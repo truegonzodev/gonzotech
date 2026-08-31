@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DropExperienceBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -21,11 +22,11 @@ public class ModBlocks {
         DeferredRegister.createBlocks(GonzoTechMod.MOD_ID);
 
     /** ore id -> (host -> зарегистрированный блок этого host-варианта). */
-    public static final Map<String, Map<Host, DeferredBlock<Block>>> ORE_BLOCKS = new LinkedHashMap<>();
+    public static final Map<String, Map<Host, DeferredBlock<? extends Block>>> ORE_BLOCKS = new LinkedHashMap<>();
 
     static {
         for (OreDefinition ore : OreDefinition.ALL) {
-            Map<Host, DeferredBlock<Block>> byHost = new EnumMap<>(Host.class);
+            Map<Host, DeferredBlock<? extends Block>> byHost = new EnumMap<>(Host.class);
             // Каждый host-вариант руды — самостоятельный блок СО СВОИМ loot table
             // файлом (data/gonzotech/loot_table/blocks/<host_prefix><id>_ore.json,
             // подхватывается по умолчанию по имени блока). Раньше здесь была
@@ -52,7 +53,17 @@ public class ModBlocks {
                     .strength(ore.hardness(host), ore.resistance())
                     .requiresCorrectToolForDrops();
 
-                byHost.put(host, BLOCKS.registerSimpleBlock(ore.blockId(host), props));
+                DeferredBlock<? extends Block> block;
+                if (ore.dropsExperience()) {
+                    // Опыт как у ванильных руд (уголь/лазурит/редстоун): блок регистрируется
+                    // как DropExperienceBlock, XP вычисляется в NeoForge-потоке
+                    // BlockDropsEvent -> getExpDrop -> EnchantmentHelper.processBlockExperience,
+                    // а шёлковое касание гасит его ванильным эффектом block_experience (set 0).
+                    block = BLOCKS.registerBlock(ore.blockId(host), p -> new DropExperienceBlock(ore.experience(), p), props);
+                } else {
+                    block = BLOCKS.registerSimpleBlock(ore.blockId(host), props);
+                }
+                byHost.put(host, block);
             }
             ORE_BLOCKS.put(ore.id(), byHost);
         }
