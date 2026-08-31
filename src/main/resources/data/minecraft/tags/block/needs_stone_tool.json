@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:calcium_ore",
+    "gonzotech:deepslate_calcium_ore",
+    "gonzotech:calcite_calcium_ore",
+    "gonzotech:aluminum_ore",
+    "gonzotech:magnesium_ore",
+    "gonzotech:deepslate_magnesium_ore",
+    "gonzotech:sulfur_ore",
+    "gonzotech:nether_sulfur_ore",
+    "gonzotech:manganese_ore",
+    "gonzotech:deepslate_manganese_ore",
+    "gonzotech:titanium_ore",
+    "gonzotech:deepslate_titanium_ore",
+    "gonzotech:barium_ore",
+    "gonzotech:deepslate_barium_ore",
+    "gonzotech:zinc_ore",
+    "gonzotech:deepslate_zinc_ore",
+    "gonzotech:tin_ore",
+    "gonzotech:deepslate_tin_ore",
+    "gonzotech:boron_ore"
+  ]
+}
