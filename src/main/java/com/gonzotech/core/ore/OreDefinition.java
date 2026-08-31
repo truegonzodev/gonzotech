@@ -139,7 +139,7 @@ public record OreDefinition(
         new OreDefinition("palladium", -64, -40, -58, 2, ToolTier.DIAMOND, 0.3f, 43.0f, List.of(Host.DEEPSLATE), true, 0, 0),
         new OreDefinition("cesium", -20, 90, 40, 2, ToolTier.DIAMOND, 0.2f, 48.5f, List.of(Host.STONE, Host.DEEPSLATE), true, 0, 0),
         new OreDefinition("iridium", -63, -45, -55, 1, ToolTier.DIAMOND, 0.05f, 54.5f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("osmium", -63, -52, -59, 1, ToolTier.DIAMOND, 0.03f, 60.0f, List.of(Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("osmium", -63, -52, -59, 1, ToolTier.DIAMOND, 0.03f, 60.0f, List.of(Host.DEEPSLATE), true, 0, 0)
     );
 
     static {
