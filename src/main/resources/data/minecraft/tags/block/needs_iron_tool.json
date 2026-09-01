@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:deepslate_chromium_ore",
+    "gonzotech:deepslate_nickel_ore",
+    "gonzotech:nether_nickel_ore",
+    "gonzotech:nickel_ore",
+    "gonzotech:deepslate_cobalt_ore",
+    "gonzotech:nether_cobalt_ore",
+    "gonzotech:silver_ore",
+    "gonzotech:deepslate_silver_ore",
+    "gonzotech:iodine_ore",
+    "gonzotech:deepslate_iodine_ore",
+    "gonzotech:nether_iodine_ore",
+    "gonzotech:deepslate_tungsten_ore",
+    "gonzotech:mercury_ore",
+    "gonzotech:deepslate_mercury_ore",
+    "gonzotech:zirconium_ore",
+    "gonzotech:deepslate_zirconium_ore"
+  ]
+}

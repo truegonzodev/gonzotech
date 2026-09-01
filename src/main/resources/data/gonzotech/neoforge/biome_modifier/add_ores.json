@@ -1,0 +1,33 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": [
+    "gonzotech:calcium_ore_placed",
+    "gonzotech:aluminum_ore_placed",
+    "gonzotech:magnesium_ore_placed",
+    "gonzotech:sulfur_ore_placed",
+    "gonzotech:manganese_ore_placed",
+    "gonzotech:titanium_ore_placed",
+    "gonzotech:barium_ore_placed",
+    "gonzotech:zinc_ore_placed",
+    "gonzotech:tin_ore_placed",
+    "gonzotech:boron_ore_placed",
+    "gonzotech:chromium_ore_placed",
+    "gonzotech:nickel_ore_placed",
+    "gonzotech:cobalt_ore_placed",
+    "gonzotech:silver_ore_placed",
+    "gonzotech:iodine_ore_placed",
+    "gonzotech:tungsten_ore_placed",
+    "gonzotech:mercury_ore_placed",
+    "gonzotech:uranium_ore_placed",
+    "gonzotech:zirconium_ore_placed",
+    "gonzotech:thorium_ore_placed",
+    "gonzotech:platinum_ore_placed",
+    "gonzotech:tellurium_ore_placed",
+    "gonzotech:palladium_ore_placed",
+    "gonzotech:cesium_ore_placed",
+    "gonzotech:iridium_ore_placed",
+    "gonzotech:osmium_ore_placed"
+  ],
+  "step": "underground_ores"
+}

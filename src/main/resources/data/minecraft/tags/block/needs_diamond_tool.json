@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:deepslate_uranium_ore",
+    "gonzotech:deepslate_thorium_ore",
+    "gonzotech:nether_thorium_ore",
+    "gonzotech:thorium_ore",
+    "gonzotech:deepslate_platinum_ore",
+    "gonzotech:deepslate_tellurium_ore",
+    "gonzotech:deepslate_palladium_ore",
+    "gonzotech:cesium_ore",
+    "gonzotech:deepslate_cesium_ore",
+    "gonzotech:deepslate_iridium_ore",
+    "gonzotech:deepslate_osmium_ore"
+  ]
+}
