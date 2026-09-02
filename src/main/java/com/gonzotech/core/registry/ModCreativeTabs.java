@@ -25,7 +25,18 @@ public class ModCreativeTabs {
                 ModItems.ORE_BLOCK_ITEMS.values().forEach(byHost ->
                     byHost.values().forEach(item -> output.accept(item.get())));
                 ModItems.RAW_ORE_ITEMS.values().forEach(item -> output.accept(item.get()));
+            })
+            .build()
+    );
+
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> FUNCTIONAL_TAB = CREATIVE_TABS.register(
+        "functional",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.gonzotech.functional"))
+            .icon(() -> new ItemStack(ModItems.CHALKBOARD_ITEM.get()))
+            .displayItems((params, output) -> {
                 output.accept(ModItems.CHALKBOARD_ITEM.get());
+                ModItems.DISCOVERY_ITEMS.forEach(item -> output.accept(item.get()));
             })
             .build()
     );

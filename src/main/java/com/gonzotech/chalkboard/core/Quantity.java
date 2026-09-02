@@ -2,7 +2,7 @@ package com.gonzotech.chalkboard.core;
 
 /**
  * A single physical quantity node: its symbol, its 7D SI dimension vector,
- * its structural complexity (aura range) and its derivation weight.
+ * its structural complexity (aura range), its derivation weight, and its unlock tier.
  */
 public record Quantity(
         String id,
@@ -15,7 +15,8 @@ public record Quantity(
         Kind kind,
         double complexity,
         double value,
-        int weight
+        int weight,
+        int tier
 ) {
 
     public enum Category {

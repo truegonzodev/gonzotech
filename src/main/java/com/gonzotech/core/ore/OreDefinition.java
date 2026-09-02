@@ -89,6 +89,14 @@ public record OreDefinition(
     }
 
     /**
+     * id предмета "сырья" (сырой руды / минерала), единого для всех host-вариантов:
+     * "raw_calcite" для calcium, "raw_<id>" для всех остальных.
+     */
+    public String rawItemId() {
+        return id.equals("calcium") ? "raw_calcite" : "raw_" + id;
+    }
+
+    /**
      * id "заглушки"-предмета для руд с selfDrop() == false (сера/марганец/йод/ртуть):
      * raw_<id>, единый для всех host-вариантов такой руды (принцип лазурита —
      * все host-варианты используют один и тот же raw_-предмет в своих loot table).
@@ -97,7 +105,7 @@ public record OreDefinition(
      * и регистрацию в {@link com.gonzotech.core.registry.ModBlocks}.
      */
     public String dropItemId() {
-        return selfDrop ? blockId(hosts.get(0)) : "raw_" + id;
+        return selfDrop ? blockId(hosts.get(0)) : rawItemId();
     }
 
     /** true — руда даёт опыт при добыче киркой (только 4 raw-drop руды, см. {@link #xpMin}). */

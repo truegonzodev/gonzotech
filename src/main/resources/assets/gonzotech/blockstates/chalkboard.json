@@ -1,7 +1,30 @@
 {
   "variants": {
-    "": {
+    "facing=down": {
+      "model": "gonzotech:block/chalkboard",
+      "x": 180
+    },
+    "facing=up": {
       "model": "gonzotech:block/chalkboard"
+    },
+    "facing=north": {
+      "model": "gonzotech:block/chalkboard",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "gonzotech:block/chalkboard",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "gonzotech:block/chalkboard",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east": {
+      "model": "gonzotech:block/chalkboard",
+      "x": 90,
+      "y": 90
     }
   }
 }

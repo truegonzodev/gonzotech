@@ -14,14 +14,8 @@ import java.util.Random;
 import java.util.Set;
 
 /**
- * Generates a random but never-nonsensical puzzle:
- * <ol>
- *   <li>pick a skeleton (A = (B·C)/D, …);</li>
- *   <li>freeze the target A plus 1-5 random RHS quantities;</li>
- *   <li>brute-force the remaining '?' slots over the whole catalogue;</li>
- *   <li>if it cannot reach 90 %, grow the tree (up to 4 expansions);</li>
- *   <li>if it still cannot, throw the whole thing away and start over.</li>
- * </ol>
+ * Generates seed-deterministic puzzles for the 16 gameplay discoveries
+ * and retains solver/hint calculation logic for future mechanics.
  */
 public final class GameSolver {
 
@@ -100,14 +94,14 @@ public final class GameSolver {
 
     // ───────────────────────── solver ─────────────────────────
 
-    private record SolverResult(boolean solvable, double score, Map<String, String> assignments) {
+    public record SolverResult(boolean solvable, double score, Map<String, String> assignments) {
     }
 
-    private static SolverResult solve(Expr expr, List<String> emptySlotIds) {
+    public static SolverResult solve(Expr expr, List<String> emptySlotIds) {
         if (emptySlotIds.isEmpty()) {
             Double s = Evaluator.analyze(expr).sD;
             double score = s == null ? 0 : s;
-            return new SolverResult(score >= 90, score, Map.of());
+            return new SolverResult(score >= 99.9, score, Map.of());
         }
 
         if (emptySlotIds.size() == 1) {
@@ -126,7 +120,7 @@ public final class GameSolver {
                 }
             }
             Map<String, String> a = bestId == null ? Map.of() : Map.of(slotId, bestId);
-            return new SolverResult(best >= 90, best, a);
+            return new SolverResult(best >= 99.9, best, a);
         }
 
         if (emptySlotIds.size() == 2) {
@@ -151,7 +145,7 @@ public final class GameSolver {
                 }
             }
             Map<String, String> a = bestPair == null ? Map.of() : Map.of(s1, bestPair[0], s2, bestPair[1]);
-            return new SolverResult(best >= 90, best, a);
+            return new SolverResult(best >= 99.9, best, a);
         }
 
         // 3+ holes: greedy fill, slot by slot, re-deriving the requirement each time
@@ -174,7 +168,7 @@ public final class GameSolver {
         }
         Double fin = Evaluator.analyze(cur).sD;
         double score = fin == null ? 0 : fin;
-        return new SolverResult(score >= 90, score, assignments);
+        return new SolverResult(score >= 99.9, score, assignments);
     }
 
     // ───────────────────────── expansion ─────────────────────────
@@ -194,10 +188,243 @@ public final class GameSolver {
 
     // ───────────────────────── generation ─────────────────────────
 
-    /**
-     * @param difficulty 1 = compact, 2 = bigger skeleton + more locks,
-     *                   3 = monstrous, and every frozen node has weight ≥ 2
-     */
+    public static Puzzle generateDiscovery(DiscoveryDef def, long worldSeed) {
+        long seed = worldSeed ^ ((long) def.index() * 0x9E3779B97F4A7C15L);
+        Random rng = new Random(seed);
+
+        // 1. Target candidate pool for LHS
+        List<Quantity> targetPool;
+        if (!def.targetPoolIds().isEmpty()) {
+            targetPool = def.targetPoolIds().stream().map(Quantities::get).filter(q -> q != null).toList();
+        } else {
+            targetPool = Quantities.ALL.stream()
+                    .filter(q -> !q.vec().isZero()
+                            && q.category() != Category.NUMBERS
+                            && q.category() != Category.CONSTANTS
+                            && def.allowedLhsTiers().contains(q.tier()))
+                    .toList();
+        }
+        if (targetPool.isEmpty()) targetPool = TARGET_POOL;
+
+        // 2. Candidate pool for RHS fixed quantities
+        List<Quantity> rhsPool = Quantities.ALL.stream()
+                .filter(q -> q.category() != Category.NUMBERS && q.category() != Category.CONSTANTS
+                        && def.allowedRhsTiers().contains(q.tier()))
+                .toList();
+        if (rhsPool.isEmpty()) rhsPool = RHS_POOL;
+
+        Puzzle bestPuzzle = null;
+        double bestPuzzleScore = -1.0;
+
+        for (int attempt = 0; attempt < 300; attempt++) {
+            // Target (LHS)
+            Quantity target = targetPool.get(rng.nextInt(targetPool.size()));
+            if (def.themeBoostTargetId() != null) {
+                Quantity boosted = Quantities.get(def.themeBoostTargetId());
+                if (boosted != null && (attempt < 80 || rng.nextBoolean())) {
+                    target = boosted;
+                }
+            }
+
+            // Total fixed quantity count K in [minNodes, maxNodes]
+            int minK = Math.max(2, def.minNodes());
+            int maxK = Math.max(minK, def.maxNodes());
+            int fixedCount = minK == maxK ? minK : minK + rng.nextInt(maxK - minK + 1);
+
+            // Fixed RHS quantities count = fixedCount - 1
+            int rhsFixedCount = Math.max(1, fixedCount - 1);
+
+            // Select fixed RHS quantities, prioritizing required tiers
+            List<Quantity> tierReqList = new ArrayList<>();
+            addTierCandidates(tierReqList, rhsPool, 99, def.minTier99Req());
+            addTierCandidates(tierReqList, rhsPool, 4, def.minTier4Req());
+            addTierCandidates(tierReqList, rhsPool, 3, def.minTier3Req());
+            addTierCandidates(tierReqList, rhsPool, 2, def.minTier2Req());
+
+            List<Quantity> fixedRhs = new ArrayList<>();
+            for (int i = 0; i < rhsFixedCount; i++) {
+                if (!tierReqList.isEmpty()) {
+                    fixedRhs.add(tierReqList.remove(0));
+                } else {
+                    fixedRhs.add(rhsPool.get(rng.nextInt(rhsPool.size())));
+                }
+            }
+            Collections.shuffle(fixedRhs, rng);
+
+            // Random skeleton division into Numerator and Denominator:
+            int denFixedCount = (fixedRhs.size() >= 2 && rng.nextDouble() < 0.70)
+                    ? 1 + rng.nextInt(fixedRhs.size() - 1)
+                    : 0;
+
+            int numFixedCount = fixedRhs.size() - denFixedCount;
+            List<Quantity> numFixed = new ArrayList<>(fixedRhs.subList(0, numFixedCount));
+            List<Quantity> denFixed = denFixedCount > 0 ? new ArrayList<>(fixedRhs.subList(numFixedCount, fixedRhs.size())) : List.of();
+
+            // Now increment empty slots count (numHoles) from 1 to 4 to find minimal holes with 100% match
+            for (int numHoles = 1; numHoles <= 4; numHoles++) {
+                for (int numHolesInNum = 0; numHolesInNum <= numHoles; numHolesInNum++) {
+                    int numHolesInDen = numHoles - numHolesInNum;
+
+                    Expr numExpr = buildProduct(numFixed, numHolesInNum);
+                    Expr denExpr = (denFixed.isEmpty() && numHolesInDen == 0) ? null : buildProduct(denFixed, numHolesInDen);
+
+                    Expr rhsExpr;
+                    if (denExpr == null) {
+                        rhsExpr = numExpr;
+                    } else {
+                        rhsExpr = Expr.Op.of(Expr.OpKind.DIV, numExpr, denExpr);
+                    }
+
+                    Expr.Slot lhsSlot = new Expr.Slot(Expr.nid("s"), target.id(), true, false);
+                    Expr expr = Expr.Eq.of(lhsSlot, rhsExpr);
+
+                    // Collect locked slot IDs and empty slot IDs
+                    List<String> lockedSlotIds = new ArrayList<>();
+                    List<String> emptySlotIds = new ArrayList<>();
+                    for (Manipulate.SlotInfo s : Manipulate.collectSlots(expr)) {
+                        if (s.locked()) {
+                            lockedSlotIds.add(s.id());
+                        } else if (!s.filled()) {
+                            emptySlotIds.add(s.id());
+                        }
+                    }
+
+                    // Solve candidate
+                    SolverResult solution = solve(expr, emptySlotIds);
+                    if (!solution.solvable() || solution.score() < 99.9) continue;
+
+                    // ANTI-REDUNDANCY / NO CANCELLATION CHECKS:
+                    // Collect numerator and denominator quantity IDs
+                    Set<String> numQuantities = new HashSet<>();
+                    Set<String> denQuantities = new HashSet<>();
+
+                    for (Quantity q : numFixed) numQuantities.add(q.id());
+                    for (Quantity q : denFixed) denQuantities.add(q.id());
+
+                    for (Map.Entry<String, String> entry : solution.assignments().entrySet()) {
+                        String slotId = entry.getKey();
+                        String qId = entry.getValue();
+                        if (qId == null) continue;
+
+                        if (isSlotInNumerator(expr, slotId)) {
+                            numQuantities.add(qId);
+                        } else {
+                            denQuantities.add(qId);
+                        }
+                    }
+
+                    // Check 1: Target must NOT appear on RHS
+                    if (numQuantities.contains(target.id()) || denQuantities.contains(target.id())) {
+                        continue;
+                    }
+
+                    // Check 2: No quantity should appear in BOTH numerator and denominator (no Iv/Iv cancellation)
+                    boolean hasCancellation = false;
+                    for (String qId : numQuantities) {
+                        if (denQuantities.contains(qId)) {
+                            hasCancellation = true;
+                            break;
+                        }
+                    }
+                    if (hasCancellation) continue;
+
+                    // Check tier constraints
+                    boolean tierConstraintsMet = checkTierRequirements(def, expr, solution.assignments());
+
+                    String title = "Открытие " + (def.index() + 1) + "/16: " + def.titleRu();
+                    String desc = "Цель: " + target.symbol() + " [" + target.unit() + "] · " + target.nameRu();
+
+                    Puzzle p = new Puzzle(expr, target, lockedSlotIds, solution.assignments(),
+                            solution.score(), 0, def.index() + 1, title, desc);
+
+                    if (tierConstraintsMet) {
+                        return p;
+                    }
+
+                    if (solution.score() > bestPuzzleScore) {
+                        bestPuzzleScore = solution.score();
+                        bestPuzzle = p;
+                    }
+                }
+            }
+        }
+
+        if (bestPuzzle != null) {
+            return bestPuzzle;
+        }
+
+        return fallback(def.index() + 1);
+    }
+
+    private static boolean isSlotInNumerator(Expr expr, String slotId) {
+        if (expr instanceof Expr.Eq eq && eq.right() instanceof Expr.Op divOp && divOp.op() == Expr.OpKind.DIV) {
+            return containsSlot(divOp.left(), slotId);
+        }
+        return true;
+    }
+
+    private static boolean containsSlot(Expr tree, String slotId) {
+        if (tree == null) return false;
+        if (tree.id().equals(slotId)) return true;
+        return switch (tree) {
+            case Expr.Op o -> containsSlot(o.left(), slotId) || containsSlot(o.right(), slotId);
+            case Expr.Pow p -> containsSlot(p.base(), slotId);
+            default -> false;
+        };
+    }
+
+    private static Expr buildProduct(List<Quantity> fixedQuantities, int emptySlotsCount) {
+        List<Expr> slots = new ArrayList<>();
+        for (Quantity q : fixedQuantities) {
+            slots.add(new Expr.Slot(Expr.nid("s"), q.id(), true, false));
+        }
+        for (int i = 0; i < emptySlotsCount; i++) {
+            slots.add(Expr.Slot.empty());
+        }
+        if (slots.isEmpty()) {
+            return Expr.Slot.empty();
+        }
+        Expr result = slots.get(0);
+        for (int i = 1; i < slots.size(); i++) {
+            result = Expr.Op.of(Expr.OpKind.MUL, result, slots.get(i));
+        }
+        return result;
+    }
+
+    private static void addTierCandidates(List<Quantity> out, List<Quantity> pool, int tier, int count) {
+        if (count <= 0) return;
+        List<Quantity> matching = pool.stream().filter(q -> q.tier() == tier).toList();
+        if (matching.isEmpty()) {
+            matching = Quantities.ALL.stream().filter(q -> q.tier() == tier).toList();
+        }
+        for (int i = 0; i < count && !matching.isEmpty(); i++) {
+            out.add(matching.get(i % matching.size()));
+        }
+    }
+
+    private static boolean checkTierRequirements(DiscoveryDef def, Expr expr, Map<String, String> assignments) {
+        Map<Integer, Integer> tierCounts = new HashMap<>();
+        for (Manipulate.SlotInfo s : Manipulate.collectSlots(expr)) {
+            String qId = s.quantityId();
+            if (qId == null) {
+                qId = assignments.get(s.id());
+            }
+            if (qId != null) {
+                Quantity q = Quantities.get(qId);
+                if (q != null) {
+                    tierCounts.put(q.tier(), tierCounts.getOrDefault(q.tier(), 0) + 1);
+                }
+            }
+        }
+
+        if (tierCounts.getOrDefault(2, 0) < def.minTier2Req()) return false;
+        if (tierCounts.getOrDefault(3, 0) < def.minTier3Req()) return false;
+        if (tierCounts.getOrDefault(4, 0) < def.minTier4Req()) return false;
+        if (tierCounts.getOrDefault(99, 0) < def.minTier99Req()) return false;
+
+        return true;
+    }
+
     public static Puzzle generate(int difficulty) {
         int level = Math.max(1, Math.min(3, difficulty));
         final int MAX_ATTEMPTS = 50;
@@ -207,10 +434,9 @@ public final class GameSolver {
             Skeleton skeleton = SKELETONS.get(RNG.nextInt(SKELETONS.size()));
             Expr expr = skeleton.build();
 
-            // Pre-grow the skeleton for higher levels
             int preGrow = switch (level) {
-                case 2 -> 1 + RNG.nextInt(3);   // +1..3 slots
-                case 3 -> 3 + RNG.nextInt(3);   // +3..5 slots
+                case 2 -> 1 + RNG.nextInt(3);
+                case 3 -> 3 + RNG.nextInt(3);
                 default -> 0;
             };
             for (int i = 0; i < preGrow; i++) expr = expand(expr);
@@ -251,7 +477,6 @@ public final class GameSolver {
 
             expr = Manipulate.markLocked(expr, lockedIds);
 
-            // Test solvability, growing the tree when necessary
             Expr working = expr;
             for (int expansions = 0; expansions <= MAX_EXPANSIONS; expansions++) {
                 List<String> empties = new ArrayList<>();
@@ -274,7 +499,6 @@ public final class GameSolver {
         return fallback(level);
     }
 
-    /** Guaranteed-solvable safety net: F = (a · ?) / ?. */
     private static Puzzle fallback(int level) {
         Expr expr = Expr.Eq.of(
                 Expr.Slot.empty(),
@@ -302,7 +526,6 @@ public final class GameSolver {
                 "Цель: F [Н]. Соберите 7D резонанс ≥ 90 %.");
     }
 
-    /** Free-play skeletons for the sandbox menu. */
     public static Expr sandbox(int index) {
         List<java.util.function.Supplier<Expr>> list = List.of(
                 () -> Expr.Eq.of(Expr.Slot.empty(), Expr.Slot.empty()),
