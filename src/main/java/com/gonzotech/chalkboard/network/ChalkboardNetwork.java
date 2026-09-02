@@ -167,7 +167,7 @@ public class ChalkboardNetwork {
                     if (context.player() instanceof ServerPlayer player) {
                         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
                         progress.setSavedExpr(payload.discoveryIndex(), payload.exprJson());
-                        progress.setSavedDrawing(payload.discoveryIndex(), payload.drawingJson());
+                        progress.setGlobalDrawingJson(payload.drawingJson());
                         player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
                     }
                 })
@@ -206,8 +206,7 @@ public class ChalkboardNetwork {
         String savedExpr = progress.getSavedExpr(discIdx);
         String exprJson = (savedExpr != null && !savedExpr.isEmpty()) ? savedExpr : Serde.toJson(puzzle.expr());
 
-        String savedDrawing = progress.getSavedDrawing(discIdx);
-        String drawingJson = savedDrawing != null ? savedDrawing : "";
+        String drawingJson = progress.getGlobalDrawingJson();
 
         Quantity target = puzzle.target();
         boolean cheats = player.isCreative() || player.hasPermissions(2);
@@ -244,8 +243,6 @@ public class ChalkboardNetwork {
 
             if (discoveryIndex == progress.getCurrentDiscoveryIndex()) {
                 progress.advanceDiscovery();
-                // Ensure drawing for new discovery index starts empty!
-                progress.setSavedDrawing(progress.getCurrentDiscoveryIndex(), "");
                 player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
 
                 // Award consumable Discovery item N (1-based index: discoveryIndex + 1)

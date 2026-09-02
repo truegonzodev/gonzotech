@@ -13,7 +13,8 @@ import java.util.Set;
 
 /**
  * Per-player progress attachment for Chalkboard / Resonance progression.
- * Uses String keys for maps to guarantee NBT tag compatibility when saved to world playerdata.
+ * Maintains persistent formula states and a continuous global chalk drawing
+ * that never resets across discovery completions unless explicitly cleared.
  */
 public class PlayerChalkboardProgress {
 
@@ -23,7 +24,8 @@ public class PlayerChalkboardProgress {
                     Codec.INT.listOf().fieldOf("unlockedRecipeTiers").forGetter(p -> new ArrayList<>(p.getUnlockedRecipeTiers())),
                     Codec.STRING.listOf().fieldOf("unlockedSecretQuantities").forGetter(p -> new ArrayList<>(p.getUnlockedSecretQuantities())),
                     Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("savedExprJson", Map.of()).forGetter(PlayerChalkboardProgress::getSavedExprJsonStr),
-                    Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("savedDrawingJson", Map.of()).forGetter(PlayerChalkboardProgress::getSavedDrawingJsonStr)
+                    Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("savedDrawingJson", Map.of()).forGetter(PlayerChalkboardProgress::getSavedDrawingJsonStr),
+                    Codec.STRING.optionalFieldOf("globalDrawingJson", "").forGetter(PlayerChalkboardProgress::getGlobalDrawingJson)
             ).apply(instance, PlayerChalkboardProgress::new)
     );
 
@@ -32,18 +34,21 @@ public class PlayerChalkboardProgress {
     private final Set<String> unlockedSecretQuantities;
     private final Map<String, String> savedExprJson;
     private final Map<String, String> savedDrawingJson;
+    private String globalDrawingJson;
 
     public PlayerChalkboardProgress() {
-        this(0, List.of(), List.of(), Map.of(), Map.of());
+        this(0, List.of(), List.of(), Map.of(), Map.of(), "");
     }
 
     public PlayerChalkboardProgress(int currentDiscoveryIndex, List<Integer> tiers, List<String> secrets,
-                                  Map<String, String> savedExpr, Map<String, String> savedDrawing) {
+                                  Map<String, String> savedExpr, Map<String, String> savedDrawing,
+                                  String globalDrawingJson) {
         this.currentDiscoveryIndex = Math.max(0, Math.min(15, currentDiscoveryIndex));
         this.unlockedRecipeTiers = new HashSet<>(tiers);
         this.unlockedSecretQuantities = new HashSet<>(secrets);
         this.savedExprJson = new HashMap<>(savedExpr);
         this.savedDrawingJson = new HashMap<>(savedDrawing);
+        this.globalDrawingJson = globalDrawingJson != null ? globalDrawingJson : "";
     }
 
     public int getCurrentDiscoveryIndex() {
@@ -100,14 +105,17 @@ public class PlayerChalkboardProgress {
         return savedDrawingJson;
     }
 
-    public String getSavedDrawing(int discoveryIndex) {
-        return savedDrawingJson.get(String.valueOf(discoveryIndex));
+    public String getGlobalDrawingJson() {
+        if (globalDrawingJson != null && !globalDrawingJson.isEmpty()) {
+            return globalDrawingJson;
+        }
+        String saved = savedDrawingJson.get(String.valueOf(currentDiscoveryIndex));
+        return saved != null ? saved : "";
     }
 
-    public void setSavedDrawing(int discoveryIndex, String json) {
-        if (json != null) {
-            savedDrawingJson.put(String.valueOf(discoveryIndex), json);
-        }
+    public void setGlobalDrawingJson(String json) {
+        this.globalDrawingJson = json != null ? json : "";
+        this.savedDrawingJson.put(String.valueOf(currentDiscoveryIndex), this.globalDrawingJson);
     }
 
     public int getTrayQuantityTier() {

@@ -296,7 +296,8 @@ public class ResonanceScreen extends Screen {
 
     private void claimDiscovery() {
         if (expr == null) return;
-        this.chalkStrokes.clear(); // Reset client-side chalk drawing immediately upon discovery completion
+
+        // Submit solution without clearing chalk notes — chalk drawing is persistent across discoveries
         String json = Serde.toJson(expr);
         PacketDistributor.sendToServer(new ChalkboardNetwork.SubmitPayload(activeDiscoveryIndex, json));
     }
