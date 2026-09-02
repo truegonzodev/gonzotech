@@ -750,12 +750,12 @@ public class ResonanceScreen extends Screen {
                 }
             } else if (b.kind() == FormulaLayout.BoxKind.OP || b.kind() == FormulaLayout.BoxKind.EQ) {
                 String symbol = b.text() != null ? b.text() : "=";
-                g.drawString(font, symbol, b.x() + (b.w() - font.width(symbol)) / 2, b.y() + (b.h() - font.height()) / 2, 0xFFFFFFFF, false);
+                g.drawString(font, symbol, b.x() + (b.w() - font.width(symbol)) / 2, b.y() + (b.h() - font.lineHeight) / 2, 0xFFFFFFFF, false);
             } else if (b.kind() == FormulaLayout.BoxKind.FRACTION_LINE) {
                 g.fill(b.x(), b.y(), b.x() + b.w(), b.y() + b.h(), 0xFFFFFFFF);
             } else if (b.kind() == FormulaLayout.BoxKind.NUM) {
                 String txt = b.text() != null ? b.text() : "1";
-                g.drawString(font, txt, b.x() + (b.w() - font.width(txt)) / 2, b.y() + (b.h() - font.height()) / 2, 0xFFFFFFFF, false);
+                g.drawString(font, txt, b.x() + (b.w() - font.width(txt)) / 2, b.y() + (b.h() - font.lineHeight) / 2, 0xFFFFFFFF, false);
             }
         }
 
