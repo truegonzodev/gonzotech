@@ -1589,8 +1589,6 @@ public class ResonanceScreen extends Screen {
                     }
                 }
             }
-                return true;
-            }
 
             // 3. Canvas Formula Blocks
             if (expr != null) {
