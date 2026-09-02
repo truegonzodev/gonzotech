@@ -248,7 +248,7 @@ public class ChalkboardNetwork {
         Expr expr = Serde.fromJson(exprJson);
         if (expr == null) return;
 
-        Analysis analysis = Evaluator.analyze(expr);
+        Analysis analysis = Evaluator.analyze(expr, progress.isInfiniteMode());
         if (analysis.sD != null && analysis.sD >= 90.0 && analysis.conflicts.isEmpty()) {
             checkSecretUnlocks(player, progress, analysis);
 

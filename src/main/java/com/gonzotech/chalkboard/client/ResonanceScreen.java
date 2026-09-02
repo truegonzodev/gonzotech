@@ -291,7 +291,8 @@ public class ResonanceScreen extends Screen {
 
     private void recompute() {
         if (expr == null) return;
-        analysis = Evaluator.analyze(expr);
+        boolean isInfinite = activeDiscoveryIndex >= 16;
+        analysis = Evaluator.analyze(expr, isInfinite);
         aura = Evaluator.decayedLove(expr, analysis);
 
         if (claimButton != null) {
@@ -591,7 +592,6 @@ public class ResonanceScreen extends Screen {
     private void drawSlot(GuiGraphics g, FormulaLayout.Box box, int mouseX, int mouseY, int centerX, int centerY) {
         Expr.Slot slot = (Expr.Slot) box.node();
         Quantity q = Quantities.get(slot.quantityId());
-        DimVec required = analysis != null ? analysis.required.get(slot.id()) : null;
         boolean locked = slot.locked();
         boolean selected = slot.id().equals(selectedSlotId);
 
@@ -599,11 +599,10 @@ public class ResonanceScreen extends Screen {
         double unscaledMy = centerY + (mouseY - centerY) / zoomScale;
         boolean hovered = box.contains(unscaledMx, unscaledMy);
 
-        boolean penalised = analysis != null && analysis.lhsExtraSlotIds.contains(slot.id());
+        boolean penalised = analysis != null && (analysis.lhsExtraSlotIds.contains(slot.id()) || analysis.rhsExtraSlotIds.contains(slot.id()));
 
         int x = box.x(), y = box.y(), w = box.w(), h = box.h();
         int accent = q != null ? Palette.flavor(q.vec(), q.kind())
-                : required != null ? Palette.flavor(required, Quantity.Kind.SCALAR)
                 : Palette.TEXT_FAINT;
 
         g.fill(x, y, x + w, y + h, q != null ? 0xF03B6334 : 0xD0274222);
@@ -634,11 +633,7 @@ public class ResonanceScreen extends Screen {
             }
         } else {
             int sw = font.width("?");
-            g.drawString(font, "?", x + (w - sw) / 2, y + 7, Palette.TEXT_FAINT, false);
-            if (required != null) {
-                drawDimBars(g, x + w / 2 - 13, y + 20, required, 12);
-                tinyCentered(g, clip(required.format(), 20), x + w / 2, y + h - 9, Palette.withAlpha(accent, 200));
-            }
+            g.drawString(font, "?", x + (w - sw) / 2, y + (h - 9) / 2, Palette.TEXT_FAINT, false);
             Double a = aura.get(slot.id());
             if (a != null && a > 8) {
                 g.fill(x + 2, y + 2, x + 5, y + 5, Palette.love(a));
@@ -720,21 +715,18 @@ public class ResonanceScreen extends Screen {
 
         cy = circleCy + 50;
 
-        // S_D dimensionality
+        // Dimensional convergence
         cy = bar(g, x + 8, cy, w - 16, tr("gui.gonzotech.chalkboard.s_d_dimension"), analysis.sD);
 
-        // S_N numerical
+        // Numerical layer
         cy = bar(g, x + 8, cy, w - 16, tr("gui.gonzotech.chalkboard.s_n_numeric"), analysis.sN);
 
-        // Formula equation label
-        String form = "S = (S_D · S_N / 100)" + (analysis.lhsPenalty > 0 ? " − " + analysis.lhsPenalty : "");
-        g.drawString(font, form, x + 8, cy, Palette.TEXT_FAINT, false);
-        cy += 14;
-
-        if (analysis.lhsPenalty > 0) {
+        int totalPenalty = analysis.lhsPenalty + analysis.rhsPenalty;
+        if (totalPenalty > 0) {
             g.fill(x + 6, cy - 1, x + w - 6, cy + 22, Palette.withAlpha(Palette.ROSE, 40));
-            g.drawString(font, String.format(Locale.ROOT, tr("gui.gonzotech.chalkboard.penalty"), analysis.lhsPenalty), x + 8, cy + 2, Palette.ROSE, false);
-            g.drawString(font, tr("gui.gonzotech.chalkboard.penalty_desc"), x + 8, cy + 12, Palette.ROSE, false);
+            g.drawString(font, String.format(Locale.ROOT, tr("gui.gonzotech.chalkboard.penalty"), totalPenalty), x + 8, cy + 2, Palette.ROSE, false);
+            String penaltyDesc = "не изолировано (ЛЧ: " + analysis.lhsPenalty + ", ПЧ: " + analysis.rhsPenalty + ")";
+            g.drawString(font, penaltyDesc, x + 8, cy + 12, Palette.ROSE, false);
             cy += 26;
         }
 
@@ -748,7 +740,7 @@ public class ResonanceScreen extends Screen {
         }
 
         cy += 4;
-        String lqStr = tr("gui.gonzotech.chalkboard.lq_label") + " " + (analysis.leftVec == null ? "?" : analysis.leftVec.format());
+        String lqStr = tr("gui.gonzotech.chalkboard.lq_label");
         g.drawString(font, lqStr, x + 8, cy, Palette.CYAN, false);
         cy += 12;
         if (analysis.leftVec != null) {
@@ -756,7 +748,7 @@ public class ResonanceScreen extends Screen {
             cy += 16;
         }
 
-        String rqStr = tr("gui.gonzotech.chalkboard.rq_label") + " " + (analysis.rightVec == null ? "?" : analysis.rightVec.format());
+        String rqStr = tr("gui.gonzotech.chalkboard.rq_label");
         g.drawString(font, rqStr, x + 8, cy, Palette.AMBER, false);
         cy += 12;
         if (analysis.rightVec != null) {
@@ -915,7 +907,7 @@ public class ResonanceScreen extends Screen {
         g.fill(x, y, x + 52, y + 22, 0xFF3B6334);
         outline(g, x, y, 52, 22, accent);
         g.drawString(font, pressedQuantity.symbol(), x + 4, y + 3, accent, false);
-        tiny(g, clip(pressedQuantity.vec().format(), 14), x + 4, y + 14, Palette.TEXT_FAINT);
+        tiny(g, clip(pressedQuantity.unit(), 14), x + 4, y + 14, Palette.TEXT_FAINT);
     }
 
     private void drawTooltips(GuiGraphics g, int mouseX, int mouseY, List<FormulaLayout.Box> boxes) {
@@ -938,7 +930,7 @@ public class ResonanceScreen extends Screen {
             if (q != null) {
                 List<Component> lines = List.of(
                         Component.literal(q.symbol() + " — " + qName(q)),
-                        Component.literal("[" + q.vec().format() + "]  " + q.unit()),
+                        Component.literal(q.unit()),
                         Component.literal("Tier " + q.tier() + " \u00b7 " + (isEnglish() ? q.kindLabelEn() : q.kindLabelRu())));
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
             }
@@ -953,13 +945,11 @@ public class ResonanceScreen extends Screen {
             if (b.kind() == FormulaLayout.BoxKind.SLOT && b.contains(unscaledMx, unscaledMy)) {
                 Expr.Slot s = (Expr.Slot) b.node();
                 Quantity q = Quantities.get(s.quantityId());
-                DimVec req = analysis != null ? analysis.required.get(s.id()) : null;
                 List<Component> lines = new ArrayList<>();
                 if (q != null) lines.add(Component.literal(q.symbol() + " — " + qName(q)));
                 else lines.add(Component.translatable("gui.gonzotech.chalkboard.empty_slot"));
-                if (req != null) lines.add(Component.translatable("gui.gonzotech.chalkboard.needed", req.format()));
                 if (s.locked()) lines.add(Component.translatable("gui.gonzotech.chalkboard.fixed_slot_tooltip"));
-                if (analysis != null && analysis.lhsExtraSlotIds.contains(s.id()))
+                if (analysis != null && (analysis.lhsExtraSlotIds.contains(s.id()) || analysis.rhsExtraSlotIds.contains(s.id())))
                     lines.add(Component.translatable("gui.gonzotech.chalkboard.penalty_slot_tooltip"));
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
                 return;

@@ -15,7 +15,7 @@ import java.util.Map;
  * <p>
  * Layer 1 — dimensional: S_D = 100 * (1 - ||A-B|| / (||A||+||B||)).<br>
  * Layer 2 — numerical:   S_N compares the actual coefficient ratio.<br>
- * S_final = S_D * S_N / 100 - lhsPenalty.
+ * S_final = S_D * S_N / 100 - lhsPenalty - rhsPenalty.
  * <p>
  * Before scoring, factors that appear on both sides are cancelled, so
  * multiplying both sides by the same block can no longer inflate the score.
@@ -215,10 +215,18 @@ public final class Evaluator {
     // ───────────────────────── public entry point ─────────────────────────
 
     public static Analysis analyze(Expr expr) {
-        return analyze(expr, null, null, 1.0);
+        return analyze(expr, false);
+    }
+
+    public static Analysis analyze(Expr expr, boolean isInfiniteMode) {
+        return analyze(expr, null, null, 1.0, isInfiniteMode);
     }
 
     public static Analysis analyze(Expr expr, String previewSlotId, String previewQuantityId, double numericRatio) {
+        return analyze(expr, previewSlotId, previewQuantityId, numericRatio, false);
+    }
+
+    public static Analysis analyze(Expr expr, String previewSlotId, String previewQuantityId, double numericRatio, boolean isInfiniteMode) {
         Expr working = (previewSlotId != null && previewQuantityId != null)
                 ? Manipulate.setSlotQuantity(expr, previewSlotId, previewQuantityId)
                 : expr;
@@ -255,7 +263,7 @@ public final class Evaluator {
             right = evalById.get(eq.right().id());
         }
 
-        // ── LHS penalty: the target must be isolated ──
+        // ── LHS penalty: target must be isolated ──
         List<String> lhsExtraSlotIds = new ArrayList<>();
         if (working instanceof Expr.Eq eq) {
             Manipulate.walkSlots(eq.left(), s -> {
@@ -263,6 +271,15 @@ public final class Evaluator {
             });
         }
         int lhsPenalty = lhsExtraSlotIds.size();
+
+        // ── RHS penalty: extra slots added beyond preset slots (only in Discovery mode) ──
+        List<String> rhsExtraSlotIds = new ArrayList<>();
+        if (!isInfiniteMode && working instanceof Expr.Eq eq) {
+            Manipulate.walkSlots(eq.right(), s -> {
+                if (s.isAdded() && !s.locked()) rhsExtraSlotIds.add(s.id());
+            });
+        }
+        int rhsPenalty = rhsExtraSlotIds.size();
 
         // ── background cancellation of common factors ──
         DimVec leftVec = left != null ? left.vec() : null;
@@ -304,7 +321,7 @@ public final class Evaluator {
             sN = Double.isFinite(ratio) ? DimVec.numScore(ratio, numericRatio) : 0.0;
         }
         if (sD != null && sN != null) {
-            sFinal = Math.max(0.0, (sD * sN) / 100.0 - lhsPenalty);
+            sFinal = Math.max(0.0, (sD * sN) / 100.0 - lhsPenalty - rhsPenalty);
         }
 
         boolean discovery = sFinal != null && sFinal >= DISCOVERY_THRESHOLD && root.conflicts().isEmpty();
@@ -317,7 +334,7 @@ public final class Evaluator {
                 right != null ? right.value() : null,
                 sD, sN, sFinal, root.conflicts(), locals, required, slotLove, evalById,
                 discovery, counts[0], counts[1], counts[2],
-                lhsPenalty, lhsExtraSlotIds, cancelled);
+                lhsPenalty, lhsExtraSlotIds, rhsPenalty, rhsExtraSlotIds, cancelled);
     }
 
     /** Aura strength of every empty slot, given the already placed blocks. */
