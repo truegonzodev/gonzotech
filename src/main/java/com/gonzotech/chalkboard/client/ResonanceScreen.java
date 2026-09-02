@@ -517,27 +517,6 @@ public class ResonanceScreen extends Screen {
             }
         };
     }
-                Quantity q = Quantities.get(s.quantityId());
-                yield q != null ? q.vec() : null;
-            }
-            case Expr.Num n -> DimVec.ZERO;
-            case Expr.Pow p -> {
-                DimVec b = evalExprVec(p.base());
-                yield b != null ? b.scale(p.exp()) : null;
-            }
-            case Expr.Op o -> {
-                DimVec l = evalExprVec(o.left());
-                DimVec r = evalExprVec(o.right());
-                if (l == null || r == null) yield null;
-                if (o.op() == Expr.OpKind.DIV) {
-                    yield l.sub(r);
-                } else {
-                    yield l.add(r);
-                }
-            }
-            case Expr.Eq q -> evalExprVec(q.left());
-        };
-    }
 
     // ─────────────────────────── tray ───────────────────────────
 
