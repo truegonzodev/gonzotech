@@ -10,7 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Server-authoritative SavedData storing the 16 seed-deterministic discovery puzzles.
+ * Server-authoritative SavedData storing the 16 seed-deterministic discovery puzzles
+ * and dynamic post-game infinite puzzles.
  */
 public class ChalkboardWorldData extends SavedData {
 
@@ -32,6 +33,9 @@ public class ChalkboardWorldData extends SavedData {
     }
 
     public GameSolver.Puzzle getPuzzle(int index) {
+        if (index >= 16) {
+            return puzzleCache.computeIfAbsent(index, i -> GameSolver.generateInfinite(i, worldSeed));
+        }
         int idx = Math.max(0, Math.min(15, index));
         return puzzleCache.computeIfAbsent(idx, i -> GameSolver.generateDiscovery(DiscoveryDef.get(i), worldSeed));
     }
@@ -50,7 +54,6 @@ public class ChalkboardWorldData extends SavedData {
 
     private static ChalkboardWorldData load(CompoundTag tag, long seed) {
         ChalkboardWorldData data = new ChalkboardWorldData(seed);
-        // Puzzles are deterministically derived from world seed, but data can be marked dirty if needed.
         return data;
     }
 

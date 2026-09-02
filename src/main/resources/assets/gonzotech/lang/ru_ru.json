@@ -138,5 +138,6 @@
   "gui.gonzotech.chalkboard.cat.chem": "Химия",
   "gui.gonzotech.chalkboard.cat.tensors": "Тензоры",
   "gui.gonzotech.chalkboard.cat.secret": "Секретные",
-  "gui.gonzotech.chalkboard.cat.super_secret": "Трансцендентные"
+  "gui.gonzotech.chalkboard.cat.super_secret": "Трансцендентные",
+  "gui.gonzotech.chalkboard.infinite_xp_award": "Стадия %d пройдена! Получено +%d опыта."
 }

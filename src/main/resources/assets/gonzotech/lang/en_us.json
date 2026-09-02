@@ -138,5 +138,6 @@
   "gui.gonzotech.chalkboard.cat.chem": "Chemistry",
   "gui.gonzotech.chalkboard.cat.tensors": "Tensors",
   "gui.gonzotech.chalkboard.cat.secret": "Secret",
-  "gui.gonzotech.chalkboard.cat.super_secret": "Super-Secret"
+  "gui.gonzotech.chalkboard.cat.super_secret": "Super-Secret",
+  "gui.gonzotech.chalkboard.infinite_xp_award": "Stage %d completed! Earned +%d XP."
 }

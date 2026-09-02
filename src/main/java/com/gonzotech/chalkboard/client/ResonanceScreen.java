@@ -467,7 +467,7 @@ public class ResonanceScreen extends Screen {
         g.fill(guiX, guiY + HEADER_H - 1, guiX + guiW, guiY + HEADER_H, Palette.STROKE);
         g.drawString(font, tr("gui.gonzotech.chalkboard.title"), guiX + 8, guiY + 4, Palette.TEXT, false);
 
-        String subtitle = tr("gui.gonzotech.chalkboard.discovery_prefix", activeDiscoveryIndex + 1) + " " + discoveryTitle();
+        String subtitle = discoveryTitle();
         tiny(g, subtitle, guiX + 8, guiY + 15, Palette.AMBER);
 
         if (cheatsEnabled) {

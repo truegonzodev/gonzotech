@@ -201,7 +201,18 @@ public class ChalkboardNetwork {
 
         ChalkboardWorldData worldData = ChalkboardWorldData.get(level);
         GameSolver.Puzzle puzzle = worldData.getPuzzle(discIdx);
-        DiscoveryDef def = DiscoveryDef.get(discIdx);
+
+        String titleRu;
+        String titleEn;
+        if (discIdx < 16) {
+            DiscoveryDef def = DiscoveryDef.get(discIdx);
+            titleRu = "Открытие " + (discIdx + 1) + "/16: " + def.titleRu();
+            titleEn = "Discovery " + (discIdx + 1) + "/16: " + def.titleEn();
+        } else {
+            int stage = discIdx + 1;
+            titleRu = "Бесконечный резонанс (Стадия " + stage + ")";
+            titleEn = "Infinite Resonance (Stage " + stage + ")";
+        }
 
         String savedExpr = progress.getSavedExpr(discIdx);
         String exprJson = (savedExpr != null && !savedExpr.isEmpty()) ? savedExpr : Serde.toJson(puzzle.expr());
@@ -213,8 +224,8 @@ public class ChalkboardNetwork {
 
         SyncDataPayload payload = new SyncDataPayload(
                 discIdx,
-                def.titleRu(),
-                def.titleEn(),
+                titleRu,
+                titleEn,
                 target.id(),
                 target.symbol(),
                 target.nameRu(),
@@ -242,29 +253,69 @@ public class ChalkboardNetwork {
             checkSecretUnlocks(player, progress, analysis);
 
             if (discoveryIndex == progress.getCurrentDiscoveryIndex()) {
+                boolean isInfiniteMode = progress.isInfiniteMode();
+                int currentStage = progress.getCurrentDiscoveryIndex() + 1;
+
                 progress.advanceDiscovery();
                 player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
 
-                // Award consumable Discovery item N (1-based index: discoveryIndex + 1)
-                int awardNum = discoveryIndex + 1;
-                ItemStack awardStack = new ItemStack(ModItems.getDiscoveryItem(awardNum).get());
-                if (!player.getInventory().add(awardStack)) {
-                    player.drop(awardStack, false);
+                if (!isInfiniteMode && discoveryIndex == 15) {
+                    // Just completed Discovery 16! (0-indexed 15)
+                    // Award consumable Discovery item 16 ONCE
+                    int awardNum = 16;
+                    ItemStack awardStack = new ItemStack(ModItems.getDiscoveryItem(awardNum).get());
+                    if (!player.getInventory().add(awardStack)) {
+                        player.drop(awardStack, false);
+                    }
+
+                    level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                            SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+                    player.displayClientMessage(
+                            Component.translatable("gui.gonzotech.chalkboard.discovery_prefix", awardNum)
+                                    .append(" ")
+                                    .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
+                                    .withStyle(ChatFormatting.GREEN),
+                            true
+                    );
+                } else if (!isInfiniteMode && discoveryIndex < 15) {
+                    // Completed Discovery 1..15
+                    int awardNum = discoveryIndex + 1;
+                    ItemStack awardStack = new ItemStack(ModItems.getDiscoveryItem(awardNum).get());
+                    if (!player.getInventory().add(awardStack)) {
+                        player.drop(awardStack, false);
+                    }
+
+                    level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                            SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+                    player.displayClientMessage(
+                            Component.translatable("gui.gonzotech.chalkboard.discovery_prefix", awardNum)
+                                    .append(" ")
+                                    .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
+                                    .withStyle(ChatFormatting.GREEN),
+                            true
+                    );
+                } else {
+                    // Infinite Mode completion (Stage 17+)!
+                    long xpSeed = level.getSeed() ^ ((long) currentStage * 0x5DEECE66DL);
+                    java.util.Random xpRng = new java.util.Random(xpSeed);
+                    int xpReward = 5000 + xpRng.nextInt(10001); // 5000 to 15000 XP
+
+                    player.giveExperiencePoints(xpReward);
+
+                    level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                            SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+                    player.displayClientMessage(
+                            Component.translatable("gui.gonzotech.chalkboard.infinite_xp_award", currentStage, xpReward)
+                                    .withStyle(ChatFormatting.GOLD),
+                            true
+                    );
                 }
 
-                level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
-
-                player.displayClientMessage(
-                        Component.translatable("gui.gonzotech.chalkboard.discovery_prefix", awardNum)
-                                .append(" ")
-                                .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
-                                .withStyle(ChatFormatting.GREEN),
-                        true
-                );
+                sendSyncToPlayer(player);
             }
-
-            sendSyncToPlayer(player);
         }
     }
 
