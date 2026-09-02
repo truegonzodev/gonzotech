@@ -20,11 +20,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-<<<<<<< HEAD
-=======
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
->>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -37,11 +34,7 @@ import java.util.Set;
 /**
  * Green chalkboard theme GUI with framed composition, pan/zoom camera navigation,
  * freehand persistent chalk drawing per player, tabbed tray filtering,
-<<<<<<< HEAD
- * 2x enlarged circular resonance gauge, custom chalkboard buttons, and full EN/RU localization.
-=======
  * 2x enlarged circular resonance gauge, custom chalkboard buttons, unified GOST tooltips, and full EN/RU localization.
->>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
  */
 public class ResonanceScreen extends Screen {
 
@@ -901,11 +894,7 @@ public class ResonanceScreen extends Screen {
         g.drawString(font, q.symbol(), x + (TILE_W - sw) / 2, y + 3, blocked ? Palette.TEXT_FAINT : accent, false);
         tinyCentered(g, clip(qName(q), 18), x + TILE_W / 2, y + 15, Palette.TEXT_FAINT);
         drawDimBars(g, x + TILE_W / 2 - 13, y + 25, q.vec(), 12);
-<<<<<<< HEAD
-        tiny(g, "T" + q.tier(), x + TILE_W - 12, y + 2, Palette.weightColor(q.tier()));
-=======
         tiny(g, "T" + q.tier(), x + TILE_W - 12, y + 2, Palette.tierColor(q.tier()));
->>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
 
         if (blocked) {
             g.fill(x, y, x + TILE_W, y + TILE_H, 0xB0000000);
@@ -942,14 +931,7 @@ public class ResonanceScreen extends Screen {
         if (mouseY >= tilesY) {
             Quantity q = tileAt(mouseX, mouseY);
             if (q != null) {
-<<<<<<< HEAD
-                List<Component> lines = List.of(
-                        Component.literal(q.symbol() + " — " + qName(q)),
-                        Component.literal(q.unit()),
-                        Component.literal("Tier " + q.tier() + " \u00b7 " + (isEnglish() ? q.kindLabelEn() : q.kindLabelRu())));
-=======
                 List<Component> lines = buildQuantityTooltip(q, isEnglish(), false, false);
->>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
             }
             return;
@@ -963,15 +945,6 @@ public class ResonanceScreen extends Screen {
             if (b.kind() == FormulaLayout.BoxKind.SLOT && b.contains(unscaledMx, unscaledMy)) {
                 Expr.Slot s = (Expr.Slot) b.node();
                 Quantity q = Quantities.get(s.quantityId());
-<<<<<<< HEAD
-                List<Component> lines = new ArrayList<>();
-                if (q != null) lines.add(Component.literal(q.symbol() + " — " + qName(q)));
-                else lines.add(Component.translatable("gui.gonzotech.chalkboard.empty_slot"));
-                if (s.locked()) lines.add(Component.translatable("gui.gonzotech.chalkboard.fixed_slot_tooltip"));
-                if (analysis != null && (analysis.lhsExtraSlotIds.contains(s.id()) || analysis.rhsExtraSlotIds.contains(s.id())))
-                    lines.add(Component.translatable("gui.gonzotech.chalkboard.penalty_slot_tooltip"));
-                g.renderComponentTooltip(font, lines, mouseX, mouseY);
-=======
                 boolean penalised = analysis != null && (analysis.lhsExtraSlotIds.contains(s.id()) || analysis.rhsExtraSlotIds.contains(s.id()));
 
                 if (q != null) {
@@ -989,7 +962,6 @@ public class ResonanceScreen extends Screen {
                     }
                     g.renderComponentTooltip(font, lines, mouseX, mouseY);
                 }
->>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
                 return;
             }
         }
