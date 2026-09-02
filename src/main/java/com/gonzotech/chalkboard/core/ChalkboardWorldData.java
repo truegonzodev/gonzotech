@@ -1,10 +1,12 @@
 package com.gonzotech.chalkboard.core;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
+import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,20 +18,13 @@ import java.util.Map;
 public class ChalkboardWorldData extends SavedData {
 
     private static final String DATA_NAME = "gonzotech_chalkboard_puzzles";
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final long worldSeed;
     private final Map<Integer, GameSolver.Puzzle> puzzleCache = new HashMap<>();
 
     public ChalkboardWorldData(long seed) {
         this.worldSeed = seed;
-        initPuzzles();
-    }
-
-    private void initPuzzles() {
-        for (int i = 0; i < 16; i++) {
-            DiscoveryDef def = DiscoveryDef.get(i);
-            puzzleCache.put(i, GameSolver.generateDiscovery(def, worldSeed));
-        }
     }
 
     public GameSolver.Puzzle getPuzzle(int index) {
@@ -54,6 +49,7 @@ public class ChalkboardWorldData extends SavedData {
 
     private static ChalkboardWorldData load(CompoundTag tag, long seed) {
         ChalkboardWorldData data = new ChalkboardWorldData(seed);
+        LOGGER.info("[Chalkboard] Loaded chalkboard SavedData with seed {}", seed);
         return data;
     }
 

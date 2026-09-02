@@ -2,6 +2,8 @@ package com.gonzotech.chalkboard.core;
 
 import com.gonzotech.chalkboard.core.Quantity.Category;
 import com.gonzotech.chalkboard.core.Quantity.Kind;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
  * and infinite post-game mode, retaining solver/hint calculation logic.
  */
 public final class GameSolver {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private GameSolver() {
     }
@@ -223,12 +227,16 @@ public final class GameSolver {
     }
 
     public static Puzzle generatePuzzleByAlgorithm(int stageIndex, DiscoveryDef def, long worldSeed) {
+        long startMs = System.currentTimeMillis();
         boolean isInfinite = (stageIndex >= 16);
         int stageNumber = stageIndex + 1;
 
         String titleRu = isInfinite
                 ? "Бесконечный резонанс (Стадия " + stageNumber + ")"
                 : "Открытие " + stageNumber + "/16: " + def.titleRu();
+
+        LOGGER.info("[Chalkboard] Generating puzzle for stage {} (isInfinite={}) on worldSeed {}...",
+                stageNumber, isInfinite, worldSeed);
 
         int minNodes = isInfinite ? 15 : (def != null ? def.minNodes() : 4);
         int maxNodes = isInfinite ? 25 : (def != null ? def.maxNodes() : 8);
@@ -390,6 +398,10 @@ public final class GameSolver {
                         }
                         fullExpr = Manipulate.markLocked(fullExpr, lockedIds);
 
+                        long elapsedMs = System.currentTimeMillis() - startMs;
+                        LOGGER.info("[Chalkboard] Generated puzzle for stage {} in {} ms (cycle {}, target={}, nodes={}, holes={}).",
+                                stageNumber, elapsedMs, cycle, target.id(), targetNodes, m);
+
                         String desc = "Цель: " + target.symbol() + " [" + target.unit() + "] · " + target.nameRu();
                         return new Puzzle(fullExpr, target, new ArrayList<>(lockedIds), solution.assignments(),
                                 solution.score(), 0, stageNumber, titleRu, desc);
@@ -399,6 +411,10 @@ public final class GameSolver {
         }
 
         // Fallback after 20 cycles: "L = X"
+        long elapsedMs = System.currentTimeMillis() - startMs;
+        LOGGER.warn("[Chalkboard] Puzzle generation for stage {} reached fallback 'L=X' after 20 cycles ({} ms).",
+                stageNumber, elapsedMs);
+
         Quantity target = targetPool.get(0);
         Expr.Slot lhsSlot = new Expr.Slot(Expr.nid("s"), target.id(), true, false);
         Expr.Slot rhsSlot = Expr.Slot.empty();
@@ -442,6 +458,7 @@ public final class GameSolver {
             return needed.isZero() ? List.of() : null;
         }
 
+        // 1 hole: O(N) search
         if (totalHoles == 1) {
             for (Quantity q : pool) {
                 DimVec v = mNum == 1 ? q.vec() : q.vec().scale(-1);
@@ -452,29 +469,32 @@ public final class GameSolver {
             return null;
         }
 
-        if (totalHoles == 2) {
-            List<Quantity> shuffled = new ArrayList<>(pool);
-            Collections.shuffle(shuffled, rng);
-            for (Quantity q1 : shuffled) {
-                DimVec v1 = mNum >= 1 ? q1.vec() : q1.vec().scale(-1);
-                DimVec rem = needed.sub(v1);
-                int mNumRem = mNum >= 1 ? mNum - 1 : 0;
+        // Fast O(1) pair lookup map for 2 holes
+        Map<DimVec, Quantity[]> pairMap = new HashMap<>();
+        for (Quantity q1 : pool) {
+            DimVec v1 = mNum >= 1 ? q1.vec() : q1.vec().scale(-1);
+            int mNumRem = mNum >= 1 ? mNum - 1 : 0;
+            for (Quantity q2 : pool) {
+                DimVec v2 = mNumRem == 1 ? q2.vec() : q2.vec().scale(-1);
+                pairMap.putIfAbsent(v1.add(v2), new Quantity[]{q1, q2});
+            }
+        }
 
-                for (Quantity q2 : shuffled) {
-                    DimVec v2 = mNumRem == 1 ? q2.vec() : q2.vec().scale(-1);
-                    if (v2.equalsVec(rem)) {
-                        return List.of(q1, q2);
-                    }
-                }
+        // 2 holes: O(1) lookup
+        if (totalHoles == 2) {
+            Quantity[] pair = pairMap.get(needed);
+            if (pair != null) {
+                return List.of(pair[0], pair[1]);
             }
             return null;
         }
 
+        // 3 to 7 holes: sample m-2 quantities and do O(1) lookup for remaining 2
         List<Quantity> shuffled = new ArrayList<>(pool);
         Collections.shuffle(shuffled, rng);
 
         int outerCount = totalHoles - 2;
-        for (int attempt = 0; attempt < 200; attempt++) {
+        for (int attempt = 0; attempt < 30; attempt++) {
             List<Quantity> picked = new ArrayList<>();
             DimVec current = DimVec.ZERO;
             int numPicked = 0;
@@ -493,32 +513,27 @@ public final class GameSolver {
             }
 
             DimVec rem = needed.sub(current);
-            int remNum = mNum - numPicked;
-            int remDen = mDen - denPicked;
+            Quantity[] pair = pairMap.get(rem);
+            if (pair != null) {
+                Quantity q1 = pair[0];
+                Quantity q2 = pair[1];
 
-            for (Quantity q1 : shuffled) {
-                DimVec v1 = remNum >= 1 ? q1.vec() : q1.vec().scale(-1);
-                DimVec rem2 = rem.sub(v1);
+                int remNum = mNum - numPicked;
                 int remNum2 = remNum >= 1 ? remNum - 1 : 0;
 
-                for (Quantity q2 : shuffled) {
-                    DimVec v2 = remNum2 == 1 ? q2.vec() : q2.vec().scale(-1);
-                    if (v2.equalsVec(rem2)) {
-                        List<Quantity> numHoles = new ArrayList<>();
-                        List<Quantity> denHoles = new ArrayList<>();
+                List<Quantity> numHoles = new ArrayList<>();
+                List<Quantity> denHoles = new ArrayList<>();
 
-                        for (int k = 0; k < outerCount; k++) {
-                            if (k < mNum) numHoles.add(picked.get(k));
-                            else denHoles.add(picked.get(k));
-                        }
-                        if (remNum >= 1) numHoles.add(q1); else denHoles.add(q1);
-                        if (remNum2 == 1) numHoles.add(q2); else denHoles.add(q2);
-
-                        List<Quantity> ordered = new ArrayList<>(numHoles);
-                        ordered.addAll(denHoles);
-                        return ordered;
-                    }
+                for (int k = 0; k < outerCount; k++) {
+                    if (k < mNum) numHoles.add(picked.get(k));
+                    else denHoles.add(picked.get(k));
                 }
+                if (remNum >= 1) numHoles.add(q1); else denHoles.add(q1);
+                if (remNum2 == 1) numHoles.add(q2); else denHoles.add(q2);
+
+                List<Quantity> ordered = new ArrayList<>(numHoles);
+                ordered.addAll(denHoles);
+                return ordered;
             }
         }
 
