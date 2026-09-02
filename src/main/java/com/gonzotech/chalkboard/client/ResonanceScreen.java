@@ -933,11 +933,13 @@ public class ResonanceScreen extends Screen {
 
         // directional drop zones while dragging
         boolean isDraggingAnything = dragging || draggedFreeboardItem != null || pressedQuantity != null;
-        if (isDraggingAnything && hovered && !locked) {
+        if (isDraggingAnything && hovered) {
             Manipulate.Direction zone = zoneOf(box, unscaledMx, unscaledMy, locked);
-            drawZoneHighlight(g, box, zone);
-            hoverSlotId = slot.id();
-            hoverZone = zone;
+            if (!locked || zone != Manipulate.Direction.CENTER) {
+                drawZoneHighlight(g, box, zone);
+                hoverSlotId = slot.id();
+                hoverZone = zone;
+            }
         }
     }
 
@@ -1777,17 +1779,21 @@ public class ResonanceScreen extends Screen {
 
             // 1. Check drop over Main Equation slot
             FormulaLayout.Box mainTarget = slotBoxAt(mx, my);
-            if (mainTarget != null && mainTarget.node() instanceof Expr.Slot slot && !slot.locked() && qId != null) {
+            if (mainTarget != null && mainTarget.node() instanceof Expr.Slot slot && qId != null) {
                 Manipulate.Direction zone = zoneOf(mainTarget, unscaledMx, unscaledMy, slot.locked());
-                if (zone == Manipulate.Direction.CENTER) {
+                if (zone == Manipulate.Direction.CENTER && !slot.locked()) {
                     expr = Manipulate.setSlotQuantity(expr, slot.id(), qId);
-                } else {
+                    freeboardExprs.remove(item);
+                    autoSave();
+                    recompute();
+                    return true;
+                } else if (zone != Manipulate.Direction.CENTER) {
                     expr = Manipulate.wrapNode(expr, slot.id(), zone, qId);
+                    freeboardExprs.remove(item);
+                    autoSave();
+                    recompute();
+                    return true;
                 }
-                freeboardExprs.remove(item);
-                autoSave();
-                recompute();
-                return true;
             }
 
             // 2. Check drop over another Freeboard Item
@@ -2012,7 +2018,7 @@ public class ResonanceScreen extends Screen {
         if (rx > 0.75) return Manipulate.Direction.RIGHT;
         if (ry < 0.25) return Manipulate.Direction.TOP;
         if (ry > 0.75) return Manipulate.Direction.BOTTOM;
-        return locked ? Manipulate.Direction.BOTTOM : Manipulate.Direction.CENTER;
+        return Manipulate.Direction.CENTER;
     }
 
     private Quantity tileAt(double mx, double my) {
