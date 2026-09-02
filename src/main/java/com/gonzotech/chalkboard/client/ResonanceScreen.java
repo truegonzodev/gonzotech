@@ -110,9 +110,26 @@ public class ResonanceScreen extends Screen {
         public List<int[]> points = new ArrayList<>(); // Each point is [canvasX, canvasY]
     }
 
+    public static class FreeboardItem {
+        public int x; // relative to canvas center
+        public int y; // relative to canvas center
+        public Expr expr;
+
+        public FreeboardItem(int x, int y, Expr expr) {
+            this.x = x;
+            this.y = y;
+            this.expr = expr;
+        }
+    }
+
     private List<ChalkStroke> chalkStrokes = new ArrayList<>();
     private ChalkStroke currentStroke = null;
     private boolean drawingChalk = false;
+
+    private List<FreeboardItem> freeboardExprs = new ArrayList<>();
+    private FreeboardItem draggedFreeboardItem = null;
+    private int fbDragOffsetX = 0;
+    private int fbDragOffsetY = 0;
 
     // ── tray ──
     private EditBox search;
@@ -241,6 +258,7 @@ public class ResonanceScreen extends Screen {
 
     private void clearChalk() {
         this.chalkStrokes.clear();
+        this.freeboardExprs.clear();
         autoSave();
     }
 
@@ -278,9 +296,9 @@ public class ResonanceScreen extends Screen {
             this.panX = 0;
             this.panY = 0;
             this.zoomScale = 1.0f;
-            this.chalkStrokes = deserializeStrokes(data.drawingJson());
-        } else if ((this.chalkStrokes == null || this.chalkStrokes.isEmpty()) && data.drawingJson() != null && !data.drawingJson().isEmpty()) {
-            this.chalkStrokes = deserializeStrokes(data.drawingJson());
+            deserializeDrawingData(data.drawingJson());
+        } else if ((this.chalkStrokes == null || this.chalkStrokes.isEmpty()) && (this.freeboardExprs == null || this.freeboardExprs.isEmpty()) && data.drawingJson() != null && !data.drawingJson().isEmpty()) {
+            deserializeDrawingData(data.drawingJson());
         }
 
         refreshTray();
@@ -314,7 +332,7 @@ public class ResonanceScreen extends Screen {
     private void autoSave() {
         if (expr != null && activeDiscoveryIndex >= 0) {
             String json = Serde.toJson(expr);
-            String drawingJson = serializeStrokes(chalkStrokes);
+            String drawingJson = serializeDrawingData();
             PacketDistributor.sendToServer(new ChalkboardNetwork.SaveExprPayload(activeDiscoveryIndex, json, drawingJson));
         }
     }
@@ -327,45 +345,149 @@ public class ResonanceScreen extends Screen {
 
     // ─────────────────────────── chalk serialization ───────────────────────────
 
-    private static String serializeStrokes(List<ChalkStroke> strokes) {
-        if (strokes == null || strokes.isEmpty()) return "";
-        StringBuilder sb = new StringBuilder("[");
-        for (int i = 0; i < strokes.size(); i++) {
-            if (i > 0) sb.append(",");
-            sb.append("[");
-            List<int[]> pts = strokes.get(i).points;
-            for (int j = 0; j < pts.size(); j++) {
-                if (j > 0) sb.append(",");
-                sb.append(pts.get(j)[0]).append(",").append(pts.get(j)[1]);
+    private String serializeDrawingData() {
+        JsonObject obj = new JsonObject();
+
+        JsonArray strokesArray = new JsonArray();
+        if (chalkStrokes != null) {
+            for (ChalkStroke stroke : chalkStrokes) {
+                JsonArray ptsArr = new JsonArray();
+                for (int[] pt : stroke.points) {
+                    ptsArr.add(pt[0]);
+                    ptsArr.add(pt[1]);
+                }
+                strokesArray.add(ptsArr);
             }
-            sb.append("]");
         }
-        sb.append("]");
-        return sb.toString();
+        obj.add("strokes", strokesArray);
+
+        JsonArray fbArray = new JsonArray();
+        if (freeboardExprs != null) {
+            for (FreeboardItem item : freeboardExprs) {
+                if (item.expr == null) continue;
+                JsonObject itemObj = new JsonObject();
+                itemObj.addProperty("x", item.x);
+                itemObj.addProperty("y", item.y);
+                itemObj.addProperty("expr", Serde.toJson(item.expr));
+                fbArray.add(itemObj);
+            }
+        }
+        obj.add("freeboard", fbArray);
+
+        return obj.toString();
     }
 
-    private static List<ChalkStroke> deserializeStrokes(String json) {
-        List<ChalkStroke> result = new ArrayList<>();
-        if (json == null || json.trim().isEmpty() || !json.startsWith("[")) return result;
+    private void deserializeDrawingData(String json) {
+        chalkStrokes.clear();
+        freeboardExprs.clear();
+        if (json == null || json.trim().isEmpty()) return;
+
         try {
-            JsonArray array = JsonParser.parseString(json).getAsJsonArray();
-            for (JsonElement elem : array) {
-                if (elem.isJsonArray()) {
-                    JsonArray ptArr = elem.getAsJsonArray();
-                    ChalkStroke stroke = new ChalkStroke();
-                    for (int i = 0; i < ptArr.size() - 1; i += 2) {
-                        int px = ptArr.get(i).getAsInt();
-                        int py = ptArr.get(i + 1).getAsInt();
-                        stroke.points.add(new int[]{px, py});
+            String trimmed = json.trim();
+            if (trimmed.startsWith("{")) {
+                JsonObject obj = JsonParser.parseString(trimmed).getAsJsonObject();
+                if (obj.has("strokes")) {
+                    JsonArray array = obj.getAsJsonArray("strokes");
+                    for (JsonElement elem : array) {
+                        if (elem.isJsonArray()) {
+                            JsonArray ptArr = elem.getAsJsonArray();
+                            ChalkStroke stroke = new ChalkStroke();
+                            for (int i = 0; i < ptArr.size() - 1; i += 2) {
+                                stroke.points.add(new int[]{ptArr.get(i).getAsInt(), ptArr.get(i + 1).getAsInt()});
+                            }
+                            if (!stroke.points.isEmpty()) chalkStrokes.add(stroke);
+                        }
                     }
-                    if (!stroke.points.isEmpty()) {
-                        result.add(stroke);
+                }
+                if (obj.has("freeboard")) {
+                    JsonArray array = obj.getAsJsonArray("freeboard");
+                    for (JsonElement elem : array) {
+                        if (elem.isJsonObject()) {
+                            JsonObject itemObj = elem.getAsJsonObject();
+                            int x = itemObj.get("x").getAsInt();
+                            int y = itemObj.get("y").getAsInt();
+                            Expr e = Serde.fromJson(itemObj.get("expr").getAsString());
+                            if (e != null) {
+                                FreeboardItem item = new FreeboardItem(x, y, e);
+                                autoEvaluateFreeboard(item);
+                                freeboardExprs.add(item);
+                            }
+                        }
+                    }
+                }
+            } else if (trimmed.startsWith("[")) {
+                JsonArray array = JsonParser.parseString(trimmed).getAsJsonArray();
+                for (JsonElement elem : array) {
+                    if (elem.isJsonArray()) {
+                        JsonArray ptArr = elem.getAsJsonArray();
+                        ChalkStroke stroke = new ChalkStroke();
+                        for (int i = 0; i < ptArr.size() - 1; i += 2) {
+                            stroke.points.add(new int[]{ptArr.get(i).getAsInt(), ptArr.get(i + 1).getAsInt()});
+                        }
+                        if (!stroke.points.isEmpty()) chalkStrokes.add(stroke);
                     }
                 }
             }
         } catch (Exception ignored) {
         }
-        return result;
+    }
+
+    private void autoEvaluateFreeboard(FreeboardItem item) {
+        if (item == null || item.expr == null) return;
+
+        Expr baseExpr = item.expr;
+        if (baseExpr instanceof Expr.Eq eq) {
+            baseExpr = eq.left();
+        }
+
+        if (baseExpr instanceof Expr.Slot || baseExpr instanceof Expr.Num) {
+            item.expr = baseExpr;
+            return;
+        }
+
+        DimVec netVec = evalExprVec(baseExpr);
+        if (netVec != null) {
+            Quantity match = null;
+            for (Quantity q : Quantities.ALL) {
+                if (q.vec().equals(netVec)) {
+                    match = q;
+                    break;
+                }
+            }
+            if (match != null) {
+                item.expr = new Expr.Eq(Expr.nid("eq"), baseExpr, new Expr.Slot(Expr.nid("s"), match.id(), false, false));
+            } else {
+                item.expr = baseExpr;
+            }
+        } else {
+            item.expr = baseExpr;
+        }
+    }
+
+    private static DimVec evalExprVec(Expr e) {
+        if (e == null) return null;
+        return switch (e) {
+            case Expr.Slot s -> {
+                Quantity q = Quantities.get(s.quantityId());
+                yield q != null ? q.vec() : null;
+            }
+            case Expr.Num n -> DimVec.zero();
+            case Expr.Pow p -> {
+                DimVec b = evalExprVec(p.base());
+                yield b != null ? b.scale(p.exp()) : null;
+            }
+            case Expr.Op o -> {
+                DimVec l = evalExprVec(o.left());
+                DimVec r = evalExprVec(o.right());
+                if (l == null || r == null) yield null;
+                if (o.op() == Expr.OpKind.DIV) {
+                    yield l.sub(r);
+                } else {
+                    yield l.add(r);
+                }
+            }
+            case Expr.Eq q -> evalExprVec(q.left());
+        };
     }
 
     // ─────────────────────────── tray ───────────────────────────
@@ -496,6 +618,11 @@ public class ResonanceScreen extends Screen {
         // 1. Draw Persistent Freehand Chalk Strokes
         drawChalkStrokes(g, centerX, centerY);
 
+        // 1b. Render Freeboard Sandbox Chalk Items
+        for (FreeboardItem fbItem : freeboardExprs) {
+            drawFreeboardItem(g, fbItem, centerX, centerY, font);
+        }
+
         // 2. Draw Goal and Hints
         String goal = tr("gui.gonzotech.chalkboard.goal_prefix") + " " + targetSymbol + " — " + targetName() + " [" + targetUnit + "]";
         g.drawString(font, goal, canvasX + 8, canvasY + 6, Palette.AMBER, false);
@@ -578,6 +705,72 @@ public class ResonanceScreen extends Screen {
                 err += dx;
                 currY += sy;
             }
+        }
+    }
+
+    private void drawFreeboardItem(GuiGraphics g, FreeboardItem item, int centerX, int centerY, Font font) {
+        if (item == null || item.expr == null) return;
+
+        g.pose().pushPose();
+        int screenX = centerX + (int) (item.x * zoomScale);
+        int screenY = centerY + (int) (item.y * zoomScale);
+        g.pose().translate(screenX, screenY, 0);
+        float fbScale = zoomScale * 0.8f;
+        g.pose().scale(fbScale, fbScale, 1.0f);
+
+        List<FormulaLayout.Box> boxes = FormulaLayout.layout(item.expr, 0, 0);
+
+        for (FormulaLayout.Box b : boxes) {
+            if (b.kind() == FormulaLayout.BoxKind.SLOT) {
+                Expr.Slot s = (Expr.Slot) b.node();
+                Quantity q = Quantities.get(s.quantityId());
+                int bx = b.x();
+                int by = b.y();
+                int bw = b.w();
+                int bh = b.h();
+
+                int frameColor = 0xFFFFFFFF; // Pure white chalk frame
+                int bgFill = 0x802A4823;    // Dark green chalkboard fill
+
+                g.fill(bx, by, bx + bw, by + bh, bgFill);
+                g.fill(bx, by, bx + bw, by + 1, frameColor);
+                g.fill(bx, by + bh - 1, bx + bw, by + bh, frameColor);
+                g.fill(bx, by, bx + 1, by + bh, frameColor);
+                g.fill(bx + bw - 1, by, bx + bw, by + bh, frameColor);
+
+                if (q != null) {
+                    int sw = font.width(q.symbol());
+                    g.drawString(font, q.symbol(), bx + (bw - sw) / 2, by + 4, 0xFFFFFFFF, false);
+                    tinyCentered(g, clip(qName(q), 14), bx + bw / 2, by + 18, 0xD0FFFFFF);
+                    drawPureWhiteDimBars(g, bx + bw / 2 - 13, by + 28, q.vec(), 12);
+                } else {
+                    g.drawString(font, "?", bx + (bw - font.width("?")) / 2, by + bh / 2 - 4, 0xFFFFFFFF, false);
+                }
+            } else if (b.kind() == FormulaLayout.BoxKind.OP || b.kind() == FormulaLayout.BoxKind.EQ) {
+                String symbol = b.text() != null ? b.text() : "=";
+                g.drawString(font, symbol, b.x() + (b.w() - font.width(symbol)) / 2, b.y() + (b.h() - font.height()) / 2, 0xFFFFFFFF, false);
+            } else if (b.kind() == FormulaLayout.BoxKind.FRACTION_LINE) {
+                g.fill(b.x(), b.y(), b.x() + b.w(), b.y() + b.h(), 0xFFFFFFFF);
+            } else if (b.kind() == FormulaLayout.BoxKind.NUM) {
+                String txt = b.text() != null ? b.text() : "1";
+                g.drawString(font, txt, b.x() + (b.w() - font.width(txt)) / 2, b.y() + (b.h() - font.height()) / 2, 0xFFFFFFFF, false);
+            }
+        }
+
+        g.pose().popPose();
+    }
+
+    private void drawPureWhiteDimBars(GuiGraphics g, int x, int y, DimVec vec, int width) {
+        if (vec == null) return;
+        double[] dims = new double[]{vec.l(), vec.m(), vec.t(), vec.i(), vec.th(), vec.n(), vec.j()};
+        int px = x;
+        for (double d : dims) {
+            if (Math.abs(d) > 0.01) {
+                int barH = Math.min(8, Math.max(2, (int) (Math.abs(d) * 2)));
+                int barY = d > 0 ? y - barH : y + 1;
+                g.fill(px, barY, px + 2, barY + barH, 0xFFFFFFFF);
+            }
+            px += 3;
         }
     }
 
@@ -1267,6 +1460,47 @@ public class ResonanceScreen extends Screen {
                 return true;
             }
 
+            // 2b. Check Freeboard Chalk Sandbox Item clicks
+            int relMx = (int) ((mx - centerX) / zoomScale);
+            int relMy = (int) ((my - centerY) / zoomScale);
+
+            FreeboardItem hitItem = null;
+            FormulaLayout.Box hitBox = null;
+
+            for (FreeboardItem item : freeboardExprs) {
+                List<FormulaLayout.Box> boxes = FormulaLayout.layout(item.expr, 0, 0);
+                for (FormulaLayout.Box b : boxes) {
+                    int boxMinX = item.x + (int) (b.x() * 0.8f);
+                    int boxMinY = item.y + (int) (b.y() * 0.8f);
+                    int boxMaxX = item.x + (int) ((b.x() + b.w()) * 0.8f);
+                    int boxMaxY = item.y + (int) ((b.y() + b.h()) * 0.8f);
+
+                    if (relMx >= boxMinX && relMx < boxMaxX && relMy >= boxMinY && relMy < boxMaxY) {
+                        hitItem = item;
+                        hitBox = b;
+                        break;
+                    }
+                }
+                if (hitItem != null) break;
+            }
+
+            if (hitItem != null && hitBox != null && button == 0) {
+                if (hitItem.expr instanceof Expr.Eq eq && hitBox.node() == eq.right()) {
+                    if (eq.right() instanceof Expr.Slot s && s.quantityId() != null) {
+                        pressedQuantity = Quantities.get(s.quantityId());
+                        dragFromSlotId = null;
+                        dragging = true;
+                        pressX = mx;
+                        pressY = my;
+                        return true;
+                    }
+                }
+                draggedFreeboardItem = hitItem;
+                fbDragOffsetX = relMx - hitItem.x;
+                fbDragOffsetY = relMy - hitItem.y;
+                return true;
+            }
+
             // 3. Canvas Formula Blocks
             if (expr != null) {
                 FormulaLayout.Box box = slotBoxAt(mx, my);
@@ -1389,6 +1623,15 @@ public class ResonanceScreen extends Screen {
             }
             return true;
         }
+        if (draggedFreeboardItem != null) {
+            int centerX = canvasX + canvasW / 2 + panX;
+            int centerY = canvasY + canvasH / 2 + panY;
+            int relMx = (int) ((mx - centerX) / zoomScale);
+            int relMy = (int) ((my - centerY) / zoomScale);
+            draggedFreeboardItem.x = relMx - fbDragOffsetX;
+            draggedFreeboardItem.y = relMy - fbDragOffsetY;
+            return true;
+        }
         if (panning) {
             panX = panOriginX + (int) (mx - panStartX);
             panY = panOriginY + (int) (my - panStartY);
@@ -1409,6 +1652,50 @@ public class ResonanceScreen extends Screen {
         if (drawingChalk) {
             drawingChalk = false;
             currentStroke = null;
+            autoSave();
+            return true;
+        }
+        if (draggedFreeboardItem != null) {
+            FreeboardItem item = draggedFreeboardItem;
+            draggedFreeboardItem = null;
+
+            // Check if dropped over a slot in main equation
+            FormulaLayout.Box target = slotBoxAt(mx, my);
+            if (target != null && target.node() instanceof Expr.Slot slot && !slot.locked()) {
+                String qId = null;
+                if (item.expr instanceof Expr.Slot s) qId = s.quantityId();
+                else if (item.expr instanceof Expr.Eq eq && eq.right() instanceof Expr.Slot rs) qId = rs.quantityId();
+
+                if (qId != null) {
+                    expr = Manipulate.setSlotQuantity(expr, slot.id(), qId);
+                    freeboardExprs.remove(item);
+                    autoSave();
+                    recompute();
+                    return true;
+                }
+            }
+
+            // Check if dropped near another freeboard item to merge
+            for (FreeboardItem other : new ArrayList<>(freeboardExprs)) {
+                if (other == item) continue;
+                int dist = (item.x - other.x) * (item.x - other.x) + (item.y - other.y) * (item.y - other.y);
+                if (dist < 3600) {
+                    Expr lExpr = other.expr instanceof Expr.Eq eq ? eq.left() : other.expr;
+                    Expr rExpr = item.expr instanceof Expr.Eq eq2 ? eq2.left() : item.expr;
+
+                    if (Math.abs(item.y - other.y) > Math.abs(item.x - other.x)) {
+                        other.expr = Expr.Op.of(Expr.OpKind.DIV, lExpr, rExpr);
+                    } else {
+                        other.expr = Expr.Op.of(Expr.OpKind.MUL, lExpr, rExpr);
+                    }
+                    autoEvaluateFreeboard(other);
+                    freeboardExprs.remove(item);
+                    autoSave();
+                    return true;
+                }
+            }
+
+            autoEvaluateFreeboard(item);
             autoSave();
             return true;
         }
@@ -1448,6 +1735,40 @@ public class ResonanceScreen extends Screen {
                     selectedSlotId = null;
                     autoSave();
                     recompute();
+                    return true;
+                }
+                if (target == null && inCanvas(mx, my)) {
+                    int centerX = canvasX + canvasW / 2 + panX;
+                    int centerY = canvasY + canvasH / 2 + panY;
+                    int relMx = (int) ((mx - centerX) / zoomScale);
+                    int relMy = (int) ((my - centerY) / zoomScale);
+
+                    boolean merged = false;
+                    for (FreeboardItem other : freeboardExprs) {
+                        int dist = (relMx - other.x) * (relMx - other.x) + (relMy - other.y) * (relMy - other.y);
+                        if (dist < 3600) {
+                            Expr lExpr = other.expr instanceof Expr.Eq eq ? eq.left() : other.expr;
+                            if (Math.abs(relMy - other.y) > Math.abs(relMx - other.x)) {
+                                other.expr = Expr.Op.of(Expr.OpKind.DIV, lExpr, Expr.Slot.of(q.id()));
+                            } else {
+                                other.expr = Expr.Op.of(Expr.OpKind.MUL, lExpr, Expr.Slot.of(q.id()));
+                            }
+                            autoEvaluateFreeboard(other);
+                            merged = true;
+                            break;
+                        }
+                    }
+
+                    if (!merged) {
+                        FreeboardItem newItem = new FreeboardItem(relMx - 15, relMy - 10, Expr.Slot.of(q.id()));
+                        autoEvaluateFreeboard(newItem);
+                        freeboardExprs.add(newItem);
+                    }
+                    if (from != null) {
+                        expr = Manipulate.setSlotQuantity(expr, from, null);
+                        recompute();
+                    }
+                    autoSave();
                     return true;
                 }
                 if (from != null && my < trayY) {
