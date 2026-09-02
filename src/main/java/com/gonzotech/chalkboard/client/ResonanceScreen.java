@@ -12,9 +12,11 @@ import com.gonzotech.chalkboard.core.Serde;
 import com.gonzotech.chalkboard.network.ChalkboardNetwork;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -471,7 +473,7 @@ public class ResonanceScreen extends Screen {
                 Quantity q = Quantities.get(s.quantityId());
                 yield q != null ? q.vec() : null;
             }
-            case Expr.Num n -> DimVec.zero();
+            case Expr.Num n -> DimVec.ZERO;
             case Expr.Pow p -> {
                 DimVec b = evalExprVec(p.base());
                 yield b != null ? b.scale(p.exp()) : null;
@@ -762,7 +764,7 @@ public class ResonanceScreen extends Screen {
 
     private void drawPureWhiteDimBars(GuiGraphics g, int x, int y, DimVec vec, int width) {
         if (vec == null) return;
-        double[] dims = new double[]{vec.l(), vec.m(), vec.t(), vec.i(), vec.th(), vec.n(), vec.j()};
+        double[] dims = vec.raw();
         int px = x;
         for (double d : dims) {
             if (Math.abs(d) > 0.01) {
