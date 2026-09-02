@@ -43,7 +43,7 @@ public class PlayerChalkboardProgress {
     public PlayerChalkboardProgress(int currentDiscoveryIndex, List<Integer> tiers, List<String> secrets,
                                   Map<String, String> savedExpr, Map<String, String> savedDrawing,
                                   String globalDrawingJson) {
-        this.currentDiscoveryIndex = Math.max(0, Math.min(15, currentDiscoveryIndex));
+        this.currentDiscoveryIndex = Math.max(0, currentDiscoveryIndex);
         this.unlockedRecipeTiers = new HashSet<>(tiers);
         this.unlockedSecretQuantities = new HashSet<>(secrets);
         this.savedExprJson = new HashMap<>(savedExpr);
@@ -56,13 +56,15 @@ public class PlayerChalkboardProgress {
     }
 
     public void setCurrentDiscoveryIndex(int index) {
-        this.currentDiscoveryIndex = Math.max(0, Math.min(15, index));
+        this.currentDiscoveryIndex = Math.max(0, index);
     }
 
     public void advanceDiscovery() {
-        if (this.currentDiscoveryIndex < 15) {
-            this.currentDiscoveryIndex++;
-        }
+        this.currentDiscoveryIndex++;
+    }
+
+    public boolean isInfiniteMode() {
+        return currentDiscoveryIndex >= 16;
     }
 
     public Set<Integer> getUnlockedRecipeTiers() {

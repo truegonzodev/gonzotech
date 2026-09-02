@@ -90,4 +90,19 @@ public record Quantity(
             case NUMBER -> "\u0447\u0438\u0441\u043b\u043e";
         };
     }
+
+    public String kindLabelEn() {
+        return switch (kind) {
+            case SCALAR -> "scalar";
+            case VECTOR -> "vector";
+            case TENSOR -> "tensor";
+            case FIELD -> "field";
+            case CONSTANT -> "constant";
+            case NUMBER -> "number";
+        };
+    }
+
+    public String kindLabel(boolean isEn) {
+        return isEn ? kindLabelEn() : kindLabelRu();
+    }
 }
