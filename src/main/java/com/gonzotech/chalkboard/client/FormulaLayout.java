@@ -105,7 +105,8 @@ public final class FormulaLayout {
                     int w = m.w();
                     place(o.left(), x + (w - l.w()) / 2, top + l.baseline(), out);
                     int lineY = top + l.h() + FRAC_GAP;
-                    out.add(new Box(o, BoxKind.FRACTION_LINE, x, lineY, w, FRAC_LINE, null));
+                    int lineBoxH = 8; // Expanded 8px hitbox for fraction line (2-3x larger)
+                    out.add(new Box(o, BoxKind.FRACTION_LINE, x, lineY - 3, w, lineBoxH, null));
                     int denTop = lineY + FRAC_LINE + FRAC_GAP;
                     place(o.right(), x + (w - r.w()) / 2, denTop + r.baseline(), out);
                 } else {

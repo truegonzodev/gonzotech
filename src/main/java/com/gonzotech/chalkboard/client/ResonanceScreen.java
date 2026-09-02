@@ -679,7 +679,8 @@ public class ResonanceScreen extends Screen {
                 case EQ -> drawEq(g, box);
                 case FRACTION_LINE -> {
                     int color = conflictColor(box.node().id());
-                    g.fill(box.x(), box.y(), box.x() + box.w(), box.y() + box.h(), color);
+                    int lineY = box.y() + box.h() / 2 - 1;
+                    g.fill(box.x(), lineY, box.x() + box.w(), lineY + 2, color);
                 }
                 case POW_EXP -> tiny(g, box.text(), box.x(), box.y(), Palette.AMBER);
             }
@@ -770,10 +771,12 @@ public class ResonanceScreen extends Screen {
                 g.fill(bx, by, bx + 1, by + bh, frameColor);
                 g.fill(bx + bw - 1, by, bx + bw, by + bh, frameColor);
 
-                // Small white 'x' delete button in top-right corner
+                // Small white 'x' delete button in top-right corner with opaque white fill and dark green 'x'
                 boolean xHover = isMouseOverFreeboardX(item, b, relMx, relMy);
-                g.fill(bx + bw - 8, by, bx + bw, by + 8, xHover ? Palette.ROSE : 0x80FF5555);
-                tiny(g, "x", bx + bw - 6, by + 1, 0xFFFFFFFF);
+                int xBg = xHover ? Palette.ROSE : 0xFFFFFFFF;
+                int xFg = xHover ? 0xFFFFFFFF : 0xFF2A4823;
+                g.fill(bx + bw - 8, by, bx + bw, by + 8, xBg);
+                tiny(g, "x", bx + bw - 6, by + 1, xFg);
 
                 if (q != null) {
                     int sw = font.width(q.symbol());
@@ -784,8 +787,8 @@ public class ResonanceScreen extends Screen {
                     g.drawString(font, "?", bx + (bw - font.width("?")) / 2, by + bh / 2 - 4, 0xFFFFFFFF, false);
                 }
 
-                // Zone highlight when dragging over this freeboard slot
-                if (isDraggingAnything && isMouseOverFreeboardBox(item, b, relMx, relMy)) {
+                // Zone highlight when dragging over another freeboard slot (never on self)
+                if (item != draggedFreeboardItem && isDraggingAnything && isMouseOverFreeboardBox(item, b, relMx, relMy)) {
                     double localMx = (relMx - item.x) / 0.8;
                     double localMy = (relMy - item.y) / 0.8;
                     Manipulate.Direction zone = zoneOf(b, localMx, localMy, false);
@@ -795,7 +798,8 @@ public class ResonanceScreen extends Screen {
                 String symbol = b.text() != null ? b.text() : "=";
                 g.drawString(font, symbol, b.x() + (b.w() - font.width(symbol)) / 2, b.y() + (b.h() - font.lineHeight) / 2, 0xFFFFFFFF, false);
             } else if (b.kind() == FormulaLayout.BoxKind.FRACTION_LINE) {
-                g.fill(b.x(), b.y(), b.x() + b.w(), b.y() + b.h(), 0xFFFFFFFF);
+                int lineY = b.y() + b.h() / 2 - 1;
+                g.fill(b.x(), lineY, b.x() + b.w(), lineY + 2, 0xFFFFFFFF);
             } else if (b.kind() == FormulaLayout.BoxKind.NUM) {
                 String txt = b.text() != null ? b.text() : "1";
                 g.drawString(font, txt, b.x() + (b.w() - font.width(txt)) / 2, b.y() + (b.h() - font.lineHeight) / 2, 0xFFFFFFFF, false);
@@ -812,6 +816,7 @@ public class ResonanceScreen extends Screen {
     }
 
     private boolean isMouseOverFreeboardBox(FreeboardItem item, FormulaLayout.Box b, int relMx, int relMy) {
+        if (item == draggedFreeboardItem) return false;
         double localMx = (relMx - item.x) / 0.8;
         double localMy = (relMy - item.y) / 0.8;
         return localMx >= b.x() && localMx < b.x() + b.w() && localMy >= b.y() && localMy < b.y() + b.h();
@@ -928,7 +933,7 @@ public class ResonanceScreen extends Screen {
 
         // directional drop zones while dragging
         boolean isDraggingAnything = dragging || draggedFreeboardItem != null || pressedQuantity != null;
-        if (isDraggingAnything && hovered) {
+        if (isDraggingAnything && hovered && !locked) {
             Manipulate.Direction zone = zoneOf(box, unscaledMx, unscaledMy, locked);
             drawZoneHighlight(g, box, zone);
             hoverSlotId = slot.id();
@@ -1560,14 +1565,22 @@ public class ResonanceScreen extends Screen {
 
                 if (isAssembled) {
                     draggedFreeboardItem = hitItem;
-                    fbDragOffsetX = relMx - hitItem.x;
-                    fbDragOffsetY = relMy - hitItem.y;
+                    int itemW = (int) (FormulaLayout.totalWidth(hitItem.expr) * 0.8f);
+                    int itemH = (int) (FormulaLayout.totalHeight(hitItem.expr) * 0.8f);
+                    fbDragOffsetX = itemW / 2;
+                    fbDragOffsetY = itemH / 2;
+                    hitItem.x = relMx - fbDragOffsetX;
+                    hitItem.y = relMy - fbDragOffsetY;
                     return true;
                 } else {
                     if (hitBox.kind() == FormulaLayout.BoxKind.OP || hitBox.kind() == FormulaLayout.BoxKind.FRACTION_LINE) {
                         draggedFreeboardItem = hitItem;
-                        fbDragOffsetX = relMx - hitItem.x;
-                        fbDragOffsetY = relMy - hitItem.y;
+                        int itemW = (int) (FormulaLayout.totalWidth(hitItem.expr) * 0.8f);
+                        int itemH = (int) (FormulaLayout.totalHeight(hitItem.expr) * 0.8f);
+                        fbDragOffsetX = itemW / 2;
+                        fbDragOffsetY = itemH / 2;
+                        hitItem.x = relMx - fbDragOffsetX;
+                        hitItem.y = relMy - fbDragOffsetY;
                         return true;
                     } else if (hitBox.kind() == FormulaLayout.BoxKind.SLOT) {
                         Expr slotNode = hitBox.node();
@@ -1579,10 +1592,12 @@ public class ResonanceScreen extends Screen {
                             } else {
                                 autoEvaluateFreeboard(hitItem);
                             }
-                            draggedFreeboardItem = new FreeboardItem(relMx - 15, relMy - 10, Expr.Slot.of(qId));
+                            int slotW = (int) (FormulaLayout.SLOT_W * 0.8f);
+                            int slotH = (int) (FormulaLayout.SLOT_H * 0.8f);
+                            fbDragOffsetX = slotW / 2;
+                            fbDragOffsetY = slotH / 2;
+                            draggedFreeboardItem = new FreeboardItem(relMx - fbDragOffsetX, relMy - fbDragOffsetY, Expr.Slot.of(qId));
                             freeboardExprs.add(draggedFreeboardItem);
-                            fbDragOffsetX = 15;
-                            fbDragOffsetY = 10;
                             autoSave();
                             return true;
                         }
