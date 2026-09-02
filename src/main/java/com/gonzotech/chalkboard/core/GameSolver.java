@@ -299,9 +299,9 @@ public final class GameSolver {
 
                 // Test m holes = 1..7
                 for (int m = 1; m <= maxHoles; m++) {
-                    int numFixed = numRhsSlots - m;
+                    int numFixedCount = numRhsSlots - m;
 
-                    List<Quantity> fixedQuantities = selectFixedRhsQuantities(numFixed, reqT2, reqT3, reqT4, reqT99, rhsPool, rng);
+                    List<Quantity> fixedQuantities = selectFixedRhsQuantities(numFixedCount, reqT2, reqT3, reqT4, reqT99, rhsPool, rng);
                     if (fixedQuantities == null) continue;
 
                     int denCount = (numRhsSlots >= 3 && rng.nextDouble() < 0.7) ? 1 + rng.nextInt(numRhsSlots / 2) : 0;

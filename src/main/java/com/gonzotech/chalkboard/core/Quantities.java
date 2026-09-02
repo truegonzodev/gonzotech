@@ -181,6 +181,13 @@ public final class Quantities {
         q("secret_X_mu", "Xμ", "Коэффициент магнито-термического дрейфа", "Magneto-Thermal Drift Coeff", "Вт/К", v(2, 1, -3, 0, -1, 0, 0), Category.THERMO, Kind.SCALAR, 99);
         q("secret_Phi_dot", "Φ̇", "Торможение реакции аннигиляции", "Annihilation Effective Deceleration", "А²/(м³·моль)", v(-3, 0, 0, 2, 0, -1, 0), Category.NUCLEAR, Kind.SCALAR, 99);
 
+        // New Tier 99 quantities:
+        q("secret_Kappa_Tau", "κτ", "Градиент топологической жесткости струны", "String Topological Stiffness Grad", "кг³·м³·с⁻⁶·А⁻¹·К⁻¹·моль⁻¹", v(3, 3, -6, -1, -1, -1, 0), Category.FIELDS, Kind.FIELD, 1.0, 3.0, 99);
+        q("secret_Gamma_Iota", "γι", "Коэффициент релятивистской электро-энтропийной вязкости", "Relativistic Electro-Entropic Viscosity Coeff", "кг⁻²·м⁻⁸·с⁴·А⁴·К⁻²·моль²", v(-8, -2, 4, 4, -2, 2, 0), Category.QUANTUM, Kind.SCALAR, 99);
+        q("secret_Etta_Omega", "ηω", "Молярный квантово-оптический барьер металлического водорода", "Molar Quantum-Optical Barrier", "кг·с⁻²·К⁻¹·моль⁻¹·кд²", v(0, 1, -2, 0, -1, -1, 2), Category.OPTICS, Kind.SCALAR, 99);
+        q("secret_Zeta_dot", "ζ̇", "Порог радиационно-индуктивного пробоя водородной матрицы", "Radiation-Inductive Breakdown Threshold", "кг²·м·с⁻⁴·А⁴·К⁻¹", v(1, 2, -4, 4, -1, 0, 0), Category.NUCLEAR, Kind.FIELD, 1.0, 3.0, 99);
+        q("secret_Chi_Rho", "χρ", "Хи-Ро (Индекс квантово-фрактального удержания энергокристалла)", "Quantum-Fractal Confinement Index", "кг·м⁷·с⁻⁴·А·К·моль⁻¹", v(7, 1, -4, 1, 1, -1, 0), Category.QUANTUM, Kind.SCALAR, 99);
+
         ALL = Collections.unmodifiableList(new ArrayList<>(BUILD));
         Map<String, Quantity> map = new LinkedHashMap<>();
         for (Quantity qq : ALL) map.put(qq.id(), qq);
