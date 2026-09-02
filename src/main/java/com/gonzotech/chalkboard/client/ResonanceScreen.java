@@ -999,7 +999,7 @@ public class ResonanceScreen extends Screen {
         // Line 4: Dimension: [<UnitSymbol>] — <UnitFullName>
         Component dimPrefixComp = Component.literal(tr("gui.gonzotech.chalkboard.tooltip_unit"))
                 .withStyle(ChatFormatting.GRAY)
-                .append(Component.literal("[").withStyle(ChatFormatting.GRAY));
+                .append(Component.literal("[").withStyle(ChatFormatting.WHITE));
 
         Component unitSymComp = buildUnitSymbolComponent(q);
         Component dimSuffixComp = Component.literal("] — " + unitFullName(q, isEn))
@@ -1047,16 +1047,24 @@ public class ResonanceScreen extends Screen {
     }
 
     private Component colorTokenComponent(String token, Quantity q) {
-        int color = switch (token) {
-            case "м", "м²", "м³" -> 0xFF38BDF8; // Length - Blue
-            case "кг" -> 0xFFFB923C;             // Mass - Orange
-            case "с", "с²" -> 0xFFC084FC;         // Time - Lilac
-            case "А" -> 0xFFFDE047;             // Current - Yellow
-            case "К" -> 0xFFFCA5A5;             // Temp - Red
-            case "моль" -> 0xFF4ADE80;          // Amount - Green
-            case "кд" -> 0xFFF472B6;            // Luminous - Pink
-            default -> blendedVectorColor(q.vec()); // Derived unit blended RGB
-        };
+        int color;
+        if (token.startsWith("м") && !token.startsWith("моль")) {
+            color = 0xFF38BDF8; // Length - Blue
+        } else if (token.startsWith("кг")) {
+            color = 0xFFFB923C; // Mass - Orange
+        } else if (token.startsWith("с") || token.startsWith("сек")) {
+            color = 0xFFC084FC; // Time - Lilac
+        } else if (token.startsWith("А")) {
+            color = 0xFFFDE047; // Current - Yellow
+        } else if (token.startsWith("К") && !token.startsWith("Кл")) {
+            color = 0xFFFCA5A5; // Temperature - Red
+        } else if (token.startsWith("моль")) {
+            color = 0xFF4ADE80; // Amount - Green
+        } else if (token.startsWith("кд")) {
+            color = 0xFFF472B6; // Luminous - Pink
+        } else {
+            color = blendedVectorColor(q.vec()); // Derived unit blended RGB
+        }
         return Component.literal(token).setStyle(Style.EMPTY.withColor(color));
     }
 
@@ -1132,6 +1140,36 @@ public class ResonanceScreen extends Screen {
             case "кат" -> isEn ? "Katals" : "Каталы";
             case "лм" -> isEn ? "Lumens" : "Люмены";
             case "лк" -> isEn ? "Lux" : "Люксы";
+            case "Н·с" -> isEn ? "Newton-seconds" : "Ньютоны в секунду";
+            case "рад/с" -> isEn ? "Radians per second" : "Радианы в секунду";
+            case "рад/с²" -> isEn ? "Radians per second squared" : "Радиан в секунду за секунду";
+            case "Н/м" -> isEn ? "Newtons per meter" : "Ньютонов на метр";
+            case "Па·с" -> isEn ? "Pascal-seconds" : "Паскали в секунду";
+            case "м²/с" -> isEn ? "Square meters per second" : "Квадратный метр на секунду";
+            case "кг/с" -> isEn ? "Kilograms per second" : "Килограмм в секунду";
+            case "м³/с" -> isEn ? "Cubic meters per second" : "Кубических метров в секунду";
+            case "м³/кг" -> isEn ? "Cubic meters per kilogram" : "Кубических метров на килограмм";
+            case "кг/м" -> isEn ? "Kilograms per meter" : "Килограмм на метр";
+            case "кг/м²" -> isEn ? "Kilograms per square meter" : "Килограмм на метр квадратный";
+            case "м⁻¹" -> isEn ? "Inverse meters" : "Обратный метр";
+            case "К⁻¹" -> isEn ? "Inverse kelvins" : "Обратный кельвин";
+            case "Вт/м²" -> isEn ? "Watts per square meter" : "Ватты на метр квадратный";
+            case "К/м" -> isEn ? "Kelvins per meter" : "Кельвин на метр";
+
+            case "моль·кд/(Тл·К·с³)" -> isEn ? "Mole-candelas per Tesla-Kelvin-cubic second" : "Моль-Канделл на Тесла-Кельвин в секунду кубическую";
+            case "с/(Гн·м·Бк)" -> isEn ? "Seconds per Henry-meter-Becquerel" : "Секунда на Генри-метр-Беккерель";
+            case "Вт·К" -> isEn ? "Watt-Kelvins" : "Ватт-Кельвин";
+            case "А²/(м³·моль)" -> isEn ? "Amperes squared per cubic meter-mole" : "Ампер квадрат на метр кубический-моль";
+            case "Н³/(А·К·моль)" -> isEn ? "Newtons cubed per Ampere-Kelvin-mole" : "Ньютон кубический на ампер-кельвин-моль";
+            case "См²·м·с/Бк²" -> isEn ? "Siemens squared-meter-seconds per Becquerel squared" : "Сименс квадратный-метр-секунда на Беккерель квадратный";
+            case "Дж·кд²/(м²·К·моль)" -> isEn ? "Joules-candelas squared per square meter-Kelvin-mole" : "Джоуль-кандела квадратная на метр квадратный-кельвин-моль";
+            case "В³·А/(Гн·с·К)" -> isEn ? "Volts cubed-amperes per Henry-second-Kelvin" : "Вольт кубический-ампер на Генри-секунду-кельвин";
+            case "В·А²·м⁵/(с·моль)" -> isEn ? "Volts-amperes squared-meters to fifth per second-mole" : "Вольт-ампер квадратный-метр в пятой степени на секунду-моль";
+            case "Гн/с" -> isEn ? "Henries per second" : "Генри на секунду";
+            case "Па·с/м³" -> isEn ? "Pascal-seconds per cubic meter" : "Паскаль-секунда на метр кубический";
+            case "Дж/с²" -> isEn ? "Joules per second squared" : "Джоуль на секунду в квадрате";
+            case "К⁴·моль" -> isEn ? "Kelvins to fourth per mole" : "Кельвин в четвёртой степени на моль";
+
             case "Дж/кг" -> isEn ? "Joules per kilogram" : "Джоули на килограмм";
             case "Дж/К" -> isEn ? "Joules per Kelvin" : "Джоули на Кельвин";
             case "Дж/(кг·К)" -> isEn ? "Joules per kilogram-Kelvin" : "Джоули на килограмм-Кельвин";
