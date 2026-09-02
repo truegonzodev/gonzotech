@@ -14,11 +14,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+<<<<<<< HEAD
+=======
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+>>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
@@ -31,7 +37,11 @@ import java.util.Set;
 /**
  * Green chalkboard theme GUI with framed composition, pan/zoom camera navigation,
  * freehand persistent chalk drawing per player, tabbed tray filtering,
+<<<<<<< HEAD
  * 2x enlarged circular resonance gauge, custom chalkboard buttons, and full EN/RU localization.
+=======
+ * 2x enlarged circular resonance gauge, custom chalkboard buttons, unified GOST tooltips, and full EN/RU localization.
+>>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
  */
 public class ResonanceScreen extends Screen {
 
@@ -891,7 +901,11 @@ public class ResonanceScreen extends Screen {
         g.drawString(font, q.symbol(), x + (TILE_W - sw) / 2, y + 3, blocked ? Palette.TEXT_FAINT : accent, false);
         tinyCentered(g, clip(qName(q), 18), x + TILE_W / 2, y + 15, Palette.TEXT_FAINT);
         drawDimBars(g, x + TILE_W / 2 - 13, y + 25, q.vec(), 12);
+<<<<<<< HEAD
         tiny(g, "T" + q.tier(), x + TILE_W - 12, y + 2, Palette.weightColor(q.tier()));
+=======
+        tiny(g, "T" + q.tier(), x + TILE_W - 12, y + 2, Palette.tierColor(q.tier()));
+>>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
 
         if (blocked) {
             g.fill(x, y, x + TILE_W, y + TILE_H, 0xB0000000);
@@ -928,10 +942,14 @@ public class ResonanceScreen extends Screen {
         if (mouseY >= tilesY) {
             Quantity q = tileAt(mouseX, mouseY);
             if (q != null) {
+<<<<<<< HEAD
                 List<Component> lines = List.of(
                         Component.literal(q.symbol() + " — " + qName(q)),
                         Component.literal(q.unit()),
                         Component.literal("Tier " + q.tier() + " \u00b7 " + (isEnglish() ? q.kindLabelEn() : q.kindLabelRu())));
+=======
+                List<Component> lines = buildQuantityTooltip(q, isEnglish(), false, false);
+>>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
             }
             return;
@@ -945,6 +963,7 @@ public class ResonanceScreen extends Screen {
             if (b.kind() == FormulaLayout.BoxKind.SLOT && b.contains(unscaledMx, unscaledMy)) {
                 Expr.Slot s = (Expr.Slot) b.node();
                 Quantity q = Quantities.get(s.quantityId());
+<<<<<<< HEAD
                 List<Component> lines = new ArrayList<>();
                 if (q != null) lines.add(Component.literal(q.symbol() + " — " + qName(q)));
                 else lines.add(Component.translatable("gui.gonzotech.chalkboard.empty_slot"));
@@ -952,9 +971,217 @@ public class ResonanceScreen extends Screen {
                 if (analysis != null && (analysis.lhsExtraSlotIds.contains(s.id()) || analysis.rhsExtraSlotIds.contains(s.id())))
                     lines.add(Component.translatable("gui.gonzotech.chalkboard.penalty_slot_tooltip"));
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
+=======
+                boolean penalised = analysis != null && (analysis.lhsExtraSlotIds.contains(s.id()) || analysis.rhsExtraSlotIds.contains(s.id()));
+
+                if (q != null) {
+                    List<Component> lines = buildQuantityTooltip(q, isEnglish(), s.locked(), penalised);
+                    g.renderComponentTooltip(font, lines, mouseX, mouseY);
+                } else {
+                    List<Component> lines = new ArrayList<>();
+                    int titleColor = Palette.brightAccent(Palette.TEXT_FAINT);
+                    lines.add(Component.translatable("gui.gonzotech.chalkboard.empty_slot").setStyle(Style.EMPTY.withColor(titleColor)));
+                    if (s.locked()) {
+                        lines.add(Component.translatable("gui.gonzotech.chalkboard.fixed_slot_tooltip").withStyle(ChatFormatting.GRAY));
+                    }
+                    if (penalised) {
+                        lines.add(Component.translatable("gui.gonzotech.chalkboard.penalty_slot_tooltip").withStyle(ChatFormatting.RED));
+                    }
+                    g.renderComponentTooltip(font, lines, mouseX, mouseY);
+                }
+>>>>>>> 627493e (feat(chalkboard): implement unified GOST tooltips with frame color titles, tier colors, and SI unit symbol blending)
                 return;
             }
         }
+    }
+
+    // ─────────────────────────── unified GOST tooltip builder ───────────────────────────
+
+    private List<Component> buildQuantityTooltip(Quantity q, boolean isEn, boolean locked, boolean penalised) {
+        List<Component> lines = new ArrayList<>();
+
+        int frameColor = Palette.flavor(q.vec(), q.kind());
+        int titleColor = Palette.brightAccent(frameColor);
+
+        // Title Line: <Symbol> — <Name>
+        Component titleComp = Component.literal(q.symbol() + " — " + qName(q))
+                .setStyle(Style.EMPTY.withColor(titleColor));
+        lines.add(titleComp);
+
+        // Line 1: Tier: X
+        Component tierComp = Component.literal(tr("gui.gonzotech.chalkboard.tooltip_tier"))
+                .withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(String.valueOf(q.tier())).setStyle(Style.EMPTY.withColor(Palette.tierColor(q.tier()))));
+        lines.add(tierComp);
+
+        // Line 2: Blank line
+        lines.add(Component.empty());
+
+        // Line 3: Type: Scalar
+        String kindText = capitalize(q.kindLabel(isEn));
+        Component typeComp = Component.literal(tr("gui.gonzotech.chalkboard.tooltip_type"))
+                .withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(kindText).withStyle(ChatFormatting.WHITE));
+        lines.add(typeComp);
+
+        // Line 4: Dimension: [<UnitSymbol>] — <UnitFullName>
+        Component dimPrefixComp = Component.literal(tr("gui.gonzotech.chalkboard.tooltip_unit"))
+                .withStyle(ChatFormatting.GRAY)
+                .append(Component.literal("[").withStyle(ChatFormatting.GRAY));
+
+        Component unitSymComp = buildUnitSymbolComponent(q);
+        Component dimSuffixComp = Component.literal("] — " + unitFullName(q, isEn))
+                .withStyle(ChatFormatting.WHITE);
+
+        Component dimComp = Component.empty().append(dimPrefixComp).append(unitSymComp).append(dimSuffixComp);
+        lines.add(dimComp);
+
+        // Canvas overlay badges
+        if (locked) {
+            lines.add(Component.translatable("gui.gonzotech.chalkboard.fixed_slot_tooltip").withStyle(ChatFormatting.GRAY));
+        }
+        if (penalised) {
+            lines.add(Component.translatable("gui.gonzotech.chalkboard.penalty_slot_tooltip").withStyle(ChatFormatting.RED));
+        }
+
+        return lines;
+    }
+
+    private Component buildUnitSymbolComponent(Quantity q) {
+        String u = q.unit() == null ? "" : q.unit().trim();
+        if (u.isEmpty() || u.equals("1") || u.equals("безразм.")) {
+            return Component.literal("1").withStyle(ChatFormatting.WHITE);
+        }
+
+        MutableComponent comp = Component.empty();
+        StringBuilder curToken = new StringBuilder();
+
+        for (int i = 0; i < u.length(); i++) {
+            char c = u.charAt(i);
+            if (c == '/' || c == '·' || c == '*' || c == '(' || c == ')') {
+                if (curToken.length() > 0) {
+                    comp.append(colorTokenComponent(curToken.toString(), q));
+                    curToken.setLength(0);
+                }
+                comp.append(Component.literal(String.valueOf(c)).withStyle(ChatFormatting.GRAY));
+            } else {
+                curToken.append(c);
+            }
+        }
+        if (curToken.length() > 0) {
+            comp.append(colorTokenComponent(curToken.toString(), q));
+        }
+        return comp;
+    }
+
+    private Component colorTokenComponent(String token, Quantity q) {
+        int color = switch (token) {
+            case "м", "м²", "м³" -> 0xFF38BDF8; // Length - Blue
+            case "кг" -> 0xFFFB923C;             // Mass - Orange
+            case "с", "с²" -> 0xFFC084FC;         // Time - Lilac
+            case "А" -> 0xFFFDE047;             // Current - Yellow
+            case "К" -> 0xFFFCA5A5;             // Temp - Red
+            case "моль" -> 0xFF4ADE80;          // Amount - Green
+            case "кд" -> 0xFFF472B6;            // Luminous - Pink
+            default -> blendedVectorColor(q.vec()); // Derived unit blended RGB
+        };
+        return Component.literal(token).setStyle(Style.EMPTY.withColor(color));
+    }
+
+    private static int blendedVectorColor(DimVec vec) {
+        int[] axisColors = new int[]{
+                0xFF38BDF8, // L - Blue
+                0xFFFB923C, // m - Orange
+                0xFFC084FC, // t - Lilac
+                0xFFFDE047, // I - Yellow
+                0xFFFCA5A5, // T - Red
+                0xFF4ADE80, // n - Green
+                0xFFF472B6  // Iv - Pink
+        };
+
+        double totalWeight = 0;
+        double sumR = 0, sumG = 0, sumB = 0;
+
+        for (int i = 0; i < DimVec.SIZE; i++) {
+            double w = Math.abs(vec.get(i));
+            if (w > 1e-9) {
+                totalWeight += w;
+                int col = axisColors[i];
+                sumR += w * ((col >> 16) & 0xFF);
+                sumG += w * ((col >> 8) & 0xFF);
+                sumB += w * (col & 0xFF);
+            }
+        }
+
+        if (totalWeight < 1e-9) {
+            return 0xFFFFFFFF; // White for scalar/dimensionless
+        }
+
+        int r = (int) Math.round(sumR / totalWeight);
+        int g = (int) Math.round(sumG / totalWeight);
+        int b = (int) Math.round(sumB / totalWeight);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
+    private String unitFullName(Quantity q, boolean isEn) {
+        String u = q.unit() == null ? "" : q.unit().trim();
+        if (u.isEmpty() || u.equals("1") || u.equals("безразм.")) {
+            return isEn ? "Dimensionless" : "Безразмерная величина";
+        }
+        return switch (u) {
+            case "м" -> isEn ? "Meters" : "Метры";
+            case "кг" -> isEn ? "Kilograms" : "Килограммы";
+            case "с" -> isEn ? "Seconds" : "Секунды";
+            case "А" -> isEn ? "Amperes" : "Амперы";
+            case "К" -> isEn ? "Kelvins" : "Кельвины";
+            case "моль" -> isEn ? "Moles" : "Моли";
+            case "кд" -> isEn ? "Candelas" : "Канделы";
+            case "м/с" -> isEn ? "Meters per second" : "Метры в секунду";
+            case "м/с²" -> isEn ? "Meters per second squared" : "Метры на секунду в квадрате";
+            case "м²" -> isEn ? "Square meters" : "Квадратные метры";
+            case "м³" -> isEn ? "Cubic meters" : "Кубические метры";
+            case "кг/м³" -> isEn ? "Kilograms per cubic meter" : "Килограммы на кубический метр";
+            case "Н" -> isEn ? "Newtons" : "Ньютоны";
+            case "Дж" -> isEn ? "Joules" : "Джоули";
+            case "Вт" -> isEn ? "Watts" : "Ватты";
+            case "Па" -> isEn ? "Pascals" : "Паскали";
+            case "Кл" -> isEn ? "Coulombs" : "Кулоны";
+            case "В" -> isEn ? "Volts" : "Вольты";
+            case "Ф" -> isEn ? "Farads" : "Фарады";
+            case "Ом" -> isEn ? "Ohms" : "Омы";
+            case "См" -> isEn ? "Siemens" : "Сименсы";
+            case "Вб" -> isEn ? "Webers" : "Веберы";
+            case "Тл" -> isEn ? "Teslas" : "Теслы";
+            case "Гн" -> isEn ? "Henries" : "Генри";
+            case "Гц" -> isEn ? "Hertz" : "Герцы";
+            case "Бк" -> isEn ? "Becquerels" : "Беккерели";
+            case "Гр" -> isEn ? "Grays" : "Грэи";
+            case "Зв" -> isEn ? "Sieverts" : "Зиверты";
+            case "кат" -> isEn ? "Katals" : "Каталы";
+            case "лм" -> isEn ? "Lumens" : "Люмены";
+            case "лк" -> isEn ? "Lux" : "Люксы";
+            case "Дж/кг" -> isEn ? "Joules per kilogram" : "Джоули на килограмм";
+            case "Дж/К" -> isEn ? "Joules per Kelvin" : "Джоули на Кельвин";
+            case "Дж/(кг·К)" -> isEn ? "Joules per kilogram-Kelvin" : "Джоули на килограмм-Кельвин";
+            case "Вт/(м·К)" -> isEn ? "Watts per meter-Kelvin" : "Ватты на метр-Кельвин";
+            case "В/м" -> isEn ? "Volts per meter" : "Вольты на метр";
+            case "А/м" -> isEn ? "Amperes per meter" : "Амперы на метр";
+            case "Кл/м³" -> isEn ? "Coulombs per cubic meter" : "Кулоны на кубический метр";
+            case "Дж/м³" -> isEn ? "Joules per cubic meter" : "Джоули на кубический метр";
+            case "Дж/моль" -> isEn ? "Joules per mole" : "Джоули на моль";
+            case "Дж/(моль·К)" -> isEn ? "Joules per mole-Kelvin" : "Джоули на моль-Кельвин";
+            case "рад" -> isEn ? "Radians" : "Радианы";
+            case "ср" -> isEn ? "Steradians" : "Стерадианы";
+            case "кг·м/с" -> isEn ? "Kilogram-meters per second" : "Килограмм-метры в секунду";
+            case "Н·м" -> isEn ? "Newton-meters" : "Ньютон-метры";
+            case "кг·м²" -> isEn ? "Kilogram-square meters" : "Килограмм-квадратные метры";
+            default -> u;
+        };
+    }
+
+    private static String capitalize(String str) {
+        if (str == null || str.isEmpty()) return "";
+        return str.substring(0, 1).toUpperCase(Locale.ROOT) + str.substring(1);
     }
 
     // ─────────────────────────── input ───────────────────────────

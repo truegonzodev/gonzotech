@@ -43,6 +43,42 @@ public final class Palette {
         };
     }
 
+    /**
+     * Tier colors:
+     * 0 -> Gray (#AAAAAA)
+     * 1 -> Green (#4ADE80)
+     * 2 -> Blue (#38BDF8)
+     * 3 -> Yellow (#FDE047)
+     * 4 -> Red (#FF5555)
+     * 99 -> Purple (#C084FC)
+     */
+    public static int tierColor(int tier) {
+        return switch (tier) {
+            case 0 -> 0xFFAAAAAA;
+            case 1 -> 0xFF4ADE80;
+            case 2 -> 0xFF38BDF8;
+            case 3 -> 0xFFFDE047;
+            case 4 -> 0xFFFF5555;
+            case 99 -> 0xFFC084FC;
+            default -> 0xFFFDE047;
+        };
+    }
+
+    /** Boosts saturation and brightness by +10% for block title text. */
+    public static int brightAccent(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+
+        float[] hsv = new float[3];
+        java.awt.Color.RGBtoHSB(r, g, b, hsv);
+        hsv[1] = Math.min(1.0f, hsv[1] + 0.10f); // +10% saturation
+        hsv[2] = Math.min(1.0f, hsv[2] + 0.10f); // +10% brightness/lightness
+
+        int rgb = java.awt.Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]);
+        return 0xFF000000 | (rgb & 0x00FFFFFF);
+    }
+
     /** ARGB with a custom alpha applied to an RGB triplet. */
     public static int withAlpha(int argb, int alpha) {
         return (Math.max(0, Math.min(255, alpha)) << 24) | (argb & 0x00FFFFFF);
