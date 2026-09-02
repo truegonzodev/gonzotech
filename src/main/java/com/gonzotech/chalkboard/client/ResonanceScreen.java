@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * Green chalkboard theme GUI with framed composition, pan/zoom camera navigation,
  * freehand persistent chalk drawing per player, tabbed tray filtering,
- * circular resonance gauge, custom chalkboard buttons, and full EN/RU localization.
+ * 2x enlarged circular resonance gauge, custom chalkboard buttons, and full EN/RU localization.
  */
 public class ResonanceScreen extends Screen {
 
@@ -49,17 +49,22 @@ public class ResonanceScreen extends Screen {
             int stroke = !this.active ? 0xFF666666 : (hovered ? Palette.CYAN : Palette.STROKE);
             int textColor = !this.active ? Palette.TEXT_FAINT : Palette.TEXT;
 
-            g.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, bg);
+            int bx = this.getX();
+            int by = this.getY();
+            int bw = this.width;
+            int bh = this.height;
 
-            // 1px solid outline
-            g.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + 1, stroke);
-            g.fill(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, stroke);
-            g.fill(this.getX(), this.getY(), this.getX() + 1, this.getY() + this.height, stroke);
-            g.fill(this.getX() + this.width - 1, this.getX() + this.width, this.getY(), this.getY() + this.height, stroke);
+            g.fill(bx, by, bx + bw, by + bh, bg);
+
+            // 1px solid outline (minX, minY, maxX, maxY, color)
+            g.fill(bx, by, bx + bw, by + 1, stroke);
+            g.fill(bx, by + bh - 1, bx + bw, by + bh, stroke);
+            g.fill(bx, by, bx + 1, by + bh, stroke);
+            g.fill(bx + bw - 1, by, bx + bw, by + bh, stroke);
 
             net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
             int tw = font.width(this.getMessage());
-            g.drawString(font, this.getMessage(), this.getX() + (this.width - tw) / 2, this.getY() + (this.height - 8) / 2, textColor, false);
+            g.drawString(font, this.getMessage(), bx + (bw - tw) / 2, by + (bh - 8) / 2, textColor, false);
         }
     }
 
@@ -708,12 +713,12 @@ public class ResonanceScreen extends Screen {
         int htw = font.width(header);
         g.drawString(font, header, x + (w - htw) / 2, cy, Palette.TEXT_FAINT, false);
 
-        // Circular Resonance Ring Gauge
+        // Circular Resonance Ring Gauge (2x larger diameter = 90px)
         int circleCx = x + w / 2;
-        int circleCy = cy + 36;
+        int circleCy = cy + 52;
         drawResonanceCircleGauge(g, circleCx, circleCy, analysis.scoreOr(-1));
 
-        cy = circleCy + 32;
+        cy = circleCy + 50;
 
         // S_D dimensionality
         cy = bar(g, x + 8, cy, w - 16, tr("gui.gonzotech.chalkboard.s_d_dimension"), analysis.sD);
@@ -764,8 +769,8 @@ public class ResonanceScreen extends Screen {
     }
 
     private void drawResonanceCircleGauge(GuiGraphics g, int cx, int cy, double score) {
-        int rOut = 25;
-        int rIn = 19;
+        int rOut = 45; // 2x larger diameter (90px)
+        int rIn = 39;  // 6px thickness
         double frac = score < 0 ? 0.0 : Math.max(0.0, Math.min(1.0, score / 100.0));
         int scoreColor = score < 0 ? Palette.TEXT_DIM : Palette.love(score);
 
@@ -788,7 +793,7 @@ public class ResonanceScreen extends Screen {
             }
         }
 
-        // Large score number in center
+        // Large score number in center (text size untouched)
         String big = score < 0 ? "—" : String.valueOf(Math.round(score));
         g.pose().pushPose();
         g.pose().translate(cx, cy - 8, 0);
@@ -797,7 +802,7 @@ public class ResonanceScreen extends Screen {
         g.drawString(font, big, -tw / 2, 0, scoreColor, false);
         g.pose().popPose();
 
-        // Status label below number inside circle
+        // Status label below number inside circle (text size untouched)
         String status = score < 0
                 ? tr("gui.gonzotech.chalkboard.resonance_incomplete")
                 : (score < 20 ? tr("gui.gonzotech.chalkboard.resonance_weak")
@@ -934,7 +939,7 @@ public class ResonanceScreen extends Screen {
                 List<Component> lines = List.of(
                         Component.literal(q.symbol() + " — " + qName(q)),
                         Component.literal("[" + q.vec().format() + "]  " + q.unit()),
-                        Component.literal("Tier " + q.tier() + " · " + (isEnglish() ? q.kindLabelEn() : q.kindLabelRu())));
+                        Component.literal("Tier " + q.tier() + " \u00b7 " + (isEnglish() ? q.kindLabelEn() : q.kindLabelRu())));
                 g.renderComponentTooltip(font, lines, mouseX, mouseY);
             }
             return;

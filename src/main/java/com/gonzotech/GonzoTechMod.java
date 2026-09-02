@@ -1,5 +1,6 @@
 package com.gonzotech;
 
+import com.gonzotech.chalkboard.command.ChalkboardCommand;
 import com.gonzotech.chalkboard.network.ChalkboardNetwork;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.core.network.CesiumBlastRequestPayload;
@@ -16,6 +17,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.slf4j.Logger;
@@ -38,6 +40,8 @@ public class GonzoTechMod {
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
+
+        NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
 
         LOGGER.info("[Gonzo Tech] Mod class constructed, mod_id={}, {} руд зарегистрировано",
             MOD_ID, com.gonzotech.core.ore.OreDefinition.ALL.size());
