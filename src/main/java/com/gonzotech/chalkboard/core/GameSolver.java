@@ -238,8 +238,9 @@ public final class GameSolver {
         LOGGER.info("[Chalkboard] Generating puzzle for stage {} (isInfinite={}) on worldSeed {}...",
                 stageNumber, isInfinite, worldSeed);
 
-        int minNodes = isInfinite ? 15 : (def != null ? def.minNodes() : 4);
-        int maxNodes = isInfinite ? 25 : (def != null ? def.maxNodes() : 8);
+        // minFixedNodes and maxFixedNodes define the target number of FIXED [ФИКС] nodes
+        int minFixedNodes = isInfinite ? 15 : (def != null ? def.minNodes() : 4);
+        int maxFixedNodes = isInfinite ? 25 : (def != null ? def.maxNodes() : 8);
 
         int reqT2 = (!isInfinite && def != null) ? def.minTier2Req() : 0;
         int reqT3 = (!isInfinite && def != null) ? def.minTier3Req() : 0;
@@ -288,11 +289,12 @@ public final class GameSolver {
             long cycleSeed = deriveCycleSeed(worldSeed, stageIndex, cycle);
             Random rng = new Random(cycleSeed);
 
-            // Target node count in [minNodes, maxNodes]
-            int targetNodes = (minNodes == maxNodes) ? minNodes : minNodes + rng.nextInt(maxNodes - minNodes + 1);
-            int numRhsSlots = targetNodes - 1; // 1 LHS slot
+            // Target number of FIXED [ФИКС] nodes in [minFixedNodes, maxFixedNodes]
+            int targetFixedNodes = (minFixedNodes == maxFixedNodes)
+                    ? minFixedNodes
+                    : minFixedNodes + rng.nextInt(maxFixedNodes - minFixedNodes + 1);
 
-            if (numRhsSlots < 2) numRhsSlots = 2;
+            int numRhsFixedCount = Math.max(1, targetFixedNodes - 1); // 1 LHS fixed slot (target A)
 
             Quantity candidateTarget = targetPool.get(rng.nextInt(targetPool.size()));
             if (!isInfinite && def != null && def.themeBoostTargetId() != null && rng.nextDouble() < 0.6) {
@@ -302,110 +304,103 @@ public final class GameSolver {
             final Quantity target = candidateTarget;
             final String targetId = target.id();
 
-            // Attempt structural variations in this cycle
-            for (int varAttempt = 0; varAttempt < 60; varAttempt++) {
-                int maxHoles = Math.min(7, numRhsSlots - 1);
-                if (maxHoles < 1) maxHoles = 1;
+            // Select exact numRhsFixedCount FIXED RHS quantities matching tier requirements
+            List<Quantity> fixedQuantities = selectFixedRhsQuantities(numRhsFixedCount, reqT2, reqT3, reqT4, reqT99, rhsPool, rng);
+            if (fixedQuantities == null) continue;
 
-                // Test m holes = 1..7
-                for (int m = 1; m <= maxHoles; m++) {
-                    int numFixedCount = numRhsSlots - m;
+            // Split RHS fixed quantities into Numerator and Denominator
+            int denFixedCount = (numRhsFixedCount >= 2 && rng.nextDouble() < 0.7) ? 1 + rng.nextInt(numRhsFixedCount / 2) : 0;
+            int numFixedCount = numRhsFixedCount - denFixedCount;
 
-                    List<Quantity> fixedQuantities = selectFixedRhsQuantities(numFixedCount, reqT2, reqT3, reqT4, reqT99, rhsPool, rng);
-                    if (fixedQuantities == null) continue;
+            List<Quantity> numFixed = fixedQuantities.subList(0, numFixedCount);
+            List<Quantity> denFixed = fixedQuantities.subList(numFixedCount, fixedQuantities.size());
 
-                    int denCount = (numRhsSlots >= 3 && rng.nextDouble() < 0.7) ? 1 + rng.nextInt(numRhsSlots / 2) : 0;
-                    int numCount = numRhsSlots - denCount;
+            // Test m holes = 1..7 empty slots '?'
+            for (int m = 1; m <= 7; m++) {
+                // Distribute m holes between numerator and denominator
+                for (int mNum = 0; mNum <= m; mNum++) {
+                    int mDen = m - mNum;
 
-                    for (int mNum = 0; mNum <= m; mNum++) {
-                        int mDen = m - mNum;
-                        if (mNum > numCount || mDen > denCount) continue;
+                    DimVec netFixed = DimVec.ZERO;
+                    for (Quantity q : numFixed) netFixed = netFixed.add(q.vec());
+                    for (Quantity q : denFixed) netFixed = netFixed.sub(q.vec());
 
-                        int kNum = numCount - mNum;
-                        int kDen = denCount - mDen;
+                    DimVec needed = target.vec().sub(netFixed);
 
-                        List<Quantity> numFixed = fixedQuantities.subList(0, kNum);
-                        List<Quantity> denFixed = fixedQuantities.subList(kNum, fixedQuantities.size());
+                    List<Quantity> holeQuantities = solveHoles(needed, mNum, mDen, SOLVER_POOL, rng);
+                    if (holeQuantities == null) continue;
 
-                        DimVec netFixed = DimVec.ZERO;
-                        for (Quantity q : numFixed) netFixed = netFixed.add(q.vec());
-                        for (Quantity q : denFixed) netFixed = netFixed.sub(q.vec());
+                    List<Quantity> numHoles = holeQuantities.subList(0, mNum);
+                    List<Quantity> denHoles = holeQuantities.subList(mNum, m);
 
-                        DimVec needed = target.vec().sub(netFixed);
+                    List<Quantity> allNum = new ArrayList<>(numFixed);
+                    allNum.addAll(numHoles);
 
-                        List<Quantity> holeQuantities = solveHoles(needed, mNum, mDen, SOLVER_POOL, rng);
-                        if (holeQuantities == null) continue;
+                    List<Quantity> allDen = new ArrayList<>(denFixed);
+                    allDen.addAll(denHoles);
 
-                        List<Quantity> numHoles = holeQuantities.subList(0, mNum);
-                        List<Quantity> denHoles = holeQuantities.subList(mNum, m);
+                    // Rule 1: No target A in RHS
+                    boolean targetInRhs = allNum.stream().anyMatch(q -> q.id().equals(targetId))
+                            || allDen.stream().anyMatch(q -> q.id().equals(targetId));
+                    if (targetInRhs) continue;
 
-                        List<Quantity> allNum = new ArrayList<>(numFixed);
-                        allNum.addAll(numHoles);
+                    // Rule 2: No direct cross-cancellation between num and den
+                    Set<String> numIds = allNum.stream().map(Quantity::id).collect(Collectors.toSet());
+                    Set<String> denIds = allDen.stream().map(Quantity::id).collect(Collectors.toSet());
+                    boolean hasCrossCancel = numIds.stream().anyMatch(denIds::contains);
+                    if (hasCrossCancel) continue;
 
-                        List<Quantity> allDen = new ArrayList<>(denFixed);
-                        allDen.addAll(denHoles);
-
-                        // Rule 1: No target A in RHS
-                        boolean targetInRhs = allNum.stream().anyMatch(q -> q.id().equals(targetId))
-                                || allDen.stream().anyMatch(q -> q.id().equals(targetId));
-                        if (targetInRhs) continue;
-
-                        // Rule 2: No direct cross-cancellation between num and den
-                        Set<String> numIds = allNum.stream().map(Quantity::id).collect(Collectors.toSet());
-                        Set<String> denIds = allDen.stream().map(Quantity::id).collect(Collectors.toSet());
-                        boolean hasCrossCancel = numIds.stream().anyMatch(denIds::contains);
-                        if (hasCrossCancel) continue;
-
-                        // Rule 3: Tier Requirements
-                        int t2 = 0, t3 = 0, t4 = 0, t99 = 0;
-                        for (Quantity q : allNum) {
-                            if (q.tier() == 2) t2++;
-                            if (q.tier() == 3) t3++;
-                            if (q.tier() == 4) t4++;
-                            if (q.tier() == 99) t99++;
-                        }
-                        for (Quantity q : allDen) {
-                            if (q.tier() == 2) t2++;
-                            if (q.tier() == 3) t3++;
-                            if (q.tier() == 4) t4++;
-                            if (q.tier() == 99) t99++;
-                        }
-                        if (t2 < reqT2 || t3 < reqT3 || t4 < reqT4 || t99 < reqT99) continue;
-
-                        // Build AST
-                        Expr fullExpr = buildEquationExpr(target, numFixed, mNum, denFixed, mDen);
-                        if (fullExpr == null) continue;
-
-                        List<String> emptySlotIds = new ArrayList<>();
-                        for (Manipulate.SlotInfo s : Manipulate.collectSlots(fullExpr)) {
-                            if (!s.filled() && !s.locked()) {
-                                emptySlotIds.add(s.id());
-                            }
-                        }
-
-                        SolverResult solution = solve(fullExpr, emptySlotIds);
-                        if (!solution.solvable() || solution.score() < 99.9) continue;
-
-                        List<Manipulate.SlotInfo> allSlots = Manipulate.collectSlots(fullExpr);
-                        if (allSlots.size() != targetNodes) continue;
-
-                        Set<String> lockedIds = new HashSet<>();
-                        lockedIds.add(allSlots.get(0).id()); // LHS slot
-                        for (Manipulate.SlotInfo info : allSlots) {
-                            if (!emptySlotIds.contains(info.id())) {
-                                lockedIds.add(info.id());
-                            }
-                        }
-                        fullExpr = Manipulate.markLocked(fullExpr, lockedIds);
-
-                        long elapsedMs = System.currentTimeMillis() - startMs;
-                        LOGGER.info("[Chalkboard] Generated puzzle for stage {} in {} ms (cycle {}, target={}, nodes={}, holes={}).",
-                                stageNumber, elapsedMs, cycle, target.id(), targetNodes, m);
-
-                        String desc = "Цель: " + target.symbol() + " [" + target.unit() + "] · " + target.nameRu();
-                        return new Puzzle(fullExpr, target, new ArrayList<>(lockedIds), solution.assignments(),
-                                solution.score(), 0, stageNumber, titleRu, desc);
+                    // Rule 3: Tier Requirements
+                    int t2 = 0, t3 = 0, t4 = 0, t99 = 0;
+                    for (Quantity q : allNum) {
+                        if (q.tier() == 2) t2++;
+                        if (q.tier() == 3) t3++;
+                        if (q.tier() == 4) t4++;
+                        if (q.tier() == 99) t99++;
                     }
+                    for (Quantity q : allDen) {
+                        if (q.tier() == 2) t2++;
+                        if (q.tier() == 3) t3++;
+                        if (q.tier() == 4) t4++;
+                        if (q.tier() == 99) t99++;
+                    }
+                    if (t2 < reqT2 || t3 < reqT3 || t4 < reqT4 || t99 < reqT99) continue;
+
+                    // Build AST
+                    Expr fullExpr = buildEquationExpr(target, numFixed, mNum, denFixed, mDen);
+                    if (fullExpr == null) continue;
+
+                    List<String> emptySlotIds = new ArrayList<>();
+                    for (Manipulate.SlotInfo s : Manipulate.collectSlots(fullExpr)) {
+                        if (!s.filled() && !s.locked()) {
+                            emptySlotIds.add(s.id());
+                        }
+                    }
+
+                    SolverResult solution = solve(fullExpr, emptySlotIds);
+                    if (!solution.solvable() || solution.score() < 99.9) continue;
+
+                    List<Manipulate.SlotInfo> allSlots = Manipulate.collectSlots(fullExpr);
+
+                    Set<String> lockedIds = new HashSet<>();
+                    lockedIds.add(allSlots.get(0).id()); // LHS slot
+                    for (Manipulate.SlotInfo info : allSlots) {
+                        if (!emptySlotIds.contains(info.id())) {
+                            lockedIds.add(info.id());
+                        }
+                    }
+                    fullExpr = Manipulate.markLocked(fullExpr, lockedIds);
+
+                    int totalFixedSlots = lockedIds.size();
+                    int totalSlots = allSlots.size();
+
+                    long elapsedMs = System.currentTimeMillis() - startMs;
+                    LOGGER.info("[Chalkboard] Generated puzzle for stage {} in {} ms (cycle {}, target={}, fixedSlots={}/{}, totalSlots={}).",
+                            stageNumber, elapsedMs, cycle, target.id(), totalFixedSlots, targetFixedNodes, totalSlots);
+
+                    String desc = "Цель: " + target.symbol() + " [" + target.unit() + "] · " + target.nameRu();
+                    return new Puzzle(fullExpr, target, new ArrayList<>(lockedIds), solution.assignments(),
+                            solution.score(), 0, stageNumber, titleRu, desc);
                 }
             }
         }
