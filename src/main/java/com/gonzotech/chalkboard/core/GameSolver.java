@@ -286,11 +286,13 @@ public final class GameSolver {
 
             if (numRhsSlots < 2) numRhsSlots = 2;
 
-            Quantity target = targetPool.get(rng.nextInt(targetPool.size()));
+            Quantity candidateTarget = targetPool.get(rng.nextInt(targetPool.size()));
             if (!isInfinite && def != null && def.themeBoostTargetId() != null && rng.nextDouble() < 0.6) {
                 Quantity boosted = Quantities.get(def.themeBoostTargetId());
-                if (boosted != null) target = boosted;
+                if (boosted != null) candidateTarget = boosted;
             }
+            final Quantity target = candidateTarget;
+            final String targetId = target.id();
 
             // Attempt structural variations in this cycle
             for (int varAttempt = 0; varAttempt < 60; varAttempt++) {
@@ -336,8 +338,8 @@ public final class GameSolver {
                         allDen.addAll(denHoles);
 
                         // Rule 1: No target A in RHS
-                        boolean targetInRhs = allNum.stream().anyMatch(q -> q.id().equals(target.id()))
-                                || allDen.stream().anyMatch(q -> q.id().equals(target.id()));
+                        boolean targetInRhs = allNum.stream().anyMatch(q -> q.id().equals(targetId))
+                                || allDen.stream().anyMatch(q -> q.id().equals(targetId));
                         if (targetInRhs) continue;
 
                         // Rule 2: No direct cross-cancellation between num and den
