@@ -42,6 +42,7 @@ public class GonzoTechMod {
         ModAttachments.register(modEventBus);
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
 
         LOGGER.info("[Gonzo Tech] Mod class constructed, mod_id={}, {} руд зарегистрировано",
             MOD_ID, com.gonzotech.core.ore.OreDefinition.ALL.size());

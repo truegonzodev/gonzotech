@@ -1,5 +1,6 @@
 package com.gonzotech.chalkboard.item;
 
+import com.gonzotech.chalkboard.advancement.ModAdvancements;
 import com.gonzotech.chalkboard.network.ChalkboardNetwork;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
@@ -46,6 +47,7 @@ public class DiscoveryItem extends Item {
                 progress.unlockRecipeTier(discoveryNumber);
                 serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
                 ChalkboardNetwork.sendSyncToPlayer(serverPlayer);
+                ModAdvancements.checkAndAwardAdvancements(serverPlayer);
                 stack.shrink(1);
 
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),

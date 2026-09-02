@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "id": "gonzotech:discovery_13"
+    },
+    "title": {
+      "translate": "advancements.gonzotech.discovery_13.title"
+    },
+    "description": {
+      "translate": "advancements.gonzotech.discovery_13.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "unlocked": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "gonzotech:discovery_12"
+}
