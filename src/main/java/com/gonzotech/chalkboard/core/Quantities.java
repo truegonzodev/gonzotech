@@ -178,13 +178,13 @@ public final class Quantities {
 
         // ─────────── Tier 99: Super-Secret quantities ───────────
         q("secret_I_alpha", "Iα", "Градиент фотонно-плазменного насыщения", "Singularity Plasma Saturation Grad", "моль·кд/(Тл·К·с³)", v(-1, 1, -5, -1, -1, 1, 1), Category.FIELDS, Kind.FIELD, 1.0, 3.0, 99);
-        q("secret_T_index", "Tindex", "Квантово-химический индекс упругости", "Quantum-Chemical Elasticity Index", "с/(Гн·м·Бк)", v(-1, 1, -1, 2, -4, -1, 0), Category.QUANTUM, Kind.FIELD, 1.0, 3.0, 99);
+        q("secret_T_index", "Tindex", "Квантово-химический индекс упругости", "Quantum-Chemical Elasticity Index", "с/(Гн·м·Бц)", v(-1, 1, -1, 2, -4, -1, 0), Category.QUANTUM, Kind.FIELD, 1.0, 3.0, 99);
         q("secret_X_mu", "Xμ", "Коэффициент магнито-термического дрейфа", "Magneto-Thermal Drift Coeff", "Вт·К", v(2, 1, -3, 0, -1, 0, 0), Category.THERMO, Kind.SCALAR, 99);
         q("secret_Phi_dot", "Φ̇", "Торможение реакции аннигиляции", "Annihilation Effective Deceleration", "А²/(м³·моль)", v(-3, 0, 0, 2, 0, -1, 0), Category.NUCLEAR, Kind.SCALAR, 99);
 
         // New Tier 99 quantities:
         q("secret_Kappa_Tau", "κτ", "Градиент топологической жесткости струны", "String Topological Stiffness Grad", "Н³/(А·К·моль)", v(3, 3, -6, -1, -1, -1, 0), Category.FIELDS, Kind.FIELD, 1.0, 3.0, 99);
-        q("secret_Gamma_Iota", "γι", "Коэффициент релятивистской электро-энтропийной вязкости", "Relativistic Electro-Entropic Viscosity Coeff", "См²·м·с/Бк²", v(-8, -2, 4, 4, -2, 2, 0), Category.QUANTUM, Kind.SCALAR, 99);
+        q("secret_Gamma_Iota", "γι", "Коэффициент релятивистской электро-энтропийной вязкости", "Relativistic Electro-Entropic Viscosity Coeff", "См²·м·с/Бц²", v(-8, -2, 4, 4, -2, 2, 0), Category.QUANTUM, Kind.SCALAR, 99);
         q("secret_Etta_Omega", "ηω", "Молярный квантово-оптический барьер металлического водорода", "Molar Quantum-Optical Barrier", "Дж·кд²/(м²·К·моль)", v(0, 1, -2, 0, -1, -1, 2), Category.OPTICS, Kind.SCALAR, 99);
         q("secret_Zeta_dot", "ζ̇", "Порог радиационно-индуктивного пробоя водородной матрицы", "Radiation-Inductive Breakdown Threshold", "В³·А/(Гн·с·К)", v(1, 2, -4, 4, -1, 0, 0), Category.NUCLEAR, Kind.FIELD, 1.0, 3.0, 99);
         q("secret_Chi_Rho", "χρ", "Хи-Ро (Индекс квантово-фрактального удержания энергокристалла)", "Quantum-Fractal Confinement Index", "В·А²·м⁵/(с·моль)", v(7, 1, -4, 1, 1, -1, 0), Category.QUANTUM, Kind.SCALAR, 99);

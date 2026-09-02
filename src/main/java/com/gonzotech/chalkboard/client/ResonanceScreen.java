@@ -997,15 +997,26 @@ public class ResonanceScreen extends Screen {
         lines.add(typeComp);
 
         // Line 4: Dimension: [<UnitSymbol>] — <UnitFullName>
-        Component dimPrefixComp = Component.literal(tr("gui.gonzotech.chalkboard.tooltip_unit"))
-                .withStyle(ChatFormatting.GRAY)
-                .append(Component.literal("[").withStyle(ChatFormatting.WHITE));
+        Component dimComp;
+        if (q.id().equals("molar_rad_density")) {
+            Component dimPrefixComp = Component.literal(tr("gui.gonzotech.chalkboard.tooltip_unit"))
+                    .withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal((isEn ? "Boltzmann " : "Больцман ") + "[").withStyle(ChatFormatting.WHITE));
+            Component btzSymComp = Component.literal("Бц").setStyle(Style.EMPTY.withColor(blendedVectorColor(DimVec.of(0, 0, 0, 0, 4, 1, 0))));
+            Component dimSuffixComp = Component.literal("] — " + unitFullName(q, isEn))
+                    .withStyle(ChatFormatting.WHITE);
+            dimComp = Component.empty().append(dimPrefixComp).append(btzSymComp).append(dimSuffixComp);
+        } else {
+            Component dimPrefixComp = Component.literal(tr("gui.gonzotech.chalkboard.tooltip_unit"))
+                    .withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal("[").withStyle(ChatFormatting.WHITE));
 
-        Component unitSymComp = buildUnitSymbolComponent(q);
-        Component dimSuffixComp = Component.literal("] — " + unitFullName(q, isEn))
-                .withStyle(ChatFormatting.WHITE);
+            Component unitSymComp = buildUnitSymbolComponent(q);
+            Component dimSuffixComp = Component.literal("] — " + unitFullName(q, isEn))
+                    .withStyle(ChatFormatting.WHITE);
 
-        Component dimComp = Component.empty().append(dimPrefixComp).append(unitSymComp).append(dimSuffixComp);
+            dimComp = Component.empty().append(dimPrefixComp).append(unitSymComp).append(dimSuffixComp);
+        }
         lines.add(dimComp);
 
         // Canvas overlay badges
@@ -1062,6 +1073,8 @@ public class ResonanceScreen extends Screen {
             color = 0xFF4ADE80; // Amount - Green
         } else if (token.startsWith("кд")) {
             color = 0xFFF472B6; // Luminous - Pink
+        } else if (token.startsWith("Бц")) {
+            color = blendedVectorColor(DimVec.of(0, 0, 0, 0, 4, 1, 0)); // Boltzmann unit color
         } else {
             color = blendedVectorColor(q.vec()); // Derived unit blended RGB
         }
@@ -1157,11 +1170,12 @@ public class ResonanceScreen extends Screen {
             case "К/м" -> isEn ? "Kelvins per meter" : "Кельвин на метр";
 
             case "моль·кд/(Тл·К·с³)" -> isEn ? "Mole-candelas per Tesla-Kelvin-cubic second" : "Моль-Канделл на Тесла-Кельвин в секунду кубическую";
-            case "с/(Гн·м·Бк)" -> isEn ? "Seconds per Henry-meter-Becquerel" : "Секунда на Генри-метр-Беккерель";
+            case "с/(Гн·м·Бц)" -> isEn ? "Seconds per Henry-meter-Boltzmann" : "Секунда на Генри-метр-Больцман";
             case "Вт·К" -> isEn ? "Watt-Kelvins" : "Ватт-Кельвин";
             case "А²/(м³·моль)" -> isEn ? "Amperes squared per cubic meter-mole" : "Ампер квадрат на метр кубический-моль";
             case "Н³/(А·К·моль)" -> isEn ? "Newtons cubed per Ampere-Kelvin-mole" : "Ньютон кубический на ампер-кельвин-моль";
             case "См²·м·с/Бк²" -> isEn ? "Siemens squared-meter-seconds per Becquerel squared" : "Сименс квадратный-метр-секунда на Беккерель квадратный";
+            case "См²·м·с/Бц²" -> isEn ? "Siemens squared-meter-seconds per Boltzmann squared" : "Сименс квадратный-метр-секунда на Больцман квадратный";
             case "Дж·кд²/(м²·К·моль)" -> isEn ? "Joules-candelas squared per square meter-Kelvin-mole" : "Джоуль-кандела квадратная на метр квадратный-кельвин-моль";
             case "В³·А/(Гн·с·К)" -> isEn ? "Volts cubed-amperes per Henry-second-Kelvin" : "Вольт кубический-ампер на Генри-секунду-кельвин";
             case "В·А²·м⁵/(с·моль)" -> isEn ? "Volts-amperes squared-meters to fifth per second-mole" : "Вольт-ампер квадратный-метр в пятой степени на секунду-моль";
