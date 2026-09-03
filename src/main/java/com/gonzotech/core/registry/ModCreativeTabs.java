@@ -25,6 +25,7 @@ public class ModCreativeTabs {
                 ModItems.ORE_BLOCK_ITEMS.values().forEach(byHost ->
                     byHost.values().forEach(item -> output.accept(item.get())));
                 ModItems.RAW_ORE_ITEMS.values().forEach(item -> output.accept(item.get()));
+                ModItems.INGOT_ITEMS.values().forEach(item -> output.accept(item.get()));
             })
             .build()
     );

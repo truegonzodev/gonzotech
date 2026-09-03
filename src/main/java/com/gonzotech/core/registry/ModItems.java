@@ -30,6 +30,28 @@ public class ModItems {
      */
     public static final Map<String, DeferredItem<Item>> RAW_ORE_ITEMS = new LinkedHashMap<>();
 
+    /** Слитки металлов и сплавов (26 рудных + 21 сплава/дополнительный). */
+    public static final Map<String, DeferredItem<Item>> INGOT_ITEMS = new LinkedHashMap<>();
+
+    public static final List<String> INGOT_IDS = List.of(
+        // 26 Ore Metal Ingots
+        "calcium_ingot", "aluminum_ingot", "magnesium_ingot", "sulfur_ingot",
+        "manganese_ingot", "titanium_ingot", "barium_ingot", "zinc_ingot",
+        "tin_ingot", "boron_ingot", "chromium_ingot", "nickel_ingot",
+        "cobalt_ingot", "silver_ingot", "iodine_ingot", "tungsten_ingot",
+        "mercury_ingot", "uranium_ingot", "zirconium_ingot", "thorium_ingot",
+        "platinum_ingot", "tellurium_ingot", "palladium_ingot", "cesium_ingot",
+        "iridium_ingot", "osmium_ingot",
+
+        // 21 Alloy & Extra Ingots
+        "steel_ingot", "stainless_steel_ingot", "corten_steel_ingot", "cast_iron_ingot",
+        "plutonium_ingot", "nitinol_ingot", "invar_ingot", "lead_ingot",
+        "neodymium_ingot", "ferromagnetic_ingot", "cantor_ingot", "vitreloy_ingot",
+        "semiconductor_ingot", "vr20_ingot", "stellite_ingot", "alnico_ingot",
+        "telluride_ingot", "bismuth_ingot", "rhenium_ingot", "radium_ingot",
+        "lithium_ingot"
+    );
+
     /** BlockItem доски резонанса — см. ModBlocks.CHALKBOARD. */
     public static final DeferredItem<BlockItem> CHALKBOARD_ITEM =
         ITEMS.registerSimpleBlockItem("chalkboard", ModBlocks.CHALKBOARD);
@@ -47,6 +69,10 @@ public class ModItems {
             ORE_BLOCK_ITEMS.put(ore.id(), byHost);
 
             RAW_ORE_ITEMS.put(ore.id(), ITEMS.registerSimpleItem(ore.rawItemId()));
+        }
+
+        for (String ingotId : INGOT_IDS) {
+            INGOT_ITEMS.put(ingotId, ITEMS.registerSimpleItem(ingotId));
         }
 
         for (int i = 1; i <= 16; i++) {
