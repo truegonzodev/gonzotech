@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "gonzotech:item/corten_steel_ingot"
+  }
+}
