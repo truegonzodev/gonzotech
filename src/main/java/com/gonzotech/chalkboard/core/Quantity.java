@@ -2,7 +2,7 @@ package com.gonzotech.chalkboard.core;
 
 /**
  * A single physical quantity node: its symbol, its 7D SI dimension vector,
- * its structural complexity (aura range) and its derivation weight.
+ * its structural complexity (aura range), its derivation weight, and its unlock tier.
  */
 public record Quantity(
         String id,
@@ -15,7 +15,8 @@ public record Quantity(
         Kind kind,
         double complexity,
         double value,
-        int weight
+        int weight,
+        int tier
 ) {
 
     public enum Category {
@@ -88,5 +89,20 @@ public record Quantity(
             case CONSTANT -> "\u043a\u043e\u043d\u0441\u0442\u0430\u043d\u0442\u0430";
             case NUMBER -> "\u0447\u0438\u0441\u043b\u043e";
         };
+    }
+
+    public String kindLabelEn() {
+        return switch (kind) {
+            case SCALAR -> "scalar";
+            case VECTOR -> "vector";
+            case TENSOR -> "tensor";
+            case FIELD -> "field";
+            case CONSTANT -> "constant";
+            case NUMBER -> "number";
+        };
+    }
+
+    public String kindLabel(boolean isEn) {
+        return isEn ? kindLabelEn() : kindLabelRu();
     }
 }

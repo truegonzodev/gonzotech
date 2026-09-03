@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "id": "gonzotech:discovery_1"
+    },
+    "title": {
+      "translate": "advancements.gonzotech.discovery_1.title"
+    },
+    "description": {
+      "translate": "advancements.gonzotech.discovery_1.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "background": "gonzotech:textures/block/chalkboard_top.png"
+  },
+  "criteria": {
+    "unlocked": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

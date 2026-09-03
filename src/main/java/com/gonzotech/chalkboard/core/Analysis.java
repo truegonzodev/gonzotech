@@ -28,7 +28,7 @@ public final class Analysis {
     public final Double sD;
     /** Numerical layer. */
     public final Double sN;
-    /** S_D * S_N / 100 - lhsPenalty. */
+    /** S_D * S_N / 100 - lhsPenalty - rhsPenalty. */
     public final Double sFinal;
 
     public final List<Conflict> conflicts;
@@ -46,6 +46,10 @@ public final class Analysis {
     public final int lhsPenalty;
     public final List<String> lhsExtraSlotIds;
 
+    /** −1 point for every extra slot added in the RHS beyond initial preset slots. */
+    public final int rhsPenalty;
+    public final List<String> rhsExtraSlotIds;
+
     /** Quantities that were cancelled out on both sides (anti-inflation compression). */
     public final List<String> cancelledIds;
 
@@ -53,7 +57,9 @@ public final class Analysis {
                     Double sD, Double sN, Double sFinal, List<Conflict> conflicts, List<LocalLove> locals,
                     Map<String, DimVec> required, Map<String, Double> slotLove, Map<String, NodeEval> evalById,
                     boolean discovery, int emptySlots, int filledSlots, int totalSlots,
-                    int lhsPenalty, List<String> lhsExtraSlotIds, List<String> cancelledIds) {
+                    int lhsPenalty, List<String> lhsExtraSlotIds,
+                    int rhsPenalty, List<String> rhsExtraSlotIds,
+                    List<String> cancelledIds) {
         this.complete = complete;
         this.leftVec = leftVec;
         this.rightVec = rightVec;
@@ -73,6 +79,8 @@ public final class Analysis {
         this.totalSlots = totalSlots;
         this.lhsPenalty = lhsPenalty;
         this.lhsExtraSlotIds = lhsExtraSlotIds;
+        this.rhsPenalty = rhsPenalty;
+        this.rhsExtraSlotIds = rhsExtraSlotIds;
         this.cancelledIds = cancelledIds;
     }
 

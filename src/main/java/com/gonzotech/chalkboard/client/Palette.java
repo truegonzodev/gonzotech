@@ -3,42 +3,80 @@ package com.gonzotech.chalkboard.client;
 import com.gonzotech.chalkboard.core.DimVec;
 import com.gonzotech.chalkboard.core.Quantity;
 
-/** Colour projection of the 7 axes onto a hue wheel + the love gradient. */
+/**
+ * Green chalkboard theme palette with white chalk strokes and high-contrast text.
+ */
 public final class Palette {
 
     private Palette() {
     }
 
-    public static final int BG = 0xF00A0D16;
-    public static final int PANEL = 0xE0111726;
-    public static final int PANEL_SOFT = 0x60151C2C;
-    public static final int STROKE = 0x3394A3B8;
-    public static final int TEXT = 0xFFE8EEF7;
-    public static final int TEXT_DIM = 0xFF8A97AB;
-    public static final int TEXT_FAINT = 0xFF5A667A;
-    public static final int CYAN = 0xFF5CE1FF;
-    public static final int AMBER = 0xFFFFC14A;
-    public static final int ROSE = 0xFFFF4D6A;
-    public static final int GREEN = 0xFF3DFF9A;
-    public static final int VIOLET = 0xFFA78BFA;
+    public static final int BG = 0xFF4B7C43;         // Chalkboard Green #4b7c43
+    public static final int PANEL = 0xFF648952;      // Panel Green #648952
+    public static final int PANEL_SOFT = 0xFF3B6334; // Darker Panel Green #3b6334
+    public static final int STROKE = 0xFFF5F5F5;     // Off-white Chalk Border #f5f5f5
+    public static final int TEXT = 0xFFFFFFFF;       // Pure White Text #FFFFFF
+    public static final int TEXT_DIM = 0xFFE2E8F0;   // Bright White Chalk Text
+    public static final int TEXT_FAINT = 0xFFCBD5E1; // Faint White Chalk Text
+    public static final int CYAN = 0xFF7DD3FC;       // Light Blue Chalk
+    public static final int AMBER = 0xFFFDE047;      // Yellow Chalk
+    public static final int ROSE = 0xFFFCA5A5;       // Pink/Red Chalk
+    public static final int GREEN = 0xFF86EFAC;      // Bright Green Chalk
+    public static final int VIOLET = 0xFFC084FC;     // Violet Chalk
 
     /** Discrete love gradient, identical bands to the web build. */
     public static int love(double score) {
-        if (score < 20) return 0xFFFF4D6A;
-        if (score < 40) return 0xFFFF8C42;
-        if (score < 60) return 0xFFFFC14A;
-        if (score < 80) return 0xFF9AE66E;
-        if (score < 95) return 0xFF3DFF9A;
-        return 0xFFE8F6FF;
+        if (score < 20) return 0xFFFCA5A5;
+        if (score < 40) return 0xFFFDBA74;
+        if (score < 60) return 0xFFFDE047;
+        if (score < 80) return 0xFFA3E635;
+        if (score < 95) return 0xFF4ADE80;
+        return 0xFFFFFFFF;
     }
 
     public static int weightColor(int weight) {
         return switch (weight) {
-            case 0 -> 0xFF94A3B8;
+            case 0 -> 0xFFCBD5E1;
             case 1 -> 0xFF4ADE80;
-            case 2 -> 0xFF5CE1FF;
-            default -> 0xFFFFC14A;
+            case 2 -> 0xFF7DD3FC;
+            default -> 0xFFFDE047;
         };
+    }
+
+    /**
+     * Tier colors:
+     * 0 -> Gray (#AAAAAA)
+     * 1 -> Green (#4ADE80)
+     * 2 -> Blue (#38BDF8)
+     * 3 -> Yellow (#FDE047)
+     * 4 -> Red (#FF5555)
+     * 99 -> Purple (#C084FC)
+     */
+    public static int tierColor(int tier) {
+        return switch (tier) {
+            case 0 -> 0xFFAAAAAA;
+            case 1 -> 0xFF4ADE80;
+            case 2 -> 0xFF38BDF8;
+            case 3 -> 0xFFFDE047;
+            case 4 -> 0xFFFF5555;
+            case 99 -> 0xFFC084FC;
+            default -> 0xFFFDE047;
+        };
+    }
+
+    /** Boosts saturation and brightness by +10% for block title text. */
+    public static int brightAccent(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+
+        float[] hsv = new float[3];
+        java.awt.Color.RGBtoHSB(r, g, b, hsv);
+        hsv[1] = Math.min(1.0f, hsv[1] + 0.10f); // +10% saturation
+        hsv[2] = Math.min(1.0f, hsv[2] + 0.10f); // +10% brightness/lightness
+
+        int rgb = java.awt.Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]);
+        return 0xFF000000 | (rgb & 0x00FFFFFF);
     }
 
     /** ARGB with a custom alpha applied to an RGB triplet. */
@@ -61,7 +99,7 @@ public final class Palette {
         double opt = a[6];
         double total = mech + em + therm + chem + opt;
 
-        if (total < 1e-9) return 0xFFB6C0CE;
+        if (total < 1e-9) return 0xFFF5F5F5;
 
         double[][] hues = {{mech, 46}, {em, 212}, {therm, 8}, {chem, 142}, {opt, 320}};
         double x = 0, y = 0;
@@ -79,7 +117,7 @@ public final class Palette {
 
         int axes = v.activeAxes();
         double sat = Math.min(0.85, 0.48 + axes * 0.08 + (kind == Quantity.Kind.TENSOR ? 0.08 : 0.0));
-        double lig = kind == Quantity.Kind.FIELD ? 0.62 : 0.58;
+        double lig = kind == Quantity.Kind.FIELD ? 0.65 : 0.60;
         return hslToArgb(hue, sat, lig);
     }
 

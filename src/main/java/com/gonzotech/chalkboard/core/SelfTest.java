@@ -43,7 +43,7 @@ public final class SelfTest {
                 Expr.Slot.of("riemann"),
                 Expr.Op.of(Expr.OpKind.MUL,
                         Expr.Op.of(Expr.OpKind.DIV,
-                                Expr.Op.of(Expr.OpKind.MUL, Expr.Slot.of("pressure"), Expr.Slot.of("strain_tensor")),
+                                Expr.Op.of(Expr.OpKind.MUL, Expr.Slot.of("pressure"), Expr.Slot.of("stress_tensor")),
                                 Expr.Slot.of("work")),
                         Expr.Slot.of("area")));
         Analysis b0 = Evaluator.analyze(base);
