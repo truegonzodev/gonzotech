@@ -98,9 +98,14 @@ public final class MachineDefs {
     /** GTH, потребляемое котлом за тик работы. */
     public static final int BOILER_GTH_PER_TICK = 22;
 
-    /** Паразитная потеря пара котлом за тик (всегда). */
+    /** Паразитная конденсация пара котлом за тик: пар→вода 1:1, ТОЛЬКО если пар есть. */
     public static final int BOILER_STEAM_LOSS = 1;
-    /** Паразитный возврат воды в свою шкалу за тик (всегда). */
+    /**
+     * @deprecated вода теперь конденсируется из своего же пара (1:1 к
+     *     {@link #BOILER_STEAM_LOSS}), а не создаётся из воздуха. Оставлено для
+     *     справки; в тик-логике не используется.
+     */
+    @Deprecated
     public static final int BOILER_WATER_GAIN = 1;
     /** Паразитная потеря GTH котлом за тик (всегда). */
     public static final int BOILER_GTH_LOSS = 1;
@@ -129,9 +134,14 @@ public final class MachineDefs {
     /** GTU, вырабатываемое стирлингом за тик работы. */
     public static final int STIRLING_GTU_PER_TICK = 2;
 
-    /** Паразитная потеря пара стирлингом за тик (всегда). */
+    /** Паразитная конденсация пара стирлингом за тик: пар→вода 1:1, ТОЛЬКО если пар есть. */
     public static final int STIRLING_STEAM_LOSS = 1;
-    /** Паразитный возврат воды в котёл за тик (всегда). */
+    /**
+     * @deprecated вода теперь конденсируется из своего же пара (1:1 к
+     *     {@link #STIRLING_STEAM_LOSS}), а не создаётся из воздуха — иначе при
+     *     нескольких котлах-соседях был дюп воды. Оставлено для справки.
+     */
+    @Deprecated
     public static final int STIRLING_WATER_GAIN = 1;
 
     /** Макс. приём пара за тик. */

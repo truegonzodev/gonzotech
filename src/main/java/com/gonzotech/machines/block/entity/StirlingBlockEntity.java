@@ -28,8 +28,9 @@ import net.minecraft.world.level.block.state.BlockState;
  * Работает ТОЛЬКО если к одной из граней примыкает паровой котёл
  * ({@link BoilerBlockEntity}). Предметных слотов нет.
  * <p>
- * Паразитика (всегда): −{@link MachineDefs#STIRLING_STEAM_LOSS} пара,
- * +{@link MachineDefs#STIRLING_WATER_GAIN} воды на возврат в котёл.
+ * Паразитика: пар конденсируется в воду 1:1 ({@link MachineDefs#STIRLING_STEAM_LOSS}/t)
+ * на возврат в котёл — ТОЛЬКО если пар есть (иначе при нескольких котлах-соседях
+ * был бы дюп воды).
  */
 public class StirlingBlockEntity extends BaseMachineBlockEntity implements SteamSink, GtuSink {
 
@@ -109,13 +110,12 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
 
         boolean chain = Sinks.hasNeighbor(server, pos, BoilerBlockEntity.class);
 
-        // Паразитика (всегда): теряем пар, копим воду на возврат.
+        // Паразитика: пар «стынет» в воду 1:1, ТОЛЬКО если пар есть.
+        //    Вода конденсируется из своего же пара — ничего не создаётся из
+        //    воздуха, поэтому дюпа воды при нескольких котлах-соседях нет.
         if (be.steam.amount() > 0) {
-            be.steam.extract(MachineDefs.STIRLING_STEAM_LOSS, false);
-            changed = true;
-        }
-        if (!be.water.isFull()) {
-            be.water.receive(MachineDefs.STIRLING_WATER_GAIN, false);
+            int cooled = be.steam.extract(MachineDefs.STIRLING_STEAM_LOSS, false);
+            be.water.receive(cooled, false);
             changed = true;
         }
 

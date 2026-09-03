@@ -32,9 +32,9 @@ import net.minecraft.world.level.block.state.BlockState;
  * Слот 0 — ведро-провайдер воды (осушается в буфер, пустое ведро уходит в слот 1).
  * Слот 1 — только забор пустых вёдер (игрок ничего туда положить не может).
  * <p>
- * Паразитика (всегда): −{@link MachineDefs#BOILER_STEAM_LOSS} пара,
- * +{@link MachineDefs#BOILER_WATER_GAIN} воды в свою шкалу,
- * −{@link MachineDefs#BOILER_GTH_LOSS} GTH.
+ * Паразитика: пар конденсируется обратно в свою же воду 1:1
+ * ({@link MachineDefs#BOILER_STEAM_LOSS}/t) — ТОЛЬКО если пар есть (ничего не
+ * создаётся из воздуха); GTH рассеивается на {@link MachineDefs#BOILER_GTH_LOSS}/t.
  */
 public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink, SteamSink, WaterSink {
 
@@ -122,15 +122,14 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
             changed = true;
         }
 
-        // 2. Паразитика (всегда, независимо от условий).
+        // 2. Паразитика: пар «стынет» обратно в воду 1:1, ТОЛЬКО если пар есть.
+        //    Ничего не создаётся из воздуха — пар превращается в свою же воду.
         if (be.steam.amount() > 0) {
-            be.steam.extract(MachineDefs.BOILER_STEAM_LOSS, false);
+            int cooled = be.steam.extract(MachineDefs.BOILER_STEAM_LOSS, false);
+            be.water.receive(cooled, false);
             changed = true;
         }
-        if (!be.water.isFull()) {
-            be.water.receive(MachineDefs.BOILER_WATER_GAIN, false);
-            changed = true;
-        }
+        // Паразитная потеря GTH — всегда (тепло просто рассеивается).
         if (be.gth.amount() > 0) {
             be.gth.extract(MachineDefs.BOILER_GTH_LOSS, false);
             changed = true;

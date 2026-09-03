@@ -9,21 +9,35 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * Общая база экранов машин паровой ветки.
- * <p>
- * БАЗА ПОД PNG-GUI. Экран может работать в двух режимах:
+ * Общая база экранов машин паровой ветки — «слоёный пирог» под будущий PNG-GUI.
+ *
+ * <h2>Как устроен рендер (слои снизу вверх)</h2>
  * <ol>
- *   <li><b>Процедурный</b> (по умолчанию): фон, рамки слотов и «дорожки» шкал
- *       рисуются {@code fill}-прямоугольниками. Заведомо рабочий GUI без ассетов.</li>
- *   <li><b>Текстурный</b>: как только художник кладёт PNG-окно по пути
- *       {@code assets/gonzotech/textures/gui/&lt;name&gt;.png} (лист 256×256, само
- *       окно 176×166), наследник переопределяет {@link #backgroundTexture()} —
- *       и фон/рамки берутся из PNG. Динамические шкалы всё равно дорисовываются
- *       поверх ({@link #drawVBar}/{@link #drawHBar}), поэтому переход на рисованные
- *       меню не ломает логику.</li>
+ *   <li><b>Мир</b> — затемняется движком ({@link #renderBackground}). Мы его не трогаем.</li>
+ *   <li><b>Фон-окно (PNG)</b> — {@link #backgroundTexture()}. Пока это КРАСНАЯ
+ *       РАМКА-эталон ({@code textures/gui/reference.png}, лист 256×256, само окно
+ *       176×166 в левом-верхнем углу листа). Она почти прозрачная: видно и мир, и
+ *       ванильный инвентарь игрока. По ней ты поймёшь, куда позиционировать свой
+ *       рисованный PNG, чтобы он бесшовно лёг на серый инвентарь игрока.</li>
+ *   <li><b>Слоты-контейнеры</b> — их рисует ванила поверх фона (подсветку при
+ *       наведении и т.п.). Рамки слотов ИНВЕНТАРЯ игрока мы НЕ рисуем — они
+ *       придут из твоего PNG (или из ванильного фона).</li>
+ *   <li><b>«Парящие» элементы машины</b> — {@link #drawMachine}: рамки машинных
+ *       слотов и динамические шкалы/стрелки. Рисуются всегда, поверх фона.</li>
+ *   <li><b>Предметы в слотах + тултипы</b> — ванила, самый верх.</li>
  * </ol>
- * Ничего в отрисовке не «прибито гвоздями»: чтобы включить PNG, достаточно вернуть
- * {@link ResourceLocation} из {@link #backgroundTexture()}.
+ *
+ * <h2>Как подставить свой PNG</h2>
+ * Нарисуй окно 176×166 в левом-верхнем углу листа 256×256, сохрани в
+ * {@code assets/gonzotech/textures/gui/&lt;имя&gt;.png} и переопредели в наследнике:
+ * <pre>
+ * &#64;Override protected ResourceLocation backgroundTexture() {
+ *     return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + "firebox.png");
+ * }
+ * </pre>
+ * Больше ничего менять не нужно: логика, слоты и шкалы уже позиционированы.
+ * (Если PNG сам рисует машинные слоты — можешь убрать их процедурную отрисовку,
+ * см. {@link #drawFrames()}.)
  */
 public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractContainerScreen<T> {
 
@@ -32,20 +46,18 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     /** Размер листа PNG-окна (стандарт GUI). */
     protected static final int TEX_SHEET = 256;
 
-    // Палитра «тёмный металл» под индустриальный тон Gonzo Tech (процедурный режим).
-    protected static final int PANEL_BG = 0xFF2B2F36;
-    protected static final int PANEL_LIGHT = 0xFF3C424C;
-    protected static final int PANEL_DARK = 0xFF15171B;
-    protected static final int SLOT_BG = 0xFF101215;
-    protected static final int SLOT_EDGE = 0xFF54606E;
-    protected static final int TEXT = 0xFFE6E9EF;
+    /** Красная рамка-эталон 256×256 — временный ориентир, пока нет рисованного PNG. */
+    protected static final ResourceLocation REFERENCE =
+        ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + "reference.png");
 
-    // Цвета ресурсов.
+    // Цвета «парящих» шкал (сам синий фон-панель удалён насовсем).
     protected static final int COL_GTH = 0xFFE0562A;    // тепло — оранжево-красный
     protected static final int COL_STEAM = 0xFFB9C6D6;  // пар — светло-серый
     protected static final int COL_GTU = 0xFF3FB6E6;    // электричество — голубой
     protected static final int COL_WATER = 0xFF3B6BE0;  // вода — синий
     protected static final int COL_TRACK = 0xFF0B0C0E;  // фон шкалы
+    protected static final int SLOT_EDGE = 0xFF54606E;  // рамка «парящего» слота
+    protected static final int SLOT_BG = 0xFF101215;    // нутро «парящего» слота
 
     protected MachineScreen(T menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -63,12 +75,19 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     }
 
     /**
-     * Текстура-фон окна. По умолчанию {@code null} → процедурный режим.
-     * Переопределите в наследнике, когда появится нарисованный PNG:
-     * <pre>return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + "firebox.png");</pre>
+     * Фон-окно. По умолчанию — красная рамка-эталон {@link #REFERENCE}.
+     * Переопредели, вернув свой рисованный PNG, когда он будет готов.
      */
     protected ResourceLocation backgroundTexture() {
-        return null;
+        return REFERENCE;
+    }
+
+    /**
+     * Рисовать ли процедурные рамки машинных слотов и «дорожки» шкал.
+     * Верни {@code false}, если всё это уже нарисовано прямо в твоём PNG.
+     */
+    protected boolean drawFrames() {
+        return true;
     }
 
     @Override
@@ -78,59 +97,38 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         this.renderTooltip(g, mouseX, mouseY);
     }
 
+    /** Убираем ВЕСЬ текст-подписи («Топка», «Инвентарь»). */
+    @Override
+    protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+        // намеренно пусто
+    }
+
     @Override
     protected void renderBg(GuiGraphics g, float partial, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
 
+        // Слой «фон-окно»: PNG (по умолчанию — красная рамка-эталон).
         ResourceLocation tex = backgroundTexture();
         if (tex != null) {
-            // Текстурный режим: всё окно (фон + рамки слотов) из PNG.
             g.blit(RenderType::guiTextured, tex, x, y, 0f, 0f,
                 imageWidth, imageHeight, TEX_SHEET, TEX_SHEET);
-        } else {
-            drawProceduralChrome(g, x, y);
         }
 
-        // Динамические элементы (шкалы/слоты машины) — всегда поверх фона.
+        // Слой «парящие элементы машины»: рамки машинных слотов + шкалы.
         drawMachine(g, x, y, mouseX, mouseY);
     }
 
-    /** Процедурный фон + рамки слотов инвентаря игрока. */
-    private void drawProceduralChrome(GuiGraphics g, int x, int y) {
-        g.fill(x, y, x + imageWidth, y + imageHeight, PANEL_BG);
-        g.fill(x, y, x + imageWidth, y + 1, PANEL_LIGHT);
-        g.fill(x, y, x + 1, y + imageHeight, PANEL_LIGHT);
-        g.fill(x + imageWidth - 1, y, x + imageWidth, y + imageHeight, PANEL_DARK);
-        g.fill(x, y + imageHeight - 1, x + imageWidth, y + imageHeight, PANEL_DARK);
-
-        int invX = x + 8;
-        int invY = y + 84;
-        for (int row = 0; row < 3; row++) {
-            for (int col = 0; col < 9; col++) {
-                drawSlot(g, invX + col * 18, invY + row * 18);
-            }
-        }
-        for (int col = 0; col < 9; col++) {
-            drawSlot(g, invX + col * 18, invY + 58);
-        }
-    }
-
-    /** Рисуется ли фон процедурно (нет PNG). Наследники используют для рамок слотов. */
-    protected boolean isProcedural() {
-        return backgroundTexture() == null;
-    }
-
-    /** Рамка одного слота 18×18 (внутри клетка 16×16). Только в процедурном режиме. */
+    /** Рамка одного «парящего» слота 18×18 (внутри клетка 16×16). */
     protected void drawSlot(GuiGraphics g, int x, int y) {
-        if (!isProcedural()) return;
+        if (!drawFrames()) return;
         g.fill(x, y, x + 18, y + 18, SLOT_EDGE);
         g.fill(x + 1, y + 1, x + 17, y + 17, SLOT_BG);
     }
 
     /** Вертикальная шкала-заполнение снизу вверх. */
     protected void drawVBar(GuiGraphics g, int x, int y, int w, int h, float fraction, int color) {
-        if (isProcedural()) {
+        if (drawFrames()) {
             g.fill(x - 1, y - 1, x + w + 1, y + h + 1, SLOT_EDGE);
             g.fill(x, y, x + w, y + h, COL_TRACK);
         }
@@ -142,7 +140,7 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     /** Горизонтальный прогресс-бар слева направо. */
     protected void drawHBar(GuiGraphics g, int x, int y, int w, int h, float fraction, int color) {
-        if (isProcedural()) {
+        if (drawFrames()) {
             g.fill(x - 1, y - 1, x + w + 1, y + h + 1, SLOT_EDGE);
             g.fill(x, y, x + w, y + h, COL_TRACK);
         }
