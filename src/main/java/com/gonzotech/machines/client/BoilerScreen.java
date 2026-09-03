@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Экран котла: слоты ведра, три шкалы (GTH/вода/пар). */
+/** Экран котла: три шкалы (GTH/вода/пар) — только проявление текстур. */
 public class BoilerScreen extends MachineScreen<BoilerMenu> {
 
     public BoilerScreen(BoilerMenu menu, Inventory inv, Component title) {
@@ -17,24 +17,21 @@ public class BoilerScreen extends MachineScreen<BoilerMenu> {
 
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawSlot(g, x + 44 - 1, y + 35 - 1);  // ведро-провайдер воды (вход)
-        drawSlot(g, x + 44 - 1, y + 57 - 1);  // пустое ведро (выход)
-
         int barY = y + 17;
-        int barW = 10;
+        int barW = 16;
         int barH = 52;
 
-        int gthX = x + 76;
+        int gthX = x + 74;
         int watX = x + 100;
-        int steX = x + 124;
+        int steX = x + 126;
 
         float gth = (float) menu.gth() / MachineDefs.BOILER_GTH_CAPACITY;
         float water = (float) menu.water() / MachineDefs.BOILER_WATER_CAPACITY;
         float steam = (float) menu.steam() / MachineDefs.BOILER_STEAM_CAPACITY;
 
-        drawVBar(g, gthX, barY, barW, barH, gth, COL_GTH);
-        drawVBar(g, watX, barY, barW, barH, water, COL_WATER);
-        drawVBar(g, steX, barY, barW, barH, steam, COL_STEAM);
+        drawVBarTex(g, gthX, barY, barW, barH, gth, BAR_HEAT);
+        drawVBarTex(g, watX, barY, barW, barH, water, BAR_FLUID);
+        drawVBarTex(g, steX, barY, barW, barH, steam, BAR_STEAM);
 
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(

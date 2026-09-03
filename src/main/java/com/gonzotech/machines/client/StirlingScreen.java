@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Экран генератора Стирлинга: шкалы пара и GTU, стрелка «пар → GTU». */
+/** Экран генератора Стирлинга: шкалы пара и GTU + стрелка «пар → GTU» — проявление текстур. */
 public class StirlingScreen extends MachineScreen<StirlingMenu> {
 
     public StirlingScreen(StirlingMenu menu, Inventory inv, Component title) {
@@ -18,20 +18,20 @@ public class StirlingScreen extends MachineScreen<StirlingMenu> {
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         int barY = y + 17;
-        int barW = 12;
+        int barW = 16;
         int barH = 52;
 
-        int steX = x + 60;
-        int gtuX = x + 104;
+        int steX = x + 58;
+        int gtuX = x + 102;
 
         float steam = (float) menu.steam() / MachineDefs.STIRLING_STEAM_CAPACITY;
         float gtu = (float) menu.gtu() / MachineDefs.STIRLING_GTU_CAPACITY;
 
-        drawVBar(g, steX, barY, barW, barH, steam, COL_STEAM);
-        drawVBar(g, gtuX, barY, barW, barH, gtu, COL_GTU);
+        drawVBarTex(g, steX, barY, barW, barH, steam, BAR_STEAM);
+        drawVBarTex(g, gtuX, barY, barW, barH, gtu, BAR_FLUID);
 
         // Стрелка «пар → GTU» между шкалами.
-        drawHBar(g, x + 78, y + 40, 20, 6, menu.running() ? 1f : 0f, COL_GTU);
+        drawHBarTex(g, x + 78, y + 36, 20, 16, menu.running() ? 1f : 0f, BAR_FLUID);
 
         if (inRect(mouseX, mouseY, steX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(

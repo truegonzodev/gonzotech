@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Экран электропечи: слоты вход/выход, стрелка переплавки, шкала GTU. */
+/** Экран электропечи: стрелка переплавки + шкала GTU — только проявление текстур. */
 public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
 
     public ElectricFurnaceScreen(ElectricFurnaceMenu menu, Inventory inv, Component title) {
@@ -17,20 +17,17 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
 
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        drawSlot(g, x + 56 - 1, y + 35 - 1);   // вход
-        drawSlot(g, x + 116 - 1, y + 35 - 1);  // выход
-
         // Стрелка прогресса переплавки.
         float cook = menu.cookTotal() > 0 ? (float) menu.cookProgress() / menu.cookTotal() : 0f;
-        drawHBar(g, x + 80, y + 34, 24, 6, cook, COL_GTU);
+        drawHBarTex(g, x + 80, y + 34, 24, 16, cook, BAR_FLUID);
 
         // Шкала GTU слева.
         int barX = x + 20;
         int barY = y + 17;
-        int barW = 12;
+        int barW = 16;
         int barH = 52;
         float gtu = (float) menu.gtu() / MachineDefs.ELECTRIC_GTU_CAPACITY;
-        drawVBar(g, barX, barY, barW, barH, gtu, COL_GTU);
+        drawVBarTex(g, barX, barY, barW, barH, gtu, BAR_FLUID);
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(

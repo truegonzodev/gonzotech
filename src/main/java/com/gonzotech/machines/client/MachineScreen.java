@@ -9,55 +9,56 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * Общая база экранов машин паровой ветки — «слоёный пирог» под будущий PNG-GUI.
+ * Общая база экранов машин — «слоёный пирог» под рисованный PNG-GUI.
  *
- * <h2>Как устроен рендер (слои снизу вверх)</h2>
- * <ol>
- *   <li><b>Мир</b> — затемняется движком ({@link #renderBackground}). Мы его не трогаем.</li>
- *   <li><b>Фон-окно (PNG)</b> — {@link #backgroundTexture()}. Пока это КРАСНАЯ
- *       РАМКА-эталон ({@code textures/gui/reference.png}, лист 256×256, само окно
- *       176×166 в левом-верхнем углу листа). Она почти прозрачная: видно и мир, и
- *       ванильный инвентарь игрока. По ней ты поймёшь, куда позиционировать свой
- *       рисованный PNG, чтобы он бесшовно лёг на серый инвентарь игрока.</li>
- *   <li><b>Слоты-контейнеры</b> — их рисует ванила поверх фона (подсветку при
- *       наведении и т.п.). Рамки слотов ИНВЕНТАРЯ игрока мы НЕ рисуем — они
- *       придут из твоего PNG (или из ванильного фона).</li>
- *   <li><b>«Парящие» элементы машины</b> — {@link #drawMachine}: рамки машинных
- *       слотов и динамические шкалы/стрелки. Рисуются всегда, поверх фона.</li>
- *   <li><b>Предметы в слотах + тултипы</b> — ванила, самый верх.</li>
- * </ol>
- *
- * <h2>Как подставить свой PNG</h2>
- * Нарисуй окно 176×166 в левом-верхнем углу листа 256×256, сохрани в
- * {@code assets/gonzotech/textures/gui/&lt;имя&gt;.png} и переопредели в наследнике:
+ * <h2>Слои (сверху вниз по Z)</h2>
  * <pre>
- * &#64;Override protected ResourceLocation backgroundTexture() {
- *     return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + "firebox.png");
- * }
+ *   Z3  Предметы + тултипы .............. ванила, самый верх
+ *   Z2  Предметы в слотах / подсветка ... ванила
+ *   Z1  PNG-ОКНО С ДЫРКАМИ ............... {@link #foregroundTexture()}  (маскирует шкалы)
+ *   Z0  ПРОЯВЛЯЮЩИЕСЯ ШКАЛЫ ............. {@link #drawMachine} (текстура-заливка)
+ *   Z-1 PNG-ФОН (под шкалами) ........... {@link #backgroundTexture()}
+ *   Z-2 Затемнение мира ................. движок ({@link #renderBackground})
  * </pre>
- * Больше ничего менять не нужно: логика, слоты и шкалы уже позиционированы.
- * (Если PNG сам рисует машинные слоты — можешь убрать их процедурную отрисовку,
- * см. {@link #drawFrames()}.)
+ * Слои Z1/Z0/Z-1 рисуются в {@link #renderBg} ДО того, как ванила отрисует
+ * предметы, поэтому предметы (Z2) и тултипы (Z3) автоматически лягут выше.
+ * <p>
+ * <b>Идея с дырками.</b> Всё «железо» окна (рамки слотов, обводки, подписи,
+ * фон) рисуешь ты в PNG. В местах шкал в переднем PNG (Z1) делаешь ПРОЗРАЧНЫЕ
+ * дырки. Под ними (Z0) мы «проявляем» текстуру-заливку снизу-вверх (или
+ * слева-направо для прогресса) — не растягивая, а открывая всё большую часть
+ * заранее затайленной 16×16 текстуры (см. {@link #drawVBarTex}). Так как передний
+ * PNG лежит ВЫШЕ шкалы, ей не нужно идеально влезать в дырку по ширине — лишнее
+ * просто перекроется рисунком. Все три PNG (Z1/Z0/Z-1) — 32-битные ARGB с альфой.
+ *
+ * <h2>Размер листа и «большое меню» (512×512 @ −128,−128)</h2>
+ * Зона взаимодействия (слоты/клики) остаётся стандартной 176×166 — её геометрию
+ * менять нельзя, иначе поедут слоты и попадание мышью. Но сам РИСУНОК может быть
+ * больше и вылезать за окно: переопредели {@link #sheetSize()} = 512 и
+ * {@link #texOffsetX()}/{@link #texOffsetY()} = −128. Тогда лист 512×512 блитится
+ * в точку {@code (leftPos−128, topPos−128)}, а интерактивное окно 176×166
+ * оказывается ровно в центре листа (в его коорд. 128,128). Так меню выглядит
+ * крупнее (рамка/декор торчат наружу до 128 px во все стороны), а клики и слоты
+ * работают как обычно. Это оптимальный маршрут: увеличивать физический размер
+ * слотов (масштаб предметов) ваниль без костылей не умеет — click-detection ломается.
  */
 public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractContainerScreen<T> {
 
-    /** Каталог текстур GUI машин. Художник кладёт PNG сюда. */
+    /** Каталог текстур GUI машин. */
     public static final String GUI_DIR = "textures/gui/";
-    /** Размер листа PNG-окна (стандарт GUI). */
-    protected static final int TEX_SHEET = 256;
 
-    /** Красная рамка-эталон 256×256 — временный ориентир, пока нет рисованного PNG. */
-    protected static final ResourceLocation REFERENCE =
-        ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + "reference.png");
+    private static ResourceLocation gui(String file) {
+        return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + file);
+    }
 
-    // Цвета «парящих» шкал (сам синий фон-панель удалён насовсем).
-    protected static final int COL_GTH = 0xFFE0562A;    // тепло — оранжево-красный
-    protected static final int COL_STEAM = 0xFFB9C6D6;  // пар — светло-серый
-    protected static final int COL_GTU = 0xFF3FB6E6;    // электричество — голубой
-    protected static final int COL_WATER = 0xFF3B6BE0;  // вода — синий
-    protected static final int COL_TRACK = 0xFF0B0C0E;  // фон шкалы
-    protected static final int SLOT_EDGE = 0xFF54606E;  // рамка «парящего» слота
-    protected static final int SLOT_BG = 0xFF101215;    // нутро «парящего» слота
+    /** Красные рамки-эталоны (для позиционирования, по умолчанию не показываются). */
+    protected static final ResourceLocation REFERENCE_256 = gui("reference.png");
+    protected static final ResourceLocation REFERENCE_512 = gui("reference_512.png");
+
+    // Отладочные шахматные текстуры-заливки шкал (проявление, не растяжение).
+    protected static final ResourceLocation BAR_HEAT = gui("bar_debug_a.png");   // GTH / пламя / переплавка
+    protected static final ResourceLocation BAR_STEAM = gui("bar_debug_b.png");  // пар
+    protected static final ResourceLocation BAR_FLUID = gui("bar_debug_c.png");  // вода / GTU
 
     protected MachineScreen(T menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -74,21 +75,33 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
-    /**
-     * Фон-окно. По умолчанию — красная рамка-эталон {@link #REFERENCE}.
-     * Переопредели, вернув свой рисованный PNG, когда он будет готов.
-     */
+    // ─────────────────── Настройки PNG-листа (переопределяемые) ───────────────────
+
+    /** Задний PNG (Z-1), под шкалами. По умолчанию нет. */
     protected ResourceLocation backgroundTexture() {
-        return REFERENCE;
+        return null;
     }
 
-    /**
-     * Рисовать ли процедурные рамки машинных слотов и «дорожки» шкал.
-     * Верни {@code false}, если всё это уже нарисовано прямо в твоём PNG.
-     */
-    protected boolean drawFrames() {
-        return true;
+    /** Передний PNG с дырками (Z1), над шкалами. По умолчанию нет. */
+    protected ResourceLocation foregroundTexture() {
+        return null;
     }
+
+    /** Размер квадратного листа PNG (256 или 512). */
+    protected int sheetSize() {
+        return 256;
+    }
+
+    /** Смещение блита листа относительно угла окна (для 512 обычно −128). */
+    protected int texOffsetX() {
+        return 0;
+    }
+
+    protected int texOffsetY() {
+        return 0;
+    }
+
+    // ─────────────────── Рендер ───────────────────
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
@@ -97,10 +110,10 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         this.renderTooltip(g, mouseX, mouseY);
     }
 
-    /** Убираем ВЕСЬ текст-подписи («Топка», «Инвентарь»). */
+    /** Убираем ВЕСЬ текст-подписи (название машины, «Инвентарь»). */
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-        // намеренно пусто
+        // намеренно пусто — всё оформление приходит из PNG
     }
 
     @Override
@@ -108,63 +121,69 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         int x = this.leftPos;
         int y = this.topPos;
 
-        // Слой «фон-окно»: PNG (по умолчанию — красная рамка-эталон).
-        ResourceLocation tex = backgroundTexture();
-        if (tex != null) {
-            g.blit(RenderType::guiTextured, tex, x, y, 0f, 0f,
-                imageWidth, imageHeight, TEX_SHEET, TEX_SHEET);
-        }
+        // Z-1: задний PNG-фон.
+        blitSheet(g, backgroundTexture(), x, y);
 
-        // Слой «парящие элементы машины»: рамки машинных слотов + шкалы.
+        // Z0: проявляющиеся шкалы (только заливка, без фона/обводки).
         drawMachine(g, x, y, mouseX, mouseY);
+
+        // Z1: передний PNG с дырками — маскирует лишнее у шкал.
+        blitSheet(g, foregroundTexture(), x, y);
     }
 
-    /** Рамка одного «парящего» слота 18×18 (внутри клетка 16×16). */
-    protected void drawSlot(GuiGraphics g, int x, int y) {
-        if (!drawFrames()) return;
-        g.fill(x, y, x + 18, y + 18, SLOT_EDGE);
-        g.fill(x + 1, y + 1, x + 17, y + 17, SLOT_BG);
+    /** Блит всего листа PNG в угол окна с учётом размера листа и смещения. */
+    private void blitSheet(GuiGraphics g, ResourceLocation tex, int x, int y) {
+        if (tex == null) return;
+        int s = sheetSize();
+        g.blit(RenderType::guiTextured, tex, x + texOffsetX(), y + texOffsetY(),
+            0f, 0f, s, s, s, s);
     }
 
-    /** Вертикальная шкала-заполнение снизу вверх. */
-    protected void drawVBar(GuiGraphics g, int x, int y, int w, int h, float fraction, int color) {
-        if (drawFrames()) {
-            g.fill(x - 1, y - 1, x + w + 1, y + h + 1, SLOT_EDGE);
-            g.fill(x, y, x + w, y + h, COL_TRACK);
+    // ─────────────────── Шкалы: «проявление» текстуры (без растяжения) ───────────────────
+
+    /**
+     * Вертикальная шкала: открывает нижние {@code fraction·h} пикселей заранее
+     * затайленной 16×16 текстуры (растёт снизу вверх, тайлы стыкуются бесшовно).
+     */
+    protected void drawVBarTex(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
+        int filled = Math.round(clamp01(fraction) * h);
+        if (filled <= 0) return;
+        int top = y + h - filled;
+        g.enableScissor(x, top, x + w, y + h);
+        // Тайлим 16×16, привязка к НИЗУ шкалы → рост снизу без сдвига паттерна.
+        for (int py = y + h - 16; py > y - 16; py -= 16) {
+            for (int px = x; px < x + w; px += 16) {
+                g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
+            }
         }
-        int filled = Math.round(Mathf.clamp01(fraction) * h);
-        if (filled > 0) {
-            g.fill(x, y + (h - filled), x + w, y + h, color);
-        }
+        g.disableScissor();
     }
 
-    /** Горизонтальный прогресс-бар слева направо. */
-    protected void drawHBar(GuiGraphics g, int x, int y, int w, int h, float fraction, int color) {
-        if (drawFrames()) {
-            g.fill(x - 1, y - 1, x + w + 1, y + h + 1, SLOT_EDGE);
-            g.fill(x, y, x + w, y + h, COL_TRACK);
+    /**
+     * Горизонтальная шкала (прогресс): открывает левые {@code fraction·w} пикселей
+     * затайленной текстуры (растёт слева направо).
+     */
+    protected void drawHBarTex(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
+        int filled = Math.round(clamp01(fraction) * w);
+        if (filled <= 0) return;
+        g.enableScissor(x, y, x + filled, y + h);
+        for (int py = y; py < y + h; py += 16) {
+            for (int px = x; px < x + w; px += 16) {
+                g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
+            }
         }
-        int filled = Math.round(Mathf.clamp01(fraction) * w);
-        if (filled > 0) {
-            g.fill(x, y, x + filled, y + h, color);
-        }
+        g.disableScissor();
     }
 
-    /** Наведение мыши на прямоугольник. */
+    /** Наведение мыши на прямоугольник (для тултипов шкал). */
     protected boolean inRect(int mouseX, int mouseY, int x, int y, int w, int h) {
         return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
     }
 
-    /** Специфичная для машины отрисовка (слоты машины, шкалы). */
+    /** Специфичная для машины отрисовка шкал (слой Z0). */
     protected abstract void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY);
 
-    /** Мелкий матан без завязки на внешние классы. */
-    protected static final class Mathf {
-        private Mathf() {
-        }
-
-        static float clamp01(float v) {
-            return v < 0 ? 0 : (v > 1 ? 1 : v);
-        }
+    protected static float clamp01(float v) {
+        return v < 0 ? 0 : (v > 1 ? 1 : v);
     }
 }

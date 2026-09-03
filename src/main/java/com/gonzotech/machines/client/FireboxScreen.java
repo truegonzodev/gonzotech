@@ -8,7 +8,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Экран топки: слоты нагрузки/топлива/выхода, стрелка переплавки, шкала GTH справа. */
+/** Экран топки: шкала пламени, стрелка переплавки, шкала GTH — только проявление текстур. */
 public class FireboxScreen extends MachineScreen<FireboxMenu> {
 
     public FireboxScreen(FireboxMenu menu, Inventory inv, Component title) {
@@ -17,26 +17,21 @@ public class FireboxScreen extends MachineScreen<FireboxMenu> {
 
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        // Слоты машины (совпадают с координатами в FireboxMenu).
-        drawSlot(g, x + 44 - 1, y + 17 - 1);   // вход-нагрузка
-        drawSlot(g, x + 44 - 1, y + 53 - 1);   // топливо
-        drawSlot(g, x + 104 - 1, y + 35 - 1);  // выход
-
-        // Индикатор пламени между слотами топлива и нагрузки.
+        // Индикатор пламени (между слотами топлива и нагрузки).
         float lit = menu.litDuration() > 0 ? (float) menu.litTime() / menu.litDuration() : 0f;
-        drawVBar(g, x + 46, y + 37, 12, 12, lit, COL_GTH);
+        drawVBarTex(g, x + 46, y + 37, 14, 14, lit, BAR_HEAT);
 
         // Стрелка прогресса переплавки.
         float cook = menu.cookTotal() > 0 ? (float) menu.cookProgress() / menu.cookTotal() : 0f;
-        drawHBar(g, x + 68, y + 34, 24, 6, cook, 0xFFB8B8B8);
+        drawHBarTex(g, x + 68, y + 34, 24, 16, cook, BAR_HEAT);
 
         // Шкала GTH справа.
         int barX = x + 150;
         int barY = y + 17;
-        int barW = 10;
+        int barW = 16;
         int barH = 52;
         float gth = menu.gthCapacity() > 0 ? (float) menu.gth() / menu.gthCapacity() : 0f;
-        drawVBar(g, barX, barY, barW, barH, gth, COL_GTH);
+        drawVBarTex(g, barX, barY, barW, barH, gth, BAR_HEAT);
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
