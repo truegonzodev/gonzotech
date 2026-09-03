@@ -36,6 +36,12 @@ public final class Sinks {
         int receiveGtu(int amount, boolean simulate);
     }
 
+    /** Блок умеет принимать воду (mB) от соседа (котёл — от генератора). */
+    public interface WaterSink {
+        /** @return сколько воды (mB) реально принято */
+        int receiveWater(int amount, boolean simulate);
+    }
+
     /**
      * Есть ли среди 6 соседей блок-сущность заданного класса.
      * Используется для проверки «вижу ли я нужного соседа в цепочке».

@@ -2,14 +2,13 @@ package com.gonzotech.machines.client;
 
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.StirlingMenu;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Экран генератора Стирлинга: шкалы пара и GTU, индикаторы цепочки и работы. */
+/** Экран генератора Стирлинга: шкалы пара и GTU, стрелка «пар → GTU». */
 public class StirlingScreen extends MachineScreen<StirlingMenu> {
 
     public StirlingScreen(StirlingMenu menu, Inventory inv, Component title) {
@@ -25,8 +24,8 @@ public class StirlingScreen extends MachineScreen<StirlingMenu> {
         int steX = x + 60;
         int gtuX = x + 104;
 
-        float steam = (float) menu.steam() / MachineDefs.STEAM_CAPACITY;
-        float gtu = (float) menu.gtu() / MachineDefs.GTU_CAPACITY;
+        float steam = (float) menu.steam() / MachineDefs.STIRLING_STEAM_CAPACITY;
+        float gtu = (float) menu.gtu() / MachineDefs.STIRLING_GTU_CAPACITY;
 
         drawVBar(g, steX, barY, barW, barH, steam, COL_STEAM);
         drawVBar(g, gtuX, barY, barW, barH, gtu, COL_GTU);
@@ -34,22 +33,12 @@ public class StirlingScreen extends MachineScreen<StirlingMenu> {
         // Стрелка «пар → GTU» между шкалами.
         drawHBar(g, x + 78, y + 40, 20, 6, menu.running() ? 1f : 0f, COL_GTU);
 
-        Component status;
-        if (!menu.chainOk()) {
-            status = Component.translatable("gui.gonzotech.chain_missing_boiler").withStyle(ChatFormatting.RED);
-        } else if (menu.running()) {
-            status = Component.translatable("gui.gonzotech.running").withStyle(ChatFormatting.GREEN);
-        } else {
-            status = Component.translatable("gui.gonzotech.idle").withStyle(ChatFormatting.YELLOW);
-        }
-        g.drawString(this.font, status, x + 8, y + 72, TEXT, false);
-
         if (inRect(mouseX, mouseY, steX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.steam", menu.steam(), MachineDefs.STEAM_CAPACITY)), mouseX, mouseY);
+                Component.translatable("gui.gonzotech.steam", menu.steam(), MachineDefs.STIRLING_STEAM_CAPACITY)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.GTU_CAPACITY)), mouseX, mouseY);
+                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.STIRLING_GTU_CAPACITY)), mouseX, mouseY);
         }
     }
 }

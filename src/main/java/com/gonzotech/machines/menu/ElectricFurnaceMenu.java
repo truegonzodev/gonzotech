@@ -9,8 +9,8 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 
 /**
- * Меню электропечи: слот входа и слот выхода (без топлива), шкала GTU,
- * прогресс переплавки и индикатор собранной цепочки.
+ * Меню электропечи: слот входа и слот выхода (без топлива), шкала GTU и
+ * прогресс переплавки.
  */
 public class ElectricFurnaceMenu extends BaseMachineMenu {
 
@@ -19,7 +19,7 @@ public class ElectricFurnaceMenu extends BaseMachineMenu {
     private final ElectricFurnaceBlockEntity be;
 
     public ElectricFurnaceMenu(int id, Inventory inv, RegistryFriendlyByteBuf buf) {
-        this(id, inv, MenuHelper.readBlockEntity(inv, buf, ElectricFurnaceBlockEntity.class), new SimpleContainerData(5));
+        this(id, inv, MenuHelper.readBlockEntity(inv, buf, ElectricFurnaceBlockEntity.class), new SimpleContainerData(3));
     }
 
     public ElectricFurnaceMenu(int id, Inventory inv, ElectricFurnaceBlockEntity be, ContainerData data) {
@@ -27,7 +27,7 @@ public class ElectricFurnaceMenu extends BaseMachineMenu {
         this.be = be;
 
         addSlot(new Slot(be, ElectricFurnaceBlockEntity.SLOT_INPUT, 56, 35));
-        addSlot(new Slot(be, ElectricFurnaceBlockEntity.SLOT_OUTPUT, 116, 35));
+        addSlot(new OutputOnlySlot(be, ElectricFurnaceBlockEntity.SLOT_OUTPUT, 116, 35));
 
         addPlayerInventory(inv, 8, 84);
     }
@@ -37,18 +37,14 @@ public class ElectricFurnaceMenu extends BaseMachineMenu {
     }
 
     public int gtu() {
-        return (data.get(0) & 0xFFFF) | ((data.get(1) & 0xFFFF) << 16);
+        return data.get(0);
     }
 
     public int cookProgress() {
-        return data.get(2);
+        return data.get(1);
     }
 
     public int cookTotal() {
-        return data.get(3);
-    }
-
-    public boolean chainOk() {
-        return data.get(4) != 0;
+        return data.get(2);
     }
 }

@@ -19,32 +19,34 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Электрическая печь — плавит ресурсы, питаясь GTU от соседнего генератора
- * Стирлинга. Слота под топливо НЕТ: только вход (0) и выход (1).
+ * Электропечь: плавит предметы, питаясь GTU от соседнего генератора Стирлинга.
+ * Слота топлива НЕТ — только вход (0) и выход (1). Скорость 160% ванили
+ * ({@link MachineDefs#ELECTRIC_COOK_TIME} тиков/предмет), суммарный расход
+ * {@link MachineDefs#ELECTRIC_GTU_PER_ITEM} GTU на предмет.
  * <p>
- * Работает ТОЛЬКО если к одной из граней примыкает генератор Стирлинга
- * ({@link StirlingBlockEntity}).
+ * Работает ТОЛЬКО при примыкающем стирлинге ({@link StirlingBlockEntity}).
+ * GTU-ёмкость ({@link MachineDefs#ELECTRIC_GTU_CAPACITY}) влезает в short, поэтому
+ * синхронизируется одним слотом {@link ContainerData}.
  */
 public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implements GtuSink {
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_OUTPUT = 1;
 
-    private final ResourceBuffer gtu = new ResourceBuffer(MachineDefs.GTU_CAPACITY);
+    private final ResourceBuffer gtu = new ResourceBuffer(MachineDefs.ELECTRIC_GTU_CAPACITY);
 
-    private boolean chainOk;
     private int cookProgress;
     private int cookTotal;
+    /** Дробный аккумулятор расхода GTU (milli-GTU), серверный, не синкается. */
+    private int gtuAccum;
 
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int i) {
             return switch (i) {
-                case 0 -> gtu.amount() & 0xFFFF;
-                case 1 -> (gtu.amount() >> 16) & 0xFFFF;
-                case 2 -> cookProgress;
-                case 3 -> cookTotal;
-                case 4 -> chainOk ? 1 : 0;
+                case 0 -> gtu.amount();
+                case 1 -> cookProgress;
+                case 2 -> cookTotal;
                 default -> 0;
             };
         }
@@ -52,18 +54,16 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
         @Override
         public void set(int i, int v) {
             switch (i) {
-                case 0 -> gtu.set((gtu.amount() & ~0xFFFF) | (v & 0xFFFF));
-                case 1 -> gtu.set((gtu.amount() & 0xFFFF) | ((v & 0xFFFF) << 16));
-                case 2 -> cookProgress = v;
-                case 3 -> cookTotal = v;
-                case 4 -> chainOk = v != 0;
+                case 0 -> gtu.set(v);
+                case 1 -> cookProgress = v;
+                case 2 -> cookTotal = v;
                 default -> { }
             }
         }
 
         @Override
         public int getCount() {
-            return 5;
+            return 3;
         }
     };
 
@@ -79,47 +79,58 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
         return data;
     }
 
-    public boolean chainOk() {
-        return chainOk;
-    }
-
     // ─────────────────────────── GtuSink ───────────────────────────
 
     @Override
     public int receiveGtu(int amount, boolean simulate) {
-        return gtu.receive(amount, simulate);
+        return gtu.receive(Math.min(amount, MachineDefs.ELECTRIC_GTU_INTAKE), simulate);
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────
+
+    /** Расход GTU за тик в milli-GTU (200 GTU / 125 тиков = 1.6 GTU/t = 1600 milli). */
+    private static final int GTU_MILLI_PER_TICK =
+        MachineDefs.ELECTRIC_GTU_PER_ITEM * 1000 / MachineDefs.ELECTRIC_COOK_TIME;
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ElectricFurnaceBlockEntity be) {
         if (!(level instanceof ServerLevel server)) return;
         boolean changed = false;
 
         boolean chain = Sinks.hasNeighbor(server, pos, StirlingBlockEntity.class);
-        if (chain != be.chainOk) {
-            be.chainOk = chain;
-            changed = true;
-        }
-
         boolean canSmelt = SmeltHelper.canOutput(server, be.items.get(SLOT_INPUT), be.items.get(SLOT_OUTPUT));
 
-        if (chain && canSmelt && be.gtu.has(MachineDefs.ELECTRIC_GTU_PER_TICK)) {
+        boolean worked = false;
+        if (chain && canSmelt) {
             if (be.cookTotal == 0) {
-                be.cookTotal = SmeltHelper.cookTime(server, be.items.get(SLOT_INPUT), MachineDefs.ELECTRIC_COOK_TIME);
+                be.cookTotal = MachineDefs.ELECTRIC_COOK_TIME;
             }
-            be.gtu.extract(MachineDefs.ELECTRIC_GTU_PER_TICK, false);
-            be.cookProgress++;
-            if (be.cookProgress >= be.cookTotal) {
-                SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
-                be.cookProgress = 0;
-                be.cookTotal = 0;
+            // Требуемый расход GTU в этом тике.
+            be.gtuAccum += GTU_MILLI_PER_TICK;
+            int need = be.gtuAccum / 1000;
+            if (be.gtu.has(need)) {
+                if (need > 0) be.gtu.extract(need, false);
+                be.gtuAccum -= need * 1000;
+                be.cookProgress++;
+                if (be.cookProgress >= be.cookTotal) {
+                    SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
+                    be.cookProgress = 0;
+                    be.cookTotal = 0;
+                    be.gtuAccum = 0;
+                }
+                worked = true;
+                changed = true;
+            } else {
+                // Нет энергии на этот тик — откатываем аккумулятор, стоим.
+                be.gtuAccum -= GTU_MILLI_PER_TICK;
             }
-            changed = true;
-        } else if (be.cookProgress != 0 || be.cookTotal != 0) {
-            // Нет питания/рецепта — плавно откатываем прогресс.
+        }
+
+        if (!worked && (be.cookProgress != 0 || be.cookTotal != 0 || be.gtuAccum != 0)) {
             be.cookProgress = Math.max(0, be.cookProgress - 2);
-            if (be.cookProgress == 0) be.cookTotal = 0;
+            if (be.cookProgress == 0) {
+                be.cookTotal = 0;
+                be.gtuAccum = 0;
+            }
             changed = true;
         }
 
@@ -136,6 +147,7 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
         gtu.save(tag, "Gtu");
         tag.putInt("CookProgress", cookProgress);
         tag.putInt("CookTotal", cookTotal);
+        tag.putInt("GtuAccum", gtuAccum);
     }
 
     @Override
@@ -144,6 +156,7 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
         gtu.load(tag, "Gtu");
         cookProgress = tag.getInt("CookProgress");
         cookTotal = tag.getInt("CookTotal");
+        gtuAccum = tag.getInt("GtuAccum");
     }
 
     // ─────────────────────────── Menu ───────────────────────────

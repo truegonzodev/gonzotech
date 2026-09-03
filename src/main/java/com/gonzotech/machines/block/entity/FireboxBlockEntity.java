@@ -3,10 +3,10 @@ package com.gonzotech.machines.block.entity;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks.GthSink;
+import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -18,18 +18,21 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Топка — как печка на 3 слота (вход-нагрузка, топливо, выход) + шкала GTH справа.
+ * Топка — печка на 3 слота (вход-нагрузка, топливо, выход) + шкала GTH.
  * <p>
  * <ul>
- *   <li>Уголь в слоте топлива горит сам по себе и наполняет буфер {@code GTH}
- *       ({@link MachineDefs#FIREBOX_GTH_PER_TICK} за тик).</li>
- *   <li>Нагрузка (руда/стейк) плавится «как обычная печь» — казуальная побочка,
- *       GTH на переплавку НЕ тратится.</li>
- *   <li>Если рядом стоит паровой котёл — GTH перетекает в него.</li>
+ *   <li>Топливо горит «ванильную» длительность (уголь 80с и т.д.) и наполняет
+ *       буфер {@code GTH} на {@link MachineDefs#FIREBOX_GTH_PER_TICK}/t
+ *       (независимо от вида топлива).</li>
+ *   <li>Нагрузка плавится ВСЕГДА, пока горит топливо — даже при полной шкале GTH
+ *       и когда GTH никуда не вытекает. Скорость плавки зависит от запаса GTH
+ *       (см. {@link MachineDefs#fireboxSpeedPermille}). GTH на переплавку не тратится.</li>
+ *   <li>GTH раздаётся соседям равномерно, максимум
+ *       {@link MachineDefs#FIREBOX_GTH_OUTPUT}/t.</li>
+ *   <li>Паразитная потеря {@link MachineDefs#FIREBOX_GTH_LOSS} GTH/t — всегда.</li>
  * </ul>
  */
 public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSink {
@@ -38,7 +41,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
     public static final int SLOT_FUEL = 1;
     public static final int SLOT_OUTPUT = 2;
 
-    private final ResourceBuffer gth = new ResourceBuffer(MachineDefs.GTH_CAPACITY);
+    private final ResourceBuffer gth = new ResourceBuffer(MachineDefs.FIREBOX_GTH_CAPACITY);
 
     /** Оставшееся время горения текущей единицы топлива, тиков. */
     private int litTime;
@@ -48,6 +51,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
     private int cookProgress;
     /** Полное время переплавки нагрузки, тиков. */
     private int cookTotal;
+    /** Дробный аккумулятор скорости плавки (промилле), серверный, не синкается. */
+    private int cookAccum;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -117,11 +122,14 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
             changed = true;
         }
 
-        // Разжечь новую единицу топлива, если погасло и есть место под GTH.
-        if (be.litTime <= 0 && !be.gth.isFull()) {
+        // Разжечь новую единицу топлива, если погасло. ВАЖНО: разжигаем даже при
+        // полной шкале GTH — топка обязана плавить всегда (лишний GTH просто
+        // не влезает в буфер).
+        if (be.litTime <= 0) {
             ItemStack fuel = be.items.get(SLOT_FUEL);
             int burn = fuel.getBurnTime(RecipeType.SMELTING, server.fuelValues());
-            if (burn > 0) {
+            boolean hasWork = FireboxBlockEntity.wantsToBurn(server, be);
+            if (burn > 0 && hasWork) {
                 be.litTime = burn;
                 be.litDuration = burn;
                 ItemStack container = fuel.getCraftingRemainder();
@@ -133,25 +141,38 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
             }
         }
 
-        // 2. Казуальная переплавка нагрузки (не тратит GTH, идёт только пока горит топка).
+        // 2. Паразитная потеря GTH — всегда.
+        if (be.gth.amount() > 0) {
+            be.gth.extract(MachineDefs.FIREBOX_GTH_LOSS, false);
+            changed = true;
+        }
+
+        // 3. Плавка нагрузки — идёт, пока горит топка (GTH не тратится).
+        //    Скорость зависит от запаса GTH.
         if (be.isLit() && SmeltHelper.canOutput(server, be.items.get(SLOT_INPUT), be.items.get(SLOT_OUTPUT))) {
             if (be.cookTotal == 0) {
-                be.cookTotal = SmeltHelper.cookTime(server, be.items.get(SLOT_INPUT), MachineDefs.FIREBOX_COOK_TIME);
+                be.cookTotal = SmeltHelper.cookTime(server, be.items.get(SLOT_INPUT), MachineDefs.FIREBOX_BASE_COOK_TIME);
             }
-            be.cookProgress++;
+            be.cookAccum += MachineDefs.fireboxSpeedPermille(be.gth.amount());
+            while (be.cookAccum >= 1000) {
+                be.cookAccum -= 1000;
+                be.cookProgress++;
+            }
             if (be.cookProgress >= be.cookTotal) {
                 SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
                 be.cookProgress = 0;
                 be.cookTotal = 0;
+                be.cookAccum = 0;
             }
             changed = true;
-        } else if (be.cookProgress != 0 || be.cookTotal != 0) {
+        } else if (be.cookProgress != 0 || be.cookTotal != 0 || be.cookAccum != 0) {
             be.cookProgress = 0;
             be.cookTotal = 0;
+            be.cookAccum = 0;
             changed = true;
         }
 
-        // 3. Отдать GTH соседнему котлу.
+        // 4. Раздать GTH соседям равномерно (макс. отдача за тик).
         if (be.pushGth(server, pos)) {
             changed = true;
         }
@@ -161,23 +182,30 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
         }
     }
 
-    /** Толкнуть GTH любому соседу-приёмнику (котлу). */
+    /**
+     * Стоит ли разжигать новую единицу топлива: есть смысл, если можно плавить
+     * нагрузку ИЛИ есть куда девать GTH (буфер не полон, либо рядом приёмник).
+     * На практике достаточно проверить «есть работа по плавке или буфер не полон».
+     */
+    private static boolean wantsToBurn(ServerLevel server, FireboxBlockEntity be) {
+        boolean canSmelt = SmeltHelper.canOutput(server, be.items.get(SLOT_INPUT), be.items.get(SLOT_OUTPUT));
+        return canSmelt || !be.gth.isFull();
+    }
+
+    /** Равномерно раздать GTH соседям-приёмникам (котлам). */
     private boolean pushGth(Level level, BlockPos pos) {
         if (gth.isEmpty()) return false;
-        boolean moved = false;
-        for (Direction dir : Direction.values()) {
-            if (gth.isEmpty()) break;
-            BlockEntity be = level.getBlockEntity(pos.relative(dir));
-            if (be instanceof GthSink sink && !(be instanceof FireboxBlockEntity)) {
-                int can = Math.min(MachineDefs.GTH_TRANSFER, gth.amount());
-                int accepted = sink.receiveGth(can, false);
-                if (accepted > 0) {
-                    gth.extract(accepted, false);
-                    moved = true;
-                }
-            }
+        int budget = Math.min(MachineDefs.FIREBOX_GTH_OUTPUT, gth.amount());
+        int moved = Transfer.distribute(level, pos, budget, be -> {
+            if (be instanceof FireboxBlockEntity) return null;
+            if (be instanceof GthSink sink) return sink::receiveGth;
+            return null;
+        });
+        if (moved > 0) {
+            gth.extract(moved, false);
+            return true;
         }
-        return moved;
+        return false;
     }
 
     // ─────────────────────────── NBT ───────────────────────────
@@ -190,6 +218,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
         tag.putInt("LitDuration", litDuration);
         tag.putInt("CookProgress", cookProgress);
         tag.putInt("CookTotal", cookTotal);
+        tag.putInt("CookAccum", cookAccum);
     }
 
     @Override
@@ -200,6 +229,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
         litDuration = tag.getInt("LitDuration");
         cookProgress = tag.getInt("CookProgress");
         cookTotal = tag.getInt("CookTotal");
+        cookAccum = tag.getInt("CookAccum");
     }
 
     // ─────────────────────────── Menu ───────────────────────────

@@ -40,7 +40,7 @@ public class FireboxScreen extends MachineScreen<FireboxMenu> {
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gth", menu.gth(), MachineDefs.GTH_CAPACITY)
+                Component.translatable("gui.gonzotech.gth", menu.gth(), MachineDefs.FIREBOX_GTH_CAPACITY)
             ), mouseX, mouseY);
         }
     }

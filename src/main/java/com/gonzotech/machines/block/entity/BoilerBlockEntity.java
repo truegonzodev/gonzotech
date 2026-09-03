@@ -5,10 +5,12 @@ import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks;
 import com.gonzotech.machines.energy.Sinks.GthSink;
 import com.gonzotech.machines.energy.Sinks.SteamSink;
+import com.gonzotech.machines.energy.Sinks.WaterSink;
+import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.energy.WaterProviders;
 import com.gonzotech.machines.menu.BoilerMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -20,31 +22,28 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Паровой котёл — принимает GTH (как топливо) от соседней топки и воду,
- * вырабатывает пар и отдаёт его соседнему генератору Стирлинга.
+ * Паровой котёл: {@code Water → Steam}, тратя GTH. Работает ТОЛЬКО если к одной
+ * из граней примыкает топка ({@link FireboxBlockEntity}) — без топки пар не
+ * делается даже при полном запасе GTH (это правильно).
  * <p>
- * Работает ТОЛЬКО если к одной из граней примыкает топка ({@link FireboxBlockEntity}).
- * Нарушив цепочку, котёл перестаёт вырабатывать пар.
+ * Слот 0 — ведро-провайдер воды (осушается в буфер, пустое ведро уходит в слот 1).
+ * Слот 1 — только забор пустых вёдер (игрок ничего туда положить не может).
  * <p>
- * Слот 0 — ведро воды (наполняет буфер воды, отдаёт пустое ведро в слот 1).
- * Именно этот блок задуман как сложный 3D-объект (Blockbench позже), поэтому
- * тут только логика, без завязки на геометрию куба.
+ * Паразитика (всегда): −{@link MachineDefs#BOILER_STEAM_LOSS} пара,
+ * +{@link MachineDefs#BOILER_WATER_GAIN} воды в свою шкалу,
+ * −{@link MachineDefs#BOILER_GTH_LOSS} GTH.
  */
-public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink, SteamSink {
+public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink, SteamSink, WaterSink {
 
     public static final int SLOT_WATER_IN = 0;
     public static final int SLOT_BUCKET_OUT = 1;
 
-    private final ResourceBuffer gth = new ResourceBuffer(MachineDefs.GTH_CAPACITY);
-    private final ResourceBuffer water = new ResourceBuffer(MachineDefs.WATER_CAPACITY);
-    private final ResourceBuffer steam = new ResourceBuffer(MachineDefs.STEAM_CAPACITY);
-
-    /** Есть ли рядом топка — для индикатора «цепочка собрана» в GUI. */
-    private boolean chainOk;
+    private final ResourceBuffer gth = new ResourceBuffer(MachineDefs.BOILER_GTH_CAPACITY);
+    private final ResourceBuffer water = new ResourceBuffer(MachineDefs.BOILER_WATER_CAPACITY);
+    private final ResourceBuffer steam = new ResourceBuffer(MachineDefs.BOILER_STEAM_CAPACITY);
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -53,7 +52,6 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
                 case 0 -> gth.amount();
                 case 1 -> water.amount();
                 case 2 -> steam.amount();
-                case 3 -> chainOk ? 1 : 0;
                 default -> 0;
             };
         }
@@ -64,14 +62,13 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
                 case 0 -> gth.set(v);
                 case 1 -> water.set(v);
                 case 2 -> steam.set(v);
-                case 3 -> chainOk = v != 0;
                 default -> { }
             }
         }
 
         @Override
         public int getCount() {
-            return 4;
+            return 3;
         }
     };
 
@@ -95,20 +92,23 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
         return data;
     }
 
-    public boolean chainOk() {
-        return chainOk;
-    }
-
     // ─────────────────────────── Sinks ───────────────────────────
 
     @Override
     public int receiveGth(int amount, boolean simulate) {
-        return gth.receive(amount, simulate);
+        return gth.receive(Math.min(amount, MachineDefs.BOILER_GTH_INTAKE), simulate);
     }
 
     @Override
     public int receiveSteam(int amount, boolean simulate) {
-        return steam.receive(amount, simulate);
+        // Котёл сам является источником пара, но реализует SteamSink на случай,
+        // если понадобится приём извне; сейчас приём пара котлом не используется.
+        return 0;
+    }
+
+    @Override
+    public int receiveWater(int amount, boolean simulate) {
+        return water.receive(Math.min(amount, MachineDefs.BOILER_WATER_INTAKE), simulate);
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────
@@ -117,19 +117,27 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
         if (!(level instanceof ServerLevel server)) return;
         boolean changed = false;
 
-        // 0. Проверить цепочку: рядом должна быть топка.
+        // 1. Осушить ведро-провайдер воды в буфер воды (+ спавн рыбы).
+        if (be.fillWaterFromBucket(server, pos)) {
+            changed = true;
+        }
+
+        // 2. Паразитика (всегда, независимо от условий).
+        if (be.steam.amount() > 0) {
+            be.steam.extract(MachineDefs.BOILER_STEAM_LOSS, false);
+            changed = true;
+        }
+        if (!be.water.isFull()) {
+            be.water.receive(MachineDefs.BOILER_WATER_GAIN, false);
+            changed = true;
+        }
+        if (be.gth.amount() > 0) {
+            be.gth.extract(MachineDefs.BOILER_GTH_LOSS, false);
+            changed = true;
+        }
+
+        // 3. Варить пар: нужна примыкающая топка + GTH + вода + место под пар.
         boolean chain = Sinks.hasNeighbor(server, pos, FireboxBlockEntity.class);
-        if (chain != be.chainOk) {
-            be.chainOk = chain;
-            changed = true;
-        }
-
-        // 1. Осушить ведро воды в буфер воды.
-        if (be.fillWaterFromBucket()) {
-            changed = true;
-        }
-
-        // 2. Варить пар: нужен GTH + вода + место под пар + собранная цепочка.
         if (chain
             && be.gth.has(MachineDefs.BOILER_GTH_PER_TICK)
             && be.water.has(MachineDefs.BOILER_WATER_PER_TICK)
@@ -140,7 +148,7 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
             changed = true;
         }
 
-        // 3. Отдать пар соседнему стирлингу.
+        // 4. Раздать пар соседям равномерно (макс. отдача).
         if (be.pushSteam(server, pos)) {
             changed = true;
         }
@@ -150,42 +158,41 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
         }
     }
 
-    /** Ведро воды → +1000 mB воды, пустое ведро в выходной слот. */
-    private boolean fillWaterFromBucket() {
+    /** Ведро-провайдер → +mB воды, пустое ведро в выходной слот, спавн рыбы для fish-вёдер. */
+    private boolean fillWaterFromBucket(ServerLevel server, BlockPos pos) {
         ItemStack in = items.get(SLOT_WATER_IN);
-        if (in.is(Items.WATER_BUCKET) && water.space() >= MachineDefs.WATER_PER_BUCKET) {
-            ItemStack out = items.get(SLOT_BUCKET_OUT);
-            if (out.isEmpty()) {
-                items.set(SLOT_BUCKET_OUT, new ItemStack(Items.BUCKET));
-            } else if (out.is(Items.BUCKET) && out.getCount() < out.getMaxStackSize()) {
-                out.grow(1);
-            } else {
-                return false;
-            }
-            water.receive(MachineDefs.WATER_PER_BUCKET, false);
-            in.shrink(1);
+        int mb = WaterProviders.millibucketsFor(in);
+        if (mb <= 0 || water.space() < mb) {
+            return false;
+        }
+        ItemStack out = items.get(SLOT_BUCKET_OUT);
+        if (out.isEmpty()) {
+            items.set(SLOT_BUCKET_OUT, new ItemStack(Items.BUCKET));
+        } else if (out.is(Items.BUCKET) && out.getCount() < out.getMaxStackSize()) {
+            out.grow(1);
+        } else {
+            return false;
+        }
+        WaterProviders.spawnFishIfAny(server, pos, in);
+        water.receive(mb, false);
+        in.shrink(1);
+        return true;
+    }
+
+    /** Равномерно раздать пар соседям-приёмникам (стирлингам). */
+    private boolean pushSteam(Level level, BlockPos pos) {
+        if (steam.isEmpty()) return false;
+        int budget = Math.min(MachineDefs.BOILER_STEAM_OUTPUT, steam.amount());
+        int moved = Transfer.distribute(level, pos, budget, be -> {
+            if (be instanceof BoilerBlockEntity) return null;
+            if (be instanceof SteamSink sink) return sink::receiveSteam;
+            return null;
+        });
+        if (moved > 0) {
+            steam.extract(moved, false);
             return true;
         }
         return false;
-    }
-
-    /** Толкнуть пар любому соседу-приёмнику (стирлингу). */
-    private boolean pushSteam(Level level, BlockPos pos) {
-        if (steam.isEmpty()) return false;
-        boolean moved = false;
-        for (Direction dir : Direction.values()) {
-            if (steam.isEmpty()) break;
-            BlockEntity be = level.getBlockEntity(pos.relative(dir));
-            if (be instanceof SteamSink sink && !(be instanceof BoilerBlockEntity)) {
-                int can = Math.min(MachineDefs.STEAM_TRANSFER, steam.amount());
-                int accepted = sink.receiveSteam(can, false);
-                if (accepted > 0) {
-                    steam.extract(accepted, false);
-                    moved = true;
-                }
-            }
-        }
-        return moved;
     }
 
     // ─────────────────────────── NBT ───────────────────────────

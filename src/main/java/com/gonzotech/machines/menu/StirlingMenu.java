@@ -9,7 +9,7 @@ import net.minecraft.world.inventory.SimpleContainerData;
 
 /**
  * Меню генератора Стирлинга: предметных слотов нет, только шкалы пара и GTU
- * и индикаторы «цепочка собрана» / «работает».
+ * и индикатор «работает».
  */
 public class StirlingMenu extends BaseMachineMenu {
 
@@ -18,7 +18,7 @@ public class StirlingMenu extends BaseMachineMenu {
     private final StirlingBlockEntity be;
 
     public StirlingMenu(int id, Inventory inv, RegistryFriendlyByteBuf buf) {
-        this(id, inv, MenuHelper.readBlockEntity(inv, buf, StirlingBlockEntity.class), new SimpleContainerData(5));
+        this(id, inv, MenuHelper.readBlockEntity(inv, buf, StirlingBlockEntity.class), new SimpleContainerData(3));
     }
 
     public StirlingMenu(int id, Inventory inv, StirlingBlockEntity be, ContainerData data) {
@@ -35,16 +35,11 @@ public class StirlingMenu extends BaseMachineMenu {
         return data.get(0);
     }
 
-    /** GTU собирается из двух half-word'ов ContainerData. */
     public int gtu() {
-        return (data.get(1) & 0xFFFF) | ((data.get(2) & 0xFFFF) << 16);
-    }
-
-    public boolean chainOk() {
-        return data.get(3) != 0;
+        return data.get(1);
     }
 
     public boolean running() {
-        return data.get(4) != 0;
+        return data.get(2) != 0;
     }
 }

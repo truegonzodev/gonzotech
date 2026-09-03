@@ -2,14 +2,13 @@ package com.gonzotech.machines.client;
 
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Экран электропечи: слоты вход/выход, стрелка переплавки, шкала GTU, индикатор цепочки. */
+/** Экран электропечи: слоты вход/выход, стрелка переплавки, шкала GTU. */
 public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
 
     public ElectricFurnaceScreen(ElectricFurnaceMenu menu, Inventory inv, Component title) {
@@ -30,18 +29,12 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
         int barY = y + 17;
         int barW = 12;
         int barH = 52;
-        float gtu = (float) menu.gtu() / MachineDefs.GTU_CAPACITY;
+        float gtu = (float) menu.gtu() / MachineDefs.ELECTRIC_GTU_CAPACITY;
         drawVBar(g, barX, barY, barW, barH, gtu, COL_GTU);
-
-        if (!menu.chainOk()) {
-            g.drawString(this.font,
-                Component.translatable("gui.gonzotech.chain_missing_stirling").withStyle(ChatFormatting.RED),
-                x + 8, y + 72, TEXT, false);
-        }
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.GTU_CAPACITY)), mouseX, mouseY);
+                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.ELECTRIC_GTU_CAPACITY)), mouseX, mouseY);
         }
     }
 }
