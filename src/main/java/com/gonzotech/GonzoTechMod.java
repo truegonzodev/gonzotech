@@ -9,6 +9,9 @@ import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.core.registry.ModCreativeTabs;
 import com.gonzotech.core.registry.ModFeatures;
 import com.gonzotech.core.registry.ModItems;
+import com.gonzotech.machines.registry.ModBlockEntities;
+import com.gonzotech.machines.registry.ModMachines;
+import com.gonzotech.machines.registry.ModMenus;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -41,8 +44,18 @@ public class GonzoTechMod {
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
 
+        // Фаза 2 — паровая ветка энергетики (машины, BlockEntity, меню).
+        ModMachines.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
+        ModMenus.register(modEventBus);
+
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
+
+        // Клиентская привязка экранов машин — только на физическом клиенте.
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
+        }
 
         LOGGER.info("[Gonzo Tech] Mod class constructed, mod_id={}, {} руд зарегистрировано",
             MOD_ID, com.gonzotech.core.ore.OreDefinition.ALL.size());

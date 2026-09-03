@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/stirling_generator" },
+    "facing=east":  { "model": "gonzotech:block/stirling_generator", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/stirling_generator", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/stirling_generator", "y": 270 }
+  }
+}

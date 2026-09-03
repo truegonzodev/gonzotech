@@ -34,10 +34,16 @@ public class ModCreativeTabs {
         "functional",
         () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.gonzotech.functional"))
-            .icon(() -> new ItemStack(ModItems.CHALKBOARD_ITEM.get()))
+            .icon(() -> new ItemStack(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.CHALKBOARD_ITEM.get());
                 ModItems.DISCOVERY_ITEMS.forEach(item -> output.accept(item.get()));
+
+                // Фаза 2 — паровая ветка энергетики.
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
             })
             .build()
     );

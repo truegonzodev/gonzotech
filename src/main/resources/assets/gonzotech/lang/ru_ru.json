@@ -221,5 +221,19 @@
   "item.gonzotech.bismuth_ingot": "Слиток висмута",
   "item.gonzotech.rhenium_ingot": "Слиток Рения",
   "item.gonzotech.radium_ingot": "Слиток Радия",
-  "item.gonzotech.lithium_ingot": "Литиевый слиток"
+  "item.gonzotech.lithium_ingot": "Литиевый слиток",
+  "block.gonzotech.firebox": "Топка",
+  "block.gonzotech.boiler": "Паровой котёл",
+  "block.gonzotech.stirling_generator": "Генератор Стирлинга",
+  "block.gonzotech.electric_furnace": "Электрическая печь",
+  "gui.gonzotech.gth": "GTH: %s / %s",
+  "gui.gonzotech.gtu": "GTU: %s / %s",
+  "gui.gonzotech.steam": "Пар: %s / %s mB",
+  "gui.gonzotech.water": "Вода: %s / %s mB",
+  "gui.gonzotech.chain_ok": "Цепочка собрана",
+  "gui.gonzotech.chain_missing_firebox": "Нужна топка рядом",
+  "gui.gonzotech.chain_missing_boiler": "Нужен паровой котёл рядом",
+  "gui.gonzotech.chain_missing_stirling": "Нужен генератор Стирлинга рядом",
+  "gui.gonzotech.running": "Вырабатывает GTU",
+  "gui.gonzotech.idle": "Простаивает"
 }

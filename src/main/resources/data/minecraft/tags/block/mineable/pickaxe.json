@@ -46,6 +46,10 @@
     "gonzotech:cesium_ore",
     "gonzotech:deepslate_cesium_ore",
     "gonzotech:deepslate_iridium_ore",
-    "gonzotech:deepslate_osmium_ore"
+    "gonzotech:deepslate_osmium_ore",
+    "gonzotech:firebox",
+    "gonzotech:boiler",
+    "gonzotech:stirling_generator",
+    "gonzotech:electric_furnace"
   ]
 }

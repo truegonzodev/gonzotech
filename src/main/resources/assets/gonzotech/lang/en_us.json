@@ -221,5 +221,19 @@
   "item.gonzotech.bismuth_ingot": "Bismuth Ingot",
   "item.gonzotech.rhenium_ingot": "Rhenium Ingot",
   "item.gonzotech.radium_ingot": "Radium Ingot",
-  "item.gonzotech.lithium_ingot": "Lithium Ingot"
+  "item.gonzotech.lithium_ingot": "Lithium Ingot",
+  "block.gonzotech.firebox": "Firebox",
+  "block.gonzotech.boiler": "Steam Boiler",
+  "block.gonzotech.stirling_generator": "Stirling Generator",
+  "block.gonzotech.electric_furnace": "Electric Furnace",
+  "gui.gonzotech.gth": "GTH: %s / %s",
+  "gui.gonzotech.gtu": "GTU: %s / %s",
+  "gui.gonzotech.steam": "Steam: %s / %s mB",
+  "gui.gonzotech.water": "Water: %s / %s mB",
+  "gui.gonzotech.chain_ok": "Chain connected",
+  "gui.gonzotech.chain_missing_firebox": "Needs a Firebox nearby",
+  "gui.gonzotech.chain_missing_boiler": "Needs a Boiler nearby",
+  "gui.gonzotech.chain_missing_stirling": "Needs a Stirling Generator nearby",
+  "gui.gonzotech.running": "Generating GTU",
+  "gui.gonzotech.idle": "Idle"
 }

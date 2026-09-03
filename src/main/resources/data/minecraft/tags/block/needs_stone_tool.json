@@ -19,6 +19,10 @@
     "gonzotech:deepslate_zinc_ore",
     "gonzotech:tin_ore",
     "gonzotech:deepslate_tin_ore",
-    "gonzotech:boron_ore"
+    "gonzotech:boron_ore",
+    "gonzotech:firebox",
+    "gonzotech:boiler",
+    "gonzotech:stirling_generator",
+    "gonzotech:electric_furnace"
   ]
 }

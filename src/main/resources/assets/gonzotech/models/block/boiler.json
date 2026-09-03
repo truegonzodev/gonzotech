@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "gonzotech:block/boiler_top",
+    "bottom": "gonzotech:block/boiler_top",
+    "side": "gonzotech:block/boiler"
+  }
+}
