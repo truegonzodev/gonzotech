@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "cast_iron_ingot",
   "ingredient": "minecraft:iron_ingot",
   "result": {
     "id": "gonzotech:cast_iron_ingot"

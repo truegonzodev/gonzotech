@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "thorium_ingot",
   "ingredient": "gonzotech:raw_thorium",
   "result": {
     "id": "gonzotech:thorium_ingot"

@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "magnesium_ingot",
   "ingredient": "gonzotech:raw_magnesium",
   "result": {
     "id": "gonzotech:magnesium_ingot"

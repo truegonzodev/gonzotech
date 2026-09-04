@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "iridium_ingot",
   "ingredient": "gonzotech:deepslate_iridium_ore",
   "result": {
     "id": "gonzotech:iridium_ingot"

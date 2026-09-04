@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "zinc_ingot",
   "ingredient": "gonzotech:zinc_ore",
   "result": {
     "id": "gonzotech:zinc_ingot"

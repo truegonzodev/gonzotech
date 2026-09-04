@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "chromium_ingot",
   "ingredient": "gonzotech:raw_chromium",
   "result": {
     "id": "gonzotech:chromium_ingot"

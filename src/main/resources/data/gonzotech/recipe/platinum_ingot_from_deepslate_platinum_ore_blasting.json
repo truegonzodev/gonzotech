@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "platinum_ingot",
   "ingredient": "gonzotech:deepslate_platinum_ore",
   "result": {
     "id": "gonzotech:platinum_ingot"

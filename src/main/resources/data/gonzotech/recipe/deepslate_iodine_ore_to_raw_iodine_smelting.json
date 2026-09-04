@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "raw_iodine",
   "ingredient": "gonzotech:deepslate_iodine_ore",
   "result": {
     "id": "gonzotech:raw_iodine"

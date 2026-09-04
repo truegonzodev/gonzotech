@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "calcium_ingot",
   "ingredient": "gonzotech:calcite_calcium_ore",
   "result": {
     "id": "gonzotech:calcium_ingot"

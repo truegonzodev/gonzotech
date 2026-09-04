@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "thorium_ingot",
   "ingredient": "gonzotech:deepslate_thorium_ore",
   "result": {
     "id": "gonzotech:thorium_ingot"

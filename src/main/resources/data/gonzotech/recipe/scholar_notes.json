@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "minecraft:book",
+    "minecraft:crafting_table"
+  ],
+  "result": {
+    "id": "gonzotech:scholar_notes",
+    "count": 1
+  }
+}

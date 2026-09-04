@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "silver_ingot",
   "ingredient": "gonzotech:deepslate_silver_ore",
   "result": {
     "id": "gonzotech:silver_ingot"

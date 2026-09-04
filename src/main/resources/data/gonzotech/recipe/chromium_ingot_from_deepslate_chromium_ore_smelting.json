@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "chromium_ingot",
   "ingredient": "gonzotech:deepslate_chromium_ore",
   "result": {
     "id": "gonzotech:chromium_ingot"

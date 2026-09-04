@@ -36,7 +36,23 @@ public final class RecipeUnlocks {
         )
     );
 
+    /**
+     * Рецепты, доступные и видимые в книге АПРИОРИ (без «Открытий»). Выдаём их
+     * безусловно при каждом входе — так их «подсказка» появляется в книге сразу,
+     * не завязываясь на срабатывание recipe-advancement'ов. Идемпотентно.
+     */
+    private static final List<String> RECIPES_ALWAYS = List.of(
+        "gonzotech:chalkboard",
+        "gonzotech:pseudo_coil",
+        "gonzotech:scholar_notes"
+    );
+
     private RecipeUnlocks() {
+    }
+
+    /** Выдать игроку рецепты, доступные априори (вызывать при каждом входе). */
+    public static void grantAlwaysUnlocked(ServerPlayer player) {
+        grant(player, RECIPES_ALWAYS);
     }
 
     /** Выдать игроку рецепты для всех уже активированных «Открытий». Идемпотентно. */

@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "magnesium_ingot",
   "ingredient": "gonzotech:deepslate_magnesium_ore",
   "result": {
     "id": "gonzotech:magnesium_ingot"

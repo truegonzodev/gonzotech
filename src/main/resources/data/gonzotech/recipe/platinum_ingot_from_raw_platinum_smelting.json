@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "platinum_ingot",
   "ingredient": "gonzotech:raw_platinum",
   "result": {
     "id": "gonzotech:platinum_ingot"

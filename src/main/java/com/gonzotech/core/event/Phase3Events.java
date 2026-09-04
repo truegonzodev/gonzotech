@@ -7,6 +7,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -14,6 +15,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.Map;
@@ -25,14 +27,17 @@ import java.util.Map;
  *       крафтит «закрытую» машину (эл. печь) до нужного «Открытия», ингредиенты
  *       всё равно тратятся, но вместо результата он получает бесполезный
  *       {@code botched_mechanism} и сообщение в чат. Задел под механику стресса.</li>
- *   <li><b>Свинец-побочка ванильных печей</b> ({@link PlayerEvent.ItemSmeltedEvent})
- *       — при заборе результата плавки железа из ванильной печи/плавильни/коптильни
- *       с шансом 5% за каждый переплавленный предмет добавляется свинцовый слиток.
- *       (В наших машинах это делает {@code SmeltSideEffects}.)</li>
+ *   <li><b>Ванильная переплавка</b> ({@link PlayerEvent.ItemSmeltedEvent}) — при
+ *       заборе результата из ванильной печи/плавильни/коптильни: (а) железо → 5%
+ *       свинца за предмет; (б) цезий → взрыв (в наших машинах это делает
+ *       {@code SmeltSideEffects}).</li>
  *   <li><b>Цезий в воде</b> ({@link PlayerTickEvent.Post}) — если в инвентаре есть
  *       цезиевая руда/поллуцит и игрок в воде, каждые 8 тиков — взрыв силой 1 в игроке.</li>
- *   <li><b>Ведро лавы в воде</b> — если в инвентаре ведро лавы и игрок в воде, оно
- *       заменяется на бесполезное ведро обсидиана.</li>
+ *   <li><b>Ведро лавы в воде</b> — если у игрока в инвентаре ведро лавы и он в воде,
+ *       оно превращается в бесполезное ведро обсидиана; аналогично — если ведро
+ *       лавы <i>выброшено</i> предметом в воду ({@link EntityTickEvent.Post}).</li>
+ *   <li><b>Заметки учёного</b> ({@link PlayerEvent.PlayerLoggedInEvent}) — выдаются
+ *       игроку ОДИН раз при первом входе в мир.</li>
  * </ol>
  */
 public final class Phase3Events {
@@ -48,6 +53,8 @@ public final class Phase3Events {
     private static Map<net.minecraft.world.item.Item, Integer> craftGate;
 
     private static final float CESIUM_WATER_EXPLOSION = 1.0F;
+    /** Сила взрыва при заборе цезия из ванильной печи. */
+    private static final float CESIUM_FURNACE_EXPLOSION = 2.0F;
     private static final float LEAD_CHANCE = 0.05F;
     private static final int WATER_EFFECT_INTERVAL = 8;
 
@@ -94,15 +101,24 @@ public final class Phase3Events {
         // TODO(Фаза X): здесь начислять «стресс» игроку за преждевременный крафт.
     }
 
-    // ─────────────────── 2. Свинец-побочка ванильных печей ───────────────────
+    // ─────────────────── 2. Ванильные печи: свинец + взрыв цезия ───────────────────
 
     @SubscribeEvent
     public static void onItemSmelted(PlayerEvent.ItemSmeltedEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        ItemStack smelted = event.getSmelting();
-        if (!smelted.is(Items.IRON_INGOT)) return;
         if (!(player.level() instanceof ServerLevel level)) return;
+        ItemStack smelted = event.getSmelting();
 
+        // (а) Цезиевый слиток из ванильной печи — взрыв у игрока (он стоит у печи).
+        if (smelted.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get())) {
+            level.explode(null,
+                player.getX(), player.getY(), player.getZ(),
+                CESIUM_FURNACE_EXPLOSION, Level.ExplosionInteraction.BLOCK);
+            return;
+        }
+
+        // (б) Железо → 5% свинца за каждый переплавленный предмет.
+        if (!smelted.is(Items.IRON_INGOT)) return;
         int made = Math.max(1, smelted.getCount());
         int lead = 0;
         for (int i = 0; i < made; i++) {
@@ -126,7 +142,7 @@ public final class Phase3Events {
 
         Inventory inv = player.getInventory();
 
-        // 4. Ведро лавы → ведро обсидиана (каждый тик в воде, чтобы не убегало).
+        // 4. Ведро лавы в инвентаре → ведро обсидиана (каждый тик в воде).
         boolean replaced = false;
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack st = inv.getItem(i);
@@ -144,6 +160,35 @@ public final class Phase3Events {
             level.explode(null,
                 player.getX(), player.getY(), player.getZ(),
                 CESIUM_WATER_EXPLOSION, Level.ExplosionInteraction.NONE);
+        }
+    }
+
+    // ─────────────── 4b. Выброшенное ведро лавы (item entity) в воде ───────────────
+
+    @SubscribeEvent
+    public static void onEntityTick(EntityTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ItemEntity itemEntity)) return;
+        if (itemEntity.level().isClientSide()) return;
+        if (!itemEntity.isInWater()) return;
+        ItemStack st = itemEntity.getItem();
+        if (st.isEmpty() || !st.is(Items.LAVA_BUCKET)) return;
+        itemEntity.setItem(new ItemStack(ModItems.OBSIDIAN_BUCKET.get(), st.getCount()));
+    }
+
+    // ─────────────────── 5. Заметки учёного при первом входе ───────────────────
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        if (progress.hasReceivedScholarNotes()) return;
+
+        progress.setReceivedScholarNotes(true);
+        player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
+
+        ItemStack notes = new ItemStack(ModItems.SCHOLAR_NOTES.get());
+        if (!player.getInventory().add(notes)) {
+            player.drop(notes, false);
         }
     }
 

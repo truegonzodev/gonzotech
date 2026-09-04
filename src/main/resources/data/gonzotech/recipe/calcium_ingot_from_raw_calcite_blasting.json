@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "calcium_ingot",
   "ingredient": "gonzotech:raw_calcite",
   "result": {
     "id": "gonzotech:calcium_ingot"

@@ -37,6 +37,8 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.CHALKBOARD_ITEM.get());
+                // Заметки учёного — сразу за доской резонанса.
+                output.accept(ModItems.SCHOLAR_NOTES.get());
                 ModItems.DISCOVERY_ITEMS.forEach(item -> output.accept(item.get()));
 
                 // Фаза 2 — паровая ветка энергетики.

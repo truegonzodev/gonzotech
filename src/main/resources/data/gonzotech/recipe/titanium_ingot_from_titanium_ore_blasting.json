@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "titanium_ingot",
   "ingredient": "gonzotech:titanium_ore",
   "result": {
     "id": "gonzotech:titanium_ingot"

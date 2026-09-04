@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "cesium_ingot",
   "ingredient": "gonzotech:raw_cesium",
   "result": {
     "id": "gonzotech:cesium_ingot"

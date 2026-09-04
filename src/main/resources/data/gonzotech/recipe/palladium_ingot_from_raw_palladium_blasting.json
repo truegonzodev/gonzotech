@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "palladium_ingot",
   "ingredient": "gonzotech:raw_palladium",
   "result": {
     "id": "gonzotech:palladium_ingot"

@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "barium_ingot",
   "ingredient": "gonzotech:barium_ore",
   "result": {
     "id": "gonzotech:barium_ingot"

@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "tungsten_ingot",
   "ingredient": "gonzotech:deepslate_tungsten_ore",
   "result": {
     "id": "gonzotech:tungsten_ingot"

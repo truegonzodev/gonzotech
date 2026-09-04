@@ -246,5 +246,7 @@
   "item.gonzotech.botched_mechanism": "Botched Mechanism",
   "message.gonzotech.botched_craft": "Something's not right... Maybe I should brush up on the theory first...",
   "tooltip.gonzotech.obsidian_bucket": "The lava froze solid, fused to the bucket. Useless now.",
-  "tooltip.gonzotech.botched_mechanism": "A tangle of parts that does nothing. I got ahead of myself."
+  "tooltip.gonzotech.botched_mechanism": "A tangle of parts that does nothing. I got ahead of myself.",
+  "item.gonzotech.scholar_notes": "Scholar's Notes",
+  "tooltip.gonzotech.scholar_notes": "A field guide to Gonzo Tech. (Coming soon.)"
 }

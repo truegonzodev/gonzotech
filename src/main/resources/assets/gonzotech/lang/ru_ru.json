@@ -246,5 +246,7 @@
   "item.gonzotech.botched_mechanism": "Неудавшийся механизм",
   "message.gonzotech.botched_craft": "Что-то Я намудрил... Наверное стоит подтянуть матчасть....",
   "tooltip.gonzotech.obsidian_bucket": "Лава застыла и приросла к ведру. Теперь бесполезно.",
-  "tooltip.gonzotech.botched_mechanism": "Клубок деталей, который ничего не делает. Поспешил."
+  "tooltip.gonzotech.botched_mechanism": "Клубок деталей, который ничего не делает. Поспешил.",
+  "item.gonzotech.scholar_notes": "Заметки учёного",
+  "tooltip.gonzotech.scholar_notes": "Руководство по Gonzo Tech. (Скоро.)"
 }

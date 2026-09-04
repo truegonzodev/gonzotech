@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "zirconium_ingot",
   "ingredient": "gonzotech:raw_zirconium",
   "result": {
     "id": "gonzotech:zirconium_ingot"

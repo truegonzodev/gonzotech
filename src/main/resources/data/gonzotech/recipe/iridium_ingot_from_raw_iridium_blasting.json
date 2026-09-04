@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "iridium_ingot",
   "ingredient": "gonzotech:raw_iridium",
   "result": {
     "id": "gonzotech:iridium_ingot"

@@ -60,6 +60,8 @@ public class ModAdvancements {
     public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer serverPlayer) {
             checkAndAwardAdvancements(serverPlayer);
+            // Фаза 3: рецепты, видимые в книге априори (доска/катушка/заметки).
+            RecipeUnlocks.grantAlwaysUnlocked(serverPlayer);
             // Фаза 3: восстановить видимость рецептов машин для уже открытых «Открытий».
             RecipeUnlocks.grantForUnlockedTiers(serverPlayer);
         }

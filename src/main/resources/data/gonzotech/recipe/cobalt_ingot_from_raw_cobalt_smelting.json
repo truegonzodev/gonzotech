@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "cobalt_ingot",
   "ingredient": "gonzotech:raw_cobalt",
   "result": {
     "id": "gonzotech:cobalt_ingot"

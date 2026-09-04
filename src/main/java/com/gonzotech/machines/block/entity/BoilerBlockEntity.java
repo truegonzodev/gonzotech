@@ -18,6 +18,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -39,10 +40,12 @@ import net.minecraft.world.level.block.state.BlockState;
  * ({@link MachineDefs#BOILER_STEAM_LOSS}/t) — ТОЛЬКО если пар есть (ничего не
  * создаётся из воздуха); GTH рассеивается на {@link MachineDefs#BOILER_GTH_LOSS}/t.
  */
-public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink, SteamSink, WaterSink {
+public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink, SteamSink, WaterSink, WorldlyContainer {
 
     public static final int SLOT_WATER_IN = 0;
     public static final int SLOT_BUCKET_OUT = 1;
+
+    private static final int[] SLOTS_ALL = { SLOT_WATER_IN, SLOT_BUCKET_OUT };
 
     /** Облачко пара «poof» (ванильный дымок), пока котёл РАБОТАЕТ. */
     private static final SimpleParticleType STEAM_PARTICLE = ParticleTypes.POOF;
@@ -251,6 +254,35 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
         gth.load(tag, "Gth");
         water.load(tag, "Water");
         steam.load(tag, "Steam");
+    }
+
+    // ─────────────────────── Container / WorldlyContainer ───────────────────────
+    //
+    // Слот забора пустых вёдер (SLOT_BUCKET_OUT) — ТОЛЬКО на вывод: ни игрок (см.
+    // OutputOnlySlot в меню), ни воронка/автоматизация не имеют права туда что-либо
+    // класть. В слот воды (SLOT_WATER_IN) можно класть только валидные вёдра-провайдеры.
+
+    @Override
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        if (slot == SLOT_BUCKET_OUT) return false;
+        if (slot == SLOT_WATER_IN) return WaterProviders.isWaterProvider(stack);
+        return false;
+    }
+
+    @Override
+    public int[] getSlotsForFace(Direction side) {
+        return SLOTS_ALL;
+    }
+
+    @Override
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction side) {
+        return canPlaceItem(slot, stack);
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
+        // Забирать можно только пустые вёдра из выходного слота.
+        return slot == SLOT_BUCKET_OUT;
     }
 
     // ─────────────────────────── Menu ───────────────────────────

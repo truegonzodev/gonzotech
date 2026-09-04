@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "raw_manganese",
   "ingredient": "gonzotech:deepslate_manganese_ore",
   "result": {
     "id": "gonzotech:raw_manganese"

@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "osmium_ingot",
   "ingredient": "gonzotech:deepslate_osmium_ore",
   "result": {
     "id": "gonzotech:osmium_ingot"

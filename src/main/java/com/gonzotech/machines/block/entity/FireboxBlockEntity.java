@@ -197,7 +197,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
                 be.cookTotal = 0;
                 be.cookAccum = 0;
                 // Фаза 3: побочки плавки (цезий → взрыв, железо → шанс свинца).
-                boolean exploded = SmeltSideEffects.apply(server, pos, r.produced());
+                boolean exploded = SmeltSideEffects.apply(server, pos, r.produced(), be);
                 if (exploded) {
                     return; // блок печи уничтожен взрывом — дальше работать нечем
                 }

@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "aluminum_ingot",
   "ingredient": "gonzotech:raw_aluminum",
   "result": {
     "id": "gonzotech:aluminum_ingot"

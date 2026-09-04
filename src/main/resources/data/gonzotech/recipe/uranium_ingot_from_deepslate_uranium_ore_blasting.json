@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "uranium_ingot",
   "ingredient": "gonzotech:deepslate_uranium_ore",
   "result": {
     "id": "gonzotech:uranium_ingot"

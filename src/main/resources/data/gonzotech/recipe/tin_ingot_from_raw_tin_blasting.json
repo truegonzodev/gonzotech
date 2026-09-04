@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "tin_ingot",
   "ingredient": "gonzotech:raw_tin",
   "result": {
     "id": "gonzotech:tin_ingot"

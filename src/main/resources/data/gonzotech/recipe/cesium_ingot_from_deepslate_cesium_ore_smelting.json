@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "cesium_ingot",
   "ingredient": "gonzotech:deepslate_cesium_ore",
   "result": {
     "id": "gonzotech:cesium_ingot"

@@ -25,7 +25,8 @@ public class PlayerChalkboardProgress {
                     Codec.STRING.listOf().fieldOf("unlockedSecretQuantities").forGetter(p -> new ArrayList<>(p.getUnlockedSecretQuantities())),
                     Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("savedExprJson", Map.of()).forGetter(PlayerChalkboardProgress::getSavedExprJsonStr),
                     Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("savedDrawingJson", Map.of()).forGetter(PlayerChalkboardProgress::getSavedDrawingJsonStr),
-                    Codec.STRING.optionalFieldOf("globalDrawingJson", "").forGetter(PlayerChalkboardProgress::getGlobalDrawingJson)
+                    Codec.STRING.optionalFieldOf("globalDrawingJson", "").forGetter(PlayerChalkboardProgress::getGlobalDrawingJson),
+                    Codec.BOOL.optionalFieldOf("receivedScholarNotes", false).forGetter(PlayerChalkboardProgress::hasReceivedScholarNotes)
             ).apply(instance, PlayerChalkboardProgress::new)
     );
 
@@ -35,20 +36,31 @@ public class PlayerChalkboardProgress {
     private final Map<String, String> savedExprJson;
     private final Map<String, String> savedDrawingJson;
     private String globalDrawingJson;
+    private boolean receivedScholarNotes;
 
     public PlayerChalkboardProgress() {
-        this(0, List.of(), List.of(), Map.of(), Map.of(), "");
+        this(0, List.of(), List.of(), Map.of(), Map.of(), "", false);
     }
 
     public PlayerChalkboardProgress(int currentDiscoveryIndex, List<Integer> tiers, List<String> secrets,
                                   Map<String, String> savedExpr, Map<String, String> savedDrawing,
-                                  String globalDrawingJson) {
+                                  String globalDrawingJson, boolean receivedScholarNotes) {
         this.currentDiscoveryIndex = Math.max(0, currentDiscoveryIndex);
         this.unlockedRecipeTiers = new HashSet<>(tiers);
         this.unlockedSecretQuantities = new HashSet<>(secrets);
         this.savedExprJson = new HashMap<>(savedExpr);
         this.savedDrawingJson = new HashMap<>(savedDrawing);
         this.globalDrawingJson = globalDrawingJson != null ? globalDrawingJson : "";
+        this.receivedScholarNotes = receivedScholarNotes;
+    }
+
+    /** Выдавались ли игроку «Заметки учёного» (одноразовая выдача при первом входе). */
+    public boolean hasReceivedScholarNotes() {
+        return receivedScholarNotes;
+    }
+
+    public void setReceivedScholarNotes(boolean value) {
+        this.receivedScholarNotes = value;
     }
 
     public int getCurrentDiscoveryIndex() {

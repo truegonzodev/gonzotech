@@ -1,6 +1,7 @@
 {
   "type": "minecraft:blasting",
   "category": "misc",
+  "group": "cobalt_ingot",
   "ingredient": "gonzotech:nether_cobalt_ore",
   "result": {
     "id": "gonzotech:cobalt_ingot"

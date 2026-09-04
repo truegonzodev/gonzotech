@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "aluminum_ingot",
   "ingredient": "gonzotech:aluminum_ore",
   "result": {
     "id": "gonzotech:aluminum_ingot"

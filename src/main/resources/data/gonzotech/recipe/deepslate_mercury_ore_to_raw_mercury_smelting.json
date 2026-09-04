@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "raw_mercury",
   "ingredient": "gonzotech:deepslate_mercury_ore",
   "result": {
     "id": "gonzotech:raw_mercury"

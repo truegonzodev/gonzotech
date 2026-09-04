@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "uranium_ingot",
   "ingredient": "gonzotech:raw_uranium",
   "result": {
     "id": "gonzotech:uranium_ingot"

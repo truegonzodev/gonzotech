@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "palladium_ingot",
   "ingredient": "gonzotech:deepslate_palladium_ore",
   "result": {
     "id": "gonzotech:palladium_ingot"

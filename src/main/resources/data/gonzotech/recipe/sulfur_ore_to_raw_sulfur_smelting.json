@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "raw_sulfur",
   "ingredient": "gonzotech:sulfur_ore",
   "result": {
     "id": "gonzotech:raw_sulfur"

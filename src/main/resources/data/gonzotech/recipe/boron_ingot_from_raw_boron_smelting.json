@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "boron_ingot",
   "ingredient": "gonzotech:raw_boron",
   "result": {
     "id": "gonzotech:boron_ingot"

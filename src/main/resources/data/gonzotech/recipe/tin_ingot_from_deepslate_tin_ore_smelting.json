@@ -1,6 +1,7 @@
 {
   "type": "minecraft:smelting",
   "category": "misc",
+  "group": "tin_ingot",
   "ingredient": "gonzotech:deepslate_tin_ore",
   "result": {
     "id": "gonzotech:tin_ingot"

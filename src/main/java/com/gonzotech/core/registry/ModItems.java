@@ -56,6 +56,15 @@ public class ModItems {
     public static final DeferredItem<BlockItem> CHALKBOARD_ITEM =
         ITEMS.registerSimpleBlockItem("chalkboard", ModBlocks.CHALKBOARD);
 
+    /**
+     * Фаза 3 — «Заметки учёного»: будущее руководство по моду (аналог таумономикона /
+     * лексикона Botania). Пока только предмет-заглушка без функционала: выдаётся
+     * игроку один раз при первом входе в мир, крафтится бесформенно (книга + верстак).
+     * Функционал (открытие GUI-руководства) добавим позже.
+     */
+    public static final DeferredItem<Item> SCHOLAR_NOTES =
+        ITEMS.registerSimpleItem("scholar_notes");
+
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =
         ITEMS.registerSimpleItem("pseudo_coil");
