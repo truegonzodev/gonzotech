@@ -58,7 +58,7 @@ public class PipeBlock extends RotatedPillarBlock {
     }
 
     @Override
-    protected MapCodec<? extends RotatedPillarBlock> codec() {
+    public MapCodec<? extends RotatedPillarBlock> codec() {
         return codec;
     }
 
