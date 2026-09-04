@@ -27,7 +27,7 @@ public class ElectricFurnaceMenu extends BaseMachineMenu {
         this.be = be;
 
         addSlot(new Slot(be, ElectricFurnaceBlockEntity.SLOT_INPUT, 56, 35));
-        addSlot(new OutputOnlySlot(be, ElectricFurnaceBlockEntity.SLOT_OUTPUT, 116, 35));
+        addSlot(new SmeltResultSlot(be, be, ElectricFurnaceBlockEntity.SLOT_OUTPUT, 116, 35));
 
         addPlayerInventory(inv, 8, 84);
     }

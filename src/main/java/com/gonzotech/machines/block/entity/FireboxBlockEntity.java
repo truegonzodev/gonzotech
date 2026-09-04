@@ -7,10 +7,14 @@ import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -35,13 +39,27 @@ import net.minecraft.world.level.block.state.BlockState;
  *   <li>Паразитная потеря {@link MachineDefs#FIREBOX_GTH_LOSS} GTH/t — всегда.</li>
  * </ul>
  */
-public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSink {
+public class FireboxBlockEntity extends BaseMachineBlockEntity
+    implements GthSink, WorldlyContainer, ExperienceOutput {
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_FUEL = 1;
     public static final int SLOT_OUTPUT = 2;
 
+    // Грани для автоматизации. Слот топлива стоит ПЕРВЫМ везде, где принимаем
+    // вставку — чтобы воронка пыталась положить топливо туда раньше, чем в сырьё
+    // (окончательный приоритет всё равно решает canPlaceItemThroughFace).
+    private static final int[] SLOTS_TOP = {SLOT_FUEL, SLOT_INPUT};
+    private static final int[] SLOTS_SIDE = {SLOT_FUEL, SLOT_INPUT};
+    private static final int[] SLOTS_BOTTOM = {SLOT_OUTPUT, SLOT_FUEL};
+
     private final ResourceBuffer gth = new ResourceBuffer(MachineDefs.FIREBOX_GTH_CAPACITY);
+
+    /** Накопленный опыт за переплавку — выдаётся игроку при заборе результата. */
+    private float storedXp;
+
+    /** Играл ли уже звук горения в этом «сеансе» (чтобы не спамить каждый тик). */
+    private int soundCooldown;
 
     /** Оставшееся время горения текущей единицы топлива, тиков. */
     private int litTime;
@@ -53,6 +71,9 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
     private int cookTotal;
     /** Дробный аккумулятор скорости плавки (промилле), серверный, не синкается. */
     private int cookAccum;
+
+    /** Интервал между звуками горящих угольков, тиков (ванильный crackle звучит ~редко). */
+    private static final int SOUND_INTERVAL = 60;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -120,6 +141,17 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
             be.litTime--;
             be.gth.receive(MachineDefs.FIREBOX_GTH_PER_TICK, false);
             changed = true;
+
+            // Звук горящих угольков, пока топка горит — периодически, чтобы не спамить.
+            if (be.soundCooldown <= 0) {
+                server.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                    SoundEvents.FURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                be.soundCooldown = SOUND_INTERVAL;
+            } else {
+                be.soundCooldown--;
+            }
+        } else {
+            be.soundCooldown = 0;
         }
 
         // Разжечь новую единицу топлива, если погасло. ВАЖНО: разжигаем даже при
@@ -159,7 +191,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
                 be.cookProgress++;
             }
             if (be.cookProgress >= be.cookTotal) {
-                SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
+                be.storedXp += SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
                 be.cookProgress = 0;
                 be.cookTotal = 0;
                 be.cookAccum = 0;
@@ -208,6 +240,84 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
         return false;
     }
 
+    // ─────────────────────────── ExperienceOutput ───────────────────────────
+
+    @Override
+    public void awardExperienceTo(Player player) {
+        if (level instanceof ServerLevel server) {
+            storedXp = SmeltHelper.awardExperience(server, player, storedXp);
+            setChanged();
+        }
+    }
+
+    // ─────────────────────── WorldlyContainer (автоматизация) ───────────────────────
+    //
+    // Ключевое правило для ВОРОНОК (не для ручной закладки): топливо всегда идёт
+    // в слот топлива. Ручная укладка через меню использует FuelSlot/обычный слот
+    // и этих ограничений не касается.
+
+    @Override
+    public int[] getSlotsForFace(Direction side) {
+        return switch (side) {
+            case DOWN -> SLOTS_BOTTOM;
+            case UP -> SLOTS_TOP;
+            default -> SLOTS_SIDE;
+        };
+    }
+
+    /**
+     * Куда воронка может ВСТАВИТЬ предмет:
+     * <ul>
+     *   <li>слот топлива — только валидное топливо;</li>
+     *   <li>слот сырья — только НЕ-топливо; если предмет одновременно и топливо,
+     *       и сырьё (напр. бревно), приоритет у слота топлива, а в сырьё он
+     *       попадёт лишь когда слот топлива уже забит под завязку (64) — это
+     *       обеспечивается тем, что воронка сначала пробует вставить в слот
+     *       топлива, а сюда придёт только если тот полон.</li>
+     * </ul>
+     */
+    @Override
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction side) {
+        if (slot == SLOT_OUTPUT) return false;
+        if (slot == SLOT_FUEL) {
+            return isFuel(stack);
+        }
+        if (slot == SLOT_INPUT) {
+            // Сырьё принимаем всегда, КРОМЕ случая, когда предмет — топливо и в
+            // слоте топлива ещё есть место: тогда пусть воронка сначала набьёт
+            // слот топлива (getSlotsForFace ставит FUEL раньше INPUT только для
+            // боков; поэтому здесь явно перенаправляем топливо в слот топлива).
+            if (isFuel(stack) && fuelSlotHasRoomFor(stack)) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
+        // Воронка снизу может вытаскивать результат; топливо-остатки (пустые вёдра
+        // и т.п.) тоже можно забрать из слота топлива.
+        return slot == SLOT_OUTPUT || slot == SLOT_FUEL;
+    }
+
+    /** Валидно ли это топливо (по ванильным burn-таблицам сервера). */
+    private boolean isFuel(ItemStack stack) {
+        if (level instanceof ServerLevel server) {
+            return stack.getBurnTime(RecipeType.SMELTING, server.fuelValues()) > 0;
+        }
+        return false;
+    }
+
+    /** Есть ли в слоте топлива место под ещё одну единицу такого топлива. */
+    private boolean fuelSlotHasRoomFor(ItemStack stack) {
+        ItemStack fuel = items.get(SLOT_FUEL);
+        if (fuel.isEmpty()) return true;
+        if (!ItemStack.isSameItemSameComponents(fuel, stack)) return false;
+        return fuel.getCount() < Math.min(fuel.getMaxStackSize(), getMaxStackSize());
+    }
+
     // ─────────────────────────── NBT ───────────────────────────
 
     @Override
@@ -219,6 +329,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
         tag.putInt("CookProgress", cookProgress);
         tag.putInt("CookTotal", cookTotal);
         tag.putInt("CookAccum", cookAccum);
+        tag.putFloat("StoredXp", storedXp);
     }
 
     @Override
@@ -230,6 +341,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
         cookProgress = tag.getInt("CookProgress");
         cookTotal = tag.getInt("CookTotal");
         cookAccum = tag.getInt("CookAccum");
+        storedXp = tag.getFloat("StoredXp");
     }
 
     // ─────────────────────────── Menu ───────────────────────────

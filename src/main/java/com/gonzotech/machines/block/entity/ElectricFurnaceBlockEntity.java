@@ -7,14 +7,19 @@ import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -28,10 +33,18 @@ import net.minecraft.world.level.block.state.BlockState;
  * GTU-ёмкость ({@link MachineDefs#ELECTRIC_GTU_CAPACITY}) влезает в short, поэтому
  * синхронизируется одним слотом {@link ContainerData}.
  */
-public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implements GtuSink {
+public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
+    implements GtuSink, WorldlyContainer, ExperienceOutput {
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_OUTPUT = 1;
+
+    private static final int[] SLOTS_TOP = {SLOT_INPUT};
+    private static final int[] SLOTS_BOTTOM = {SLOT_OUTPUT};
+    private static final int[] SLOTS_SIDE = {SLOT_INPUT};
+
+    /** Интервал между звуками работы печи, тиков. */
+    private static final int SOUND_INTERVAL = 60;
 
     private final ResourceBuffer gtu = new ResourceBuffer(MachineDefs.ELECTRIC_GTU_CAPACITY);
 
@@ -39,6 +52,10 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
     private int cookTotal;
     /** Дробный аккумулятор расхода GTU (milli-GTU), серверный, не синкается. */
     private int gtuAccum;
+    /** Накопленный опыт за переплавку — выдаётся игроку при заборе результата. */
+    private float storedXp;
+    /** Кулдаун звука работы. */
+    private int soundCooldown;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -112,31 +129,71 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
                 be.gtuAccum -= need * 1000;
                 be.cookProgress++;
                 if (be.cookProgress >= be.cookTotal) {
-                    SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
+                    be.storedXp += SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
                     be.cookProgress = 0;
                     be.cookTotal = 0;
                     be.gtuAccum = 0;
                 }
                 worked = true;
                 changed = true;
+
+                // Звук работающей печи (угольки/пламя), периодически.
+                if (be.soundCooldown <= 0) {
+                    server.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                        SoundEvents.FURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    be.soundCooldown = SOUND_INTERVAL;
+                } else {
+                    be.soundCooldown--;
+                }
             } else {
                 // Нет энергии на этот тик — откатываем аккумулятор, стоим.
                 be.gtuAccum -= GTU_MILLI_PER_TICK;
             }
         }
 
-        if (!worked && (be.cookProgress != 0 || be.cookTotal != 0 || be.gtuAccum != 0)) {
-            be.cookProgress = Math.max(0, be.cookProgress - 2);
-            if (be.cookProgress == 0) {
-                be.cookTotal = 0;
-                be.gtuAccum = 0;
+        if (!worked) {
+            be.soundCooldown = 0;
+            if (be.cookProgress != 0 || be.cookTotal != 0 || be.gtuAccum != 0) {
+                be.cookProgress = Math.max(0, be.cookProgress - 2);
+                if (be.cookProgress == 0) {
+                    be.cookTotal = 0;
+                    be.gtuAccum = 0;
+                }
+                changed = true;
             }
-            changed = true;
         }
 
         if (changed) {
             be.setChanged();
         }
+    }
+
+    // ─────────────────────────── ExperienceOutput ───────────────────────────
+
+    @Override
+    public void awardExperienceTo(Player player) {
+        if (level instanceof ServerLevel server) {
+            storedXp = SmeltHelper.awardExperience(server, player, storedXp);
+            setChanged();
+        }
+    }
+
+    // ─────────────────────── WorldlyContainer (автоматизация) ───────────────────────
+    // У электропечи слота топлива нет: сверху/сбоку — вход, снизу — выход.
+
+    @Override
+    public int[] getSlotsForFace(Direction side) {
+        return side == Direction.DOWN ? SLOTS_BOTTOM : (side == Direction.UP ? SLOTS_TOP : SLOTS_SIDE);
+    }
+
+    @Override
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction side) {
+        return slot == SLOT_INPUT;
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
+        return slot == SLOT_OUTPUT;
     }
 
     // ─────────────────────────── NBT ───────────────────────────
@@ -148,6 +205,7 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
         tag.putInt("CookProgress", cookProgress);
         tag.putInt("CookTotal", cookTotal);
         tag.putInt("GtuAccum", gtuAccum);
+        tag.putFloat("StoredXp", storedXp);
     }
 
     @Override
@@ -157,6 +215,7 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity implement
         cookProgress = tag.getInt("CookProgress");
         cookTotal = tag.getInt("CookTotal");
         gtuAccum = tag.getInt("GtuAccum");
+        storedXp = tag.getFloat("StoredXp");
     }
 
     // ─────────────────────────── Menu ───────────────────────────

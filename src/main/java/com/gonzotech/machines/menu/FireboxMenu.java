@@ -27,10 +27,10 @@ public class FireboxMenu extends BaseMachineMenu {
         super(ModMenus.FIREBOX.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
-        // вход-нагрузка (верх), топливо (низ, только валидное топливо), выход (справа, только вывод)
+        // вход-нагрузка (верх), топливо (низ, только валидное топливо), выход (справа, только вывод + опыт)
         addSlot(new Slot(be, FireboxBlockEntity.SLOT_INPUT, 44, 17));
         addSlot(new FuelSlot(be, FireboxBlockEntity.SLOT_FUEL, 44, 53, inv));
-        addSlot(new OutputOnlySlot(be, FireboxBlockEntity.SLOT_OUTPUT, 104, 35));
+        addSlot(new SmeltResultSlot(be, be, FireboxBlockEntity.SLOT_OUTPUT, 104, 35));
 
         addPlayerInventory(inv, 8, 84);
     }
