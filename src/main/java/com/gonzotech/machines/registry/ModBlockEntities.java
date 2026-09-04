@@ -2,6 +2,7 @@ package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.entity.BoilerBlockEntity;
+import com.gonzotech.machines.block.entity.CondenserBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.block.entity.StirlingBlockEntity;
@@ -35,6 +36,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
         BLOCK_ENTITIES.register("electric_furnace", () -> new BlockEntityType<>(
             ElectricFurnaceBlockEntity::new, false, ModMachines.ELECTRIC_FURNACE.get()));
+
+    public static final Supplier<BlockEntityType<CondenserBlockEntity>> CONDENSER =
+        BLOCK_ENTITIES.register("condenser", () -> new BlockEntityType<>(
+            CondenserBlockEntity::new, false, ModMachines.CONDENSER.get()));
 
     public static void register(IEventBus modEventBus) {
         BLOCK_ENTITIES.register(modEventBus);

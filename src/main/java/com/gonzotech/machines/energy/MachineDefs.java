@@ -118,7 +118,7 @@ public final class MachineDefs {
     public static final int BOILER_WATER_INTAKE = 80;
 
     // ═══════════════════════════ ГЕНЕРАТОР СТИРЛИНГА (Stirling) ═══════════════════════════
-    // Steam → GTU + возврат воды в котёл (1:1). Работает при примыкающем котле.
+    // 40 пара → 2 GTU + возврат воды в котёл (база 6 + 5 за конденсатор). Работает при примыкающем котле.
 
     /** Максимум пара в стирлинге, mB. */
     public static final int STIRLING_STEAM_CAPACITY = 12_000;
@@ -129,10 +129,21 @@ public final class MachineDefs {
 
     /** Пар (mB), потребляемый стирлингом за тик работы. */
     public static final int STIRLING_STEAM_PER_TICK = 40;
-    /** Вода (mB), возвращаемая в котёл за тик работы (1:1 к пару). */
-    public static final int STIRLING_WATER_PER_TICK = 40;
+    /**
+     * Базовая вода (mB), возвращаемая в котёл за тик работы БЕЗ конденсаторов.
+     * Раньше было 1:1 (40), теперь стирлинг «сбрасывает» большую часть пара как
+     * потери, отдавая обратно лишь малую воду — цикл нуждается в конденсаторах.
+     */
+    public static final int STIRLING_WATER_BASE_PER_TICK = 6;
+    /** +вода (mB) за каждый примыкающий конденсатор ({@link #STIRLING_WATER_BASE_PER_TICK} + n·это). */
+    public static final int STIRLING_WATER_PER_CONDENSER = 5;
     /** GTU, вырабатываемое стирлингом за тик работы. */
     public static final int STIRLING_GTU_PER_TICK = 2;
+
+    /** Итоговая водоотдача стирлинга за тик при {@code n} примыкающих конденсаторах. */
+    public static int stirlingWaterPerTick(int condensers) {
+        return STIRLING_WATER_BASE_PER_TICK + Math.max(0, condensers) * STIRLING_WATER_PER_CONDENSER;
+    }
 
     /** Паразитная конденсация пара стирлингом за тик: пар→вода 1:1, ТОЛЬКО если пар есть. */
     public static final int STIRLING_STEAM_LOSS = 1;

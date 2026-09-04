@@ -50,6 +50,7 @@
     "gonzotech:firebox",
     "gonzotech:boiler",
     "gonzotech:stirling_generator",
-    "gonzotech:electric_furnace"
+    "gonzotech:electric_furnace",
+    "gonzotech:condenser"
   ]
 }

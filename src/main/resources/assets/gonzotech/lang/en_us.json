@@ -226,6 +226,7 @@
   "block.gonzotech.boiler": "Steam Boiler",
   "block.gonzotech.stirling_generator": "Stirling Generator",
   "block.gonzotech.electric_furnace": "Electric Furnace",
+  "block.gonzotech.condenser": "Condenser",
   "gui.gonzotech.gth": "GTH: %s / %s",
   "gui.gonzotech.gtu": "GTU: %s / %s",
   "gui.gonzotech.steam": "Steam: %s / %s mB",

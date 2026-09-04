@@ -44,6 +44,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.CONDENSER_ITEM.get());
             })
             .build()
     );

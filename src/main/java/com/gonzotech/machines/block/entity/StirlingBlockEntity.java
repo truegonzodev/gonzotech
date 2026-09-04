@@ -22,8 +22,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Генератор Стирлинга: {@code Steam → GTU + Water}. Пар превращается в GTU, а
- * равный объём воды возвращается В КОТЁЛ (1:1) — цикл замыкается без долива воды.
+ * Генератор Стирлинга: {@code 40 пара → 2 GTU + вода}. Пар превращается в GTU, а
+ * часть воды возвращается В КОТЁЛ. БЕЗ конденсаторов возврат мал
+ * ({@link MachineDefs#STIRLING_WATER_BASE_PER_TICK}/t), поэтому цикл сам себя не
+ * держит; каждый примыкающий {@link CondenserBlockEntity} добавляет
+ * +{@link MachineDefs#STIRLING_WATER_PER_CONDENSER}/t. Достаточно конденсаторов —
+ * и цикл замыкается без долива воды.
  * <p>
  * Работает ТОЛЬКО если к одной из граней примыкает паровой котёл
  * ({@link BoilerBlockEntity}). Предметных слотов нет.
@@ -119,15 +123,18 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
             changed = true;
         }
 
-        // Основной цикл: пар → GTU + вода на возврат.
+        // Основной цикл: 40 пара → 2 GTU + вода на возврат.
+        // Водоотдача = база (6) + 5 за каждый примыкающий конденсатор.
+        int condensers = countCondensers(server, pos);
+        int waterOut = MachineDefs.stirlingWaterPerTick(condensers);
         boolean run = false;
         if (chain
             && be.steam.has(MachineDefs.STIRLING_STEAM_PER_TICK)
             && be.gtu.space() >= MachineDefs.STIRLING_GTU_PER_TICK
-            && be.water.space() >= MachineDefs.STIRLING_WATER_PER_TICK) {
+            && be.water.space() >= waterOut) {
             be.steam.extract(MachineDefs.STIRLING_STEAM_PER_TICK, false);
             be.gtu.receive(MachineDefs.STIRLING_GTU_PER_TICK, false);
-            be.water.receive(MachineDefs.STIRLING_WATER_PER_TICK, false);
+            be.water.receive(waterOut, false);
             run = true;
             changed = true;
         }
@@ -151,11 +158,22 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
         }
     }
 
+    /** Сколько конденсаторов примыкает к 6 граням. */
+    private static int countCondensers(Level level, BlockPos pos) {
+        int n = 0;
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+            if (level.getBlockEntity(pos.relative(dir)) instanceof CondenserBlockEntity) {
+                n++;
+            }
+        }
+        return n;
+    }
+
     /** Равномерно вернуть воду соседним котлам. */
     private boolean pushWater(Level level, BlockPos pos) {
         if (water.isEmpty()) return false;
         int budget = Math.min(MachineDefs.STIRLING_WATER_OUTPUT, water.amount());
-        int moved = Transfer.distribute(level, pos, budget, be -> {
+        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
             if (be instanceof StirlingBlockEntity) return null;
             if (be instanceof WaterSink sink) return sink::receiveWater;
             return null;
@@ -171,7 +189,7 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
     private boolean pushGtu(Level level, BlockPos pos) {
         if (gtu.isEmpty()) return false;
         int budget = Math.min(MachineDefs.STIRLING_GTU_OUTPUT, gtu.amount());
-        int moved = Transfer.distribute(level, pos, budget, be -> {
+        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
             if (be instanceof StirlingBlockEntity) return null;
             if (be instanceof GtuSink sink) return sink::receiveGtu;
             return null;

@@ -16,10 +16,20 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
     }
 
     @Override
+    protected net.minecraft.resources.ResourceLocation backgroundTexture() {
+        return gui("electric_furnace_GUI_BG.png");
+    }
+
+    @Override
+    protected net.minecraft.resources.ResourceLocation foregroundTexture() {
+        return gui("electric_furnace_GUI.png");
+    }
+
+    @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         // Стрелка прогресса переплавки.
         float cook = menu.cookTotal() > 0 ? (float) menu.cookProgress() / menu.cookTotal() : 0f;
-        drawHBarTex(g, x + 80, y + 34, 24, 16, cook, BAR_FLUID);
+        drawHBarTex(g, x + 80, y + 34, 24, 16, cook, BAR_SMELTING);
 
         // Шкала GTU слева.
         int barX = x + 20;
@@ -27,7 +37,7 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
         int barW = 16;
         int barH = 52;
         float gtu = (float) menu.gtu() / MachineDefs.ELECTRIC_GTU_CAPACITY;
-        drawVBarTex(g, barX, barY, barW, barH, gtu, BAR_FLUID);
+        drawVBarTex(g, barX, barY, barW, barH, gtu, BAR_GTU);
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(

@@ -16,6 +16,16 @@ public class BoilerScreen extends MachineScreen<BoilerMenu> {
     }
 
     @Override
+    protected net.minecraft.resources.ResourceLocation backgroundTexture() {
+        return gui("boiler_GUI_BG.png");
+    }
+
+    @Override
+    protected net.minecraft.resources.ResourceLocation foregroundTexture() {
+        return gui("boiler_GUI.png");
+    }
+
+    @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         int barY = y + 17;
         int barW = 16;
@@ -29,8 +39,8 @@ public class BoilerScreen extends MachineScreen<BoilerMenu> {
         float water = (float) menu.water() / MachineDefs.BOILER_WATER_CAPACITY;
         float steam = (float) menu.steam() / MachineDefs.BOILER_STEAM_CAPACITY;
 
-        drawVBarTex(g, gthX, barY, barW, barH, gth, BAR_HEAT);
-        drawVBarTex(g, watX, barY, barW, barH, water, BAR_FLUID);
+        drawVBarTex(g, gthX, barY, barW, barH, gth, BAR_GTH);
+        drawVBarTex(g, watX, barY, barW, barH, water, BAR_WATER);
         drawVBarTex(g, steX, barY, barW, barH, steam, BAR_STEAM);
 
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {

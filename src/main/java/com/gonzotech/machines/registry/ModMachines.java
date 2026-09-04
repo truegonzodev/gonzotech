@@ -2,6 +2,7 @@ package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.BoilerBlock;
+import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.StirlingBlock;
@@ -50,6 +51,9 @@ public final class ModMachines {
     public static final DeferredBlock<ElectricFurnaceBlock> ELECTRIC_FURNACE =
         BLOCKS.registerBlock("electric_furnace", ElectricFurnaceBlock::new, metal());
 
+    public static final DeferredBlock<CondenserBlock> CONDENSER =
+        BLOCKS.registerBlock("condenser", CondenserBlock::new, metal());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -63,6 +67,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> ELECTRIC_FURNACE_ITEM =
         ITEMS.registerSimpleBlockItem("electric_furnace", ELECTRIC_FURNACE);
+
+    public static final DeferredItem<BlockItem> CONDENSER_ITEM =
+        ITEMS.registerSimpleBlockItem("condenser", CONDENSER);
 
     public static void register(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);

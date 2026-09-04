@@ -20,45 +20,39 @@ import net.minecraft.world.entity.player.Inventory;
  *   Z-1 PNG-ФОН (под шкалами) ........... {@link #backgroundTexture()}
  *   Z-2 Затемнение мира ................. движок ({@link #renderBackground})
  * </pre>
- * Слои Z1/Z0/Z-1 рисуются в {@link #renderBg} ДО того, как ванила отрисует
- * предметы, поэтому предметы (Z2) и тултипы (Z3) автоматически лягут выше.
- * <p>
- * <b>Идея с дырками.</b> Всё «железо» окна (рамки слотов, обводки, подписи,
- * фон) рисуешь ты в PNG. В местах шкал в переднем PNG (Z1) делаешь ПРОЗРАЧНЫЕ
- * дырки. Под ними (Z0) мы «проявляем» текстуру-заливку снизу-вверх (или
- * слева-направо для прогресса) — не растягивая, а открывая всё большую часть
- * заранее затайленной 16×16 текстуры (см. {@link #drawVBarTex}). Так как передний
- * PNG лежит ВЫШЕ шкалы, ей не нужно идеально влезать в дырку по ширине — лишнее
- * просто перекроется рисунком. Все три PNG (Z1/Z0/Z-1) — 32-битные ARGB с альфой.
  *
- * <h2>Размер листа и «большое меню» (512×512 @ −128,−128)</h2>
- * Зона взаимодействия (слоты/клики) остаётся стандартной 176×166 — её геометрию
- * менять нельзя, иначе поедут слоты и попадание мышью. Но сам РИСУНОК может быть
- * больше и вылезать за окно: переопредели {@link #sheetSize()} = 512 и
- * {@link #texOffsetX()}/{@link #texOffsetY()} = −128. Тогда лист 512×512 блитится
- * в точку {@code (leftPos−128, topPos−128)}, а интерактивное окно 176×166
- * оказывается ровно в центре листа (в его коорд. 128,128). Так меню выглядит
- * крупнее (рамка/декор торчат наружу до 128 px во все стороны), а клики и слоты
- * работают как обычно. Это оптимальный маршрут: увеличивать физический размер
- * слотов (масштаб предметов) ваниль без костылей не умеет — click-detection ломается.
+ * <h2>Стандарт меню (512×512 @ −128,−128)</h2>
+ * Лист PNG — {@code 512×512}, блитится в {@code (leftPos−128, topPos−128)}, так
+ * что интерактивное окно 176×166 (слоты/клики) оказывается в ЦЕНТРЕ листа (его
+ * координаты 128,128). Рисунок может торчать за окно до 128 px во все стороны —
+ * меню выглядит крупным, а геометрия слотов остаётся стандартной. По умолчанию
+ * оба слоя ({@code *_GUI_BG.png} и {@code *_GUI.png}) — это красные рамки-эталоны,
+ * пока художник не заменит их своим рисунком.
+ *
+ * <h2>Защита шкал альфа-маской</h2>
+ * Из переднего PNG ({@link #foregroundTexture()}) строится {@link GuiMask}:
+ * пиксели с альфой выше порога «закрыты», шкалы туда физически не рисуются
+ * (клипуются по наибольшей дырке). Так заливка не может вылезти за рисунок —
+ * она навечно погребена под непрозрачным оверлеем.
  */
 public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractContainerScreen<T> {
 
     /** Каталог текстур GUI машин. */
     public static final String GUI_DIR = "textures/gui/";
 
-    private static ResourceLocation gui(String file) {
+    protected static ResourceLocation gui(String file) {
         return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + file);
     }
 
-    /** Красные рамки-эталоны (для позиционирования, по умолчанию не показываются). */
-    protected static final ResourceLocation REFERENCE_256 = gui("reference.png");
-    protected static final ResourceLocation REFERENCE_512 = gui("reference_512.png");
+    // Пер-ресурсные шахматные текстуры-заливки шкал (общие, но НЕ универсальные).
+    protected static final ResourceLocation BAR_GTH = gui("bar_gth.png");
+    protected static final ResourceLocation BAR_BURNUP = gui("bar_burnup.png");
+    protected static final ResourceLocation BAR_SMELTING = gui("bar_smelting.png");
+    protected static final ResourceLocation BAR_WATER = gui("bar_water.png");
+    protected static final ResourceLocation BAR_STEAM = gui("bar_steam.png");
+    protected static final ResourceLocation BAR_GTU = gui("bar_gtu.png");
 
-    // Отладочные шахматные текстуры-заливки шкал (проявление, не растяжение).
-    protected static final ResourceLocation BAR_HEAT = gui("bar_debug_a.png");   // GTH / пламя / переплавка
-    protected static final ResourceLocation BAR_STEAM = gui("bar_debug_b.png");  // пар
-    protected static final ResourceLocation BAR_FLUID = gui("bar_debug_c.png");  // вода / GTU
+    private GuiMask mask = GuiMask.forTexture(null, 0, 0);
 
     protected MachineScreen(T menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -73,11 +67,12 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         this.titleLabelY = 6;
         this.inventoryLabelX = 8;
         this.inventoryLabelY = this.imageHeight - 94;
+        this.mask = GuiMask.forTexture(foregroundTexture(), texOffsetX(), texOffsetY());
     }
 
     // ─────────────────── Настройки PNG-листа (переопределяемые) ───────────────────
 
-    /** Задний PNG (Z-1), под шкалами. По умолчанию нет. */
+    /** Задний PNG (Z-1), под шкалами. По умолчанию нет — переопредели в наследнике. */
     protected ResourceLocation backgroundTexture() {
         return null;
     }
@@ -87,18 +82,18 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         return null;
     }
 
-    /** Размер квадратного листа PNG (256 или 512). */
+    /** Размер квадратного листа PNG. Стандарт — 512. */
     protected int sheetSize() {
-        return 256;
+        return 512;
     }
 
-    /** Смещение блита листа относительно угла окна (для 512 обычно −128). */
+    /** Смещение блита листа относительно угла окна. Стандарт — −128. */
     protected int texOffsetX() {
-        return 0;
+        return -128;
     }
 
     protected int texOffsetY() {
-        return 0;
+        return -128;
     }
 
     // ─────────────────── Рендер ───────────────────
@@ -124,7 +119,7 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         // Z-1: задний PNG-фон.
         blitSheet(g, backgroundTexture(), x, y);
 
-        // Z0: проявляющиеся шкалы (только заливка, без фона/обводки).
+        // Z0: проявляющиеся шкалы (только заливка).
         drawMachine(g, x, y, mouseX, mouseY);
 
         // Z1: передний PNG с дырками — маскирует лишнее у шкал.
@@ -142,15 +137,20 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     // ─────────────────── Шкалы: «проявление» текстуры (без растяжения) ───────────────────
 
     /**
-     * Вертикальная шкала: открывает нижние {@code fraction·h} пикселей заранее
-     * затайленной 16×16 текстуры (растёт снизу вверх, тайлы стыкуются бесшовно).
+     * Вертикальная шкала: открывает нижние {@code fraction·h} пикселей затайленной
+     * 16×16 текстуры (растёт снизу вверх). Клипуется по дырке в переднем PNG —
+     * заливка не может залезть под непрозрачный рисунок.
      */
     protected void drawVBarTex(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
+        int[] clip = clipRect(x, y, w, h);
+        if (clip == null) return;
         int filled = Math.round(clamp01(fraction) * h);
         if (filled <= 0) return;
-        int top = y + h - filled;
-        g.enableScissor(x, top, x + w, y + h);
-        // Тайлим 16×16, привязка к НИЗУ шкалы → рост снизу без сдвига паттерна.
+        int top = Math.max(clip[1], y + h - filled);
+        int scLeft = clip[0], scRight = clip[2], scBottom = clip[3];
+        if (top >= scBottom) return;
+        g.enableScissor(scLeft, top, scRight, scBottom);
+        // тайлим 16×16, привязка к НИЗУ шкалы → рост без сдвига паттерна
         for (int py = y + h - 16; py > y - 16; py -= 16) {
             for (int px = x; px < x + w; px += 16) {
                 g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
@@ -161,18 +161,38 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     /**
      * Горизонтальная шкала (прогресс): открывает левые {@code fraction·w} пикселей
-     * затайленной текстуры (растёт слева направо).
+     * (растёт слева направо). Тоже клипуется по дырке PNG.
      */
     protected void drawHBarTex(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
+        int[] clip = clipRect(x, y, w, h);
+        if (clip == null) return;
         int filled = Math.round(clamp01(fraction) * w);
         if (filled <= 0) return;
-        g.enableScissor(x, y, x + filled, y + h);
+        int right = Math.min(clip[2], x + filled);
+        int scLeft = clip[0], scTop = clip[1], scBottom = clip[3];
+        if (right <= scLeft) return;
+        g.enableScissor(scLeft, scTop, right, scBottom);
         for (int py = y; py < y + h; py += 16) {
             for (int px = x; px < x + w; px += 16) {
                 g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
             }
         }
         g.disableScissor();
+    }
+
+    /**
+     * Пересечение footprint шкалы с «дыркой» в переднем PNG, в ЭКРАННЫХ координатах.
+     * @return {@code [left,top,right,bottom]} или {@code null}, если дырки нет.
+     */
+    private int[] clipRect(int x, int y, int w, int h) {
+        int wx = x - this.leftPos;
+        int wy = y - this.topPos;
+        int[] open = mask.openSubRect(wx, wy, w, h);
+        if (open == null) return null;
+        return new int[]{
+            this.leftPos + open[0], this.topPos + open[1],
+            this.leftPos + open[2], this.topPos + open[3]
+        };
     }
 
     /** Наведение мыши на прямоугольник (для тултипов шкал). */

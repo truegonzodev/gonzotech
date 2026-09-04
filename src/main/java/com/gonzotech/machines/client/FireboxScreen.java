@@ -16,14 +16,24 @@ public class FireboxScreen extends MachineScreen<FireboxMenu> {
     }
 
     @Override
+    protected net.minecraft.resources.ResourceLocation backgroundTexture() {
+        return gui("firebox_GUI_BG.png");
+    }
+
+    @Override
+    protected net.minecraft.resources.ResourceLocation foregroundTexture() {
+        return gui("firebox_GUI.png");
+    }
+
+    @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        // Индикатор пламени (между слотами топлива и нагрузки).
+        // Индикатор горения топлива (между слотами топлива и нагрузки).
         float lit = menu.litDuration() > 0 ? (float) menu.litTime() / menu.litDuration() : 0f;
-        drawVBarTex(g, x + 46, y + 37, 14, 14, lit, BAR_HEAT);
+        drawVBarTex(g, x + 46, y + 37, 14, 14, lit, BAR_BURNUP);
 
         // Стрелка прогресса переплавки.
         float cook = menu.cookTotal() > 0 ? (float) menu.cookProgress() / menu.cookTotal() : 0f;
-        drawHBarTex(g, x + 68, y + 34, 24, 16, cook, BAR_HEAT);
+        drawHBarTex(g, x + 68, y + 34, 24, 16, cook, BAR_SMELTING);
 
         // Шкала GTH справа.
         int barX = x + 150;
@@ -31,7 +41,7 @@ public class FireboxScreen extends MachineScreen<FireboxMenu> {
         int barW = 16;
         int barH = 52;
         float gth = menu.gthCapacity() > 0 ? (float) menu.gth() / menu.gthCapacity() : 0f;
-        drawVBarTex(g, barX, barY, barW, barH, gth, BAR_HEAT);
+        drawVBarTex(g, barX, barY, barW, barH, gth, BAR_GTH);
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(

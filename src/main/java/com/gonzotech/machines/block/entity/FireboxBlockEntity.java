@@ -196,7 +196,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity implements GthSin
     private boolean pushGth(Level level, BlockPos pos) {
         if (gth.isEmpty()) return false;
         int budget = Math.min(MachineDefs.FIREBOX_GTH_OUTPUT, gth.amount());
-        int moved = Transfer.distribute(level, pos, budget, be -> {
+        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
             if (be instanceof FireboxBlockEntity) return null;
             if (be instanceof GthSink sink) return sink::receiveGth;
             return null;

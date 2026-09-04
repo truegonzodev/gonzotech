@@ -182,7 +182,7 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
     private boolean pushSteam(Level level, BlockPos pos) {
         if (steam.isEmpty()) return false;
         int budget = Math.min(MachineDefs.BOILER_STEAM_OUTPUT, steam.amount());
-        int moved = Transfer.distribute(level, pos, budget, be -> {
+        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
             if (be instanceof BoilerBlockEntity) return null;
             if (be instanceof SteamSink sink) return sink::receiveSteam;
             return null;

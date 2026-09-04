@@ -226,6 +226,7 @@
   "block.gonzotech.boiler": "Паровой котёл",
   "block.gonzotech.stirling_generator": "Генератор Стирлинга",
   "block.gonzotech.electric_furnace": "Электрическая печь",
+  "block.gonzotech.condenser": "Конденсатор",
   "gui.gonzotech.gth": "GTH: %s / %s",
   "gui.gonzotech.gtu": "GTU: %s / %s",
   "gui.gonzotech.steam": "Пар: %s / %s mB",
