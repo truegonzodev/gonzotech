@@ -1,6 +1,9 @@
 {
   "itemGroup.gonzotech.ores": "Gonzo Tech Resources & Materials",
   "itemGroup.gonzotech.functional": "Gonzo Tech Functional",
+  "itemGroup.gonzotech.blocks": "Gonzo Tech Blocks",
+  "itemGroup.gonzotech.components": "Gonzo Tech Components",
+  "itemGroup.gonzotech.gags": "Gonzo Tech Gags",
   "block.gonzotech.calcium_ore": "Calcium Ore",
   "block.gonzotech.deepslate_calcium_ore": "Deepslate Calcium Ore",
   "block.gonzotech.calcite_calcium_ore": "Calcite Calcium Ore",
@@ -236,5 +239,12 @@
   "gui.gonzotech.chain_missing_boiler": "Needs a Boiler nearby",
   "gui.gonzotech.chain_missing_stirling": "Needs a Stirling Generator nearby",
   "gui.gonzotech.running": "Generating GTU",
-  "gui.gonzotech.idle": "Idle"
+  "gui.gonzotech.idle": "Idle",
+  "block.gonzotech.lunar_dirt": "Lunar Dirt",
+  "item.gonzotech.pseudo_coil": "Pseudo-Coil",
+  "item.gonzotech.obsidian_bucket": "Obsidian Bucket",
+  "item.gonzotech.botched_mechanism": "Botched Mechanism",
+  "message.gonzotech.botched_craft": "Something's not right... Maybe I should brush up on the theory first...",
+  "tooltip.gonzotech.obsidian_bucket": "The lava froze solid, fused to the bucket. Useless now.",
+  "tooltip.gonzotech.botched_mechanism": "A tangle of parts that does nothing. I got ahead of myself."
 }

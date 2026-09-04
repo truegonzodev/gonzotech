@@ -129,10 +129,16 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
                 be.gtuAccum -= need * 1000;
                 be.cookProgress++;
                 if (be.cookProgress >= be.cookTotal) {
-                    be.storedXp += SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
+                    SmeltHelper.Result r = SmeltHelper.finish(server, be.items, SLOT_INPUT, SLOT_OUTPUT);
+                    be.storedXp += r.experience();
                     be.cookProgress = 0;
                     be.cookTotal = 0;
                     be.gtuAccum = 0;
+                    // Фаза 3: побочки плавки (цезий → взрыв, железо → шанс свинца).
+                    boolean exploded = SmeltSideEffects.apply(server, pos, r.produced());
+                    if (exploded) {
+                        return; // блок печи уничтожен взрывом
+                    }
                 }
                 worked = true;
                 changed = true;

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:deepslate_tellurium_ore",
+  "result": {
+    "id": "gonzotech:tellurium_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

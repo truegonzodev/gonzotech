@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:raw_tin",
+  "result": {
+    "id": "gonzotech:tin_ingot"
+  },
+  "experience": 0.5,
+  "cookingtime": 200
+}

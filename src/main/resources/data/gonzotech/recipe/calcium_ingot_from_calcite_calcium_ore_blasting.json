@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": "gonzotech:calcite_calcium_ore",
+  "result": {
+    "id": "gonzotech:calcium_ingot"
+  },
+  "experience": 0.2,
+  "cookingtime": 100
+}

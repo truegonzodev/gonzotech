@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:raw_aluminum",
+  "result": {
+    "id": "gonzotech:aluminum_ingot"
+  },
+  "experience": 0.2,
+  "cookingtime": 200
+}

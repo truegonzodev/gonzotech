@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:nether_sulfur_ore",
+  "result": {
+    "id": "gonzotech:raw_sulfur"
+  },
+  "experience": 0.35,
+  "cookingtime": 200
+}

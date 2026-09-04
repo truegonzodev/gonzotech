@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:raw_titanium",
+  "result": {
+    "id": "gonzotech:titanium_ingot"
+  },
+  "experience": 0.35,
+  "cookingtime": 200
+}

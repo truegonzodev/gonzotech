@@ -42,6 +42,18 @@ public class ModBlocks {
             .strength(2.5f, 3.0f)
     );
 
+    /**
+     * Фаза 3 — тестовый размещаемый блок «лунный грунт» (вкладка «Блоки»).
+     * Просто ставится; копает лопата, как ванильный dirt-подобный блок.
+     */
+    public static final DeferredBlock<Block> LUNAR_DIRT = BLOCKS.registerSimpleBlock(
+        "lunar_dirt",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.GRAVEL)
+            .strength(0.6f, 0.6f)
+    );
+
     static {
         for (OreDefinition ore : OreDefinition.ALL) {
             Map<Host, DeferredBlock<? extends Block>> byHost = new EnumMap<>(Host.class);

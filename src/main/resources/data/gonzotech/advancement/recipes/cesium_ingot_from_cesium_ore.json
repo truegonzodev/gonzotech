@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:cesium_ingot_from_cesium_ore_smelting",
+      "gonzotech:cesium_ingot_from_cesium_ore_blasting"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:cesium_ingot_from_cesium_ore_smelting"
+      }
+    },
+    "has_item_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "gonzotech:cesium_ore"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_item_0",
+      "has_the_recipe"
+    ]
+  ]
+}

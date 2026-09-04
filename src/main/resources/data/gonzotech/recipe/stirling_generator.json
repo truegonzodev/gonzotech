@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "MPM",
+    "IMI",
+    "MPM"
+  ],
+  "key": {
+    "M": "minecraft:copper_ingot",
+    "P": "minecraft:piston",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "gonzotech:stirling_generator",
+    "count": 1
+  }
+}

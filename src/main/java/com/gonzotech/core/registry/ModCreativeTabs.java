@@ -49,6 +49,45 @@ public class ModCreativeTabs {
             .build()
     );
 
+    // ─────────────────────────── Фаза 3: новые вкладки ───────────────────────────
+
+    /** «Блоки Gonzo Tech» — размещаемые декоративные/тестовые блоки. */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> BLOCKS_TAB = CREATIVE_TABS.register(
+        "blocks",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.gonzotech.blocks"))
+            .icon(() -> new ItemStack(ModItems.LUNAR_DIRT_ITEM.get()))
+            .displayItems((params, output) -> {
+                output.accept(ModItems.LUNAR_DIRT_ITEM.get());
+            })
+            .build()
+    );
+
+    /** «Компоненты Gonzo Tech» — предметы-ингредиенты для крафтов. */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> COMPONENTS_TAB = CREATIVE_TABS.register(
+        "components",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.gonzotech.components"))
+            .icon(() -> new ItemStack(ModItems.PSEUDO_COIL.get()))
+            .displayItems((params, output) -> {
+                output.accept(ModItems.PSEUDO_COIL.get());
+            })
+            .build()
+    );
+
+    /** «Приколы Gonzo Tech» — бесполезные/шуточные предметы. */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> GAGS_TAB = CREATIVE_TABS.register(
+        "gags",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.gonzotech.gags"))
+            .icon(() -> new ItemStack(ModItems.OBSIDIAN_BUCKET.get()))
+            .displayItems((params, output) -> {
+                output.accept(ModItems.OBSIDIAN_BUCKET.get());
+                output.accept(ModItems.BOTCHED_MECHANISM.get());
+            })
+            .build()
+    );
+
     public static void register(IEventBus modEventBus) {
         CREATIVE_TABS.register(modEventBus);
     }

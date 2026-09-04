@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": "gonzotech:barium_ore",
+  "result": {
+    "id": "gonzotech:barium_ingot"
+  },
+  "experience": 0.35,
+  "cookingtime": 100
+}

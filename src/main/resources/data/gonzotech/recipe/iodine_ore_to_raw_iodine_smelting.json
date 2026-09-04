@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:iodine_ore",
+  "result": {
+    "id": "gonzotech:raw_iodine"
+  },
+  "experience": 0.7,
+  "cookingtime": 200
+}

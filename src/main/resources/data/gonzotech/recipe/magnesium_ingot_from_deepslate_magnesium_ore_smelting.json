@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:deepslate_magnesium_ore",
+  "result": {
+    "id": "gonzotech:magnesium_ingot"
+  },
+  "experience": 0.2,
+  "cookingtime": 200
+}

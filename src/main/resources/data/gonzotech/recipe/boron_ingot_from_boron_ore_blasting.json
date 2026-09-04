@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": "gonzotech:boron_ore",
+  "result": {
+    "id": "gonzotech:boron_ingot"
+  },
+  "experience": 0.5,
+  "cookingtime": 100
+}

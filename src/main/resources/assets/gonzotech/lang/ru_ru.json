@@ -1,6 +1,9 @@
 {
   "itemGroup.gonzotech.ores": "Ресурсы и материалы Gonzo Tech",
   "itemGroup.gonzotech.functional": "Функционал Gonzo Tech",
+  "itemGroup.gonzotech.blocks": "Блоки Gonzo Tech",
+  "itemGroup.gonzotech.components": "Компоненты Gonzo Tech",
+  "itemGroup.gonzotech.gags": "Приколы Gonzo Tech",
   "block.gonzotech.calcium_ore": "Кальциевая руда",
   "block.gonzotech.deepslate_calcium_ore": "Глубиносланцевая Кальциевая руда",
   "block.gonzotech.calcite_calcium_ore": "Кальцитовая Кальциевая руда",
@@ -236,5 +239,12 @@
   "gui.gonzotech.chain_missing_boiler": "Нужен паровой котёл рядом",
   "gui.gonzotech.chain_missing_stirling": "Нужен генератор Стирлинга рядом",
   "gui.gonzotech.running": "Вырабатывает GTU",
-  "gui.gonzotech.idle": "Простаивает"
+  "gui.gonzotech.idle": "Простаивает",
+  "block.gonzotech.lunar_dirt": "Лунный грунт",
+  "item.gonzotech.pseudo_coil": "Псевдо-катушка",
+  "item.gonzotech.obsidian_bucket": "Ведро обсидиана",
+  "item.gonzotech.botched_mechanism": "Неудавшийся механизм",
+  "message.gonzotech.botched_craft": "Что-то Я намудрил... Наверное стоит подтянуть матчасть....",
+  "tooltip.gonzotech.obsidian_bucket": "Лава застыла и приросла к ведру. Теперь бесполезно.",
+  "tooltip.gonzotech.botched_mechanism": "Клубок деталей, который ничего не делает. Поспешил."
 }

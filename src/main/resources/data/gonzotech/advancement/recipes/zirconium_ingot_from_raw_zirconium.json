@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:zirconium_ingot_from_raw_zirconium_smelting",
+      "gonzotech:zirconium_ingot_from_raw_zirconium_blasting"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:zirconium_ingot_from_raw_zirconium_smelting"
+      }
+    },
+    "has_item_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "gonzotech:raw_zirconium"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_item_0",
+      "has_the_recipe"
+    ]
+  ]
+}

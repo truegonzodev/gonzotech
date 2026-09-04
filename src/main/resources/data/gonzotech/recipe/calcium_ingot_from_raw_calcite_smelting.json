@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:raw_calcite",
+  "result": {
+    "id": "gonzotech:calcium_ingot"
+  },
+  "experience": 0.2,
+  "cookingtime": 200
+}

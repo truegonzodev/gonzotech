@@ -1,0 +1,19 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": { "recipes": [ "gonzotech:pseudo_coil" ] },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "gonzotech:pseudo_coil" }
+    },
+    "has_copper": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": "minecraft:copper_ingot" } ] }
+    },
+    "has_iron": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": "minecraft:iron_ingot" } ] }
+    }
+  },
+  "requirements": [ [ "has_copper", "has_iron", "has_the_recipe" ] ]
+}

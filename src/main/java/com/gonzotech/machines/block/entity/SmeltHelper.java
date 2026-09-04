@@ -60,17 +60,22 @@ public final class SmeltHelper {
             .orElse(0.0F);
     }
 
+    /** Результат одной переплавки: опыт (как в ваниле) + копия произведённого стака. */
+    public record Result(float experience, ItemStack produced) {
+        public static final Result NONE = new Result(0.0F, ItemStack.EMPTY);
+    }
+
     /**
      * Завершить одну переплавку: убавить вход на 1, положить результат в выход.
      * Предполагается, что {@link #canOutput} уже вернул true.
      *
-     * @return опыт (как в ваниле) за эту переплавку — вызывающий копит его и
-     *         выдаёт игроку при заборе результата из выходного слота.
+     * @return {@link Result}: опыт (вызывающий копит и выдаёт при заборе) и копия
+     *         произведённого стака (для детекта цезия/железа спец-механиками).
      */
-    public static float finish(ServerLevel level, NonNullList<ItemStack> items, int inputSlot, int outputSlot) {
+    public static Result finish(ServerLevel level, NonNullList<ItemStack> items, int inputSlot, int outputSlot) {
         ItemStack input = items.get(inputSlot);
         Optional<RecipeHolder<SmeltingRecipe>> recipe = find(level, input);
-        if (recipe.isEmpty()) return 0.0F;
+        if (recipe.isEmpty()) return Result.NONE;
         ItemStack result = recipe.get().value().assemble(new SingleRecipeInput(input), level.registryAccess());
         ItemStack output = items.get(outputSlot);
         if (output.isEmpty()) {
@@ -79,7 +84,7 @@ public final class SmeltHelper {
             output.grow(result.getCount());
         }
         input.shrink(1);
-        return recipe.get().value().experience();
+        return new Result(recipe.get().value().experience(), result.copy());
     }
 
     /**

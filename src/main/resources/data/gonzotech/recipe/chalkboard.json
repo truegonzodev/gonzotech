@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "PCP",
+    "PCP"
+  ],
+  "key": {
+    "P": "#minecraft:planks",
+    "C": "minecraft:calcite"
+  },
+  "result": {
+    "id": "gonzotech:chalkboard",
+    "count": 1
+  }
+}

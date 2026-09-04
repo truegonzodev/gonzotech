@@ -56,6 +56,29 @@ public class ModItems {
     public static final DeferredItem<BlockItem> CHALKBOARD_ITEM =
         ITEMS.registerSimpleBlockItem("chalkboard", ModBlocks.CHALKBOARD);
 
+    /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
+    public static final DeferredItem<Item> PSEUDO_COIL =
+        ITEMS.registerSimpleItem("pseudo_coil");
+
+    /**
+     * Фаза 3 — «прикол»: ведро обсидиана. Бесполезный предмет: ведро лавы в
+     * инвентаре при попадании в воду «застывает» в него (см. WaterPhase3Events).
+     */
+    public static final DeferredItem<Item> OBSIDIAN_BUCKET =
+        ITEMS.registerSimpleItem("obsidian_bucket");
+
+    /**
+     * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
+     * игрок пытается скрафтить закрытую машину (напр. эл. печь) до нужного
+     * «Открытия» (см. RecipeGateEvents). Заготовка под будущую механику стресса.
+     */
+    public static final DeferredItem<Item> BOTCHED_MECHANISM =
+        ITEMS.registerSimpleItem("botched_mechanism");
+
+    /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */
+    public static final DeferredItem<BlockItem> LUNAR_DIRT_ITEM =
+        ITEMS.registerSimpleBlockItem("lunar_dirt", ModBlocks.LUNAR_DIRT);
+
     /** Предметы «Открытие 1» .. «Открытие 16». */
     public static final List<DeferredItem<DiscoveryItem>> DISCOVERY_ITEMS = new ArrayList<>();
 

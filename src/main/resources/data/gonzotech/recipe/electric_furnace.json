@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "KFK",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "F": "minecraft:furnace",
+    "K": "gonzotech:pseudo_coil"
+  },
+  "result": {
+    "id": "gonzotech:electric_furnace",
+    "count": 1
+  }
+}

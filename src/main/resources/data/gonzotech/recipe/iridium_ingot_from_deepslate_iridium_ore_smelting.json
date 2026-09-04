@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:deepslate_iridium_ore",
+  "result": {
+    "id": "gonzotech:iridium_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

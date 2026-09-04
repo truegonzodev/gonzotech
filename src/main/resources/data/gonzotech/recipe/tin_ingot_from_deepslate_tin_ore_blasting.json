@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "ingredient": "gonzotech:deepslate_tin_ore",
+  "result": {
+    "id": "gonzotech:tin_ingot"
+  },
+  "experience": 0.5,
+  "cookingtime": 100
+}

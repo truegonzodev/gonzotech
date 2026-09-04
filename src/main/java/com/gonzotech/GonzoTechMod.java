@@ -52,6 +52,9 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
 
+        // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
+
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);

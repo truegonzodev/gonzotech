@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BBB",
+    "BMB",
+    "BBB"
+  ],
+  "key": {
+    "B": "minecraft:iron_bars",
+    "M": "minecraft:copper_ingot"
+  },
+  "result": {
+    "id": "gonzotech:condenser",
+    "count": 1
+  }
+}

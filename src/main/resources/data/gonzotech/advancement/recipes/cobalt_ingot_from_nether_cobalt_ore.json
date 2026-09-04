@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:cobalt_ingot_from_nether_cobalt_ore_smelting",
+      "gonzotech:cobalt_ingot_from_nether_cobalt_ore_blasting"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:cobalt_ingot_from_nether_cobalt_ore_smelting"
+      }
+    },
+    "has_item_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "gonzotech:nether_cobalt_ore"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_item_0",
+      "has_the_recipe"
+    ]
+  ]
+}

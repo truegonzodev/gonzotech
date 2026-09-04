@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IMI",
+    "IFI",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "M": "minecraft:copper_ingot",
+    "F": "minecraft:furnace"
+  },
+  "result": {
+    "id": "gonzotech:firebox",
+    "count": 1
+  }
+}

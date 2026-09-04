@@ -48,6 +48,8 @@ public class DiscoveryItem extends Item {
                 serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
                 ChalkboardNetwork.sendSyncToPlayer(serverPlayer);
                 ModAdvancements.checkAndAwardAdvancements(serverPlayer);
+                // Фаза 3: показать в книге рецептов машины этого «Открытия».
+                com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantForTier(serverPlayer, discoveryNumber);
                 stack.shrink(1);
 
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:raw_osmium",
+  "result": {
+    "id": "gonzotech:osmium_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

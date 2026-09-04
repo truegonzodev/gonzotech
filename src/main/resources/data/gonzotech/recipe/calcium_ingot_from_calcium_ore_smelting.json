@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:calcium_ore",
+  "result": {
+    "id": "gonzotech:calcium_ingot"
+  },
+  "experience": 0.2,
+  "cookingtime": 200
+}
