@@ -37,13 +37,23 @@ public final class ModMachines {
             .requiresCorrectToolForDrops();
     }
 
+    /**
+     * Как {@link #metal()}, но с {@code .noOcclusion()} — для блоков с кастомной
+     * 3D-моделью, которая НЕ является полным кубом (например котёл). Без этого
+     * Minecraft считает блок полным непрозрачным кубом и на стыках отсекает грани
+     * (выступающие части «пропадают», соседние блоки затеняются некорректно).
+     */
+    private static BlockBehaviour.Properties metalCustomShape() {
+        return metal().noOcclusion();
+    }
+
     // ─────────────────────────── блоки ───────────────────────────
 
     public static final DeferredBlock<FireboxBlock> FIREBOX =
         BLOCKS.registerBlock("firebox", FireboxBlock::new, metal());
 
     public static final DeferredBlock<BoilerBlock> BOILER =
-        BLOCKS.registerBlock("boiler", BoilerBlock::new, metal());
+        BLOCKS.registerBlock("boiler", BoilerBlock::new, metalCustomShape());
 
     public static final DeferredBlock<StirlingBlock> STIRLING =
         BLOCKS.registerBlock("stirling_generator", StirlingBlock::new, metal());
