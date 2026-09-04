@@ -17,12 +17,12 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("electric_furnace_GUI_BG.png");
+        return gui("electric_furnace_gui_bg.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("electric_furnace_GUI.png");
+        return gui("electric_furnace_gui.png");
     }
 
     @Override
