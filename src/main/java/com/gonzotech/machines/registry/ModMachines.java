@@ -6,7 +6,11 @@ import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.StirlingBlock;
+import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.network.PipeBlock;
+import com.gonzotech.machines.network.PipeType;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -64,6 +68,26 @@ public final class ModMachines {
     public static final DeferredBlock<CondenserBlock> CONDENSER =
         BLOCKS.registerBlock("condenser", CondenserBlock::new, metal());
 
+    // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
+    // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
+    // через NetworkManager (тикает сеть, не труба). noOcclusion, т.к. модель не
+    // полный куб (тонкая труба).
+
+    private static BlockBehaviour.Properties pipe() {
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(1.5f, 6.0f)
+            .requiresCorrectToolForDrops()
+            .noOcclusion();
+    }
+
+    public static final DeferredBlock<PipeBlock> WIRE =
+        BLOCKS.registerBlock("wire", props -> new PipeBlock(props, PipeType.WIRE), pipe());
+
+    public static final DeferredBlock<PipeBlock> HEAT_PIPE =
+        BLOCKS.registerBlock("heat_pipe", props -> new PipeBlock(props, PipeType.HEAT), pipe());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -80,6 +104,18 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> CONDENSER_ITEM =
         ITEMS.registerSimpleBlockItem("condenser", CONDENSER);
+
+    public static final DeferredItem<BlockItem> WIRE_ITEM =
+        ITEMS.registerSimpleBlockItem("wire", WIRE);
+
+    public static final DeferredItem<BlockItem> HEAT_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("heat_pipe", HEAT_PIPE);
+
+    // ─────────────────────────── инструменты ───────────────────────────
+
+    /** Гаечный ключ: ПКМ по трубе переключает её режим AUTO/PULL/PUSH. */
+    public static final DeferredItem<Item> WRENCH =
+        ITEMS.registerItem("wrench", props -> new WrenchItem(props.stacksTo(1)));
 
     public static void register(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);

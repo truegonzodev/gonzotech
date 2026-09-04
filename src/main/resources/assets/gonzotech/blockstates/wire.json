@@ -1,0 +1,40 @@
+{
+  "variants": {
+    "axis=y,mode=auto": {
+      "model": "gonzotech:block/wire"
+    },
+    "axis=z,mode=auto": {
+      "model": "gonzotech:block/wire",
+      "x": 90
+    },
+    "axis=x,mode=auto": {
+      "model": "gonzotech:block/wire",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,mode=pull": {
+      "model": "gonzotech:block/wire"
+    },
+    "axis=z,mode=pull": {
+      "model": "gonzotech:block/wire",
+      "x": 90
+    },
+    "axis=x,mode=pull": {
+      "model": "gonzotech:block/wire",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y,mode=push": {
+      "model": "gonzotech:block/wire"
+    },
+    "axis=z,mode=push": {
+      "model": "gonzotech:block/wire",
+      "x": 90
+    },
+    "axis=x,mode=push": {
+      "model": "gonzotech:block/wire",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

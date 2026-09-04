@@ -4,6 +4,7 @@ import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
+import com.gonzotech.machines.energy.Sinks.GtuSource;
 import com.gonzotech.machines.energy.Sinks.SteamSink;
 import com.gonzotech.machines.energy.Sinks.WaterSink;
 import com.gonzotech.machines.energy.Transfer;
@@ -36,7 +37,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * на возврат в котёл — ТОЛЬКО если пар есть (иначе при нескольких котлах-соседях
  * был бы дюп воды).
  */
-public class StirlingBlockEntity extends BaseMachineBlockEntity implements SteamSink, GtuSink {
+public class StirlingBlockEntity extends BaseMachineBlockEntity implements SteamSink, GtuSink, GtuSource {
 
     private final ResourceBuffer steam = new ResourceBuffer(MachineDefs.STIRLING_STEAM_CAPACITY);
     private final ResourceBuffer gtu = new ResourceBuffer(MachineDefs.STIRLING_GTU_CAPACITY);
@@ -104,6 +105,13 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
     public int receiveGtu(int amount, boolean simulate) {
         // Стирлинг сам источник GTU; приём извне не используется.
         return 0;
+    }
+
+    // ─────────────────────────── GtuSource (для проводов) ───────────────────────────
+
+    @Override
+    public int extractGtu(int amount, boolean simulate) {
+        return gtu.extract(amount, simulate);
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────

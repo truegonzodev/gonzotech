@@ -98,6 +98,8 @@
     "gonzotech:bismuth_block",
     "gonzotech:rhenium_block",
     "gonzotech:radium_block",
-    "gonzotech:lithium_block"
+    "gonzotech:lithium_block",
+    "gonzotech:wire",
+    "gonzotech:heat_pipe"
   ]
 }

@@ -3,6 +3,7 @@ package com.gonzotech.machines.block.entity;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks.GthSink;
+import com.gonzotech.machines.energy.Sinks.GthSource;
 import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
@@ -40,7 +41,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * </ul>
  */
 public class FireboxBlockEntity extends BaseMachineBlockEntity
-    implements GthSink, WorldlyContainer, ExperienceOutput {
+    implements GthSink, GthSource, WorldlyContainer, ExperienceOutput {
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_FUEL = 1;
@@ -128,6 +129,13 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     @Override
     public int receiveGth(int amount, boolean simulate) {
         return gth.receive(amount, simulate);
+    }
+
+    // ─────────────────────────── GthSource (для теплотруб) ───────────────────────────
+
+    @Override
+    public int extractGth(int amount, boolean simulate) {
+        return gth.extract(amount, simulate);
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────

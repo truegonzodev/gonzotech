@@ -51,6 +51,11 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.CONDENSER_ITEM.get());
+
+                // Логистика — трубы энергосети + гаечный ключ.
+                output.accept(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.HEAT_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
             })
             .build()
     );

@@ -62,7 +62,22 @@ public final class Transfer {
             Receiver r = mapper.apply(be);
             if (r != null) receivers.add(r);
         }
+        return distributeAmong(receivers, budget, rotation);
+    }
 
+    /**
+     * То же равномерное деление с ротацией остатка, но по ПРОИЗВОЛЬНОМУ списку
+     * приёмников (не обязательно соседей одного блока). Используется энергосетью
+     * ({@code EnergyNetwork}), где приёмники — машины на всех концах контура.
+     *
+     * @param receivers приёмники (порядок должен быть стабильным между тиками
+     *                  для честной ротации остатка)
+     * @param budget    сколько единиц раздать
+     * @param rotation  сдвиг ротации остатка (обычно {@code level.getGameTime()})
+     * @return сколько единиц суммарно принято
+     */
+    public static int distributeAmong(List<Receiver> receivers, int budget, long rotation) {
+        if (budget <= 0) return 0;
         int n = receivers.size();
         if (n == 0) return 0;
 
@@ -72,7 +87,6 @@ public final class Transfer {
 
         int moved = 0;
         for (int i = 0; i < n; i++) {
-            // сосед i получает базовую долю + возможно 1 из остатка (по кругу от start)
             int rot = Math.floorMod(i - start, n);
             int share = base + (rot < extra ? 1 : 0);
             if (share <= 0) continue;
