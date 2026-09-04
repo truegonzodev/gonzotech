@@ -11,7 +11,9 @@ import com.gonzotech.machines.energy.WaterProviders;
 import com.gonzotech.machines.menu.BoilerMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -40,6 +42,11 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
 
     public static final int SLOT_WATER_IN = 0;
     public static final int SLOT_BUCKET_OUT = 1;
+
+    /** Белая пар-пыль (reddust #ffffff, size 1.0) — как у {@code IodineOreBlock}, но белая. */
+    private static final DustParticleOptions STEAM_PARTICLE = new DustParticleOptions(0xFFFFFF, 1.0F);
+    /** Раз в сколько тиков брызгать паром, пока котёл РАБОТАЕТ. */
+    private static final int PARTICLE_INTERVAL = 5;
 
     private final ResourceBuffer gth = new ResourceBuffer(MachineDefs.BOILER_GTH_CAPACITY);
     private final ResourceBuffer water = new ResourceBuffer(MachineDefs.BOILER_WATER_CAPACITY);
@@ -137,6 +144,7 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
 
         // 3. Варить пар: нужна примыкающая топка + GTH + вода + место под пар.
         boolean chain = Sinks.hasNeighbor(server, pos, FireboxBlockEntity.class);
+        boolean boiling = false;
         if (chain
             && be.gth.has(MachineDefs.BOILER_GTH_PER_TICK)
             && be.water.has(MachineDefs.BOILER_WATER_PER_TICK)
@@ -145,6 +153,13 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
             be.water.extract(MachineDefs.BOILER_WATER_PER_TICK, false);
             be.steam.receive(MachineDefs.BOILER_STEAM_PER_TICK, false);
             changed = true;
+            boiling = true;
+        }
+
+        // 3b. Пока котёл РАБОТАЕТ (делает пар) — раз в 5 тиков брызгать белым паром
+        //     у всех граней кроме нижней (north/south/east/west/top).
+        if (boiling && server.getGameTime() % PARTICLE_INTERVAL == 0) {
+            spawnSteamParticles(server, pos);
         }
 
         // 4. Раздать пар соседям равномерно (макс. отдача).
@@ -154,6 +169,31 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
 
         if (changed) {
             be.setChanged();
+        }
+    }
+
+    /**
+     * По одному облачку белого пара у каждой грани, КРОМЕ нижней (north/south/east/west/top),
+     * у которой нет непрозрачного соседа. Логика позиций — как у {@code IodineOreBlock}
+     * (0.5625 = середина + ~половина блока наружу), но через {@link ServerLevel#sendParticles},
+     * т.к. мы на сервере (частица разошлётся всем клиентам поблизости).
+     */
+    private static void spawnSteamParticles(ServerLevel server, BlockPos pos) {
+        for (Direction direction : Direction.values()) {
+            if (direction == Direction.DOWN) continue; // нижнюю грань пропускаем
+            BlockPos neighbor = pos.relative(direction);
+            if (server.getBlockState(neighbor).isSolidRender()) continue;
+            Direction.Axis axis = direction.getAxis();
+            double dx = axis == Direction.Axis.X ? 0.5 + 0.5625 * direction.getStepX() : server.random.nextFloat();
+            double dy = axis == Direction.Axis.Y ? 0.5 + 0.5625 * direction.getStepY() : server.random.nextFloat();
+            double dz = axis == Direction.Axis.Z ? 0.5 + 0.5625 * direction.getStepZ() : server.random.nextFloat();
+            server.sendParticles(
+                STEAM_PARTICLE,
+                pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz,
+                1,          // count
+                0.0, 0.0, 0.0,
+                0.0         // speed
+            );
         }
     }
 
