@@ -23,3 +23,8 @@ description = '''${mod_description}'''
     versionRange = "${minecraft_version_range}"
     ordering = "NONE"
     side = "BOTH"
+
+# Фаза 3: миксин в ванильную печь — взрыв при появлении цезия в слоте результата.
+[[mixins]]
+    config = "gonzotech.mixins.json"
+

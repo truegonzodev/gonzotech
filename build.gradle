@@ -60,6 +60,9 @@ neoForge {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
+    // Mixin annotation processor — генерирует refmap для наших миксинов
+    // (см. src/main/resources/gonzotech.mixins.json).
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     // сюда позже: GeckoLib/AzureLib, JEI (localRuntime), и т.д.
 }
 

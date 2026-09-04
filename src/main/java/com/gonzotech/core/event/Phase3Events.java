@@ -27,10 +27,11 @@ import java.util.Map;
  *       крафтит «закрытую» машину (эл. печь) до нужного «Открытия», ингредиенты
  *       всё равно тратятся, но вместо результата он получает бесполезный
  *       {@code botched_mechanism} и сообщение в чат. Задел под механику стресса.</li>
- *   <li><b>Ванильная переплавка</b> ({@link PlayerEvent.ItemSmeltedEvent}) — при
- *       заборе результата из ванильной печи/плавильни/коптильни: (а) железо → 5%
- *       свинца за предмет; (б) цезий → взрыв (в наших машинах это делает
- *       {@code SmeltSideEffects}).</li>
+ *   <li><b>Свинец в ванильных печах</b> ({@link PlayerEvent.ItemSmeltedEvent}) —
+ *       при заборе результата плавки железа из ванильной печи/плавильни/коптильни:
+ *       5% свинца за предмет. (Взрыв цезия в ванильных печах делает миксин
+ *       {@code AbstractFurnaceBlockEntityMixin} прямо в тике печи; в наших машинах —
+ *       {@code SmeltSideEffects}.)</li>
  *   <li><b>Цезий в воде</b> ({@link PlayerTickEvent.Post}) — если в инвентаре есть
  *       цезиевая руда/поллуцит и игрок в воде, каждые 8 тиков — взрыв силой 1 в игроке.</li>
  *   <li><b>Ведро лавы в воде</b> — если у игрока в инвентаре ведро лавы и он в воде,
@@ -53,8 +54,6 @@ public final class Phase3Events {
     private static Map<net.minecraft.world.item.Item, Integer> craftGate;
 
     private static final float CESIUM_WATER_EXPLOSION = 1.0F;
-    /** Сила взрыва при заборе цезия из ванильной печи. */
-    private static final float CESIUM_FURNACE_EXPLOSION = 2.0F;
     private static final float LEAD_CHANCE = 0.05F;
     private static final int WATER_EFFECT_INTERVAL = 8;
 
@@ -109,15 +108,11 @@ public final class Phase3Events {
         if (!(player.level() instanceof ServerLevel level)) return;
         ItemStack smelted = event.getSmelting();
 
-        // (а) Цезиевый слиток из ванильной печи — взрыв у игрока (он стоит у печи).
-        if (smelted.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get())) {
-            level.explode(null,
-                player.getX(), player.getY(), player.getZ(),
-                CESIUM_FURNACE_EXPLOSION, Level.ExplosionInteraction.BLOCK);
-            return;
-        }
+        // Взрыв цезия в ванильных печах обрабатывается миксином прямо в тике печи
+        // (AbstractFurnaceBlockEntityMixin) — чтобы рвануло в БЛОКЕ печи при появлении
+        // слитка в слоте результата, как в наших машинах, а не при заборе у игрока.
 
-        // (б) Железо → 5% свинца за каждый переплавленный предмет.
+        // Железо → 5% свинца за каждый переплавленный предмет (при заборе результата).
         if (!smelted.is(Items.IRON_INGOT)) return;
         int made = Math.max(1, smelted.getCount());
         int lead = 0;
