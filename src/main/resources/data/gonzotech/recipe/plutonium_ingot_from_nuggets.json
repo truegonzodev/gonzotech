@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:plutonium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:plutonium_ingot",
+    "count": 1
+  }
+}

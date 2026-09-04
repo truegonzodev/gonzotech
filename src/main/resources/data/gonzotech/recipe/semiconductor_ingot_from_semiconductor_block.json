@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:semiconductor_block"
+  ],
+  "result": {
+    "id": "gonzotech:semiconductor_ingot",
+    "count": 9
+  }
+}

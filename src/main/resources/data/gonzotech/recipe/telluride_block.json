@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:telluride_ingot"
+  },
+  "result": {
+    "id": "gonzotech:telluride_block",
+    "count": 1
+  }
+}

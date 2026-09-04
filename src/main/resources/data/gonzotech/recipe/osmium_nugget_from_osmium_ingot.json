@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:osmium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:osmium_nugget",
+    "count": 9
+  }
+}

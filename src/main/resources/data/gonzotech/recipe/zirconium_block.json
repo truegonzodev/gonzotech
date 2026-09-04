@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:zirconium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:zirconium_block",
+    "count": 1
+  }
+}

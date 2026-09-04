@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:boron_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:boron_nugget",
+    "count": 9
+  }
+}

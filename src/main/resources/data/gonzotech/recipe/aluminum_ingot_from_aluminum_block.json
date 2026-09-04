@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:aluminum_block"
+  ],
+  "result": {
+    "id": "gonzotech:aluminum_ingot",
+    "count": 9
+  }
+}

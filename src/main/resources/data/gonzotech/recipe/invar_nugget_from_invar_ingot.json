@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:invar_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:invar_nugget",
+    "count": 9
+  }
+}

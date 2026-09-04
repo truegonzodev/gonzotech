@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:zirconium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:zirconium_nugget",
+    "count": 9
+  }
+}

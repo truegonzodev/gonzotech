@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:silver_block"
+  ],
+  "result": {
+    "id": "gonzotech:silver_ingot",
+    "count": 9
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:lithium_block"
+  ],
+  "result": {
+    "id": "gonzotech:lithium_ingot",
+    "count": 9
+  }
+}

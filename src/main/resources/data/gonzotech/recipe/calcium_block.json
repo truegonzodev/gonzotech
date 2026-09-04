@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:calcium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:calcium_block",
+    "count": 1
+  }
+}

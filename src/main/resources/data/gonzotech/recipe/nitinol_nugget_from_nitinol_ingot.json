@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:nitinol_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:nitinol_nugget",
+    "count": 9
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:telluride_block"
+  ],
+  "result": {
+    "id": "gonzotech:telluride_ingot",
+    "count": 9
+  }
+}

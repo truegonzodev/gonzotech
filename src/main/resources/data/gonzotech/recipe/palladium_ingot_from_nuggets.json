@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:palladium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:palladium_ingot",
+    "count": 1
+  }
+}

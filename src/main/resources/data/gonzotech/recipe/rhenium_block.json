@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:rhenium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:rhenium_block",
+    "count": 1
+  }
+}

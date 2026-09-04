@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "gonzotech:block/semiconductor_block"
+  }
+}

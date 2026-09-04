@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:vr20_block"
+  ],
+  "result": {
+    "id": "gonzotech:vr20_ingot",
+    "count": 9
+  }
+}

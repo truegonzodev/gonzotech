@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:radium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:radium_block",
+    "count": 1
+  }
+}

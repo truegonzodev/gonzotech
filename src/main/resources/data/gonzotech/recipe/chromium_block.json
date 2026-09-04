@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:chromium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:chromium_block",
+    "count": 1
+  }
+}

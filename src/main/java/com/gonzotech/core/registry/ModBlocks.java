@@ -28,6 +28,14 @@ public class ModBlocks {
     public static final Map<String, Map<Host, DeferredBlock<? extends Block>>> ORE_BLOCKS = new LinkedHashMap<>();
 
     /**
+     * Фаза 3 — «драгоценные» блоки-хранилища из 9 слитков (по одному на КАЖДЫЙ
+     * слиток из {@link ModItems#INGOT_IDS}, без исключений). Ключ карты — id блока
+     * вида {@code <metal>_block} (у {@code *_ingot} убираем суффикс {@code _ingot}).
+     * Все блоки — beacon base (тег {@code minecraft:beacon_base_blocks}).
+     */
+    public static final Map<String, DeferredBlock<Block>> METAL_BLOCKS = new LinkedHashMap<>();
+
+    /**
      * Доска резонанса (com.gonzotech.chalkboard) — Фаза 1: просто ставится,
      * ПКМ открывает экран конструктора формул. См.
      * info/gonzo_tech_chalkboard_design.md. Дерево/мел — не руда, не
@@ -104,6 +112,19 @@ public class ModBlocks {
                 byHost.put(host, block);
             }
             ORE_BLOCKS.put(ore.id(), byHost);
+        }
+
+        // Фаза 3 — блоки-хранилища из 9 слитков (у каждого слитка, без исключений).
+        // Металлически «звонкие» и прочные, как ванильный iron_block; служат также
+        // основанием маяка (тег beacon_base_blocks проставляется в data-паке).
+        for (String ingotId : Metals.INGOT_IDS) {
+            String blockId = Metals.base(ingotId) + "_block";
+            BlockBehaviour.Properties props = BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .sound(SoundType.METAL)
+                .strength(5.0f, 6.0f)
+                .requiresCorrectToolForDrops();
+            METAL_BLOCKS.put(blockId, BLOCKS.registerSimpleBlock(blockId, props));
         }
     }
 

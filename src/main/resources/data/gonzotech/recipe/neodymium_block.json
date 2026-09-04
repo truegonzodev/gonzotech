@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:neodymium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:neodymium_block",
+    "count": 1
+  }
+}

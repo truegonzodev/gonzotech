@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:chromium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:chromium_nugget",
+    "count": 9
+  }
+}

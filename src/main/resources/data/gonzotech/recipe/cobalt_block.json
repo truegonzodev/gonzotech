@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:cobalt_ingot"
+  },
+  "result": {
+    "id": "gonzotech:cobalt_block",
+    "count": 1
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:nitinol_block"
+  ],
+  "result": {
+    "id": "gonzotech:nitinol_ingot",
+    "count": 9
+  }
+}

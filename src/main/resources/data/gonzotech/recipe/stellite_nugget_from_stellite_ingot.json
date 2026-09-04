@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:stellite_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:stellite_nugget",
+    "count": 9
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:alnico_nugget"
+  },
+  "result": {
+    "id": "gonzotech:alnico_ingot",
+    "count": 1
+  }
+}

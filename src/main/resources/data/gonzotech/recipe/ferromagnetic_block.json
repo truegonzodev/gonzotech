@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:ferromagnetic_ingot"
+  },
+  "result": {
+    "id": "gonzotech:ferromagnetic_block",
+    "count": 1
+  }
+}

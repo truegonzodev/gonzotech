@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:chromium_block"
+  ],
+  "result": {
+    "id": "gonzotech:chromium_ingot",
+    "count": 9
+  }
+}

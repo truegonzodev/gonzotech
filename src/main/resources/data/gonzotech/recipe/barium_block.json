@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:barium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:barium_block",
+    "count": 1
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:mercury_block"
+  ],
+  "result": {
+    "id": "gonzotech:mercury_ingot",
+    "count": 9
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:ferromagnetic_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:ferromagnetic_nugget",
+    "count": 9
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:calcium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:calcium_ingot",
+    "count": 1
+  }
+}

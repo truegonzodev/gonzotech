@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:tin_block"
+  ],
+  "result": {
+    "id": "gonzotech:tin_ingot",
+    "count": 9
+  }
+}

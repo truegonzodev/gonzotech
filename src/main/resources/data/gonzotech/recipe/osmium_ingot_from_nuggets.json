@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:osmium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:osmium_ingot",
+    "count": 1
+  }
+}

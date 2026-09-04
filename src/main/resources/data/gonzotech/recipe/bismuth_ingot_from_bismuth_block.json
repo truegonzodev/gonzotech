@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:bismuth_block"
+  ],
+  "result": {
+    "id": "gonzotech:bismuth_ingot",
+    "count": 9
+  }
+}

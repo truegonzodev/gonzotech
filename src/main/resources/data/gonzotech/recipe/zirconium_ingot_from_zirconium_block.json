@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:zirconium_block"
+  ],
+  "result": {
+    "id": "gonzotech:zirconium_ingot",
+    "count": 9
+  }
+}
