@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "aluminum_nugget",
   "ingredients": [
     "gonzotech:aluminum_ingot"
   ],

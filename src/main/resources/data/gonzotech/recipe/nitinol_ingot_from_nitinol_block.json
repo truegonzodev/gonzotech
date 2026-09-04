@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "nitinol_ingot",
   "ingredients": [
     "gonzotech:nitinol_block"
   ],

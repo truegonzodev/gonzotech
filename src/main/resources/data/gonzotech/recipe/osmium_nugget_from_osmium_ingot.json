@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "osmium_nugget",
   "ingredients": [
     "gonzotech:osmium_ingot"
   ],

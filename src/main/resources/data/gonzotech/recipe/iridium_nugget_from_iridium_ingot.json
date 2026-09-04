@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "iridium_nugget",
   "ingredients": [
     "gonzotech:iridium_ingot"
   ],

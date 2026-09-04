@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "zinc_ingot",
   "ingredients": [
     "gonzotech:zinc_block"
   ],

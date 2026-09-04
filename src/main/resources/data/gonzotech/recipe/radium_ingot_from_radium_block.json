@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "radium_ingot",
   "ingredients": [
     "gonzotech:radium_block"
   ],

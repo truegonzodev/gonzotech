@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "rhenium_ingot",
   "ingredients": [
     "gonzotech:rhenium_block"
   ],

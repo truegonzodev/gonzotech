@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "building",
+  "group": "stellite_block",
   "pattern": [
     "III",
     "III",

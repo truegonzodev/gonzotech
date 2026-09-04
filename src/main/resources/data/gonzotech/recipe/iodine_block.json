@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "building",
+  "group": "iodine_block",
   "pattern": [
     "III",
     "III",

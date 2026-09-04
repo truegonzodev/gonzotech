@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "iridium_ingot",
   "ingredients": [
     "gonzotech:iridium_block"
   ],

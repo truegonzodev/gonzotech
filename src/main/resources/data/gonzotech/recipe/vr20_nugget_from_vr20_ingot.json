@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "vr20_nugget",
   "ingredients": [
     "gonzotech:vr20_ingot"
   ],

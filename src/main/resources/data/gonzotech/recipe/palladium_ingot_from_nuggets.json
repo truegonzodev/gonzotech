@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
+  "group": "palladium_ingot",
   "pattern": [
     "NNN",
     "NNN",

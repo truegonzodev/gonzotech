@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "building",
+  "group": "corten_steel_block",
   "pattern": [
     "III",
     "III",

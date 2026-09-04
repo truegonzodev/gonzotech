@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "stainless_steel_ingot",
   "ingredients": [
     "gonzotech:stainless_steel_block"
   ],

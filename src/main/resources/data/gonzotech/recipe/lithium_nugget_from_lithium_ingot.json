@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "lithium_nugget",
   "ingredients": [
     "gonzotech:lithium_ingot"
   ],

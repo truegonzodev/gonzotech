@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "tellurium_nugget",
   "ingredients": [
     "gonzotech:tellurium_ingot"
   ],

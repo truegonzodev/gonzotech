@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "cantor_ingot",
   "ingredients": [
     "gonzotech:cantor_block"
   ],

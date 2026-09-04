@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "cesium_ingot",
   "ingredients": [
     "gonzotech:cesium_block"
   ],

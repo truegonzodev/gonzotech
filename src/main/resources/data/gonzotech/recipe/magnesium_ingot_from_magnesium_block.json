@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "magnesium_ingot",
   "ingredients": [
     "gonzotech:magnesium_block"
   ],

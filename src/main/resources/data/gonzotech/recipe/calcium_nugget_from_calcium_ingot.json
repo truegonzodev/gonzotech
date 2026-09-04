@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "calcium_nugget",
   "ingredients": [
     "gonzotech:calcium_ingot"
   ],

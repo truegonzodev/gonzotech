@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "lead_ingot",
   "ingredients": [
     "gonzotech:lead_block"
   ],

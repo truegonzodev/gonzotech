@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "invar_ingot",
   "ingredients": [
     "gonzotech:invar_block"
   ],

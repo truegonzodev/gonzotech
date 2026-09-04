@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "plutonium_nugget",
   "ingredients": [
     "gonzotech:plutonium_ingot"
   ],

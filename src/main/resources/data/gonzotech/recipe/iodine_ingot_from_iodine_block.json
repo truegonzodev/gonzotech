@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "iodine_ingot",
   "ingredients": [
     "gonzotech:iodine_block"
   ],

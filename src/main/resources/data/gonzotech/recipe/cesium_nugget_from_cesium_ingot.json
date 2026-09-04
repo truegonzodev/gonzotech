@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "group": "cesium_nugget",
   "ingredients": [
     "gonzotech:cesium_ingot"
   ],
