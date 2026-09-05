@@ -5,7 +5,6 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -152,11 +151,8 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE.get(part)).next();
                 level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
-                player.displayClientMessage(
-                    Component.translatable("message.gonzotech.pipe_mode_part",
-                        Component.translatable("block.gonzotech." + part.id()),
-                        Component.translatable("message.gonzotech.pipe_mode_short." + nextMode.getSerializedName())),
-                    true);
+                // Ничего в action-bar: type/mode/поток трубы под прицелом уже
+                // показывает WrenchHud.
             }
             return InteractionResult.SUCCESS;
         }

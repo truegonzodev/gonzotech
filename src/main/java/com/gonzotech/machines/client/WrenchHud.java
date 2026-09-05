@@ -28,7 +28,13 @@ import java.util.List;
 /**
  * Клиентская подсказка гаечного ключа. Когда игрок держит {@link WrenchItem} и
  * смотрит на КОНКРЕТНУЮ трубу пучка, поверх HUD показывается её тип, режим и
- * живой поток по двум концам оси.
+ * живой поток по двум концам оси. Это ЕДИНСТВЕННЫЙ вывод ключа — сообщений в
+ * action-bar/чат при прокрутке режима нет (дублировало бы этот HUD).
+ * <p>
+ * Для блока-узла заголовок — имя самого узла ("Wire Node"), а не тип трубы:
+ * узел концептуально не «отрезок трубы», а точка у механизма «забрать всё /
+ * отдать всё / авто». Посреди цепи режим (у трубы и у узла) ни на что не влияет —
+ * он значим только на стыке с механизмом.
  * <p>
  * Труба, в которую целится игрок, определяется по точке наведения через
  * {@link PipeGeometry#partAt} — так в связке нескольких типов ключ и HUD знают,
@@ -94,7 +100,7 @@ public final class WrenchHud {
         PipeMode mode = modeOf(state, part);
         Component line = Component.translatable(
             "hud.gonzotech.wrench_pipe",
-            Component.translatable("block.gonzotech." + part.id()),
+            partLabel(state, part),
             Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()),
             resourceLabel(part));
 
@@ -126,6 +132,19 @@ public final class WrenchHud {
             return PipeGeometry.partAt(axis, pos, hit.getLocation(), present);
         }
         return null;
+    }
+
+    /**
+     * Заголовок строки HUD. Для узла ({@link PipeBlock#connectsAllSides()}) —
+     * собственное имя блока ("Wire Node"), потому что узел концептуально не
+     * «труба», а точка «забрать всё / отдать всё / авто» у механизма. Для трубы
+     * и части пучка — имя типа трубы ("Wire" / "Heat Pipe").
+     */
+    private static Component partLabel(BlockState state, PipeType part) {
+        if (state.getBlock() instanceof PipeBlock pipe && pipe.connectsAllSides()) {
+            return state.getBlock().getName();
+        }
+        return Component.translatable("block.gonzotech." + part.id());
     }
 
     private static PipeMode modeOf(BlockState state, PipeType part) {

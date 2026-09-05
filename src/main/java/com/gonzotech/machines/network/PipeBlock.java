@@ -137,15 +137,12 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        // Ключ — прокрутить режим этой трубы.
+        // Ключ — прокрутить режим этой трубы. Никаких сообщений в action-bar:
+        // тип/режим/поток и так живьём висят над прицелом (WrenchHud).
         if (stack.getItem() instanceof WrenchItem) {
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE).next();
                 level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
-                player.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable(
-                        "message.gonzotech.pipe_mode." + nextMode.getSerializedName()),
-                    true);
             }
             return InteractionResult.SUCCESS;
         }
