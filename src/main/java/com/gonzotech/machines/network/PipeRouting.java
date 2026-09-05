@@ -35,10 +35,38 @@ import java.util.function.BiFunction;
  * <p>
  * Обход выполняется лишь когда машине реально есть что слить (и провод рядом), а
  * не каждый тик у каждого провода. Стоимость зависит от размера цепи.
+ * <p>
+ * <b>Соединения строго вдоль оси.</b> У провода ровно два конца — по его оси. Он
+ * соединяется с соседом ТОЛЬКО через торец:
+ * <ul>
+ *   <li>труба ↔ труба: сосед должен лежать на той же оси И встык концами
+ *       (направление между ними = ось обеих труб). Параллельные бок-о-бок и
+ *       перпендикулярные (уголок) НЕ соединяются — уголки/тройники будут отдельным
+ *       блоком-узлом;</li>
+ *   <li>машина ↔ труба: машина цепляется только к торцу трубы (стоит вдоль её
+ *       оси), а не сбоку.</li>
+ * </ul>
  */
 public final class PipeRouting {
 
     private PipeRouting() {
+    }
+
+    /** Труба соединяется с соседней трубой только встык по своей оси. */
+    private static boolean pipesConnect(Direction dir, Direction.Axis pipeAxis, Direction.Axis neighborAxis) {
+        return dir.getAxis() == pipeAxis && pipeAxis == neighborAxis;
+    }
+
+    /**
+     * Машина соединяется с трубой только через её торец: направление между ними
+     * должно совпадать с осью трубы (машина стоит на конце, не сбоку).
+     */
+    private static boolean machineConnects(Direction dirToPipe, Direction.Axis pipeAxis) {
+        return dirToPipe.getAxis() == pipeAxis;
+    }
+
+    private static Direction.Axis pipeAxis(BlockState state) {
+        return state.getValue(PipeBlock.AXIS);
     }
 
     /** Шаг пути: труба {@code pipe} выпускает ресурс в сторону {@code out}. */
@@ -93,34 +121,42 @@ public final class PipeRouting {
         // По нему восстанавливаем путь машина→…→труба для записи потока.
         Map<Long, BlockPos> parent = new HashMap<>();
 
-        // Старт — прилегающие провода, чья грань принимает слив из машины (AUTO/PULL).
+        // Старт — прилегающие провода, чья грань принимает слив из машины (AUTO/PULL)
+        // И которые повёрнуты торцом к машине (машина на конце оси, не сбоку).
         Deque<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
         for (Direction dir : Direction.values()) {
             BlockPos ppos = fromPos.relative(dir);
             BlockState pstate = level.getBlockState(ppos);
-            if (isPipe(pstate, type) && pstate.getValue(PipeBlock.MODE).acceptsFromMachine()) {
-                if (visited.add(ppos)) {
-                    parent.put(ppos.asLong(), null);
-                    queue.add(ppos);
-                }
+            if (!isPipe(pstate, type)) continue;
+            if (!machineConnects(dir, pipeAxis(pstate))) continue;
+            if (!pstate.getValue(PipeBlock.MODE).acceptsFromMachine()) continue;
+            if (visited.add(ppos)) {
+                parent.put(ppos.asLong(), null);
+                queue.add(ppos);
             }
         }
 
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
-            PipeMode mode = level.getBlockState(pipe).getValue(PipeBlock.MODE);
+            BlockState pstate = level.getBlockState(pipe);
+            Direction.Axis axis = pipeAxis(pstate);
+            PipeMode mode = pstate.getValue(PipeBlock.MODE);
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
                 BlockState nstate = level.getBlockState(npos);
                 if (isPipe(nstate, type)) {
+                    // Только встык по оси: параллельные/перпендикулярные не соединяем.
+                    if (!pipesConnect(dir, axis, pipeAxis(nstate))) continue;
                     if (visited.add(npos)) {
                         parent.put(npos.asLong(), pipe);
                         queue.add(npos);
                     }
                     continue;
                 }
-                // Машина за трубой — приёмник, только если ЭТА труба отдаёт в машину.
+                // Машина за трубой — приёмник, только если она у ТОРЦА трубы (по оси)
+                // и ЭТА труба отдаёт в машину.
+                if (!machineConnects(dir, axis)) continue;
                 if (!mode.deliversToMachine()) continue;
                 List<PathStep> path = buildPath(level, pipe, npos, parent);
                 addReceiver(level, npos, fromPos, receivers, receiverOf, path);
