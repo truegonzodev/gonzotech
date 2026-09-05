@@ -192,6 +192,14 @@ public class ChalkboardNetwork {
                     CLIENT_DATA = payload;
                 })
         );
+
+        // S2C: анимация «выброса» открытия (как тотем) — только при реальной активации.
+        registrar.playToClient(
+                DiscoveryActivationPayload.TYPE,
+                DiscoveryActivationPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() ->
+                        com.gonzotech.chalkboard.client.DiscoveryActivationClient.play(payload.discoveryNumber()))
+        );
     }
 
     public static void sendSyncToPlayer(ServerPlayer player) {

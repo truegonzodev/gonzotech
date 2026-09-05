@@ -5,6 +5,7 @@ import com.gonzotech.machines.block.entity.BoilerBlockEntity;
 import com.gonzotech.machines.block.entity.CondenserBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
+import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.StirlingBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -40,6 +41,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<CondenserBlockEntity>> CONDENSER =
         BLOCK_ENTITIES.register("condenser", () -> new BlockEntityType<>(
             CondenserBlockEntity::new, false, ModMachines.CONDENSER.get()));
+
+    public static final Supplier<BlockEntityType<PumpBlockEntity>> PUMP =
+        BLOCK_ENTITIES.register("pump", () -> new BlockEntityType<>(
+            PumpBlockEntity::new, false, ModMachines.PUMP.get()));
 
     public static void register(IEventBus modEventBus) {
         BLOCK_ENTITIES.register(modEventBus);

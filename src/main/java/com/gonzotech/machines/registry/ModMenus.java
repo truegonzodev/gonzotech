@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.menu.BoilerMenu;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.menu.FireboxMenu;
+import com.gonzotech.machines.menu.PumpMenu;
 import com.gonzotech.machines.menu.StirlingMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
@@ -33,6 +34,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE =
         MENUS.register("electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));
+
+    public static final Supplier<MenuType<PumpMenu>> PUMP =
+        MENUS.register("pump", () -> IMenuTypeExtension.create(PumpMenu::new));
 
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);

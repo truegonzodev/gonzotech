@@ -230,6 +230,7 @@
   "block.gonzotech.stirling_generator": "Stirling Generator",
   "block.gonzotech.electric_furnace": "Electric Furnace",
   "block.gonzotech.condenser": "Condenser",
+  "block.gonzotech.pump": "Pump",
   "block.gonzotech.wire": "Wire",
   "block.gonzotech.heat_pipe": "Heat Pipe",
   "block.gonzotech.wire_node": "Wire Node",

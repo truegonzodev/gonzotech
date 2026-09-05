@@ -5,6 +5,7 @@ import com.gonzotech.machines.block.BoilerBlock;
 import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FireboxBlock;
+import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.StirlingBlock;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
@@ -70,6 +71,9 @@ public final class ModMachines {
     public static final DeferredBlock<CondenserBlock> CONDENSER =
         BLOCKS.registerBlock("condenser", CondenserBlock::new, metal());
 
+    public static final DeferredBlock<PumpBlock> PUMP =
+        BLOCKS.registerBlock("pump", PumpBlock::new, metal());
+
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
     // пассивны: слив дотягивает PipeRouting (труба не тикает). noOcclusion, модель не
@@ -119,6 +123,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> CONDENSER_ITEM =
         ITEMS.registerSimpleBlockItem("condenser", CONDENSER);
+
+    public static final DeferredItem<BlockItem> PUMP_ITEM =
+        ITEMS.registerSimpleBlockItem("pump", PUMP);
 
     public static final DeferredItem<BlockItem> WIRE_ITEM =
         ITEMS.registerSimpleBlockItem("wire", WIRE);
