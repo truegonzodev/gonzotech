@@ -13,6 +13,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -98,11 +99,11 @@ public final class WrenchHud {
         maybeRequestFlow(pos, part);
 
         PipeMode mode = modeOf(state, part);
+        // Строка 1: имя трубы/узла + режим (напр. «Труба — режим: авто»).
         Component line = Component.translatable(
             "hud.gonzotech.wrench_pipe",
             partLabel(state, part),
-            Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()),
-            resourceLabel(part));
+            Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()));
 
         GuiGraphics g = event.getGuiGraphics();
         Font font = mc.font;
@@ -111,9 +112,11 @@ public final class WrenchHud {
         int y = screenH / 2 - 30;
         g.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
 
+        // Строка 2: цветное имя ресурса + «поток: N» тем же цветом (сумма по концам,
+        // без «влево/вправо» — глазами бежишь по трубам и видишь, куда течёт).
         Component flow = flowLine(pos, part);
         if (flow != null) {
-            g.drawString(font, flow, (screenW - font.width(flow)) / 2, y + font.lineHeight + 1, 0xA0FFA0, true);
+            g.drawString(font, flow, (screenW - font.width(flow)) / 2, y + font.lineHeight + 1, 0xFFFFFF, true);
         }
     }
 
@@ -168,37 +171,26 @@ public final class WrenchHud {
         }
     }
 
+    /**
+     * Вторая строка HUD: «&lt;цвет&gt;Ресурс &7| &lt;цвет&gt;поток: N». Ресурс и число —
+     * ЦВЕТОМ ресурса ({@link PipeType#color()}), разделитель серый. Поток —
+     * СУММА по всем концам/граням (без «влево/вправо»): и для трубы (два конца
+     * оси сложены), и для узла (сумма 6 граней). Так удобно взглядом бежать по
+     * трубам и видеть, где сколько течёт, не думая про направление.
+     */
     private static Component flowLine(BlockPos pos, PipeType part) {
         if (flowPos == null || !flowPos.equals(pos) || flowTypeId != part.ordinal()) return null;
         if (clientTick - flowClientTick > FLOW_STALE_TICKS) return null;
-        if (flowPos3d <= 0 && flowNeg3d <= 0) return null;
+        int total = flowPos3d + flowNeg3d;
+        if (total <= 0) return null;
 
-        if (flowAxis == PipeFlowNetwork.AXIS_NODE_SUM) {
-            return Component.translatable("hud.gonzotech.wrench_node_flow", flowPos3d);
-        }
-
-        Direction.Axis axis = Direction.Axis.values()[flowAxis];
-        Direction posDir = switch (axis) {
-            case X -> Direction.EAST;
-            case Y -> Direction.UP;
-            case Z -> Direction.SOUTH;
-        };
-        Direction negDir = posDir.getOpposite();
-
-        return Component.translatable(
-            "hud.gonzotech.wrench_pipe_flow",
-            dirAbbr(posDir), flowPos3d,
-            dirAbbr(negDir), flowNeg3d);
-    }
-
-    private static Component dirAbbr(Direction dir) {
-        return Component.translatable("hud.gonzotech.dir." + dir.getSerializedName());
-    }
-
-    private static String resourceLabel(PipeType type) {
-        return switch (type) {
-            case WIRE -> "GTU";
-            case HEAT -> "GTH";
-        };
+        int color = part.color();
+        Component name = Component.translatable("resource.gonzotech." + part.id())
+            .setStyle(Style.EMPTY.withColor(color));
+        Component sep = Component.literal(" | ").setStyle(Style.EMPTY.withColor(0xA0A0A0));
+        Component unit = Component.translatable("resource.gonzotech." + part.id() + ".unit");
+        Component amount = Component.translatable("hud.gonzotech.flow_amount", total, unit)
+            .setStyle(Style.EMPTY.withColor(color));
+        return Component.empty().append(name).append(sep).append(amount);
     }
 }

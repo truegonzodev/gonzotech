@@ -6,8 +6,9 @@ import com.gonzotech.machines.energy.Sinks;
 import com.gonzotech.machines.energy.Sinks.GthSink;
 import com.gonzotech.machines.energy.Sinks.SteamSink;
 import com.gonzotech.machines.energy.Sinks.WaterSink;
-import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.energy.WaterProviders;
+import com.gonzotech.machines.network.PipeRouting;
+import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.menu.BoilerMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -222,11 +223,16 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
         return true;
     }
 
-    /** Равномерно раздать пар соседям-приёмникам (стирлингам). */
+    /**
+     * Раздать пар приёмникам-{@link SteamSink}: прямым соседям (стирлинг вплотную)
+     * ИЛИ дальше по паровым трубам ({@link PipeType#STEAM}) через
+     * {@link PipeRouting#drain} — равномерно. Без труб рядом = прямая передача
+     * соседу (прежнее поведение сохранено).
+     */
     private boolean pushSteam(Level level, BlockPos pos) {
         if (steam.isEmpty()) return false;
         int budget = Math.min(MachineDefs.BOILER_STEAM_OUTPUT, steam.amount());
-        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
+        int moved = PipeRouting.drain(level, pos, PipeType.STEAM, budget, level.getGameTime(), (be, p) -> {
             if (be instanceof BoilerBlockEntity) return null;
             if (be instanceof SteamSink sink) return sink::receiveSteam;
             return null;

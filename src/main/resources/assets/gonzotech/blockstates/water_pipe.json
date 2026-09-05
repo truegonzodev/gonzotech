@@ -1,0 +1,37 @@
+{
+  "variants": {
+    "axis=z,mode=auto": {
+      "model": "gonzotech:block/water_pipe"
+    },
+    "axis=y,mode=auto": {
+      "model": "gonzotech:block/water_pipe",
+      "x": 90
+    },
+    "axis=x,mode=auto": {
+      "model": "gonzotech:block/water_pipe",
+      "y": 90
+    },
+    "axis=z,mode=pull": {
+      "model": "gonzotech:block/water_pipe"
+    },
+    "axis=y,mode=pull": {
+      "model": "gonzotech:block/water_pipe",
+      "x": 90
+    },
+    "axis=x,mode=pull": {
+      "model": "gonzotech:block/water_pipe",
+      "y": 90
+    },
+    "axis=z,mode=push": {
+      "model": "gonzotech:block/water_pipe"
+    },
+    "axis=y,mode=push": {
+      "model": "gonzotech:block/water_pipe",
+      "x": 90
+    },
+    "axis=x,mode=push": {
+      "model": "gonzotech:block/water_pipe",
+      "y": 90
+    }
+  }
+}

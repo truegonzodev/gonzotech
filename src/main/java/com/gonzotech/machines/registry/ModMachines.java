@@ -94,12 +94,24 @@ public final class ModMachines {
     public static final DeferredBlock<PipeBlock> HEAT_PIPE =
         BLOCKS.registerBlock("heat_pipe", props -> new PipeBlock(props, PipeType.HEAT), pipe());
 
+    public static final DeferredBlock<PipeBlock> WATER_PIPE =
+        BLOCKS.registerBlock("water_pipe", props -> new PipeBlock(props, PipeType.WATER), pipe());
+
+    public static final DeferredBlock<PipeBlock> STEAM_PIPE =
+        BLOCKS.registerBlock("steam_pipe", props -> new PipeBlock(props, PipeType.STEAM), pipe());
+
     // Блоки-узлы: та же труба, но открыта во все 6 сторон (ветвления/уголки).
     public static final DeferredBlock<NodeBlock> WIRE_NODE =
         BLOCKS.registerBlock("wire_node", props -> new NodeBlock(props, PipeType.WIRE), pipe());
 
     public static final DeferredBlock<NodeBlock> HEAT_NODE =
         BLOCKS.registerBlock("heat_node", props -> new NodeBlock(props, PipeType.HEAT), pipe());
+
+    public static final DeferredBlock<NodeBlock> WATER_NODE =
+        BLOCKS.registerBlock("water_node", props -> new NodeBlock(props, PipeType.WATER), pipe());
+
+    public static final DeferredBlock<NodeBlock> STEAM_NODE =
+        BLOCKS.registerBlock("steam_node", props -> new NodeBlock(props, PipeType.STEAM), pipe());
 
     // Составной блок: несколько типов труб в одном кубе (стакаемость), каждый в
     // своём углу сечения, не соединяясь между собой. Обычно не крафтится — в него
@@ -133,11 +145,23 @@ public final class ModMachines {
     public static final DeferredItem<BlockItem> HEAT_PIPE_ITEM =
         ITEMS.registerSimpleBlockItem("heat_pipe", HEAT_PIPE);
 
+    public static final DeferredItem<BlockItem> WATER_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("water_pipe", WATER_PIPE);
+
+    public static final DeferredItem<BlockItem> STEAM_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("steam_pipe", STEAM_PIPE);
+
     public static final DeferredItem<BlockItem> WIRE_NODE_ITEM =
         ITEMS.registerSimpleBlockItem("wire_node", WIRE_NODE);
 
     public static final DeferredItem<BlockItem> HEAT_NODE_ITEM =
         ITEMS.registerSimpleBlockItem("heat_node", HEAT_NODE);
+
+    public static final DeferredItem<BlockItem> WATER_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("water_node", WATER_NODE);
+
+    public static final DeferredItem<BlockItem> STEAM_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("steam_node", STEAM_NODE);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

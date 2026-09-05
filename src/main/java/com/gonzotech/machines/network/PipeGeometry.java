@@ -38,7 +38,10 @@ public final class PipeGeometry {
         return switch (type) {
             case WIRE -> new int[]{2, 10};
             case HEAT -> new int[]{2, 2};
-            // FLUID -> {10, 10};  ITEM -> {10, 2};  (углы зарезервированы)
+            // Жидкостное семейство (вода/пар/…) делит ОДИН угол сечения FLUID —
+            // потому в пучке одновременно возможна только одна жидкостная труба.
+            case WATER, STEAM -> new int[]{10, 10};
+            // ITEM -> {10, 2};  (угол зарезервирован)
         };
     }
 

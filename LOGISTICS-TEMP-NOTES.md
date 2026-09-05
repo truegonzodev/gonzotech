@@ -1,5 +1,5 @@
 TEMP-NOTES (логистика/трубы) — plain text, рабочая шпаргалка, не финальная документация.
-Последнее обновление: 2026-09-05
+Последнее обновление: 2026-09-05 (жидкостные трубы: вода/пар + waterlogged + HUD жидкости)
 
 ================================================================
 ТЕКУЩИЙ STANCE (что уже сделано и как это работает)
@@ -35,9 +35,37 @@ TEMP-NOTES (логистика/трубы) — plain text, рабочая шпа
 
 РАСКЛАДКА УГЛОВ СЕЧЕНИЯ (4 типа = 4 угла, PipeGeometry.corner):
     [ ]E[ ][ ]F[ ]    E = WIRE  (ток)      верх-лево   {2,10}   [есть]
-    [ ][ ][ ][ ][ ]    F = FLUID (жидкость) верх-право  {10,10}  [зарезервировано]
+    [ ][ ][ ][ ][ ]    F = FLUID (жидкость) верх-право  {10,10}  [есть: вода/пар]
     [ ]H[ ][ ]I[ ]    H = HEAT  (тепло)    низ-лево    {2,2}    [есть]
                        I = ITEM  (предметы) низ-право   {10,2}   [зарезервировано]
+
+ЖИДКОСТНОЕ СЕМЕЙСТВО (PipeType.isFluid()): вода (WATER), пар (STEAM), в будущем
+гелий и т.п. — ВСЕ делят ОДИН угол сечения FLUID {10,10}. Следствие: в одном
+ПУЧКЕ одновременно возможна максимум ОДНА жидкостная труба (вода ЛИБО пар) —
+взаимоисключение зашито в PipeBlock (сборка пучка) и CompositePipeBlock.canAdd().
+Это и снимает вопрос «труба то воду, то пар»: труба несёт СТРОГО один ресурс,
+а разные жидкости = разные блоки-трубы, конкурирующие за общий угол.
+
+ЭКСПОРТ ЖИДКОСТЕЙ ЧЕРЕЗ ТРУБЫ (как GTU/GTH):
+- Помпа.pushWater  → PipeRouting.drain(..., PipeType.WATER, ..., WaterSink::receiveWater)
+- Котёл.pushSteam  → PipeRouting.drain(..., PipeType.STEAM, ..., SteamSink::receiveSteam)
+- Стирлинг.pushWater → PipeRouting.drain(..., PipeType.WATER, ..., WaterSink::receiveWater)
+drain включает прямых соседей (шаг 1) + приёмники за трубами (шаг 2), поэтому
+машина вплотную к приёмнику работает как раньше, трубы лишь удлиняют дотяг.
+
+WATERLOGGED: у ВСЕХ труб/узлов/пучков (PipeBlock, NodeBlock, CompositePipeBlock)
+через SimpleWaterloggedBlock + BlockStateProperties.WATERLOGGED. Сигнатура 1.21.4:
+updateShape(state, LevelReader, ScheduledTickAccess, pos, dir, npos, nstate, random)
++ tickAccess.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level)).
+getFluidState → WATER source при waterlogged. getStateForPlacement читает
+ctx.getLevel().getFluidState(pos). В blockstate-variants ключ waterlogged НЕ
+пишем (как ванильные плиты) — состояние всё равно однозначно.
+
+HUD КЛЮЧА (WrenchHud.flowLine): строка 2 = «<цвет>Ресурс</> &7| <цвет>поток: N ед.».
+Ресурс+число цветом ресурса (PipeType.color()), разделитель серый. Поток — СУММА
+по концам/граням (без «влево/вправо»). Лэнг: resource.gonzotech.<id>(.unit),
+hud.gonzotech.flow_amount="поток: %s %s". Строка 1 «имя — режим: X» (убран 3-й
+аргумент-ресурс из wrench_pipe).
 
 РЕЖИМЫ (грань труба↔машина): AUTO=вход+выход; PULL(«забор»)=машина→сеть, сеть не отдаёт;
 PUSH(«отдача»)=сеть→машина, машина не сливает.

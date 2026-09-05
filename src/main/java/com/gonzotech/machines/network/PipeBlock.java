@@ -4,20 +4,28 @@ import com.gonzotech.machines.item.WrenchItem;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.ticks.ScheduledTickAccess;
 
 /**
  * Труба энергосети (провод — GTU / теплотруба — GTH). Полностью ПАССИВНЫЙ блок:
@@ -37,9 +45,10 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * ПКМ гаечным ключом ({@link WrenchItem}); влияет только на грань труба↔машина
  * (вход/выход). Хранение режима в блокстейте избавляет трубу от BlockEntity.
  */
-public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
+public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, SimpleWaterloggedBlock {
 
     public static final EnumProperty<PipeMode> MODE = EnumProperty.create("mode", PipeMode.class);
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
     private final PipeType pipeType;
     /** Кодек, захватывающий тип трубы (у провода и теплотрубы он разный). */
@@ -51,7 +60,8 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
         this.codec = makeCodec();
         this.registerDefaultState(this.stateDefinition.any()
             .setValue(AXIS, Direction.Axis.Y)
-            .setValue(MODE, PipeMode.AUTO));
+            .setValue(MODE, PipeMode.AUTO)
+            .setValue(WATERLOGGED, false));
     }
 
     /**
@@ -102,14 +112,33 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(AXIS, MODE);
+        builder.add(AXIS, MODE, WATERLOGGED);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluid = context.getLevel().getFluidState(context.getClickedPos());
         return this.defaultBlockState()
             .setValue(AXIS, context.getClickedFace().getAxis())
-            .setValue(MODE, PipeMode.AUTO);
+            .setValue(MODE, PipeMode.AUTO)
+            .setValue(WATERLOGGED, fluid.getType() == Fluids.WATER);
+    }
+
+    // ─────────────────────────── waterlogging ───────────────────────────
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess tickAccess,
+                                     BlockPos pos, Direction direction, BlockPos neighborPos,
+                                     BlockState neighborState, RandomSource random) {
+        if (state.getValue(WATERLOGGED)) {
+            tickAccess.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+        }
+        return super.updateShape(state, level, tickAccess, pos, direction, neighborPos, neighborState, random);
     }
 
     // ─────────────────────────── форма (хитбокс) ───────────────────────────
@@ -149,13 +178,16 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
 
         // Труба ДРУГОГО типа в руке → собрать связку (составной блок): сохраняем
         // ось этой трубы, добавляем оба типа. Узлы (connectsAllSides) не стакаем.
+        // Жидкостные типы делят один угол — воду и пар вместе в пучок нельзя.
         if (!connectsAllSides()) {
             PipeType adding = CompositePipeBlock.pipeTypeOf(stack);
-            if (adding != null && adding != this.pipeType && ModCompositeAccess.get() != null) {
+            boolean fluidClash = adding != null && adding.isFluid() && this.pipeType.isFluid();
+            if (adding != null && adding != this.pipeType && !fluidClash && ModCompositeAccess.get() != null) {
                 if (!level.isClientSide()) {
                     Direction.Axis axis = state.getValue(AXIS);
                     BlockState composite = ModCompositeAccess.get().defaultBlockState()
                         .setValue(AXIS, axis)
+                        .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))
                         .setValue(CompositePipeBlock.PRESENT.get(this.pipeType), true)
                         .setValue(CompositePipeBlock.MODE.get(this.pipeType), state.getValue(MODE))
                         .setValue(CompositePipeBlock.PRESENT.get(adding), true);

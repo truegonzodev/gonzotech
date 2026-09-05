@@ -104,6 +104,12 @@ public class GonzoTechMod {
         com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
             com.gonzotech.machines.network.PipeType.HEAT,
             com.gonzotech.machines.registry.ModMachines.HEAT_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
+            com.gonzotech.machines.network.PipeType.WATER,
+            com.gonzotech.machines.registry.ModMachines.WATER_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
+            com.gonzotech.machines.network.PipeType.STEAM,
+            com.gonzotech.machines.registry.ModMachines.STEAM_PIPE.get());
         LOGGER.info("[Gonzo Tech] Common setup complete — core systems ready to attach.");
     }
 }

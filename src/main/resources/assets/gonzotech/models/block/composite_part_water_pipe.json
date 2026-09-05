@@ -1,0 +1,83 @@
+{
+  "credit": "Placeholder (author supplies textures)",
+  "texture_size": [
+    32,
+    32
+  ],
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "0": "gonzotech:block/water_pipe",
+    "particle": "gonzotech:block/water_pipe"
+  },
+  "elements": [
+    {
+      "from": [
+        10,
+        10,
+        0
+      ],
+      "to": [
+        14,
+        14,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4,
+            4,
+            6,
+            6
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            4,
+            4,
+            6,
+            6
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            8,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4,
+            4,
+            6,
+            6
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            4,
+            4,
+            6,
+            6
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ],
+  "gui_light": "front"
+}

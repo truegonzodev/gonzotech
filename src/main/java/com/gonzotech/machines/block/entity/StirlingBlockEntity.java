@@ -5,7 +5,6 @@ import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.energy.Sinks.SteamSink;
 import com.gonzotech.machines.energy.Sinks.WaterSink;
-import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.network.PipeRouting;
 import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.menu.StirlingMenu;
@@ -170,11 +169,15 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
         return n;
     }
 
-    /** Равномерно вернуть воду соседним котлам. */
+    /**
+     * Вернуть воду котлам: прямым соседям-{@link WaterSink} ИЛИ дальше по водным
+     * трубам ({@link PipeType#WATER}) через {@link PipeRouting#drain} —
+     * равномерно. Без труб рядом = прямая передача соседу (прежнее поведение).
+     */
     private boolean pushWater(Level level, BlockPos pos) {
         if (water.isEmpty()) return false;
         int budget = Math.min(MachineDefs.STIRLING_WATER_OUTPUT, water.amount());
-        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
+        int moved = PipeRouting.drain(level, pos, PipeType.WATER, budget, level.getGameTime(), (be, p) -> {
             if (be instanceof StirlingBlockEntity) return null;
             if (be instanceof WaterSink sink) return sink::receiveWater;
             return null;

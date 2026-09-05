@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -45,7 +47,10 @@ public class NodeBlock extends PipeBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         // Ось для узла роли не играет — оставляем дефолт (Y), режим AUTO.
-        return this.defaultBlockState().setValue(MODE, PipeMode.AUTO);
+        FluidState fluid = context.getLevel().getFluidState(context.getClickedPos());
+        return this.defaultBlockState()
+            .setValue(MODE, PipeMode.AUTO)
+            .setValue(WATERLOGGED, fluid.getType() == Fluids.WATER);
     }
 
     // Полный куб (перебиваем тонкую форму трубы из PipeBlock).

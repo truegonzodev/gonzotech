@@ -4,8 +4,9 @@ import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.energy.Sinks.WaterSink;
-import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.menu.PumpMenu;
+import com.gonzotech.machines.network.PipeRouting;
+import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -270,11 +271,16 @@ public class PumpBlockEntity extends BaseMachineBlockEntity implements GtuSink, 
         return bottle;
     }
 
-    /** Равномерно слить воду соседним приёмникам (котлу). */
+    /**
+     * Слить воду приёмникам: прямым соседям-{@link WaterSink} (котлу вплотную)
+     * ИЛИ дальше по водным трубам ({@link PipeType#WATER}) через
+     * {@link PipeRouting#drain} — равномерно. Без труб рядом работает как прямая
+     * передача соседу (поведение до появления жидкостных труб сохранено).
+     */
     private boolean pushWater(Level level, BlockPos pos) {
         if (water.isEmpty()) return false;
         int budget = Math.min(MachineDefs.PUMP_WATER_OUTPUT, water.amount());
-        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
+        int moved = PipeRouting.drain(level, pos, PipeType.WATER, budget, level.getGameTime(), (be, p) -> {
             if (be instanceof PumpBlockEntity) return null;
             if (be instanceof WaterSink sink) return sink::receiveWater;
             return null;
