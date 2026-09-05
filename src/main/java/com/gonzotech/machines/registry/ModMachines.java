@@ -70,7 +70,7 @@ public final class ModMachines {
 
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
-    // через NetworkManager (тикает сеть, не труба). noOcclusion, т.к. модель не
+    // пассивны: слив дотягивает PipeRouting (труба не тикает). noOcclusion, модель не
     // полный куб (тонкая труба).
 
     private static BlockBehaviour.Properties pipe() {

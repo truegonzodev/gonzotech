@@ -1,39 +1,36 @@
 {
   "variants": {
-    "axis=y,mode=auto": {
+    "axis=z,mode=auto": {
       "model": "gonzotech:block/heat_pipe"
     },
-    "axis=z,mode=auto": {
+    "axis=y,mode=auto": {
       "model": "gonzotech:block/heat_pipe",
       "x": 90
     },
     "axis=x,mode=auto": {
       "model": "gonzotech:block/heat_pipe",
-      "x": 90,
       "y": 90
     },
-    "axis=y,mode=pull": {
+    "axis=z,mode=pull": {
       "model": "gonzotech:block/heat_pipe"
     },
-    "axis=z,mode=pull": {
+    "axis=y,mode=pull": {
       "model": "gonzotech:block/heat_pipe",
       "x": 90
     },
     "axis=x,mode=pull": {
       "model": "gonzotech:block/heat_pipe",
-      "x": 90,
       "y": 90
     },
-    "axis=y,mode=push": {
+    "axis=z,mode=push": {
       "model": "gonzotech:block/heat_pipe"
     },
-    "axis=z,mode=push": {
+    "axis=y,mode=push": {
       "model": "gonzotech:block/heat_pipe",
       "x": 90
     },
     "axis=x,mode=push": {
       "model": "gonzotech:block/heat_pipe",
-      "x": 90,
       "y": 90
     }
   }

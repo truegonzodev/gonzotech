@@ -55,12 +55,11 @@ public class GonzoTechMod {
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
 
-        // Логистика — тикер энергосетей (тикают сети, не провода).
-        NeoForge.EVENT_BUS.register(com.gonzotech.machines.network.PipeNetworkTicker.class);
-
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
+            // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
+            NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
         }
 
         LOGGER.info("[Gonzo Tech] Mod class constructed, mod_id={}, {} руд зарегистрировано",

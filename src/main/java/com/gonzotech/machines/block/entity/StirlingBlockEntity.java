@@ -4,10 +4,11 @@ import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
-import com.gonzotech.machines.energy.Sinks.GtuSource;
 import com.gonzotech.machines.energy.Sinks.SteamSink;
 import com.gonzotech.machines.energy.Sinks.WaterSink;
 import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.network.PipeRouting;
+import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.menu.StirlingMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -37,7 +38,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * на возврат в котёл — ТОЛЬКО если пар есть (иначе при нескольких котлах-соседях
  * был бы дюп воды).
  */
-public class StirlingBlockEntity extends BaseMachineBlockEntity implements SteamSink, GtuSink, GtuSource {
+public class StirlingBlockEntity extends BaseMachineBlockEntity implements SteamSink, GtuSink {
 
     private final ResourceBuffer steam = new ResourceBuffer(MachineDefs.STIRLING_STEAM_CAPACITY);
     private final ResourceBuffer gtu = new ResourceBuffer(MachineDefs.STIRLING_GTU_CAPACITY);
@@ -105,13 +106,6 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
     public int receiveGtu(int amount, boolean simulate) {
         // Стирлинг сам источник GTU; приём извне не используется.
         return 0;
-    }
-
-    // ─────────────────────────── GtuSource (для проводов) ───────────────────────────
-
-    @Override
-    public int extractGtu(int amount, boolean simulate) {
-        return gtu.extract(amount, simulate);
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────
@@ -197,7 +191,8 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
     private boolean pushGtu(Level level, BlockPos pos) {
         if (gtu.isEmpty()) return false;
         int budget = Math.min(MachineDefs.STIRLING_GTU_OUTPUT, gtu.amount());
-        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
+        // Слив GTU: прямым соседям-электропечам ИЛИ через провода дальше по цепи.
+        int moved = PipeRouting.drain(level, pos, PipeType.WIRE, budget, level.getGameTime(), (be, p) -> {
             if (be instanceof StirlingBlockEntity) return null;
             if (be instanceof GtuSink sink) return sink::receiveGtu;
             return null;

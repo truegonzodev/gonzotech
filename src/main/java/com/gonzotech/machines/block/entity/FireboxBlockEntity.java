@@ -3,8 +3,8 @@ package com.gonzotech.machines.block.entity;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
 import com.gonzotech.machines.energy.Sinks.GthSink;
-import com.gonzotech.machines.energy.Sinks.GthSource;
-import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.network.PipeRouting;
+import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -41,7 +41,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * </ul>
  */
 public class FireboxBlockEntity extends BaseMachineBlockEntity
-    implements GthSink, GthSource, WorldlyContainer, ExperienceOutput {
+    implements GthSink, WorldlyContainer, ExperienceOutput {
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_FUEL = 1;
@@ -129,13 +129,6 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     @Override
     public int receiveGth(int amount, boolean simulate) {
         return gth.receive(amount, simulate);
-    }
-
-    // ─────────────────────────── GthSource (для теплотруб) ───────────────────────────
-
-    @Override
-    public int extractGth(int amount, boolean simulate) {
-        return gth.extract(amount, simulate);
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────
@@ -242,7 +235,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     private boolean pushGth(Level level, BlockPos pos) {
         if (gth.isEmpty()) return false;
         int budget = Math.min(MachineDefs.FIREBOX_GTH_OUTPUT, gth.amount());
-        int moved = Transfer.distribute(level, pos, budget, level.getGameTime(), be -> {
+        // Слив тепла: прямым соседям-котлам ИЛИ через теплотрубы дальше по цепи.
+        int moved = PipeRouting.drain(level, pos, PipeType.HEAT, budget, level.getGameTime(), (be, p) -> {
             if (be instanceof FireboxBlockEntity) return null;
             if (be instanceof GthSink sink) return sink::receiveGth;
             return null;
