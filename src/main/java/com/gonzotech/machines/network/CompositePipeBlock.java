@@ -199,7 +199,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         List<ItemStack> drops = new ArrayList<>();
         for (PipeType t : PipeType.values()) {
             if (!state.getValue(PRESENT.get(t))) continue;
-            Item item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("gonzotech", t.id()));
+            Item item = BuiltInRegistries.ITEM.getValue(ResourceLocation.fromNamespaceAndPath("gonzotech", t.id()));
             if (item != Items.AIR) drops.add(new ItemStack(item));
         }
         return drops;
