@@ -404,5 +404,6 @@
   "block.gonzotech.lithium_block": "Литиевый блок",
   "item.gonzotech.lithium_dust": "Литиевая пыль",
   "item.gonzotech.lithium_nugget": "Литиевый самородок",
-  "message.gonzotech.composite_cycled": "Связка: режимы прокручены"
+  "message.gonzotech.composite_cycled": "Связка: режимы прокручены",
+  "message.gonzotech.pipe_mode_part": "%s → %s"
 }

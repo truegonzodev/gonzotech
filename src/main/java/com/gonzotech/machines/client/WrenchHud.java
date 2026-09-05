@@ -1,8 +1,10 @@
 package com.gonzotech.machines.client;
 
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.PipeBlock;
 import com.gonzotech.machines.network.PipeFlowNetwork;
+import com.gonzotech.machines.network.PipeGeometry;
 import com.gonzotech.machines.network.PipeMode;
 import com.gonzotech.machines.network.PipeType;
 import net.minecraft.client.Minecraft;
@@ -12,6 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -19,33 +22,30 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Клиентская подсказка гаечного ключа. Когда игрок держит {@link WrenchItem} и
- * смотрит на трубу, поверх HUD (по центру, чуть выше прицела) показывается её
- * тип, режим и ЖИВОЙ поток по двум концам оси.
+ * смотрит на КОНКРЕТНУЮ трубу пучка, поверх HUD показывается её тип, режим и
+ * живой поток по двум концам оси.
  * <p>
- * Пример: {@code Wire — mode: auto (GTU)} и ниже {@code E: 60  W: 30} — сколько
- * ресурса реально прошло через этот провод за тик в каждую сторону оси (по
- * мировым направлениям, не «лево/право»: показания не зависят от того, откуда
- * смотрит игрок).
- * <p>
- * Провод пассивен и потока не хранит — фактический объём считает сервер
- * ({@code FlowTracker}). Пока игрок смотрит на трубу с ключом, клиент раз в
- * несколько тиков шлёт запрос ({@link PipeFlowNetwork}); ответ кэшируется здесь и
- * рисуется. Если поток прекратился, сервер вернёт нули и строка потока исчезнет.
+ * Труба, в которую целится игрок, определяется по точке наведения через
+ * {@link PipeGeometry#partAt} — так в связке нескольких типов ключ и HUD знают,
+ * о какой именно трубе речь. Поток считает сервер ({@code FlowTracker}); клиент
+ * раз в несколько тиков шлёт адресный запрос (позиция + тип).
  */
 public final class WrenchHud {
 
     private WrenchHud() {
     }
 
-    /** Как часто (тиков клиента) опрашивать поток у трубы под прицелом. */
     private static final int REQUEST_INTERVAL = 5;
-    /** После скольких тиков без обновления считаем кэш потока устаревшим. */
     private static final int FLOW_STALE_TICKS = 15;
 
-    // Кэш последнего ответа сервера (клиентский поток).
+    // Кэш последнего ответа сервера.
     private static BlockPos flowPos;
+    private static int flowTypeId = -1;
     private static int flowAxis;
     private static int flowPos3d;
     private static int flowNeg3d;
@@ -54,11 +54,12 @@ public final class WrenchHud {
     // Троттлинг запросов.
     private static long lastRequestTick = Long.MIN_VALUE;
     private static long lastRequestPosKey = Long.MIN_VALUE;
+    private static int lastRequestType = -1;
     private static long clientTick;
 
-    /** Приём ответа сервера (в игровом потоке клиента). */
     public static void acceptFlow(PipeFlowNetwork.FlowPayload payload) {
         flowPos = payload.pos();
+        flowTypeId = payload.typeId();
         flowAxis = payload.axis3d();
         flowPos3d = payload.posAmount();
         flowNeg3d = payload.negAmount();
@@ -72,7 +73,6 @@ public final class WrenchHud {
         if (player == null || mc.level == null) return;
         if (mc.options.hideGui) return;
 
-        // Ключ в любой руке.
         if (!(player.getMainHandItem().getItem() instanceof WrenchItem)
             && !(player.getOffhandItem().getItem() instanceof WrenchItem)) {
             return;
@@ -80,57 +80,80 @@ public final class WrenchHud {
 
         HitResult hit = mc.hitResult;
         if (hit == null || hit.getType() != HitResult.Type.BLOCK) return;
-        BlockPos pos = ((BlockHitResult) hit).getBlockPos();
+        BlockHitResult bhit = (BlockHitResult) hit;
+        BlockPos pos = bhit.getBlockPos();
         BlockState state = mc.level.getBlockState(pos);
-        if (!(state.getBlock() instanceof PipeBlock pipe)) return;
 
-        // Троттлированный опрос потока у трубы под прицелом.
+        // Какую трубу пучка мы держим на прицеле?
+        PipeType part = aimedPart(state, pos, bhit);
+        if (part == null) return;
+
         clientTick = mc.level.getGameTime();
-        maybeRequestFlow(pos);
+        maybeRequestFlow(pos, part);
 
-        PipeMode mode = state.getValue(PipeBlock.MODE);
+        PipeMode mode = modeOf(state, part);
         Component line = Component.translatable(
             "hud.gonzotech.wrench_pipe",
-            pipe.getName(),
+            Component.translatable("block.gonzotech." + part.id()),
             Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()),
-            resourceLabel(pipe.pipeType()));
+            resourceLabel(part));
 
         GuiGraphics g = event.getGuiGraphics();
         Font font = mc.font;
         int screenW = g.guiWidth();
         int screenH = g.guiHeight();
-        int textW = font.width(line);
-        int x = (screenW - textW) / 2;
-        int y = screenH / 2 - 30; // чуть выше прицела
-        g.drawString(font, line, x, y, 0xFFFFFF, true);
+        int y = screenH / 2 - 30;
+        g.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
 
-        // Строка живого потока по концам оси (если поток свежий для ЭТОЙ трубы).
-        Component flow = flowLine(pos);
+        Component flow = flowLine(pos, part);
         if (flow != null) {
-            int fw = font.width(flow);
-            g.drawString(font, flow, (screenW - fw) / 2, y + font.lineHeight + 1, 0xA0FFA0, true);
+            g.drawString(font, flow, (screenW - font.width(flow)) / 2, y + font.lineHeight + 1, 0xA0FFA0, true);
         }
     }
 
-    private static void maybeRequestFlow(BlockPos pos) {
+    /** Тип трубы пучка/одиночной трубы, в которую смотрит игрок, или {@code null}. */
+    private static PipeType aimedPart(BlockState state, BlockPos pos, BlockHitResult hit) {
+        if (state.getBlock() instanceof PipeBlock pipe) {
+            return pipe.pipeType();
+        }
+        if (state.getBlock() instanceof CompositePipeBlock) {
+            List<PipeType> present = new ArrayList<>();
+            for (PipeType t : PipeType.values()) {
+                if (state.getValue(CompositePipeBlock.PRESENT.get(t))) present.add(t);
+            }
+            if (present.isEmpty()) return null;
+            Direction.Axis axis = state.getValue(RotatedPillarBlock.AXIS);
+            return PipeGeometry.partAt(axis, pos, hit.getLocation(), present);
+        }
+        return null;
+    }
+
+    private static PipeMode modeOf(BlockState state, PipeType part) {
+        if (state.getBlock() instanceof PipeBlock) {
+            return state.getValue(PipeBlock.MODE);
+        }
+        if (state.getBlock() instanceof CompositePipeBlock) {
+            return state.getValue(CompositePipeBlock.MODE.get(part));
+        }
+        return PipeMode.AUTO;
+    }
+
+    private static void maybeRequestFlow(BlockPos pos, PipeType part) {
         long key = pos.asLong();
-        if (key != lastRequestPosKey || clientTick - lastRequestTick >= REQUEST_INTERVAL) {
+        int tid = part.ordinal();
+        if (key != lastRequestPosKey || tid != lastRequestType || clientTick - lastRequestTick >= REQUEST_INTERVAL) {
             lastRequestPosKey = key;
+            lastRequestType = tid;
             lastRequestTick = clientTick;
-            PacketDistributor.sendToServer(new PipeFlowNetwork.RequestPayload(pos));
+            PacketDistributor.sendToServer(new PipeFlowNetwork.RequestPayload(pos, tid));
         }
     }
 
-    /**
-     * Строка «E: 60  W: 30» по мировым концам оси провода, или {@code null}, если
-     * актуальных данных для этой трубы нет / поток нулевой.
-     */
-    private static Component flowLine(BlockPos pos) {
-        if (flowPos == null || !flowPos.equals(pos)) return null;
+    private static Component flowLine(BlockPos pos, PipeType part) {
+        if (flowPos == null || !flowPos.equals(pos) || flowTypeId != part.ordinal()) return null;
         if (clientTick - flowClientTick > FLOW_STALE_TICKS) return null;
         if (flowPos3d <= 0 && flowNeg3d <= 0) return null;
 
-        // Узел ветвится во все стороны — показываем суммарный поток одним числом.
         if (flowAxis == PipeFlowNetwork.AXIS_NODE_SUM) {
             return Component.translatable("hud.gonzotech.wrench_node_flow", flowPos3d);
         }

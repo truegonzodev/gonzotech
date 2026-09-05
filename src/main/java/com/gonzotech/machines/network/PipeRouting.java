@@ -107,7 +107,7 @@ public final class PipeRouting {
             BlockPos npos = fromPos.relative(dir);
             BlockState nstate = level.getBlockState(npos);
             if (isPipe(nstate, type)) continue;
-            addReceiver(level, npos, fromPos, receivers, receiverOf, null);
+            addReceiver(level, npos, fromPos, receivers, receiverOf, type, null);
         }
 
         // 2) Приёмники за проводами (с записью потока по пути).
@@ -164,7 +164,7 @@ public final class PipeRouting {
                 if (!machineConnects(pstate, type, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 List<PathStep> path = buildPath(level, pipe, npos, parent);
-                addReceiver(level, npos, fromPos, receivers, receiverOf, path);
+                addReceiver(level, npos, fromPos, receivers, receiverOf, type, path);
             }
         }
     }
@@ -192,7 +192,7 @@ public final class PipeRouting {
             Level level, BlockPos pos, BlockPos fromPos,
             TreeMap<Long, Transfer.Receiver> receivers,
             BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
-            List<PathStep> path) {
+            PipeType type, List<PathStep> path) {
         if (pos.equals(fromPos)) return;
         long key = pos.asLong();
         if (receivers.containsKey(key)) return;
@@ -200,19 +200,20 @@ public final class PipeRouting {
         if (be == null) return;
         Transfer.Receiver r = receiverOf.apply(be, pos);
         if (r == null) return;
-        receivers.put(key, path == null ? r : recording(level, r, path));
+        receivers.put(key, path == null ? r : recording(level, r, type, path));
     }
 
     /**
      * Обёртка-приёмник: сколько реально принято — столько же записываем каждому
-     * проводу на пути в его выходную сторону (учёт фактического потока за тик).
+     * проводу на пути в его выходную сторону (учёт фактического потока за тик,
+     * раздельно по типу — в связке типы делят позицию).
      */
-    private static Transfer.Receiver recording(Level level, Transfer.Receiver real, List<PathStep> path) {
+    private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path) {
         return (amount, simulate) -> {
             int accepted = real.receive(amount, simulate);
             if (!simulate && accepted > 0) {
                 for (PathStep s : path) {
-                    FlowTracker.record(level, s.pipe(), s.out(), accepted);
+                    FlowTracker.record(level, s.pipe(), type, s.out(), accepted);
                 }
             }
             return accepted;

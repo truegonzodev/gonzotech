@@ -23,7 +23,9 @@ import java.util.Map;
  */
 public final class FlowTracker {
 
-    private static final int[] EMPTY = new int[6];
+    private static final int DIRS = 6;
+    private static final int TYPES = PipeType.values().length;
+    private static final int[] EMPTY = new int[DIRS];
     private static final Map<Level, Holder> LEVELS = new IdentityHashMap<>();
 
     private FlowTracker() {
@@ -31,11 +33,17 @@ public final class FlowTracker {
 
     private static final class Holder {
         long tick = Long.MIN_VALUE;
-        final Map<Long, int[]> flow = new HashMap<>();
+        // Ключ — позиция трубы. Значение — [тип][сторона]: типы связки делят
+        // позицию, но учитываются раздельно.
+        final Map<Long, int[][]> flow = new HashMap<>();
     }
 
-    /** Записать, что из трубы {@code pipe} вышло {@code amount} единиц в сторону {@code out}. */
-    public static void record(Level level, BlockPos pipe, Direction out, int amount) {
+    /**
+     * Записать, что из трубы типа {@code type} в позиции {@code pipe} вышло
+     * {@code amount} единиц в сторону {@code out}. Поток учитывается ОТДЕЛЬНО по
+     * типу — в связке несколько типов делят одну позицию.
+     */
+    public static void record(Level level, BlockPos pipe, PipeType type, Direction out, int amount) {
         if (amount <= 0 || out == null) return;
         Holder h = LEVELS.computeIfAbsent(level, k -> new Holder());
         long t = level.getGameTime();
@@ -43,20 +51,21 @@ public final class FlowTracker {
             h.flow.clear();
             h.tick = t;
         }
-        int[] f = h.flow.computeIfAbsent(pipe.asLong(), k -> new int[6]);
-        f[out.get3DDataValue()] += amount;
+        int[][] byType = h.flow.computeIfAbsent(pipe.asLong(), k -> new int[TYPES][DIRS]);
+        byType[type.ordinal()][out.get3DDataValue()] += amount;
     }
 
     /**
-     * Поток через трубу за последний актуальный тик: массив из 6 значений,
-     * индексируемых {@link Direction#get3DDataValue()} — сколько вышло в каждую
-     * сторону. Возвращает нули, если данных нет или они устарели.
+     * Поток через трубу типа {@code type} за последний актуальный тик: массив из
+     * 6 значений, индексируемых {@link Direction#get3DDataValue()} — сколько вышло
+     * в каждую сторону. Нули, если данных нет или они устарели.
      */
-    public static int[] get(Level level, BlockPos pipe) {
+    public static int[] get(Level level, BlockPos pipe, PipeType type) {
         Holder h = LEVELS.get(level);
         if (h == null) return EMPTY;
         if (level.getGameTime() - h.tick > 1) return EMPTY;
-        return h.flow.getOrDefault(pipe.asLong(), EMPTY);
+        int[][] byType = h.flow.get(pipe.asLong());
+        return byType == null ? EMPTY : byType[type.ordinal()];
     }
 
     /** Сброс при остановке сервера, чтобы не удерживать ссылки на уровни. */

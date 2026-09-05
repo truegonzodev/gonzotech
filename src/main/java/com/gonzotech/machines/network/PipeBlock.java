@@ -41,12 +41,6 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
 
     public static final EnumProperty<PipeMode> MODE = EnumProperty.create("mode", PipeMode.class);
 
-    // Вытянутый хитбокс 4×4 в сечении, 16 в длину — совпадает с тонкой моделью
-    // (а не полный куб, как у котла). По одной форме на каждую ось.
-    private static final VoxelShape SHAPE_Y = Block.box(6, 0, 6, 10, 16, 10);
-    private static final VoxelShape SHAPE_Z = Block.box(6, 6, 0, 10, 10, 16);
-    private static final VoxelShape SHAPE_X = Block.box(0, 6, 6, 16, 10, 10);
-
     private final PipeType pipeType;
     /** Кодек, захватывающий тип трубы (у провода и теплотрубы он разный). */
     private final MapCodec<? extends PipeBlock> codec;
@@ -120,12 +114,10 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
 
     // ─────────────────────────── форма (хитбокс) ───────────────────────────
 
-    private static VoxelShape shapeFor(BlockState state) {
-        return switch (state.getValue(AXIS)) {
-            case X -> SHAPE_X;
-            case Z -> SHAPE_Z;
-            default -> SHAPE_Y;
-        };
+    private VoxelShape shapeFor(BlockState state) {
+        // Труба сидит в СВОЁМ углу сечения (не по центру) — так одиночная труба и
+        // связка выглядят одинаково, а тип всегда на своём месте.
+        return PipeGeometry.cornerBox(state.getValue(AXIS), pipeType);
     }
 
     @Override

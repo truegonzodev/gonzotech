@@ -69,17 +69,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         }
     }
 
-    /** Угол сечения (u,v) для каждого типа: 4×4 клетка, u — «гориз.», v — «верт.». */
-    private static int[] corner(PipeType type) {
-        return switch (type) {
-            case WIRE -> new int[]{2, 10};  // верх-лево  — ток (энергия)
-            case HEAT -> new int[]{2, 2};   // низ-лево   — тепло
-            // Зарезервировано под будущие типы (углы уже заняты в раскладке):
-            //   FLUID -> {10, 10} верх-право
-            //   ITEM  -> {10, 2}  низ-право
-        };
-    }
-
     private final MapCodec<CompositePipeBlock> codec;
 
     public CompositePipeBlock(Properties properties) {
@@ -127,23 +116,12 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     // ─────────────────────────── форма (хитбокс) ───────────────────────────
 
-    private static VoxelShape boxFor(Direction.Axis axis, int u, int v) {
-        // 4×4 в сечении, 16 вдоль оси. Раскладка углов одинакова у соседей одной
-        // оси — под-решётки выравниваются.
-        return switch (axis) {
-            case Z -> Block.box(u, v, 0, u + 4, v + 4, 16);   // сечение = X(u)×Y(v)
-            case X -> Block.box(0, v, u, 16, v + 4, u + 4);   // сечение = Z(u)×Y(v)
-            case Y -> Block.box(u, 0, v, u + 4, 16, v + 4);   // сечение = X(u)×Z(v)
-        };
-    }
-
     private static VoxelShape shapeFor(BlockState state) {
         Direction.Axis axis = state.getValue(AXIS);
         VoxelShape shape = Shapes.empty();
         for (PipeType t : PipeType.values()) {
             if (!state.getValue(PRESENT.get(t))) continue;
-            int[] c = corner(t);
-            shape = Shapes.join(shape, boxFor(axis, c[0], c[1]), BooleanOp.OR);
+            shape = Shapes.join(shape, PipeGeometry.cornerBox(axis, t), BooleanOp.OR);
         }
         return shape.isEmpty() ? Shapes.block() : shape;
     }
@@ -163,18 +141,24 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        // Ключ: прокрутить режим всех несомых типов (per-type/попарная настройка — Шаг 2).
+        // Ключ работает по КОНКРЕТНОЙ трубе пучка — той, куда наведён прицел.
         if (stack.getItem() instanceof WrenchItem) {
+            PipeType part = partAt(state, pos, hit);
+            if (part == null) return InteractionResult.PASS;
             if (!level.isClientSide()) {
-                BlockState next = state;
-                for (PipeType t : PipeType.values()) {
-                    if (state.getValue(PRESENT.get(t))) {
-                        next = next.setValue(MODE.get(t), state.getValue(MODE.get(t)).next());
-                    }
+                if (player.isSecondaryUseActive()) {
+                    // Shift+ПКМ — снять эту трубу из пучка (выпадает предметом).
+                    removePart(level, pos, state, part, player);
+                } else {
+                    // ПКМ — прокрутить режим именно этой трубы.
+                    PipeMode nextMode = state.getValue(MODE.get(part)).next();
+                    level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
+                    player.displayClientMessage(
+                        Component.translatable("message.gonzotech.pipe_mode_part",
+                            Component.translatable("block.gonzotech." + part.id()),
+                            Component.translatable("message.gonzotech.pipe_mode_short." + nextMode.getSerializedName())),
+                        true);
                 }
-                level.setBlock(pos, next, Block.UPDATE_ALL);
-                player.displayClientMessage(
-                    Component.translatable("message.gonzotech.composite_cycled"), true);
             }
             return InteractionResult.SUCCESS;
         }
@@ -189,6 +173,52 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
+    }
+
+    /** Снять одну трубу пучка. Последняя ушла → блок исчезает. */
+    private void removePart(Level level, BlockPos pos, BlockState state, PipeType part, Player player) {
+        if (!player.getAbilities().instabuild) {
+            Item item = BuiltInRegistries.ITEM.getValue(ResourceLocation.fromNamespaceAndPath("gonzotech", part.id()));
+            if (item != Items.AIR) Block.popResource(level, pos, new ItemStack(item));
+        }
+        BlockState next = state.setValue(PRESENT.get(part), false);
+        // Сколько типов осталось?
+        int remaining = 0;
+        PipeType lastLeft = null;
+        for (PipeType t : PipeType.values()) {
+            if (next.getValue(PRESENT.get(t))) {
+                remaining++;
+                lastLeft = t;
+            }
+        }
+        if (remaining == 0) {
+            level.removeBlock(pos, false);
+        } else if (remaining == 1) {
+            // Осталась одна труба — «схлопываем» пучок обратно в одиночный блок.
+            PipeBlock single = ModCompositeAccess.singleOf(lastLeft);
+            if (single != null) {
+                BlockState singleState = single.defaultBlockState()
+                    .setValue(PipeBlock.MODE, next.getValue(MODE.get(lastLeft)));
+                // Совместить ось (у RotatedPillarBlock свойство AXIS общее).
+                singleState = singleState.setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS,
+                    next.getValue(AXIS));
+                level.setBlock(pos, singleState, Block.UPDATE_ALL);
+            } else {
+                level.setBlock(pos, next, Block.UPDATE_ALL);
+            }
+        } else {
+            level.setBlock(pos, next, Block.UPDATE_ALL);
+        }
+    }
+
+    /** Тип трубы пучка, в которую сейчас смотрит игрок (по точке наведения). */
+    private static PipeType partAt(BlockState state, BlockPos pos, BlockHitResult hit) {
+        List<PipeType> present = new ArrayList<>();
+        for (PipeType t : PipeType.values()) {
+            if (state.getValue(PRESENT.get(t))) present.add(t);
+        }
+        if (present.isEmpty()) return null;
+        return PipeGeometry.partAt(state.getValue(AXIS), pos, hit.getLocation(), present);
     }
 
     // ─────────────────────────── дроп компонентов ───────────────────────────
