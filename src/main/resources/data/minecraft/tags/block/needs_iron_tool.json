@@ -67,6 +67,7 @@
     "gonzotech:wire",
     "gonzotech:heat_pipe",
     "gonzotech:heat_node",
+    "gonzotech:composite_pipe",
     "gonzotech:wire_node"
   ]
 }

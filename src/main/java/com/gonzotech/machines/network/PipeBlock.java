@@ -37,7 +37,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * ПКМ гаечным ключом ({@link WrenchItem}); влияет только на грань труба↔машина
  * (вход/выход). Хранение режима в блокстейте избавляет трубу от BlockEntity.
  */
-public class PipeBlock extends RotatedPillarBlock {
+public class PipeBlock extends RotatedPillarBlock implements PipeCarrier {
 
     public static final EnumProperty<PipeMode> MODE = EnumProperty.create("mode", PipeMode.class);
 
@@ -80,6 +80,25 @@ public class PipeBlock extends RotatedPillarBlock {
      */
     public boolean connectsAllSides() {
         return false;
+    }
+
+    // ─────────────────────────── PipeCarrier ───────────────────────────
+
+    @Override
+    public boolean carries(BlockState state, PipeType type) {
+        return this.pipeType == type;
+    }
+
+    @Override
+    public boolean opensToward(BlockState state, PipeType type, Direction dir) {
+        if (this.pipeType != type) return false;
+        if (connectsAllSides()) return true;
+        return dir.getAxis() == state.getValue(AXIS);
+    }
+
+    @Override
+    public PipeMode modeFor(BlockState state, PipeType type) {
+        return state.getValue(MODE);
     }
 
     @Override
@@ -126,17 +145,37 @@ public class PipeBlock extends RotatedPillarBlock {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!(stack.getItem() instanceof WrenchItem)) {
-            return InteractionResult.PASS;
+        // Ключ — прокрутить режим этой трубы.
+        if (stack.getItem() instanceof WrenchItem) {
+            if (!level.isClientSide()) {
+                PipeMode nextMode = state.getValue(MODE).next();
+                level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
+                player.displayClientMessage(
+                    net.minecraft.network.chat.Component.translatable(
+                        "message.gonzotech.pipe_mode." + nextMode.getSerializedName()),
+                    true);
+            }
+            return InteractionResult.SUCCESS;
         }
-        if (!level.isClientSide()) {
-            PipeMode nextMode = state.getValue(MODE).next();
-            level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
-            player.displayClientMessage(
-                net.minecraft.network.chat.Component.translatable(
-                    "message.gonzotech.pipe_mode." + nextMode.getSerializedName()),
-                true);
+
+        // Труба ДРУГОГО типа в руке → собрать связку (составной блок): сохраняем
+        // ось этой трубы, добавляем оба типа. Узлы (connectsAllSides) не стакаем.
+        if (!connectsAllSides()) {
+            PipeType adding = CompositePipeBlock.pipeTypeOf(stack);
+            if (adding != null && adding != this.pipeType && ModCompositeAccess.get() != null) {
+                if (!level.isClientSide()) {
+                    Direction.Axis axis = state.getValue(AXIS);
+                    BlockState composite = ModCompositeAccess.get().defaultBlockState()
+                        .setValue(AXIS, axis)
+                        .setValue(CompositePipeBlock.PRESENT.get(this.pipeType), true)
+                        .setValue(CompositePipeBlock.MODE.get(this.pipeType), state.getValue(MODE))
+                        .setValue(CompositePipeBlock.PRESENT.get(adding), true);
+                    level.setBlock(pos, composite, Block.UPDATE_ALL);
+                    if (!player.getAbilities().instabuild) stack.shrink(1);
+                }
+                return InteractionResult.SUCCESS;
+            }
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
 }

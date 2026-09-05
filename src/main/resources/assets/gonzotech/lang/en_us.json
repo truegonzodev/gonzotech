@@ -234,6 +234,7 @@
   "block.gonzotech.heat_pipe": "Heat Pipe",
   "block.gonzotech.wire_node": "Wire Node",
   "block.gonzotech.heat_node": "Heat Pipe Node",
+  "block.gonzotech.composite_pipe": "Pipe Bundle",
   "item.gonzotech.wrench": "Wrench",
   "message.gonzotech.pipe_mode.auto": "Mode: Auto (pull + push)",
   "message.gonzotech.pipe_mode.pull": "Mode: Pull (input from machines)",
@@ -402,5 +403,6 @@
   "item.gonzotech.radium_nugget": "Radium Nugget",
   "block.gonzotech.lithium_block": "Lithium Block",
   "item.gonzotech.lithium_dust": "Lithium Dust",
-  "item.gonzotech.lithium_nugget": "Lithium Nugget"
+  "item.gonzotech.lithium_nugget": "Lithium Nugget",
+  "message.gonzotech.composite_cycled": "Bundle: cycled modes"
 }

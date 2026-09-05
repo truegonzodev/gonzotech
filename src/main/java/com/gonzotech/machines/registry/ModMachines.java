@@ -7,6 +7,7 @@ import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.StirlingBlock;
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.NodeBlock;
 import com.gonzotech.machines.network.PipeBlock;
 import com.gonzotech.machines.network.PipeType;
@@ -95,6 +96,12 @@ public final class ModMachines {
 
     public static final DeferredBlock<NodeBlock> HEAT_NODE =
         BLOCKS.registerBlock("heat_node", props -> new NodeBlock(props, PipeType.HEAT), pipe());
+
+    // Составной блок: несколько типов труб в одном кубе (стакаемость), каждый в
+    // своём углу сечения, не соединяясь между собой. Обычно не крафтится — в него
+    // собирается связка при добавлении трубы другого типа к уже стоящей.
+    public static final DeferredBlock<CompositePipeBlock> COMPOSITE_PIPE =
+        BLOCKS.registerBlock("composite_pipe", CompositePipeBlock::new, pipe());
 
     // ─────────────────────────── предметы-блоки ───────────────────────────
 

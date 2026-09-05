@@ -54,25 +54,25 @@ public final class PipeRouting {
     }
 
     /**
-     * Открыта ли грань трубы {@code pipe} в сторону {@code dir}. У узла открыты
-     * все 6 граней; у обычной трубы — только вдоль её оси (два торца).
+     * Открыта ли в блоке {@code state} труба типа {@code type} гранью в сторону
+     * {@code dir}. Делегирует носителю ({@link PipeCarrier}) — работает и для
+     * одиночной трубы/узла, и для составного блока.
      */
-    private static boolean opensToward(BlockState pipe, Direction dir) {
-        if (pipe.getBlock() instanceof PipeBlock pb && pb.connectsAllSides()) return true;
-        return dir.getAxis() == pipe.getValue(PipeBlock.AXIS);
+    private static boolean opensToward(BlockState state, PipeType type, Direction dir) {
+        return state.getBlock() instanceof PipeCarrier c && c.opensToward(state, type, dir);
     }
 
-    /** Две соседние трубы соединяются, если обе грани открыты навстречу. */
-    private static boolean pipesConnect(BlockState a, BlockState b, Direction dirAtoB) {
-        return opensToward(a, dirAtoB) && opensToward(b, dirAtoB.getOpposite());
+    /** Два соседних носителя соединяются по типу, если обе грани открыты навстречу. */
+    private static boolean pipesConnect(BlockState a, BlockState b, PipeType type, Direction dirAtoB) {
+        return opensToward(a, type, dirAtoB) && opensToward(b, type, dirAtoB.getOpposite());
     }
 
     /**
-     * Машина соединяется с трубой, только если грань трубы открыта в сторону
-     * машины (т.е. навстречу направлению машина→труба).
+     * Машина соединяется с трубой типа {@code type}, только если её грань открыта
+     * в сторону машины (навстречу направлению машина→труба).
      */
-    private static boolean machineConnects(BlockState pipe, Direction dirToPipe) {
-        return opensToward(pipe, dirToPipe.getOpposite());
+    private static boolean machineConnects(BlockState pipe, PipeType type, Direction dirToPipe) {
+        return opensToward(pipe, type, dirToPipe.getOpposite());
     }
 
     /** Шаг пути: труба {@code pipe} выпускает ресурс в сторону {@code out}. */
@@ -135,8 +135,8 @@ public final class PipeRouting {
             BlockPos ppos = fromPos.relative(dir);
             BlockState pstate = level.getBlockState(ppos);
             if (!isPipe(pstate, type)) continue;
-            if (!machineConnects(pstate, dir)) continue;
-            if (!pstate.getValue(PipeBlock.MODE).acceptsFromMachine()) continue;
+            if (!machineConnects(pstate, type, dir)) continue;
+            if (!modeOf(pstate, type).acceptsFromMachine()) continue;
             if (visited.add(ppos)) {
                 parent.put(ppos.asLong(), null);
                 queue.add(ppos);
@@ -146,13 +146,13 @@ public final class PipeRouting {
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
             BlockState pstate = level.getBlockState(pipe);
-            PipeMode mode = pstate.getValue(PipeBlock.MODE);
+            PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
                 BlockState nstate = level.getBlockState(npos);
                 if (isPipe(nstate, type)) {
-                    // Соединяем, только если обе грани открыты навстречу.
-                    if (!pipesConnect(pstate, nstate, dir)) continue;
+                    // Соединяем, только если обе грани этого типа открыты навстречу.
+                    if (!pipesConnect(pstate, nstate, type, dir)) continue;
                     if (visited.add(npos)) {
                         parent.put(npos.asLong(), pipe);
                         queue.add(npos);
@@ -161,7 +161,7 @@ public final class PipeRouting {
                 }
                 // Машина за трубой — приёмник, только если грань трубы открыта к ней
                 // и ЭТА труба отдаёт в машину.
-                if (!machineConnects(pstate, dir)) continue;
+                if (!machineConnects(pstate, type, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 List<PathStep> path = buildPath(level, pipe, npos, parent);
                 addReceiver(level, npos, fromPos, receivers, receiverOf, path);
@@ -227,6 +227,10 @@ public final class PipeRouting {
     }
 
     private static boolean isPipe(BlockState state, PipeType type) {
-        return state.getBlock() instanceof PipeBlock pb && pb.pipeType() == type;
+        return state.getBlock() instanceof PipeCarrier c && c.carries(state, type);
+    }
+
+    private static PipeMode modeOf(BlockState state, PipeType type) {
+        return state.getBlock() instanceof PipeCarrier c ? c.modeFor(state, type) : PipeMode.AUTO;
     }
 }

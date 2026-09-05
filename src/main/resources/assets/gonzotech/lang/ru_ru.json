@@ -234,6 +234,7 @@
   "block.gonzotech.heat_pipe": "Теплотруба",
   "block.gonzotech.wire_node": "Узел провода",
   "block.gonzotech.heat_node": "Узел теплотрубы",
+  "block.gonzotech.composite_pipe": "Связка труб",
   "item.gonzotech.wrench": "Гаечный ключ",
   "message.gonzotech.pipe_mode.auto": "Режим: Авто (забор + отдача)",
   "message.gonzotech.pipe_mode.pull": "Режим: Забор (вход из машин)",
@@ -402,5 +403,6 @@
   "item.gonzotech.radium_nugget": "Самородок Радия",
   "block.gonzotech.lithium_block": "Литиевый блок",
   "item.gonzotech.lithium_dust": "Литиевая пыль",
-  "item.gonzotech.lithium_nugget": "Литиевый самородок"
+  "item.gonzotech.lithium_nugget": "Литиевый самородок",
+  "message.gonzotech.composite_cycled": "Связка: режимы прокручены"
 }

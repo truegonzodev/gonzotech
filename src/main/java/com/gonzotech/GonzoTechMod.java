@@ -95,6 +95,9 @@ public class GonzoTechMod {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        // Дать одиночным трубам ссылку на составной блок (для сборки связки).
+        com.gonzotech.machines.network.ModCompositeAccess.set(
+            com.gonzotech.machines.registry.ModMachines.COMPOSITE_PIPE.get());
         LOGGER.info("[Gonzo Tech] Common setup complete — core systems ready to attach.");
     }
 }
