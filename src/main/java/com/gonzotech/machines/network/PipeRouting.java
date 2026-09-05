@@ -10,7 +10,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
@@ -25,12 +28,21 @@ import java.util.function.BiFunction;
  * которым можно отдать (грань трубы в режиме {@link PipeMode#deliversToMachine}).
  * Ресурс телепортируется приёмникам за тот же тик.
  * <p>
+ * Попутно каждому проводу на пути от машины к приёмнику записывается фактически
+ * прошедший через него объём ({@link FlowTracker}) — по мировым сторонам, куда
+ * ресурс вышел. Так провод не хранит поток, но HUD гаечного ключа может показать
+ * живые числа по концам оси (напр. восток 60, запад 30 при встречных потоках).
+ * <p>
  * Обход выполняется лишь когда машине реально есть что слить (и провод рядом), а
  * не каждый тик у каждого провода. Стоимость зависит от размера цепи.
  */
 public final class PipeRouting {
 
     private PipeRouting() {
+    }
+
+    /** Шаг пути: труба {@code pipe} выпускает ресурс в сторону {@code out}. */
+    private record PathStep(BlockPos pipe, Direction out) {
     }
 
     /**
@@ -55,15 +67,16 @@ public final class PipeRouting {
         // честной ротации остатка в distributeAmong.
         TreeMap<Long, Transfer.Receiver> receivers = new TreeMap<>();
 
-        // 1) Прямые соседи-приёмники (не трубы, не сам источник).
+        // 1) Прямые соседи-приёмники (не трубы, не сам источник). Через провод не
+        // идут — поток по проводам для них не пишем.
         for (Direction dir : Direction.values()) {
             BlockPos npos = fromPos.relative(dir);
             BlockState nstate = level.getBlockState(npos);
             if (isPipe(nstate, type)) continue;
-            addReceiver(level, npos, fromPos, receivers, receiverOf);
+            addReceiver(level, npos, fromPos, receivers, receiverOf, null);
         }
 
-        // 2) Приёмники за проводами.
+        // 2) Приёмники за проводами (с записью потока по пути).
         collectThroughPipes(level, fromPos, type, receivers, receiverOf);
 
         if (receivers.isEmpty()) return 0;
@@ -76,6 +89,10 @@ public final class PipeRouting {
             TreeMap<Long, Transfer.Receiver> receivers,
             BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
 
+        // Родитель каждой посещённой трубы (труба ближе к машине), null у стартовых.
+        // По нему восстанавливаем путь машина→…→труба для записи потока.
+        Map<Long, BlockPos> parent = new HashMap<>();
+
         // Старт — прилегающие провода, чья грань принимает слив из машины (AUTO/PULL).
         Deque<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
@@ -83,7 +100,10 @@ public final class PipeRouting {
             BlockPos ppos = fromPos.relative(dir);
             BlockState pstate = level.getBlockState(ppos);
             if (isPipe(pstate, type) && pstate.getValue(PipeBlock.MODE).acceptsFromMachine()) {
-                if (visited.add(ppos)) queue.add(ppos);
+                if (visited.add(ppos)) {
+                    parent.put(ppos.asLong(), null);
+                    queue.add(ppos);
+                }
             }
         }
 
@@ -94,27 +114,75 @@ public final class PipeRouting {
                 BlockPos npos = pipe.relative(dir);
                 BlockState nstate = level.getBlockState(npos);
                 if (isPipe(nstate, type)) {
-                    if (visited.add(npos)) queue.add(npos);
+                    if (visited.add(npos)) {
+                        parent.put(npos.asLong(), pipe);
+                        queue.add(npos);
+                    }
                     continue;
                 }
                 // Машина за трубой — приёмник, только если ЭТА труба отдаёт в машину.
                 if (!mode.deliversToMachine()) continue;
-                addReceiver(level, npos, fromPos, receivers, receiverOf);
+                List<PathStep> path = buildPath(level, pipe, npos, parent);
+                addReceiver(level, npos, fromPos, receivers, receiverOf, path);
             }
         }
+    }
+
+    /**
+     * Путь от стартовой трубы до {@code viaPipe} и далее выход в {@code receiver}.
+     * Каждый шаг — какая труба в какую сторону выпускает ресурс. Порядок не важен
+     * для записи (пишем всем шагам одинаковый прошедший объём).
+     */
+    private static List<PathStep> buildPath(Level level, BlockPos viaPipe, BlockPos receiver,
+                                            Map<Long, BlockPos> parent) {
+        List<PathStep> steps = new ArrayList<>();
+        BlockPos cur = viaPipe;
+        BlockPos next = receiver; // узел ближе к приёмнику, куда выходит ресурс
+        while (cur != null) {
+            Direction out = dirFromTo(cur, next);
+            if (out != null) steps.add(new PathStep(cur, out));
+            next = cur;
+            cur = parent.get(cur.asLong());
+        }
+        return steps;
     }
 
     private static void addReceiver(
             Level level, BlockPos pos, BlockPos fromPos,
             TreeMap<Long, Transfer.Receiver> receivers,
-            BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
+            BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
+            List<PathStep> path) {
         if (pos.equals(fromPos)) return;
         long key = pos.asLong();
         if (receivers.containsKey(key)) return;
         BlockEntity be = level.getBlockEntity(pos);
         if (be == null) return;
         Transfer.Receiver r = receiverOf.apply(be, pos);
-        if (r != null) receivers.put(key, r);
+        if (r == null) return;
+        receivers.put(key, path == null ? r : recording(level, r, path));
+    }
+
+    /**
+     * Обёртка-приёмник: сколько реально принято — столько же записываем каждому
+     * проводу на пути в его выходную сторону (учёт фактического потока за тик).
+     */
+    private static Transfer.Receiver recording(Level level, Transfer.Receiver real, List<PathStep> path) {
+        return (amount, simulate) -> {
+            int accepted = real.receive(amount, simulate);
+            if (!simulate && accepted > 0) {
+                for (PathStep s : path) {
+                    FlowTracker.record(level, s.pipe(), s.out(), accepted);
+                }
+            }
+            return accepted;
+        };
+    }
+
+    private static Direction dirFromTo(BlockPos from, BlockPos to) {
+        for (Direction d : Direction.values()) {
+            if (from.relative(d).equals(to)) return d;
+        }
+        return null;
     }
 
     private static boolean isPipe(BlockState state, PipeType type) {

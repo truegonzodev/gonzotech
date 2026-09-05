@@ -49,6 +49,10 @@ public class GonzoTechMod {
         ModBlockEntities.register(modEventBus);
         ModMenus.register(modEventBus);
 
+        // При остановке сервера сбросить транзитный учёт потока труб (держит ссылки на Level).
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) ->
+            com.gonzotech.machines.network.FlowTracker.clearAll());
+
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
 
@@ -85,6 +89,9 @@ public class GonzoTechMod {
         );
 
         ChalkboardNetwork.register(registrar);
+
+        // HUD живого потока труб (ключ ↔ сервер).
+        com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
