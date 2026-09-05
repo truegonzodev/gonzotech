@@ -404,6 +404,5 @@
   "block.gonzotech.lithium_block": "Lithium Block",
   "item.gonzotech.lithium_dust": "Lithium Dust",
   "item.gonzotech.lithium_nugget": "Lithium Nugget",
-  "message.gonzotech.composite_cycled": "Bundle: cycled modes",
   "message.gonzotech.pipe_mode_part": "%s → %s"
 }

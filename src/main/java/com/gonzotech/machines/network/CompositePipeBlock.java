@@ -142,23 +142,21 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
         // Ключ работает по КОНКРЕТНОЙ трубе пучка — той, куда наведён прицел.
+        // ТОЛЬКО обычный ПКМ (Shift/Alt+ПКМ зарезервированы под будущие повороты
+        // труб — их здесь не перехватываем). Снятие одной трубы не нужно: можно
+        // просто сломать блок и получить трубы обратно.
         if (stack.getItem() instanceof WrenchItem) {
+            if (player.isSecondaryUseActive()) return InteractionResult.PASS;
             PipeType part = partAt(state, pos, hit);
             if (part == null) return InteractionResult.PASS;
             if (!level.isClientSide()) {
-                if (player.isSecondaryUseActive()) {
-                    // Shift+ПКМ — снять эту трубу из пучка (выпадает предметом).
-                    removePart(level, pos, state, part, player);
-                } else {
-                    // ПКМ — прокрутить режим именно этой трубы.
-                    PipeMode nextMode = state.getValue(MODE.get(part)).next();
-                    level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
-                    player.displayClientMessage(
-                        Component.translatable("message.gonzotech.pipe_mode_part",
-                            Component.translatable("block.gonzotech." + part.id()),
-                            Component.translatable("message.gonzotech.pipe_mode_short." + nextMode.getSerializedName())),
-                        true);
-                }
+                PipeMode nextMode = state.getValue(MODE.get(part)).next();
+                level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
+                player.displayClientMessage(
+                    Component.translatable("message.gonzotech.pipe_mode_part",
+                        Component.translatable("block.gonzotech." + part.id()),
+                        Component.translatable("message.gonzotech.pipe_mode_short." + nextMode.getSerializedName())),
+                    true);
             }
             return InteractionResult.SUCCESS;
         }
@@ -173,42 +171,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
-    }
-
-    /** Снять одну трубу пучка. Последняя ушла → блок исчезает. */
-    private void removePart(Level level, BlockPos pos, BlockState state, PipeType part, Player player) {
-        if (!player.getAbilities().instabuild) {
-            Item item = BuiltInRegistries.ITEM.getValue(ResourceLocation.fromNamespaceAndPath("gonzotech", part.id()));
-            if (item != Items.AIR) Block.popResource(level, pos, new ItemStack(item));
-        }
-        BlockState next = state.setValue(PRESENT.get(part), false);
-        // Сколько типов осталось?
-        int remaining = 0;
-        PipeType lastLeft = null;
-        for (PipeType t : PipeType.values()) {
-            if (next.getValue(PRESENT.get(t))) {
-                remaining++;
-                lastLeft = t;
-            }
-        }
-        if (remaining == 0) {
-            level.removeBlock(pos, false);
-        } else if (remaining == 1) {
-            // Осталась одна труба — «схлопываем» пучок обратно в одиночный блок.
-            PipeBlock single = ModCompositeAccess.singleOf(lastLeft);
-            if (single != null) {
-                BlockState singleState = single.defaultBlockState()
-                    .setValue(PipeBlock.MODE, next.getValue(MODE.get(lastLeft)));
-                // Совместить ось (у RotatedPillarBlock свойство AXIS общее).
-                singleState = singleState.setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS,
-                    next.getValue(AXIS));
-                level.setBlock(pos, singleState, Block.UPDATE_ALL);
-            } else {
-                level.setBlock(pos, next, Block.UPDATE_ALL);
-            }
-        } else {
-            level.setBlock(pos, next, Block.UPDATE_ALL);
-        }
     }
 
     /** Тип трубы пучка, в которую сейчас смотрит игрок (по точке наведения). */

@@ -2,7 +2,6 @@ package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
-import com.gonzotech.machines.energy.Sinks;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.energy.Sinks.SteamSink;
 import com.gonzotech.machines.energy.Sinks.WaterSink;
@@ -31,8 +30,8 @@ import net.minecraft.world.level.block.state.BlockState;
  * +{@link MachineDefs#STIRLING_WATER_PER_CONDENSER}/t. Достаточно конденсаторов —
  * и цикл замыкается без долива воды.
  * <p>
- * Работает ТОЛЬКО если к одной из граней примыкает паровой котёл
- * ({@link BoilerBlockEntity}). Предметных слотов нет.
+ * Крутится от пара из своего буфера — ОТКУДА бы он ни пришёл (труба дотянет пар
+ * от любого котла; примыкающий сосед не требуется). Предметных слотов нет.
  * <p>
  * Паразитика: пар конденсируется в воду 1:1 ({@link MachineDefs#STIRLING_STEAM_LOSS}/t)
  * на возврат в котёл — ТОЛЬКО если пар есть (иначе при нескольких котлах-соседях
@@ -114,8 +113,6 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
         if (!(level instanceof ServerLevel server)) return;
         boolean changed = false;
 
-        boolean chain = Sinks.hasNeighbor(server, pos, BoilerBlockEntity.class);
-
         // Паразитика: пар «стынет» в воду 1:1, ТОЛЬКО если пар есть.
         //    Вода конденсируется из своего же пара — ничего не создаётся из
         //    воздуха, поэтому дюпа воды при нескольких котлах-соседях нет.
@@ -129,9 +126,11 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
         // Водоотдача = база (6) + 5 за каждый примыкающий конденсатор.
         int condensers = countCondensers(server, pos);
         int waterOut = MachineDefs.stirlingWaterPerTick(condensers);
+        // Развязано от «соседа»-котла: стирлинг крутится от пара, откуда бы он ни
+        // пришёл (труба дотянет пар от любого котла). Псевдомногоблок оставлен
+        // только для топка+котёл.
         boolean run = false;
-        if (chain
-            && be.steam.has(MachineDefs.STIRLING_STEAM_PER_TICK)
+        if (be.steam.has(MachineDefs.STIRLING_STEAM_PER_TICK)
             && be.gtu.space() >= MachineDefs.STIRLING_GTU_PER_TICK
             && be.water.space() >= waterOut) {
             be.steam.extract(MachineDefs.STIRLING_STEAM_PER_TICK, false);

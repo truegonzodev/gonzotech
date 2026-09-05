@@ -2,7 +2,6 @@ package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
-import com.gonzotech.machines.energy.Sinks;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
@@ -24,13 +23,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Электропечь: плавит предметы, питаясь GTU от соседнего генератора Стирлинга.
- * Слота топлива НЕТ — только вход (0) и выход (1). Скорость 160% ванили
- * ({@link MachineDefs#ELECTRIC_COOK_TIME} тиков/предмет), суммарный расход
- * {@link MachineDefs#ELECTRIC_GTU_PER_ITEM} GTU на предмет.
+ * Электропечь: плавит предметы, питаясь GTU. Слота топлива НЕТ — только вход (0)
+ * и выход (1). Скорость 160% ванили ({@link MachineDefs#ELECTRIC_COOK_TIME}
+ * тиков/предмет), суммарный расход {@link MachineDefs#ELECTRIC_GTU_PER_ITEM} GTU
+ * на предмет.
  * <p>
- * Работает ТОЛЬКО при примыкающем стирлинге ({@link StirlingBlockEntity}).
- * GTU-ёмкость ({@link MachineDefs#ELECTRIC_GTU_CAPACITY}) влезает в short, поэтому
+ * Питается GTU из своего буфера — ОТКУДА бы он ни пришёл (провод дотянет энергию
+ * от любого генератора; примыкающий сосед не требуется). GTU-ёмкость
+ * ({@link MachineDefs#ELECTRIC_GTU_CAPACITY}) влезает в short, поэтому
  * синхронизируется одним слотом {@link ContainerData}.
  */
 public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
@@ -113,11 +113,13 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
         if (!(level instanceof ServerLevel server)) return;
         boolean changed = false;
 
-        boolean chain = Sinks.hasNeighbor(server, pos, StirlingBlockEntity.class);
+        // Развязано от «соседа»-генератора: печь работает от GTU, откуда бы он ни
+        // пришёл (провод дотянет от любого источника). Псевдомногоблок оставлен
+        // только для топка+котёл.
         boolean canSmelt = SmeltHelper.canOutput(server, be.items.get(SLOT_INPUT), be.items.get(SLOT_OUTPUT));
 
         boolean worked = false;
-        if (chain && canSmelt) {
+        if (canSmelt) {
             if (be.cookTotal == 0) {
                 be.cookTotal = MachineDefs.ELECTRIC_COOK_TIME;
             }
