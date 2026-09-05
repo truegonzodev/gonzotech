@@ -25,7 +25,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraft.world.ticks.ScheduledTickAccess;
+import net.minecraft.world.level.ScheduledTickAccess;
 
 /**
  * Труба энергосети (провод — GTU / теплотруба — GTH). Полностью ПАССИВНЫЙ блок:
