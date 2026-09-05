@@ -49,19 +49,37 @@ public class PipeBlock extends RotatedPillarBlock {
 
     private final PipeType pipeType;
     /** Кодек, захватывающий тип трубы (у провода и теплотрубы он разный). */
-    private final MapCodec<PipeBlock> codec;
+    private final MapCodec<? extends PipeBlock> codec;
 
     public PipeBlock(Properties properties, PipeType pipeType) {
         super(properties);
         this.pipeType = pipeType;
-        this.codec = simpleCodec(props -> new PipeBlock(props, pipeType));
+        this.codec = makeCodec();
         this.registerDefaultState(this.stateDefinition.any()
             .setValue(AXIS, Direction.Axis.Y)
             .setValue(MODE, PipeMode.AUTO));
     }
 
+    /**
+     * Строит кодек, воссоздающий именно ЭТОТ подкласс трубы (важно для узла —
+     * {@link NodeBlock}). Вызывается из конструктора {@link PipeBlock}, когда
+     * {@link #pipeType} уже проставлен.
+     */
+    protected MapCodec<? extends PipeBlock> makeCodec() {
+        return simpleCodec(props -> new PipeBlock(props, pipeType()));
+    }
+
     public PipeType pipeType() {
         return pipeType;
+    }
+
+    /**
+     * Соединяется ли этот блок со всех 6 сторон. Обычная труба — нет (только два
+     * конца по оси); блок-узел ({@link NodeBlock}) — да. Маршрутизатор
+     * ({@link PipeRouting}) по этому флагу решает, какие грани трубы «открыты».
+     */
+    public boolean connectsAllSides() {
+        return false;
     }
 
     @Override

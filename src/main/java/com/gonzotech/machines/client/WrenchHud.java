@@ -91,7 +91,7 @@ public final class WrenchHud {
         PipeMode mode = state.getValue(PipeBlock.MODE);
         Component line = Component.translatable(
             "hud.gonzotech.wrench_pipe",
-            Component.translatable("block.gonzotech." + pipe.pipeType().id()),
+            pipe.getName(),
             Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()),
             resourceLabel(pipe.pipeType()));
 
@@ -129,6 +129,11 @@ public final class WrenchHud {
         if (flowPos == null || !flowPos.equals(pos)) return null;
         if (clientTick - flowClientTick > FLOW_STALE_TICKS) return null;
         if (flowPos3d <= 0 && flowNeg3d <= 0) return null;
+
+        // Узел ветвится во все стороны — показываем суммарный поток одним числом.
+        if (flowAxis == PipeFlowNetwork.AXIS_NODE_SUM) {
+            return Component.translatable("hud.gonzotech.wrench_node_flow", flowPos3d);
+        }
 
         Direction.Axis axis = Direction.Axis.values()[flowAxis];
         Direction posDir = switch (axis) {

@@ -7,6 +7,7 @@ import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.StirlingBlock;
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.network.NodeBlock;
 import com.gonzotech.machines.network.PipeBlock;
 import com.gonzotech.machines.network.PipeType;
 import net.minecraft.world.item.BlockItem;
@@ -88,6 +89,13 @@ public final class ModMachines {
     public static final DeferredBlock<PipeBlock> HEAT_PIPE =
         BLOCKS.registerBlock("heat_pipe", props -> new PipeBlock(props, PipeType.HEAT), pipe());
 
+    // Блоки-узлы: та же труба, но открыта во все 6 сторон (ветвления/уголки).
+    public static final DeferredBlock<NodeBlock> WIRE_NODE =
+        BLOCKS.registerBlock("wire_node", props -> new NodeBlock(props, PipeType.WIRE), pipe());
+
+    public static final DeferredBlock<NodeBlock> HEAT_NODE =
+        BLOCKS.registerBlock("heat_node", props -> new NodeBlock(props, PipeType.HEAT), pipe());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -110,6 +118,12 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> HEAT_PIPE_ITEM =
         ITEMS.registerSimpleBlockItem("heat_pipe", HEAT_PIPE);
+
+    public static final DeferredItem<BlockItem> WIRE_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("wire_node", WIRE_NODE);
+
+    public static final DeferredItem<BlockItem> HEAT_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("heat_node", HEAT_NODE);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

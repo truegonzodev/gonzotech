@@ -65,6 +65,8 @@
     "gonzotech:radium_block",
     "gonzotech:lithium_block",
     "gonzotech:wire",
-    "gonzotech:heat_pipe"
+    "gonzotech:heat_pipe",
+    "gonzotech:heat_node",
+    "gonzotech:wire_node"
   ]
 }

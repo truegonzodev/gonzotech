@@ -55,6 +55,8 @@ public class ModCreativeTabs {
                 // Логистика — трубы энергосети + гаечный ключ.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.HEAT_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.WIRE_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.HEAT_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
             })
             .build()

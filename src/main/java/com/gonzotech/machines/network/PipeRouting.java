@@ -36,15 +36,16 @@ import java.util.function.BiFunction;
  * Обход выполняется лишь когда машине реально есть что слить (и провод рядом), а
  * не каждый тик у каждого провода. Стоимость зависит от размера цепи.
  * <p>
- * <b>Соединения строго вдоль оси.</b> У провода ровно два конца — по его оси. Он
- * соединяется с соседом ТОЛЬКО через торец:
+ * <b>Соединения.</b> У обычной трубы ровно два конца — по её оси; она открыта
+ * соседу ТОЛЬКО через торец. Блок-узел ({@link NodeBlock}) открыт во все 6 сторон
+ * ({@link PipeBlock#connectsAllSides()}) — это точка ветвления/уголков. Правило
+ * едино для всех точек связи:
  * <ul>
- *   <li>труба ↔ труба: сосед должен лежать на той же оси И встык концами
- *       (направление между ними = ось обеих труб). Параллельные бок-о-бок и
- *       перпендикулярные (уголок) НЕ соединяются — уголки/тройники будут отдельным
- *       блоком-узлом;</li>
- *   <li>машина ↔ труба: машина цепляется только к торцу трубы (стоит вдоль её
- *       оси), а не сбоку.</li>
+ *   <li>труба ↔ труба: соединяются, только если ОБЕ грани открыты навстречу
+ *       (у обычной трубы грань открыта, если направление = её ось; у узла — всегда)
+ *       и обе трубы одного типа;</li>
+ *   <li>машина ↔ труба: машина цепляется к грани трубы, только если та открыта в
+ *       её сторону (торец обычной трубы либо любая грань узла).</li>
  * </ul>
  */
 public final class PipeRouting {
@@ -52,21 +53,26 @@ public final class PipeRouting {
     private PipeRouting() {
     }
 
-    /** Труба соединяется с соседней трубой только встык по своей оси. */
-    private static boolean pipesConnect(Direction dir, Direction.Axis pipeAxis, Direction.Axis neighborAxis) {
-        return dir.getAxis() == pipeAxis && pipeAxis == neighborAxis;
+    /**
+     * Открыта ли грань трубы {@code pipe} в сторону {@code dir}. У узла открыты
+     * все 6 граней; у обычной трубы — только вдоль её оси (два торца).
+     */
+    private static boolean opensToward(BlockState pipe, Direction dir) {
+        if (pipe.getBlock() instanceof PipeBlock pb && pb.connectsAllSides()) return true;
+        return dir.getAxis() == pipe.getValue(PipeBlock.AXIS);
+    }
+
+    /** Две соседние трубы соединяются, если обе грани открыты навстречу. */
+    private static boolean pipesConnect(BlockState a, BlockState b, Direction dirAtoB) {
+        return opensToward(a, dirAtoB) && opensToward(b, dirAtoB.getOpposite());
     }
 
     /**
-     * Машина соединяется с трубой только через её торец: направление между ними
-     * должно совпадать с осью трубы (машина стоит на конце, не сбоку).
+     * Машина соединяется с трубой, только если грань трубы открыта в сторону
+     * машины (т.е. навстречу направлению машина→труба).
      */
-    private static boolean machineConnects(Direction dirToPipe, Direction.Axis pipeAxis) {
-        return dirToPipe.getAxis() == pipeAxis;
-    }
-
-    private static Direction.Axis pipeAxis(BlockState state) {
-        return state.getValue(PipeBlock.AXIS);
+    private static boolean machineConnects(BlockState pipe, Direction dirToPipe) {
+        return opensToward(pipe, dirToPipe.getOpposite());
     }
 
     /** Шаг пути: труба {@code pipe} выпускает ресурс в сторону {@code out}. */
@@ -129,7 +135,7 @@ public final class PipeRouting {
             BlockPos ppos = fromPos.relative(dir);
             BlockState pstate = level.getBlockState(ppos);
             if (!isPipe(pstate, type)) continue;
-            if (!machineConnects(dir, pipeAxis(pstate))) continue;
+            if (!machineConnects(pstate, dir)) continue;
             if (!pstate.getValue(PipeBlock.MODE).acceptsFromMachine()) continue;
             if (visited.add(ppos)) {
                 parent.put(ppos.asLong(), null);
@@ -140,23 +146,22 @@ public final class PipeRouting {
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
             BlockState pstate = level.getBlockState(pipe);
-            Direction.Axis axis = pipeAxis(pstate);
             PipeMode mode = pstate.getValue(PipeBlock.MODE);
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
                 BlockState nstate = level.getBlockState(npos);
                 if (isPipe(nstate, type)) {
-                    // Только встык по оси: параллельные/перпендикулярные не соединяем.
-                    if (!pipesConnect(dir, axis, pipeAxis(nstate))) continue;
+                    // Соединяем, только если обе грани открыты навстречу.
+                    if (!pipesConnect(pstate, nstate, dir)) continue;
                     if (visited.add(npos)) {
                         parent.put(npos.asLong(), pipe);
                         queue.add(npos);
                     }
                     continue;
                 }
-                // Машина за трубой — приёмник, только если она у ТОРЦА трубы (по оси)
+                // Машина за трубой — приёмник, только если грань трубы открыта к ней
                 // и ЭТА труба отдаёт в машину.
-                if (!machineConnects(dir, axis)) continue;
+                if (!machineConnects(pstate, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 List<PathStep> path = buildPath(level, pipe, npos, parent);
                 addReceiver(level, npos, fromPos, receivers, receiverOf, path);

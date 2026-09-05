@@ -44,11 +44,15 @@ public final class PipeFlowNetwork {
         }
     }
 
+    /** Значение {@code axis3d} для блока-узла: показываем не два конца, а сумму. */
+    public static final int AXIS_NODE_SUM = -1;
+
     /**
-     * Сервер → клиент: поток трубы. {@code posAmount} — объём, ушедший в
+     * Сервер → клиент: поток трубы. Для обычной трубы {@code axis3d} —
+     * {@link Direction.Axis#ordinal()} (0=X,1=Y,2=Z), {@code posAmount} — объём в
      * положительный конец оси (+X=восток, +Y=верх, +Z=юг), {@code negAmount} — в
-     * отрицательный (−X=запад, −Y=низ, −Z=север). {@code axis3d} —
-     * {@link Direction.Axis#ordinal()} (0=X,1=Y,2=Z).
+     * отрицательный (−X=запад, −Y=низ, −Z=север). Для узла ({@link #AXIS_NODE_SUM})
+     * {@code posAmount} — суммарный поток через все грани, {@code negAmount}=0.
      */
     public record FlowPayload(BlockPos pos, int axis3d, int posAmount, int negAmount) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<FlowPayload> TYPE =
@@ -93,13 +97,23 @@ public final class PipeFlowNetwork {
         ServerLevel level = player.serverLevel();
         if (pos.distToCenterSqr(player.getX(), player.getY(), player.getZ()) > MAX_DISTANCE_SQR) return;
         BlockState state = level.getBlockState(pos);
-        if (!(state.getBlock() instanceof PipeBlock)) return;
+        if (!(state.getBlock() instanceof PipeBlock pipe)) return;
+
+        int[] flow = FlowTracker.get(level, pos);
+
+        if (pipe.connectsAllSides()) {
+            // Узел ветвится во все стороны — «два конца оси» не имеют смысла,
+            // показываем суммарный прошедший поток.
+            int sum = 0;
+            for (int v : flow) sum += v;
+            PacketDistributor.sendToPlayer(player, new FlowPayload(pos, AXIS_NODE_SUM, sum, 0));
+            return;
+        }
 
         Direction.Axis axis = state.getValue(PipeBlock.AXIS);
         Direction posDir = positiveOf(axis);
         Direction negDir = posDir.getOpposite();
 
-        int[] flow = FlowTracker.get(level, pos);
         int posAmount = flow[posDir.get3DDataValue()];
         int negAmount = flow[negDir.get3DDataValue()];
 
