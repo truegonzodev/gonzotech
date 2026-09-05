@@ -3,6 +3,7 @@ package com.gonzotech.machines.network;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -41,51 +42,61 @@ public final class PipeGeometry {
         };
     }
 
-    /** Бокс трубы типа {@code type} вдоль оси {@code axis}, в его углу сечения. */
+    /**
+     * Бокс трубы типа {@code type} вдоль оси {@code axis}, в его углу сечения.
+     * <p>
+     * Координаты выведены из того, КАК блокстейт крутит модель (авторская модель
+     * лежит вдоль Z; ось X → {@code y:90}, ось Y → {@code x:90}). MC вращает через
+     * {@code rotateYXZ(-y, -x, 0)} вокруг центра, поэтому для оси Y координата Z
+     * зеркалится в {@code [12-v, 16-v]} — только так хитбокс совпадает с моделью
+     * (без этого вертикальные трубы менялись местами с соседом).
+     */
     public static VoxelShape cornerBox(Direction.Axis axis, PipeType type) {
         int[] c = corner(type);
         int u = c[0];
         int v = c[1];
         return switch (axis) {
-            case Z -> Block.box(u, v, 0, u + 4, v + 4, 16);   // сечение X(u)×Y(v)
-            case X -> Block.box(0, v, u, 16, v + 4, u + 4);   // сечение Z(u)×Y(v)
-            case Y -> Block.box(u, 0, v, u + 4, 16, v + 4);   // сечение X(u)×Z(v)
+            case Z -> Block.box(u, v, 0, u + 4, v + 4, 16);            // сечение X(u)×Y(v)
+            case X -> Block.box(0, v, u, 16, v + 4, u + 4);            // сечение Z(u)×Y(v)
+            case Y -> Block.box(u, 0, 12 - v, u + 4, 16, 16 - v);      // Z зеркалится поворотом
         };
     }
 
     /**
      * Какая труба пучка ближе всего к точке наведения. {@code hitLocation} —
      * мировые координаты точки попадания луча; {@code candidates} — присутствующие
-     * типы. Возвращает ближайший по сечению тип или {@code null}, если кандидатов
-     * нет.
+     * типы. Возвращает ближайший по сечению тип или {@code null}.
+     * <p>
+     * Центр каждого кандидата берётся ПРЯМО из {@link #cornerBox} — так наведение
+     * и хитбокс/модель гарантированно согласованы для любой оси.
      */
     public static PipeType partAt(Direction.Axis axis, BlockPos pos, Vec3 hitLocation, Iterable<PipeType> candidates) {
-        // Локальные координаты 0..16 внутри блока.
         double lx = (hitLocation.x - pos.getX()) * 16.0;
         double ly = (hitLocation.y - pos.getY()) * 16.0;
         double lz = (hitLocation.z - pos.getZ()) * 16.0;
 
-        // Горизонталь/вертикаль сечения зависят от оси прогона.
-        double h;
-        double vv;
-        switch (axis) {
-            case Z -> { h = lx; vv = ly; }
-            case X -> { h = lz; vv = ly; }
-            default -> { h = lx; vv = lz; } // Y
-        }
-
         PipeType best = null;
         double bestDist = Double.MAX_VALUE;
         for (PipeType t : candidates) {
-            int[] c = corner(t);
-            double cu = c[0] + 2.0; // центр бокса 4×4
-            double cv = c[1] + 2.0;
-            double d = (h - cu) * (h - cu) + (vv - cv) * (vv - cv);
+            AABB b = cornerBox(axis, t).bounds();
+            double cx = (b.minX + b.maxX) * 0.5 * 16.0;
+            double cy = (b.minY + b.maxY) * 0.5 * 16.0;
+            double cz = (b.minZ + b.maxZ) * 0.5 * 16.0;
+            // Сравниваем только в плоскости сечения (ось прогона игнорируем).
+            double d = switch (axis) {
+                case X -> sq(ly - cy) + sq(lz - cz);
+                case Y -> sq(lx - cx) + sq(lz - cz);
+                default -> sq(lx - cx) + sq(ly - cy); // Z
+            };
             if (d < bestDist) {
                 bestDist = d;
                 best = t;
             }
         }
         return best;
+    }
+
+    private static double sq(double x) {
+        return x * x;
     }
 }

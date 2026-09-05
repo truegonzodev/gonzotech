@@ -4,9 +4,9 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
@@ -21,14 +21,12 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * поведение вида {@code (X+Y+Z)/3}, когда несколько источников через узлы кормят
  * несколько приёмников.
  * <p>
- * В отличие от трубы, форма узла не зависит от оси — это компактный центральный
- * кубик (грани-«штуцеры» дорисовывает модель/текстура). Свойство {@code AXIS}
- * наследуется, но на соединения и форму не влияет.
+ * Форма — обычный ПОЛНЫЙ КУБ (не тонкий брусок трубы и не хитроструктура): узел
+ * одинаков во всех ориентациях, все грани — одна и та же текстура. Поэтому здесь
+ * НЕ переопределяются {@code getShape}/{@code getCollisionShape} — берётся
+ * дефолтный куб {@link net.minecraft.world.level.block.Block}.
  */
 public class NodeBlock extends PipeBlock {
-
-    // Центральный кубик 8×8×8 — узел одинаков во всех ориентациях.
-    private static final VoxelShape SHAPE = Block.box(4, 4, 4, 12, 12, 12);
 
     public NodeBlock(Properties properties, PipeType pipeType) {
         super(properties, pipeType);
@@ -50,13 +48,14 @@ public class NodeBlock extends PipeBlock {
         return this.defaultBlockState().setValue(MODE, PipeMode.AUTO);
     }
 
+    // Полный куб (перебиваем тонкую форму трубы из PipeBlock).
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return Shapes.block();
     }
 
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return Shapes.block();
     }
 }

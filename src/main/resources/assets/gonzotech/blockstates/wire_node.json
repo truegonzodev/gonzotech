@@ -1,30 +1,6 @@
 {
   "variants": {
-    "axis=x,mode=auto": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=x,mode=pull": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=x,mode=push": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=y,mode=auto": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=y,mode=pull": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=y,mode=push": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=z,mode=auto": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=z,mode=pull": {
-      "model": "gonzotech:block/wire_node"
-    },
-    "axis=z,mode=push": {
+    "": {
       "model": "gonzotech:block/wire_node"
     }
   }
