@@ -215,33 +215,14 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        // Ключ работает по КОНКРЕТНОЙ трубе пучка — той, куда наведён прицел.
-        //  • обычный ПКМ — прокрутка режима (AUTO/PULL/PUSH) наведённой трубы;
-        //  • Shift/Alt+ПКМ — поворот СЛОЯ наведённой трубы (X↔Z). Слой = пара труб
-        //    по высоте сечения: верх WIRE+FLUID (AXIS), низ HEAT+ITEM (AXIS_LOWER).
-        //    Вертикальный слой (Y) не крутится — из-за зеркала модели Y-раскол
-        //    невозможен; клик просто «съедается».
+        // Ключ по КОНКРЕТНОЙ трубе пучка — той, куда наведён прицел.
+        //  • обычный ПКМ (этот метод) — прокрутка режима (AUTO/PULL/PUSH);
+        //  • «присесть + ПКМ» — поворот слоя, но при сидении с предметом в руке
+        //    ванилла НЕ зовёт useItemOn у блока, поэтому поворот живёт в
+        //    {@link WrenchItem#useOn} (см. rotateLayerAt).
         if (stack.getItem() instanceof WrenchItem) {
             PipeType part = partAt(state, pos, hit);
             if (part == null) return InteractionResult.PASS;
-
-            if (player.isSecondaryUseActive()) {
-                // Поворот слоя наведённой трубы X↔Z.
-                boolean lower = isLowerLayer(part);
-                EnumProperty<Direction.Axis> axisProp = lower ? AXIS_LOWER : AXIS;
-                Direction.Axis cur = state.getValue(axisProp);
-                if (cur == Direction.Axis.Y) {
-                    // Вертикальный слой не поворачиваем — но клик считаем обработанным,
-                    // чтобы ключом случайно не поставить/сломать что-то.
-                    return InteractionResult.SUCCESS;
-                }
-                if (!level.isClientSide()) {
-                    Direction.Axis next = (cur == Direction.Axis.X) ? Direction.Axis.Z : Direction.Axis.X;
-                    level.setBlock(pos, state.setValue(axisProp, next), Block.UPDATE_ALL);
-                }
-                return InteractionResult.SUCCESS;
-            }
-
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE.get(part)).next();
                 level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
@@ -296,12 +277,44 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     /** Тип трубы пучка, в которую сейчас смотрит игрок (по точке наведения). */
     private static PipeType partAt(BlockState state, BlockPos pos, BlockHitResult hit) {
+        return partAt(state, pos, hit.getLocation());
+    }
+
+    /** Тип трубы пучка по мировой точке наведения (для {@code Item.useOn}). */
+    public static PipeType partAt(BlockState state, BlockPos pos, net.minecraft.world.phys.Vec3 hitLoc) {
         List<PipeType> present = new ArrayList<>();
         for (PipeType t : PipeType.values()) {
             if (state.getValue(PRESENT.get(t))) present.add(t);
         }
         if (present.isEmpty()) return null;
-        return PipeGeometry.partAt(t -> axisOf(state, t), pos, hit.getLocation(), present);
+        return PipeGeometry.partAt(t -> axisOf(state, t), pos, hitLoc, present);
+    }
+
+    /**
+     * Повернуть СЛОЙ наведённой трубы X↔Z (по точке {@code hitLoc}). Слой = пара
+     * труб по высоте сечения: верх WIRE+FLUID ({@link #AXIS}), низ HEAT+ITEM
+     * ({@link #AXIS_LOWER}). Вертикальный (Y) слой не поворачиваем — из-за зеркала
+     * модели Y-раскол невозможен. Вызывается из {@link WrenchItem#useOn} на
+     * «присесть + ПКМ ключом», т.к. ванилла при сидении с предметом в руке НЕ
+     * зовёт {@code BlockState.useItemOn} у блока.
+     *
+     * @return {@code true}, если состояние блока изменилось (или клик надо
+     *         «съесть» как обработанный — например, вертикальный слой).
+     */
+    public static boolean rotateLayerAt(Level level, BlockPos pos, BlockState state, net.minecraft.world.phys.Vec3 hitLoc) {
+        PipeType part = partAt(state, pos, hitLoc);
+        if (part == null) return false;
+        EnumProperty<Direction.Axis> axisProp = isLowerLayer(part) ? AXIS_LOWER : AXIS;
+        Direction.Axis cur = state.getValue(axisProp);
+        if (cur == Direction.Axis.Y) {
+            // Вертикальный слой не крутим, но клик считаем обработанным.
+            return true;
+        }
+        if (!level.isClientSide()) {
+            Direction.Axis next = (cur == Direction.Axis.X) ? Direction.Axis.Z : Direction.Axis.X;
+            level.setBlock(pos, state.setValue(axisProp, next), Block.UPDATE_ALL);
+        }
+        return true;
     }
 
     // ─────────────────────────── дроп компонентов ───────────────────────────
