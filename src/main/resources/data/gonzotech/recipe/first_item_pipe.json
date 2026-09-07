@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " CK",
+    "HLH",
+    "KC "
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "K": "gonzotech:calcium_ingot",
+    "H": "minecraft:hopper",
+    "L": "minecraft:lever"
+  },
+  "result": { "id": "gonzotech:first_item_pipe", "count": 8 }
+}

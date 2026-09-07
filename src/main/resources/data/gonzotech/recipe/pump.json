@@ -2,18 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "pattern": [
-    "CBC",
-    "CPC",
-    "CMC"
+    "ICI",
+    "BBB",
+    "ICI"
   ],
   "key": {
-    "C": "gonzotech:cast_iron_ingot",
-    "B": "minecraft:bucket",
-    "P": "minecraft:piston",
-    "M": "minecraft:copper_ingot"
+    "I": "minecraft:iron_ingot",
+    "C": "minecraft:copper_ingot",
+    "B": "minecraft:bucket"
   },
-  "result": {
-    "id": "gonzotech:pump",
-    "count": 1
-  }
+  "result": { "id": "gonzotech:pump", "count": 1 }
 }

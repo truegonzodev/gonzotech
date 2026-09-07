@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CPC",
+    "PPP",
+    "CPC"
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "P": "gonzotech:first_heat_pipe"
+  },
+  "result": { "id": "gonzotech:first_heat_node", "count": 1 }
+}

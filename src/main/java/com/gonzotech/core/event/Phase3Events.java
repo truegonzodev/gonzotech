@@ -62,10 +62,15 @@ public final class Phase3Events {
     /**
      * Ленивая карта гейта item -> требуемый номер «Открытия»: строится при первом
      * обращении, т.к. {@code Item}-инстансы недоступны до завершения регистрации.
-     * Сюда попадают ТОЛЬКО «физически закрытые» машины (сейчас — эл. печь).
+     * <p>
+     * Сюда попадают «физически закрытые» рецепты: до нужного «Открытия» крафт
+     * тратит ингредиенты, но выдаёт бесполезный {@code botched_mechanism}. Кроме
+     * эл. печи (задел Фазы 3) здесь ВСЯ логистика первого тира и станки Открытия 1
+     * (помпа/аккумулятор/генератор булыжника). ИСКЛЮЧЕНИЕ — гаечный ключ: он
+     * крафтится всегда (рецепт лишь скрыт в книге до Открытия 1).
+     * <p>
      * Котёл/топка/стирлинг/конденсатор здесь НЕ фигурируют: их можно крафтить до
      * открытия, рецепт лишь скрыт в книге (см. reward-advancement).
-     * Будущие закрытые машины (ядерный реактор и т.п.) добавлять здесь.
      */
     private static Map<net.minecraft.world.item.Item, Integer> craftGate;
 
@@ -78,8 +83,30 @@ public final class Phase3Events {
 
     private static Map<net.minecraft.world.item.Item, Integer> gate() {
         if (craftGate == null) {
-            craftGate = Map.of(
-                com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get(), 1
+            craftGate = Map.ofEntries(
+                // Станки Открытия 1 (гаечный КЛЮЧ НЕ гейтим — он крафтится всегда).
+                Map.entry(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.ACCUMULATOR_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.COBBLE_GENERATOR_ITEM.get(), 1),
+                // Трубы
+                Map.entry(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.HEAT_PIPE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.WATER_PIPE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.STEAM_PIPE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_PIPE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_FLUID_PIPE_ITEM.get(), 1),
+                // Узлы
+                Map.entry(com.gonzotech.machines.registry.ModMachines.WIRE_NODE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.HEAT_NODE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.WATER_NODE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.STEAM_NODE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_NODE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_FLUID_NODE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get(), 1),
+                // Сортировка предметов
+                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get(), 1)
             );
         }
         return craftGate;

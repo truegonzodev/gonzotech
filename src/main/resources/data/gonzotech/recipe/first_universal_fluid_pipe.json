@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " TK",
+    "KBM",
+    "KK "
+  ],
+  "key": {
+    "K": "gonzotech:calcium_ingot",
+    "T": "minecraft:copper_trapdoor",
+    "B": "minecraft:bucket",
+    "M": "minecraft:copper_ingot"
+  },
+  "result": { "id": "gonzotech:first_universal_fluid_pipe", "count": 8 }
+}

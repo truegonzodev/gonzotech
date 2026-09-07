@@ -28,11 +28,35 @@ public final class RecipeUnlocks {
     /** tier «Открытия» -> ключи рецептов (по namespace/path), открываемых в книге. */
     private static final Map<Integer, List<String>> RECIPES_BY_TIER = Map.of(
         1, List.of(
+            // Машины
             "gonzotech:firebox",
             "gonzotech:boiler",
             "gonzotech:stirling_generator",
             "gonzotech:condenser",
-            "gonzotech:electric_furnace"
+            "gonzotech:electric_furnace",
+            "gonzotech:pump",
+            "gonzotech:accumulator",
+            "gonzotech:cobble_generator",
+            // Логистика: инструмент
+            "gonzotech:wrench",
+            // Логистика: трубы
+            "gonzotech:first_wire",
+            "gonzotech:first_heat_pipe",
+            "gonzotech:first_water_pipe",
+            "gonzotech:first_steam_pipe",
+            "gonzotech:first_universal_fluid_pipe",
+            "gonzotech:first_item_pipe",
+            // Логистика: узлы
+            "gonzotech:first_wire_node",
+            "gonzotech:first_heat_node",
+            "gonzotech:first_water_node",
+            "gonzotech:first_steam_node",
+            "gonzotech:first_item_node",
+            "gonzotech:first_universal_fluid_node",
+            "gonzotech:first_universal_node",
+            // Логистика: сортировка предметов
+            "gonzotech:item_filter",
+            "gonzotech:item_scavenger"
         )
     );
 

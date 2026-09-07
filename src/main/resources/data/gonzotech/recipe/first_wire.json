@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "PPP",
+    "AAA",
+    "PPP"
+  ],
+  "key": {
+    "P": "minecraft:paper",
+    "A": "gonzotech:aluminum_ingot"
+  },
+  "result": { "id": "gonzotech:first_wire", "count": 8 }
+}

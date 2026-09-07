@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "N F",
+    "CHC",
+    "T I"
+  ],
+  "key": {
+    "N": "gonzotech:first_wire_node",
+    "F": "gonzotech:first_universal_fluid_pipe",
+    "C": "minecraft:copper_ingot",
+    "H": "minecraft:chest",
+    "T": "gonzotech:first_heat_pipe",
+    "I": "gonzotech:first_item_pipe"
+  },
+  "result": { "id": "gonzotech:first_universal_node", "count": 1 }
+}
