@@ -30,9 +30,10 @@ import java.util.Optional;
  * рисованные PNG; весь текст рисуется шрифтом ради локализации; иллюстрации
  * страниц — рисованный PNG на страницу ({@code page_N.png}).
  *
- * <p>Контейнер = 3 PNG: {@code notes_bg.png} (панель), {@code notes_unlocked_tab.png},
- * {@code notes_locked_tab.png}. Иконка-предмет главы, тинт активной вкладки, «?»
- * на закрытой — это РЕНДЕР поверх PNG. Вкладки рисуются ПЕРВЫМИ (уходят под панель).
+ * <p>Контейнер = панель-фон ПО ГЛАВЕ ({@code notes_bg_era1..era5.png}, выбирается
+ * активной эрой) + {@code notes_unlocked_tab.png} + {@code notes_locked_tab.png}.
+ * Иконка-предмет главы, тинт активной вкладки, «?» на закрытой — это РЕНДЕР поверх
+ * PNG. Вкладки рисуются ПЕРВЫМИ (уходят под панель).
  *
  * <p>Раскладка страницы задаётся per-page ({@link ScholarPage.Layout}):
  * TEXT_FULL / TEXT_LEFT (правая половина под иллюстрацию) / IMAGE_FULL (только арт).
@@ -50,8 +51,6 @@ public class ScholarNotesScreen extends Screen {
     private static final int TAB_H = 26;
     private static final int TAB_GAP = 4;
 
-    private static final ResourceLocation TEX_BG =
-            ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/notes/notes_bg.png");
     private static final ResourceLocation TEX_TAB_UNLOCKED =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/notes/notes_unlocked_tab.png");
     private static final ResourceLocation TEX_TAB_LOCKED =
@@ -170,7 +169,10 @@ public class ScholarNotesScreen extends Screen {
     }
 
     private void drawFrame(GuiGraphics g) {
-        blit(g, TEX_BG, leftPos, topPos, FRAME_W, FRAME_H);
+        // Фон-панель контейнера зависит от активной главы (эры): у каждой свой bg.
+        ScholarChapter chapter = ScholarNotesContent.PAGES.get(pageIndex).chapter();
+        ResourceLocation bg = ResourceLocation.fromNamespaceAndPath("gonzotech", chapter.backgroundPath());
+        blit(g, bg, leftPos, topPos, FRAME_W, FRAME_H);
         ScholarPage page = ScholarNotesContent.PAGES.get(pageIndex);
         ResourceLocation pageBg = ResourceLocation.fromNamespaceAndPath("gonzotech", page.backgroundPath());
         // Иллюстрация страницы всегда занимает ОКНО 256×200, но сэмплируется из
