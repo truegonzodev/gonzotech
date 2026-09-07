@@ -56,6 +56,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("cobble_generator", () -> new BlockEntityType<>(
             CobbleGeneratorBlockEntity::new, false, ModMachines.COBBLE_GENERATOR.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> ITEM_FILTER =
+        BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.ItemFilterBlockEntity::new, false, ModMachines.ITEM_FILTER.get()));
+
     public static void register(IEventBus modEventBus) {
         BLOCK_ENTITIES.register(modEventBus);
     }

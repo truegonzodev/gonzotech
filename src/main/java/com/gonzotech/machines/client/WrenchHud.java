@@ -180,6 +180,10 @@ public final class WrenchHud {
      * все жидкостные типы (вода + пар), которые она переносит.
      */
     private static List<PipeType> carriedParts(BlockState state, PipeType aimed) {
+        // Универсальный узел несёт ВСЕ типы первого тира — показываем все.
+        if (state.getBlock() instanceof com.gonzotech.machines.network.UniversalNodeBlock) {
+            return List.of(PipeType.values());
+        }
         boolean universalSingle =
             state.getBlock() instanceof com.gonzotech.machines.network.UniversalFluidPipeBlock;
         // В пучке универсальная труба = оба жидк.флага; показываем её, только когда
@@ -198,6 +202,11 @@ public final class WrenchHud {
 
     /** Тип трубы пучка/одиночной трубы, в которую смотрит игрок, или {@code null}. */
     private static PipeType aimedPart(BlockState state, BlockPos pos, BlockHitResult hit) {
+        // Универсальный узел несёт все типы — якорим на WIRE (реальный список
+        // компонентов выдаёт carriedParts).
+        if (state.getBlock() instanceof com.gonzotech.machines.network.UniversalNodeBlock) {
+            return PipeType.WIRE;
+        }
         if (state.getBlock() instanceof PipeBlock pipe) {
             return pipe.pipeType();
         }
@@ -207,8 +216,8 @@ public final class WrenchHud {
                 if (state.getValue(CompositePipeBlock.PRESENT.get(t))) present.add(t);
             }
             if (present.isEmpty()) return null;
-            Direction.Axis axis = state.getValue(RotatedPillarBlock.AXIS);
-            return PipeGeometry.partAt(axis, pos, hit.getLocation(), present);
+            return PipeGeometry.partAt(
+                t -> CompositePipeBlock.axisOf(state, t), pos, hit.getLocation(), present);
         }
         return null;
     }
@@ -221,6 +230,10 @@ public final class WrenchHud {
      */
     private static Component partLabel(BlockState state, PipeType part) {
         if (state.getBlock() instanceof PipeBlock pipe && pipe.connectsAllSides()) {
+            return state.getBlock().getName();
+        }
+        // Универсальный узел — собственное имя блока (несёт все типы).
+        if (state.getBlock() instanceof com.gonzotech.machines.network.UniversalNodeBlock) {
             return state.getBlock().getName();
         }
         // Универсальная труба несёт несколько ресурсов — заголовком её собственное
@@ -242,6 +255,9 @@ public final class WrenchHud {
         }
         if (state.getBlock() instanceof CompositePipeBlock) {
             return state.getValue(CompositePipeBlock.MODE.get(part));
+        }
+        if (state.getBlock() instanceof com.gonzotech.machines.network.UniversalNodeBlock) {
+            return state.getValue(com.gonzotech.machines.network.UniversalNodeBlock.MODE);
         }
         return PipeMode.AUTO;
     }

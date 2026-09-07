@@ -70,6 +70,15 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     public static final Map<PipeType, EnumProperty<PipeMode>> MODE = new EnumMap<>(PipeType.class);
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
+    /**
+     * Ось прогона НИЖНЕГО слоя (HEAT + ITEM). Верхний слой (WIRE + FLUID) использует
+     * унаследованную {@link RotatedPillarBlock#AXIS}. Разделение по высоте сечения:
+     * верх {@code v=10} (WIRE {2,10}, FLUID {10,10}), низ {@code v=2} (HEAT {2,2},
+     * ITEM {10,2}). Так слои можно крутить попарно и независимо (X↔Z) ключом.
+     */
+    public static final EnumProperty<Direction.Axis> AXIS_LOWER =
+        EnumProperty.create("axis_lower", Direction.Axis.class);
+
     static {
         for (PipeType t : PipeType.values()) {
             PRESENT.put(t, BooleanProperty.create("has_" + t.id()));
@@ -84,6 +93,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         this.codec = simpleCodec(CompositePipeBlock::new);
         BlockState def = this.stateDefinition.any()
             .setValue(AXIS, Direction.Axis.Z)
+            .setValue(AXIS_LOWER, Direction.Axis.Z)
             .setValue(WATERLOGGED, false);
         for (PipeType t : PipeType.values()) {
             def = def.setValue(PRESENT.get(t), false).setValue(MODE.get(t), PipeMode.AUTO);
@@ -98,7 +108,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(AXIS, WATERLOGGED);
+        builder.add(AXIS, AXIS_LOWER, WATERLOGGED);
         for (PipeType t : PipeType.values()) {
             builder.add(PRESENT.get(t));
             builder.add(MODE.get(t));
@@ -132,8 +142,26 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     public boolean opensToward(BlockState state, PipeType type, Direction dir) {
         if (!carries(state, type)) return false;
-        // Шаг 1: общая ось — тип открыт двумя торцами вдоль оси блока.
-        return dir.getAxis() == state.getValue(AXIS);
+        // Тип открыт двумя торцами вдоль оси СВОЕГО слоя.
+        return dir.getAxis() == axisOf(state, type);
+    }
+
+    /**
+     * В нижнем ли слое сечения находится тип. Нижний слой — HEAT + ITEM (v=2);
+     * верхний — WIRE + FLUID/вода/пар (v=10). Разбивка совпадает с
+     * {@link PipeGeometry#corner}.
+     */
+    private static boolean isLowerLayer(PipeType type) {
+        return type == PipeType.HEAT || type == PipeType.ITEM;
+    }
+
+    /**
+     * Ось прогона для типа: нижний слой (HEAT/ITEM) — {@link #AXIS_LOWER}, верхний
+     * (WIRE/FLUID) — {@link #AXIS}. Публичный, чтобы HUD/поток-сеть читали ось «по
+     * слою наведённого типа».
+     */
+    public static Direction.Axis axisOf(BlockState state, PipeType type) {
+        return isLowerLayer(type) ? state.getValue(AXIS_LOWER) : state.getValue(AXIS);
     }
 
     @Override
@@ -144,11 +172,10 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     // ─────────────────────────── форма (хитбокс) ───────────────────────────
 
     private static VoxelShape shapeFor(BlockState state) {
-        Direction.Axis axis = state.getValue(AXIS);
         VoxelShape shape = Shapes.empty();
         for (PipeType t : PipeType.values()) {
             if (!state.getValue(PRESENT.get(t))) continue;
-            shape = Shapes.join(shape, PipeGeometry.cornerBox(axis, t), BooleanOp.OR);
+            shape = Shapes.join(shape, PipeGeometry.cornerBox(axisOf(state, t), t), BooleanOp.OR);
         }
         return shape.isEmpty() ? Shapes.block() : shape;
     }
@@ -189,13 +216,32 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
         // Ключ работает по КОНКРЕТНОЙ трубе пучка — той, куда наведён прицел.
-        // ТОЛЬКО обычный ПКМ (Shift/Alt+ПКМ зарезервированы под будущие повороты
-        // труб — их здесь не перехватываем). Снятие одной трубы не нужно: можно
-        // просто сломать блок и получить трубы обратно.
+        //  • обычный ПКМ — прокрутка режима (AUTO/PULL/PUSH) наведённой трубы;
+        //  • Shift/Alt+ПКМ — поворот СЛОЯ наведённой трубы (X↔Z). Слой = пара труб
+        //    по высоте сечения: верх WIRE+FLUID (AXIS), низ HEAT+ITEM (AXIS_LOWER).
+        //    Вертикальный слой (Y) не крутится — из-за зеркала модели Y-раскол
+        //    невозможен; клик просто «съедается».
         if (stack.getItem() instanceof WrenchItem) {
-            if (player.isSecondaryUseActive()) return InteractionResult.PASS;
             PipeType part = partAt(state, pos, hit);
             if (part == null) return InteractionResult.PASS;
+
+            if (player.isSecondaryUseActive()) {
+                // Поворот слоя наведённой трубы X↔Z.
+                boolean lower = isLowerLayer(part);
+                EnumProperty<Direction.Axis> axisProp = lower ? AXIS_LOWER : AXIS;
+                Direction.Axis cur = state.getValue(axisProp);
+                if (cur == Direction.Axis.Y) {
+                    // Вертикальный слой не поворачиваем — но клик считаем обработанным,
+                    // чтобы ключом случайно не поставить/сломать что-то.
+                    return InteractionResult.SUCCESS;
+                }
+                if (!level.isClientSide()) {
+                    Direction.Axis next = (cur == Direction.Axis.X) ? Direction.Axis.Z : Direction.Axis.X;
+                    level.setBlock(pos, state.setValue(axisProp, next), Block.UPDATE_ALL);
+                }
+                return InteractionResult.SUCCESS;
+            }
+
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE.get(part)).next();
                 level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
@@ -255,7 +301,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             if (state.getValue(PRESENT.get(t))) present.add(t);
         }
         if (present.isEmpty()) return null;
-        return PipeGeometry.partAt(state.getValue(AXIS), pos, hit.getLocation(), present);
+        return PipeGeometry.partAt(t -> axisOf(state, t), pos, hit.getLocation(), present);
     }
 
     // ─────────────────────────── дроп компонентов ───────────────────────────

@@ -60,6 +60,9 @@ neoForge {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
+    // NB: НЕ добавлять org.spongepowered:mixin processor — под NeoForge миксины
+    // работают в официальном (mojang) неймспейсе, refmap не нужен. AP ищет
+    // searge/notch-маппинги, которых тут нет, и падает на @Inject (serverTick).
     // сюда позже: GeckoLib/AzureLib, JEI (localRuntime), и т.д.
 }
 

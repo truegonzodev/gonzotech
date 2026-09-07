@@ -72,6 +72,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.STEAM_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_FLUID_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get());
             })
             .build()
     );

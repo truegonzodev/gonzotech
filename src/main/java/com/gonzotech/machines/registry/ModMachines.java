@@ -11,6 +11,8 @@ import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.StirlingBlock;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
+import com.gonzotech.machines.network.ItemFilterBlock;
+import com.gonzotech.machines.network.ItemScavengerBlock;
 import com.gonzotech.machines.network.ItemNodeBlock;
 import com.gonzotech.machines.network.ItemPipeBlock;
 import com.gonzotech.machines.network.NodeBlock;
@@ -18,6 +20,7 @@ import com.gonzotech.machines.network.PipeBlock;
 import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.network.UniversalFluidNodeBlock;
 import com.gonzotech.machines.network.UniversalFluidPipeBlock;
+import com.gonzotech.machines.network.UniversalNodeBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
@@ -141,11 +144,28 @@ public final class ModMachines {
     public static final DeferredBlock<UniversalFluidNodeBlock> UNIVERSAL_FLUID_NODE =
         BLOCKS.registerBlock("first_universal_fluid_node", UniversalFluidNodeBlock::new, pipe());
 
+    // Универсальный узел: один куб, несёт ВСЕ 4 типа первого тира (провод +
+    // теплотруба + жидкости вода/пар + предметы), открыт во все стороны. Штраф
+    // −10% к пропускной способности каждого типа.
+    public static final DeferredBlock<UniversalNodeBlock> UNIVERSAL_NODE =
+        BLOCKS.registerBlock("first_universal_node", UniversalNodeBlock::new, pipe());
+
     // Составной блок: несколько типов труб в одном кубе (стакаемость), каждый в
     // своём углу сечения, не соединяясь между собой. Обычно не крафтится — в него
     // собирается связка при добавлении трубы другого типа к уже стоящей.
     public static final DeferredBlock<CompositePipeBlock> COMPOSITE_PIPE =
         BLOCKS.registerBlock("composite_pipe", CompositePipeBlock::new, pipe());
+
+    // ─────────────────────────── фильтр + отсеиватель ───────────────────────────
+    // Фильтр — активный полный куб с меню (3 ghost-слота): пропускает совпавшее в
+    // свою выходную сеть, отсеянное — в сеть Отсеивателя. Отсеиватель — пассивный
+    // блок-якорь второй сети, без меню.
+
+    public static final DeferredBlock<ItemFilterBlock> ITEM_FILTER =
+        BLOCKS.registerBlock("item_filter", ItemFilterBlock::new, metal());
+
+    public static final DeferredBlock<ItemScavengerBlock> ITEM_SCAVENGER =
+        BLOCKS.registerBlock("item_scavenger", ItemScavengerBlock::new, metal());
 
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
@@ -208,6 +228,15 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> UNIVERSAL_FLUID_NODE_ITEM =
         ITEMS.registerSimpleBlockItem("first_universal_fluid_node", UNIVERSAL_FLUID_NODE);
+
+    public static final DeferredItem<BlockItem> UNIVERSAL_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("first_universal_node", UNIVERSAL_NODE);
+
+    public static final DeferredItem<BlockItem> ITEM_FILTER_ITEM =
+        ITEMS.registerSimpleBlockItem("item_filter", ITEM_FILTER);
+
+    public static final DeferredItem<BlockItem> ITEM_SCAVENGER_ITEM =
+        ITEMS.registerSimpleBlockItem("item_scavenger", ITEM_SCAVENGER);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

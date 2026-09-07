@@ -188,15 +188,32 @@ public final class PipeRouting {
     /** Лимит одной прилегающей трубы. Универсальная — остаток общего бюджета. */
     private static long pipeEntryLimit(Level level, BlockPos ppos, BlockState pstate, PipeType type) {
         if (isUniversal(pstate)) {
-            return Math.max(0, MachineDefsUniversalOutput() - FluidBudgetLedger.used(level, ppos));
+            long remain = Math.max(0, MachineDefsUniversalOutput() - FluidBudgetLedger.used(level, ppos));
+            return scaleByFactor(remain, pstate, type);
         }
-        return type.maxThroughput();
+        return scaleByFactor(type.maxThroughput(), pstate, type);
+    }
+
+    /**
+     * Масштабирует лимит на {@link PipeCarrier#throughputFactor} блока (обычные
+     * трубы — 1.0, универсальный узел — 0.9). Округляем вниз, но минимум 1, чтобы
+     * узел не «замирал» на дробном остатке.
+     */
+    private static long scaleByFactor(long limit, BlockState pstate, PipeType type) {
+        if (limit <= 0) return limit;
+        if (pstate.getBlock() instanceof PipeCarrier carrier) {
+            double f = carrier.throughputFactor(pstate, type);
+            if (f < 1.0) return Math.max(1, (long) Math.floor(limit * f));
+        }
+        return limit;
     }
 
     private static boolean isUniversal(BlockState state) {
-        // Одиночная универсальная труба/узел, либо пучок, где FLUID-угол занят
-        // универсальной трубой (вода+пар вместе) — в обоих случаях общий бюджет.
+        // Одиночная универсальная труба/узел, универсальный УЗЕЛ (несёт вода+пар в
+        // одном общем бюджете), либо пучок, где FLUID-угол занят универсальной
+        // трубой (вода+пар вместе) — во всех случаях общий бюджет 800 mB/t.
         return state.getBlock() instanceof UniversalFluidPipeBlock
+            || state.getBlock() instanceof UniversalNodeBlock
             || CompositePipeBlock.carriesUniversalFluid(state);
     }
 

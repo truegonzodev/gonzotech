@@ -39,9 +39,11 @@ public enum PipeType {
      * В отличие от жидкостей/энергий не пассивна: узлы/трубы этого типа тикают и
      * мгновенно маршрутизируют предметы источник→приёмник (см. {@code ItemRouting}),
      * ничего не храня в трубах. Значение {@code maxThroughput} здесь — предел
-     * ПРЕДМЕТОВ за тик через одну точку забора (16 шт/т у first-tier).
+     * ПРЕДМЕТОВ за тик через одну точку забора: 5 шт/т СУММАРНО, но не более
+     * 1 шт/т на КАЖДЫЙ конкретный вид (см. {@code ItemRouting.PER_ITEM_TICK_CAP}),
+     * поэтому одновременно едет максимум 5 разных видов.
      */
-    ITEM("first_item_pipe", false, 0xC08A4A, 16);
+    ITEM("first_item_pipe", false, 0xC08A4A, 5);
 
     private final String id;
     private final boolean fluid;

@@ -46,6 +46,9 @@ public final class ModMenus {
     public static final Supplier<MenuType<CobbleGeneratorMenu>> COBBLE_GENERATOR =
         MENUS.register("cobble_generator", () -> IMenuTypeExtension.create(CobbleGeneratorMenu::new));
 
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> ITEM_FILTER =
+        MENUS.register("item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));
+
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);
     }

@@ -20,5 +20,6 @@ public final class MachineClient {
         event.register(ModMenus.PUMP.get(), PumpScreen::new);
         event.register(ModMenus.ACCUMULATOR.get(), AccumulatorScreen::new);
         event.register(ModMenus.COBBLE_GENERATOR.get(), CobbleGeneratorScreen::new);
+        event.register(ModMenus.ITEM_FILTER.get(), ItemFilterScreen::new);
     }
 }

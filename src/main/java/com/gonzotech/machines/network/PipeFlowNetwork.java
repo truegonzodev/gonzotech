@@ -163,14 +163,19 @@ public final class PipeFlowNetwork {
         long[] flow = FlowTracker.get(level, pos, pipeType);
 
         // Узел ветвится во все стороны — «два конца оси» не имеют смысла, сумма.
-        if (state.getBlock() instanceof PipeBlock pb && pb.connectsAllSides()) {
+        if ((state.getBlock() instanceof PipeBlock pb && pb.connectsAllSides())
+            || state.getBlock() instanceof UniversalNodeBlock) {
             long sum = 0;
             for (long v : flow) sum += v;
             PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0));
             return;
         }
 
-        Direction.Axis axis = state.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS);
+        // В пучке ось зависит от слоя наведённого типа (верх WIRE/FLUID = AXIS,
+        // низ HEAT/ITEM = AXIS_LOWER); у одиночной трубы — общая AXIS.
+        Direction.Axis axis = (state.getBlock() instanceof CompositePipeBlock)
+            ? CompositePipeBlock.axisOf(state, pipeType)
+            : state.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS);
         Direction posDir = positiveOf(axis);
         Direction negDir = posDir.getOpposite();
 

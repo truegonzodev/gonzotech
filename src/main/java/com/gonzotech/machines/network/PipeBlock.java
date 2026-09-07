@@ -184,6 +184,7 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
                 Direction.Axis axis = state.getValue(AXIS);
                 BlockState composite = ModCompositeAccess.get().defaultBlockState()
                     .setValue(AXIS, axis)
+                    .setValue(CompositePipeBlock.AXIS_LOWER, axis)
                     .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))
                     .setValue(CompositePipeBlock.PRESENT.get(this.pipeType), true)
                     .setValue(CompositePipeBlock.MODE.get(this.pipeType), state.getValue(MODE));
@@ -205,6 +206,7 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
                     Direction.Axis axis = state.getValue(AXIS);
                     BlockState composite = ModCompositeAccess.get().defaultBlockState()
                         .setValue(AXIS, axis)
+                        .setValue(CompositePipeBlock.AXIS_LOWER, axis)
                         .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))
                         .setValue(CompositePipeBlock.PRESENT.get(this.pipeType), true)
                         .setValue(CompositePipeBlock.MODE.get(this.pipeType), state.getValue(MODE))

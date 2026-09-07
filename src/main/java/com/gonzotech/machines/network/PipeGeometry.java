@@ -66,14 +66,15 @@ public final class PipeGeometry {
     }
 
     /**
-     * Какая труба пучка ближе всего к точке наведения. {@code hitLocation} —
-     * мировые координаты точки попадания луча; {@code candidates} — присутствующие
-     * типы. Возвращает ближайший по сечению тип или {@code null}.
-     * <p>
-     * Центр каждого кандидата берётся ПРЯМО из {@link #cornerBox} — так наведение
-     * и хитбокс/модель гарантированно согласованы для любой оси.
+     * Какая труба пучка ближе всего к точке наведения — версия с ОСЬЮ ПО ТИПУ.
+     * {@code axisOf} возвращает ось прогона для каждого типа (в пучке верхний слой
+     * WIRE+FLUID и нижний HEAT+ITEM могут смотреть по разным горизонтальным осям).
+     * Для каждого кандидата берём его реальный бокс ({@link #cornerBox} на оси его
+     * слоя) и меряем расстояние от точки до этого бокса (0 внутри бокса) — так
+     * выбор корректен для любой комбинации осей слоёв.
      */
-    public static PipeType partAt(Direction.Axis axis, BlockPos pos, Vec3 hitLocation, Iterable<PipeType> candidates) {
+    public static PipeType partAt(java.util.function.Function<PipeType, Direction.Axis> axisOf,
+                                  BlockPos pos, Vec3 hitLocation, Iterable<PipeType> candidates) {
         double lx = (hitLocation.x - pos.getX()) * 16.0;
         double ly = (hitLocation.y - pos.getY()) * 16.0;
         double lz = (hitLocation.z - pos.getZ()) * 16.0;
@@ -81,16 +82,11 @@ public final class PipeGeometry {
         PipeType best = null;
         double bestDist = Double.MAX_VALUE;
         for (PipeType t : candidates) {
-            AABB b = cornerBox(axis, t).bounds();
-            double cx = (b.minX + b.maxX) * 0.5 * 16.0;
-            double cy = (b.minY + b.maxY) * 0.5 * 16.0;
-            double cz = (b.minZ + b.maxZ) * 0.5 * 16.0;
-            // Сравниваем только в плоскости сечения (ось прогона игнорируем).
-            double d = switch (axis) {
-                case X -> sq(ly - cy) + sq(lz - cz);
-                case Y -> sq(lx - cx) + sq(lz - cz);
-                default -> sq(lx - cx) + sq(ly - cy); // Z
-            };
+            AABB b = cornerBox(axisOf.apply(t), t).bounds();
+            double dx = axisDist(lx, b.minX * 16.0, b.maxX * 16.0);
+            double dy = axisDist(ly, b.minY * 16.0, b.maxY * 16.0);
+            double dz = axisDist(lz, b.minZ * 16.0, b.maxZ * 16.0);
+            double d = dx * dx + dy * dy + dz * dz;
             if (d < bestDist) {
                 bestDist = d;
                 best = t;
@@ -99,7 +95,23 @@ public final class PipeGeometry {
         return best;
     }
 
-    private static double sq(double x) {
-        return x * x;
+    /** Расстояние точки {@code p} до отрезка {@code [lo, hi]} (0, если внутри). */
+    private static double axisDist(double p, double lo, double hi) {
+        if (p < lo) return lo - p;
+        if (p > hi) return p - hi;
+        return 0.0;
+    }
+
+    /**
+     * Какая труба пучка ближе всего к точке наведения. {@code hitLocation} —
+     * мировые координаты точки попадания луча; {@code candidates} — присутствующие
+     * типы. Возвращает ближайший по сечению тип или {@code null}.
+     * <p>
+     * Центр каждого кандидата берётся ПРЯМО из {@link #cornerBox} — так наведение
+     * и хитбокс/модель гарантированно согласованы для любой оси.
+     */
+    public static PipeType partAt(Direction.Axis axis, BlockPos pos, Vec3 hitLocation, Iterable<PipeType> candidates) {
+        return partAt(t -> axis, pos, hitLocation, candidates);
     }
 }
+

@@ -108,6 +108,9 @@
     "gonzotech:first_wire_node",
     "gonzotech:first_universal_fluid_pipe",
     "gonzotech:first_universal_fluid_node",
-    "gonzotech:cobble_generator"
+    "gonzotech:first_universal_node",
+    "gonzotech:cobble_generator",
+    "gonzotech:item_filter",
+    "gonzotech:item_scavenger"
   ]
 }

@@ -28,4 +28,15 @@ public interface PipeCarrier {
 
     /** Режим (AUTO/PULL/PUSH) трубы типа {@code type} в этом блоке. */
     PipeMode modeFor(BlockState state, PipeType type);
+
+    /**
+     * Множитель пропускной способности этого блока для типа {@code type}
+     * относительно базовой {@link PipeType#maxThroughput()}. Обычная труба/узел —
+     * {@code 1.0}. Универсальный узел, несущий все типы сразу, — {@code 0.9}
+     * (на 10% хуже труб, из которых он «состоит»). Маршрутизаторы умножают на это
+     * значение лимит слива за тик.
+     */
+    default double throughputFactor(BlockState state, PipeType type) {
+        return 1.0;
+    }
 }

@@ -51,6 +51,14 @@ public final class ItemRouting {
     private static final PipeType T = PipeType.ITEM;
 
     /**
+     * Предел на ОДИН вид предмета за тик через точку забора. Суммарный лимит —
+     * {@link PipeType#maxThroughput()} (5 шт/т), но каждый конкретный вид едет не
+     * быстрее 1 шт/т. Следствие: одновременно через трубу проходит максимум 5
+     * разных видов.
+     */
+    static final int PER_ITEM_TICK_CAP = 1;
+
+    /**
      * Один проход извлечения для трубы/узла в {@code pos}: по всем граням, где
      * труба открыта, режим позволяет забор из машины/контейнера и рядом есть
      * контейнер-источник — вынимаем до общего лимита {@link PipeType#maxThroughput()}
@@ -63,7 +71,10 @@ public final class ItemRouting {
         if (!(state.getBlock() instanceof PipeCarrier carrier)) return 0;
         if (!carrier.carries(state, T)) return 0;
 
-        int budget = (int) T.maxThroughput();
+        // Пропускная у этой точки забора = базовая × коэффициент блока
+        // (универсальный узел = 0.9, обычные трубы/узлы = 1.0). Минимум 1.
+        double factor = carrier.throughputFactor(state, T);
+        int budget = (int) Math.max(1, Math.floor(T.maxThroughput() * factor));
         if (budget <= 0) return 0;
 
         int moved = 0;
@@ -104,6 +115,8 @@ public final class ItemRouting {
         int moved = 0;
         long rotation = level.getGameTime();
         int n = sinks.size();
+        // Сколько уже перемещено КАЖДОГО вида за этот тик (для лимита PER_ITEM_TICK_CAP).
+        java.util.Map<net.minecraft.world.item.Item, Integer> perItem = new java.util.HashMap<>();
 
         for (int slot : extractableSlots(src, srcFace)) {
             if (moved >= budget) break;
@@ -113,6 +126,8 @@ public final class ItemRouting {
                 ItemStack cur = src.getItem(slot);
                 if (cur.isEmpty()) break;
                 if (!canTake(src, slot, cur, srcFace)) break;
+                // Лимит на этот вид уже исчерпан за тик — к следующему слоту.
+                if (perItem.getOrDefault(cur.getItem(), 0) >= PER_ITEM_TICK_CAP) break;
 
                 ItemStack one = cur.copy();
                 one.setCount(1);
@@ -125,6 +140,7 @@ public final class ItemRouting {
                         src.removeItem(slot, 1);
                         src.setChanged();
                         moved++;
+                        perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
                         // Учёт потока для HUD ключа (предмет → шт/тик).
                         ItemFlowTracker.record(level, pipePos, one.getItem(), 1);
@@ -139,7 +155,7 @@ public final class ItemRouting {
     }
 
     /** Все слоты источника, из которых можно вынимать (с учётом грани), в порядке обхода. */
-    private static List<Integer> extractableSlots(Container src, Direction face) {
+    static List<Integer> extractableSlots(Container src, Direction face) {
         List<Integer> out = new ArrayList<>();
         if (src instanceof WorldlyContainer wc) {
             for (int slot : wc.getSlotsForFace(face)) out.add(slot);
@@ -150,7 +166,7 @@ public final class ItemRouting {
     }
 
     /** Можно ли вынуть предмет из слота источника (с учётом грани для sided-инвентаря). */
-    private static boolean canTake(Container src, int slot, ItemStack stack, Direction face) {
+    static boolean canTake(Container src, int slot, ItemStack stack, Direction face) {
         if (src instanceof WorldlyContainer wc) {
             return wc.canTakeItemThroughFace(slot, stack, face);
         }
@@ -158,7 +174,7 @@ public final class ItemRouting {
     }
 
     /** Кладёт ровно 1 предмет в приёмник (с учётом грани), стакая где можно. Возвращает успех. */
-    private static boolean insertOne(Container dst, Direction face, ItemStack one) {
+    static boolean insertOne(Container dst, Direction face, ItemStack one) {
         if (dst instanceof WorldlyContainer wc) {
             for (int slot : wc.getSlotsForFace(face)) {
                 if (!wc.canPlaceItemThroughFace(slot, one, face)) continue;
@@ -260,7 +276,7 @@ public final class ItemRouting {
      * Делегируем ванильной логике воронки — она корректно собирает двойные сундуки
      * и контейнер-сущности. Возвращает {@code null}, если контейнера нет.
      */
-    private static Container containerAt(Level level, BlockPos pos) {
+    static Container containerAt(Level level, BlockPos pos) {
         return HopperBlockEntity.getContainerAt(level, pos);
     }
 }
