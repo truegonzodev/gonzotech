@@ -95,6 +95,35 @@ public final class ScholarNotesContent {
                             "gonzotech:first_water_node", "gonzotech:first_steam_node",
                             "gonzotech:first_universal_fluid_pipe",
                             "gonzotech:first_universal_fluid_node"),
+                    Layout.TEXT_LEFT),
+
+            // 11 — «Генератор булыжника» (после «Открытия 1»)
+            new ScholarPage(11, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p11.title",
+                    "gui.gonzotech.notes.p11.body",
+                    List.of("gonzotech:cobble_generator"),
+                    Layout.TEXT_LEFT),
+
+            // 12 — «Логистика предметов» (после «Открытия 1»)
+            new ScholarPage(12, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p12.title",
+                    "gui.gonzotech.notes.p12.body",
+                    List.of("gonzotech:first_item_pipe", "gonzotech:first_item_node",
+                            "gonzotech:item_filter", "gonzotech:item_scavenger"),
+                    Layout.TEXT_LEFT),
+
+            // 13 — «Логистика предметов» (после «Открытия 1») — иллюстрация на весь лист
+            new ScholarPage(13, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p13.title",
+                    null,
+                    List.of(),
+                    Layout.IMAGE_FULL),
+
+            // 14 — «Универсальный узел» (после «Открытия 1»)
+            new ScholarPage(14, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p14.title",
+                    "gui.gonzotech.notes.p14.body",
+                    List.of("gonzotech:first_universal_node"),
                     Layout.TEXT_LEFT)
     );
 
