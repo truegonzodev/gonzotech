@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "boron_ingot",
+  "ingredients": [
+    "gonzotech:boron_block"
+  ],
+  "result": {
+    "id": "gonzotech:boron_ingot",
+    "count": 9
+  }
+}

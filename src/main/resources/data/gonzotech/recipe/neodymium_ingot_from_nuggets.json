@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "neodymium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:neodymium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:neodymium_ingot",
+    "count": 1
+  }
+}

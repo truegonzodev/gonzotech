@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "tellurium_ingot",
+  "ingredient": "gonzotech:raw_tellurium",
+  "result": {
+    "id": "gonzotech:tellurium_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "manganese_ingot",
+  "ingredients": [
+    "gonzotech:manganese_block"
+  ],
+  "result": {
+    "id": "gonzotech:manganese_ingot",
+    "count": 9
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "mercury_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:mercury_nugget"
+  },
+  "result": {
+    "id": "gonzotech:mercury_ingot",
+    "count": 1
+  }
+}

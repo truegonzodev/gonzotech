@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "cantor_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:cantor_nugget"
+  },
+  "result": {
+    "id": "gonzotech:cantor_ingot",
+    "count": 1
+  }
+}

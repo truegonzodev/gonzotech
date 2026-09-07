@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/electric_furnace" },
+    "facing=east":  { "model": "gonzotech:block/electric_furnace", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/electric_furnace", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/electric_furnace", "y": 270 }
+  }
+}

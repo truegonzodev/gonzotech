@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "tungsten_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:tungsten_nugget"
+  },
+  "result": {
+    "id": "gonzotech:tungsten_ingot",
+    "count": 1
+  }
+}

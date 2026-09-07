@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "titanium_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:titanium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:titanium_block",
+    "count": 1
+  }
+}

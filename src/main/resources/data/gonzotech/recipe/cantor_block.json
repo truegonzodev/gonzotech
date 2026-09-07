@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "cantor_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:cantor_ingot"
+  },
+  "result": {
+    "id": "gonzotech:cantor_block",
+    "count": 1
+  }
+}

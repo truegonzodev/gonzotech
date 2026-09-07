@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "boron_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:boron_nugget"
+  },
+  "result": {
+    "id": "gonzotech:boron_ingot",
+    "count": 1
+  }
+}

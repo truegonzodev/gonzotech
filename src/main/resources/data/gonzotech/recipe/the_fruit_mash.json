@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "group": "the_fruit_mash",
+  "ingredients": [
+    [
+      "minecraft:apple",
+      "minecraft:melon_slice",
+      "minecraft:glow_berries",
+      "minecraft:sweet_berries"
+    ],
+    "minecraft:wheat_seeds",
+    "minecraft:bone_meal"
+  ],
+  "result": {
+    "id": "gonzotech:the_fruit_mash",
+    "count": 1
+  }
+}

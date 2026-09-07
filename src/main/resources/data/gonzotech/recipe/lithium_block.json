@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "lithium_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:lithium_ingot"
+  },
+  "result": {
+    "id": "gonzotech:lithium_block",
+    "count": 1
+  }
+}

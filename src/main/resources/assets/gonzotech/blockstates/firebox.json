@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/firebox" },
+    "facing=east":  { "model": "gonzotech:block/firebox", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/firebox", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/firebox", "y": 270 }
+  }
+}

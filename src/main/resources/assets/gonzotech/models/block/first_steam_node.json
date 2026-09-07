@@ -1,0 +1,6 @@
+{
+  "parent": "gonzotech:block/node_cube",
+  "textures": {
+    "all": "gonzotech:block/steam_node"
+  }
+}

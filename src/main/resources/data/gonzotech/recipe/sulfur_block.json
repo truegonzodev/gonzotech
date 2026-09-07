@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "sulfur_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:sulfur_ingot"
+  },
+  "result": {
+    "id": "gonzotech:sulfur_block",
+    "count": 1
+  }
+}

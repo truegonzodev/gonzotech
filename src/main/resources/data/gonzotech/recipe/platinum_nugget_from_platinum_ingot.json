@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "platinum_nugget",
+  "ingredients": [
+    "gonzotech:platinum_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:platinum_nugget",
+    "count": 9
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "sulfur_ingot",
+  "ingredients": [
+    "gonzotech:sulfur_block"
+  ],
+  "result": {
+    "id": "gonzotech:sulfur_ingot",
+    "count": 9
+  }
+}

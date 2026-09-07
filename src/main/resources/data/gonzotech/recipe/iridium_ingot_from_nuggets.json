@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "iridium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:iridium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:iridium_ingot",
+    "count": 1
+  }
+}

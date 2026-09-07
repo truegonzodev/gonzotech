@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "platinum_ingot",
+  "ingredient": "gonzotech:deepslate_platinum_ore",
+  "result": {
+    "id": "gonzotech:platinum_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

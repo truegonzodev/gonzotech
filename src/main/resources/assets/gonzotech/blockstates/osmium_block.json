@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "gonzotech:block/osmium_block"
+    }
+  }
+}

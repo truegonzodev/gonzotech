@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "stainless_steel_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:stainless_steel_ingot"
+  },
+  "result": {
+    "id": "gonzotech:stainless_steel_block",
+    "count": 1
+  }
+}

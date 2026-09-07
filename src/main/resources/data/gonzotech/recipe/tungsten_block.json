@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "tungsten_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:tungsten_ingot"
+  },
+  "result": {
+    "id": "gonzotech:tungsten_block",
+    "count": 1
+  }
+}

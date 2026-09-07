@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "cast_iron_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:cast_iron_nugget"
+  },
+  "result": {
+    "id": "gonzotech:cast_iron_ingot",
+    "count": 1
+  }
+}

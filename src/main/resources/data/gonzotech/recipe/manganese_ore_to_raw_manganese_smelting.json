@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "raw_manganese",
+  "ingredient": "gonzotech:manganese_ore",
+  "result": {
+    "id": "gonzotech:raw_manganese"
+  },
+  "experience": 0.35,
+  "cookingtime": 200
+}

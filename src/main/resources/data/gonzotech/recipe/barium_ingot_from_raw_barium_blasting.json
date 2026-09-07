@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "barium_ingot",
+  "ingredient": "gonzotech:raw_barium",
+  "result": {
+    "id": "gonzotech:barium_ingot"
+  },
+  "experience": 0.35,
+  "cookingtime": 100
+}

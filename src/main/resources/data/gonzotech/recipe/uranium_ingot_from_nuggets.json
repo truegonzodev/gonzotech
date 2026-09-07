@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "uranium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:uranium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:uranium_ingot",
+    "count": 1
+  }
+}

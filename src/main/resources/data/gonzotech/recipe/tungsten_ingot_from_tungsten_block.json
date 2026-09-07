@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "tungsten_ingot",
+  "ingredients": [
+    "gonzotech:tungsten_block"
+  ],
+  "result": {
+    "id": "gonzotech:tungsten_ingot",
+    "count": 9
+  }
+}

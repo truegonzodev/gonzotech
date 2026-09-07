@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "corten_steel_ingot",
+  "ingredients": [
+    "gonzotech:corten_steel_block"
+  ],
+  "result": {
+    "id": "gonzotech:corten_steel_ingot",
+    "count": 9
+  }
+}

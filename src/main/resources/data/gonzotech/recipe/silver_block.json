@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "silver_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:silver_ingot"
+  },
+  "result": {
+    "id": "gonzotech:silver_block",
+    "count": 1
+  }
+}

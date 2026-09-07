@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "mercury_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:mercury_ingot"
+  },
+  "result": {
+    "id": "gonzotech:mercury_block",
+    "count": 1
+  }
+}

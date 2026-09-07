@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "alnico_nugget",
+  "ingredients": [
+    "gonzotech:alnico_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:alnico_nugget",
+    "count": 9
+  }
+}

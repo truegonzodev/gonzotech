@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "cast_iron_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:cast_iron_ingot"
+  },
+  "result": {
+    "id": "gonzotech:cast_iron_block",
+    "count": 1
+  }
+}

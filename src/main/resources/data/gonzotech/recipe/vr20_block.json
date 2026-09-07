@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "vr20_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:vr20_ingot"
+  },
+  "result": {
+    "id": "gonzotech:vr20_block",
+    "count": 1
+  }
+}

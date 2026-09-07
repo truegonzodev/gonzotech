@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "palladium_nugget",
+  "ingredients": [
+    "gonzotech:palladium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:palladium_nugget",
+    "count": 9
+  }
+}

@@ -9,6 +9,9 @@ import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.core.registry.ModCreativeTabs;
 import com.gonzotech.core.registry.ModFeatures;
 import com.gonzotech.core.registry.ModItems;
+import com.gonzotech.machines.registry.ModBlockEntities;
+import com.gonzotech.machines.registry.ModMachines;
+import com.gonzotech.machines.registry.ModMenus;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -40,9 +43,34 @@ public class GonzoTechMod {
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
+        com.gonzotech.core.psyche.ModPsycheAttachments.register(modEventBus);
+
+        // Фаза 2 — паровая ветка энергетики (машины, BlockEntity, меню).
+        ModMachines.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
+        ModMenus.register(modEventBus);
+
+        // При остановке сервера сбросить транзитный учёт потока труб (держит ссылки на Level).
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
+            com.gonzotech.machines.network.FlowTracker.clearAll();
+            com.gonzotech.machines.network.ItemFlowTracker.clearAll();
+            com.gonzotech.machines.network.FluidBudgetLedger.clearAll();
+        });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
+
+        // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
+
+        // Клиентская привязка экранов машин — только на физическом клиенте.
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
+            // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
+            NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
+            // Три HUD-шкалы «психики» слева от хотбара.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
+        }
 
         LOGGER.info("[Gonzo Tech] Mod class constructed, mod_id={}, {} руд зарегистрировано",
             MOD_ID, com.gonzotech.core.ore.OreDefinition.ALL.size());
@@ -67,9 +95,33 @@ public class GonzoTechMod {
         );
 
         ChalkboardNetwork.register(registrar);
+
+        // Sync для GUI «Заметок учёного» (наигранное время + tier 1).
+        com.gonzotech.chalkboard.network.NotesNetwork.register(registrar);
+
+        // Sync трёх HUD-шкал «психики» (зависимость/стресс/кризис).
+        com.gonzotech.core.psyche.PsycheNetwork.register(registrar);
+
+        // HUD живого потока труб (ключ ↔ сервер).
+        com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        // Дать пакету network ссылки на блоки труб (сборка/разборка связки).
+        com.gonzotech.machines.network.ModCompositeAccess.set(
+            com.gonzotech.machines.registry.ModMachines.COMPOSITE_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
+            com.gonzotech.machines.network.PipeType.WIRE,
+            com.gonzotech.machines.registry.ModMachines.WIRE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
+            com.gonzotech.machines.network.PipeType.HEAT,
+            com.gonzotech.machines.registry.ModMachines.HEAT_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
+            com.gonzotech.machines.network.PipeType.WATER,
+            com.gonzotech.machines.registry.ModMachines.WATER_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
+            com.gonzotech.machines.network.PipeType.STEAM,
+            com.gonzotech.machines.registry.ModMachines.STEAM_PIPE.get());
         LOGGER.info("[Gonzo Tech] Common setup complete — core systems ready to attach.");
     }
 }

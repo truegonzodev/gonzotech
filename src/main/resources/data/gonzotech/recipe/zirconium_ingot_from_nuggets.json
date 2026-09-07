@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "zirconium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:zirconium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:zirconium_ingot",
+    "count": 1
+  }
+}

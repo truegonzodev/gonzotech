@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "nickel_nugget",
+  "ingredients": [
+    "gonzotech:nickel_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:nickel_nugget",
+    "count": 9
+  }
+}

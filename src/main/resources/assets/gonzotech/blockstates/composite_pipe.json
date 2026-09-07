@@ -1,0 +1,187 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "has_first_wire": "true",
+        "axis": "z"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_wire"
+      }
+    },
+    {
+      "when": {
+        "has_first_wire": "true",
+        "axis": "x"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_wire",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_wire": "true",
+        "axis": "y"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_wire",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_heat_pipe": "true",
+        "axis": "z"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_heat_pipe"
+      }
+    },
+    {
+      "when": {
+        "has_first_heat_pipe": "true",
+        "axis": "x"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_heat_pipe",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_heat_pipe": "true",
+        "axis": "y"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_heat_pipe",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_water_pipe": "true",
+        "axis": "z",
+        "has_first_steam_pipe": "false"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_water_pipe"
+      }
+    },
+    {
+      "when": {
+        "has_first_water_pipe": "true",
+        "axis": "x",
+        "has_first_steam_pipe": "false"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_water_pipe",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_water_pipe": "true",
+        "axis": "y",
+        "has_first_steam_pipe": "false"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_water_pipe",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_steam_pipe": "true",
+        "axis": "z",
+        "has_first_water_pipe": "false"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_steam_pipe"
+      }
+    },
+    {
+      "when": {
+        "has_first_steam_pipe": "true",
+        "axis": "x",
+        "has_first_water_pipe": "false"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_steam_pipe",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_steam_pipe": "true",
+        "axis": "y",
+        "has_first_water_pipe": "false"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_steam_pipe",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_water_pipe": "true",
+        "has_first_steam_pipe": "true",
+        "axis": "z"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_universal_fluid"
+      }
+    },
+    {
+      "when": {
+        "has_first_water_pipe": "true",
+        "has_first_steam_pipe": "true",
+        "axis": "x"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_universal_fluid",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_water_pipe": "true",
+        "has_first_steam_pipe": "true",
+        "axis": "y"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_universal_fluid",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_item_pipe": "true",
+        "axis": "z"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_item_pipe"
+      }
+    },
+    {
+      "when": {
+        "has_first_item_pipe": "true",
+        "axis": "x"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_item_pipe",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "has_first_item_pipe": "true",
+        "axis": "y"
+      },
+      "apply": {
+        "model": "gonzotech:block/composite_part_item_pipe",
+        "x": 90
+      }
+    }
+  ]
+}

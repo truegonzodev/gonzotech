@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "lead_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:lead_nugget"
+  },
+  "result": {
+    "id": "gonzotech:lead_ingot",
+    "count": 1
+  }
+}

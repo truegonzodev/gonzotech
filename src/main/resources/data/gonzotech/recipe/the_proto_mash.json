@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "food",
+  "group": "the_proto_mash",
+  "ingredients": [
+    "minecraft:wheat",
+    "minecraft:wheat_seeds",
+    "minecraft:bone_meal"
+  ],
+  "result": {
+    "id": "gonzotech:the_proto_mash",
+    "count": 1
+  }
+}

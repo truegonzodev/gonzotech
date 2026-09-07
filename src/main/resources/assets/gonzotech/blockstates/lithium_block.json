@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "gonzotech:block/lithium_block"
+    }
+  }
+}
