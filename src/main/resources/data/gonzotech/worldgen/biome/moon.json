@@ -19,8 +19,24 @@
     "misc": []
   },
   "spawn_costs": {},
-  "carvers": [],
+  "carvers": [
+    "gonzotech:moon_canyon"
+  ],
   "features": [
-    [], [], [], [], [], [], [], [], [], [], []
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "gonzotech:moon_stone_blob_placed",
+      "gonzotech:moon_andesite_blob_placed",
+      "gonzotech:moon_rich_vein_placed"
+    ],
+    [],
+    [],
+    [],
+    []
   ]
 }

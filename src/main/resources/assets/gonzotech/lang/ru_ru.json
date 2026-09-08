@@ -474,6 +474,15 @@
   "item.gonzotech.dosimeter": "Дозиметр",
   "item.gonzotech.uv_meter": "УФ-радиометр",
 
+  "block.gonzotech.lunar_stone": "Лунная порода",
+  "block.gonzotech.rich_lunar_stone": "Богатая лунная порода",
+  "block.gonzotech.lunar_sand": "Лунный песок",
+  "block.gonzotech.martian_stone": "Марсианская порода",
+  "block.gonzotech.rich_martian_stone": "Богатая марсианская порода",
+  "block.gonzotech.martian_dirt": "Марсианский грунт",
+  "block.gonzotech.superdense_ice": "Сверхплотный лёд",
+  "block.gonzotech.europan_ice": "Европианский лёд",
+
   "dimension.gonzotech.moon": "Луна",
   "dimension.gonzotech.mars": "Марс",
   "dimension.gonzotech.europa": "Европа",

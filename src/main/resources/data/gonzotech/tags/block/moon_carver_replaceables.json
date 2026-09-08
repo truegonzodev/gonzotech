@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:lunar_stone",
+    "gonzotech:rich_lunar_stone",
+    "gonzotech:lunar_dirt",
+    "gonzotech:lunar_sand",
+    "minecraft:andesite",
+    "minecraft:stone"
+  ]
+}

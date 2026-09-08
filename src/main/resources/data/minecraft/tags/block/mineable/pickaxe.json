@@ -111,6 +111,11 @@
     "gonzotech:first_universal_node",
     "gonzotech:cobble_generator",
     "gonzotech:item_filter",
-    "gonzotech:item_scavenger"
+    "gonzotech:item_scavenger",
+    "gonzotech:lunar_stone",
+    "gonzotech:rich_lunar_stone",
+    "gonzotech:martian_stone",
+    "gonzotech:rich_martian_stone",
+    "gonzotech:superdense_ice"
   ]
 }

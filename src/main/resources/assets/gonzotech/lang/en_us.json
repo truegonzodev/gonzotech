@@ -474,6 +474,15 @@
   "item.gonzotech.dosimeter": "Dosimeter",
   "item.gonzotech.uv_meter": "UV Radiometer",
 
+  "block.gonzotech.lunar_stone": "Lunar Stone",
+  "block.gonzotech.rich_lunar_stone": "Rich Lunar Stone",
+  "block.gonzotech.lunar_sand": "Lunar Sand",
+  "block.gonzotech.martian_stone": "Martian Stone",
+  "block.gonzotech.rich_martian_stone": "Rich Martian Stone",
+  "block.gonzotech.martian_dirt": "Martian Dirt",
+  "block.gonzotech.superdense_ice": "Superdense Ice",
+  "block.gonzotech.europan_ice": "Europan Ice",
+
   "dimension.gonzotech.moon": "The Moon",
   "dimension.gonzotech.mars": "Mars",
   "dimension.gonzotech.europa": "Europa",

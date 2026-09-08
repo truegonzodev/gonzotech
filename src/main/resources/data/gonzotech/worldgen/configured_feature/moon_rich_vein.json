@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:ore",
+  "config": {
+    "targets": [
+      { "target": { "predicate_type": "minecraft:block_match", "block": "gonzotech:lunar_stone" },
+        "state": { "Name": "gonzotech:rich_lunar_stone" } }
+    ],
+    "size": 24,
+    "discard_chance_on_air_exposure": 0.0
+  }
+}

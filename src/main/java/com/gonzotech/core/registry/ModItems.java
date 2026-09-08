@@ -135,6 +135,24 @@ public class ModItems {
     public static final DeferredItem<BlockItem> LUNAR_DIRT_ITEM =
         ITEMS.registerSimpleBlockItem("lunar_dirt", ModBlocks.LUNAR_DIRT);
 
+    // ─────────────────────── Фаза 4: BlockItem'ы блоков космоса ───────────────────────
+    public static final DeferredItem<BlockItem> LUNAR_STONE_ITEM =
+        ITEMS.registerSimpleBlockItem("lunar_stone", ModBlocks.LUNAR_STONE);
+    public static final DeferredItem<BlockItem> RICH_LUNAR_STONE_ITEM =
+        ITEMS.registerSimpleBlockItem("rich_lunar_stone", ModBlocks.RICH_LUNAR_STONE);
+    public static final DeferredItem<BlockItem> LUNAR_SAND_ITEM =
+        ITEMS.registerSimpleBlockItem("lunar_sand", ModBlocks.LUNAR_SAND);
+    public static final DeferredItem<BlockItem> MARTIAN_STONE_ITEM =
+        ITEMS.registerSimpleBlockItem("martian_stone", ModBlocks.MARTIAN_STONE);
+    public static final DeferredItem<BlockItem> RICH_MARTIAN_STONE_ITEM =
+        ITEMS.registerSimpleBlockItem("rich_martian_stone", ModBlocks.RICH_MARTIAN_STONE);
+    public static final DeferredItem<BlockItem> MARTIAN_DIRT_ITEM =
+        ITEMS.registerSimpleBlockItem("martian_dirt", ModBlocks.MARTIAN_DIRT);
+    public static final DeferredItem<BlockItem> SUPERDENSE_ICE_ITEM =
+        ITEMS.registerSimpleBlockItem("superdense_ice", ModBlocks.SUPERDENSE_ICE);
+    public static final DeferredItem<BlockItem> EUROPAN_ICE_ITEM =
+        ITEMS.registerSimpleBlockItem("europan_ice", ModBlocks.EUROPAN_ICE);
+
     /** Предметы «Открытие 1» .. «Открытие 16». */
     public static final List<DeferredItem<DiscoveryItem>> DISCOVERY_ITEMS = new ArrayList<>();
 

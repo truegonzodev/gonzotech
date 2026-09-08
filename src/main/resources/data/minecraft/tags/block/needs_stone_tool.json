@@ -24,6 +24,11 @@
     "gonzotech:boiler",
     "gonzotech:stirling_generator",
     "gonzotech:electric_furnace",
-    "gonzotech:condenser"
+    "gonzotech:condenser",
+    "gonzotech:lunar_stone",
+    "gonzotech:rich_lunar_stone",
+    "gonzotech:martian_stone",
+    "gonzotech:rich_martian_stone",
+    "gonzotech:superdense_ice"
   ]
 }

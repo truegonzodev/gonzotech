@@ -62,6 +62,92 @@ public class ModBlocks {
             .strength(0.6f, 0.6f)
     );
 
+    // ─────────────────────────── Фаза 4: блоки космоса ───────────────────────────
+    // Плейсхолдер-текстуры (см. textures/block/*.png). Балансы прочности пока
+    // грубые: породы — как камень, грунты/песок — как земля/песок. Все блоки
+    // копаются киркой (породы) / лопатой (грунты, песок) — теги ниже в data/.
+
+    /** Луна: базовая порода недр (аналог камня). */
+    public static final DeferredBlock<Block> LUNAR_STONE = BLOCKS.registerSimpleBlock(
+        "lunar_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(1.5f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Луна: «богатая» порода — жилы/вкрапления в недрах. */
+    public static final DeferredBlock<Block> RICH_LUNAR_STONE = BLOCKS.registerSimpleBlock(
+        "rich_lunar_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(2.0f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Луна: поверхностный «лунный песок» — падает как ванильный песок. */
+    public static final DeferredBlock<com.gonzotech.space.block.GonzoFallingBlock> LUNAR_SAND =
+        BLOCKS.registerBlock(
+            "lunar_sand",
+            com.gonzotech.space.block.GonzoFallingBlock::new,
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.SAND)
+                .sound(SoundType.SAND)
+                .strength(0.5f, 0.5f)
+        );
+
+    /** Марс: базовая порода недр. */
+    public static final DeferredBlock<Block> MARTIAN_STONE = BLOCKS.registerSimpleBlock(
+        "martian_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_ORANGE)
+            .sound(SoundType.STONE)
+            .strength(1.5f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Марс: «богатая» порода — жилы/вкрапления. */
+    public static final DeferredBlock<Block> RICH_MARTIAN_STONE = BLOCKS.registerSimpleBlock(
+        "rich_martian_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_ORANGE)
+            .sound(SoundType.STONE)
+            .strength(2.0f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Марс: поверхностный грунт (как земля, не падает). */
+    public static final DeferredBlock<Block> MARTIAN_DIRT = BLOCKS.registerSimpleBlock(
+        "martian_dirt",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_ORANGE)
+            .sound(SoundType.GRAVEL)
+            .strength(0.6f, 0.6f)
+    );
+
+    /** Европа: «сверхплотный лёд» глубинного панциря (не тает, скользкий). */
+    public static final DeferredBlock<Block> SUPERDENSE_ICE = BLOCKS.registerSimpleBlock(
+        "superdense_ice",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.ICE)
+            .sound(SoundType.GLASS)
+            .strength(2.0f, 6.0f)
+            .friction(0.98f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Европа: верхний «европианский лёд» корки/глыб (не тает). */
+    public static final DeferredBlock<Block> EUROPAN_ICE = BLOCKS.registerSimpleBlock(
+        "europan_ice",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.ICE)
+            .sound(SoundType.GLASS)
+            .strength(1.0f, 3.0f)
+            .friction(0.98f)
+    );
+
     static {
         for (OreDefinition ore : OreDefinition.ALL) {
             Map<Host, DeferredBlock<? extends Block>> byHost = new EnumMap<>(Host.class);

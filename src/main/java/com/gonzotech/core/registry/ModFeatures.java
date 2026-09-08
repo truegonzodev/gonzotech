@@ -17,6 +17,12 @@ public class ModFeatures {
     public static final DeferredHolder<Feature<?>, MineralReplacementFeature> MINERAL_REPLACEMENT =
         FEATURES.register("mineral_replacement", MineralReplacementFeature::new);
 
+    /** Фаза 4 — кратеры Луны (сплющенные полусферы с валом). */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.space.worldgen.CraterFeature> CRATER =
+        FEATURES.register("crater",
+            () -> new com.gonzotech.space.worldgen.CraterFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
     public static void register(IEventBus modEventBus) {
         FEATURES.register(modEventBus);
     }

@@ -17,11 +17,12 @@ public final class SpaceClient {
     }
 
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {
-        // Луна — почти чёрный вакуум, лёгкая серая дымка у поверхности.
-        event.register(SpaceDimensions.MOON_SKY, new SpaceSkyEffects(0.35F));
-        // Марс — рыжеватая пылевая дымка, чуть плотнее.
-        event.register(SpaceDimensions.MARS_SKY, new SpaceSkyEffects(0.6F));
-        // Европа — холодный синеватый горизонт над ледяным панцирем.
-        event.register(SpaceDimensions.EUROPA_SKY, new SpaceSkyEffects(0.5F));
+        // Fog-множители низкие: при END-небе яркий туман биома даёт светящуюся
+        // полосу у горизонта, которая не сливается с чёрным. Пока (до настоящих
+        // скайбоксов в Части 2) держим дымку почти чёрной — горизонт сливается
+        // с небом. Луна — вакуум без атмосферы; Марс/Европа чуть заметнее.
+        event.register(SpaceDimensions.MOON_SKY, new SpaceSkyEffects(0.05F));
+        event.register(SpaceDimensions.MARS_SKY, new SpaceSkyEffects(0.18F));
+        event.register(SpaceDimensions.EUROPA_SKY, new SpaceSkyEffects(0.08F));
     }
 }

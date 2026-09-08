@@ -89,6 +89,15 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.LUNAR_DIRT_ITEM.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.LUNAR_DIRT_ITEM.get());
+                // Фаза 4 — блоки космоса.
+                output.accept(ModItems.LUNAR_STONE_ITEM.get());
+                output.accept(ModItems.RICH_LUNAR_STONE_ITEM.get());
+                output.accept(ModItems.LUNAR_SAND_ITEM.get());
+                output.accept(ModItems.MARTIAN_STONE_ITEM.get());
+                output.accept(ModItems.RICH_MARTIAN_STONE_ITEM.get());
+                output.accept(ModItems.MARTIAN_DIRT_ITEM.get());
+                output.accept(ModItems.SUPERDENSE_ICE_ITEM.get());
+                output.accept(ModItems.EUROPAN_ICE_ITEM.get());
             })
             .build()
     );

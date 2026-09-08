@@ -19,8 +19,23 @@
     "misc": []
   },
   "spawn_costs": {},
-  "carvers": [],
+  "carvers": [
+    "gonzotech:mars_canyon"
+  ],
   "features": [
-    [], [], [], [], [], [], [], [], [], [], []
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "gonzotech:mars_terracotta_blob_placed",
+      "gonzotech:mars_rich_vein_placed"
+    ],
+    [],
+    [],
+    [],
+    []
   ]
 }
