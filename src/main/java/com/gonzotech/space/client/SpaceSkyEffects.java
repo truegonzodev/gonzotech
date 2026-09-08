@@ -78,9 +78,16 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            int horizonDayArgb, int horizonNightArgb,
                            int sunsetArgb,
                            List<CelestialBody> bodies) {
-        // cloudLevel=NaN (нет облаков), hasGround=false, SkyType.NONE — рисуем сами;
-        // constantAmbientLight=true (в вакууме свет не зависит от времени суток).
-        super(Float.NaN, false, DimensionSpecialEffects.SkyType.NONE, false, true);
+        // cloudLevel=NaN (нет облаков), hasGround=false, constantAmbientLight=true.
+        //
+        // КРИТИЧНО: SkyType ДОЛЖЕН быть NORMAL, а НЕ NONE. В 1.21.4 ванильный
+        // LevelRenderer.addSkyPass создаёт FramePass неба (внутри которого NeoForge
+        // вызывает наш renderSky) ТОЛЬКО когда skyType != NONE. С NONE (как у Ада)
+        // проход неба не создаётся вовсе → наш renderSky НИКОГДА не вызывается,
+        // и виден лишь цвет очистки/тумана. Именно поэтому раньше «ничего не
+        // менялось». renderSky возвращает true и полностью подменяет ванильное небо,
+        // так что NORMAL не рисует ванильные солнце/луну/звёзды поверх наших.
+        super(Float.NaN, false, DimensionSpecialEffects.SkyType.NORMAL, false, true);
         this.fogFactor = fogFactor;
         this.zenithDayArgb = zenithDayArgb;
         this.zenithNightArgb = zenithNightArgb;
