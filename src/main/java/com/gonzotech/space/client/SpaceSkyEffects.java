@@ -9,8 +9,8 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -76,7 +76,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     @Override
     public boolean renderSky(ClientLevel level, int ticks, float partialTick,
                              Matrix4f modelViewMatrix, Camera camera,
-                             Matrix4f projectionMatrix, boolean isFoggy, Runnable setupFog) {
+                             Matrix4f projectionMatrix, Runnable setupFog) {
         RenderSystem.depthMask(false);
         RenderSystem.disableCull(); // купол-куб смотрим изнутри — грани не отбрасываем
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -97,7 +97,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
     /** Сплошной цвет неба: куб {@link #BG} вокруг камеры (матрица вида без сдвига). */
     private void renderBackground(Matrix4f mv) {
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         float s = BG;
@@ -143,7 +143,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
         float sz = body.size();
         int argb = body.argb();
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+        RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR);
         RenderSystem.setShaderTexture(0, body.texture());
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
