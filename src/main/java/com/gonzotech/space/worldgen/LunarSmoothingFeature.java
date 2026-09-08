@@ -23,9 +23,14 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 public class LunarSmoothingFeature extends Feature<NoneFeatureConfiguration> {
 
     /** Сколько проходов сглаживания. */
-    private static final int PASSES = 4;
-    /** Разница высот (в блоках), выше которой колонка считается резким пиком. */
-    private static final int THRESHOLD = 1;
+    private static final int PASSES = 3;
+    /**
+     * Разница высот (в блоках), выше которой колонка считается резким пиком.
+     * =2: трогаем ТОЛЬКО реально острые выступы (края чаш кратеров после снятия
+     * вала, ступеньки шума), НЕ съедая пологие холмы рельефа. Раньше =1 при 4
+     * проходах слишком уплощало Луну в «плоский лист».
+     */
+    private static final int THRESHOLD = 2;
 
     public LunarSmoothingFeature(Codec<NoneFeatureConfiguration> codec) {
         super(codec);

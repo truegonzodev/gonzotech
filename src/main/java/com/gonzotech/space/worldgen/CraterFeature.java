@@ -83,7 +83,6 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
 
     private void carve(WorldGenLevel level, int cx, int cy, int cz, int radius) {
         int depth = Math.max(2, Math.round(radius * FLATTEN));
-        BlockState rimState = surfaceBlock(level, cx, cy, cz);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         int minY = level.getMinY();
@@ -120,6 +119,11 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
                 int dig = (int) Math.round(bowl * depth);
 
                 // Вырезаем воздух сверху вниз на dig блоков от вершины колонки.
+                // ВАЛ (бровка/rim) УБРАН ПОЛНОСТЬЮ (по фидбэку): приподнятый край
+                // генерировался максимально криво и создавал «ебнутую вакханалию» —
+                // рваные концентрические кольца. Теперь кратер = чистая чаша,
+                // просто вырезанная из пола, без единого добавленного блока сверху.
+                // Резкие края чаши затем сгладит LunarSmoothingFeature.
                 for (int k = 0; k < dig; k++) {
                     int y = colTop - k;
                     if (y <= minY + 1 || y >= maxY) {
@@ -131,17 +135,6 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
                         continue;
                     }
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
-                }
-
-                // Приподнятый вал на самой границе кольца (t в [0.88..1.0]).
-                if (t >= 0.88 && rimState != null) {
-                    int rimY = colTop + 1;
-                    if (rimY < maxY) {
-                        pos.set(x, rimY, z);
-                        if (level.getBlockState(pos).isAir()) {
-                            level.setBlock(pos, rimState, 2);
-                        }
-                    }
                 }
             }
         }
@@ -165,18 +158,5 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         return Integer.MIN_VALUE;
-    }
-
-    /** Верхний непустой блок в колонке центра — им же строим вал. */
-    private BlockState surfaceBlock(WorldGenLevel level, int x, int y, int z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int dy = 2; dy >= -3; dy--) {
-            pos.set(x, y + dy, z);
-            BlockState state = level.getBlockState(pos);
-            if (!state.isAir() && !state.is(Blocks.BEDROCK)) {
-                return state;
-            }
-        }
-        return null;
     }
 }

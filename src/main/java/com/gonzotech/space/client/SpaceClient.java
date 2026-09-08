@@ -35,7 +35,7 @@ public final class SpaceClient {
     private static SpaceSkyEffects moon() {
         List<CelestialBody> bodies = List.of(
             CelestialBody.sun(tex("moon/sun"), 22F, Motion.SUN,
-                /*cycleDays*/ 20F, /*yaw*/ -90F, /*tilt*/ 12F, /*phase*/ 0F),
+                /*cycleDays*/ 60F, /*yaw*/ -90F, /*tilt*/ 12F, /*phase*/ 0F),
             CelestialBody.planet(tex("moon/earth"), 40F, Motion.FIXED,
                 0F, -45F, 0F, -55F)
         );
@@ -71,7 +71,7 @@ public final class SpaceClient {
             CelestialBody.planet(tex("europa/jupiter"), 70F, Motion.FIXED,
                 0F, 20F, 0F, -35F),
             CelestialBody.sun(tex("europa/sun"), 5F, Motion.SUN,
-                0.333F, -90F, 6F, 0F),
+                /*cycleDays*/ 3.5F, -90F, 6F, 0F),
             CelestialBody.planet(tex("europa/satellite"), 3F, Motion.ORBIT,
                 0.333F, -60F, 40F, 40F),
             CelestialBody.planet(tex("europa/satellite"), 2.5F, Motion.ORBIT,

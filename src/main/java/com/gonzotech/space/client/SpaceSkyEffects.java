@@ -68,6 +68,14 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     /** Закатный оттенок у горизонта — ARGB (наложение на восходе/закате). */
     private final int sunsetArgb;
     private final List<CelestialBody> bodies;
+    /**
+     * Главное солнце мира (первое тело с {@link CelestialBody.Motion#SUN}) — от
+     * его положения зависит цвет неба день/ночь. Так «день» длится ровно столько,
+     * сколько солнце над горизонтом: Марс {@code cycleDays=1} = как ваниль, Европа
+     * {@code =3} = втрое длиннее, Луна {@code =60} = ~30 суток свет / ~30 тьма.
+     * null, если у мира нет солнца (падаем на ванильное время).
+     */
+    private final CelestialBody primarySun;
 
     /**
      * @param fogFactor        множитель яркости тумана биома (0..1).
@@ -99,6 +107,14 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         this.horizonNightArgb = horizonNightArgb;
         this.sunsetArgb = sunsetArgb;
         this.bodies = List.copyOf(bodies);
+        CelestialBody sun = null;
+        for (CelestialBody b : this.bodies) {
+            if (b.motion() == CelestialBody.Motion.SUN) {
+                sun = b;
+                break;
+            }
+        }
+        this.primarySun = sun;
     }
 
     /**
@@ -124,7 +140,16 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
     @Override
     public Vec3 getBrightnessDependentFogColor(Vec3 biomeFogColor, float daylight) {
-        return biomeFogColor.scale(fogFactor);
+        // ФИКС «чёрного тумана»: туман = цвет НЕБА У ГОРИЗОНТА (день/ночь), чтобы
+        // дальние/туманные чанки плавно РАСТВОРЯЛИСЬ в небе, а не тонули в чёрной
+        // тени. Раньше возвращали затемнённый цвет тумана биома → у горизонта
+        // возникала чёрная кайма между землёй и оранжевым/цветным небом.
+        // daylight: 0=ночь … 1=день.
+        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, Mth.clamp(daylight, 0f, 1f));
+        double r = ((horizon >>> 16) & 0xFF) / 255.0;
+        double g = ((horizon >>> 8) & 0xFF) / 255.0;
+        double b = (horizon & 0xFF) / 255.0;
+        return new Vec3(r, g, b);
     }
 
     @Override
@@ -204,13 +229,30 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private boolean logged = false;
 
     /**
-     * Дневной коэффициент 0..1 из угла солнца. {@code level.getTimeOfDay} даёт
-     * фазу суток; {@link Mth#cos} угла солнца → яркость. Совпадает с логикой
-     * ванильного неба (полдень≈1, полночь≈0).
+     * Дневной коэффициент 0..1 — из ВЫСОТЫ ГЛАВНОГО СОЛНЦА над горизонтом, а не из
+     * ванильного времени. Благодаря этому цвет неба и «день/ночь» идут В ТОМ ЖЕ
+     * ТЕМПЕ, что и движение солнца по небосклону:
+     * <ul>
+     *   <li>Марс ({@code cycleDays=1}) — как ваниль (полдень светло, полночь темно);</li>
+     *   <li>Европа ({@code cycleDays=3}) — сутки визуально втрое длиннее;</li>
+     *   <li>Луна ({@code cycleDays=60}) — ~30 суток непрерывного света, затем ~30
+     *       тьмы (солнце реально ползёт полкруга за 30 суток).</li>
+     * </ul>
+     * Раньше брали ванильный {@code getTimeOfDay} → небо мигало день/ночь каждые
+     * пол-суток, пока солнце едва двигалось. Теперь фаза = та же, что у диска солнца.
      */
     private float daylightFactor(ClientLevel level, float partialTick) {
-        float angle = level.getTimeOfDay(partialTick);              // 0..1
-        float cos = Mth.cos(angle * ((float) Math.PI * 2.0F));      // 1 в полдень, -1 в полночь
+        if (primarySun == null) {
+            float angle = level.getTimeOfDay(partialTick);
+            float cos = Mth.cos(angle * ((float) Math.PI * 2.0F));
+            return Mth.clamp((cos + 0.35F) / 1.35F, 0.0F, 1.0F);
+        }
+        // Та же фаза, что и у диска солнца в renderBody: 0=зенит(полдень),
+        // 0.5=надир(полночь). Высота над горизонтом = cos(фаза*2π): +1 зенит, −1 надир.
+        double cycleTicks = 24000.0 * Math.max(0.001, primarySun.cycleDays());
+        double time = level.getDayTime() + partialTick;
+        double frac = Mth.frac((float) ((time - 6000.0) / cycleTicks));
+        float cos = Mth.cos((float) (frac * 2.0 * Math.PI)); // 1=зенит, -1=надир
         return Mth.clamp((cos + 0.35F) / 1.35F, 0.0F, 1.0F);
     }
 
@@ -298,9 +340,19 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         switch (body.motion()) {
             case FIXED -> xDeg = body.phaseDeg();
             case SUN, ORBIT -> {
+                // ВЫРАВНИВАНИЕ С ВАНИЛЬНЫМ СВЕТОМ (фикс: раньше при dayTime=0 солнце
+                // оказывалось в ЗЕНИТЕ, хотя это утро/горизонт → диск не совпадал со
+                // светом, ночью торчал вверху). Квад тела до поворота лежит в зените
+                // (y=+SKY_DISTANCE), поворот вокруг X ведёт его по вертикальному
+                // кругу: 0°=зенит, 90°=горизонт(закат), 180°=надир, 270°=горизонт(рассвет).
+                // Ванильный полдень = dayTime 6000. Сдвигаем фазу на −6000, чтобы
+                // зенит приходился на полдень; тогда для cycleDays=1 диск совпадает
+                // со светом ТОЧНО (закат dayTime 12000 → 90°, полночь 18000 → 180°).
+                // Для cycleDays>1 солнце дрейфует медленно (Луна/Европа): один
+                // оборот за cycleDays суток, зенит на «полдень» первого дня.
                 double cycleTicks = 24000.0 * Math.max(0.001, body.cycleDays());
                 double time = level.getDayTime() + partialTick;
-                double frac = (time / cycleTicks) % 1.0;
+                double frac = Mth.frac((float) ((time - 6000.0) / cycleTicks));
                 xDeg = (float) (frac * 360.0) + body.phaseDeg();
             }
             default -> xDeg = 0.0F;
