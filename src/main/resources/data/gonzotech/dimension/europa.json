@@ -1,0 +1,18 @@
+{
+  "type": "gonzotech:europa",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "gonzotech:europa",
+      "lakes": false,
+      "features": false,
+      "structure_overrides": [],
+      "layers": [
+        { "block": "minecraft:bedrock", "height": 1 },
+        { "block": "minecraft:blue_ice", "height": 8 },
+        { "block": "minecraft:water", "height": 250 },
+        { "block": "minecraft:ice", "height": 30 }
+      ]
+    }
+  }
+}

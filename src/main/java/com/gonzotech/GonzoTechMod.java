@@ -58,6 +58,9 @@ public class GonzoTechMod {
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
+
+        // Фаза 4 — космос: отладочный телепорт /gonzotech tp <dimension>.
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.space.SpaceCommand::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
@@ -70,6 +73,8 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
             // Три HUD-шкалы «психики» слева от хотбара.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
+            // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
+            modEventBus.addListener(com.gonzotech.space.client.SpaceClient::onRegisterDimensionEffects);
         }
 
         LOGGER.info("[Gonzo Tech] Mod class constructed, mod_id={}, {} руд зарегистрировано",

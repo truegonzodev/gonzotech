@@ -472,5 +472,12 @@
   "hud.gonzotech.psyche.uv": "УФ излучение",
   "hud.gonzotech.psyche.chemical": "Химическое заражение",
   "item.gonzotech.dosimeter": "Дозиметр",
-  "item.gonzotech.uv_meter": "УФ-радиометр"
+  "item.gonzotech.uv_meter": "УФ-радиометр",
+
+  "dimension.gonzotech.moon": "Луна",
+  "dimension.gonzotech.mars": "Марс",
+  "dimension.gonzotech.europa": "Европа",
+  "biome.gonzotech.moon": "Поверхность Луны",
+  "biome.gonzotech.mars": "Поверхность Марса",
+  "biome.gonzotech.europa": "Ледяной панцирь Европы"
 }

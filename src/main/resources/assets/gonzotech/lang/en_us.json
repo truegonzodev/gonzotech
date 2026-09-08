@@ -472,5 +472,12 @@
   "hud.gonzotech.psyche.uv": "UV Radiation",
   "hud.gonzotech.psyche.chemical": "Chemical Contamination",
   "item.gonzotech.dosimeter": "Dosimeter",
-  "item.gonzotech.uv_meter": "UV Radiometer"
+  "item.gonzotech.uv_meter": "UV Radiometer",
+
+  "dimension.gonzotech.moon": "The Moon",
+  "dimension.gonzotech.mars": "Mars",
+  "dimension.gonzotech.europa": "Europa",
+  "biome.gonzotech.moon": "Lunar Surface",
+  "biome.gonzotech.mars": "Martian Surface",
+  "biome.gonzotech.europa": "Europan Ice Sheet"
 }
