@@ -19,6 +19,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
 
 import java.util.List;
 
@@ -53,6 +56,8 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     /** Радиус купола вокруг камеры. */
     private static final float DOME = 16.0F;
 
+    private static final Logger LOGGER = LogUtils.getLogger();
+
     private final float fogFactor;
     /** Цвет неба в зените (день/ночь) — ARGB. */
     private final int zenithDayArgb;
@@ -80,14 +85,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            List<CelestialBody> bodies) {
         // cloudLevel=NaN (нет облаков), hasGround=false, constantAmbientLight=true.
         //
-        // КРИТИЧНО: SkyType ДОЛЖЕН быть NORMAL, а НЕ NONE. В 1.21.4 ванильный
-        // LevelRenderer.addSkyPass создаёт FramePass неба (внутри которого NeoForge
-        // вызывает наш renderSky) ТОЛЬКО когда skyType != NONE. С NONE (как у Ада)
-        // проход неба не создаётся вовсе → наш renderSky НИКОГДА не вызывается,
-        // и виден лишь цвет очистки/тумана. Именно поэтому раньше «ничего не
-        // менялось». renderSky возвращает true и полностью подменяет ванильное небо,
-        // так что NORMAL не рисует ванильные солнце/луну/звёзды поверх наших.
-        super(Float.NaN, false, DimensionSpecialEffects.SkyType.NORMAL, false, true);
+        // SkyType.NONE: в 1.21.4 ванильный addSkyPass вызывает наш renderSky
+        // БЕЗУСЛОВНО (внутри прохода), а SkyType проверяется лишь ПОСЛЕ того, как
+        // renderSky вернул false — чтобы выбрать ванильное небо. Мы возвращаем true
+        // (полностью своё небо), поэтому SkyType роли не играет и NONE корректен.
+        // (NORMAL в маппингах Parchment 1.21.4 не существует и ломает сборку.)
+        super(Float.NaN, false, DimensionSpecialEffects.SkyType.NONE, false, true);
         this.fogFactor = fogFactor;
         this.zenithDayArgb = zenithDayArgb;
         this.zenithNightArgb = zenithNightArgb;
@@ -138,29 +141,45 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         // Закатный оттенок подмешиваем к горизонту.
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
 
+        if (!logged) {
+            logged = true;
+            LOGGER.info("[Gonzo Tech] SpaceSkyEffects.renderSky ВЫЗВАН (тела={}, day={}), небо подменяется",
+                bodies.size(), dayFrac);
+        }
+
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
+        RenderSystem.disableDepthTest();
+        RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        // ВАЖНО (фикс невидимых тел / плоского неба): в момент renderSky матрица
-        // вида камеры УЖЕ активна в RenderSystem (её применяет core-шейдер). Если
-        // ещё раз «запечь» modelViewMatrix в вершины — получается ДВОЙНАЯ
-        // трансформация: купол (камера внутри) выглядит плоским чёрным, а тела на
-        // дистанции 100 улетают за экран. Поэтому рисуем в ЛОКАЛЬНЫХ координатах
-        // (единичная матрица), а поворот камеры добавит сам шейдер.
-        Matrix4f id = new Matrix4f();
+        // ДЕТЕРМИНИРОВАННЫЙ КОНТРОЛЬ МАТРИЦЫ (устраняет неоднозначность двойной
+        // трансформации): в 1.21.4 core-шейдеры берут модельвью из
+        // RenderSystem.getModelViewStack() на момент отрисовки. Мы ВРЕМЕННО
+        // выставляем его в ЕДИНИЦУ, а поворот камеры (modelViewMatrix, переданный
+        // в renderSky) «запекаем» в вершины сами. Тогда трансформация применяется
+        // РОВНО ОДИН РАЗ, независимо от того, лежала ли уже матрица вида на стеке.
+        Matrix4fStack mvStack = RenderSystem.getModelViewStack();
+        mvStack.pushMatrix();
+        mvStack.identity();
 
-        renderDome(id, zenith, horizon);
+        renderDome(modelViewMatrix, zenith, horizon);
 
         // Небесные тела — ванильный celestial-слой через общий буфер.
-        renderBodies(level, partialTick);
+        renderBodies(level, partialTick, modelViewMatrix);
 
+        mvStack.popMatrix();
+
+        RenderSystem.enableDepthTest();
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
 
         RenderSystem.setShaderFog(savedFog);
         return true;
     }
+
+    /** Одноразовый флаг для диагностического лога (подтверждение вызова). */
+    private boolean logged = false;
 
     /**
      * Дневной коэффициент 0..1 из угла солнца. {@code level.getTimeOfDay} даёт
@@ -240,18 +259,18 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * Все небесные тела: каждое — текстурированный квад в {@link RenderType#celestial}.
      * Общий {@link MultiBufferSource.BufferSource} батчит и рисует по {@code endBatch}.
      */
-    private void renderBodies(ClientLevel level, float partialTick) {
+    private void renderBodies(ClientLevel level, float partialTick, Matrix4f mv) {
         MultiBufferSource.BufferSource src =
             Minecraft.getInstance().renderBuffers().bufferSource();
 
         for (CelestialBody body : bodies) {
-            renderBody(body, level, partialTick, src);
+            renderBody(body, level, partialTick, mv, src);
         }
         src.endBatch();
     }
 
     private void renderBody(CelestialBody body, ClientLevel level, float partialTick,
-                            MultiBufferSource.BufferSource src) {
+                            Matrix4f mv, MultiBufferSource.BufferSource src) {
         float xDeg;
         switch (body.motion()) {
             case FIXED -> xDeg = body.phaseDeg();
@@ -264,8 +283,8 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             default -> xDeg = 0.0F;
         }
 
-        // Локальная матрица (единичная): поворот камеры добавит core-шейдер сам.
-        Matrix4f m = new Matrix4f();
+        // Запекаем матрицу вида камеры (mv) + локальные орбитальные повороты.
+        Matrix4f m = new Matrix4f(mv);
         m.rotate(Axis.YP.rotationDegrees(body.axisYaw()));
         m.rotate(Axis.ZP.rotationDegrees(body.axisTilt()));
         m.rotate(Axis.XP.rotationDegrees(xDeg));
