@@ -23,6 +23,12 @@ public class ModFeatures {
             () -> new com.gonzotech.space.worldgen.CraterFeature(
                 net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
 
+    /** Фаза 4 — финальное лёгкое сглаживание рельефа Луны (после кратеров). */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.space.worldgen.LunarSmoothingFeature> LUNAR_SMOOTHING =
+        FEATURES.register("lunar_smoothing",
+            () -> new com.gonzotech.space.worldgen.LunarSmoothingFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
     public static void register(IEventBus modEventBus) {
         FEATURES.register(modEventBus);
     }

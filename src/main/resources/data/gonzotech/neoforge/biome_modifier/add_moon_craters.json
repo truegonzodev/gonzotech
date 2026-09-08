@@ -1,6 +1,6 @@
 {
   "type": "neoforge:add_features",
   "biomes": "gonzotech:moon",
-  "features": [ "gonzotech:moon_craters" ],
+  "features": [ "gonzotech:moon_craters", "gonzotech:moon_smoothing" ],
   "step": "top_layer_modification"
 }

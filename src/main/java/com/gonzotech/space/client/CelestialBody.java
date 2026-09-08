@@ -21,6 +21,14 @@ import net.minecraft.resources.ResourceLocation;
  *       траектории спутников / Земли-Марса-Луны); {@link #cycleDays} — период,
  *       {@link #axisTilt} — наклон кольца, {@link #phaseDeg} — сдвиг фазы.</li>
  * </ul>
+ *
+ * <p>{@link Blend} управляет наложением спрайта на небо:
+ * <ul>
+ *   <li>{@link Blend#ADDITIVE} — как ванильное солнце: задействован только канал
+ *       яркости, спрайт «светится» поверх неба (солнца всех миров).</li>
+ *   <li>{@link Blend#NORMAL} — обычное alpha-наложение: спрайт как есть (Юпитер,
+ *       Земля, планеты-точки).</li>
+ * </ul>
  */
 public record CelestialBody(
     ResourceLocation texture,
@@ -30,7 +38,8 @@ public record CelestialBody(
     float axisYaw,
     float axisTilt,
     float phaseDeg,
-    int argb
+    int argb,
+    Blend blend
 ) {
 
     public enum Motion {
@@ -42,9 +51,24 @@ public record CelestialBody(
         ORBIT
     }
 
-    /** Тело-«диск» (Солнце/планета) с полной непрозрачностью и заданным размером. */
-    public static CelestialBody disc(ResourceLocation tex, float size, Motion motion,
-                                     float cycleDays, float yaw, float tilt, float phase) {
-        return new CelestialBody(tex, size, motion, cycleDays, yaw, tilt, phase, 0xFFFFFFFF);
+    public enum Blend {
+        /** Аддитивное наложение (ванильное солнце): светится поверх неба. */
+        ADDITIVE,
+        /** Обычное alpha-наложение: спрайт как есть. */
+        NORMAL
+    }
+
+    /** Солнце: аддитивный диск (яркость поверх неба). */
+    public static CelestialBody sun(ResourceLocation tex, float size, Motion motion,
+                                    float cycleDays, float yaw, float tilt, float phase) {
+        return new CelestialBody(tex, size, motion, cycleDays, yaw, tilt, phase,
+            0xFFFFFFFF, Blend.ADDITIVE);
+    }
+
+    /** Планета/спутник: обычное alpha-наложение (спрайт как есть). */
+    public static CelestialBody planet(ResourceLocation tex, float size, Motion motion,
+                                       float cycleDays, float yaw, float tilt, float phase) {
+        return new CelestialBody(tex, size, motion, cycleDays, yaw, tilt, phase,
+            0xFFFFFFFF, Blend.NORMAL);
     }
 }
