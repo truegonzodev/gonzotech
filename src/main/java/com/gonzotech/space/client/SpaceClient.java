@@ -59,9 +59,9 @@ public final class SpaceClient {
         );
         return new SpaceSkyEffects(
             0.22F,
-            /*zenithDay */ 0xFF1F0202, /*zenithNight*/ 0xFF0A0101, // тёмно-красный верх
-            /*horizonDay*/ 0xFF3A0B04, /*horizonNight*/ 0xFF140303, // тёмно-оранжевая дымка у горизонта
-            /*sunset    */ 0x90903018, // приглушённый оранж-закат
+            /*zenithDay */ 0xFF6E7C8A, /*zenithNight*/ 0xFF0A0806, // днём: голубовато-серый зенит
+            /*horizonDay*/ 0xFFC26A2E, /*horizonNight*/ 0xFF180A04, // днём: оранжевая пылевая дымка у горизонта
+            /*sunset    */ 0x90B0521C, // насыщенный оранж-закат
             bodies);
     }
 

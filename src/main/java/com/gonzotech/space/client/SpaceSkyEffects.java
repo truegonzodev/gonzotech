@@ -85,12 +85,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            List<CelestialBody> bodies) {
         // cloudLevel=NaN (нет облаков), hasGround=false, constantAmbientLight=true.
         //
-        // SkyType.NONE: в 1.21.4 ванильный addSkyPass вызывает наш renderSky
-        // БЕЗУСЛОВНО (внутри прохода), а SkyType проверяется лишь ПОСЛЕ того, как
-        // renderSky вернул false — чтобы выбрать ванильное небо. Мы возвращаем true
-        // (полностью своё небо), поэтому SkyType роли не играет и NONE корректен.
-        // (NORMAL в маппингах Parchment 1.21.4 не существует и ломает сборку.)
-        super(Float.NaN, false, DimensionSpecialEffects.SkyType.NONE, false, true);
+        // КРИТИЧНО (подтверждено: renderSky НИ РАЗУ не логировался): в 1.21.4
+        // ванильный addSkyPass создаёт проход неба (внутри которого NeoForge
+        // вызывает наш renderSky) ТОЛЬКО если skyType != NONE. С NONE проход не
+        // создаётся → renderSky не вызывается, виден лишь туман. Нужен NORMAL.
+        // Имя константы NORMAL в маппингах Parchment ломало сборку, поэтому
+        // выбираем «нормальный» тип неба через values() без ссылки на имя.
+        super(Float.NaN, false, normalSkyType(), false, true);
         this.fogFactor = fogFactor;
         this.zenithDayArgb = zenithDayArgb;
         this.zenithNightArgb = zenithNightArgb;
@@ -98,6 +99,27 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         this.horizonNightArgb = horizonNightArgb;
         this.sunsetArgb = sunsetArgb;
         this.bodies = List.copyOf(bodies);
+    }
+
+    /**
+     * Возвращает «нормальный» тип неба (эквивалент {@code SkyType.NORMAL}), но БЕЗ
+     * ссылки на имя константы, которое в маппингах Parchment 1.21.4 ломало сборку.
+     *
+     * <p>Порядок объявления enum фиксирован: {@code NONE(0), NORMAL(1), END(2)} —
+     * поэтому {@code values()[1]} гарантированно даёт NORMAL при любых маппингах
+     * имён. Это единственный тип, при котором ванильный {@code addSkyPass}
+     * создаёт проход неба и, как следствие, вызывает наш {@link #renderSky}.
+     */
+    private static DimensionSpecialEffects.SkyType normalSkyType() {
+        DimensionSpecialEffects.SkyType[] all = DimensionSpecialEffects.SkyType.values();
+        // Ищем константу по имени (устойчиво к смене порядка), c запасным
+        // вариантом values()[1], если имя не совпало (напр. чужой маппинг).
+        for (DimensionSpecialEffects.SkyType t : all) {
+            if ("NORMAL".equals(t.name())) {
+                return t;
+            }
+        }
+        return all.length > 1 ? all[1] : all[0];
     }
 
     @Override
