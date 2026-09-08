@@ -108,7 +108,7 @@ public final class SpaceCommand {
         double py = y;
         double pz = z + 0.5D;
 
-        player.teleportTo(level, px, py, pz, Set.<Relative>of(), player.getYRot(), player.getXRot());
+        player.teleportTo(level, px, py, pz, Set.<Relative>of(), player.getYRot(), player.getXRot(), true);
 
         final String fname = name;
         final BlockPos landed = BlockPos.containing(px, py, pz);
