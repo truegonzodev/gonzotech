@@ -75,6 +75,10 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
             modEventBus.addListener(com.gonzotech.space.client.SpaceClient::onRegisterDimensionEffects);
+            // Фаза 4 — авто-подтверждение ванильного предупреждения об
+            // «экспериментальных настройках» (наши измерения = эксперим. датапак).
+            NeoForge.EVENT_BUS.addListener(
+                com.gonzotech.space.client.ExperimentalWarningSkip::onScreenOpening);
         }
 
         LOGGER.info("[Gonzo Tech] Mod class constructed, mod_id={}, {} руд зарегистрировано",
