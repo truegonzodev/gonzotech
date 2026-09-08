@@ -83,8 +83,8 @@ public final class SpaceClient {
         );
         return new SpaceSkyEffects(
             0.03F,
-            /*zenithDay */ 0xFF020204, /*zenithNight*/ 0xFF000000,
-            /*horizonDay*/ 0xFF060409, /*horizonNight*/ 0xFF010102,
+            /*zenithDay */ 0xFF0A1430, /*zenithNight*/ 0xFF03060F, // тёмно-синий верх (не чёрный)
+            /*horizonDay*/ 0xFF14284F, /*horizonNight*/ 0xFF060A18, // чуть светлее синий у горизонта
             /*sunset    */ 0x60392046, // едва заметный багрянец/фиолет
             bodies);
     }

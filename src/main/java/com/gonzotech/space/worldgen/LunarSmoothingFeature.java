@@ -22,8 +22,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  */
 public class LunarSmoothingFeature extends Feature<NoneFeatureConfiguration> {
 
-    /** Сколько проходов сглаживания. */
-    private static final int PASSES = 2;
+    /** Сколько проходов сглаживания (по фидбэку — усилено до 6). */
+    private static final int PASSES = 6;
     /** Разница высот (в блоках), выше которой колонка считается резким пиком/ямой. */
     private static final int THRESHOLD = 2;
 

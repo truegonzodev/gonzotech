@@ -135,10 +135,18 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         RenderSystem.disableCull();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        renderDome(modelViewMatrix, zenith, horizon);
+        // ВАЖНО (фикс невидимых тел / плоского неба): в момент renderSky матрица
+        // вида камеры УЖЕ активна в RenderSystem (её применяет core-шейдер). Если
+        // ещё раз «запечь» modelViewMatrix в вершины — получается ДВОЙНАЯ
+        // трансформация: купол (камера внутри) выглядит плоским чёрным, а тела на
+        // дистанции 100 улетают за экран. Поэтому рисуем в ЛОКАЛЬНЫХ координатах
+        // (единичная матрица), а поворот камеры добавит сам шейдер.
+        Matrix4f id = new Matrix4f();
+
+        renderDome(id, zenith, horizon);
 
         // Небесные тела — ванильный celestial-слой через общий буфер.
-        renderBodies(level, partialTick, modelViewMatrix);
+        renderBodies(level, partialTick);
 
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
@@ -225,18 +233,18 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * Все небесные тела: каждое — текстурированный квад в {@link RenderType#celestial}.
      * Общий {@link MultiBufferSource.BufferSource} батчит и рисует по {@code endBatch}.
      */
-    private void renderBodies(ClientLevel level, float partialTick, Matrix4f mv) {
+    private void renderBodies(ClientLevel level, float partialTick) {
         MultiBufferSource.BufferSource src =
             Minecraft.getInstance().renderBuffers().bufferSource();
 
         for (CelestialBody body : bodies) {
-            renderBody(body, level, partialTick, mv, src);
+            renderBody(body, level, partialTick, src);
         }
         src.endBatch();
     }
 
     private void renderBody(CelestialBody body, ClientLevel level, float partialTick,
-                            Matrix4f mv, MultiBufferSource.BufferSource src) {
+                            MultiBufferSource.BufferSource src) {
         float xDeg;
         switch (body.motion()) {
             case FIXED -> xDeg = body.phaseDeg();
@@ -249,7 +257,8 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             default -> xDeg = 0.0F;
         }
 
-        Matrix4f m = new Matrix4f(mv);
+        // Локальная матрица (единичная): поворот камеры добавит core-шейдер сам.
+        Matrix4f m = new Matrix4f();
         m.rotate(Axis.YP.rotationDegrees(body.axisYaw()));
         m.rotate(Axis.ZP.rotationDegrees(body.axisTilt()));
         m.rotate(Axis.XP.rotationDegrees(xDeg));

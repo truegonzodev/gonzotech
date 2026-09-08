@@ -29,6 +29,12 @@ public class ModFeatures {
             () -> new com.gonzotech.space.worldgen.LunarSmoothingFeature(
                 net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
 
+    /** Фаза 4 — подводные ледяные горы/сталактиты + плавающие глыбы Европы. */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.space.worldgen.EuropaIceFeature> EUROPA_ICE =
+        FEATURES.register("europa_ice",
+            () -> new com.gonzotech.space.worldgen.EuropaIceFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
     public static void register(IEventBus modEventBus) {
         FEATURES.register(modEventBus);
     }
