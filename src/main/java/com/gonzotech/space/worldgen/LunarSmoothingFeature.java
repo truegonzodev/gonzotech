@@ -22,9 +22,9 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  */
 public class LunarSmoothingFeature extends Feature<NoneFeatureConfiguration> {
 
-    /** Сколько проходов сглаживания (по фидбэку — усилено ещё сильнее). */
-    private static final int PASSES = 10;
-    /** Разница высот (в блоках), выше которой колонка считается резким пиком/ямой. */
+    /** Сколько проходов сглаживания. */
+    private static final int PASSES = 4;
+    /** Разница высот (в блоках), выше которой колонка считается резким пиком. */
     private static final int THRESHOLD = 1;
 
     public LunarSmoothingFeature(Codec<NoneFeatureConfiguration> codec) {
@@ -64,22 +64,23 @@ public class LunarSmoothingFeature extends Feature<NoneFeatureConfiguration> {
         }
         int avg = Math.round((n + s + e + w) / 4.0F);
 
+        // ВАЖНО (по фидбэку): сглаживаем ТОЛЬКО срезая резкие пики. НЕ засыпаем
+        // впадины — иначе сглаживание «затапливало» чаши кратеров и убивало их.
+        // Так холмистый рельеф Луны остаётся, кратеры целы, а шумные острые
+        // выступы (грязь по краям кратеров/пикселизация шума) сглаживаются.
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        if (h - avg >= THRESHOLD) {
-            // Резкий пик — срезаем верхний блок.
-            pos.set(x, h, z);
-            BlockState here = level.getBlockState(pos);
-            if (!here.isAir() && !here.is(Blocks.BEDROCK)) {
-                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
-            }
-        } else if (avg - h >= THRESHOLD) {
-            // Резкая яма — досыпаем поверхностный блок соседа сверху.
-            BlockState fill = surfaceBlock(level, x, h, z);
-            if (fill != null) {
-                pos.set(x, h + 1, z);
-                if (level.getBlockState(pos).isAir()) {
-                    level.setBlock(pos, fill, 2);
+        int cut = h - avg;
+        if (cut >= THRESHOLD) {
+            // Срезаем сверху столько блоков, на сколько пик выше среднего (но не
+            // ниже уровня соседей), максимум пара блоков за проход.
+            int remove = Math.min(cut, 2);
+            for (int k = 0; k < remove; k++) {
+                pos.set(x, h - k, z);
+                BlockState here = level.getBlockState(pos);
+                if (here.isAir() || here.is(Blocks.BEDROCK)) {
+                    break;
                 }
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
             }
         }
     }
@@ -97,18 +98,5 @@ public class LunarSmoothingFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
         return Integer.MIN_VALUE;
-    }
-
-    /** Поверхностный блок колонки (им досыпаем ямы). */
-    private BlockState surfaceBlock(WorldGenLevel level, int x, int y, int z) {
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        for (int dy = 0; dy >= -2; dy--) {
-            pos.set(x, y + dy, z);
-            BlockState st = level.getBlockState(pos);
-            if (!st.isAir() && !st.is(Blocks.BEDROCK)) {
-                return st;
-            }
-        }
-        return null;
     }
 }

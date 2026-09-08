@@ -1,11 +1,11 @@
 package com.gonzotech.space.client;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
@@ -256,21 +256,22 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     }
 
     /**
-     * Все небесные тела: каждое — текстурированный квад в {@link RenderType#celestial}.
-     * Общий {@link MultiBufferSource.BufferSource} батчит и рисует по {@code endBatch}.
+     * Все небесные тела: каждое — текстурированный квад, рисуемый ТЕМ ЖЕ путём,
+     * что и купол ({@link BufferUploader#drawWithShader} + {@link CoreShaders#POSITION_TEX}).
+     * Раньше тела шли через {@code RenderType.celestial}+bufferSource и НЕ рисовались;
+     * теперь используем проверенный ручной путь (купол-то виден).
      */
     private void renderBodies(ClientLevel level, float partialTick, Matrix4f mv) {
-        MultiBufferSource.BufferSource src =
-            Minecraft.getInstance().renderBuffers().bufferSource();
-
+        RenderSystem.enableBlend();
+        RenderSystem.setShader(CoreShaders.POSITION_TEX);
         for (CelestialBody body : bodies) {
-            renderBody(body, level, partialTick, mv, src);
+            renderBody(body, level, partialTick, mv);
         }
-        src.endBatch();
+        RenderSystem.defaultBlendFunc();
     }
 
     private void renderBody(CelestialBody body, ClientLevel level, float partialTick,
-                            Matrix4f mv, MultiBufferSource.BufferSource src) {
+                            Matrix4f mv) {
         float xDeg;
         switch (body.motion()) {
             case FIXED -> xDeg = body.phaseDeg();
@@ -289,13 +290,31 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         m.rotate(Axis.ZP.rotationDegrees(body.axisTilt()));
         m.rotate(Axis.XP.rotationDegrees(xDeg));
 
+        // Блендинг: солнца — аддитивно (светятся), планеты — обычная альфа.
+        if (body.blend() == CelestialBody.Blend.ADDITIVE) {
+            RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA,
+                GlStateManager.DestFactor.ONE);
+        } else {
+            RenderSystem.defaultBlendFunc();
+        }
+
+        int a = (body.argb() >>> 24) & 0xFF;
+        int r = (body.argb() >>> 16) & 0xFF;
+        int g = (body.argb() >>> 8) & 0xFF;
+        int b = body.argb() & 0xFF;
+        RenderSystem.setShaderColor(r / 255F, g / 255F, b / 255F, a / 255F);
+        RenderSystem.setShaderTexture(0, body.texture());
+
         float sz = body.size();
-        int argb = body.argb();
-        VertexConsumer vc = src.getBuffer(RenderType.celestial(body.texture()));
-        vc.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(0.0F, 0.0F).setColor(argb);
-        vc.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(1.0F, 0.0F).setColor(argb);
-        vc.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(1.0F, 1.0F).setColor(argb);
-        vc.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(0.0F, 1.0F).setColor(argb);
+        BufferBuilder buf = Tesselator.getInstance()
+            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(0.0F, 0.0F);
+        buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(1.0F, 0.0F);
+        buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(1.0F, 1.0F);
+        buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(0.0F, 1.0F);
+        BufferUploader.drawWithShader(buf.buildOrThrow());
+
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     // ---- ARGB утилиты ----

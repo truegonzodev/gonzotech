@@ -39,11 +39,24 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
         super(codec);
     }
 
+    /** Границы безопасной зоны записи (3×3 чанка вокруг генерируемого чанка). */
+    private int safeMinX, safeMaxX, safeMinZ, safeMaxZ;
+
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
+
+        // Безопасная зона: чанк origin ± 1 чанк. Запись дальше вызывает
+        // «Detected setBlock in a far chunk» и спамит лог ошибками. Кратеры
+        // радиусом до 25 из точки у края чанка доставали до +2 чанков — клампим.
+        int chunkMinX = (origin.getX() >> 4) << 4;
+        int chunkMinZ = (origin.getZ() >> 4) << 4;
+        safeMinX = chunkMinX - 16;
+        safeMaxX = chunkMinX + 31;
+        safeMinZ = chunkMinZ - 16;
+        safeMaxZ = chunkMinZ + 31;
 
         if (random.nextFloat() > CHUNK_CHANCE) {
             return false;
@@ -61,6 +74,11 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
             carve(level, cx, surfaceY, cz, radius);
         }
         return true;
+    }
+
+    /** true, если запись в (x,z) не выходит за безопасную 3×3-зону чанков. */
+    private boolean inSafe(int x, int z) {
+        return x >= safeMinX && x <= safeMaxX && z >= safeMinZ && z <= safeMaxZ;
     }
 
     private void carve(WorldGenLevel level, int cx, int cy, int cz, int radius) {
@@ -85,6 +103,9 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
                 }
                 int x = cx + dx;
                 int z = cz + dz;
+                if (!inSafe(x, z)) {
+                    continue; // не пишем в дальние чанки
+                }
 
                 // Реальная вершина колонки — первый непустой блок сверху вниз в
                 // окне [cy+4 .. cy-depth-4]. Только реально сгенерированные блоки.

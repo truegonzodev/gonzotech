@@ -4,8 +4,12 @@
   "aquifers_enabled": false,
   "ore_veins_enabled": false,
   "legacy_random_source": false,
-  "default_block": { "Name": "gonzotech:lunar_stone" },
-  "default_fluid": { "Name": "minecraft:air" },
+  "default_block": {
+    "Name": "gonzotech:lunar_stone"
+  },
+  "default_fluid": {
+    "Name": "minecraft:air"
+  },
   "noise": {
     "min_y": -64,
     "height": 256,
@@ -37,21 +41,21 @@
         "type": "minecraft:add",
         "argument1": {
           "type": "minecraft:mul",
-          "argument1": 0.34,
+          "argument1": 0.62,
           "argument2": {
             "type": "minecraft:noise",
             "noise": "minecraft:continentalness",
-            "xz_scale": 0.22,
+            "xz_scale": 0.32,
             "y_scale": 0.0
           }
         },
         "argument2": {
           "type": "minecraft:mul",
-          "argument1": 0.12,
+          "argument1": 0.28,
           "argument2": {
             "type": "minecraft:noise",
             "noise": "minecraft:erosion",
-            "xz_scale": 0.75,
+            "xz_scale": 0.9,
             "y_scale": 0.0
           }
         }
@@ -70,12 +74,18 @@
         "if_true": {
           "type": "minecraft:vertical_gradient",
           "random_name": "gonzotech:moon_bedrock_floor",
-          "true_at_and_below": { "absolute": -64 },
-          "false_at_and_above": { "absolute": -60 }
+          "true_at_and_below": {
+            "absolute": -64
+          },
+          "false_at_and_above": {
+            "absolute": -60
+          }
         },
         "then_run": {
           "type": "minecraft:block",
-          "result_state": { "Name": "minecraft:bedrock" }
+          "result_state": {
+            "Name": "minecraft:bedrock"
+          }
         }
       },
       {
@@ -100,12 +110,16 @@
               },
               "then_run": {
                 "type": "minecraft:block",
-                "result_state": { "Name": "gonzotech:lunar_sand" }
+                "result_state": {
+                  "Name": "gonzotech:lunar_sand"
+                }
               }
             },
             {
               "type": "minecraft:block",
-              "result_state": { "Name": "gonzotech:lunar_dirt" }
+              "result_state": {
+                "Name": "gonzotech:lunar_dirt"
+              }
             }
           ]
         }
@@ -121,12 +135,16 @@
         },
         "then_run": {
           "type": "minecraft:block",
-          "result_state": { "Name": "gonzotech:lunar_dirt" }
+          "result_state": {
+            "Name": "gonzotech:lunar_dirt"
+          }
         }
       },
       {
         "type": "minecraft:block",
-        "result_state": { "Name": "gonzotech:lunar_stone" }
+        "result_state": {
+          "Name": "gonzotech:lunar_stone"
+        }
       }
     ]
   }

@@ -41,9 +41,9 @@ public final class SpaceClient {
         );
         return new SpaceSkyEffects(
             0.06F,
-            /*zenithDay */ 0xFF10131F, /*zenithNight*/ 0xFF040406,
-            /*horizonDay*/ 0xFF1A2038, /*horizonNight*/ 0xFF07070C,
-            /*sunset    */ 0xB0432038, // приглушённый багрянец
+            /*zenithDay */ 0xFF050507, /*zenithNight*/ 0xFF010101,
+            /*horizonDay*/ 0xFF0A0A0E, /*horizonNight*/ 0xFF020203,
+            /*sunset    */ 0x70432038, // очень слабый багрянец
             bodies);
     }
 
@@ -59,9 +59,9 @@ public final class SpaceClient {
         );
         return new SpaceSkyEffects(
             0.22F,
-            /*zenithDay */ 0xFF6E7EA6, /*zenithNight*/ 0xFF0B0A12, // днём голубоватый верх
-            /*horizonDay*/ 0xFFC77A44, /*horizonNight*/ 0xFF241019, // днём оранжевая дымка
-            /*sunset    */ 0xC0D25A2A, // насыщенный оранж-закат
+            /*zenithDay */ 0xFF1F0202, /*zenithNight*/ 0xFF0A0101, // тёмно-красный верх
+            /*horizonDay*/ 0xFF3A0B04, /*horizonNight*/ 0xFF140303, // тёмно-оранжевая дымка у горизонта
+            /*sunset    */ 0x90903018, // приглушённый оранж-закат
             bodies);
     }
 
@@ -83,9 +83,9 @@ public final class SpaceClient {
         );
         return new SpaceSkyEffects(
             0.03F,
-            /*zenithDay */ 0xFF0A1430, /*zenithNight*/ 0xFF03060F, // тёмно-синий верх (не чёрный)
-            /*horizonDay*/ 0xFF14284F, /*horizonNight*/ 0xFF060A18, // чуть светлее синий у горизонта
-            /*sunset    */ 0x60392046, // едва заметный багрянец/фиолет
+            /*zenithDay */ 0xFF020306, /*zenithNight*/ 0xFF000001, // почти чёрный с намёком на синь
+            /*horizonDay*/ 0xFF04060C, /*horizonNight*/ 0xFF010102, // тёмно-синий у горизонта
+            /*sunset    */ 0x50392046, // едва заметный фиолет
             bodies);
     }
 
