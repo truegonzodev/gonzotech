@@ -28,8 +28,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  */
 public class CraterFeature extends Feature<NoneFeatureConfiguration> {
 
-    /** Средняя доля чанков, где вообще появляется кратер. */
-    private static final float CHUNK_CHANCE = 0.55F;
+    /** Средняя доля чанков, где вообще появляется кратер (−36% к прежним 0.55). */
+    private static final float CHUNK_CHANCE = 0.35F;
     private static final int MIN_DIAMETER = 5;
     private static final int MAX_DIAMETER = 50;
     /** Во сколько раз кратер площе полусферы (глубина = радиус * этот коэффициент). */
@@ -71,6 +71,12 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
         int minY = level.getMinY();
         int maxY = level.getMaxY();
 
+        // ФИКС «сеточки»: НЕ читаем heightmap по каждой колонке (у соседних чанков
+        // он ещё не финализирован на шаге top_layer_modification, оттого кратеры
+        // «прилипали» к разной высоте и на швах чанков возникали круглые тёмные
+        // артефакты). Вместо этого берём ОДНУ опорную высоту центра кратера и
+        // вырезаем чашу относительно неё; фактическую вершину каждой колонки ищем
+        // не по heightmap, а сканируя реальные блоки в узком окне у cy.
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 double horiz = Math.sqrt((double) dx * dx + (double) dz * dz);
@@ -79,8 +85,13 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
                 }
                 int x = cx + dx;
                 int z = cz + dz;
-                // Локальная высота поверхности в этой колонке (рельеф неровный).
-                int colTop = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
+
+                // Реальная вершина колонки — первый непустой блок сверху вниз в
+                // окне [cy+4 .. cy-depth-4]. Только реально сгенерированные блоки.
+                int colTop = findLocalTop(level, pos, x, z, cy + 4, cy - depth - 4);
+                if (colTop == Integer.MIN_VALUE) {
+                    continue; // в этой колонке нечего резать
+                }
 
                 // Профиль чаши: глубина максимальна в центре, 0 на границе.
                 double t = horiz / radius;                 // 0..1
@@ -113,6 +124,26 @@ public class CraterFeature extends Feature<NoneFeatureConfiguration> {
                 }
             }
         }
+    }
+
+    /**
+     * Ищет вершину колонки, сканируя реальные блоки сверху вниз в окне
+     * [{@code fromY}..{@code toY}]. Возвращает Y первого непустого не-бедрок
+     * блока или {@link Integer#MIN_VALUE}, если ничего не найдено. В отличие от
+     * heightmap не зависит от порядка генерации соседних чанков.
+     */
+    private int findLocalTop(WorldGenLevel level, BlockPos.MutableBlockPos pos,
+                             int x, int z, int fromY, int toY) {
+        int hi = Math.min(fromY, level.getMaxY() - 1);
+        int lo = Math.max(toY, level.getMinY());
+        for (int y = hi; y >= lo; y--) {
+            pos.set(x, y, z);
+            BlockState state = level.getBlockState(pos);
+            if (!state.isAir() && !state.is(Blocks.BEDROCK)) {
+                return y;
+            }
+        }
+        return Integer.MIN_VALUE;
     }
 
     /** Верхний непустой блок в колонке центра — им же строим вал. */

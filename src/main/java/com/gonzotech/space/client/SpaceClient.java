@@ -43,7 +43,8 @@ public final class SpaceClient {
             CelestialBody.disc(tex("moon/earth"), 40F, Motion.FIXED,
                 /*cycleDays*/ 0F, /*yaw*/ -45F, /*tilt*/ 0F, /*phase(height)*/ -55F)
         );
-        return new SpaceSkyEffects(0.06F, 0xFF0B0B10, bodies);
+        // Небо серо-чёрное (не чисто чёрное) — сливается с тёмным туманом 0x141414.
+        return new SpaceSkyEffects(0.06F, 0xFF16161C, bodies);
     }
 
     // ---- МАРС: тусклый оранж с голубым отливом; обычный цикл, солнце меньше ----
@@ -59,10 +60,11 @@ public final class SpaceClient {
             CelestialBody.disc(tex("mars/moon"), 3F, Motion.ORBIT,
                 1F, -70F, 34F, 162F)
         );
-        return new SpaceSkyEffects(0.22F, 0xFF3A1E12, bodies);
+        // Небо тускло-оранжевое с дымкой — сливается с рыжим туманом 0x6f3e24.
+        return new SpaceSkyEffects(0.22F, 0xFF7A4A2E, bodies);
     }
 
-    // ---- ЕВРОПА: абсолютно чёрное; сутки ×3, солнце-точка, огромный Юпитер ----
+    // ---- ЕВРОПА: голубое небо; сутки ×3, солнце-точка, огромный Юпитер ----
     private static SpaceSkyEffects europa() {
         List<CelestialBody> bodies = List.of(
             // Огромный неподвижный Юпитер — доминирует над горизонтом.
@@ -82,7 +84,8 @@ public final class SpaceClient {
             CelestialBody.disc(tex("europa/mars"), 2.5F, Motion.ORBIT,
                 1F, -80F, 24F, 152F)
         );
-        return new SpaceSkyEffects(0.03F, 0xFF000000, bodies);
+        // Небо голубое (юзер: «работает») — совпадает с голубым туманом 0xc1d5fa.
+        return new SpaceSkyEffects(0.03F, 0xFFB4CCF2, bodies);
     }
 
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {

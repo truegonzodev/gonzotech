@@ -20,7 +20,8 @@
   },
   "spawn_costs": {},
   "carvers": [
-    "gonzotech:moon_canyon"
+    "gonzotech:moon_canyon",
+    "gonzotech:moon_caves"
   ],
   "features": [
     [],

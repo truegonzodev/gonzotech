@@ -11,6 +11,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -77,6 +78,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     public boolean renderSky(ClientLevel level, int ticks, float partialTick,
                              Matrix4f modelViewMatrix, Camera camera,
                              Matrix4f projectionMatrix, Runnable setupFog) {
+        // КЛЮЧЕВОЙ ФИКС (MC 1.21.2+): туман стал шейдерным юниформом. К моменту
+        // рендера неба в юниформе лежит ПЛОТНЫЙ туман биома, который полностью
+        // «съедает» и фон-куб (он читался как цвет тумана — оттого небо Марса/Луны
+        // выглядело чёрным), и все небесные тела на дистанции 100 (были невидимы).
+        // Отключаем туман на время рендера неба, а затем восстанавливаем его через
+        // setupFog (как это делает ванильный SkyRenderer).
+        FogParameters savedFog = RenderSystem.getShaderFog();
+        RenderSystem.setShaderFog(FogParameters.NO_FOG);
+
         RenderSystem.depthMask(false);
         RenderSystem.disableCull(); // купол-куб смотрим изнутри — грани не отбрасываем
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -92,6 +102,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
+
+        // Возвращаем туман биома для последующего рендера мира.
+        RenderSystem.setShaderFog(savedFog);
         return true; // ванильное небо отменяем целиком
     }
 

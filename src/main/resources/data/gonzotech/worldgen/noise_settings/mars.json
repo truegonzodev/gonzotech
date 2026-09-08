@@ -4,8 +4,12 @@
   "aquifers_enabled": false,
   "ore_veins_enabled": false,
   "legacy_random_source": false,
-  "default_block": { "Name": "gonzotech:martian_stone" },
-  "default_fluid": { "Name": "minecraft:air" },
+  "default_block": {
+    "Name": "gonzotech:martian_stone"
+  },
+  "default_fluid": {
+    "Name": "minecraft:air"
+  },
   "noise": {
     "min_y": -64,
     "height": 256,
@@ -29,7 +33,7 @@
       "argument1": {
         "type": "minecraft:y_clamped_gradient",
         "from_y": 64,
-        "to_y": 140,
+        "to_y": 155,
         "from_value": 1.0,
         "to_value": -1.0
       },
@@ -37,7 +41,7 @@
         "type": "minecraft:add",
         "argument1": {
           "type": "minecraft:mul",
-          "argument1": 0.85,
+          "argument1": 1.0,
           "argument2": {
             "type": "minecraft:noise",
             "noise": "minecraft:continentalness",
@@ -47,11 +51,11 @@
         },
         "argument2": {
           "type": "minecraft:mul",
-          "argument1": 0.45,
+          "argument1": 0.32,
           "argument2": {
             "type": "minecraft:noise",
             "noise": "minecraft:erosion",
-            "xz_scale": 1.1,
+            "xz_scale": 0.55,
             "y_scale": 0.0
           }
         }
@@ -70,12 +74,18 @@
         "if_true": {
           "type": "minecraft:vertical_gradient",
           "random_name": "gonzotech:mars_bedrock_floor",
-          "true_at_and_below": { "absolute": -64 },
-          "false_at_and_above": { "absolute": -60 }
+          "true_at_and_below": {
+            "absolute": -64
+          },
+          "false_at_and_above": {
+            "absolute": -60
+          }
         },
         "then_run": {
           "type": "minecraft:block",
-          "result_state": { "Name": "minecraft:bedrock" }
+          "result_state": {
+            "Name": "minecraft:bedrock"
+          }
         }
       },
       {
@@ -94,18 +104,39 @@
               "type": "minecraft:condition",
               "if_true": {
                 "type": "minecraft:y_above",
-                "anchor": { "absolute": 100 },
+                "anchor": {
+                  "absolute": 95
+                },
                 "surface_depth_multiplier": 0,
                 "add_stone_depth": false
               },
               "then_run": {
                 "type": "minecraft:block",
-                "result_state": { "Name": "minecraft:red_sand" }
+                "result_state": {
+                  "Name": "gonzotech:martian_dirt"
+                }
+              }
+            },
+            {
+              "type": "minecraft:condition",
+              "if_true": {
+                "type": "minecraft:noise_threshold",
+                "noise": "minecraft:surface",
+                "min_threshold": -1.0,
+                "max_threshold": 0.0
+              },
+              "then_run": {
+                "type": "minecraft:block",
+                "result_state": {
+                  "Name": "minecraft:red_sand"
+                }
               }
             },
             {
               "type": "minecraft:block",
-              "result_state": { "Name": "gonzotech:martian_dirt" }
+              "result_state": {
+                "Name": "gonzotech:martian_dirt"
+              }
             }
           ]
         }
@@ -121,12 +152,16 @@
         },
         "then_run": {
           "type": "minecraft:block",
-          "result_state": { "Name": "gonzotech:martian_dirt" }
+          "result_state": {
+            "Name": "gonzotech:martian_dirt"
+          }
         }
       },
       {
         "type": "minecraft:block",
-        "result_state": { "Name": "gonzotech:martian_stone" }
+        "result_state": {
+          "Name": "gonzotech:martian_stone"
+        }
       }
     ]
   }
