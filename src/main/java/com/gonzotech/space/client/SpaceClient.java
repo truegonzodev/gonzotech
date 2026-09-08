@@ -69,7 +69,7 @@ public final class SpaceClient {
     private static SpaceSkyEffects europa() {
         List<CelestialBody> bodies = List.of(
             CelestialBody.planet(tex("europa/jupiter"), 70F, Motion.FIXED,
-                0F, 20F, 0F, -35F),
+                0F, 20F, 0F, -72F),
             CelestialBody.sun(tex("europa/sun"), 5F, Motion.SUN,
                 /*cycleDays*/ 3.5F, -90F, 6F, 0F),
             CelestialBody.planet(tex("europa/satellite"), 3F, Motion.ORBIT,

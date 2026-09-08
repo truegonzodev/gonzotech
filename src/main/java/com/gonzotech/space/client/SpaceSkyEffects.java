@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
@@ -173,6 +174,16 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     public boolean renderSky(ClientLevel level, int ticks, float partialTick,
                              Matrix4f modelViewMatrix, Camera camera,
                              Matrix4f projectionMatrix, Runnable setupFog) {
+        // ПОД ВОДОЙ/ЛАВОЙ/СНЕГОМ небо рисовать НЕЛЬЗЯ: наш купол затирает
+        // жидкостный туман, из-за чего сквозь синюю дымку блоков было видно
+        // «чистое» небо (конфликт с подводным затемнением). Возвращаем false —
+        // тогда ванильный проход неба отработает штатно (в жидкости он сам его
+        // прячет), а подводный туман/тинт останется на месте.
+        FogType fog = camera.getFluidInCamera();
+        if (fog != FogType.NONE) {
+            return false;
+        }
+
         // На время рендера неба выключаем шейдерный туман (иначе он всё перекроет).
         FogParameters savedFog = RenderSystem.getShaderFog();
         RenderSystem.setShaderFog(FogParameters.NO_FOG);
