@@ -78,33 +78,44 @@ public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
         if (random.nextFloat() < BLOB_CHUNK_CHANCE) {
             int count = 1 + random.nextInt(3); // 1..3 глыбы на чанк
             for (int i = 0; i < count; i++) {
-                // Радиус глыбы: в основном мелкие/средние, изредка ОГРОМНЫЕ (до d~50).
-                int maxR;
+                // Радиус глыбы: в основном мелкие/средние, изредка ОГРОМНЫЕ.
+                int desiredR;
                 float roll = random.nextFloat();
                 if (roll < 0.60F) {
-                    maxR = 2 + random.nextInt(4);   // мелкие r2..5 (d 4..10)
+                    desiredR = 2 + random.nextInt(4);   // мелкие r2..5
                 } else if (roll < 0.90F) {
-                    maxR = 6 + random.nextInt(7);   // средние r6..12 (d 12..24)
+                    desiredR = 6 + random.nextInt(7);    // средние r6..12
                 } else {
-                    maxR = 13 + random.nextInt(13); // ОГРОМНЫЕ r13..25 (d 26..50)
+                    desiredR = 13 + random.nextInt(10);  // ОГРОМНЫЕ r13..22
                 }
 
-                // Крупные глыбы центрируем ближе к середине чанка, чтобы safe-зона
-                // не срезала их сильно; мелкие можно раскидывать свободнее.
-                int margin = Math.min(7, maxR);
-                int span = Math.max(1, 16 - 2 * Math.min(6, margin));
-                int x = origin.getX() + Math.min(6, margin) + random.nextInt(span);
-                int z = origin.getZ() + Math.min(6, margin) + random.nextInt(span);
+                // ЭЛЛИПСОИДНАЯ ДЕВИАЦИЯ вдоль случайного 3D-направления.
+                double sx = random.nextGaussian(), sy = random.nextGaussian(), sz = random.nextGaussian();
+                double slen = Math.sqrt(sx * sx + sy * sy + sz * sz);
+                if (slen < 1e-6) { sx = 1; sy = 0; sz = 0; slen = 1; }
+                sx /= slen; sy /= slen; sz /= slen;
+                double stretch = 1.0 + random.nextDouble() * 0.9; // 1.0..1.9
 
-                // Центр глыбы — в средней/нижней части водного столба, но с запасом
-                // maxR от дна и от корки, чтобы висела в воде.
-                int floor = level.getMinY() + 8 + maxR;
-                int top = SEA_LEVEL - 8 - maxR;
+                // КЛАМП ПОД БЕЗОПАСНУЮ ЗОНУ 3×3 чанка (иначе крупные глыбы срезаются
+                // плоскими гранями). Доступный полурадиус ≈ 21 блок.
+                final double AVAIL_HALF = 21.0;
+                final double BOUND = 1.45;
+                int maxAllowed = (int) Math.floor(AVAIL_HALF / (BOUND * stretch));
+                int maxR = Math.max(2, Math.min(desiredR, maxAllowed));
+
+                // Центр глыбы — В ЦЕНТРЕ ЧАНКА (симметричный запас до краёв зоны).
+                int x = origin.getX() + 8;
+                int z = origin.getZ() + 8;
+
+                // Центр глыбы — в средней/нижней части водного столба, с запасом.
+                int gab = (int) Math.ceil(maxR * BOUND * stretch) + 2;
+                int floor = level.getMinY() + 4 + gab;
+                int top = SEA_LEVEL - 4 - gab;
                 if (top <= floor + 4) {
                     continue;
                 }
                 int cy = floor + random.nextInt(top - floor);
-                chaoticBlob(level, random, x, cy, z, maxR);
+                chaoticBlob(level, random, x, cy, z, maxR, sx, sy, sz, stretch);
             }
         }
         return true;
@@ -145,9 +156,15 @@ public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
         boolean mountain = random.nextInt(4) == 0;         // 25% «горы»
         int length = mountain ? 20 + random.nextInt(31)    // 20..50
                               : 6 + random.nextInt(20);     // 6..25
-        int baseRadius = mountain ? 3 + random.nextInt(5)  // 3..7
-                                  : 1 + random.nextInt(3);  // 1..3
-        long jitterSeed = random.nextLong();
+        double baseRadius = mountain ? 3 + random.nextInt(5)  // 3..7
+                                     : 1 + random.nextInt(3); // 1..3
+        long noiseSeed = random.nextLong();
+        // Низкочастотный профиль вдоль длины: крупные плавные утолщения/перетяжки
+        // (частота 0.10..0.16 → бугры длиной ~7..10 блоков), БЕЗ послойной ряби.
+        double profScale = 0.10 + random.nextDouble() * 0.06;
+        // Плавное искривление оси сосульки (дрейф центра) — тоже value-noise.
+        double bendScale = 0.06 + random.nextDouble() * 0.04;
+        double bendAmp = mountain ? 2.0 : 1.0;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
         for (int d = 0; d < length; d++) {
@@ -155,22 +172,27 @@ public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
             if (y <= level.getMinY() + 2) {
                 break;
             }
-            // Профиль: линейное сужение к кончику × хаотичный множитель 0.55..1.25.
-            float t = 1.0F - (float) d / length;
-            double jitter = 0.55 + hash01(jitterSeed, 0, d, 0) * 0.70;
-            int r = Math.max(0, (int) Math.round(baseRadius * t * jitter));
-            for (int dx = -r; dx <= r; dx++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    // Круглое сечение + лёгкая шумовая эрозия края.
-                    double dd = dx * dx + dz * dz;
-                    if (dd > (r + 0.5) * (r + 0.5)) {
+            // Профиль: плавное сужение к кончику (степенная кривая) × плавный
+            // шумовой множитель 0.75..1.25 → бугристая «гора», не ступеньки.
+            double t = 1.0 - (double) d / length;
+            double taper = Math.pow(t, 0.7); // мягче линейного у основания
+            double bump = 1.0 + valueNoise(noiseSeed, 0, d * profScale, 0) * 0.25;
+            double rf = baseRadius * taper * bump;
+            int r = Math.max(0, (int) Math.round(rf));
+            // Плавный сдвиг центра сечения (искривление оси).
+            int ox = (int) Math.round(valueNoise(noiseSeed, 100, d * bendScale, 0) * bendAmp);
+            int oz = (int) Math.round(valueNoise(noiseSeed, 0, d * bendScale, 100) * bendAmp);
+            double rEdge = rf + 0.5;
+            for (int dx = -r - 1; dx <= r + 1; dx++) {
+                for (int dz = -r - 1; dz <= r + 1; dz++) {
+                    // Круглое сечение с плавной шумовой кромкой (радиус чуть
+                    // «дышит» по углу) — без попиксельного выгрызания.
+                    double dist = Math.sqrt(dx * dx + dz * dz);
+                    double edgeWobble = valueNoise(noiseSeed, dx, d * 0.5, dz) * 0.6;
+                    if (dist > rEdge + edgeWobble) {
                         continue;
                     }
-                    if (r >= 2 && dd > (r - 0.5) * (r - 0.5)
-                        && hash01(jitterSeed, dx, d, dz) < 0.35) {
-                        continue; // выгрызаем часть кромки → неровно
-                    }
-                    int wx = x + dx, wz = z + dz;
+                    int wx = x + ox + dx, wz = z + oz + dz;
                     if (!inSafe(wx, wz)) {
                         continue;
                     }
@@ -189,7 +211,8 @@ public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
      * бывают пористыми (пустоты внутри).
      */
     private void chaoticBlob(WorldGenLevel level, RandomSource random,
-                             int cx, int cy, int cz, int maxR) {
+                             int cx, int cy, int cz, int maxR,
+                             double ax, double ay, double az, double stretch) {
         int lobes = 2 + random.nextInt(4); // 2..5 слитных долей
         double[] lx = new double[lobes], ly = new double[lobes], lz = new double[lobes], lr = new double[lobes];
         for (int i = 0; i < lobes; i++) {
@@ -203,16 +226,20 @@ public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
         double noiseScale = 0.14 + random.nextDouble() * 0.06;
         double warpAmp = 0.30 + random.nextDouble() * 0.20;
 
-        int R = maxR + 3;
+        int R = (int) Math.ceil((maxR + 3) * stretch);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int dx = -R; dx <= R; dx++) {
             for (int dy = -R; dy <= R; dy++) {
                 for (int dz = -R; dz <= R; dz++) {
-                    // Гладкое поле метаболов + плавный шум на пороге поверхности.
+                    // Анизотропное поле метаболов (эллипсоид вдоль оси a) + шум.
                     double field = 0.0;
                     for (int i = 0; i < lobes; i++) {
-                        double ddx = dx - lx[i], ddy = dy - ly[i], ddz = dz - lz[i];
-                        double d2 = ddx * ddx + ddy * ddy + ddz * ddz + 1.0;
+                        double px = dx - lx[i], py = dy - ly[i], pz = dz - lz[i];
+                        double along = px * ax + py * ay + pz * az;
+                        double cxx = px - along * ax + (along / stretch) * ax;
+                        double cyy = py - along * ay + (along / stretch) * ay;
+                        double czz = pz - along * az + (along / stretch) * az;
+                        double d2 = cxx * cxx + cyy * cyy + czz * czz + 1.0;
                         field += (lr[i] * lr[i]) / d2;
                     }
                     double warp = valueNoise(noiseSeed,

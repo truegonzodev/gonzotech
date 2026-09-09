@@ -51,29 +51,48 @@ public class MeteorFeature extends Feature<NoneFeatureConfiguration> {
         safeMaxZ = chunkMinZ + 31;
 
         // Радиус глыбы: распределение как у глыб Европы (в основном
-        // мелкие/средние, изредка огромные). Диаметр 5..50 → r ~2..25.
-        int maxR;
+        // мелкие/средние, изредка огромные).
+        int desiredR;
         float roll = random.nextFloat();
         if (roll < 0.55F) {
-            maxR = 2 + random.nextInt(4);   // мелкие r2..5 (d 5..11)
+            desiredR = 3 + random.nextInt(4);   // мелкие r3..6
         } else if (roll < 0.88F) {
-            maxR = 6 + random.nextInt(7);   // средние r6..12 (d 12..25)
+            desiredR = 7 + random.nextInt(7);    // средние r7..13
         } else {
-            maxR = 13 + random.nextInt(13); // огромные r13..25 (d 26..50)
+            desiredR = 14 + random.nextInt(9);   // огромные r14..22
         }
 
-        // Центр — около середины чанка (чтобы safe-зона не срезала крупные).
-        int cx = chunkMinX + 4 + random.nextInt(8);
-        int cz = chunkMinZ + 4 + random.nextInt(8);
-        // Высота центра — в средней части мира с запасом maxR от краёв.
-        int floor = level.getMinY() + 8 + maxR;
-        int ceil = level.getMaxY() - 8 - maxR;
+        // ЭЛЛИПСОИДНАЯ ДЕВИАЦИЯ: тянем глыбу вдоль СЛУЧАЙНОГО 3D-направления
+        // (не по оси) с коэффициентом k=1.0..1.9 → получаются и «шары», и
+        // вытянутые тела. Направление — равномерно по сфере.
+        double sx = random.nextGaussian(), sy = random.nextGaussian(), sz = random.nextGaussian();
+        double slen = Math.sqrt(sx * sx + sy * sy + sz * sz);
+        if (slen < 1e-6) { sx = 1; sy = 0; sz = 0; slen = 1; }
+        sx /= slen; sy /= slen; sz /= slen;
+        double stretch = 1.0 + random.nextDouble() * 0.9; // 1.0..1.9
+
+        // КЛАМП ПОД БЕЗОПАСНУЮ ЗОНУ: вся глыба (с учётом лопастей ~1.45·R,
+        // растяжения и шумовой кромки) должна поместиться в 3×3-чанковую зону
+        // записи (иначе дальние блоки молча отбрасываются → плоские срезы/грани).
+        // Центрируем в центре чанка; доступный полурадиус ≈ 21 блок.
+        final double AVAIL_HALF = 21.0;
+        final double BOUND = 1.45; // множитель габарита от maxR (лопасти + warp)
+        int maxAllowed = (int) Math.floor(AVAIL_HALF / (BOUND * stretch));
+        int maxR = Math.max(2, Math.min(desiredR, maxAllowed));
+
+        // Центр — РОВНО в центре чанка (симметричный запас до краёв зоны).
+        int cx = chunkMinX + 8;
+        int cz = chunkMinZ + 8;
+        // Высота центра — в средней части мира с запасом от краёв.
+        int margin = (int) Math.ceil(maxR * BOUND * stretch) + 2;
+        int floor = level.getMinY() + 4 + margin;
+        int ceil = level.getMaxY() - 4 - margin;
         if (ceil <= floor + 4) {
             return false;
         }
         int cy = floor + random.nextInt(ceil - floor);
 
-        chaoticBlob(level, random, cx, cy, cz, maxR);
+        chaoticBlob(level, random, cx, cy, cz, maxR, sx, sy, sz, stretch);
         return true;
     }
 
@@ -93,7 +112,8 @@ public class MeteorFeature extends Feature<NoneFeatureConfiguration> {
      * шум, который плавно «дышит» порогом → лопасти и впадины без ступенек.
      */
     private void chaoticBlob(WorldGenLevel level, RandomSource random,
-                             int cx, int cy, int cz, int maxR) {
+                             int cx, int cy, int cz, int maxR,
+                             double ax, double ay, double az, double stretch) {
         int lobes = 2 + random.nextInt(4); // 2..5 слитных долей
         double[] lx = new double[lobes], ly = new double[lobes], lz = new double[lobes], lr = new double[lobes];
         for (int i = 0; i < lobes; i++) {
@@ -114,16 +134,26 @@ public class MeteorFeature extends Feature<NoneFeatureConfiguration> {
         BlockState meteor = ModBlocks.METEOR.get().defaultBlockState();
         BlockState ice = ModBlocks.SUPERDENSE_ICE.get().defaultBlockState();
 
-        int R = maxR + 3;
+        // Габарит с учётом растяжения по оси (ax,ay,az): вдоль оси тело в
+        // stretch раз длиннее, поэтому расширяем область сканирования.
+        int R = (int) Math.ceil((maxR + 3) * stretch);
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int dx = -R; dx <= R; dx++) {
             for (int dy = -R; dy <= R; dy++) {
                 for (int dz = -R; dz <= R; dz++) {
-                    // Поле метаболов: гладкое слияние долей.
+                    // Поле метаболов в АНИЗОТРОПНОМ пространстве: координату вдоль
+                    // оси (ax,ay,az) сжимаем в 1/stretch раз → сфера превращается
+                    // в эллипсоид, вытянутый в СЛУЧАЙНОМ направлении.
                     double field = 0.0;
                     for (int i = 0; i < lobes; i++) {
-                        double ddx = dx - lx[i], ddy = dy - ly[i], ddz = dz - lz[i];
-                        double d2 = ddx * ddx + ddy * ddy + ddz * ddz + 1.0;
+                        double px = dx - lx[i], py = dy - ly[i], pz = dz - lz[i];
+                        // проекция на ось растяжения
+                        double along = px * ax + py * ay + pz * az;
+                        // компонента вдоль оси сжимается, поперечные — как есть
+                        double cxx = px - along * ax + (along / stretch) * ax;
+                        double cyy = py - along * ay + (along / stretch) * ay;
+                        double czz = pz - along * az + (along / stretch) * az;
+                        double d2 = cxx * cxx + cyy * cyy + czz * czz + 1.0;
                         field += (lr[i] * lr[i]) / d2;
                     }
                     // Плавный шум искажает порог поверхности → органичные лопасти.

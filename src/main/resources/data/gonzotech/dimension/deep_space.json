@@ -1,13 +1,11 @@
 {
   "type": "gonzotech:deep_space",
   "generator": {
-    "type": "minecraft:flat",
-    "settings": {
-      "biome": "gonzotech:deep_space",
-      "lakes": false,
-      "features": true,
-      "layers": [],
-      "structure_overrides": []
+    "type": "minecraft:noise",
+    "settings": "gonzotech:void",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "gonzotech:deep_space"
     }
   }
 }

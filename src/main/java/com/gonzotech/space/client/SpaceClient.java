@@ -46,7 +46,7 @@ public final class SpaceClient {
             /*sunset    */ 0x70432038, // очень слабый багрянец
             bodies,
             /*daylightScale*/ 0.30F, // день −70%: даже в зените сумрачно
-            /*starNight*/ 1.00F, /*starDay*/ 0.80F); // звёзды всегда, днём −20%
+            /*starNight*/ 0.80F, /*starDay*/ 0.70F); // звёзды приглушены (80% ночью)
     }
 
     // ---- МАРС: светлое оранж-голубое днём → закат → тёмное; солнце меньше ----
@@ -92,7 +92,7 @@ public final class SpaceClient {
             /*sunset    */ 0x50392046, // едва заметный фиолет
             bodies,
             /*daylightScale*/ 0.12F, // день −88%: почти всегда полумрак
-            /*starNight*/ 1.00F, /*starDay*/ 0.75F); // звёзды всегда, днём −25%
+            /*starNight*/ 0.88F, /*starDay*/ 0.85F); // звёзды 85-88%
     }
 
     // ---- ОРБИТА СОЛНЦА: чёрное небо, огромное статичное солнце у горизонта ----
@@ -118,7 +118,7 @@ public final class SpaceClient {
             /*sunset    */ 0x00000000, // тон не подмешиваем (фикс. освещение)
             bodies,
             /*daylightScale*/ 1.00F,   // свет не трогаем атрибутно
-            /*starNight*/ 0.80F, /*starDay*/ 0.80F, // звёзды 80% всегда
+            /*starNight*/ 0.88F, /*starDay*/ 0.88F, // звёзды 88%
             /*fixedDaylight*/ 0.40F);  // «заморожено» на закате ~40%
     }
 
@@ -135,7 +135,7 @@ public final class SpaceClient {
             /*sunset    */ 0x00000000,
             bodies,
             /*daylightScale*/ 1.00F,
-            /*starNight*/ 0.80F, /*starDay*/ 0.80F,
+            /*starNight*/ 0.88F, /*starDay*/ 0.88F,
             /*fixedDaylight*/ 0.40F);
     }
 
@@ -165,7 +165,7 @@ public final class SpaceClient {
             /*sunset    */ 0x00000000,
             bodies,
             /*daylightScale*/ 1.00F,
-            /*starNight*/ 0.90F, /*starDay*/ 0.90F, // звёздное небо всегда
+            /*starNight*/ 0.90F, /*starDay*/ 0.90F, // звёздное небо 90%
             /*fixedDaylight*/ 0.35F); // лёгкое ровное освещение (космос)
     }
 
