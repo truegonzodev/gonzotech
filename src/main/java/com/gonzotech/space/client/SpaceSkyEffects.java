@@ -10,6 +10,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
@@ -107,6 +108,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      */
     private final float starNightBrightness;
     private final float starDayBrightness;
+    /**
+     * ФИКСИРОВАННЫЙ дневной коэффициент (0..1) или {@code -1} = обычный цикл.
+     * Для пустых орбит нет смены дня/ночи: освещение «заморожено» на закатном
+     * уровне (~0.4). При {@code >=0} {@link #daylightFactor} всегда возвращает
+     * это число → небо/звёзды/тон/свет статичны.
+     */
+    private final float fixedDaylight;
     private final List<CelestialBody> bodies;
     /**
      * Главное солнце мира (первое тело с {@link CelestialBody.Motion#SUN}) — от
@@ -151,6 +159,24 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float daylightScale,
                            float starNightBrightness,
                            float starDayBrightness) {
+        this(fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, daylightScale,
+            starNightBrightness, starDayBrightness, -1.0F);
+    }
+
+    /**
+     * @param fixedDaylight фиксированный дневной коэффициент (0..1) — нет смены
+     *                      дня/ночи (пустые орбиты); {@code -1} = обычный цикл.
+     */
+    public SpaceSkyEffects(float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness,
+                           float fixedDaylight) {
         // cloudLevel=NaN (нет облаков), hasGround=false, constantAmbientLight=true.
         //
         // КРИТИЧНО (подтверждено: renderSky НИ РАЗУ не логировался): в 1.21.4
@@ -169,6 +195,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         this.daylightScale = Mth.clamp(daylightScale, 0.0F, 1.0F);
         this.starNightBrightness = Mth.clamp(starNightBrightness, 0.0F, 1.0F);
         this.starDayBrightness = Mth.clamp(starDayBrightness, 0.0F, 1.0F);
+        this.fixedDaylight = fixedDaylight;
         this.bodies = List.copyOf(bodies);
         CelestialBody sun = null;
         for (CelestialBody b : this.bodies) {
@@ -322,6 +349,10 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * пол-суток, пока солнце едва двигалось. Теперь фаза = та же, что у диска солнца.
      */
     private float daylightFactor(ClientLevel level, float partialTick) {
+        // Пустые орбиты: освещение «заморожено» (нет смены дня/ночи).
+        if (fixedDaylight >= 0.0F) {
+            return Mth.clamp(fixedDaylight, 0.0F, 1.0F);
+        }
         if (primarySun == null) {
             float angle = level.getTimeOfDay(partialTick);
             float cos = Mth.cos(angle * ((float) Math.PI * 2.0F));
@@ -343,7 +374,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * освещении и НЕ трогается.
      */
     public boolean overridesSkyLight() {
-        return daylightScale < 0.999F;
+        // Затемняем свет для Луны/Европы (daylightScale<1) ИЛИ когда освещение
+        // «заморожено» на пустых орбитах (fixedDaylight>=0, нет смены дня/ночи).
+        return daylightScale < 0.999F || fixedDaylight >= 0.0F;
     }
 
     /**
@@ -365,6 +398,11 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * когда {@link #overridesSkyLight()} == {@code true}.
      */
     public float computeSkyDarken(ClientLevel level, float partialTick) {
+        // Пустые орбиты: свет заморожен на fixedDaylight (напр. 0.4 «закат»),
+        // ночной пол не добавляем — уровень строго фиксирован.
+        if (fixedDaylight >= 0.0F) {
+            return Mth.clamp(0.2F + 0.8F * fixedDaylight, 0.0F, 1.0F);
+        }
         float dayFrac = daylightFactor(level, partialTick);
         return 0.2F + 0.8F * dayFrac * daylightScale;
     }
@@ -576,33 +614,48 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
     private void renderBody(CelestialBody body, ClientLevel level, float partialTick,
                             Matrix4f mv, float[] tint) {
-        float xDeg;
-        switch (body.motion()) {
-            case FIXED -> xDeg = body.phaseDeg();
-            case SUN, ORBIT -> {
-                // ВЫРАВНИВАНИЕ С ВАНИЛЬНЫМ СВЕТОМ (фикс: раньше при dayTime=0 солнце
-                // оказывалось в ЗЕНИТЕ, хотя это утро/горизонт → диск не совпадал со
-                // светом, ночью торчал вверху). Квад тела до поворота лежит в зените
-                // (y=+SKY_DISTANCE), поворот вокруг X ведёт его по вертикальному
-                // кругу: 0°=зенит, 90°=горизонт(закат), 180°=надир, 270°=горизонт(рассвет).
-                // Ванильный полдень = dayTime 6000. Сдвигаем фазу на −6000, чтобы
-                // зенит приходился на полдень; тогда для cycleDays=1 диск совпадает
-                // со светом ТОЧНО (закат dayTime 12000 → 90°, полночь 18000 → 180°).
-                // Для cycleDays>1 солнце дрейфует медленно (Луна/Европа): один
-                // оборот за cycleDays суток, зенит на «полдень» первого дня.
-                double cycleTicks = 24000.0 * Math.max(0.001, body.cycleDays());
-                double time = level.getDayTime() + partialTick;
-                double frac = Mth.frac((float) ((time - 6000.0) / cycleTicks));
-                xDeg = (float) (frac * 360.0) + body.phaseDeg();
-            }
-            default -> xDeg = 0.0F;
-        }
-
-        // Запекаем матрицу вида камеры (mv) + локальные орбитальные повороты.
+        // Запекаем матрицу вида камеры (mv) + локальные повороты тела.
         Matrix4f m = new Matrix4f(mv);
-        m.rotate(Axis.YP.rotationDegrees(body.axisYaw()));
-        m.rotate(Axis.ZP.rotationDegrees(body.axisTilt()));
-        m.rotate(Axis.XP.rotationDegrees(xDeg));
+
+        if (body.motion() == CelestialBody.Motion.HORIZON_ORBIT) {
+            // ГОРИЗОНТАЛЬНЫЙ круг по азимуту (Земля на орбите Солнца): тело
+            // обходит горизонт С→З→Ю→В на фиксированной высоте axisTilt.
+            // JOML применяет ПОСЛЕДНИЙ rotate к вершине ПЕРВЫМ: сначала опускаем
+            // квад из зенита к нужной высоте (X на 90−altitude), затем крутим
+            // вокруг вертикали (Y) по времени → тело едет по кольцу горизонта.
+            double cycleTicks = 24000.0 * Math.max(0.001, body.cycleDays());
+            double time = level.getDayTime() + partialTick;
+            double frac = Mth.frac((float) (time / cycleTicks));
+            float azimuth = (float) (frac * 360.0) + body.phaseDeg();
+            float altitude = body.axisTilt(); // высота над горизонтом, 0 = горизонт
+            m.rotate(Axis.YP.rotationDegrees(azimuth));
+            m.rotate(Axis.XP.rotationDegrees(90.0F - altitude));
+        } else {
+            float xDeg;
+            switch (body.motion()) {
+                case FIXED -> xDeg = body.phaseDeg();
+                case SUN, ORBIT -> {
+                    // ВЫРАВНИВАНИЕ С ВАНИЛЬНЫМ СВЕТОМ (фикс: раньше при dayTime=0 солнце
+                    // оказывалось в ЗЕНИТЕ, хотя это утро/горизонт → диск не совпадал со
+                    // светом, ночью торчал вверху). Квад тела до поворота лежит в зените
+                    // (y=+SKY_DISTANCE), поворот вокруг X ведёт его по вертикальному
+                    // кругу: 0°=зенит, 90°=горизонт(закат), 180°=надир, 270°=горизонт(рассвет).
+                    // Ванильный полдень = dayTime 6000. Сдвигаем фазу на −6000, чтобы
+                    // зенит приходился на полдень; тогда для cycleDays=1 диск совпадает
+                    // со светом ТОЧНО (закат dayTime 12000 → 90°, полночь 18000 → 180°).
+                    // Для cycleDays>1 солнце дрейфует медленно (Луна/Европа): один
+                    // оборот за cycleDays суток, зенит на «полдень» первого дня.
+                    double cycleTicks = 24000.0 * Math.max(0.001, body.cycleDays());
+                    double time = level.getDayTime() + partialTick;
+                    double frac = Mth.frac((float) ((time - 6000.0) / cycleTicks));
+                    xDeg = (float) (frac * 360.0) + body.phaseDeg();
+                }
+                default -> xDeg = 0.0F;
+            }
+            m.rotate(Axis.YP.rotationDegrees(body.axisYaw()));
+            m.rotate(Axis.ZP.rotationDegrees(body.axisTilt()));
+            m.rotate(Axis.XP.rotationDegrees(xDeg));
+        }
 
         // Блендинг: солнца — аддитивно (светятся), планеты — обычная альфа.
         if (body.blend() == CelestialBody.Blend.ADDITIVE) {
@@ -621,16 +674,105 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             r / 255F * tint[0], g / 255F * tint[1], b / 255F * tint[2], a / 255F);
         RenderSystem.setShaderTexture(0, body.texture());
 
+        // .mcmeta-АНИМАЦИЯ: если рядом с текстурой лежит .mcmeta с секцией
+        // animation, текстура считается вертикальным стрипом кадров (как у
+        // ванильных блоков). Берём диапазон V текущего кадра; иначе весь [0,1].
+        float[] v = animationV(body.texture());
+        float v0 = v[0], v1 = v[1];
+
         float sz = body.size();
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(0.0F, 0.0F);
-        buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(1.0F, 0.0F);
-        buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(1.0F, 1.0F);
-        buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(0.0F, 1.0F);
+        buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(0.0F, v0);
+        buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(1.0F, v0);
+        buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(1.0F, v1);
+        buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(0.0F, v1);
         BufferUploader.drawWithShader(buf.buildOrThrow());
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    /** Кэш метаданных анимации по текстуре (чтобы не читать .mcmeta каждый кадр). */
+    private static final java.util.Map<ResourceLocation, int[]> ANIM_CACHE =
+        new java.util.HashMap<>();
+
+    /**
+     * Возвращает диапазон {@code {v0, v1}} по вертикали для текущего кадра
+     * анимации тела. Если у текстуры нет {@code .mcmeta} с секцией
+     * {@code animation} — весь диапазон {@code {0,1}} (статичная картинка).
+     *
+     * <p>Логика повторяет ванильную животину блоков: текстура-стрип из N кадров
+     * по вертикали (высота = N × ширина), каждый кадр показывается
+     * {@code frametime} тиков, кадры листаются по кругу от игрового времени.
+     * Всё в try/catch — при любой ошибке чтения откатываемся на статичный кадр,
+     * так что краша быть не может (вынос «ебли» на картинки автора).
+     *
+     * <p>Формат {@code .mcmeta} — ванильный, например:
+     * <pre>{ "animation": { "frametime": 2 } }</pre>
+     */
+    private float[] animationV(ResourceLocation tex) {
+        int[] meta = ANIM_CACHE.computeIfAbsent(tex, this::readAnimation);
+        int frames = meta[0];
+        int frametime = meta[1];
+        if (frames <= 1) {
+            return new float[] { 0.0F, 1.0F };
+        }
+        long ticks = 0L;
+        if (Minecraft.getInstance().level != null) {
+            ticks = Minecraft.getInstance().level.getGameTime();
+        }
+        int frame = (int) ((ticks / Math.max(1, frametime)) % frames);
+        float h = 1.0F / frames;
+        float v0 = frame * h;
+        return new float[] { v0, v0 + h };
+    }
+
+    /**
+     * Читает {@code .mcmeta} рядом с текстурой и определяет число кадров +
+     * frametime. Число кадров = высота/ширина PNG (вертикальный стрип). Возвращает
+     * {@code {frames, frametime}}; {@code {1,1}} — нет анимации/ошибка.
+     */
+    private int[] readAnimation(ResourceLocation tex) {
+        try {
+            var rm = Minecraft.getInstance().getResourceManager();
+            ResourceLocation metaLoc = ResourceLocation.fromNamespaceAndPath(
+                tex.getNamespace(), tex.getPath() + ".mcmeta");
+            var metaRes = rm.getResource(metaLoc);
+            if (metaRes.isEmpty()) {
+                return new int[] { 1, 1 };
+            }
+            // Разбор frametime из json (без строгой схемы — простое чтение).
+            String json;
+            try (var in = metaRes.get().open()) {
+                json = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            }
+            if (!json.contains("animation")) {
+                return new int[] { 1, 1 };
+            }
+            int frametime = 1;
+            var fm = java.util.regex.Pattern.compile("\"frametime\"\\s*:\\s*(\\d+)").matcher(json);
+            if (fm.find()) {
+                frametime = Math.max(1, Integer.parseInt(fm.group(1)));
+            }
+            // Число кадров из размеров PNG (высота / ширина).
+            int frames = 1;
+            var texRes = rm.getResource(tex);
+            if (texRes.isPresent()) {
+                try (var in = texRes.get().open()) {
+                    com.mojang.blaze3d.platform.NativeImage img =
+                        com.mojang.blaze3d.platform.NativeImage.read(in);
+                    int w = img.getWidth();
+                    int hgt = img.getHeight();
+                    img.close();
+                    if (w > 0 && hgt > w && (hgt % w == 0)) {
+                        frames = hgt / w;
+                    }
+                }
+            }
+            return new int[] { Math.max(1, frames), frametime };
+        } catch (Exception e) {
+            return new int[] { 1, 1 };
+        }
     }
 
     // ---- ARGB утилиты ----

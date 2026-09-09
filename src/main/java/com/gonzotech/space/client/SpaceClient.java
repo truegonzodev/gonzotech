@@ -95,9 +95,86 @@ public final class SpaceClient {
             /*starNight*/ 1.00F, /*starDay*/ 0.75F); // звёзды всегда, днём −25%
     }
 
+    // ---- ОРБИТА СОЛНЦА: чёрное небо, огромное статичное солнце у горизонта ----
+    // Земля обходит горизонт по кругу и заходит за солнце. Освещение заморожено
+    // на «закатном» уровне (~0.4), нет смены дня/ночи. Звёзды 80%.
+    private static SpaceSkyEffects solarOrbit() {
+        // Солнце huge: квад Юпитера был 70 → ×0.7 ≈ 49. Земля меньше.
+        List<CelestialBody> bodies = List.of(
+            // Земля рисуется ПЕРВОЙ (ниже солнца по слоям) → солнце её перекрывает.
+            new CelestialBody(tex("solar_orbit/earth"), 8F,
+                Motion.HORIZON_ORBIT, /*cycleDays*/ 8F, /*yaw n/a*/ 0F,
+                /*altitude*/ 6F, /*startAzimuth*/ 200F, 0xFFFFFFFF,
+                CelestialBody.Blend.NORMAL),
+            // Огромное солнце: FIXED у горизонта на западе (phaseDeg=90 → горизонт),
+            // yaw=90 разворачивает азимут на запад.
+            CelestialBody.sun(tex("solar_orbit/sun"), 49F, Motion.FIXED,
+                1F, /*yaw=запад*/ 90F, 0F, /*phase=горизонт*/ 90F)
+        );
+        return new SpaceSkyEffects(
+            0.10F,
+            /*zenithDay */ 0xFF010101, /*zenithNight*/ 0xFF010101, // чёрное всегда
+            /*horizonDay*/ 0xFF140A04, /*horizonNight*/ 0xFF140A04, // тёмный тёплый у горизонта
+            /*sunset    */ 0x00000000, // тон не подмешиваем (фикс. освещение)
+            bodies,
+            /*daylightScale*/ 1.00F,   // свет не трогаем атрибутно
+            /*starNight*/ 0.80F, /*starDay*/ 0.80F, // звёзды 80% всегда
+            /*fixedDaylight*/ 0.40F);  // «заморожено» на закате ~40%
+    }
+
+    // ---- ОРБИТА АЛЬФА ЦЕНТАВРА: то же, но БЕЗ Земли ----
+    private static SpaceSkyEffects alphaCentauriOrbit() {
+        List<CelestialBody> bodies = List.of(
+            CelestialBody.sun(tex("alpha_centauri_orbit/sun"), 49F, Motion.FIXED,
+                1F, /*yaw=запад*/ 90F, 0F, /*phase=горизонт*/ 90F)
+        );
+        return new SpaceSkyEffects(
+            0.10F,
+            /*zenithDay */ 0xFF010101, /*zenithNight*/ 0xFF010101,
+            /*horizonDay*/ 0xFF120A06, /*horizonNight*/ 0xFF120A06,
+            /*sunset    */ 0x00000000,
+            bodies,
+            /*daylightScale*/ 1.00F,
+            /*starNight*/ 0.80F, /*starDay*/ 0.80F,
+            /*fixedDaylight*/ 0.40F);
+    }
+
+    // ---- ОТКРЫТЫЙ КОСМОС: звёзды + 3-4 больших квада-галактики, хаотичный дрейф ----
+    private static SpaceSkyEffects deepSpace() {
+        // Галактики: большие полупрозрачные квады, медленный дрейф по кругу (как
+        // Луна, cycleDays~60), НО у каждой СВОИ оси (yaw/tilt) → траектории
+        // хаотичные, не в ряд запад→восток. Blend ADDITIVE (светятся на чёрном).
+        List<CelestialBody> bodies = List.of(
+            new CelestialBody(tex("deep_space/galaxy1"), 40F, Motion.SUN,
+                60F, /*yaw*/ 10F, /*tilt*/ 25F, /*phase*/ 0F,
+                0xFFFFFFFF, CelestialBody.Blend.ADDITIVE),
+            new CelestialBody(tex("deep_space/galaxy2"), 34F, Motion.SUN,
+                75F, /*yaw*/ 140F, /*tilt*/ -35F, /*phase*/ 120F,
+                0xFFFFFFFF, CelestialBody.Blend.ADDITIVE),
+            new CelestialBody(tex("deep_space/galaxy3"), 46F, Motion.SUN,
+                90F, /*yaw*/ -70F, /*tilt*/ 55F, /*phase*/ 210F,
+                0xFFFFFFFF, CelestialBody.Blend.ADDITIVE),
+            new CelestialBody(tex("deep_space/galaxy4"), 30F, Motion.SUN,
+                70F, /*yaw*/ 220F, /*tilt*/ 15F, /*phase*/ 300F,
+                0xFFFFFFFF, CelestialBody.Blend.ADDITIVE)
+        );
+        return new SpaceSkyEffects(
+            0.06F,
+            /*zenithDay */ 0xFF000001, /*zenithNight*/ 0xFF000001, // чернота
+            /*horizonDay*/ 0xFF010102, /*horizonNight*/ 0xFF010102,
+            /*sunset    */ 0x00000000,
+            bodies,
+            /*daylightScale*/ 1.00F,
+            /*starNight*/ 0.90F, /*starDay*/ 0.90F, // звёздное небо всегда
+            /*fixedDaylight*/ 0.35F); // лёгкое ровное освещение (космос)
+    }
+
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {
         event.register(SpaceDimensions.MOON_SKY, moon());
         event.register(SpaceDimensions.MARS_SKY, mars());
         event.register(SpaceDimensions.EUROPA_SKY, europa());
+        event.register(SpaceDimensions.SOLAR_ORBIT_SKY, solarOrbit());
+        event.register(SpaceDimensions.ALPHA_CENTAURI_ORBIT_SKY, alphaCentauriOrbit());
+        event.register(SpaceDimensions.DEEP_SPACE_SKY, deepSpace());
     }
 }

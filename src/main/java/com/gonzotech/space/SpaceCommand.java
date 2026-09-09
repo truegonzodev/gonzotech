@@ -99,9 +99,22 @@ public final class SpaceCommand {
         level.getChunk(x >> 4, z >> 4); // синхронная загрузка/генерация чанка
         int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         int y = Math.max(surface + 1, level.getMinY() + 2);
-        // Если рельефа нет (пустое измерение) — ставим на безопасную высоту.
+        // Если рельефа нет (пустое измерение) — ставим на безопасную высоту и
+        // подкладываем маленькую метеор-платформу 3×3, чтобы не улететь в пустоту
+        // (космический полёт — отдельная задача, пока просто твёрдая опора).
         if (surface <= level.getMinY()) {
             y = 128;
+            net.minecraft.world.level.block.state.BlockState platform =
+                com.gonzotech.core.registry.ModBlocks.METEOR.get().defaultBlockState();
+            BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    p.set(x + dx, y - 1, z + dz);
+                    if (level.getBlockState(p).isAir()) {
+                        level.setBlock(p, platform, 3);
+                    }
+                }
+            }
         }
 
         double px = x + 0.5D;

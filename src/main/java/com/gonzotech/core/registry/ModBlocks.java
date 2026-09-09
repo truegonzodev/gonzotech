@@ -148,6 +148,16 @@ public class ModBlocks {
             .friction(0.98f)
     );
 
+    /** Метеорит: тёмная космическая порода парящих глыб (орбиты/открытый космос). */
+    public static final DeferredBlock<Block> METEOR = BLOCKS.registerSimpleBlock(
+        "meteor",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_GRAY)
+            .sound(SoundType.STONE)
+            .strength(2.0f, 8.0f)
+            .requiresCorrectToolForDrops()
+    );
+
     static {
         for (OreDefinition ore : OreDefinition.ALL) {
             Map<Host, DeferredBlock<? extends Block>> byHost = new EnumMap<>(Host.class);

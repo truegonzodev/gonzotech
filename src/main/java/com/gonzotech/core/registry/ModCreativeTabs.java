@@ -98,6 +98,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.MARTIAN_DIRT_ITEM.get());
                 output.accept(ModItems.SUPERDENSE_ICE_ITEM.get());
                 output.accept(ModItems.EUROPAN_ICE_ITEM.get());
+                output.accept(ModItems.METEOR_ITEM.get());
             })
             .build()
     );

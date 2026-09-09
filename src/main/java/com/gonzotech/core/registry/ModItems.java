@@ -152,6 +152,8 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("superdense_ice", ModBlocks.SUPERDENSE_ICE);
     public static final DeferredItem<BlockItem> EUROPAN_ICE_ITEM =
         ITEMS.registerSimpleBlockItem("europan_ice", ModBlocks.EUROPAN_ICE);
+    public static final DeferredItem<BlockItem> METEOR_ITEM =
+        ITEMS.registerSimpleBlockItem("meteor", ModBlocks.METEOR);
 
     /** Предметы «Открытие 1» .. «Открытие 16». */
     public static final List<DeferredItem<DiscoveryItem>> DISCOVERY_ITEMS = new ArrayList<>();

@@ -43,6 +43,14 @@ public final class SpaceDimensions {
     public static final ResourceKey<Level> MARS = dim("mars");
     public static final ResourceKey<Level> EUROPA = dim("europa");
 
+    // --- Группа 2: пустые орбиты/космос (только скайбокс + редкие глыбы) ---
+    /** Орбита Солнца: огромное статичное солнце у горизонта, Земля по кругу. */
+    public static final ResourceKey<Level> SOLAR_ORBIT = dim("solar_orbit");
+    /** Орбита Альфа Центавра: как орбита Солнца, но без Земли. */
+    public static final ResourceKey<Level> ALPHA_CENTAURI_ORBIT = dim("alpha_centauri_orbit");
+    /** Открытый космос: звёзды + 3-4 больших квада (галактики), медленный дрейф. */
+    public static final ResourceKey<Level> DEEP_SPACE = dim("deep_space");
+
     // --- Идентификаторы скайбоксов (dimension_type -> "effects") ----------
     public static final ResourceLocation MOON_SKY =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "moon_sky");
@@ -50,4 +58,10 @@ public final class SpaceDimensions {
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "mars_sky");
     public static final ResourceLocation EUROPA_SKY =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "europa_sky");
+    public static final ResourceLocation SOLAR_ORBIT_SKY =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "solar_orbit_sky");
+    public static final ResourceLocation ALPHA_CENTAURI_ORBIT_SKY =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "alpha_centauri_orbit_sky");
+    public static final ResourceLocation DEEP_SPACE_SKY =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "deep_space_sky");
 }

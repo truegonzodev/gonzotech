@@ -35,6 +35,12 @@ public class ModFeatures {
             () -> new com.gonzotech.space.worldgen.EuropaIceFeature(
                 net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
 
+    /** Фаза 4 (группа 2) — суперредкие парящие глыбы метеорной породы в пустых мирах. */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.space.worldgen.MeteorFeature> METEOR =
+        FEATURES.register("meteor",
+            () -> new com.gonzotech.space.worldgen.MeteorFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
     public static void register(IEventBus modEventBus) {
         FEATURES.register(modEventBus);
     }
