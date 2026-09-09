@@ -61,6 +61,8 @@ public class GonzoTechMod {
 
         // Фаза 4 — космос: отладочный телепорт /gonzotech tp <dimension>.
         NeoForge.EVENT_BUS.addListener(com.gonzotech.space.SpaceCommand::onRegisterCommands);
+        // Фаза 4 — гравитация космических миров (атрибуты по измерению).
+        NeoForge.EVENT_BUS.register(com.gonzotech.space.SpaceGravity.class);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
