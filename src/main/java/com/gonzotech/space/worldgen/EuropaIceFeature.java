@@ -190,45 +190,35 @@ public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
      */
     private void chaoticBlob(WorldGenLevel level, RandomSource random,
                              int cx, int cy, int cz, int maxR) {
-        int lobes = 3 + random.nextInt(6); // 3..8 долей
-        int[] lx = new int[lobes], ly = new int[lobes], lz = new int[lobes];
-        double[] lr = new double[lobes];
+        int lobes = 2 + random.nextInt(4); // 2..5 слитных долей
+        double[] lx = new double[lobes], ly = new double[lobes], lz = new double[lobes], lr = new double[lobes];
         for (int i = 0; i < lobes; i++) {
-            double spread = 0.55;
-            lx[i] = (int) Math.round((random.nextDouble() * 2 - 1) * maxR * spread);
-            ly[i] = (int) Math.round((random.nextDouble() * 2 - 1) * maxR * spread * 0.7);
-            lz[i] = (int) Math.round((random.nextDouble() * 2 - 1) * maxR * spread);
-            lr[i] = maxR * (0.35 + random.nextDouble() * 0.45); // доля 0.35..0.8·R
+            double spread = 0.42; // доли близко к центру → единое тело
+            lx[i] = (random.nextDouble() * 2 - 1) * maxR * spread;
+            ly[i] = (random.nextDouble() * 2 - 1) * maxR * spread;
+            lz[i] = (random.nextDouble() * 2 - 1) * maxR * spread;
+            lr[i] = maxR * (0.55 + random.nextDouble() * 0.30); // радиус доли 0.55..0.85·R
         }
-        boolean porous = maxR >= 7 && random.nextInt(3) == 0;
-        long poreSeed = random.nextLong();
-        long edgeSeed = random.nextLong();
+        long noiseSeed = random.nextLong();
+        double noiseScale = 0.14 + random.nextDouble() * 0.06;
+        double warpAmp = 0.30 + random.nextDouble() * 0.20;
 
-        int R = maxR + 2;
+        int R = maxR + 3;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int dx = -R; dx <= R; dx++) {
             for (int dy = -R; dy <= R; dy++) {
                 for (int dz = -R; dz <= R; dz++) {
-                    // metaball-union: воксель внутри, если попал хотя бы в одну долю.
-                    boolean inside = false;
-                    double nearest = 9.9;
+                    // Гладкое поле метаболов + плавный шум на пороге поверхности.
+                    double field = 0.0;
                     for (int i = 0; i < lobes; i++) {
                         double ddx = dx - lx[i], ddy = dy - ly[i], ddz = dz - lz[i];
-                        double n = Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz) / lr[i];
-                        if (n <= 1.0) {
-                            inside = true;
-                        }
-                        nearest = Math.min(nearest, n);
+                        double d2 = ddx * ddx + ddy * ddy + ddz * ddz + 1.0;
+                        field += (lr[i] * lr[i]) / d2;
                     }
-                    if (!inside) {
-                        continue;
-                    }
-                    // Шероховатость: у самой кромки (nearest в 0.8..1.0) случайно
-                    // выгрызаем воксели → рваная, «причудливая» поверхность.
-                    if (nearest > 0.80 && hash01(edgeSeed, dx, dy, dz) < 0.45) {
-                        continue;
-                    }
-                    if (porous && nearest < 0.65 && pore(poreSeed, dx, dy, dz)) {
+                    double warp = valueNoise(noiseSeed,
+                        dx * noiseScale, dy * noiseScale, dz * noiseScale); // -1..1
+                    double threshold = 1.0 - warp * warpAmp;
+                    if (field < threshold) {
                         continue;
                     }
                     int x = cx + dx, y = cy + dy, z = cz + dz;
@@ -247,13 +237,39 @@ public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
         }
     }
 
-    /** Детерминированная «пористость»: ~30% вокселей внутри становятся пустотами. */
-    private boolean pore(long seed, int dx, int dy, int dz) {
-        long h = seed;
-        h = h * 6364136223846793005L + (dx * 341873128712L);
-        h = h * 6364136223846793005L + (dy * 132897987541L);
-        h = h * 6364136223846793005L + (dz * 1274126177L);
-        return ((h >>> 33) % 10) < 3;
+    /**
+     * Гладкий 3D value-noise в [-1,1]: хеш в узлах решётки + трилинейная
+     * интерполяция со smootherstep. Крупные плавные бугры вместо «ряби».
+     */
+    private double valueNoise(long seed, double x, double y, double z) {
+        int xi = fastFloor(x), yi = fastFloor(y), zi = fastFloor(z);
+        double xf = x - xi, yf = y - yi, zf = z - zi;
+        double u = fade(xf), v = fade(yf), w = fade(zf);
+        double c000 = hash01(seed, xi, yi, zi);
+        double c100 = hash01(seed, xi + 1, yi, zi);
+        double c010 = hash01(seed, xi, yi + 1, zi);
+        double c110 = hash01(seed, xi + 1, yi + 1, zi);
+        double c001 = hash01(seed, xi, yi, zi + 1);
+        double c101 = hash01(seed, xi + 1, yi, zi + 1);
+        double c011 = hash01(seed, xi, yi + 1, zi + 1);
+        double c111 = hash01(seed, xi + 1, yi + 1, zi + 1);
+        double x00 = lerp(c000, c100, u), x10 = lerp(c010, c110, u);
+        double x01 = lerp(c001, c101, u), x11 = lerp(c011, c111, u);
+        double y0 = lerp(x00, x10, v), y1 = lerp(x01, x11, v);
+        return lerp(y0, y1, w) * 2.0 - 1.0;
+    }
+
+    private static int fastFloor(double v) {
+        int i = (int) v;
+        return v < i ? i - 1 : i;
+    }
+
+    private static double fade(double t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+
+    private static double lerp(double a, double b, double t) {
+        return a + (b - a) * t;
     }
 
     /** Детерминированный хеш-шум в [0,1) от (seed, x, y, z). */

@@ -1,11 +1,13 @@
 {
   "type": "gonzotech:alpha_centauri_orbit",
   "generator": {
-    "type": "minecraft:noise",
-    "settings": "gonzotech:void",
-    "biome_source": {
-      "type": "minecraft:fixed",
-      "biome": "gonzotech:alpha_centauri_orbit"
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "gonzotech:alpha_centauri_orbit",
+      "lakes": false,
+      "features": true,
+      "layers": [],
+      "structure_overrides": []
     }
   }
 }

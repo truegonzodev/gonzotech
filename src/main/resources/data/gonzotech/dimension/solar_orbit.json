@@ -1,11 +1,13 @@
 {
   "type": "gonzotech:solar_orbit",
   "generator": {
-    "type": "minecraft:noise",
-    "settings": "gonzotech:void",
-    "biome_source": {
-      "type": "minecraft:fixed",
-      "biome": "gonzotech:solar_orbit"
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "gonzotech:solar_orbit",
+      "lakes": false,
+      "features": true,
+      "layers": [],
+      "structure_overrides": []
     }
   }
 }
