@@ -58,14 +58,14 @@ public abstract class LightTextureMixin {
         int h = lightPixels.getHeight();
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int c = lightPixels.getPixelRGBA(x, y);
+                int c = lightPixels.getPixel(x, y);
                 // NativeImage RGBA упакован как 0xAABBGGRR (альфа — старший байт).
                 // Масштабируем три младших байта (цветовые каналы), альфу храним.
                 int a = c & 0xFF000000;
                 int b0 = Math.min(255, (int) ((c & 0xFF) * factor));          // R
                 int b1 = Math.min(255, (int) (((c >> 8) & 0xFF) * factor));   // G
                 int b2 = Math.min(255, (int) (((c >> 16) & 0xFF) * factor));  // B
-                lightPixels.setPixelRGBA(x, y, a | (b2 << 16) | (b1 << 8) | b0);
+                lightPixels.setPixel(x, y, a | (b2 << 16) | (b1 << 8) | b0);
             }
         }
     }
