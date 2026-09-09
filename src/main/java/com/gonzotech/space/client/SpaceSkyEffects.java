@@ -68,6 +68,21 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private final int horizonNightArgb;
     /** Закатный оттенок у горизонта — ARGB (наложение на восходе/закате). */
     private final int sunsetArgb;
+    /**
+     * Множитель ДНЕВНОЙ яркости мира (не неба!) — 0..1. Развязывает фактическое
+     * освещение блоков от ванильного времени и привязывает его к ПОЛОЖЕНИЮ
+     * СОЛНЦА (той же фазе {@code cycleDays}, что и диск на небе), после чего
+     * домножает «дневную добавку» к свету на это число:
+     * <ul>
+     *   <li>Луна {@code 0.30} — день −70% (сумрачно даже в зените);</li>
+     *   <li>Европа {@code 0.12} — день −88% (почти всегда полумрак);</li>
+     *   <li>Марс {@code 1.0} — НЕ трогаем (см. {@link #overridesSkyLight()}).</li>
+     * </ul>
+     * Ночной «пол» яркости не меняется (как в оверворлде). Благодаря привязке к
+     * положению солнца Луна получает длинный цикл освещения (~30 суток свет /
+     * ~30 тьма), а не обычные сутки.
+     */
+    private final float daylightScale;
     private final List<CelestialBody> bodies;
     /**
      * Главное солнце мира (первое тело с {@link CelestialBody.Motion#SUN}) — от
@@ -92,6 +107,21 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            int horizonDayArgb, int horizonNightArgb,
                            int sunsetArgb,
                            List<CelestialBody> bodies) {
+        // Совместимость со старыми вызовами: без затемнения дня (Марс).
+        this(fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, 1.0F);
+    }
+
+    /**
+     * @param daylightScale множитель дневной яркости мира (0..1). {@code 1.0} —
+     *                      не трогать освещение (ванильное поведение).
+     */
+    public SpaceSkyEffects(float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale) {
         // cloudLevel=NaN (нет облаков), hasGround=false, constantAmbientLight=true.
         //
         // КРИТИЧНО (подтверждено: renderSky НИ РАЗУ не логировался): в 1.21.4
@@ -107,6 +137,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         this.horizonDayArgb = horizonDayArgb;
         this.horizonNightArgb = horizonNightArgb;
         this.sunsetArgb = sunsetArgb;
+        this.daylightScale = Mth.clamp(daylightScale, 0.0F, 1.0F);
         this.bodies = List.copyOf(bodies);
         CelestialBody sun = null;
         for (CelestialBody b : this.bodies) {
@@ -265,6 +296,39 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         double frac = Mth.frac((float) ((time - 6000.0) / cycleTicks));
         float cos = Mth.cos((float) (frac * 2.0 * Math.PI)); // 1=зенит, -1=надир
         return Mth.clamp((cos + 0.35F) / 1.35F, 0.0F, 1.0F);
+    }
+
+    /**
+     * Нужно ли этому миру ПОДМЕНЯТЬ фактическое освещение (яркость лайтмапа).
+     * {@code true} только когда задан множитель затемнения {@code < 1} —
+     * т.е. для Луны/Европы. Марс ({@code daylightScale=1}) остаётся на ванильном
+     * освещении и НЕ трогается.
+     */
+    public boolean overridesSkyLight() {
+        return daylightScale < 0.999F;
+    }
+
+    /**
+     * Значение «яркости неба» для лайтмапа, РАЗВЯЗАННОЕ от ванильного времени и
+     * привязанное к ПОЛОЖЕНИЮ СОЛНЦА, плюс домноженное на {@link #daylightScale}.
+     *
+     * <p>Ванильный {@code ClientLevel.getSkyDarken(float)} возвращает диапазон
+     * {@code [0.2, 1.0]}: {@code 0.2} — ночной «пол» яркости, {@code 1.0} —
+     * полдень. Мы сохраняем ночной пол {@code 0.2} (пещеры/ночь как в оверворлде),
+     * но «дневную добавку» {@code (value − 0.2)} берём из дневного коэффициента
+     * {@link #daylightFactor} (0..1 по высоте солнца) и умножаем на
+     * {@code daylightScale}:
+     * <pre>result = 0.2 + 0.8 · dayFrac · daylightScale</pre>
+     * Итог: (1) свет день/ночь идёт в темпе движения солнца — Луна получает
+     * длинный цикл (~30 суток свет / ~30 тьма), Европа — цикл 3.5 суток;
+     * (2) пик дня затемнён (Луна −70%, Европа −88%), ночь не тронута.
+     *
+     * <p>Вызывается из клиентского миксина на {@code getSkyDarken(F)F} только
+     * когда {@link #overridesSkyLight()} == {@code true}.
+     */
+    public float computeSkyDarken(ClientLevel level, float partialTick) {
+        float dayFrac = daylightFactor(level, partialTick);
+        return 0.2F + 0.8F * dayFrac * daylightScale;
     }
 
     /** Закатный пик: максимум когда день≈0.5 (переход), 0 в полдень/полночь. */

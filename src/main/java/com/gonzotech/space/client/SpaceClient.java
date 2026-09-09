@@ -44,7 +44,8 @@ public final class SpaceClient {
             /*zenithDay */ 0xFF050507, /*zenithNight*/ 0xFF010101,
             /*horizonDay*/ 0xFF0A0A0E, /*horizonNight*/ 0xFF020203,
             /*sunset    */ 0x70432038, // очень слабый багрянец
-            bodies);
+            bodies,
+            /*daylightScale*/ 0.30F); // день −70%: даже в зените сумрачно
     }
 
     // ---- МАРС: светлое оранж-голубое днём → закат → тёмное; солнце меньше ----
@@ -86,7 +87,8 @@ public final class SpaceClient {
             /*zenithDay */ 0xFF020306, /*zenithNight*/ 0xFF000001, // почти чёрный с намёком на синь
             /*horizonDay*/ 0xFF04060C, /*horizonNight*/ 0xFF010102, // тёмно-синий у горизонта
             /*sunset    */ 0x50392046, // едва заметный фиолет
-            bodies);
+            bodies,
+            /*daylightScale*/ 0.12F); // день −88%: почти всегда полумрак
     }
 
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {

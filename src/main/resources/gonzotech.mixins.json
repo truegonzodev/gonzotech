@@ -7,6 +7,9 @@
   "mixins": [
     "AbstractFurnaceBlockEntityMixin"
   ],
+  "client": [
+    "client.ClientLevelSkyDarkenMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
