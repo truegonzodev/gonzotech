@@ -369,6 +369,46 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         return 0.2F + 0.8F * dayFrac * daylightScale;
     }
 
+    /**
+     * Тон небесных тел по времени суток (мультипликаторы R,G,B для
+     * {@code setShaderColor}), плавно по {@link #daylightFactor} (1=полдень,
+     * ≈0.26=горизонт/закат-рассвет, 0=полночь):
+     * <ul>
+     *   <li><b>День</b> (dayFrac ≥ 0.6): тон отсутствует — {@code (1,1,1)}.</li>
+     *   <li><b>Закат/рассвет</b> (пик у горизонта): +10% в красный —
+     *       гасим G и B на 10% (солнце и тела краснеют).</li>
+     *   <li><b>Ночь</b> (dayFrac → 0): +10% в синий — гасим R и G на 10%,
+     *       плюс общая яркость −5%.</li>
+     * </ul>
+     * Переход красный→синий на спуске в ночь и синий→красный на восходе выходит
+     * автоматически (redFactor и blueFactor перекрываются в сумеречной полосе).
+     *
+     * @return массив {@code {rMul, gMul, bMul}} 0..1.
+     */
+    private float[] computeBodyTint(float dayFrac) {
+        // redFactor: треугольник с пиком у горизонта (dayFrac≈0.30), 0 днём и
+        // 0 в глубокой ночи. blueFactor: нарастает от 0 (dayFrac=0.30) до 1
+        // (dayFrac=0, полночь).
+        float redFactor;
+        if (dayFrac >= 0.6F || dayFrac <= 0.0F) {
+            redFactor = 0.0F;
+        } else if (dayFrac >= 0.3F) {
+            redFactor = (0.6F - dayFrac) / 0.3F;   // 0.6→0 … 0.3→1
+        } else {
+            redFactor = dayFrac / 0.3F;            // 0.3→1 … 0→0
+        }
+        float blueFactor = Mth.clamp((0.3F - dayFrac) / 0.3F, 0.0F, 1.0F);
+
+        float redTint = 0.10F * redFactor;   // насколько «в красный»
+        float blueTint = 0.10F * blueFactor; // насколько «в синий»
+        float brightness = 1.0F - 0.05F * blueFactor; // ночью −5%
+
+        float rMul = (1.0F - blueTint) * brightness;
+        float gMul = (1.0F - redTint) * (1.0F - blueTint) * brightness;
+        float bMul = (1.0F - redTint) * brightness;
+        return new float[] { rMul, gMul, bMul };
+    }
+
     /** Закатный пик: максимум когда день≈0.5 (переход), 0 в полдень/полночь. */
     private float sunsetFactor(float dayFrac) {
         // Треугольник с пиком на dayFrac=0.5.
@@ -417,16 +457,19 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             for (int c = 0; c < 4; c++) {
                 double ox = (double) ((c & 2) - 1) * scale;
                 double oy = (double) ((c + 1 & 2) - 1) * scale;
-                // Поворот угла квада вокруг оси взгляда, затем ориентация к центру.
+                // Поворот угла квада вокруг оси взгляда (roll), затем ориентация
+                // билборда к ЦЕНТРУ сферы — ТОЧНО по ванильному LevelRenderer:
+                // квад нормалью смотрит на камеру, поэтому не «встаёт на ребро»
+                // (иначе звёзды вырождались в линии вдоль оси движения солнца).
                 double rox = ox * cosR - oy * sinR;
-                double roy = ox * sinR + oy * cosR;
-                double pz = roy * sinP;
-                double px = rox * cosT - pz * sinT;
-                double pz2 = rox * sinT + pz * cosT;
-                double py = -(roy * cosP);
-                corners[idx++] = (float) (cx + px);
-                corners[idx++] = (float) (cy + py);
-                corners[idx++] = (float) (cz + pz2);
+                double roy = oy * cosR + ox * sinR;
+                double yOff = rox * sinP;          // d23 в ванили
+                double k = -rox * cosP;            // d24 в ванили
+                double xOff = k * sinT - roy * cosT;   // d25
+                double zOff = roy * sinT + k * cosT;   // d27
+                corners[idx++] = (float) (cx + xOff);
+                corners[idx++] = (float) (cy + yOff);
+                corners[idx++] = (float) (cz + zOff);
             }
         }
         return corners;
@@ -522,14 +565,17 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private void renderBodies(ClientLevel level, float partialTick, Matrix4f mv) {
         RenderSystem.enableBlend();
         RenderSystem.setShader(CoreShaders.POSITION_TEX);
+        // Тон тел по времени суток (день без тона / закат в красный / ночь в
+        // синий), считается один раз на кадр и общий для всех тел.
+        float[] tint = computeBodyTint(daylightFactor(level, partialTick));
         for (CelestialBody body : bodies) {
-            renderBody(body, level, partialTick, mv);
+            renderBody(body, level, partialTick, mv, tint);
         }
         RenderSystem.defaultBlendFunc();
     }
 
     private void renderBody(CelestialBody body, ClientLevel level, float partialTick,
-                            Matrix4f mv) {
+                            Matrix4f mv, float[] tint) {
         float xDeg;
         switch (body.motion()) {
             case FIXED -> xDeg = body.phaseDeg();
@@ -570,7 +616,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         int r = (body.argb() >>> 16) & 0xFF;
         int g = (body.argb() >>> 8) & 0xFF;
         int b = body.argb() & 0xFF;
-        RenderSystem.setShaderColor(r / 255F, g / 255F, b / 255F, a / 255F);
+        // База тела × тон времени суток (tint[]): днём (1,1,1) — как раньше.
+        RenderSystem.setShaderColor(
+            r / 255F * tint[0], g / 255F * tint[1], b / 255F * tint[2], a / 255F);
         RenderSystem.setShaderTexture(0, body.texture());
 
         float sz = body.size();
