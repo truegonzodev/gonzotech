@@ -45,7 +45,8 @@ public final class SpaceClient {
             /*horizonDay*/ 0xFF0A0A0E, /*horizonNight*/ 0xFF020203,
             /*sunset    */ 0x70432038, // очень слабый багрянец
             bodies,
-            /*daylightScale*/ 0.30F); // день −70%: даже в зените сумрачно
+            /*daylightScale*/ 0.30F, // день −70%: даже в зените сумрачно
+            /*starNight*/ 1.00F, /*starDay*/ 0.80F); // звёзды всегда, днём −20%
     }
 
     // ---- МАРС: светлое оранж-голубое днём → закат → тёмное; солнце меньше ----
@@ -63,7 +64,9 @@ public final class SpaceClient {
             /*zenithDay */ 0xFF6E7C8A, /*zenithNight*/ 0xFF0A0806, // днём: голубовато-серый зенит
             /*horizonDay*/ 0xFFC26A2E, /*horizonNight*/ 0xFF180A04, // днём: оранжевая пылевая дымка у горизонта
             /*sunset    */ 0x90B0521C, // насыщенный оранж-закат
-            bodies);
+            bodies,
+            /*daylightScale*/ 1.00F, // освещение НЕ трогаем (ванильное)
+            /*starNight*/ 0.35F, /*starDay*/ 0.00F); // звёзды ТОЛЬКО ночью, тускло (атмосфера)
     }
 
     // ---- ЕВРОПА: почти чёрное день/ночь, едва багрянец/фиолет на терминаторе ----
@@ -88,7 +91,8 @@ public final class SpaceClient {
             /*horizonDay*/ 0xFF04060C, /*horizonNight*/ 0xFF010102, // тёмно-синий у горизонта
             /*sunset    */ 0x50392046, // едва заметный фиолет
             bodies,
-            /*daylightScale*/ 0.12F); // день −88%: почти всегда полумрак
+            /*daylightScale*/ 0.12F, // день −88%: почти всегда полумрак
+            /*starNight*/ 1.00F, /*starDay*/ 0.75F); // звёзды всегда, днём −25%
     }
 
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {

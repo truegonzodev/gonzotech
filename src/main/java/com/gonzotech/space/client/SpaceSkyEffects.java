@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -57,6 +58,17 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     /** Радиус купола вокруг камеры. */
     private static final float DOME = 16.0F;
 
+    /** Кол-во звёзд (как в ванильном небе). */
+    private static final int STAR_COUNT = 1500;
+    /** Сид генерации звёзд — фиксирован, чтобы поле было стабильным между кадрами. */
+    private static final long STAR_SEED = 10842L;
+    /**
+     * Предрассчитанные вершины звёздных билбордов: {@code STAR_COUNT × 4 угла × 3
+     * координаты}. Считаются один раз (лениво) тем же алгоритмом, что и ванильные
+     * звёзды, и переиспользуются каждый кадр (перекрашиваются под текущую яркость).
+     */
+    private static float[] starCorners;
+
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private final float fogFactor;
@@ -83,6 +95,18 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * ~30 тьма), а не обычные сутки.
      */
     private final float daylightScale;
+    /**
+     * Яркость звёзд НОЧЬЮ и ДНЁМ (0..1). Между ними интерполируется по
+     * {@link #daylightFactor} (0=ночь, 1=день):
+     * <ul>
+     *   <li>Луна/Европа — {@code night=1.0}, {@code day≈0.8} (днём −20% как в
+     *       оверворлде: звёзды видны всегда, чуть тусклее);</li>
+     *   <li>Марс — {@code night≈0.3}, {@code day=0.0} (звёзды только ночью и
+     *       своей пониженной яркостью — атмосфера засвечивает).</li>
+     * </ul>
+     */
+    private final float starNightBrightness;
+    private final float starDayBrightness;
     private final List<CelestialBody> bodies;
     /**
      * Главное солнце мира (первое тело с {@link CelestialBody.Motion#SUN}) — от
@@ -107,21 +131,26 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            int horizonDayArgb, int horizonNightArgb,
                            int sunsetArgb,
                            List<CelestialBody> bodies) {
-        // Совместимость со старыми вызовами: без затемнения дня (Марс).
+        // Совместимость со старыми вызовами: без затемнения дня (Марс),
+        // звёзды ночью в полную силу, днём приглушены на 20%.
         this(fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
-            horizonNightArgb, sunsetArgb, bodies, 1.0F);
+            horizonNightArgb, sunsetArgb, bodies, 1.0F, 1.0F, 0.8F);
     }
 
     /**
-     * @param daylightScale множитель дневной яркости мира (0..1). {@code 1.0} —
-     *                      не трогать освещение (ванильное поведение).
+     * @param daylightScale        множитель дневной яркости мира (0..1). {@code 1.0} —
+     *                             не трогать освещение (ванильное поведение).
+     * @param starNightBrightness  яркость звёзд ночью (0..1).
+     * @param starDayBrightness    яркость звёзд днём (0..1); {@code 0} — днём не видны.
      */
     public SpaceSkyEffects(float fogFactor,
                            int zenithDayArgb, int zenithNightArgb,
                            int horizonDayArgb, int horizonNightArgb,
                            int sunsetArgb,
                            List<CelestialBody> bodies,
-                           float daylightScale) {
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness) {
         // cloudLevel=NaN (нет облаков), hasGround=false, constantAmbientLight=true.
         //
         // КРИТИЧНО (подтверждено: renderSky НИ РАЗУ не логировался): в 1.21.4
@@ -138,6 +167,8 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         this.horizonNightArgb = horizonNightArgb;
         this.sunsetArgb = sunsetArgb;
         this.daylightScale = Mth.clamp(daylightScale, 0.0F, 1.0F);
+        this.starNightBrightness = Mth.clamp(starNightBrightness, 0.0F, 1.0F);
+        this.starDayBrightness = Mth.clamp(starDayBrightness, 0.0F, 1.0F);
         this.bodies = List.copyOf(bodies);
         CelestialBody sun = null;
         for (CelestialBody b : this.bodies) {
@@ -254,6 +285,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
         renderDome(modelViewMatrix, zenith, horizon);
 
+        // ЗВЁЗДЫ — между куполом и телами: тела гарантированно рисуются ПОВЕРХ
+        // звёзд (порядок отрисовки = порядок наложения, depthTest выключен).
+        float starBrightness = Mth.lerp(dayFrac, starNightBrightness, starDayBrightness);
+        if (starBrightness > 0.001F) {
+            renderStars(modelViewMatrix, starBrightness);
+        }
+
         // Небесные тела — ванильный celestial-слой через общий буфер.
         renderBodies(level, partialTick, modelViewMatrix);
 
@@ -335,6 +373,87 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private float sunsetFactor(float dayFrac) {
         // Треугольник с пиком на dayFrac=0.5.
         return Mth.clamp(1.0F - Math.abs(dayFrac - 0.5F) * 2.0F, 0.0F, 1.0F);
+    }
+
+    /**
+     * Лениво считает геометрию звёздного поля тем же алгоритмом, что и ванильное
+     * небо ({@code LevelRenderer.drawStars}): {@link #STAR_COUNT} звёзд в случайных
+     * точках сферы, каждая — крошечный квад-билборд, развёрнутый к центру и
+     * случайно повёрнутый вокруг своей оси. Считается ОДИН раз (детерминированно,
+     * общий для всех миров) и кэшируется в {@link #starCorners}.
+     */
+    private static float[] buildStars() {
+        RandomSource random = RandomSource.create(STAR_SEED);
+        float[] corners = new float[STAR_COUNT * 4 * 3];
+        int idx = 0;
+        for (int i = 0; i < STAR_COUNT; i++) {
+            // Случайная точка внутри куба [-1,1]^3, отбрасываем далёкие/близкие —
+            // получаем равномерную «скорлупу» звёзд.
+            double x = random.nextFloat() * 2.0F - 1.0F;
+            double y = random.nextFloat() * 2.0F - 1.0F;
+            double z = random.nextFloat() * 2.0F - 1.0F;
+            double scale = 0.15F + random.nextFloat() * 0.1F; // размер звезды
+            double d = x * x + y * y + z * z;
+            if (d <= 0.010000000474974513 || d >= 1.0) {
+                i--;
+                continue;
+            }
+            // Нормируем на радиус небесной сферы (звёзды дальше тел, ближе купола
+            // не важно — depthTest выключен, важен лишь порядок отрисовки).
+            double inv = 1.0 / Math.sqrt(d);
+            x *= inv;
+            y *= inv;
+            z *= inv;
+            double cx = x * 100.0;
+            double cy = y * 100.0;
+            double cz = z * 100.0;
+            // Углы направления на звезду (для ориентации билборда к центру).
+            double aTheta = Math.atan2(x, z);
+            double sinT = Math.sin(aTheta), cosT = Math.cos(aTheta);
+            double aPhi = Math.atan2(Math.sqrt(x * x + z * z), y);
+            double sinP = Math.sin(aPhi), cosP = Math.cos(aPhi);
+            double roll = random.nextDouble() * Math.PI * 2.0; // случайный поворот
+            double sinR = Math.sin(roll), cosR = Math.cos(roll);
+            for (int c = 0; c < 4; c++) {
+                double ox = (double) ((c & 2) - 1) * scale;
+                double oy = (double) ((c + 1 & 2) - 1) * scale;
+                // Поворот угла квада вокруг оси взгляда, затем ориентация к центру.
+                double rox = ox * cosR - oy * sinR;
+                double roy = ox * sinR + oy * cosR;
+                double pz = roy * sinP;
+                double px = rox * cosT - pz * sinT;
+                double pz2 = rox * sinT + pz * cosT;
+                double py = -(roy * cosP);
+                corners[idx++] = (float) (cx + px);
+                corners[idx++] = (float) (cy + py);
+                corners[idx++] = (float) (cz + pz2);
+            }
+        }
+        return corners;
+    }
+
+    /**
+     * Рисует звёзды поверх купола (под телами). Цвет — белый с альфой
+     * {@code brightness}; аддитивный блендинг, чтобы звёзды «светились» на фоне
+     * неба, как ванильные ночью.
+     */
+    private void renderStars(Matrix4f mv, float brightness) {
+        if (starCorners == null) {
+            starCorners = buildStars();
+        }
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA,
+            GlStateManager.DestFactor.ONE);
+        RenderSystem.setShader(CoreShaders.POSITION);
+        RenderSystem.setShaderColor(brightness, brightness, brightness, brightness);
+        BufferBuilder buf = Tesselator.getInstance()
+            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
+        for (int i = 0; i < starCorners.length; i += 3) {
+            buf.addVertex(mv, starCorners[i], starCorners[i + 1], starCorners[i + 2]);
+        }
+        BufferUploader.drawWithShader(buf.buildOrThrow());
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.defaultBlendFunc();
     }
 
     /**
