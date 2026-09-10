@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -14,30 +15,28 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
- * ГРАВИТАЦИЯ КОСМИЧЕСКИХ МИРОВ (ситуация A — миры с твёрдой землёй).
+ * ГРАВИТАЦИЯ И ПОЛЁТ В КОСМИЧЕСКИХ МИРАХ.
  *
- * <p>Меняет саму физику через ванильные атрибуты 1.20.5+, а НЕ через эффекты
- * прыгучести/медленного падения (те дают «игрушечную лунную походку» с
- * фиксированной высотой прыжка, мигающий значок в HUD и ломают воду/лаву/полёт).
- * Атрибут честно уменьшает ускорение падения: прыжок выше, падение медленнее,
- * инерция сохраняется, элитры/парашют работают корректно.
- *
- * <p>Два транзитных (не сохраняемых) модификатора вешаются на игрока по
- * измерению:
+ * <p><b>Ситуация A (миры с поверхностью — Луна, Марс, Европа):</b>
+ * Пониженная гравитация через ванильные атрибуты ({@link Attributes#GRAVITY})
+ * и пропорциональная компенсация высоты падения ({@link Attributes#SAFE_FALL_DISTANCE}):
  * <ul>
- *   <li>{@link Attributes#GRAVITY} — задаём АБСОЛЮТНОЕ целевое ускорение через
- *       {@code ADD_VALUE} с дельтой {@code target − 0.08} (ванильная база 0.08).
- *       Луна {@code 0.03}, Марс {@code 0.045}, Европа {@code 0.025}.</li>
- *   <li>{@link Attributes#SAFE_FALL_DISTANCE} — поднимаем планку урона от
- *       падения. Урон в MC зависит от ВЫСОТЫ, а не от скорости: при низкой
- *       гравитации прыгаешь выше и без компенсации ловил бы урон при приземлении.
- *       Ставим планку ~пропорционально {@code 1/ratio} (во сколько выше прыжок).</li>
+ *   <li>Луна: {@code 0.030} (земная 0.080)</li>
+ *   <li>Марс: {@code 0.045}</li>
+ *   <li>Европа: {@code 0.025}</li>
  * </ul>
  *
- * <p>Реконсиляция — раз в тик на игрока, но действие происходит ТОЛЬКО когда
- * текущее состояние не совпадает с целевым (сравниваем наличие/значение
- * модификатора), поэтому дешёвая. Вышел в оверворлд/иной мир — модификаторы
- * снимаются, физика ванильная.
+ * <p><b>Ситуация B (пустотные миры — орбиты Солнца/Альфы Центавра, открытый космос):</b>
+ * <ul>
+ *   <li>Полная невесомость: {@code gravity = 0.0} (дельта −0.080)</li>
+ *   <li>Безопасная высота падения: {@code +1000} блоков (урон от падения отключён)</li>
+ *   <li>Медленный космический полёт в выживании/хардкоре/приключении:
+ *       {@code mayfly = true}, {@code flyingSpeed = 0.007F} (в ~7 раз медленнее ванильного 0.05F
+ *       для эффекта дрейфа и маневровых движителей в невесомости)</li>
+ *   <li>Креатив и спектатор не изменяются (полная ванильная скорость)</li>
+ * </ul>
+ *
+ * <p>При выходе из пустотных миров режим полёта и скорость автоматически возвращаются в ваниль.
  */
 public final class SpaceGravity {
 
@@ -48,12 +47,23 @@ public final class SpaceGravity {
     private static final double BASE_GRAVITY = 0.08;
     /** Ванильная база безопасной высоты падения (блоки). */
     private static final double BASE_SAFE_FALL = 3.0;
+    /** Ванильная базовая скорость полёта. */
+    private static final float VANILLA_FLYING_SPEED = 0.05F;
+    /** Очень медленная скорость маневрирования в невесомости (дрейф). */
+    private static final float ZERO_G_FLYING_SPEED = 0.007F;
 
     /** Стабильные id модификаторов (lowercase). */
     private static final ResourceLocation GRAVITY_ID =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "space_gravity");
     private static final ResourceLocation SAFE_FALL_ID =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "space_safe_fall");
+
+    /** Проверка, является ли измерение пустотным космическим миром (Ситуация B). */
+    public static boolean isVoidSpace(ResourceKey<Level> dim) {
+        return dim == SpaceDimensions.SOLAR_ORBIT
+            || dim == SpaceDimensions.ALPHA_CENTAURI_ORBIT
+            || dim == SpaceDimensions.DEEP_SPACE;
+    }
 
     /**
      * Целевая гравитация мира или {@code -1}, если мир не наш (физика ванильная).
@@ -62,39 +72,90 @@ public final class SpaceGravity {
         if (dim == SpaceDimensions.MOON) return 0.030;
         if (dim == SpaceDimensions.MARS) return 0.045;
         if (dim == SpaceDimensions.EUROPA) return 0.025;
+        if (isVoidSpace(dim)) return 0.0;
         return -1.0;
     }
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
-        // Только сервер — атрибуты синхронизируются на клиент сами.
-        if (player.level().isClientSide()) return;
-
-        double target = targetGravity(player.level().dimension());
-        if (target < 0) {
-            // Не наш мир — снять оба модификатора, если висят.
-            removeModifier(player, Attributes.GRAVITY, GRAVITY_ID);
-            removeModifier(player, Attributes.SAFE_FALL_DISTANCE, SAFE_FALL_ID);
+        // Только сервер — атрибуты и способности синхронизируются на клиент.
+        if (player.level().isClientSide() || !(player instanceof ServerPlayer serverPlayer)) {
             return;
         }
 
-        // Гравитация: дельта к базе (ADD_VALUE) — итог = 0.08 + delta = target.
-        double gravityDelta = target - BASE_GRAVITY;
-        ensureModifier(player, Attributes.GRAVITY, GRAVITY_ID, gravityDelta);
+        ResourceKey<Level> dim = serverPlayer.level().dimension();
+        double target = targetGravity(dim);
 
-        // Безопасная высота падения: чем ниже гравитация, тем выше прыжок
-        // (высота ∝ 1/gravity), поэтому планку поднимаем во столько же раз.
-        double ratio = target / BASE_GRAVITY;              // <1 в космосе
-        double safeFall = BASE_SAFE_FALL / Math.max(0.05, ratio); // ~1/ratio
-        double safeFallDelta = safeFall - BASE_SAFE_FALL;
-        ensureModifier(player, Attributes.SAFE_FALL_DISTANCE, SAFE_FALL_ID, safeFallDelta);
+        if (target < 0) {
+            // Не наш мир — снять оба модификатора, если висят.
+            removeModifier(serverPlayer, Attributes.GRAVITY, GRAVITY_ID);
+            removeModifier(serverPlayer, Attributes.SAFE_FALL_DISTANCE, SAFE_FALL_ID);
+            restoreSurvivalFlight(serverPlayer);
+            return;
+        }
+
+        // 1. ГРАВИТАЦИЯ
+        double gravityDelta = target - BASE_GRAVITY;
+        ensureModifier(serverPlayer, Attributes.GRAVITY, GRAVITY_ID, gravityDelta);
+
+        // 2. БЕЗОПАСНАЯ ВЫСОТА ПАДЕНИЯ
+        if (isVoidSpace(dim)) {
+            ensureModifier(serverPlayer, Attributes.SAFE_FALL_DISTANCE, SAFE_FALL_ID, 1000.0);
+            applyVoidSpaceFlight(serverPlayer);
+        } else {
+            double ratio = target / BASE_GRAVITY; // <1 в космосе
+            double safeFall = BASE_SAFE_FALL / Math.max(0.05, ratio);
+            double safeFallDelta = safeFall - BASE_SAFE_FALL;
+            ensureModifier(serverPlayer, Attributes.SAFE_FALL_DISTANCE, SAFE_FALL_ID, safeFallDelta);
+            restoreSurvivalFlight(serverPlayer);
+        }
+    }
+
+    /** Включить медленный космический полёт в выживании/приключении в невесомости. */
+    private static void applyVoidSpaceFlight(ServerPlayer player) {
+        if (player.isCreative() || player.isSpectator()) {
+            return; // Креатив и спектатор не трогаем
+        }
+
+        boolean changed = false;
+        if (!player.getAbilities().mayfly) {
+            player.getAbilities().mayfly = true;
+            changed = true;
+        }
+        if (Math.abs(player.getAbilities().getFlyingSpeed() - ZERO_G_FLYING_SPEED) > 1.0E-4F) {
+            player.getAbilities().setFlyingSpeed(ZERO_G_FLYING_SPEED);
+            changed = true;
+        }
+        if (changed) {
+            player.onUpdateAbilities();
+        }
+    }
+
+    /** Вернуть стандартные параметры способностей вне пустотного космоса. */
+    private static void restoreSurvivalFlight(ServerPlayer player) {
+        if (player.isCreative() || player.isSpectator()) {
+            return;
+        }
+
+        boolean changed = false;
+        if (player.getAbilities().mayfly) {
+            player.getAbilities().mayfly = false;
+            player.getAbilities().flying = false;
+            changed = true;
+        }
+        if (Math.abs(player.getAbilities().getFlyingSpeed() - VANILLA_FLYING_SPEED) > 1.0E-4F) {
+            player.getAbilities().setFlyingSpeed(VANILLA_FLYING_SPEED);
+            changed = true;
+        }
+        if (changed) {
+            player.onUpdateAbilities();
+        }
     }
 
     /**
      * Гарантирует, что на атрибуте висит транзитный ADD_VALUE-модификатор с
-     * данным id и значением. Если значение уже верное — ничего не делает
-     * (дёшево). Если отличается/отсутствует — обновляет.
+     * данным id и значением.
      */
     private static void ensureModifier(Player player, Holder<Attribute> attr,
                                        ResourceLocation id, double amount) {
@@ -104,7 +165,6 @@ public final class SpaceGravity {
         if (existing != null && Math.abs(existing.amount() - amount) < 1.0E-6) {
             return; // уже правильное значение
         }
-        // addOrUpdateTransientModifier заменяет по id, если уже есть.
         inst.addOrUpdateTransientModifier(new AttributeModifier(
             id, amount, AttributeModifier.Operation.ADD_VALUE));
     }
