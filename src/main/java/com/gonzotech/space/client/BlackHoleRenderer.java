@@ -17,27 +17,22 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 
 /**
- * Рендерер горизонта событий Чёрных Дыр (Шаг 1).
+ * Рендерер горизонта событий Чёрных Дыр (Шаг 1 — корректное позиционирование).
  *
- * <p>Рисует гигантскую идеально гладкую полую математическую сферу чистого чёрного
- * цвета в абсолютных мировых координатах (0, 160, 0):
+ * <p>Рисует гигантскую идеально гладкую полую сферу чистого чёрного цвета
+ * в абсолютных мировых координатах (0, 160, 0):
  * <ul>
  *   <li><b>Yx989-k2</b>: радиус 120 блоков</li>
  *   <li><b>Zangler-11</b>: радиус 200 блоков</li>
  * </ul>
  *
- * <p>Особенности:
- * <ul>
- *   <li>Рендерится через {@link RenderLevelStageEvent} на этапе {@code AFTER_SKY} —
- *       видна с любого расстояния в мире, не зависит от дальности прогрузки чанков/сущностей
- *       и не исчезает при повороте камеры (без frustum culling багов).</li>
- *   <li>Отключён Backface Culling ({@link RenderSystem#disableCull}): сфера полая,
- *       в неё можно физически влететь и вылететь обратно.</li>
- *   <li>Работает буфер глубины: блоки и метеоры перед дырой перекрывают её,
- *       а фон неба и далёкие звёзды за ней полностью поглощаются горизонтом событий.</li>
- * </ul>
+ * <p>Устранено двойное умножение матрицы вида (V x V) через сброс
+ * {@link RenderSystem#getModelViewStack()} в единичную матрицу во время отрисовки.
+ * Теперь ЧД физически находится ровно на (0, 160, 0), летя на неё вперёд (W)
+ * игрок приближается к ней, а оглядываясь назад — видит позади себя.
  */
 public final class BlackHoleRenderer {
 
@@ -85,16 +80,25 @@ public final class BlackHoleRenderer {
         Camera camera = event.getCamera();
         Vec3 camPos = camera.getPosition();
 
-        // Смещение относительно камеры игрока
+        // Смещение центра ЧД относительно камеры игрока в мировом пространстве
         float rx = (float) (CENTER_X - camPos.x);
         float ry = (float) (CENTER_Y - camPos.y);
         float rz = (float) (CENTER_Z - camPos.z);
 
+        // Итоговая матрица: поворот камеры (modelViewMatrix) + смещение в центр ЧД + масштаб радиуса
         Matrix4f mv = new Matrix4f(event.getModelViewMatrix());
         mv.translate(rx, ry, rz);
         mv.scale(radius);
 
+        // Устранение двойного умножения матрицы вида (V x V):
+        // Стек шейдера временно ставим в единицу, а поворот камеры запечён в вершинах mv.
+        Matrix4fStack mvStack = RenderSystem.getModelViewStack();
+        mvStack.pushMatrix();
+        mvStack.identity();
+
         renderBlackSphere(mv);
+
+        mvStack.popMatrix();
     }
 
     /** Отрисовка непроглядной черной полой сферы. */
@@ -157,19 +161,18 @@ public final class BlackHoleRenderer {
                 float z22 = r2 * (float) Math.sin(theta2);
 
                 // Quad v1, v2, v3, v4
-                // 1
                 vertices[idx++] = x11;
                 vertices[idx++] = y1;
                 vertices[idx++] = z11;
-                // 2
+
                 vertices[idx++] = x12;
                 vertices[idx++] = y1;
                 vertices[idx++] = z12;
-                // 3
+
                 vertices[idx++] = x22;
                 vertices[idx++] = y2;
                 vertices[idx++] = z22;
-                // 4
+
                 vertices[idx++] = x21;
                 vertices[idx++] = y2;
                 vertices[idx++] = z21;
