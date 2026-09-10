@@ -20,19 +20,18 @@ import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
 /**
- * Рендерер горизонта событий Чёрных Дыр (Шаг 1 — корректное позиционирование).
+ * Рендерер горизонта событий и гравитационного линзирования Чёрных Дыр.
  *
- * <p>Рисует гигантскую идеально гладкую полую сферу чистого чёрного цвета
- * в абсолютных мировых координатах (0, 160, 0):
+ * <p>Рисует релятивистскую Чёрную Дыру в координатах (0, 160, 0):
  * <ul>
- *   <li><b>Yx989-k2</b>: радиус 120 блоков</li>
- *   <li><b>Zangler-11</b>: радиус 200 блоков</li>
+ *   <li><b>Yx989-k2</b>: радиус Шварцшильда 120 блоков</li>
+ *   <li><b>Zangler-11</b>: радиус Шварцшильда 200 блоков</li>
  * </ul>
  *
- * <p>Устранено двойное умножение матрицы вида (V x V) через сброс
- * {@link RenderSystem#getModelViewStack()} в единичную матрицу во время отрисовки.
- * Теперь ЧД физически находится ровно на (0, 160, 0), летя на неё вперёд (W)
- * игрок приближается к ней, а оглядываясь назад — видит позади себя.
+ * <p>Использует GPU-шейдер гравитационного линзирования ({@link BlackHoleShader})
+ * для физически достоверного искривления пространства-времени, аккреционного диска
+ * Гаргантюа, эффекта Доплера и фотонного кольца Эйнштейна. При сбое шейдера
+ * плавно переключается на запасную геометрическую сферу.
  */
 public final class BlackHoleRenderer {
 
@@ -48,11 +47,11 @@ public final class BlackHoleRenderer {
     public static final float RADIUS_YX989_K2 = 120.0F;
     public static final float RADIUS_ZANGLER_11 = 200.0F;
 
-    /** Число секторов и колец сферы для идеально гладкой геометрии. */
+    /** Число секторов и колец запасной сферы. */
     private static final int SPHERE_STACKS = 64;
     private static final int SPHERE_SECTORS = 64;
 
-    /** Предрассчитанный массив вершин единичной сферы. */
+    /** Предрассчитанный массив вершин единичной сферы (fallback). */
     private static float[] sphereVertices;
 
     @SubscribeEvent
@@ -80,38 +79,41 @@ public final class BlackHoleRenderer {
         Camera camera = event.getCamera();
         Vec3 camPos = camera.getPosition();
 
-        // Смещение центра ЧД относительно камеры игрока в мировом пространстве
+        // Основной рендер через шейдер гравитационного линзирования
+        if (BlackHoleShader.init()) {
+            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(), radius);
+            return;
+        }
+
+        // Запасной путь (fallback) — сплошная чёрная полая сфера
         float rx = (float) (CENTER_X - camPos.x);
         float ry = (float) (CENTER_Y - camPos.y);
         float rz = (float) (CENTER_Z - camPos.z);
 
-        // Итоговая матрица: поворот камеры (modelViewMatrix) + смещение в центр ЧД + масштаб радиуса
         Matrix4f mv = new Matrix4f(event.getModelViewMatrix());
         mv.translate(rx, ry, rz);
         mv.scale(radius);
 
-        // Устранение двойного умножения матрицы вида (V x V):
-        // Стек шейдера временно ставим в единицу, а поворот камеры запечён в вершинах mv.
         Matrix4fStack mvStack = RenderSystem.getModelViewStack();
         mvStack.pushMatrix();
         mvStack.identity();
 
-        renderBlackSphere(mv);
+        renderFallbackBlackSphere(mv);
 
         mvStack.popMatrix();
     }
 
-    /** Отрисовка непроглядной черной полой сферы. */
-    private static void renderBlackSphere(Matrix4f matrix) {
+    /** Запасная отрисовка непроглядной черной полой сферы при ошибке шейдера. */
+    private static void renderFallbackBlackSphere(Matrix4f matrix) {
         if (sphereVertices == null) {
             sphereVertices = buildUnitSphere(SPHERE_STACKS, SPHERE_SECTORS);
         }
 
         RenderSystem.enableDepthTest();
         RenderSystem.depthMask(true);
-        RenderSystem.depthFunc(515); // GL_LEQUAL — честная глубина
-        RenderSystem.disableCull();   // Полая сфера: видна снаружи и изнутри
-        RenderSystem.disableBlend();  // Чистый плотный непроглядный черный
+        RenderSystem.depthFunc(515); // GL_LEQUAL
+        RenderSystem.disableCull();
+        RenderSystem.disableBlend();
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
 
         BufferBuilder buf = Tesselator.getInstance()
@@ -119,7 +121,7 @@ public final class BlackHoleRenderer {
 
         for (int i = 0; i < sphereVertices.length; i += 3) {
             buf.addVertex(matrix, sphereVertices[i], sphereVertices[i + 1], sphereVertices[i + 2])
-               .setColor(0xFF000000); // Глубокий непроглядный черный
+               .setColor(0xFF000000);
         }
 
         BufferUploader.drawWithShader(buf.buildOrThrow());
