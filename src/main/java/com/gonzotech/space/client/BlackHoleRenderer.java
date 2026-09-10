@@ -38,19 +38,17 @@ import java.util.List;
  *   <li><b>yx989_k2:</b>
  *     <ul>
  *       <li>Горизонт событий ($r_s$): {@code 120} блоков</li>
- *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда ({@code r_min < 1.48 r_s})</li>
- *       <li>ISCO-зазор: {@code 120 - 165} блоков</li>
- *       <li>Аккреционный диск: {@code 165 - 500} блоков</li>
- *       <li>Кольцо Дайсона: радиус {@code 360} блоков (уменьшен для отсутствия клиппинга и плотной компоновки)</li>
+ *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда (критический радиус $b_c$)</li>
+ *       <li>Аккреционный диск: {@code 180 - 400} блоков (от {@code 1.50 r_s} до {@code 3.33 r_s})</li>
+ *       <li>Кольцо Дайсона: радиус {@code 360} блоков (с геометрическим отсечением за тенью ЧД)</li>
  *     </ul>
  *   </li>
  *   <li><b>zangler_11:</b>
  *     <ul>
  *       <li>Горизонт событий ($r_s$): {@code 200} блоков</li>
- *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда ({@code r_min < 1.48 r_s})</li>
- *       <li>ISCO-зазор: {@code 200 - 276} блоков</li>
- *       <li>Аккреционный диск: {@code 276 - 1300} блоков</li>
- *       <li>Кольцо Дайсона: радиус {@code 750} блоков (уменьшен для гарантированной видимости)</li>
+ *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда (критический радиус $b_c$)</li>
+ *       <li>Аккреционный диск: {@code 300 - 666} блоков (от {@code 1.50 r_s} до {@code 3.33 r_s})</li>
+ *       <li>Кольцо Дайсона: радиус {@code 750} блоков (с геометрическим отсечением за тенью ЧД)</li>
  *     </ul>
  *   </li>
  * </ul>
@@ -67,18 +65,14 @@ public final class BlackHoleRenderer {
 
     // === ФИНАЛЬНЫЕ ПАРАМЕТРЫ ДЛЯ BLACKHOLE_YX989_K2 ===
     public static final float RADIUS_YX989_K2 = 120.0F;
-    public static final float RING_MIN_YX989_K2 = 126.0F;
-    public static final float RING_MAX_YX989_K2 = 134.0F;
-    public static final float DISK_IN_YX989_K2 = 165.0F;
-    public static final float DISK_OUT_YX989_K2 = 500.0F;
+    public static final float DISK_IN_YX989_K2 = 180.0F;
+    public static final float DISK_OUT_YX989_K2 = 400.0F;
     public static final float DYSON_RING_YX989_K2 = 360.0F;
 
     // === ФИНАЛЬНЫЕ ПАРАМЕТРЫ ДЛЯ BLACKHOLE_ZANGLER_11 ===
     public static final float RADIUS_ZANGLER_11 = 200.0F;
-    public static final float RING_MIN_ZANGLER_11 = 214.0F;
-    public static final float RING_MAX_ZANGLER_11 = 224.0F;
-    public static final float DISK_IN_ZANGLER_11 = 276.0F;
-    public static final float DISK_OUT_ZANGLER_11 = 1300.0F;
+    public static final float DISK_IN_ZANGLER_11 = 300.0F;
+    public static final float DISK_OUT_ZANGLER_11 = 666.0F;
     public static final float DYSON_RING_ZANGLER_11 = 750.0F;
 
     /** Текстура ванильной пиксельной пылинки 8x8 px. */
@@ -223,23 +217,15 @@ public final class BlackHoleRenderer {
         }
 
         ResourceKey<Level> dim = level.dimension();
-        float radius, ringMin, ringMax, diskIn, diskOut, dysonRadius;
+        float radius, dysonRadius;
         boolean isDysonActive;
 
         if (dim == SpaceDimensions.BLACKHOLE_YX989_K2) {
             radius = RADIUS_YX989_K2;
-            ringMin = RING_MIN_YX989_K2;
-            ringMax = RING_MAX_YX989_K2;
-            diskIn = DISK_IN_YX989_K2;
-            diskOut = DISK_OUT_YX989_K2;
             dysonRadius = DYSON_RING_YX989_K2;
             isDysonActive = SpaceSkyState.yx989Dyson;
         } else if (dim == SpaceDimensions.BLACKHOLE_ZANGLER_11) {
             radius = RADIUS_ZANGLER_11;
-            ringMin = RING_MIN_ZANGLER_11;
-            ringMax = RING_MAX_ZANGLER_11;
-            diskIn = DISK_IN_ZANGLER_11;
-            diskOut = DISK_OUT_ZANGLER_11;
             dysonRadius = DYSON_RING_ZANGLER_11;
             isDysonActive = SpaceSkyState.zanglerDyson;
         } else {
@@ -251,8 +237,7 @@ public final class BlackHoleRenderer {
 
         // 1. Основной рендер релятивистской Чёрной Дыры через GPU-шейдер
         if (BlackHoleShader.init()) {
-            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
-                                   radius, ringMin, ringMax, diskIn, diskOut);
+            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(), radius);
         } else {
             // Запасной путь (fallback)
             float rx = (float) (CENTER_X - camPos.x);
@@ -277,7 +262,7 @@ public final class BlackHoleRenderer {
 
         // 3. Рендеринг 3D Кольца Дайсона вокруг Чёрной Дыры (если активировано)
         if (isDysonActive) {
-            renderDysonRing(event, camera, camPos, dysonRadius);
+            renderDysonRing(event, camera, camPos, dysonRadius, radius);
         }
     }
 
@@ -291,9 +276,11 @@ public final class BlackHoleRenderer {
      *   <li>Длина сегмента: {@code ~16} блоков вдоль окружности</li>
      *   <li>Вращение по Y: 1 оборот за 200 сек</li>
      *   <li>Кульбит (вращение по X): 1 оборот за 1500 сек</li>
+     *   <li><b>Геометрическая окклюзия тени ЧД:</b> сегменты, перекрываемые горизонтом событий
+     *       со стороны камеры, отсекаются и не просвечивают сквозь черную дыру.</li>
      * </ul>
      */
-    private static void renderDysonRing(RenderLevelStageEvent event, Camera camera, Vec3 camPos, float ringRadius) {
+    private static void renderDysonRing(RenderLevelStageEvent event, Camera camera, Vec3 camPos, float ringRadius, float bhRadius) {
         Matrix4f mvMatrix = event.getModelViewMatrix();
 
         Matrix4fStack mvStack = RenderSystem.getModelViewStack();
@@ -338,6 +325,16 @@ public final class BlackHoleRenderer {
         float oy = (float) (CENTER_Y - camPos.y);
         float oz = (float) (CENTER_Z - camPos.z);
 
+        // Параметры оптической тени Шварцшильда для отсечения сегментов за черной дырой
+        double toCx = ox;
+        double toCy = oy;
+        double toCz = oz;
+        double distCSq = toCx * toCx + toCy * toCy + toCz * toCz;
+        double distC = Math.sqrt(distCSq);
+
+        double bc = (double) bhRadius * 2.598 * Math.sqrt(Math.max(0.01, 1.0 - (double) bhRadius / Math.max((double) bhRadius, distC)));
+        double shadowRadiusSq = bc * bc;
+
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 
@@ -354,6 +351,29 @@ public final class BlackHoleRenderer {
         for (int i = 0; i < segments; i++) {
             float a0 = i * angleStep;
             float a1 = (i + 1) * angleStep;
+            float aMid = (i + 0.5F) * angleStep;
+
+            // Проверка геометрического перекрытия тенью ЧД для центра сегмента
+            float cosMid = (float) Math.cos(aMid), sinMid = (float) Math.sin(aMid);
+            Vector3f pMid = new Vector3f(ringRadius * cosMid, 0.0F, ringRadius * sinMid).rotate(ringRot).add(ox, oy, oz);
+
+            double toPx = pMid.x;
+            double toPy = pMid.y;
+            double toPz = pMid.z;
+            double distPSq = toPx * toPx + toPy * toPy + toPz * toPz;
+            double distP = Math.sqrt(distPSq);
+
+            double dirX = toPx / distP;
+            double dirY = toPy / distP;
+            double dirZ = toPz / distP;
+
+            double tProj = toCx * dirX + toCy * dirY + toCz * dirZ;
+            if (tProj > 0.0 && tProj < distP) {
+                double perpDistSq = distCSq - (tProj * tProj);
+                if (perpDistSq <= shadowRadiusSq) {
+                    continue; // Сегмент находится за гравитационной тенью ЧД - не рендерим его!
+                }
+            }
 
             float cos0 = (float) Math.cos(a0), sin0 = (float) Math.sin(a0);
             float cos1 = (float) Math.cos(a1), sin1 = (float) Math.sin(a1);

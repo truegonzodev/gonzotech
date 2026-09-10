@@ -36,6 +36,7 @@ public final class SpaceClient {
                 1F, -90F, 0F, 180F)
         );
         return new SpaceSkyEffects(
+            192.0F, true,
             0.0F,
             /*zenithDay */ 0xFF78A7FF, /*zenithNight*/ 0xFF050510,
             /*horizonDay*/ 0xFFC0D8FF, /*horizonNight*/ 0xFF0A0A18,
@@ -74,6 +75,7 @@ public final class SpaceClient {
                 1F, -70F, 34F, 162F)
         );
         return new SpaceSkyEffects(
+            128.0F, true,
             0.22F,
             /*zenithDay */ 0xFF6E7C8A, /*zenithNight*/ 0xFF0A0806, // днём: голубовато-серый зенит
             /*horizonDay*/ 0xFFC26A2E, /*horizonNight*/ 0xFF180A04, // днём: оранжевая пылевая дымка у горизонта

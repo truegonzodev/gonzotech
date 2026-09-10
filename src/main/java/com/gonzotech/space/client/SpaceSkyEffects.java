@@ -101,7 +101,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     /** Множитель плотности тумана для мира. */
     private final float fogFactor;
 
-    public SpaceSkyEffects(float fogFactor,
+    public SpaceSkyEffects(float cloudHeight,
+                           boolean hasGround,
+                           float fogFactor,
                            int zenithDayArgb, int zenithNightArgb,
                            int horizonDayArgb, int horizonNightArgb,
                            int sunsetArgb,
@@ -109,12 +111,14 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float daylightScale,
                            float starNightBrightness,
                            float starDayBrightness) {
-        this(fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+        this(cloudHeight, hasGround, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
             horizonNightArgb, sunsetArgb, bodies, daylightScale,
             starNightBrightness, starDayBrightness, -1.0F);
     }
 
-    public SpaceSkyEffects(float fogFactor,
+    public SpaceSkyEffects(float cloudHeight,
+                           boolean hasGround,
+                           float fogFactor,
                            int zenithDayArgb, int zenithNightArgb,
                            int horizonDayArgb, int horizonNightArgb,
                            int sunsetArgb,
@@ -123,7 +127,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float starNightBrightness,
                            float starDayBrightness,
                            float fixedDaylight) {
-        super(192.0F, true, normalSkyType(), false, false);
+        super(cloudHeight, hasGround, normalSkyType(), false, false);
         this.fogFactor = fogFactor;
         this.zenithDayArgb = zenithDayArgb;
         this.zenithNightArgb = zenithNightArgb;
@@ -143,6 +147,33 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             }
         }
         this.primarySun = sun;
+    }
+
+    public SpaceSkyEffects(float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness) {
+        this(Float.NaN, false, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, daylightScale,
+            starNightBrightness, starDayBrightness, -1.0F);
+    }
+
+    public SpaceSkyEffects(float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness,
+                           float fixedDaylight) {
+        this(Float.NaN, false, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, daylightScale,
+            starNightBrightness, starDayBrightness, fixedDaylight);
     }
 
     private static DimensionSpecialEffects.SkyType normalSkyType() {
