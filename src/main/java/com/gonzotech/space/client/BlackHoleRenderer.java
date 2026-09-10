@@ -241,7 +241,16 @@ public final class BlackHoleRenderer {
         Camera camera = event.getCamera();
         Vec3 camPos = camera.getPosition();
 
-        // 1. Основной рендер релятивистской Чёрной Дыры через GPU-шейдер
+        // 1. Сначала рисуем геометрию кольца Дайсона в depth buffer.
+        // Затем шейдер ЧД смешивает полупрозрачную плазму поверх тех сегментов,
+        // которые находятся за аккреционным диском. Обратный порядок заставляет
+        // кольцо полностью перекрывать диск и лишает его оранжевого тинта.
+        if (isDysonActive) {
+            renderDysonRing(event, camera, camPos, dysonRadius, radius);
+        }
+
+        // 2. Основной рендер релятивистской Чёрной Дыры через GPU-шейдер.
+        // Его depth и alpha теперь корректно скрывают/тонируют дальнюю часть кольца.
         if (BlackHoleShader.init()) {
             BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
                                    radius, diskIn, diskOut);
@@ -262,14 +271,10 @@ public final class BlackHoleRenderer {
             mvStack.popMatrix();
         }
 
-        // 2. Рендеринг гигантских vanilla-like билборд-частиц (12–38.4 блоков)
+        // 3. Рендеринг гигантских vanilla-like билборд-частиц (12–38.4 блоков).
+        // Частицы остаются последним слоем плазмы и также проходят depth-test ЧД.
         if (!PARTICLES.isEmpty()) {
             renderAccretionParticles(event, camera, camPos, radius);
-        }
-
-        // 3. Рендеринг 3D Кольца Дайсона вокруг Чёрной Дыры (если активировано)
-        if (isDysonActive) {
-            renderDysonRing(event, camera, camPos, dysonRadius, radius);
         }
     }
 
