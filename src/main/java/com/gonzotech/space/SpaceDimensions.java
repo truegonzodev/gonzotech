@@ -17,10 +17,6 @@ import java.util.Map;
  * Сами измерения/типы/ноиз-настройки описаны data-паком в
  * {@code data/gonzotech/dimension[_type]} и {@code worldgen/*} — движок грузит
  * их сам; Java-код лишь ссылается на них по id.
- *
- * <p><b>Группа 1</b> — настоящие измерения с генерацией мира и скайбоксом:
- * Луна, Марс, Европа. Остальные группы (пустые орбиты, орбиты чёрной дыры)
- * добавляются следующими итерациями и регистрируются здесь же.
  */
 public final class SpaceDimensions {
 
@@ -51,6 +47,10 @@ public final class SpaceDimensions {
     /** Открытый космос: звёзды + 3-4 больших квада (галактики), медленный дрейф. */
     public static final ResourceKey<Level> DEEP_SPACE = dim("deep_space");
 
+    // --- Группа 3: миры чёрных дыр ---------------------------------------
+    public static final ResourceKey<Level> BLACKHOLE_YX989_K2 = dim("blackhole_yx989_k2");
+    public static final ResourceKey<Level> BLACKHOLE_ZANGLER_11 = dim("blackhole_zangler_11");
+
     // --- Идентификаторы скайбоксов (dimension_type -> "effects") ----------
     public static final ResourceLocation MOON_SKY =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "moon_sky");
@@ -64,4 +64,8 @@ public final class SpaceDimensions {
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "alpha_centauri_orbit_sky");
     public static final ResourceLocation DEEP_SPACE_SKY =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "deep_space_sky");
+    public static final ResourceLocation BLACKHOLE_YX989_K2_SKY =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "blackhole_yx989_k2_sky");
+    public static final ResourceLocation BLACKHOLE_ZANGLER_11_SKY =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "blackhole_zangler_11_sky");
 }

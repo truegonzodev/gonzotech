@@ -110,7 +110,11 @@ public final class SpaceCommand {
 
         ResourceKey<Level> key = SpaceDimensions.DIMENSIONS.get(name);
         if (key == null) {
-            key = VANILLA.get(name);
+            String normalized = name.toLowerCase(java.util.Locale.ROOT).replace('-', '_');
+            key = SpaceDimensions.DIMENSIONS.get(normalized);
+        }
+        if (key == null) {
+            key = VANILLA.get(name.toLowerCase(java.util.Locale.ROOT));
         }
         if (key == null) {
             source.sendFailure(Component.literal("§c[GonzoTech] Неизвестное измерение: " + name));

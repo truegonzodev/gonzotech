@@ -15,11 +15,6 @@ import java.util.List;
  * оттенок) и список небесных тел с СОБСТВЕННЫМИ текстурами и траекториями.
  * Солнца рисуются аддитивно ({@link CelestialBody#sun}), планеты обычным
  * наложением ({@link CelestialBody#planet}).
- *
- * <p>Смена цвета неба день/ночь — во всех трёх мирах (по требованию), но с
- * характером: Марс — светлое оранж-голубое днём → закат → тёмное; Луна —
- * тёмно-синее → лёгкий багрянец на закате → почти чёрное; Европа — почти чёрное
- * день/ночь с едва заметным багрянцем/фиолетом на терминаторе.
  */
 public final class SpaceClient {
 
@@ -96,18 +91,12 @@ public final class SpaceClient {
     }
 
     // ---- ОРБИТА СОЛНЦА: чёрное небо, огромное статичное солнце у горизонта ----
-    // Земля обходит горизонт по кругу и заходит за солнце. Освещение заморожено
-    // на «закатном» уровне (~0.4), нет смены дня/ночи. Звёзды 80%.
     private static SpaceSkyEffects solarOrbit() {
-        // Солнце huge: квад Юпитера был 70 → ×0.7 ≈ 49. Земля меньше.
         List<CelestialBody> bodies = List.of(
-            // Земля рисуется ПЕРВОЙ (ниже солнца по слоям) → солнце её перекрывает.
             new CelestialBody(tex("solar_orbit/earth"), 8F,
                 Motion.HORIZON_ORBIT, /*cycleDays*/ 8F, /*yaw n/a*/ 0F,
                 /*altitude*/ 6F, /*startAzimuth*/ 200F, 0xFFFFFFFF,
                 CelestialBody.Blend.NORMAL),
-            // Огромное солнце: FIXED у горизонта на западе (phaseDeg=90 → горизонт),
-            // yaw=90 разворачивает азимут на запад.
             CelestialBody.sun(tex("solar_orbit/sun"), 49F, Motion.FIXED,
                 1F, /*yaw=запад*/ 90F, 0F, /*phase=горизонт*/ 90F)
         );
@@ -115,11 +104,11 @@ public final class SpaceClient {
             0.10F,
             /*zenithDay */ 0xFF010101, /*zenithNight*/ 0xFF010101, // чёрное всегда
             /*horizonDay*/ 0xFF140A04, /*horizonNight*/ 0xFF140A04, // тёмный тёплый у горизонта
-            /*sunset    */ 0x00000000, // тон не подмешиваем (фикс. освещение)
+            /*sunset    */ 0x00000000,
             bodies,
-            /*daylightScale*/ 1.00F,   // свет не трогаем атрибутно
-            /*starNight*/ 0.88F, /*starDay*/ 0.88F, // звёзды 88%
-            /*fixedDaylight*/ 0.40F);  // «заморожено» на закате ~40%
+            /*daylightScale*/ 1.00F,
+            /*starNight*/ 0.88F, /*starDay*/ 0.88F,
+            /*fixedDaylight*/ 0.40F);
     }
 
     // ---- ОРБИТА АЛЬФА ЦЕНТАВРА: то же, но БЕЗ Земли ----
@@ -139,11 +128,8 @@ public final class SpaceClient {
             /*fixedDaylight*/ 0.40F);
     }
 
-    // ---- ОТКРЫТЫЙ КОСМОС: звёзды + 3-4 больших квада-галактики, хаотичный дрейф ----
+    // ---- ОТКРЫТЫЙ КОСМОС И МИРЫ ЧЁРНЫХ ДЫР: звёзды + галактики ----
     private static SpaceSkyEffects deepSpace() {
-        // Галактики: большие полупрозрачные квады, медленный дрейф по кругу (как
-        // Луна, cycleDays~60), НО у каждой СВОИ оси (yaw/tilt) → траектории
-        // хаотичные, не в ряд запад→восток. Blend ADDITIVE (светятся на чёрном).
         List<CelestialBody> bodies = List.of(
             new CelestialBody(tex("deep_space/galaxy1"), 40F, Motion.SUN,
                 60F, /*yaw*/ 10F, /*tilt*/ 25F, /*phase*/ 0F,
@@ -165,8 +151,8 @@ public final class SpaceClient {
             /*sunset    */ 0x00000000,
             bodies,
             /*daylightScale*/ 1.00F,
-            /*starNight*/ 0.90F, /*starDay*/ 0.90F, // звёздное небо 90%
-            /*fixedDaylight*/ 0.35F); // лёгкое ровное освещение (космос)
+            /*starNight*/ 0.90F, /*starDay*/ 0.90F,
+            /*fixedDaylight*/ 0.35F);
     }
 
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {
@@ -176,5 +162,7 @@ public final class SpaceClient {
         event.register(SpaceDimensions.SOLAR_ORBIT_SKY, solarOrbit());
         event.register(SpaceDimensions.ALPHA_CENTAURI_ORBIT_SKY, alphaCentauriOrbit());
         event.register(SpaceDimensions.DEEP_SPACE_SKY, deepSpace());
+        event.register(SpaceDimensions.BLACKHOLE_YX989_K2_SKY, deepSpace());
+        event.register(SpaceDimensions.BLACKHOLE_ZANGLER_11_SKY, deepSpace());
     }
 }

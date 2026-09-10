@@ -26,7 +26,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  *   <li>Европа: {@code 0.025}</li>
  * </ul>
  *
- * <p><b>Ситуация B (пустотные миры — орбиты Солнца/Альфы Центавра, открытый космос):</b>
+ * <p><b>Ситуация B (пустотные миры — орбиты, открытый космос, чёрные дыры):</b>
  * <ul>
  *   <li>Полная невесомость: {@code gravity = 0.0} (дельта −0.080)</li>
  *   <li>Безопасная высота падения: {@code +1000} блоков (урон от падения отключён)</li>
@@ -62,7 +62,9 @@ public final class SpaceGravity {
     public static boolean isVoidSpace(ResourceKey<Level> dim) {
         return dim == SpaceDimensions.SOLAR_ORBIT
             || dim == SpaceDimensions.ALPHA_CENTAURI_ORBIT
-            || dim == SpaceDimensions.DEEP_SPACE;
+            || dim == SpaceDimensions.DEEP_SPACE
+            || dim == SpaceDimensions.BLACKHOLE_YX989_K2
+            || dim == SpaceDimensions.BLACKHOLE_ZANGLER_11;
     }
 
     /**
