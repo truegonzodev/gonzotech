@@ -42,11 +42,11 @@ import java.util.List;
  * <p>Особенности:
  * <ul>
  *   <li>Высокопроизводительный GPU-шейдер ({@link BlackHoleShader}) с белым фотонным кольцом
- *       по внешней кромке тени, сжатым зазором ISCO (165–400 блоков) и плавными арками Интерстеллара (160+ FPS).</li>
- *   <li>Гигантские vanilla-like билборд-частицы пыли (12–38.4 блока), летающие по орбите диска со скоростью
- *       20.0..0.5 б/сек, с динамическим остыванием (#fffcf2 → #ffd000 → #990011 → прозрачный серый)
+ *       в зазоре ISCO, аккреционным диском (135–400 блоков) и плавными арками Интерстеллара (160+ FPS).</li>
+ *   <li>Гигантские vanilla-like билборд-частицы пыли (12–38.4 блока), летающие по орбите диска (135–400 блоков)
+ *       со скоростью 20.0..0.5 б/сек, с динамическим остыванием (#fffcf2 → #ffd000 → #990011 → прозрачный серый)
  *       и уменьшением на 90% за время жизни (10–20 сек).</li>
- *   <li>Математическое и буферное отсечение частиц, находящихся за горизонтом событий ЧД.</li>
+ *   <li>Честное лучевое отсечение частиц, находящихся за гравитационной тенью горизонта событий ЧД.</li>
  * </ul>
  */
 public final class BlackHoleRenderer {
@@ -110,8 +110,8 @@ public final class BlackHoleRenderer {
      * Спавн одной новой орбитальной частицы по физическим параметрам диска.
      */
     private static AccretionParticle createParticle(float bhRadius, boolean randomAge) {
-        float rIn = 1.38F * bhRadius;  // 165 блоков при rs=120
-        float rOut = 3.33F * bhRadius; // 400 блоков при rs=120
+        float rIn = 1.125F * bhRadius;  // 135 блоков при rs=120 (аккреционный диск)
+        float rOut = 3.333F * bhRadius; // 400 блоков при rs=120
 
         // 1. Радиальное распределение: шанс спавна на краю диска на 40% ниже, чем вблизи
         float u;
@@ -269,8 +269,11 @@ public final class BlackHoleRenderer {
         double toCy = CENTER_Y - camPos.y;
         double toCz = CENTER_Z - camPos.z;
         double distCSq = toCx * toCx + toCy * toCy + toCz * toCz;
-        double shadowRadius = bhRadius * 1.35; // Радиус поглощающей тени ЧД
-        double shadowRadiusSq = shadowRadius * shadowRadius;
+        double distC = Math.sqrt(distCSq);
+
+        // Критический радиус оптической тени Шварцшильда (с учетом гравитационного линзирования ~2.598 * rs)
+        double bc = (double) bhRadius * 2.598 * Math.sqrt(Math.max(0.01, 1.0 - (double) bhRadius / Math.max((double) bhRadius, distC)));
+        double shadowRadiusSq = bc * bc;
 
         Matrix4fStack mvStack = RenderSystem.getModelViewStack();
         mvStack.pushMatrix();
@@ -309,7 +312,7 @@ public final class BlackHoleRenderer {
             double distPSq = toPx * toPx + toPy * toPy + toPz * toPz;
             double distP = Math.sqrt(distPSq);
 
-            // Отсечение частиц, находящихся ЗА Чёрной Дырой
+            // Отсечение частиц, находящихся ЗА гравитационной тенью Чёрной Дыры
             double dirX = toPx / distP;
             double dirY = toPy / distP;
             double dirZ = toPz / distP;
@@ -317,8 +320,8 @@ public final class BlackHoleRenderer {
             double tProj = toCx * dirX + toCy * dirY + toCz * dirZ;
             if (tProj > 0.0 && tProj < distP) {
                 double perpDistSq = distCSq - (tProj * tProj);
-                if (perpDistSq < shadowRadiusSq) {
-                    continue; // Частица скрыта за горизонтом событий ЧД
+                if (perpDistSq <= shadowRadiusSq) {
+                    continue; // Частица скрыта за оптической тенью горизонта событий ЧД
                 }
             }
 
