@@ -49,6 +49,13 @@ public final class BlackHoleShader {
     private static int uDiskOutLoc = -1;
     private static int uTimeLoc = -1;
     private static int uDiskNormalLoc = -1;
+    private static int uRenderPassLoc = -1;
+
+    /** Два раздельных прохода нужны для корректной прозрачности диска перед/за кольцом Дайсона. */
+    public enum RenderPass {
+        CORE,
+        ACCRETION_DISK
+    }
 
     // Вспомогательные буферы для загрузки матриц
     private static final float[] MAT_ARRAY = new float[16];
@@ -83,6 +90,8 @@ public final class BlackHoleShader {
         uniform float u_diskOut;
         uniform float u_time;
         uniform vec3 u_diskNormal;
+        // 0 = непрозрачное ядро и фотонное кольцо, 1 = прозрачная плазма диска.
+        uniform int u_renderPass;
 
         // Быстрый 2D Хэш
         float hash(vec2 p) {
@@ -203,23 +212,26 @@ public final class BlackHoleShader {
                 }
             }
 
-            // 2. БЫСТРЫЙ ВЫХОД ДЛЯ ПИКСЕЛЕЙ ВНЕ ЗОНЫ ЧД И ДИСКА (ускорение до 160+ FPS)
+            // 2. БЫСТРЫЙ ВЫХОД ДЛЯ ПИКСЕЛЕЙ ВНЕ ЗОНЫ ЧД И ДИСКА.
+            // Для плазменного прохода сохраняем прямое пересечение диска; core
+            // здесь прозрачен и не тратит время на интегрирование.
             if (D > Rout && (cosTheta < 0.0 || b > Rout * 1.25)) {
-                // Проверяем прямое пересечение диска без гравитационного искривления
-                float denom = dot(rayDir, n);
-                if (abs(denom) > 0.0001) {
-                    float t = -dot(u_camPos, n) / denom;
-                    if (t > 0.0) {
-                        vec3 hit = u_camPos + t * rayDir;
-                        float r = length(hit);
-                        if (r >= Rin && r <= Rout) {
-                            vec4 sample = sampleAccretionDisk(hit, r, rayDir, rs, u_time, n, Rin, Rout);
-                            if (sample.a > 0.005) {
-                                fragColor = sample;
-                                vec3 hitCam = t * rayDir;
-                                vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
-                                gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
-                                return;
+                if (u_renderPass == 1) {
+                    float denom = dot(rayDir, n);
+                    if (abs(denom) > 0.0001) {
+                        float t = -dot(u_camPos, n) / denom;
+                        if (t > 0.0) {
+                            vec3 hit = u_camPos + t * rayDir;
+                            float r = length(hit);
+                            if (r >= Rin && r <= Rout) {
+                                vec4 sample = sampleAccretionDisk(hit, r, rayDir, rs, u_time, n, Rin, Rout);
+                                if (sample.a > 0.005) {
+                                    fragColor = sample;
+                                    vec3 hitCam = t * rayDir;
+                                    vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
+                                    gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
+                                    return;
+                                }
                             }
                         }
                     }
@@ -280,7 +292,7 @@ public final class BlackHoleShader {
                 float h1 = dot(x, n);
                 float h2 = dot(x_next, n);
 
-                if (h1 * h2 <= 0.0) {
+                if (u_renderPass == 1 && h1 * h2 <= 0.0) {
                     float tau = abs(h1) / (abs(h1) + abs(h2) + 1e-7);
                     vec3 x_cross = mix(x, x_next, tau);
                     float r_cross = length(x_cross);
@@ -306,21 +318,32 @@ public final class BlackHoleShader {
                 v = v_next;
             }
 
-            // 4. ИТОГОВАЯ КОМПОЗИЦИЯ С БЕЛЫМ ФОТОННЫМ КОЛЬЦОМ ИЗ 6000e90
-            if (hitHorizon) {
-                // Горизонт событий: тень ЧД + передний диск + белое кольцо фотонов
-                vec3 finalRgb = accumColor + whitePhotonRing;
-                fragColor = vec4(finalRgb, 1.0);
-
-                vec3 hitCam = horizonHitPos - u_camPos;
-                vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
-                gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
+            // 4. ДВА ПРОХОДА: сначала непрозрачное ядро ЧД, затем прозрачный диск.
+            // Это сохраняет правильную depth-окклюзию самого кольца, но позволяет
+            // плазме смешаться поверх только тех его фрагментов, которые дальше неё.
+            if (u_renderPass == 0) {
+                if (hitHorizon) {
+                    // Непрозрачная тень горизонта; фотонное кольцо остаётся в этом же core-pass.
+                    fragColor = vec4(whitePhotonRing, 1.0);
+                    vec3 hitCam = horizonHitPos - u_camPos;
+                    vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
+                    gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
+                } else if (length(whitePhotonRing) > 0.05) {
+                    // Фотонное кольцо должно закрывать дальние сегменты Дайсона, но не ближние.
+                    fragColor = vec4(whitePhotonRing, 1.0);
+                    float photonDist = max(0.001, D * cosTheta);
+                    vec3 hitCam = photonDist * rayDir;
+                    vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
+                    gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
+                } else {
+                    fragColor = vec4(0.0);
+                    gl_FragDepth = 1.0;
+                }
             } else {
-                vec3 finalRgb = accumColor + whitePhotonRing;
-                float finalAlpha = clamp(accumAlpha + (length(whitePhotonRing) > 0.05 ? 1.0 : 0.0), 0.0, 1.0);
-                fragColor = vec4(finalRgb, finalAlpha);
-
-                if (firstDiskDist > 0.0 && accumAlpha > 0.25) {
+                // Только полупрозрачная плазма. Depth mask отключён на Java-стороне:
+                // диск проверяет глубину кольца, тонирует дальнюю часть и не затирает depth.
+                fragColor = vec4(accumColor, accumAlpha);
+                if (firstDiskDist > 0.0) {
                     vec3 hitCam = firstDiskDist * rayDir;
                     vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
                     gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
@@ -378,6 +401,7 @@ public final class BlackHoleShader {
             uDiskOutLoc = GL20.glGetUniformLocation(programId, "u_diskOut");
             uTimeLoc = GL20.glGetUniformLocation(programId, "u_time");
             uDiskNormalLoc = GL20.glGetUniformLocation(programId, "u_diskNormal");
+            uRenderPassLoc = GL20.glGetUniformLocation(programId, "u_renderPass");
 
             // Создаём VAO и VBO для полноэкранного квада
             float[] quadVertices = {
@@ -429,29 +453,22 @@ public final class BlackHoleShader {
     }
 
     /**
-     * Отрисовка Чёрной Дыры с релятивистским геодезическим линзированием, гэпом и белым фотонным кольцом.
-     *
-     * @param compositeOverDysonRing если кольцо Дайсона уже нарисовано, не сравнивать
-     *                               аккреционный слой с его depth: alpha диска должна
-     *                               смешаться поверх кольца в экранной области диска
+     * Рисует один слой ЧД. {@link RenderPass#CORE} должен идти до кольца Дайсона,
+     * а {@link RenderPass#ACCRETION_DISK} — после: так прозрачность диска смешивается
+     * только с геометрией, действительно находящейся за ним.
      */
     public static void render(Vec3 camPos, Matrix4f modelViewMatrix,
                               Matrix4f projectionMatrix, float radius,
-                              float diskIn, float diskOut, boolean compositeOverDysonRing) {
+                              float diskIn, float diskOut, RenderPass renderPass) {
         if (!init()) {
             return;
         }
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        if (compositeOverDysonRing) {
-            // Кольцо уже лежит в depth buffer. Обычный LEQUAL отбрасывает именно
-            // пиксели диска поверх него, поэтому здесь нужен только alpha blend.
-            RenderSystem.disableDepthTest();
-        } else {
-            RenderSystem.enableDepthTest();
-        }
-        RenderSystem.depthMask(true);
+        RenderSystem.enableDepthTest();
+        // Core формирует окклюзию ЧД; прозрачный диск только тестирует depth.
+        RenderSystem.depthMask(renderPass == RenderPass.CORE);
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
         RenderSystem.disableCull();
 
@@ -487,8 +504,9 @@ public final class BlackHoleShader {
         float time = (float) ((System.nanoTime() / 1_000_000L) % 100_000_000L) * 0.001F;
         GL20.glUniform1f(uTimeLoc, time);
 
-        // 8. Нормаль плоскости диска
+        // 8. Нормаль плоскости диска и режим текущего слоя.
         GL20.glUniform3f(uDiskNormalLoc, DISK_NORMAL.x(), DISK_NORMAL.y(), DISK_NORMAL.z());
+        GL20.glUniform1i(uRenderPassLoc, renderPass == RenderPass.CORE ? 0 : 1);
 
         // Отрисовка полноэкранного квада
         GL30.glBindVertexArray(vaoId);
@@ -497,7 +515,8 @@ public final class BlackHoleShader {
 
         GL20.glUseProgram(0);
 
-        // Не оставлять отключённый depth-test следующим рендер-проходам.
+        // Не оставлять состояние прозрачного disk-pass следующим рендер-проходам.
+        RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         RenderSystem.enableCull();
     }

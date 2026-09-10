@@ -241,21 +241,14 @@ public final class BlackHoleRenderer {
         Camera camera = event.getCamera();
         Vec3 camPos = camera.getPosition();
 
-        // 1. Сначала рисуем кольцо Дайсона.
-        if (isDysonActive) {
-            renderDysonRing(event, camera, camPos, dysonRadius, radius);
-        }
+        boolean shaderAvailable = BlackHoleShader.init();
 
-        // 2. Затем рисуем ЧД и аккреционный диск. Когда кольцо активно, шейдер
-        // намеренно не тестируется против уже записанной им глубины: плазма — это
-        // полупрозрачный экранный слой, который обязан тонировать кольцо в зоне
-        // визуального пересечения, даже если их точная 3D-глубина различается.
-        // Сам шейдер продолжает записывать свою depth для последующих частиц.
-        if (BlackHoleShader.init()) {
+        // 1. Непрозрачные горизонт и фотонное кольцо формируют реальную depth-окклюзию.
+        if (shaderAvailable) {
             BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
-                                   radius, diskIn, diskOut, isDysonActive);
+                                   radius, diskIn, diskOut, BlackHoleShader.RenderPass.CORE);
         } else {
-            // Запасной путь (fallback)
+            // Запасной путь (fallback) сохраняет обычную глубину непрозрачной сферы.
             float rx = (float) (CENTER_X - camPos.x);
             float ry = (float) (CENTER_Y - camPos.y);
             float rz = (float) (CENTER_Z - camPos.z);
@@ -271,8 +264,21 @@ public final class BlackHoleRenderer {
             mvStack.popMatrix();
         }
 
-        // 3. Рендеринг гигантских vanilla-like билборд-частиц (12–38.4 блоков).
-        // Частицы остаются последним слоем плазмы и также проходят depth-test ЧД.
+        // 2. Кольцо проходит depth-test против ЧД: ближняя дуга видна, дальняя
+        // естественно исчезает за горизонтом и фотонным кольцом.
+        if (isDysonActive) {
+            renderDysonRing(event, camera, camPos, dysonRadius, radius);
+        }
+
+        // 3. Диск — отдельный прозрачный проход без записи depth. Он смешивается
+        // только поверх тех фрагментов кольца, которые физически находятся дальше.
+        if (shaderAvailable) {
+            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
+                                   radius, diskIn, diskOut, BlackHoleShader.RenderPass.ACCRETION_DISK);
+        }
+
+        // 4. Рендеринг гигантских vanilla-like билборд-частиц (12–38.4 блоков).
+        // Они, как и диск, depth-test'ятся против горизонта и кольца.
         if (!PARTICLES.isEmpty()) {
             renderAccretionParticles(event, camera, camPos, radius);
         }
