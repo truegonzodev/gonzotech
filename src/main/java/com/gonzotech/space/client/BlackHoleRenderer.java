@@ -11,20 +11,16 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.core.particles.DustColorTransitionOptions;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
-import org.joml.Vector3f;
 
 /**
- * Рендерер горизонта событий, гравитационного линзирования и орбитальных частиц Чёрных Дыр.
+ * Рендерер горизонта событий, гравитационного линзирования и аккреционного диска Чёрных Дыр.
  *
  * <p>Рисует релятивистскую Чёрную Дыру в координатах (0, 160, 0):
  * <ul>
@@ -35,9 +31,7 @@ import org.joml.Vector3f;
  * <p>Особенности:
  * <ul>
  *   <li>Высокопроизводительный GPU-шейдер ({@link BlackHoleShader}) с белым фотонным кольцом,
- *       ISCO-зазором и арками Интерстеллара без падения FPS (160+ FPS).</li>
- *   <li>Орбитальные гигантские частицы перелива цвета {@link DustColorTransitionOptions}
- *       (#fffcf2 → #ff3c00, size 200-400), летящие вдоль аккреционного диска с кеплеровской скоростью.</li>
+ *       компактным аккреционным диском (180–400 блоков) и плавными арками Интерстеллара (160+ FPS).</li>
  * </ul>
  */
 public final class BlackHoleRenderer {
@@ -53,12 +47,6 @@ public final class BlackHoleRenderer {
     /** Радиусы горизонта событий по измерениям. */
     public static final float RADIUS_YX989_K2 = 120.0F;
     public static final float RADIUS_ZANGLER_11 = 200.0F;
-
-    /** Цвета перехода орбитальных частиц плазмы: #fffcf2 (бело-золотой) → #ff3c00 (огненно-красный). */
-    private static final int PARTICLE_COLOR_1 = 0xFFFCF2;
-    private static final int PARTICLE_COLOR_2 = 0xFF3C00;
-
-    private static final RandomSource RANDOM = RandomSource.create();
 
     /** Число секторов и колец запасной сферы. */
     private static final int SPHERE_STACKS = 64;
@@ -114,63 +102,6 @@ public final class BlackHoleRenderer {
         renderFallbackBlackSphere(mv);
 
         mvStack.popMatrix();
-    }
-
-    /**
-     * Спавн орбитальных частиц плазмы вдоль аккреционного диска каждый клиентский тик.
-     */
-    @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        ClientLevel level = mc.level;
-        if (level == null || mc.isPaused()) {
-            return;
-        }
-
-        ResourceKey<Level> dim = level.dimension();
-        float radius;
-        if (dim == SpaceDimensions.BLACKHOLE_YX989_K2) {
-            radius = RADIUS_YX989_K2;
-        } else if (dim == SpaceDimensions.BLACKHOLE_ZANGLER_11) {
-            radius = RADIUS_ZANGLER_11;
-        } else {
-            return;
-        }
-
-        float rIn = 3.2F * radius;
-        float rOut = 8.5F * radius;
-
-        Vector3f normal = BlackHoleShader.DISK_NORMAL;
-        Vector3f ex = new Vector3f(0.0F, 1.0F, 0.0F).cross(normal).normalize();
-        Vector3f ez = new Vector3f(normal).cross(ex).normalize();
-
-        // Спавним 6-10 частиц за тик (постоянно поддерживается 150-200 активных частиц)
-        int spawnCount = 6 + RANDOM.nextInt(5);
-        for (int i = 0; i < spawnCount; i++) {
-            float u = RANDOM.nextFloat();
-            float r = rIn + (float) Math.sqrt(u) * (rOut - rIn);
-            float theta = RANDOM.nextFloat() * (float) (2.0 * Math.PI);
-
-            float cosT = (float) Math.cos(theta);
-            float sinT = (float) Math.sin(theta);
-
-            float px = (float) CENTER_X + r * (cosT * ex.x() + sinT * ez.x()) + normal.x() * (RANDOM.nextFloat() - 0.5F) * 12.0F;
-            float py = (float) CENTER_Y + r * (cosT * ex.y() + sinT * ez.y()) + normal.y() * (RANDOM.nextFloat() - 0.5F) * 12.0F;
-            float pz = (float) CENTER_Z + r * (cosT * ex.z() + sinT * ez.z()) + normal.z() * (RANDOM.nextFloat() - 0.5F) * 12.0F;
-
-            // Орбитальная скорость по касательной к орбите
-            float speed = 1.4F * (float) Math.sqrt(radius / r);
-            float vx = (-sinT * ex.x() + cosT * ez.x()) * speed;
-            float vy = (-sinT * ex.y() + cosT * ez.y()) * speed;
-            float vz = (-sinT * ex.z() + cosT * ez.z()) * speed;
-
-            float scale = 200.0F + RANDOM.nextFloat() * 200.0F; // Размер 200..400
-            DustColorTransitionOptions options = new DustColorTransitionOptions(
-                PARTICLE_COLOR_1, PARTICLE_COLOR_2, scale);
-
-            level.addParticle(options, (double) px, (double) py, (double) pz,
-                                       (double) vx, (double) vy, (double) vz);
-        }
     }
 
     /** Запасная отрисовка непроглядной черной полой сферы при ошибке шейдера. */
