@@ -15,25 +15,6 @@ import org.slf4j.Logger;
 import java.nio.FloatBuffer;
 
 /**
-<<<<<<< HEAD
- * Релятивистский GPU-шейдер Чёрных Дыр (модель Гаргантюа / Шварцшильда).
- *
- * <p>Использует честное численное интегрирование геодезических нулевой кривизны
- * (уравнение Эйнштейна для траектории фотонов в метрике Шварцшильда):
- * <ul>
- *   <li><b>Гравитационное линзирование (Interstellar halo):</b> искривление световых лучей
- *       в гравитационной яме ЧД естественным образом проецирует заднюю сторону аккреционного
- *       диска в верхнюю и нижнюю арки без разрывов, паразитных кайм и дублирующих колец.</li>
- *   <li><b>Фотонное кольцо Эйнштейна:</b> фотоны на орбите {@code r ≈ 1.5 r_s} совершают
- *       обороты вокруг горизонта, накапливая свечение и формируя сверхъяркое тонкое кольцо.</li>
- *   <li><b>Релятивистский аккреционный диск:</b> кеплеровское вращение ({@code Ω ~ r^-1.5}),
- *       логарифмические спирали плазмы, спектральный эффект Доплера (набегающая сторона
- *       усилена и смещена в бело-голубой цвет, удаляющаяся — в тёмно-красный).</li>
- *   <li><b>Устранение паразитных клонов:</b> при взгляде от ЧД лучи уходят в бесконечность
- *       без ложных отражений и фантомных горизонтов.</li>
- *   <li><b>Честный буфер глубины ({@code gl_FragDepth}):</b> горизонт событий и передний
- *       план диска корректно перекрывают/перекрываются блоками в мире.</li>
-=======
  * Высокопроизводительный релятивистский GPU-шейдер Чёрных Дыр (Гаргантюа / Интерстеллар).
  *
  * <p>Особенности архитектуры:
@@ -48,7 +29,6 @@ import java.nio.FloatBuffer;
  *       эффект Доплера (бело-голубое усиление набегающей стороны, багровое затемнение удаляющейся),
  *       кеплеровское вращение и спиральная турбулентность плазмы.</li>
  *   <li><b>Отсутствие паразитных клонов:</b> при взгляде назад лучи уходят в космический фон.</li>
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
  * </ul>
  */
 public final class BlackHoleShader {
@@ -76,11 +56,7 @@ public final class BlackHoleShader {
     private static final float[] MAT_ARRAY = new float[16];
     private static final FloatBuffer MAT_BUFFER = BufferUtils.createFloatBuffer(16);
 
-<<<<<<< HEAD
-    /** Нормаль плоскости аккреционного диска (наклон ~12° для фотогеничной 3D-перспективы). */
-=======
     /** Нормаль плоскости аккреционного диска (наклон ~12° для зрелищного 3D-вида). */
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
     public static final Vector3f DISK_NORMAL = new Vector3f(0.12F, 0.98F, 0.15F).normalize();
 
     private static final String VERTEX_SHADER_SRC = """
@@ -108,22 +84,14 @@ public final class BlackHoleShader {
         uniform float u_time;
         uniform vec3 u_diskNormal;
 
-<<<<<<< HEAD
-        // 2D Хэш
-=======
         // Быстрый 2D Хэш
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
         float hash(vec2 p) {
             p = fract(p * vec2(123.34, 456.21));
             p += dot(p, p + 45.32);
             return fract(p.x * p.y);
         }
 
-<<<<<<< HEAD
-        // 2D Шум
-=======
         // Быстрый 2D Шум
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
         float noise(vec2 p) {
             vec2 i = floor(p);
             vec2 f = fract(p);
@@ -135,22 +103,6 @@ public final class BlackHoleShader {
             return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
         }
 
-<<<<<<< HEAD
-        // 4-октавный турбулентный шум плазмы
-        float fbm(vec2 p) {
-            float v = 0.0;
-            float amp = 0.5;
-            mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
-            for (int i = 0; i < 4; i++) {
-                v += amp * noise(p);
-                p = rot * p * 2.05 + vec2(1.5, 3.2);
-                amp *= 0.5;
-            }
-            return v;
-        }
-
-        // Сэмплирование аккреционного диска в мировой точке pos
-=======
         // Быстрая 2-октавная турбулентность плазмы (оптимизировано для 160+ FPS)
         float fbmFast(vec2 p) {
             float v = noise(p) * 0.65;
@@ -160,43 +112,18 @@ public final class BlackHoleShader {
         }
 
         // Сэмплирование аккреционного диска с эффектом Доплера и спиралями
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
         vec4 sampleAccretionDisk(vec3 pos, float r, vec3 viewRay, float rs, float time, vec3 n, float Rin, float Rout) {
             float u = (r - Rin) / (Rout - Rin);
             if (u < 0.0 || u > 1.0) return vec4(0.0);
 
-<<<<<<< HEAD
-            // Радиальный профиль: резкий рост от ISCO, пик вблизи 3.2 r_s, плавное затухание наружу
-            float radial = pow(u, 0.25) * pow(1.0 - u, 1.5) * 4.2;
-
-            // Базис плоскости диска
-=======
             // Плавный радиальный профиль с мягким спадом к краям
             float radial = pow(u, 0.35) * pow(1.0 - u, 1.6) * 4.0;
 
             // Локальный базис в плоскости диска
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
             vec3 tangentX = normalize(abs(n.y) < 0.99 ? cross(vec3(0.0, 1.0, 0.0), n) : cross(vec3(1.0, 0.0, 0.0), n));
             vec3 tangentZ = cross(n, tangentX);
             float phi = atan(dot(pos, tangentZ), dot(pos, tangentX));
 
-<<<<<<< HEAD
-            // Кеплеровская угловая скорость Omega ~ r^-1.5
-            float omega = 1.8 * pow(Rin / r, 1.5);
-            float phi_rot = phi - omega * time * 0.4;
-
-            // Логарифмические спирали турбулентности
-            float spiral = phi_rot + 3.5 * log(r / Rin);
-            vec2 noiseUV = vec2(r / rs * 0.5, spiral * 1.5);
-
-            float n1 = fbm(noiseUV);
-            float n2 = fbm(noiseUV * 2.2 + vec2(time * 0.08, time * 0.04));
-            float plasma = n1 * 0.65 + n2 * 0.35;
-
-            // Релятивистский эффект Доплера (Doppler Beaming)
-            vec3 v_orb = normalize(cross(n, pos));
-            float speed_frac = 0.52 * sqrt(Rin / r); // v/c
-=======
             // Кеплеровская скорость вращения Omega ~ r^-1.5
             float omega = 1.6 * pow(Rin / r, 1.5);
             float phi_rot = phi - omega * time * 0.45;
@@ -209,21 +136,11 @@ public final class BlackHoleShader {
             // Релятивистский эффект Доплера (Doppler Beaming)
             vec3 v_orb = normalize(cross(n, pos));
             float speed_frac = 0.50 * sqrt(Rin / r);
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
             float beta_parallel = dot(v_orb, -viewRay) * speed_frac;
             float gamma = 1.0 / sqrt(max(0.01, 1.0 - speed_frac * speed_frac));
             float doppler = 1.0 / (gamma * (1.0 - beta_parallel));
             float beaming = pow(doppler, 3.2);
 
-<<<<<<< HEAD
-            // Цветовая температура (палитра Интерстеллара)
-            float temp = (1.0 - u * 0.8) * doppler * (0.85 + 0.35 * plasma);
-
-            vec3 colCool = vec3(0.70, 0.16, 0.02); // Тёмный багрово-янтарный
-            vec3 colWarm = vec3(1.00, 0.58, 0.12); // Сияющий золотисто-оранжевый
-            vec3 colHot  = vec3(1.00, 0.94, 0.80); // Раскалённый бело-золотой
-            vec3 colBlue = vec3(0.90, 0.95, 1.00); // Релятивистский синий сдвиг
-=======
             // Температурный градиент
             float temp = (1.0 - u * 0.75) * doppler * (0.85 + 0.35 * plasma);
 
@@ -231,7 +148,6 @@ public final class BlackHoleShader {
             vec3 colWarm = vec3(1.00, 0.58, 0.12); // Золотисто-оранжевый
             vec3 colHot  = vec3(1.00, 0.92, 0.75); // Бело-золотой
             vec3 colBlue = vec3(0.88, 0.94, 1.00); // Релятивистский синий сдвиг
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
 
             vec3 col = mix(colCool, colWarm, clamp(temp * 1.3, 0.0, 1.0));
             col = mix(col, colHot, clamp((temp - 0.75) * 2.2, 0.0, 1.0));
@@ -246,11 +162,7 @@ public final class BlackHoleShader {
         }
 
         void main() {
-<<<<<<< HEAD
-            // Точный мировой луч из камеры
-=======
             // Точный мировой луч камеры
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
             vec3 rayCam = normalize(vec3(v_uv.x * u_tanFov.x, v_uv.y * u_tanFov.y, -1.0));
             vec3 rayDir = normalize((u_invViewMat * vec4(rayCam, 0.0)).xyz);
 
@@ -270,15 +182,6 @@ public final class BlackHoleShader {
 
             vec3 u_bh = -u_camPos / max(0.001, D);
             float cosTheta = dot(rayDir, u_bh);
-<<<<<<< HEAD
-
-            // Параметры диска
-            vec3 n = normalize(u_diskNormal);
-            float Rin = 2.6 * rs;
-            float Rout = 7.8 * rs;
-
-            // Быстрый выход для лучей, направленных строго от Чёрной Дыры (устраняет паразитных клонов)
-=======
             float sinThetaSq = max(0.0, 1.0 - cosTheta * cosTheta);
             float sinTheta = sqrt(sinThetaSq);
             float b = D * sinTheta; // Прицельный параметр луча
@@ -318,7 +221,6 @@ public final class BlackHoleShader {
             }
 
             // 3. БЫСТРЫЙ ВЫХОД ДЛЯ ЛУЧЕЙ, НАПРАВЛЕННЫХ ОТ ЧД (устраняет паразитных клонов)
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
             if (D > 2.0 * rs && cosTheta < -0.2) {
                 float denom = dot(rayDir, n);
                 if (abs(denom) > 0.0001) {
@@ -343,100 +245,6 @@ public final class BlackHoleShader {
                 return;
             }
 
-<<<<<<< HEAD
-            // Численное интегрирование геодезических луча света в гравитационном поле Шварцшильда
-            vec3 x = u_camPos;
-            vec3 v = rayDir;
-
-            // Сохраняющийся угловой момент фотона: L = x × v
-            vec3 L = cross(x, v);
-            float L2 = dot(L, L);
-
-            vec3 accumColor = vec3(0.0);
-            float accumAlpha = 0.0;
-            float firstDiskDist = -1.0;
-            bool hitHorizon = false;
-            vec3 horizonHitPos = vec3(0.0);
-
-            const int MAX_STEPS = 40;
-
-            for (int i = 0; i < MAX_STEPS; i++) {
-                float r = length(x);
-
-                // 1. Фотон поглощен горизонтом событий
-                if (r <= rs * 1.02) {
-                    hitHorizon = true;
-                    horizonHitPos = x;
-                    break;
-                }
-
-                // 2. Фотон ушел на бесконечность
-                if (r > 9.0 * rs && dot(x, v) > 0.0) {
-                    break;
-                }
-
-                // Адаптивный шаг интегрирования
-                float ds = clamp(r * 0.18, rs * 0.08, rs * 0.35);
-
-                // Релятивистское ускорение фотона: a = -1.5 * rs * L^2 / r^5 * x
-                float r5 = r * r * r * r * r;
-                vec3 a = (-1.5 * rs * L2 / max(1e-5, r5)) * x;
-
-                // Шаг позиции (Verlet)
-                vec3 x_next = x + v * ds + 0.5 * a * ds * ds;
-                float r_next = length(x_next);
-
-                // Ускорение в следующей точке
-                float r5_next = r_next * r_next * r_next * r_next * r_next;
-                vec3 a_next = (-1.5 * rs * L2 / max(1e-5, r5_next)) * x_next;
-
-                // Шаг скорости
-                vec3 v_next = normalize(v + 0.5 * (a + a_next) * ds);
-
-                // 3. Проверка пересечения плоскости аккреционного диска между x и x_next
-                float h1 = dot(x, n);
-                float h2 = dot(x_next, n);
-
-                if (h1 * h2 <= 0.0) {
-                    float tau = abs(h1) / (abs(h1) + abs(h2) + 1e-7);
-                    vec3 x_cross = mix(x, x_next, tau);
-                    float r_cross = length(x_cross);
-
-                    if (r_cross >= Rin && r_cross <= Rout) {
-                        vec4 diskSample = sampleAccretionDisk(x_cross, r_cross, v_next, rs, u_time, n, Rin, Rout);
-                        if (diskSample.a > 0.005) {
-                            accumColor += (1.0 - accumAlpha) * diskSample.rgb;
-                            accumAlpha += (1.0 - accumAlpha) * diskSample.a;
-
-                            if (firstDiskDist < 0.0) {
-                                firstDiskDist = length(x_cross - u_camPos);
-                            }
-
-                            if (accumAlpha > 0.98) {
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                x = x_next;
-                v = v_next;
-            }
-
-            // 4. Итоговая композиция цвета и глубины
-            if (hitHorizon) {
-                // Горизонт событий полностью поглощает фон за собой
-                fragColor = vec4(accumColor, 1.0);
-
-                vec3 hitCam = horizonHitPos - u_camPos;
-                vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
-                gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
-            } else {
-                fragColor = vec4(accumColor, accumAlpha);
-
-                if (firstDiskDist > 0.0 && accumAlpha > 0.3) {
-                    vec3 hitCam = firstDiskDist * rayDir;
-=======
             // 4. ПРЯМОЙ АККРЕЦИОННЫЙ ДИСК (передний план)
             vec4 directDisk = vec4(0.0);
             float directDist = 1e9;
@@ -500,7 +308,6 @@ public final class BlackHoleShader {
 
                 if (directDisk.a > 0.3) {
                     vec3 hitCam = directDist * rayDir;
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
                     vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
                     gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
                 } else {
@@ -514,11 +321,7 @@ public final class BlackHoleShader {
     }
 
     /**
-<<<<<<< HEAD
-     * Попытка компиляции шейдерной программы и создания полноэкранного VAO.
-=======
      * Инициализация шейдерной программы и VAO.
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
      */
     public static boolean init() {
         if (initialized) {
@@ -560,11 +363,7 @@ public final class BlackHoleShader {
             uTimeLoc = GL20.glGetUniformLocation(programId, "u_time");
             uDiskNormalLoc = GL20.glGetUniformLocation(programId, "u_diskNormal");
 
-<<<<<<< HEAD
-            // Создаём VAO и VBO для 2 треугольников (полноэкранный квад)
-=======
             // Создаём VAO и VBO для полноэкранного квада
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
             float[] quadVertices = {
                 -1.0F, -1.0F,
                  1.0F, -1.0F,
@@ -591,11 +390,7 @@ public final class BlackHoleShader {
             GL30.glBindVertexArray(0);
 
             initialized = true;
-<<<<<<< HEAD
-            LOGGER.info("[Gonzo Tech] Релятивистский шейдер Чёрной Дыры успешно инициализирован!");
-=======
             LOGGER.info("[Gonzo Tech] Оптимизированный релятивистский шейдер Чёрной Дыры успешно инициализирован!");
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
             return true;
         } catch (Exception e) {
             LOGGER.error("[Gonzo Tech] Исключение при инициализации шейдера Чёрной Дыры", e);
@@ -618,11 +413,7 @@ public final class BlackHoleShader {
     }
 
     /**
-<<<<<<< HEAD
-     * Отрисовка Чёрной Дыры с релятивистским геодезическим линзированием.
-=======
      * Отрисовка Чёрной Дыры с ультра-высоким FPS и белым фотонным кольцом.
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
      */
     public static void render(Vec3 camPos, Matrix4f modelViewMatrix,
                               Matrix4f projectionMatrix, float radius) {
@@ -639,21 +430,13 @@ public final class BlackHoleShader {
 
         GL20.glUseProgram(programId);
 
-<<<<<<< HEAD
-        // 1. Относительная позиция камеры к центру ЧД (0, 160, 0)
-=======
         // 1. Позиция камеры относительно центра ЧД (0, 160, 0)
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
         float rx = (float) (camPos.x - BlackHoleRenderer.CENTER_X);
         float ry = (float) (camPos.y - BlackHoleRenderer.CENTER_Y);
         float rz = (float) (camPos.z - BlackHoleRenderer.CENTER_Z);
         GL20.glUniform3f(uCamPosLoc, rx, ry, rz);
 
-<<<<<<< HEAD
-        // 2. Обратная матрица поворота вида
-=======
         // 2. Обратная матрица вида камеры
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
         Matrix4f invView = new Matrix4f(modelViewMatrix).invert();
         uploadMatrix(uInvViewMatLoc, invView);
 
@@ -671,19 +454,11 @@ public final class BlackHoleShader {
         // 6. Радиус Шварцшильда
         GL20.glUniform1f(uRadiusLoc, radius);
 
-<<<<<<< HEAD
-        // 7. Плавное время анимации плазмы
-        float time = (float) ((System.nanoTime() / 1_000_000L) % 100_000_000L) * 0.001F;
-        GL20.glUniform1f(uTimeLoc, time);
-
-        // 8. Нормаль диска
-=======
         // 7. Плавное время анимации
         float time = (float) ((System.nanoTime() / 1_000_000L) % 100_000_000L) * 0.001F;
         GL20.glUniform1f(uTimeLoc, time);
 
         // 8. Нормаль плоскости диска
->>>>>>> 3c017f7 (Космос: оптимизация FPS (160+ FPS), яркое белое фотонное кольцо вокруг ЧД, ISCO-зазор и частицы размером 200-400)
         GL20.glUniform3f(uDiskNormalLoc, DISK_NORMAL.x(), DISK_NORMAL.y(), DISK_NORMAL.z());
 
         // Отрисовка полноэкранного квада
