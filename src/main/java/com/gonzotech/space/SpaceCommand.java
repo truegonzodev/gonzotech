@@ -22,14 +22,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Отладочный телепорт между космическими измерениями:
- * {@code /gonzotech tp <dimension>}.
- *
- * <p>Список {@code <dimension>} автодополняется из
- * {@link SpaceDimensions#DIMENSIONS} (плюс ванильные overworld/nether/end для
- * возврата домой). Телепорт использует ванильный кросс-мировой путь 1.21.4
- * {@code Entity.teleportTo(ServerLevel, x,y,z, relatives, yRot, xRot)} — тот же,
- * что и команда {@code /tp} — без порталов и эффектов смены измерения.
+ * Отладочные команды мода GonzoTech:
+ * <ul>
+ *   <li>{@code /gonzotech tp <dimension>} — телепорт между измерениями.</li>
+ *   <li>{@code /gonzotech debug sun default|dyson|gone|blackhole|blackhole_dyson} — смена состояния Солнца.</li>
+ *   <li>{@code /gonzotech debug alpha_centauri default|dyson} — сфера Дайсона для Альфы Центавра.</li>
+ *   <li>{@code /gonzotech debug yx989 default|dyson} (алиасы y989, yx989_k2) — кольцо Дайсона Yx989-k2.</li>
+ *   <li>{@code /gonzotech debug zangler default|dyson} (алиас zangler_11) — кольцо Дайсона Zangler-11.</li>
+ * </ul>
  */
 public final class SpaceCommand {
 
@@ -57,20 +57,55 @@ public final class SpaceCommand {
                 .suggests(DIMENSION_SUGGESTIONS)
                 .executes(SpaceCommand::teleport));
 
-        // /gonzotech debug sun|alpha_centauri|all default|dyson — переключение текстур звёзд.
+        // /gonzotech debug sun <state>
+        LiteralArgumentBuilder<CommandSourceStack> sunDebug = Commands.literal("sun")
+            .then(Commands.literal("default").executes(c -> setSun(c, SunState.DEFAULT)))
+            .then(Commands.literal("dyson").executes(c -> setSun(c, SunState.DYSON)))
+            .then(Commands.literal("gone").executes(c -> setSun(c, SunState.GONE)))
+            .then(Commands.literal("blackhole").executes(c -> setSun(c, SunState.BLACKHOLE)))
+            .then(Commands.literal("blackhole_dyson").executes(c -> setSun(c, SunState.BLACKHOLE_DYSON)))
+            .then(Commands.literal("blackhole-dyson").executes(c -> setSun(c, SunState.BLACKHOLE_DYSON)));
+
+        // /gonzotech debug alpha_centauri default|dyson
+        LiteralArgumentBuilder<CommandSourceStack> alphaDebug = Commands.literal("alpha_centauri")
+            .then(Commands.literal("default").executes(c -> setStar(c, "alpha_centauri", false, "Альфа Центавра")))
+            .then(Commands.literal("dyson").executes(c -> setStar(c, "alpha_centauri", true, "Альфа Центавра")));
+
+        LiteralArgumentBuilder<CommandSourceStack> alphaHyphenDebug = Commands.literal("alpha-centauri")
+            .then(Commands.literal("default").executes(c -> setStar(c, "alpha_centauri", false, "Альфа Центавра")))
+            .then(Commands.literal("dyson").executes(c -> setStar(c, "alpha_centauri", true, "Альфа Центавра")));
+
+        // /gonzotech debug y989 / yx989 / yx989_k2 default|dyson
+        LiteralArgumentBuilder<CommandSourceStack> y989Debug = Commands.literal("y989")
+            .then(Commands.literal("default").executes(c -> setStar(c, "yx989", false, "Чёрная Дыра Yx989-k2")))
+            .then(Commands.literal("dyson").executes(c -> setStar(c, "yx989", true, "Чёрная Дыра Yx989-k2")));
+
+        LiteralArgumentBuilder<CommandSourceStack> yx989Debug = Commands.literal("yx989")
+            .then(Commands.literal("default").executes(c -> setStar(c, "yx989", false, "Чёрная Дыра Yx989-k2")))
+            .then(Commands.literal("dyson").executes(c -> setStar(c, "yx989", true, "Чёрная Дыра Yx989-k2")));
+
+        LiteralArgumentBuilder<CommandSourceStack> yx989K2Debug = Commands.literal("yx989_k2")
+            .then(Commands.literal("default").executes(c -> setStar(c, "yx989", false, "Чёрная Дыра Yx989-k2")))
+            .then(Commands.literal("dyson").executes(c -> setStar(c, "yx989", true, "Чёрная Дыра Yx989-k2")));
+
+        // /gonzotech debug zangler / zangler_11 default|dyson
+        LiteralArgumentBuilder<CommandSourceStack> zanglerDebug = Commands.literal("zangler")
+            .then(Commands.literal("default").executes(c -> setStar(c, "zangler", false, "Чёрная Дыра Zangler-11")))
+            .then(Commands.literal("dyson").executes(c -> setStar(c, "zangler", true, "Чёрная Дыра Zangler-11")));
+
+        LiteralArgumentBuilder<CommandSourceStack> zangler11Debug = Commands.literal("zangler_11")
+            .then(Commands.literal("default").executes(c -> setStar(c, "zangler", false, "Чёрная Дыра Zangler-11")))
+            .then(Commands.literal("dyson").executes(c -> setStar(c, "zangler", true, "Чёрная Дыра Zangler-11")));
+
         LiteralArgumentBuilder<CommandSourceStack> debug = Commands.literal("debug")
-            .then(Commands.literal("sun")
-                .then(Commands.literal("default").executes(c -> setStar(c, "sun", false)))
-                .then(Commands.literal("dyson").executes(c -> setStar(c, "sun", true))))
-            .then(Commands.literal("alpha_centauri")
-                .then(Commands.literal("default").executes(c -> setStar(c, "alpha_centauri", false)))
-                .then(Commands.literal("dyson").executes(c -> setStar(c, "alpha_centauri", true))))
-            .then(Commands.literal("alpha-centauri")
-                .then(Commands.literal("default").executes(c -> setStar(c, "alpha_centauri", false)))
-                .then(Commands.literal("dyson").executes(c -> setStar(c, "alpha_centauri", true))))
-            .then(Commands.literal("all")
-                .then(Commands.literal("default").executes(c -> setStar(c, "all", false)))
-                .then(Commands.literal("dyson").executes(c -> setStar(c, "all", true))));
+            .then(sunDebug)
+            .then(alphaDebug)
+            .then(alphaHyphenDebug)
+            .then(y989Debug)
+            .then(yx989Debug)
+            .then(yx989K2Debug)
+            .then(zanglerDebug)
+            .then(zangler11Debug);
 
         dispatcher.register(
             Commands.literal("gonzotech")
@@ -79,20 +114,35 @@ public final class SpaceCommand {
                 .then(debug));
     }
 
-    /** Переключить звезду (обычное/сфера Дайсона) для всех игроков. */
-    private static int setStar(CommandContext<CommandSourceStack> ctx, String target, boolean dyson) {
+    /** Установить состояние Солнца для всех игроков сервера. */
+    private static int setSun(CommandContext<CommandSourceStack> ctx, SunState state) {
         CommandSourceStack source = ctx.getSource();
         if (source.getServer() == null) {
             return 0;
         }
-        SpaceSkyNetwork.sendToAll(source.getServer(), target, dyson);
-        String label = switch (target) {
-            case "sun" -> "Солнце";
-            case "alpha_centauri", "alpha-centauri" -> "Альфа Центавра";
-            default -> "Все звёзды";
+        SpaceSkyNetwork.sendSunStateToAll(source.getServer(), state);
+        String label = switch (state) {
+            case DEFAULT -> "Обычное (sun.png)";
+            case DYSON -> "Сфера Дайсона (sun_dyson.png)";
+            case GONE -> "Взорвалось / Погасло (sun_gone.png + вечная ночь)";
+            case BLACKHOLE -> "Чёрная Дыра (sun_blackhole.png)";
+            case BLACKHOLE_DYSON -> "Чёрная Дыра со Сферой Дайсона (sun_blackhole_dyson.png)";
         };
         source.sendSuccess(() -> Component.literal(
-            "§a[GonzoTech] " + label + ": §e" + (dyson ? "сфера Дайсона" : "обычное")), true);
+            "§a[GonzoTech] Состояние Солнца: §e" + label), true);
+        return 1;
+    }
+
+    /** Переключить сферу/кольцо Дайсона для звезды или чёрной дыры. */
+    private static int setStar(CommandContext<CommandSourceStack> ctx, String target, boolean dyson, String displayName) {
+        CommandSourceStack source = ctx.getSource();
+        if (source.getServer() == null) {
+            return 0;
+        }
+        SpaceSkyNetwork.sendStarModeToAll(source.getServer(), target, dyson);
+        String stateName = dyson ? "Кольцо/Сфера Дайсона (АКТИВНО)" : "Обычное состояние (ОТКЛЮЧЕНО)";
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] " + displayName + ": §e" + stateName), true);
         return 1;
     }
 
@@ -129,16 +179,12 @@ public final class SpaceCommand {
             return 0;
         }
 
-        // Точка появления над (0,0). Форс-грузим чанк и берём высоту рельефа,
-        // чтобы не воткнуть игрока в блок и не уронить в пустоту.
         int x = 0;
         int z = 0;
-        level.getChunk(x >> 4, z >> 4); // синхронная загрузка/генерация чанка
+        level.getChunk(x >> 4, z >> 4);
         int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         int y = Math.max(surface + 1, level.getMinY() + 2);
-        // Если рельефа нет (пустое измерение) — ставим на безопасную высоту и
-        // подкладываем маленькую метеор-платформу 3×3, чтобы не улететь в пустоту
-        // (космический полёт — отдельная задача, пока просто твёрдая опора).
+
         if (surface <= level.getMinY()) {
             y = 128;
             net.minecraft.world.level.block.state.BlockState platform =

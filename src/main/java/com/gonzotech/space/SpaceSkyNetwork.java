@@ -1,6 +1,7 @@
 package com.gonzotech.space;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.space.client.SpaceSkyState;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -10,18 +11,37 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * Синхронизация флагов скайбокса на клиент.
- *
- * <p>Режим звёзд (обычное ↔ сфера Дайсона) для Солнца и Альфы Центавра.
- * Сервер шлёт {@link StarModePayload} по команде {@code /gonzotech debug <star> default|dyson};
- * клиент выставляет флаги в {@code SpaceSkyState}.
+ * Синхронизация состояний скайбокса (Солнце, Альфа Центавра, кольца Чёрных Дыр) на клиент.
  */
 public final class SpaceSkyNetwork {
 
     private SpaceSkyNetwork() {
     }
 
-    /** S2C: включить/выключить режим сферы Дайсона для звезды (sun, alpha_centauri, all). */
+    /** Серверное состояние для синхронизации вновь подключившимся игрокам. */
+    public static volatile SunState currentSunState = SunState.DEFAULT;
+    public static volatile boolean currentAlphaCentauriDyson = false;
+    public static volatile boolean currentYx989Dyson = false;
+    public static volatile boolean currentZanglerDyson = false;
+
+    /** S2C: Установка состояния Солнца (default, dyson, gone, blackhole, blackhole_dyson). */
+    public record SunStatePayload(String stateName) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<SunStatePayload> TYPE =
+            new CustomPacketPayload.Type<>(
+                ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "sun_state"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, SunStatePayload> STREAM_CODEC =
+            StreamCodec.of(
+                (buf, v) -> buf.writeUtf(v.stateName()),
+                buf -> new SunStatePayload(buf.readUtf()));
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** S2C: Режим сферы/кольца Дайсона для звёзд и чёрных дыр. */
     public record StarModePayload(String target, boolean dyson) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<StarModePayload> TYPE =
             new CustomPacketPayload.Type<>(
@@ -43,32 +63,55 @@ public final class SpaceSkyNetwork {
 
     public static void register(PayloadRegistrar registrar) {
         registrar.playToClient(
+            SunStatePayload.TYPE,
+            SunStatePayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                SpaceSkyState.sunState = SunState.fromString(payload.stateName());
+            }));
+
+        registrar.playToClient(
             StarModePayload.TYPE,
             StarModePayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 String target = payload.target();
                 boolean d = payload.dyson();
-                if ("sun".equalsIgnoreCase(target)) {
-                    com.gonzotech.space.client.SpaceSkyState.sunDyson = d;
-                } else if ("alpha_centauri".equalsIgnoreCase(target) || "alpha-centauri".equalsIgnoreCase(target)) {
-                    com.gonzotech.space.client.SpaceSkyState.alphaCentauriDyson = d;
-                } else {
-                    com.gonzotech.space.client.SpaceSkyState.sunDyson = d;
-                    com.gonzotech.space.client.SpaceSkyState.alphaCentauriDyson = d;
-                    com.gonzotech.space.client.SpaceSkyState.dysonSphere = d;
+                if ("alpha_centauri".equalsIgnoreCase(target) || "alpha-centauri".equalsIgnoreCase(target)) {
+                    SpaceSkyState.alphaCentauriDyson = d;
+                } else if ("yx989".equalsIgnoreCase(target) || "yx989_k2".equalsIgnoreCase(target) || "y989".equalsIgnoreCase(target)) {
+                    SpaceSkyState.yx989Dyson = d;
+                } else if ("zangler".equalsIgnoreCase(target) || "zangler_11".equalsIgnoreCase(target)) {
+                    SpaceSkyState.zanglerDyson = d;
                 }
             }));
     }
 
-    /** Отправить текущий режим одному игроку. */
-    public static void sendToPlayer(ServerPlayer player, String target, boolean dyson) {
-        PacketDistributor.sendToPlayer(player, new StarModePayload(target, dyson));
+    /** Отправить состояние Солнца всем игрокам. */
+    public static void sendSunStateToAll(net.minecraft.server.MinecraftServer server, SunState state) {
+        currentSunState = state;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            PacketDistributor.sendToPlayer(p, new SunStatePayload(state.getSerializedName()));
+        }
     }
 
-    /** Разослать режим всем игрокам сервера. */
-    public static void sendToAll(net.minecraft.server.MinecraftServer server, String target, boolean dyson) {
+    /** Отправить режим звезды/кольца всем игрокам. */
+    public static void sendStarModeToAll(net.minecraft.server.MinecraftServer server, String target, boolean dyson) {
+        if ("alpha_centauri".equalsIgnoreCase(target) || "alpha-centauri".equalsIgnoreCase(target)) {
+            currentAlphaCentauriDyson = dyson;
+        } else if ("yx989".equalsIgnoreCase(target) || "yx989_k2".equalsIgnoreCase(target) || "y989".equalsIgnoreCase(target)) {
+            currentYx989Dyson = dyson;
+        } else if ("zangler".equalsIgnoreCase(target) || "zangler_11".equalsIgnoreCase(target)) {
+            currentZanglerDyson = dyson;
+        }
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             PacketDistributor.sendToPlayer(p, new StarModePayload(target, dyson));
         }
+    }
+
+    /** Синхронизировать текущее состояние подключившемуся игроку. */
+    public static void syncToPlayer(ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player, new SunStatePayload(currentSunState.getSerializedName()));
+        PacketDistributor.sendToPlayer(player, new StarModePayload("alpha_centauri", currentAlphaCentauriDyson));
+        PacketDistributor.sendToPlayer(player, new StarModePayload("yx989", currentYx989Dyson));
+        PacketDistributor.sendToPlayer(player, new StarModePayload("zangler", currentZanglerDyson));
     }
 }

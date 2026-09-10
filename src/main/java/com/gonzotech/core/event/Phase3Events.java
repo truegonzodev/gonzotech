@@ -238,11 +238,12 @@ public final class Phase3Events {
      */
     private static final int MASH_ADDICTION_PER_EAT = 1;
 
-    /** Синк трёх HUD-шкал при входе в мир. */
+    /** Синк трёх HUD-шкал и состояния космического неба при входе в мир. */
     @SubscribeEvent
     public static void onPsycheLoginSync(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PsycheNetwork.sendToPlayer(player);
+            com.gonzotech.space.SpaceSkyNetwork.syncToPlayer(player);
         }
     }
 
