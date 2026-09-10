@@ -56,8 +56,8 @@ public final class BlackHoleRenderer {
     public static final float RADIUS_ZANGLER_11 = 200.0F;
 
     /** Цвета перехода орбитальных частиц плазмы: #fffcf2 (бело-золотой) → #ff3c00 (огненно-красный). */
-    private static final Vector3f PARTICLE_COLOR_1 = new Vector3f(1.0F, 0.9882F, 0.9490F);
-    private static final Vector3f PARTICLE_COLOR_2 = new Vector3f(1.0F, 0.2353F, 0.0F);
+    private static final int PARTICLE_COLOR_1 = 0xFFFCF2;
+    private static final int PARTICLE_COLOR_2 = 0xFF3C00;
 
     private static final RandomSource RANDOM = RandomSource.create();
 
@@ -169,7 +169,8 @@ public final class BlackHoleRenderer {
             DustColorTransitionOptions options = new DustColorTransitionOptions(
                 PARTICLE_COLOR_1, PARTICLE_COLOR_2, scale);
 
-            level.addParticle(options, true, px, py, pz, vx, vy, vz);
+            level.addParticle(options, (double) px, (double) py, (double) pz,
+                                       (double) vx, (double) vy, (double) vz);
         }
     }
 
