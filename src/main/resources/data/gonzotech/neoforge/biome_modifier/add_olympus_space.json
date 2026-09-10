@@ -1,6 +1,6 @@
 {
   "type": "neoforge:add_features",
-  "biomes": "#minecraft:is_overworld",
+  "biomes": [ "gonzotech:moon", "gonzotech:mars", "gonzotech:europa" ],
   "features": [ "gonzotech:olympus" ],
   "step": "surface_structures"
 }
