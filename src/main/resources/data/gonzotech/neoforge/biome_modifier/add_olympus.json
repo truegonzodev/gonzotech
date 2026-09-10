@@ -1,6 +1,6 @@
 {
   "type": "neoforge:add_features",
-  "biomes": "gonzotech:mars",
+  "biomes": [ "gonzotech:mars" ],
   "features": [ "gonzotech:olympus" ],
   "step": "surface_structures"
 }

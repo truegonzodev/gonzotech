@@ -36,6 +36,8 @@ public class OlympusFeature extends Feature<NoneFeatureConfiguration> {
 
     /** Радиус основания вулкана: 320 блоков. */
     private static final int RADIUS = 320;
+    /** Зарывание фундамента в грунт для исключения висячих краев и пустот под горой. */
+    private static final int DIG_IN = 8;
     /** Небольшой шум высоты конуса, чтобы склон не был идеально гладким. */
     private static final double NOISE_AMP = 6.0;
 
@@ -68,7 +70,6 @@ public class OlympusFeature extends Feature<NoneFeatureConfiguration> {
         int topBuild = level.getMaxY() - 2; // потолок застройки с запасом под слой снега
         BlockState stone = ModBlocks.MARTIAN_STONE.get().defaultBlockState();
         BlockState rich = ModBlocks.RICH_MARTIAN_STONE.get().defaultBlockState();
-        BlockState snowBlock = Blocks.SNOW_BLOCK.defaultBlockState();
         BlockState snowLayer = Blocks.SNOW.defaultBlockState();
         RandomSource random = context.random();
         long noiseSeed = 0x0157A11L ^ ((long) anchor[0] * 73428767L + anchor[1] * 912931L);
@@ -85,76 +86,66 @@ public class OlympusFeature extends Feature<NoneFeatureConfiguration> {
                 if (dist > RADIUS) {
                     continue;
                 }
-                // Профиль щитового вулкана: 1 в центре → 0 на краю.
+                // Профиль конуса: 1 в центре → 0 на краю.
                 double frac = 1.0 - (dist / RADIUS);
                 double shaped = Math.pow(frac, 1.25);
-                int baseY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, wx, wz);
-                if (baseY <= level.getMinY() + 1) {
-                    baseY = level.getMinY() + 2;
+                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, wx, wz);
+                if (surfaceY <= level.getMinY() + 1) {
+                    surfaceY = level.getMinY() + 2;
                 }
                 double noise = valueNoise(noiseSeed, wx * 0.03, 0, wz * 0.03) * NOISE_AMP;
-                int peakY = baseY + (int) Math.round(shaped * (topBuild - baseY) + noise * frac);
+                int peakY = surfaceY + (int) Math.round(shaped * (topBuild - surfaceY) + noise * frac);
                 if (peakY > topBuild) {
                     peakY = topBuild;
                 }
-                if (peakY < baseY) {
-                    peakY = baseY;
+                if (peakY < surfaceY) {
+                    peakY = surfaceY;
                 }
 
-                // Шум границы снега для естественного волнистого края шапки
-                double snowWarp = valueNoise(noiseSeed ^ 0x9E3779B9L, wx * 0.04, 0, wz * 0.04) * 0.08;
-                int snowLine = baseY + (int) Math.round((topBuild - baseY) * (0.68 + snowWarp));
-
-                // ЗАРЫВАНИЕ: заполняем фундамент на 10 блоков вглубь от поверхности,
-                // чтобы исключить висячие склоны, дыры от каверн и трещины под горой.
-                int foundationBottom = Math.max(level.getMinY() + 2, baseY - 10);
-                for (int y = foundationBottom; y < baseY; y++) {
+                // --- 1) ТЕЛО ВУЛКАНА (порода + зарывание) ---
+                int fillFrom = Math.max(level.getMinY() + 2, surfaceY - DIG_IN);
+                for (int y = fillFrom; y <= peakY; y++) {
                     pos.set(wx, y, wz);
-                    BlockState current = level.getBlockState(pos);
-                    if (current.isAir() || current.canBeReplaced() || current.is(Blocks.WATER)) {
-                        level.setBlock(pos, stone, 2);
-                    }
-                }
-
-                // Тело вулкана и снежная шапка
-                for (int y = baseY; y <= peakY; y++) {
-                    pos.set(wx, y, wz);
-                    BlockState put;
-                    if (y >= snowLine) {
-                        // Верхняя снежная шапка:
-                        // На самой вершине и у поверхности шапки — плотный снежный блок
-                        if (y >= peakY - 2 || y >= snowLine + 12) {
-                            put = snowBlock;
-                        } else {
-                            put = (random.nextInt(4) == 0) ? stone : snowBlock;
+                    if (y < surfaceY) {
+                        BlockState current = level.getBlockState(pos);
+                        if (current.isAir() || current.canBeReplaced() || current.is(Blocks.WATER)) {
+                            level.setBlock(pos, stone, 2);
                         }
                     } else {
-                        // Скалистое тело вулкана
-                        put = (random.nextInt(9) == 0) ? rich : stone;
+                        BlockState put = (random.nextInt(9) == 0) ? rich : stone;
+                        level.setBlock(pos, put, 2);
                     }
-                    level.setBlock(pos, put, 2);
                 }
 
-                // СНЕЖНАЯ ШАПКА СЛОЯМИ НА ВЕРШИНЕ (поверх блоков peakY):
-                if (peakY + 1 < level.getMaxY()) {
-                    pos.set(wx, peakY + 1, wz);
-                    if (level.getBlockState(pos).isAir()) {
-                        if (peakY >= snowLine) {
-                            int heightAboveSnow = peakY - snowLine;
-                            int layerCount;
-                            if (heightAboveSnow >= 10) {
-                                layerCount = 6 + random.nextInt(3); // 6..8 слоёв
-                            } else if (heightAboveSnow >= 5) {
-                                layerCount = 3 + random.nextInt(3); // 3..5 слоёв
-                            } else {
-                                layerCount = 1 + random.nextInt(3); // 1..3 слоя
-                            }
-                            layerCount = Math.max(1, Math.min(8, layerCount));
-                            level.setBlock(pos, snowLayer.setValue(SnowLayerBlock.LAYERS, layerCount), 2);
-                        } else if (peakY >= snowLine - 6 && snowWarp > 0.02) {
-                            // Островная легкая присыпка у границы снега
-                            int layerCount = 1 + random.nextInt(2);
-                            level.setBlock(pos, snowLayer.setValue(SnowLayerBlock.LAYERS, layerCount), 2);
+                // --- 2) СНЕГ КАК ТОНКИЙ СЛОЙ ---
+                // Линия снега начинается примерно на 70% высоты горы
+                int snowLine = surfaceY + (int) Math.round((topBuild - surfaceY) * 0.70);
+                if (peakY >= snowLine - 3 && peakY + 1 < level.getMaxY()) {
+                    // Двухоктавный value-noise для пятнистого/рваного начала
+                    double n1 = valueNoise(noiseSeed ^ 0x9E3779B9L, wx * 0.04, 0, wz * 0.04);
+                    double n2 = valueNoise(noiseSeed ^ 0x5F3759DFL, wx * 0.12, 0, wz * 0.12) * 0.5;
+                    double snowNoise = (n1 + n2) / 1.5; // [-1..1]
+                    double normNoise = (snowNoise + 1.0) * 0.5; // [0..1]
+
+                    // Прогресс от линии снега до вершины
+                    double snowT = (double) (peakY - snowLine) / Math.max(1, topBuild - snowLine);
+                    snowT = Math.max(0.0, Math.min(1.0, snowT));
+
+                    boolean isPeakTop = (peakY >= topBuild - 5);
+                    // Покрытие плавно растет: ~15% у снеговой линии до 100% у пика
+                    double coverage = isPeakTop ? 1.0 : (0.15 + 0.85 * snowT);
+
+                    if (normNoise <= coverage || isPeakTop) {
+                        int layers;
+                        if (isPeakTop) {
+                            layers = 8; // 100% + 8 слоев на последних 5 блоках вершины
+                        } else {
+                            layers = 1 + (int) Math.round(snowT * 7.0 + snowNoise * 1.5);
+                            layers = Math.max(1, Math.min(8, layers));
+                        }
+                        pos.set(wx, peakY + 1, wz);
+                        if (level.getBlockState(pos).isAir()) {
+                            level.setBlock(pos, snowLayer.setValue(SnowLayerBlock.LAYERS, layers), 2);
                         }
                     }
                 }
@@ -184,7 +175,7 @@ public class OlympusFeature extends Feature<NoneFeatureConfiguration> {
         double c011 = hash01(seed, xi, yi + 1, zi + 1);
         double c111 = hash01(seed, xi + 1, yi + 1, zi + 1);
         double x00 = lerp(c000, c100, u), x10 = lerp(c010, c110, u);
-        double x01 = lerp(c001, c101, u), x11 = lerp(c011, c101, u);
+        double x01 = lerp(c001, c101, u), x11 = lerp(c011, c111, u);
         double y0 = lerp(x00, x10, v), y1 = lerp(x01, x11, v);
         return lerp(y0, y1, w) * 2.0 - 1.0;
     }

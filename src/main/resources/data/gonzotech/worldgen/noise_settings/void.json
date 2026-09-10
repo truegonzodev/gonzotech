@@ -1,5 +1,5 @@
 {
-  "sea_level": 0,
+  "sea_level": -64,
   "disable_mob_generation": true,
   "aquifers_enabled": false,
   "ore_veins_enabled": false,
