@@ -438,25 +438,25 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
         float posAngle;
         if (body.motion() == CelestialBody.Motion.FIXED) {
-            posAngle = body.phase();
+            posAngle = body.phaseDeg();
         } else if (body.motion() == CelestialBody.Motion.HORIZON_ORBIT) {
             double cycleTicks = 24000.0 * Math.max(0.001, body.cycleDays());
             double time = level.getDayTime() + partialTick;
             float frac = Mth.frac((float) (time / cycleTicks));
-            posAngle = body.phase() + frac * 360.0F;
+            posAngle = body.phaseDeg() + frac * 360.0F;
         } else {
             double cycleTicks = 24000.0 * Math.max(0.001, body.cycleDays());
             double time = level.getDayTime() + partialTick;
             float frac = Mth.frac((float) ((time - 6000.0) / cycleTicks));
-            posAngle = body.phase() + frac * 360.0F;
+            posAngle = body.phaseDeg() + frac * 360.0F;
         }
 
         if (body.motion() == CelestialBody.Motion.HORIZON_ORBIT) {
             m.rotate(Axis.YP.rotationDegrees(posAngle));
-            m.rotate(Axis.XP.rotationDegrees(90.0F - body.tilt()));
+            m.rotate(Axis.XP.rotationDegrees(90.0F - body.axisTilt()));
         } else {
-            m.rotate(Axis.YP.rotationDegrees(body.yaw()));
-            m.rotate(Axis.XP.rotationDegrees(body.tilt()));
+            m.rotate(Axis.YP.rotationDegrees(body.axisYaw()));
+            m.rotate(Axis.XP.rotationDegrees(body.axisTilt()));
             m.rotate(Axis.ZP.rotationDegrees(posAngle));
         }
 
