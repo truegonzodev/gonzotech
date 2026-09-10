@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "cantor_ingot",
+  "ingredients": [
+    "gonzotech:cantor_block"
+  ],
+  "result": {
+    "id": "gonzotech:cantor_ingot",
+    "count": 9
+  }
+}

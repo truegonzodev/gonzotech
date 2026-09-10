@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "stainless_steel_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:stainless_steel_nugget"
+  },
+  "result": {
+    "id": "gonzotech:stainless_steel_ingot",
+    "count": 1
+  }
+}

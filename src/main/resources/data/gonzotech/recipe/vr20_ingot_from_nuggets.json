@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "vr20_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:vr20_nugget"
+  },
+  "result": {
+    "id": "gonzotech:vr20_ingot",
+    "count": 1
+  }
+}

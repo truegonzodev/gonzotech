@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "raw_sulfur",
+  "ingredient": "gonzotech:sulfur_ore",
+  "result": {
+    "id": "gonzotech:raw_sulfur"
+  },
+  "experience": 0.35,
+  "cookingtime": 100
+}

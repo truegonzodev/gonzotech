@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "manganese_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:manganese_ingot"
+  },
+  "result": {
+    "id": "gonzotech:manganese_block",
+    "count": 1
+  }
+}

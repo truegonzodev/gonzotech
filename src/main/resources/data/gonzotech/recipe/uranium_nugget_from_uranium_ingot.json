@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "uranium_nugget",
+  "ingredients": [
+    "gonzotech:uranium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:uranium_nugget",
+    "count": 9
+  }
+}

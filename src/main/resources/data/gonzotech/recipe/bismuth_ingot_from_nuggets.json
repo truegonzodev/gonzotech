@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "bismuth_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:bismuth_nugget"
+  },
+  "result": {
+    "id": "gonzotech:bismuth_ingot",
+    "count": 1
+  }
+}

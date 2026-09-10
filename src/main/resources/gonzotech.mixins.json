@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.gonzotech.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "gonzotech.refmap.json",
+  "mixins": [
+    "AbstractFurnaceBlockEntityMixin"
+  ],
+  "client": [
+    "client.ClientLevelSkyDarkenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

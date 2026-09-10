@@ -1,0 +1,11 @@
+{
+  "type": "gonzotech:mars",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "gonzotech:mars",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "gonzotech:mars"
+    }
+  }
+}

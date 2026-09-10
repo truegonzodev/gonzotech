@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "nickel_ingot",
+  "ingredient": "gonzotech:raw_nickel",
+  "result": {
+    "id": "gonzotech:nickel_ingot"
+  },
+  "experience": 0.7,
+  "cookingtime": 100
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "aluminum_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:aluminum_ingot"
+  },
+  "result": {
+    "id": "gonzotech:aluminum_block",
+    "count": 1
+  }
+}

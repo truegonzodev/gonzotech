@@ -1,0 +1,11 @@
+{
+  "type": "gonzotech:solar_orbit",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "gonzotech:void",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "gonzotech:solar_orbit"
+    }
+  }
+}

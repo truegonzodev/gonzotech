@@ -28,6 +28,14 @@ public class ModBlocks {
     public static final Map<String, Map<Host, DeferredBlock<? extends Block>>> ORE_BLOCKS = new LinkedHashMap<>();
 
     /**
+     * Фаза 3 — «драгоценные» блоки-хранилища из 9 слитков (по одному на КАЖДЫЙ
+     * слиток из {@link ModItems#INGOT_IDS}, без исключений). Ключ карты — id блока
+     * вида {@code <metal>_block} (у {@code *_ingot} убираем суффикс {@code _ingot}).
+     * Все блоки — beacon base (тег {@code minecraft:beacon_base_blocks}).
+     */
+    public static final Map<String, DeferredBlock<Block>> METAL_BLOCKS = new LinkedHashMap<>();
+
+    /**
      * Доска резонанса (com.gonzotech.chalkboard) — Фаза 1: просто ставится,
      * ПКМ открывает экран конструктора формул. См.
      * info/gonzo_tech_chalkboard_design.md. Дерево/мел — не руда, не
@@ -40,6 +48,114 @@ public class ModBlocks {
             .mapColor(MapColor.WOOD)
             .sound(SoundType.WOOD)
             .strength(2.5f, 3.0f)
+    );
+
+    /**
+     * Фаза 3 — тестовый размещаемый блок «лунный грунт» (вкладка «Блоки»).
+     * Просто ставится; копает лопата, как ванильный dirt-подобный блок.
+     */
+    public static final DeferredBlock<Block> LUNAR_DIRT = BLOCKS.registerSimpleBlock(
+        "lunar_dirt",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.GRAVEL)
+            .strength(0.6f, 0.6f)
+    );
+
+    // ─────────────────────────── Фаза 4: блоки космоса ───────────────────────────
+    // Плейсхолдер-текстуры (см. textures/block/*.png). Балансы прочности пока
+    // грубые: породы — как камень, грунты/песок — как земля/песок. Все блоки
+    // копаются киркой (породы) / лопатой (грунты, песок) — теги ниже в data/.
+
+    /** Луна: базовая порода недр (аналог камня). */
+    public static final DeferredBlock<Block> LUNAR_STONE = BLOCKS.registerSimpleBlock(
+        "lunar_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(1.5f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Луна: «богатая» порода — жилы/вкрапления в недрах. */
+    public static final DeferredBlock<Block> RICH_LUNAR_STONE = BLOCKS.registerSimpleBlock(
+        "rich_lunar_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(2.0f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Луна: поверхностный «лунный песок» — падает как ванильный песок. */
+    public static final DeferredBlock<com.gonzotech.space.block.GonzoFallingBlock> LUNAR_SAND =
+        BLOCKS.registerBlock(
+            "lunar_sand",
+            com.gonzotech.space.block.GonzoFallingBlock::new,
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.SAND)
+                .sound(SoundType.SAND)
+                .strength(0.5f, 0.5f)
+        );
+
+    /** Марс: базовая порода недр. */
+    public static final DeferredBlock<Block> MARTIAN_STONE = BLOCKS.registerSimpleBlock(
+        "martian_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_ORANGE)
+            .sound(SoundType.STONE)
+            .strength(1.5f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Марс: «богатая» порода — жилы/вкрапления. */
+    public static final DeferredBlock<Block> RICH_MARTIAN_STONE = BLOCKS.registerSimpleBlock(
+        "rich_martian_stone",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_ORANGE)
+            .sound(SoundType.STONE)
+            .strength(2.0f, 6.0f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Марс: поверхностный грунт (как земля, не падает). */
+    public static final DeferredBlock<Block> MARTIAN_DIRT = BLOCKS.registerSimpleBlock(
+        "martian_dirt",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_ORANGE)
+            .sound(SoundType.GRAVEL)
+            .strength(0.6f, 0.6f)
+    );
+
+    /** Европа: «сверхплотный лёд» глубинного панциря (не тает, скользкий). */
+    public static final DeferredBlock<Block> SUPERDENSE_ICE = BLOCKS.registerSimpleBlock(
+        "superdense_ice",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.ICE)
+            .sound(SoundType.GLASS)
+            .strength(2.0f, 6.0f)
+            .friction(0.98f)
+            .requiresCorrectToolForDrops()
+    );
+
+    /** Европа: верхний «европианский лёд» корки/глыб (не тает). */
+    public static final DeferredBlock<Block> EUROPAN_ICE = BLOCKS.registerSimpleBlock(
+        "europan_ice",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.ICE)
+            .sound(SoundType.GLASS)
+            .strength(1.0f, 3.0f)
+            .friction(0.98f)
+    );
+
+    /** Метеорит: тёмная космическая порода парящих глыб (орбиты/открытый космос). */
+    public static final DeferredBlock<Block> METEOR = BLOCKS.registerSimpleBlock(
+        "meteor",
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.COLOR_GRAY)
+            .sound(SoundType.STONE)
+            .strength(2.0f, 8.0f)
+            .requiresCorrectToolForDrops()
     );
 
     static {
@@ -92,6 +208,19 @@ public class ModBlocks {
                 byHost.put(host, block);
             }
             ORE_BLOCKS.put(ore.id(), byHost);
+        }
+
+        // Фаза 3 — блоки-хранилища из 9 слитков (у каждого слитка, без исключений).
+        // Металлически «звонкие» и прочные, как ванильный iron_block; служат также
+        // основанием маяка (тег beacon_base_blocks проставляется в data-паке).
+        for (String ingotId : Metals.INGOT_IDS) {
+            String blockId = Metals.base(ingotId) + "_block";
+            BlockBehaviour.Properties props = BlockBehaviour.Properties.of()
+                .mapColor(MapColor.METAL)
+                .sound(SoundType.METAL)
+                .strength(5.0f, 6.0f)
+                .requiresCorrectToolForDrops();
+            METAL_BLOCKS.put(blockId, BLOCKS.registerSimpleBlock(blockId, props));
         }
     }
 

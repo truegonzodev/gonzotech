@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "plutonium_nugget",
+  "ingredients": [
+    "gonzotech:plutonium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:plutonium_nugget",
+    "count": 9
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "gonzotech:europa",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "gonzotech:europa",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "gonzotech:europa"
+    }
+  }
+}

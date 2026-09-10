@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "rhenium_nugget",
+  "ingredients": [
+    "gonzotech:rhenium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:rhenium_nugget",
+    "count": 9
+  }
+}

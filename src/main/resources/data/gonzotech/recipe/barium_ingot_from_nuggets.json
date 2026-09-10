@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "barium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:barium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:barium_ingot",
+    "count": 1
+  }
+}

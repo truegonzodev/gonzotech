@@ -1,0 +1,43 @@
+{
+  "has_precipitation": false,
+  "temperature": 2.0,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 0,
+    "fog_color": 1315860,
+    "water_color": 4159204,
+    "water_fog_color": 329011
+  },
+  "spawners": {
+    "monster": [],
+    "creature": [],
+    "ambient": [],
+    "axolotls": [],
+    "underground_water_creature": [],
+    "water_creature": [],
+    "water_ambient": [],
+    "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": [
+    "gonzotech:moon_canyon",
+    "gonzotech:moon_caves"
+  ],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "gonzotech:moon_stone_blob_placed",
+      "gonzotech:moon_andesite_blob_placed",
+      "gonzotech:moon_rich_vein_placed"
+    ],
+    [],
+    [],
+    [],
+    []
+  ]
+}

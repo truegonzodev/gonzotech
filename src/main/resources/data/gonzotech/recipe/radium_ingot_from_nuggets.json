@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "radium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:radium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:radium_ingot",
+    "count": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "calcium_nugget",
+  "ingredients": [
+    "gonzotech:calcium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:calcium_nugget",
+    "count": 9
+  }
+}

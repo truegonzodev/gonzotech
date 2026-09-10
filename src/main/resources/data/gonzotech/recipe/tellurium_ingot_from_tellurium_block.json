@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "tellurium_ingot",
+  "ingredients": [
+    "gonzotech:tellurium_block"
+  ],
+  "result": {
+    "id": "gonzotech:tellurium_ingot",
+    "count": 9
+  }
+}

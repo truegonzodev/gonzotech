@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "DPH",
+    "B B",
+    "CPL"
+  ],
+  "key": {
+    "D": "#minecraft:planks",
+    "P": "minecraft:piston",
+    "H": "minecraft:chest",
+    "B": "minecraft:bucket",
+    "C": "gonzotech:cast_iron_ingot",
+    "L": "minecraft:lever"
+  },
+  "result": { "id": "gonzotech:cobble_generator", "count": 1 }
+}

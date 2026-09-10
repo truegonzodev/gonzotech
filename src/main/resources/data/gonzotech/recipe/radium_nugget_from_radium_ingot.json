@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "radium_nugget",
+  "ingredients": [
+    "gonzotech:radium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:radium_nugget",
+    "count": 9
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "gonzotech:blackhole_zangler_11",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "gonzotech:void",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "gonzotech:blackhole_zangler_11"
+    }
+  }
+}

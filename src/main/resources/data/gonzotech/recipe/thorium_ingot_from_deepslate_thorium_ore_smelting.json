@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "thorium_ingot",
+  "ingredient": "gonzotech:deepslate_thorium_ore",
+  "result": {
+    "id": "gonzotech:thorium_ingot"
+  },
+  "experience": 0.9,
+  "cookingtime": 200
+}

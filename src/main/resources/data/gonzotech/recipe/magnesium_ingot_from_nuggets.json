@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "magnesium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:magnesium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:magnesium_ingot",
+    "count": 1
+  }
+}

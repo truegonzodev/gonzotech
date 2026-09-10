@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "zinc_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:zinc_nugget"
+  },
+  "result": {
+    "id": "gonzotech:zinc_ingot",
+    "count": 1
+  }
+}

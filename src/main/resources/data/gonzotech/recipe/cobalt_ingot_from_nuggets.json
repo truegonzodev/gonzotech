@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "cobalt_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:cobalt_nugget"
+  },
+  "result": {
+    "id": "gonzotech:cobalt_ingot",
+    "count": 1
+  }
+}

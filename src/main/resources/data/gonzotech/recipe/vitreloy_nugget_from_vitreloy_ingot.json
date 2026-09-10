@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "vitreloy_nugget",
+  "ingredients": [
+    "gonzotech:vitreloy_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:vitreloy_nugget",
+    "count": 9
+  }
+}

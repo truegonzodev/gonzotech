@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "vitreloy_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:vitreloy_nugget"
+  },
+  "result": {
+    "id": "gonzotech:vitreloy_ingot",
+    "count": 1
+  }
+}

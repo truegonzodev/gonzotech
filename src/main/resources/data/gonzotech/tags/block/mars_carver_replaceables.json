@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:martian_stone",
+    "gonzotech:rich_martian_stone",
+    "gonzotech:martian_dirt",
+    "minecraft:terracotta",
+    "minecraft:red_sand"
+  ]
+}

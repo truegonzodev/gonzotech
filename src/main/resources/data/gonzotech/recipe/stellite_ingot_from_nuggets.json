@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "stellite_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:stellite_nugget"
+  },
+  "result": {
+    "id": "gonzotech:stellite_ingot",
+    "count": 1
+  }
+}

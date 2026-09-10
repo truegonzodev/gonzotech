@@ -48,7 +48,14 @@ public class DiscoveryItem extends Item {
                 serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
                 ChalkboardNetwork.sendSyncToPlayer(serverPlayer);
                 ModAdvancements.checkAndAwardAdvancements(serverPlayer);
+                // Фаза 3: показать в книге рецептов машины этого «Открытия».
+                com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantForTier(serverPlayer, discoveryNumber);
                 stack.shrink(1);
+
+                // Стильный визуал: анимация «выброса» на экран (как тотем бессмертия) —
+                // только при реальной активации. Бессмертия НЕ даёт, партиклов нет.
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                        serverPlayer, new com.gonzotech.chalkboard.network.DiscoveryActivationPayload(discoveryNumber));
 
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.2F);

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "lead_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:lead_ingot"
+  },
+  "result": {
+    "id": "gonzotech:lead_block",
+    "count": 1
+  }
+}

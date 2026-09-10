@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "iodine_ingot",
+  "ingredients": [
+    "gonzotech:iodine_block"
+  ],
+  "result": {
+    "id": "gonzotech:iodine_ingot",
+    "count": 9
+  }
+}

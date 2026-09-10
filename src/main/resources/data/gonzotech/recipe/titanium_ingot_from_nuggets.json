@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "titanium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:titanium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:titanium_ingot",
+    "count": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "boron_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:boron_ingot"
+  },
+  "result": {
+    "id": "gonzotech:boron_block",
+    "count": 1
+  }
+}

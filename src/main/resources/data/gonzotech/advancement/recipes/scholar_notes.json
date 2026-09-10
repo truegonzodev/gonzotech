@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": { "recipes": [ "gonzotech:scholar_notes" ] },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "gonzotech:scholar_notes" }
+    },
+    "has_book": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [ { "items": "minecraft:book" } ] }
+    }
+  },
+  "requirements": [ [ "has_book", "has_the_recipe" ] ]
+}

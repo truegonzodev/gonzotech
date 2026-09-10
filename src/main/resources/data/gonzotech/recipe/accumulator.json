@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CRC",
+    "KIK",
+    "CGC"
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "R": "minecraft:copper_grate",
+    "K": "gonzotech:pseudo_coil",
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:glass"
+  },
+  "result": { "id": "gonzotech:accumulator", "count": 1 }
+}

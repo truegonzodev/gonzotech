@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "steel_nugget",
+  "ingredients": [
+    "gonzotech:steel_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:steel_nugget",
+    "count": 9
+  }
+}

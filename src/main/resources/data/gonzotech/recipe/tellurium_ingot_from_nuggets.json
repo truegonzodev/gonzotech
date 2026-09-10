@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "tellurium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:tellurium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:tellurium_ingot",
+    "count": 1
+  }
+}

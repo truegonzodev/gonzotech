@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:ore",
+  "config": {
+    "targets": [
+      { "target": { "predicate_type": "minecraft:block_match", "block": "gonzotech:martian_stone" },
+        "state": { "Name": "minecraft:terracotta" } }
+    ],
+    "size": 64,
+    "discard_chance_on_air_exposure": 0.0
+  }
+}

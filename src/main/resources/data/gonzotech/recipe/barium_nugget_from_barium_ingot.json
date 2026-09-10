@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "barium_nugget",
+  "ingredients": [
+    "gonzotech:barium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:barium_nugget",
+    "count": 9
+  }
+}

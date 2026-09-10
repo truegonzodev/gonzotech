@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "semiconductor_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:semiconductor_nugget"
+  },
+  "result": {
+    "id": "gonzotech:semiconductor_ingot",
+    "count": 1
+  }
+}

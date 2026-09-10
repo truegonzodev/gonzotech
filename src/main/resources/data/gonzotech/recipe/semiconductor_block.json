@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "semiconductor_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:semiconductor_ingot"
+  },
+  "result": {
+    "id": "gonzotech:semiconductor_block",
+    "count": 1
+  }
+}

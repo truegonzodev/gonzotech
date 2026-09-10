@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "magnesium_nugget",
+  "ingredients": [
+    "gonzotech:magnesium_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:magnesium_nugget",
+    "count": 9
+  }
+}

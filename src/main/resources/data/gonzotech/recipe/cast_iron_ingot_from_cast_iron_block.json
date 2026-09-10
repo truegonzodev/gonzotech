@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "cast_iron_ingot",
+  "ingredients": [
+    "gonzotech:cast_iron_block"
+  ],
+  "result": {
+    "id": "gonzotech:cast_iron_ingot",
+    "count": 9
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "neodymium_ingot",
+  "ingredients": [
+    "gonzotech:neodymium_block"
+  ],
+  "result": {
+    "id": "gonzotech:neodymium_ingot",
+    "count": 9
+  }
+}

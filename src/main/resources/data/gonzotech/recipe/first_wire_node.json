@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "IWA",
+    "W W",
+    "AWI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "W": "gonzotech:first_wire",
+    "A": "gonzotech:aluminum_ingot"
+  },
+  "result": { "id": "gonzotech:first_wire_node", "count": 1 }
+}

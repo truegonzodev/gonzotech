@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "platinum_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:platinum_nugget"
+  },
+  "result": {
+    "id": "gonzotech:platinum_ingot",
+    "count": 1
+  }
+}

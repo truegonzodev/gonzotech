@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " CL",
+    "IRI",
+    "SI "
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "L": "minecraft:lever",
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "S": "minecraft:iron_sword"
+  },
+  "result": { "id": "gonzotech:wrench", "count": 1 }
+}

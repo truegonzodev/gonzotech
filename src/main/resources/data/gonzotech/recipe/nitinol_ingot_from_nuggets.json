@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "nitinol_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:nitinol_nugget"
+  },
+  "result": {
+    "id": "gonzotech:nitinol_ingot",
+    "count": 1
+  }
+}

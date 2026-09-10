@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " CS",
+    "BDB",
+    " C "
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "S": "minecraft:stick",
+    "B": "minecraft:cobblestone",
+    "D": "minecraft:dropper"
+  },
+  "result": { "id": "gonzotech:item_scavenger", "count": 1 }
+}

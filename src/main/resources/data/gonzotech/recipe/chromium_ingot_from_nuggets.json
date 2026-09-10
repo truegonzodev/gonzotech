@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "chromium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:chromium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:chromium_ingot",
+    "count": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "stellite_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:stellite_ingot"
+  },
+  "result": {
+    "id": "gonzotech:stellite_block",
+    "count": 1
+  }
+}

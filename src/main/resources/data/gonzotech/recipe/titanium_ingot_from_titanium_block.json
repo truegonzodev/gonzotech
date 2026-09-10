@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "titanium_ingot",
+  "ingredients": [
+    "gonzotech:titanium_block"
+  ],
+  "result": {
+    "id": "gonzotech:titanium_ingot",
+    "count": 9
+  }
+}

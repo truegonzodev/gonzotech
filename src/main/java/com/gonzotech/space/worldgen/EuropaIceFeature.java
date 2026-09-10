@@ -1,0 +1,340 @@
+package com.gonzotech.space.worldgen;
+
+import com.gonzotech.core.registry.ModBlocks;
+import com.mojang.serialization.Codec;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.material.Fluids;
+
+/**
+ * Фаза 4 — «подводная жизнь» ледяного океана Европы (переработка по фидбэку #5):
+ * <ol>
+ *   <li>ВИСЯЧИЕ ЛЕДЯНЫЕ ГОРЫ — с нижней кромки корки («подкорки») в воду свисают
+ *       хаотичные сосульки-«горы» разной толщины/длины с неровным, бугристым
+ *       профилем (не гладкие конусы), разбавленные ванильным packed/blue ice.</li>
+ *   <li>ПЛАВАЮЩИЕ ГЛЫБЫ — от мелких (d~4) до огромных (d~50) КУСКОВ ПРИЧУДЛИВОЙ
+ *       формы: слепленные из нескольких долей-«лопастей» (metaball-объединение) с
+ *       шумовой шероховатостью краёв — НЕ эллипсоиды. Крупные бывают пористыми.</li>
+ * </ol>
+ *
+ * <p>Работает по чанку в шаге {@code underground_decoration}. Заменяются только
+ * вода/воздух — саму корку и бедрок не трогаем. Сверхплотный лёд НЕ используется
+ * (он только на дне океана, ставится surface-rule); глыбы/сосульки — из
+ * европианского/packed/blue/обычного льда.
+ *
+ * <p>ВСЕ записи ограничены безопасной зоной 3×3 чанка вокруг origin (как в
+ * {@link CraterFeature}) — иначе крупные глыбы писали бы в дальние чанки и
+ * спамили «setBlock in a far chunk».
+ */
+public class EuropaIceFeature extends Feature<NoneFeatureConfiguration> {
+
+    /** Уровень океана Европы (см. noise_settings sea_level). */
+    private static final int SEA_LEVEL = 230;
+    /** Шанс на чанк вырастить группу сосулек-гор с подкорки. */
+    private static final float STALACTITE_CHUNK_CHANCE = 0.9F;
+    /** Шанс на чанк раскидать плавающие глыбы. */
+    private static final float BLOB_CHUNK_CHANCE = 0.7F;
+
+    public EuropaIceFeature(Codec<NoneFeatureConfiguration> codec) {
+        super(codec);
+    }
+
+    /** Границы безопасной зоны записи (3×3 чанка вокруг генерируемого чанка). */
+    private int safeMinX, safeMaxX, safeMinZ, safeMaxZ;
+
+    @Override
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        WorldGenLevel level = context.level();
+        RandomSource random = context.random();
+        BlockPos origin = context.origin();
+
+        int chunkMinX = (origin.getX() >> 4) << 4;
+        int chunkMinZ = (origin.getZ() >> 4) << 4;
+        safeMinX = chunkMinX - 16;
+        safeMaxX = chunkMinX + 31;
+        safeMinZ = chunkMinZ - 16;
+        safeMaxZ = chunkMinZ + 31;
+
+        // 1) Висячие ледяные горы с нижней кромки корки.
+        if (random.nextFloat() < STALACTITE_CHUNK_CHANCE) {
+            int count = 3 + random.nextInt(5); // 3..7 сосулек на чанк
+            for (int i = 0; i < count; i++) {
+                int x = origin.getX() + random.nextInt(16);
+                int z = origin.getZ() + random.nextInt(16);
+                int crustBottom = findCrustBottom(level, x, z);
+                if (crustBottom != Integer.MIN_VALUE) {
+                    growStalactite(level, random, x, crustBottom, z);
+                }
+            }
+        }
+
+        // 2) Плавающие глыбы в водной толще.
+        if (random.nextFloat() < BLOB_CHUNK_CHANCE) {
+            int count = 1 + random.nextInt(3); // 1..3 глыбы на чанк
+            for (int i = 0; i < count; i++) {
+                // Радиус глыбы: в основном мелкие/средние, изредка ОГРОМНЫЕ.
+                int desiredR;
+                float roll = random.nextFloat();
+                if (roll < 0.60F) {
+                    desiredR = 2 + random.nextInt(4);   // мелкие r2..5
+                } else if (roll < 0.90F) {
+                    desiredR = 6 + random.nextInt(7);    // средние r6..12
+                } else {
+                    desiredR = 13 + random.nextInt(10);  // ОГРОМНЫЕ r13..22
+                }
+
+                // ЭЛЛИПСОИДНАЯ ДЕВИАЦИЯ вдоль случайного 3D-направления.
+                double sx = random.nextGaussian(), sy = random.nextGaussian(), sz = random.nextGaussian();
+                double slen = Math.sqrt(sx * sx + sy * sy + sz * sz);
+                if (slen < 1e-6) { sx = 1; sy = 0; sz = 0; slen = 1; }
+                sx /= slen; sy /= slen; sz /= slen;
+                double stretch = 1.0 + random.nextDouble() * 0.9; // 1.0..1.9
+
+                // КЛАМП ПОД БЕЗОПАСНУЮ ЗОНУ 3×3 чанка (иначе крупные глыбы срезаются
+                // плоскими гранями). Доступный полурадиус ≈ 21 блок.
+                final double AVAIL_HALF = 21.0;
+                final double BOUND = 1.45;
+                int maxAllowed = (int) Math.floor(AVAIL_HALF / (BOUND * stretch));
+                int maxR = Math.max(2, Math.min(desiredR, maxAllowed));
+
+                // Центр глыбы — В ЦЕНТРЕ ЧАНКА (симметричный запас до краёв зоны).
+                int x = origin.getX() + 8;
+                int z = origin.getZ() + 8;
+
+                // Центр глыбы — в средней/нижней части водного столба, с запасом.
+                int gab = (int) Math.ceil(maxR * BOUND * stretch) + 2;
+                int floor = level.getMinY() + 4 + gab;
+                int top = SEA_LEVEL - 4 - gab;
+                if (top <= floor + 4) {
+                    continue;
+                }
+                int cy = floor + random.nextInt(top - floor);
+                chaoticBlob(level, random, x, cy, z, maxR, sx, sy, sz, stretch);
+            }
+        }
+        return true;
+    }
+
+    /** true, если запись в (x,z) не выходит за безопасную 3×3-зону чанков. */
+    private boolean inSafe(int x, int z) {
+        return x >= safeMinX && x <= safeMaxX && z >= safeMinZ && z <= safeMaxZ;
+    }
+
+    /**
+     * Ищет нижнюю кромку корки: идём сверху (SEA_LEVEL+6) вниз, находим сплошной
+     * лёд, затем первую воду/воздух под ним. Возвращает Y последнего блока корки.
+     */
+    private int findCrustBottom(WorldGenLevel level, int x, int z) {
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        int top = Math.min(SEA_LEVEL + 6, level.getMaxY() - 1);
+        boolean inCrust = false;
+        for (int y = top; y > level.getMinY() + 4; y--) {
+            pos.set(x, y, z);
+            BlockState st = level.getBlockState(pos);
+            if (isIce(st)) {
+                inCrust = true;
+            } else if (inCrust) {
+                return y + 1; // предыдущий y — низ корки
+            }
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Свисающая с подкорки сосулька-«гора»: длина 6..50, толщина сужается книзу,
+     * но с ХАОТИЧНЫМ бугристым профилем (шумовой множитель радиуса), а не гладкий
+     * конус. ~25% — толстые «горы» (широкое основание, большая длина).
+     */
+    private void growStalactite(WorldGenLevel level, RandomSource random,
+                                int x, int crustBottom, int z) {
+        boolean mountain = random.nextInt(4) == 0;         // 25% «горы»
+        int length = mountain ? 20 + random.nextInt(31)    // 20..50
+                              : 6 + random.nextInt(20);     // 6..25
+        double baseRadius = mountain ? 3 + random.nextInt(5)  // 3..7
+                                     : 1 + random.nextInt(3); // 1..3
+        long noiseSeed = random.nextLong();
+        // Низкочастотный профиль вдоль длины: крупные плавные утолщения/перетяжки
+        // (частота 0.10..0.16 → бугры длиной ~7..10 блоков), БЕЗ послойной ряби.
+        double profScale = 0.10 + random.nextDouble() * 0.06;
+        // Плавное искривление оси сосульки (дрейф центра) — тоже value-noise.
+        double bendScale = 0.06 + random.nextDouble() * 0.04;
+        double bendAmp = mountain ? 2.0 : 1.0;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+        for (int d = 0; d < length; d++) {
+            int y = crustBottom - d;
+            if (y <= level.getMinY() + 2) {
+                break;
+            }
+            // Профиль: плавное сужение к кончику (степенная кривая) × плавный
+            // шумовой множитель 0.75..1.25 → бугристая «гора», не ступеньки.
+            double t = 1.0 - (double) d / length;
+            double taper = Math.pow(t, 0.7); // мягче линейного у основания
+            double bump = 1.0 + valueNoise(noiseSeed, 0, d * profScale, 0) * 0.25;
+            double rf = baseRadius * taper * bump;
+            int r = Math.max(0, (int) Math.round(rf));
+            // Плавный сдвиг центра сечения (искривление оси).
+            int ox = (int) Math.round(valueNoise(noiseSeed, 100, d * bendScale, 0) * bendAmp);
+            int oz = (int) Math.round(valueNoise(noiseSeed, 0, d * bendScale, 100) * bendAmp);
+            double rEdge = rf + 0.5;
+            for (int dx = -r - 1; dx <= r + 1; dx++) {
+                for (int dz = -r - 1; dz <= r + 1; dz++) {
+                    // Круглое сечение с плавной шумовой кромкой (радиус чуть
+                    // «дышит» по углу) — без попиксельного выгрызания.
+                    double dist = Math.sqrt(dx * dx + dz * dz);
+                    double edgeWobble = valueNoise(noiseSeed, dx, d * 0.5, dz) * 0.6;
+                    if (dist > rEdge + edgeWobble) {
+                        continue;
+                    }
+                    int wx = x + ox + dx, wz = z + oz + dz;
+                    if (!inSafe(wx, wz)) {
+                        continue;
+                    }
+                    pos.set(wx, y, wz);
+                    if (isWaterOrAir(level.getBlockState(pos))) {
+                        level.setBlock(pos, iceMix(random), 2);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Плавающая глыба ПРИЧУДЛИВОЙ формы (не эллипсоид): объединение нескольких
+     * долей-«лопастей» (metaball union) + шумовая шероховатость краёв. Крупные
+     * бывают пористыми (пустоты внутри).
+     */
+    private void chaoticBlob(WorldGenLevel level, RandomSource random,
+                             int cx, int cy, int cz, int maxR,
+                             double ax, double ay, double az, double stretch) {
+        int lobes = 2 + random.nextInt(4); // 2..5 слитных долей
+        double[] lx = new double[lobes], ly = new double[lobes], lz = new double[lobes], lr = new double[lobes];
+        for (int i = 0; i < lobes; i++) {
+            double spread = 0.42; // доли близко к центру → единое тело
+            lx[i] = (random.nextDouble() * 2 - 1) * maxR * spread;
+            ly[i] = (random.nextDouble() * 2 - 1) * maxR * spread;
+            lz[i] = (random.nextDouble() * 2 - 1) * maxR * spread;
+            lr[i] = maxR * (0.55 + random.nextDouble() * 0.30); // радиус доли 0.55..0.85·R
+        }
+        long noiseSeed = random.nextLong();
+        double noiseScale = 0.14 + random.nextDouble() * 0.06;
+        double warpAmp = 0.30 + random.nextDouble() * 0.20;
+
+        int R = (int) Math.ceil((maxR + 3) * stretch);
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int dx = -R; dx <= R; dx++) {
+            for (int dy = -R; dy <= R; dy++) {
+                for (int dz = -R; dz <= R; dz++) {
+                    // Анизотропное поле метаболов (эллипсоид вдоль оси a) + шум.
+                    double field = 0.0;
+                    for (int i = 0; i < lobes; i++) {
+                        double px = dx - lx[i], py = dy - ly[i], pz = dz - lz[i];
+                        double along = px * ax + py * ay + pz * az;
+                        double cxx = px - along * ax + (along / stretch) * ax;
+                        double cyy = py - along * ay + (along / stretch) * ay;
+                        double czz = pz - along * az + (along / stretch) * az;
+                        double d2 = cxx * cxx + cyy * cyy + czz * czz + 1.0;
+                        field += (lr[i] * lr[i]) / d2;
+                    }
+                    double warp = valueNoise(noiseSeed,
+                        dx * noiseScale, dy * noiseScale, dz * noiseScale); // -1..1
+                    double threshold = 1.0 - warp * warpAmp;
+                    if (field < threshold) {
+                        continue;
+                    }
+                    int x = cx + dx, y = cy + dy, z = cz + dz;
+                    if (!inSafe(x, z)) {
+                        continue;
+                    }
+                    if (y <= level.getMinY() + 2 || y >= level.getMaxY() - 1) {
+                        continue;
+                    }
+                    pos.set(x, y, z);
+                    if (isWaterOrAir(level.getBlockState(pos))) {
+                        level.setBlock(pos, iceMix(random), 2);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Гладкий 3D value-noise в [-1,1]: хеш в узлах решётки + трилинейная
+     * интерполяция со smootherstep. Крупные плавные бугры вместо «ряби».
+     */
+    private double valueNoise(long seed, double x, double y, double z) {
+        int xi = fastFloor(x), yi = fastFloor(y), zi = fastFloor(z);
+        double xf = x - xi, yf = y - yi, zf = z - zi;
+        double u = fade(xf), v = fade(yf), w = fade(zf);
+        double c000 = hash01(seed, xi, yi, zi);
+        double c100 = hash01(seed, xi + 1, yi, zi);
+        double c010 = hash01(seed, xi, yi + 1, zi);
+        double c110 = hash01(seed, xi + 1, yi + 1, zi);
+        double c001 = hash01(seed, xi, yi, zi + 1);
+        double c101 = hash01(seed, xi + 1, yi, zi + 1);
+        double c011 = hash01(seed, xi, yi + 1, zi + 1);
+        double c111 = hash01(seed, xi + 1, yi + 1, zi + 1);
+        double x00 = lerp(c000, c100, u), x10 = lerp(c010, c110, u);
+        double x01 = lerp(c001, c101, u), x11 = lerp(c011, c111, u);
+        double y0 = lerp(x00, x10, v), y1 = lerp(x01, x11, v);
+        return lerp(y0, y1, w) * 2.0 - 1.0;
+    }
+
+    private static int fastFloor(double v) {
+        int i = (int) v;
+        return v < i ? i - 1 : i;
+    }
+
+    private static double fade(double t) {
+        return t * t * t * (t * (t * 6 - 15) + 10);
+    }
+
+    private static double lerp(double a, double b, double t) {
+        return a + (b - a) * t;
+    }
+
+    /** Детерминированный хеш-шум в [0,1) от (seed, x, y, z). */
+    private double hash01(long seed, int x, int y, int z) {
+        long h = seed;
+        h = h * 6364136223846793005L + (x * 341873128712L);
+        h = h * 6364136223846793005L + (y * 132897987541L);
+        h = h * 6364136223846793005L + (z * 1274126177L);
+        h ^= (h >>> 29);
+        return ((h >>> 11) & 0x1FFFFFFFFFFFFFL) / (double) 0x20000000000000L;
+    }
+
+    /**
+     * Смесь льдов для глыб/сосулек: европианский (наш) + ванильные packed/blue/ice.
+     * СВЕРХПЛОТНЫЙ ЛЁД НЕ ВКЛЮЧАЕМ — он только на дне океана (по требованию).
+     */
+    private BlockState iceMix(RandomSource random) {
+        int r = random.nextInt(100);
+        if (r < 45) {
+            return ModBlocks.EUROPAN_ICE.get().defaultBlockState();
+        } else if (r < 75) {
+            return Blocks.PACKED_ICE.defaultBlockState();
+        } else if (r < 92) {
+            return Blocks.BLUE_ICE.defaultBlockState();
+        } else {
+            return Blocks.ICE.defaultBlockState();
+        }
+    }
+
+    private boolean isIce(BlockState st) {
+        return st.is(ModBlocks.EUROPAN_ICE.get())
+            || st.is(ModBlocks.SUPERDENSE_ICE.get())
+            || st.is(Blocks.PACKED_ICE)
+            || st.is(Blocks.BLUE_ICE)
+            || st.is(Blocks.ICE);
+    }
+
+    private boolean isWaterOrAir(BlockState st) {
+        return st.isAir() || st.getFluidState().is(Fluids.WATER) || st.getFluidState().is(Fluids.FLOWING_WATER);
+    }
+}

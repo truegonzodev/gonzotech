@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "lithium_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:lithium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:lithium_ingot",
+    "count": 1
+  }
+}

@@ -1,0 +1,62 @@
+package com.gonzotech.machines.energy;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+
+/**
+ * Маленькие интерфейсы «приёмников» ресурсов, чтобы блоки могли толкать
+ * ресурс соседу, не зная его конкретного класса.
+ * <p>
+ * Пока это прямая передача блок→сосед (мы ставим блоки вплотную вместо
+ * проводов). Позже, когда появятся трубы/провода, здесь же можно будет
+ * повесить NeoForge-capability, а логика толкания в {@link #push} не изменится.
+ */
+public final class Sinks {
+
+    private Sinks() {
+    }
+
+    // Величины — long в базовых единицах ресурса: GTU/GTH в МИЛЛИ (1 ед.=1000),
+    // вода/пар в mB. Поток за тик ограничен throughput → long хватает с запасом
+    // (хранилище может быть больше — оно на BigInteger в GtBuffer).
+
+    /** Блок умеет принимать GTH (тепло, mGTH) от соседа. */
+    public interface GthSink {
+        /** @return сколько mGTH реально принято */
+        long receiveGth(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать пар (mB) от соседа. */
+    public interface SteamSink {
+        /** @return сколько пара (mB) реально принято */
+        long receiveSteam(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать GTU («электричество», mGTU) от соседа. */
+    public interface GtuSink {
+        /** @return сколько mGTU реально принято */
+        long receiveGtu(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать воду (mB) от соседа (котёл — от генератора). */
+    public interface WaterSink {
+        /** @return сколько воды (mB) реально принято */
+        long receiveWater(long amount, boolean simulate);
+    }
+
+    /**
+     * Есть ли среди 6 соседей блок-сущность заданного класса.
+     * Используется для проверки «вижу ли я нужного соседа в цепочке».
+     */
+    public static boolean hasNeighbor(Level level, BlockPos pos, Class<?> type) {
+        for (Direction dir : Direction.values()) {
+            BlockEntity be = level.getBlockEntity(pos.relative(dir));
+            if (be != null && type.isInstance(be)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}

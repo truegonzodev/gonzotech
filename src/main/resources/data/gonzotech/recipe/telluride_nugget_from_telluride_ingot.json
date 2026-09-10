@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "telluride_nugget",
+  "ingredients": [
+    "gonzotech:telluride_ingot"
+  ],
+  "result": {
+    "id": "gonzotech:telluride_nugget",
+    "count": 9
+  }
+}

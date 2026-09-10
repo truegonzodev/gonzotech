@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " C ",
+    "CHC",
+    " F "
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "H": "minecraft:chest",
+    "F": "minecraft:hopper"
+  },
+  "result": { "id": "gonzotech:item_filter", "count": 1 }
+}

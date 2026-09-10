@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "zinc_block",
+  "pattern": [
+    "III",
+    "III",
+    "III"
+  ],
+  "key": {
+    "I": "gonzotech:zinc_ingot"
+  },
+  "result": {
+    "id": "gonzotech:zinc_block",
+    "count": 1
+  }
+}

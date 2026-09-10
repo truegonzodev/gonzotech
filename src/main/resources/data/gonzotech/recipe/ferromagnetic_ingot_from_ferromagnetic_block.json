@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "ferromagnetic_ingot",
+  "ingredients": [
+    "gonzotech:ferromagnetic_block"
+  ],
+  "result": {
+    "id": "gonzotech:ferromagnetic_ingot",
+    "count": 9
+  }
+}

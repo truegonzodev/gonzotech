@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "corten_steel_ingot",
+  "pattern": [
+    "NNN",
+    "NNN",
+    "NNN"
+  ],
+  "key": {
+    "N": "gonzotech:corten_steel_nugget"
+  },
+  "result": {
+    "id": "gonzotech:corten_steel_ingot",
+    "count": 1
+  }
+}

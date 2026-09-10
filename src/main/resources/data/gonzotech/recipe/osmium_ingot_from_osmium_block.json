@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "osmium_ingot",
+  "ingredients": [
+    "gonzotech:osmium_block"
+  ],
+  "result": {
+    "id": "gonzotech:osmium_ingot",
+    "count": 9
+  }
+}
