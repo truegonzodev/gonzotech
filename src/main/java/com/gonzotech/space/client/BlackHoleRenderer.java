@@ -33,24 +33,24 @@ import java.util.List;
 /**
  * Рендерер горизонта событий, аккреционного диска, орбитальных частиц и Колец Дайсона Чёрных Дыр.
  *
- * <p>Финальные точные параметры измерений:
+ * <p>Параметры геометрии и мегаструктур:
  * <ul>
  *   <li><b>yx989_k2:</b>
  *     <ul>
- *       <li>Горизонт событий: {@code 120} блоков</li>
- *       <li>Фотонное кольцо: {@code 126 - 134} блоков</li>
- *       <li>ISCO-зазор: {@code 120 - 135} блоков</li>
- *       <li>Аккреционный диск: {@code 138 - 500} блоков</li>
- *       <li>Кольцо Дайсона: радиус {@code 520} блоков (граница диска + 20)</li>
+ *       <li>Горизонт событий ($r_s$): {@code 120} блоков</li>
+ *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда ({@code r_min < 1.48 r_s})</li>
+ *       <li>ISCO-зазор: {@code 120 - 165} блоков</li>
+ *       <li>Аккреционный диск: {@code 165 - 500} блоков</li>
+ *       <li>Кольцо Дайсона: радиус {@code 360} блоков (уменьшен для отсутствия клиппинга и плотной компоновки)</li>
  *     </ul>
  *   </li>
  *   <li><b>zangler_11:</b>
  *     <ul>
- *       <li>Горизонт событий: {@code 200} блоков</li>
- *       <li>Фотонное кольцо: {@code 214 - 224} блоков</li>
- *       <li>ISCO-зазор: {@code 200 - 225} блоков</li>
- *       <li>Аккреционный диск: {@code 228 - 1300} блоков</li>
- *       <li>Кольцо Дайсона: радиус {@code 1320} блоков (граница диска + 20)</li>
+ *       <li>Горизонт событий ($r_s$): {@code 200} блоков</li>
+ *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда ({@code r_min < 1.48 r_s})</li>
+ *       <li>ISCO-зазор: {@code 200 - 276} блоков</li>
+ *       <li>Аккреционный диск: {@code 276 - 1300} блоков</li>
+ *       <li>Кольцо Дайсона: радиус {@code 750} блоков (уменьшен для гарантированной видимости)</li>
  *     </ul>
  *   </li>
  * </ul>
@@ -69,17 +69,17 @@ public final class BlackHoleRenderer {
     public static final float RADIUS_YX989_K2 = 120.0F;
     public static final float RING_MIN_YX989_K2 = 126.0F;
     public static final float RING_MAX_YX989_K2 = 134.0F;
-    public static final float DISK_IN_YX989_K2 = 138.0F;
+    public static final float DISK_IN_YX989_K2 = 165.0F;
     public static final float DISK_OUT_YX989_K2 = 500.0F;
-    public static final float DYSON_RING_YX989_K2 = 520.0F; // 500 + 20 блоков
+    public static final float DYSON_RING_YX989_K2 = 360.0F;
 
     // === ФИНАЛЬНЫЕ ПАРАМЕТРЫ ДЛЯ BLACKHOLE_ZANGLER_11 ===
     public static final float RADIUS_ZANGLER_11 = 200.0F;
     public static final float RING_MIN_ZANGLER_11 = 214.0F;
     public static final float RING_MAX_ZANGLER_11 = 224.0F;
-    public static final float DISK_IN_ZANGLER_11 = 228.0F;
+    public static final float DISK_IN_ZANGLER_11 = 276.0F;
     public static final float DISK_OUT_ZANGLER_11 = 1300.0F;
-    public static final float DYSON_RING_ZANGLER_11 = 1320.0F; // 1300 + 20 блоков
+    public static final float DYSON_RING_ZANGLER_11 = 750.0F;
 
     /** Текстура ванильной пиксельной пылинки 8x8 px. */
     public static final ResourceLocation DUST_TEXTURE =
@@ -322,8 +322,8 @@ public final class BlackHoleRenderer {
         // Составной поворот кольца: наклон к диску + вращение вокруг оси + медленный кульбит
         Quaternionf ringRot = new Quaternionf()
             .rotationTo(new Vector3f(0.0F, 1.0F, 0.0F), BlackHoleShader.DISK_NORMAL)
-            .rotateX(phiPitch)
-            .rotateY(phiYaw);
+            .rotateAxis(phiPitch, 1.0F, 0.0F, 0.0F)
+            .rotateAxis(phiYaw, 0.0F, 1.0F, 0.0F);
 
         float rIn = ringRadius - 6.0F;
         float rOut = ringRadius + 6.0F;

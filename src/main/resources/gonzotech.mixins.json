@@ -8,8 +8,7 @@
     "AbstractFurnaceBlockEntityMixin"
   ],
   "client": [
-    "client.ClientLevelSkyDarkenMixin",
-    "client.LevelRendererSunMixin"
+    "client.ClientLevelSkyDarkenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

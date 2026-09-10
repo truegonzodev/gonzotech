@@ -14,10 +14,12 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Relative;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,6 +43,15 @@ public final class SpaceCommand {
         "overworld", Level.OVERWORLD,
         "nether", Level.NETHER,
         "end", Level.END);
+
+    /** 5 измерений Солнечной системы, зависящих от состояния Солнца. */
+    private static final List<ResourceKey<Level>> SOLAR_DIMENSIONS = List.of(
+        Level.OVERWORLD,
+        SpaceDimensions.SOLAR_ORBIT,
+        SpaceDimensions.MOON,
+        SpaceDimensions.MARS,
+        SpaceDimensions.EUROPA
+    );
 
     private static final SuggestionProvider<CommandSourceStack> DIMENSION_SUGGESTIONS =
         (ctx, builder) -> SharedSuggestionProvider.suggest(
@@ -117,10 +128,33 @@ public final class SpaceCommand {
     /** Установить состояние Солнца для всех игроков сервера. */
     private static int setSun(CommandContext<CommandSourceStack> ctx, SunState state) {
         CommandSourceStack source = ctx.getSource();
-        if (source.getServer() == null) {
+        var server = source.getServer();
+        if (server == null) {
             return 0;
         }
-        SpaceSkyNetwork.sendSunStateToAll(source.getServer(), state);
+
+        SpaceSkyNetwork.sendSunStateToAll(server, state);
+
+        if (state == SunState.GONE) {
+            // При исчезновении солнца — вечная тьма: time set 18000 + doDaylightCycle false
+            for (ResourceKey<Level> dimKey : SOLAR_DIMENSIONS) {
+                ServerLevel lvl = server.getLevel(dimKey);
+                if (lvl != null) {
+                    lvl.setDayTime(18000L);
+                    lvl.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, server);
+                }
+            }
+        } else {
+            // При возвращении солнца/ЧД — возобновление цикла: doDaylightCycle true + time set 6000
+            for (ResourceKey<Level> dimKey : SOLAR_DIMENSIONS) {
+                ServerLevel lvl = server.getLevel(dimKey);
+                if (lvl != null) {
+                    lvl.setDayTime(6000L);
+                    lvl.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(true, server);
+                }
+            }
+        }
+
         String label = switch (state) {
             case DEFAULT -> "Обычное (sun.png)";
             case DYSON -> "Сфера Дайсона (sun_dyson.png)";

@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.space.SpaceDimensions;
 import com.gonzotech.space.client.CelestialBody.Motion;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
 
 import java.util.List;
@@ -24,6 +25,24 @@ public final class SpaceClient {
     private static ResourceLocation tex(String path) {
         return ResourceLocation.fromNamespaceAndPath(
             GonzoTechMod.MOD_ID, "textures/environment/" + path + ".png");
+    }
+
+    // ---- ОВЕРВОРЛД: динамическое солнце по глобальному SunState ----
+    private static SpaceSkyEffects overworld() {
+        List<CelestialBody> bodies = List.of(
+            CelestialBody.sun(tex("overworld/sun"), 30F, Motion.SUN,
+                1F, -90F, 0F, 0F),
+            CelestialBody.planet(tex("mars/moon"), 20F, Motion.SUN,
+                1F, -90F, 0F, 180F)
+        );
+        return new SpaceSkyEffects(
+            0.0F,
+            /*zenithDay */ 0xFF78A7FF, /*zenithNight*/ 0xFF050510,
+            /*horizonDay*/ 0xFFC0D8FF, /*horizonNight*/ 0xFF0A0A18,
+            /*sunset    */ 0xDCFFA64A,
+            bodies,
+            /*daylightScale*/ 1.00F,
+            /*starNight*/ 1.00F, /*starDay*/ 0.00F);
     }
 
     // ---- ЛУНА: тёмно-синее→багрянец(закат)→почти чёрное; Земля висит на СЗ ----
@@ -156,6 +175,7 @@ public final class SpaceClient {
     }
 
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {
+        event.register(Level.OVERWORLD.location(), overworld());
         event.register(SpaceDimensions.MOON_SKY, moon());
         event.register(SpaceDimensions.MARS_SKY, mars());
         event.register(SpaceDimensions.EUROPA_SKY, europa());
