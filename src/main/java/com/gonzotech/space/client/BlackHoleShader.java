@@ -430,17 +430,27 @@ public final class BlackHoleShader {
 
     /**
      * Отрисовка Чёрной Дыры с релятивистским геодезическим линзированием, гэпом и белым фотонным кольцом.
+     *
+     * @param compositeOverDysonRing если кольцо Дайсона уже нарисовано, не сравнивать
+     *                               аккреционный слой с его depth: alpha диска должна
+     *                               смешаться поверх кольца в экранной области диска
      */
     public static void render(Vec3 camPos, Matrix4f modelViewMatrix,
                               Matrix4f projectionMatrix, float radius,
-                              float diskIn, float diskOut) {
+                              float diskIn, float diskOut, boolean compositeOverDysonRing) {
         if (!init()) {
             return;
         }
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
+        if (compositeOverDysonRing) {
+            // Кольцо уже лежит в depth buffer. Обычный LEQUAL отбрасывает именно
+            // пиксели диска поверх него, поэтому здесь нужен только alpha blend.
+            RenderSystem.disableDepthTest();
+        } else {
+            RenderSystem.enableDepthTest();
+        }
         RenderSystem.depthMask(true);
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
         RenderSystem.disableCull();
@@ -487,6 +497,8 @@ public final class BlackHoleShader {
 
         GL20.glUseProgram(0);
 
+        // Не оставлять отключённый depth-test следующим рендер-проходам.
+        RenderSystem.enableDepthTest();
         RenderSystem.enableCull();
     }
 
