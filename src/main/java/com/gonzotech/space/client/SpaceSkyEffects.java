@@ -708,19 +708,24 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
     /**
      * Возвращает актуальную текстуру тела с учётом флага сферы Дайсона.
-     * Если {@link SpaceSkyState#dysonSphere} включён и рядом лежит вариант
+     * Если для звезды включён режим сферы Дайсона и рядом лежит вариант
      * {@code <path без .png>_dyson.png} — отдаём его; иначе исходную текстуру.
      */
     private ResourceLocation resolveTexture(ResourceLocation base) {
-        if (!SpaceSkyState.dysonSphere) {
+        String path = base.getPath();
+        boolean isSunDyson = path.contains("solar_orbit") && (SpaceSkyState.sunDyson || SpaceSkyState.dysonSphere);
+        boolean isAlphaDyson = path.contains("alpha_centauri") && (SpaceSkyState.alphaCentauriDyson || SpaceSkyState.dysonSphere);
+        boolean isGeneralDyson = (!path.contains("solar_orbit") && !path.contains("alpha_centauri")) && SpaceSkyState.dysonSphere;
+
+        if (!isSunDyson && !isAlphaDyson && !isGeneralDyson) {
             return base;
         }
         return DYSON_CACHE.computeIfAbsent(base, b -> {
-            String path = b.getPath();
-            if (!path.endsWith(".png")) {
+            String p = b.getPath();
+            if (!p.endsWith(".png")) {
                 return b;
             }
-            String dysonPath = path.substring(0, path.length() - 4) + "_dyson.png";
+            String dysonPath = p.substring(0, p.length() - 4) + "_dyson.png";
             ResourceLocation dyson = ResourceLocation.fromNamespaceAndPath(b.getNamespace(), dysonPath);
             try {
                 if (Minecraft.getInstance().getResourceManager().getResource(dyson).isPresent()) {

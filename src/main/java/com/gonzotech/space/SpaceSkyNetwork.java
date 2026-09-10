@@ -12,27 +12,28 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 /**
  * Синхронизация флагов скайбокса на клиент.
  *
- * <p>Пока — только режим главного солнца (обычное ↔ сфера Дайсона). Сервер шлёт
- * {@link SunModePayload} по команде {@code /gonzotech debug sun default|dyson};
- * клиент выставляет {@code SpaceSkyState.dysonSphere}. Обработчик — на клиенте
- * (загружается только на физической стороне клиента, чтобы не тянуть клиентские
- * классы на сервере).
+ * <p>Режим звёзд (обычное ↔ сфера Дайсона) для Солнца и Альфы Центавра.
+ * Сервер шлёт {@link StarModePayload} по команде {@code /gonzotech debug <star> default|dyson};
+ * клиент выставляет флаги в {@code SpaceSkyState}.
  */
 public final class SpaceSkyNetwork {
 
     private SpaceSkyNetwork() {
     }
 
-    /** S2C: включить/выключить режим сферы Дайсона для солнца. */
-    public record SunModePayload(boolean dyson) implements CustomPacketPayload {
-        public static final CustomPacketPayload.Type<SunModePayload> TYPE =
+    /** S2C: включить/выключить режим сферы Дайсона для звезды (sun, alpha_centauri, all). */
+    public record StarModePayload(String target, boolean dyson) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<StarModePayload> TYPE =
             new CustomPacketPayload.Type<>(
-                ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "sun_mode"));
+                ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "star_mode"));
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, SunModePayload> STREAM_CODEC =
+        public static final StreamCodec<RegistryFriendlyByteBuf, StarModePayload> STREAM_CODEC =
             StreamCodec.of(
-                (buf, v) -> buf.writeBoolean(v.dyson()),
-                buf -> new SunModePayload(buf.readBoolean()));
+                (buf, v) -> {
+                    buf.writeUtf(v.target());
+                    buf.writeBoolean(v.dyson());
+                },
+                buf -> new StarModePayload(buf.readUtf(), buf.readBoolean()));
 
         @Override
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -42,21 +43,32 @@ public final class SpaceSkyNetwork {
 
     public static void register(PayloadRegistrar registrar) {
         registrar.playToClient(
-            SunModePayload.TYPE,
-            SunModePayload.STREAM_CODEC,
-            (payload, context) -> context.enqueueWork(
-                () -> com.gonzotech.space.client.SpaceSkyState.dysonSphere = payload.dyson()));
+            StarModePayload.TYPE,
+            StarModePayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                String target = payload.target();
+                boolean d = payload.dyson();
+                if ("sun".equalsIgnoreCase(target)) {
+                    com.gonzotech.space.client.SpaceSkyState.sunDyson = d;
+                } else if ("alpha_centauri".equalsIgnoreCase(target) || "alpha-centauri".equalsIgnoreCase(target)) {
+                    com.gonzotech.space.client.SpaceSkyState.alphaCentauriDyson = d;
+                } else {
+                    com.gonzotech.space.client.SpaceSkyState.sunDyson = d;
+                    com.gonzotech.space.client.SpaceSkyState.alphaCentauriDyson = d;
+                    com.gonzotech.space.client.SpaceSkyState.dysonSphere = d;
+                }
+            }));
     }
 
     /** Отправить текущий режим одному игроку. */
-    public static void sendToPlayer(ServerPlayer player, boolean dyson) {
-        PacketDistributor.sendToPlayer(player, new SunModePayload(dyson));
+    public static void sendToPlayer(ServerPlayer player, String target, boolean dyson) {
+        PacketDistributor.sendToPlayer(player, new StarModePayload(target, dyson));
     }
 
     /** Разослать режим всем игрокам сервера. */
-    public static void sendToAll(net.minecraft.server.MinecraftServer server, boolean dyson) {
+    public static void sendToAll(net.minecraft.server.MinecraftServer server, String target, boolean dyson) {
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-            PacketDistributor.sendToPlayer(p, new SunModePayload(dyson));
+            PacketDistributor.sendToPlayer(p, new StarModePayload(target, dyson));
         }
     }
 }

@@ -57,11 +57,20 @@ public final class SpaceCommand {
                 .suggests(DIMENSION_SUGGESTIONS)
                 .executes(SpaceCommand::teleport));
 
-        // /gonzotech debug sun default|dyson — переключение солнца орбиты Солнца.
+        // /gonzotech debug sun|alpha_centauri|all default|dyson — переключение текстур звёзд.
         LiteralArgumentBuilder<CommandSourceStack> debug = Commands.literal("debug")
             .then(Commands.literal("sun")
-                .then(Commands.literal("default").executes(c -> setSun(c, false)))
-                .then(Commands.literal("dyson").executes(c -> setSun(c, true))));
+                .then(Commands.literal("default").executes(c -> setStar(c, "sun", false)))
+                .then(Commands.literal("dyson").executes(c -> setStar(c, "sun", true))))
+            .then(Commands.literal("alpha_centauri")
+                .then(Commands.literal("default").executes(c -> setStar(c, "alpha_centauri", false)))
+                .then(Commands.literal("dyson").executes(c -> setStar(c, "alpha_centauri", true))))
+            .then(Commands.literal("alpha-centauri")
+                .then(Commands.literal("default").executes(c -> setStar(c, "alpha_centauri", false)))
+                .then(Commands.literal("dyson").executes(c -> setStar(c, "alpha_centauri", true))))
+            .then(Commands.literal("all")
+                .then(Commands.literal("default").executes(c -> setStar(c, "all", false)))
+                .then(Commands.literal("dyson").executes(c -> setStar(c, "all", true))));
 
         dispatcher.register(
             Commands.literal("gonzotech")
@@ -70,15 +79,20 @@ public final class SpaceCommand {
                 .then(debug));
     }
 
-    /** Переключить солнце (обычное/сфера Дайсона) для всех игроков. */
-    private static int setSun(CommandContext<CommandSourceStack> ctx, boolean dyson) {
+    /** Переключить звезду (обычное/сфера Дайсона) для всех игроков. */
+    private static int setStar(CommandContext<CommandSourceStack> ctx, String target, boolean dyson) {
         CommandSourceStack source = ctx.getSource();
         if (source.getServer() == null) {
             return 0;
         }
-        SpaceSkyNetwork.sendToAll(source.getServer(), dyson);
+        SpaceSkyNetwork.sendToAll(source.getServer(), target, dyson);
+        String label = switch (target) {
+            case "sun" -> "Солнце";
+            case "alpha_centauri", "alpha-centauri" -> "Альфа Центавра";
+            default -> "Все звёзды";
+        };
         source.sendSuccess(() -> Component.literal(
-            "§a[GonzoTech] Солнце: §e" + (dyson ? "сфера Дайсона" : "обычное")), true);
+            "§a[GonzoTech] " + label + ": §e" + (dyson ? "сфера Дайсона" : "обычное")), true);
         return 1;
     }
 
