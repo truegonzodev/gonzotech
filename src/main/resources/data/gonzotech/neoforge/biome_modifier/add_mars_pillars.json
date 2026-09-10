@@ -1,0 +1,6 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "gonzotech:mars",
+  "features": [ "gonzotech:mars_pillars" ],
+  "step": "surface_structures"
+}

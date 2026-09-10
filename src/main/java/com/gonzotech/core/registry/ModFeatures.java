@@ -41,6 +41,18 @@ public class ModFeatures {
             () -> new com.gonzotech.space.worldgen.MeteorFeature(
                 net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
 
+    /** Марс — кластеры выветренных каменных столбов (останцы). */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.space.worldgen.MarsPillarFeature> MARS_PILLARS =
+        FEATURES.register("mars_pillars",
+            () -> new com.gonzotech.space.worldgen.MarsPillarFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
+    /** Гора Олимп — гигантский конус в 4 фиксированных точках любого мира. */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.space.worldgen.OlympusFeature> OLYMPUS =
+        FEATURES.register("olympus",
+            () -> new com.gonzotech.space.worldgen.OlympusFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
     public static void register(IEventBus modEventBus) {
         FEATURES.register(modEventBus);
     }

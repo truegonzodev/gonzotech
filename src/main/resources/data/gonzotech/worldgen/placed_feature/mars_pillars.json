@@ -1,7 +1,7 @@
 {
-  "feature": "gonzotech:meteor",
+  "feature": "gonzotech:mars_pillars",
   "placement": [
-    { "type": "minecraft:rarity_filter", "chance": 1260 },
+    { "type": "minecraft:rarity_filter", "chance": 40 },
     { "type": "minecraft:in_square" },
     { "type": "minecraft:biome" }
   ]

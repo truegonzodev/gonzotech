@@ -116,6 +116,8 @@ public class GonzoTechMod {
 
         // HUD живого потока труб (ключ ↔ сервер).
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
+
+        com.gonzotech.space.SpaceSkyNetwork.register(registrar);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

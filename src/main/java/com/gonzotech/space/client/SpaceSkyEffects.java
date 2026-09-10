@@ -672,12 +672,18 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         // База тела × тон времени суток (tint[]): днём (1,1,1) — как раньше.
         RenderSystem.setShaderColor(
             r / 255F * tint[0], g / 255F * tint[1], b / 255F * tint[2], a / 255F);
-        RenderSystem.setShaderTexture(0, body.texture());
+
+        // ПЕРЕКЛЮЧЕНИЕ СОЛНЦА: если включён режим сферы Дайсона и у тела рядом
+        // есть вариант <path>_dyson.png — рисуем его вместо обычного солнца.
+        // Работает по конвенции пути (…/sun → …/sun_dyson), без правки записей.
+        ResourceLocation tex = resolveTexture(body.texture());
+
+        RenderSystem.setShaderTexture(0, tex);
 
         // .mcmeta-АНИМАЦИЯ: если рядом с текстурой лежит .mcmeta с секцией
         // animation, текстура считается вертикальным стрипом кадров (как у
         // ванильных блоков). Берём диапазон V текущего кадра; иначе весь [0,1].
-        float[] v = animationV(body.texture());
+        float[] v = animationV(tex);
         float v0 = v[0], v1 = v[1];
 
         float sz = body.size();
@@ -695,6 +701,37 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     /** Кэш метаданных анимации по текстуре (чтобы не читать .mcmeta каждый кадр). */
     private static final java.util.Map<ResourceLocation, int[]> ANIM_CACHE =
         new java.util.HashMap<>();
+
+    /** Кэш существования dyson-варианта текстуры (…/sun → …/sun_dyson). */
+    private static final java.util.Map<ResourceLocation, ResourceLocation> DYSON_CACHE =
+        new java.util.HashMap<>();
+
+    /**
+     * Возвращает актуальную текстуру тела с учётом флага сферы Дайсона.
+     * Если {@link SpaceSkyState#dysonSphere} включён и рядом лежит вариант
+     * {@code <path без .png>_dyson.png} — отдаём его; иначе исходную текстуру.
+     */
+    private ResourceLocation resolveTexture(ResourceLocation base) {
+        if (!SpaceSkyState.dysonSphere) {
+            return base;
+        }
+        return DYSON_CACHE.computeIfAbsent(base, b -> {
+            String path = b.getPath();
+            if (!path.endsWith(".png")) {
+                return b;
+            }
+            String dysonPath = path.substring(0, path.length() - 4) + "_dyson.png";
+            ResourceLocation dyson = ResourceLocation.fromNamespaceAndPath(b.getNamespace(), dysonPath);
+            try {
+                if (Minecraft.getInstance().getResourceManager().getResource(dyson).isPresent()) {
+                    return dyson;
+                }
+            } catch (Exception ignored) {
+                // fallthrough
+            }
+            return b; // нет dyson-варианта → исходная текстура
+        });
+    }
 
     /**
      * Возвращает диапазон {@code {v0, v1}} по вертикали для текущего кадра
