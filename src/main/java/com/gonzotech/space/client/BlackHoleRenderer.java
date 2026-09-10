@@ -241,14 +241,12 @@ public final class BlackHoleRenderer {
         Camera camera = event.getCamera();
         Vec3 camPos = camera.getPosition();
 
-        boolean shaderAvailable = BlackHoleShader.init();
-
-        // 1. Непрозрачные горизонт и фотонное кольцо формируют реальную depth-окклюзию.
-        if (shaderAvailable) {
+        // 1. Основной рендер релятивистской Чёрной Дыры через GPU-шейдер
+        if (BlackHoleShader.init()) {
             BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
-                                   radius, diskIn, diskOut, BlackHoleShader.RenderPass.CORE);
+                                   radius, diskIn, diskOut);
         } else {
-            // Запасной путь (fallback) сохраняет обычную глубину непрозрачной сферы.
+            // Запасной путь (fallback)
             float rx = (float) (CENTER_X - camPos.x);
             float ry = (float) (CENTER_Y - camPos.y);
             float rz = (float) (CENTER_Z - camPos.z);
@@ -264,23 +262,14 @@ public final class BlackHoleRenderer {
             mvStack.popMatrix();
         }
 
-        // 2. Кольцо проходит depth-test против ЧД: ближняя дуга видна, дальняя
-        // естественно исчезает за горизонтом и фотонным кольцом.
-        if (isDysonActive) {
-            renderDysonRing(event, camera, camPos, dysonRadius, radius);
-        }
-
-        // 3. Диск — отдельный прозрачный проход без записи depth. Он смешивается
-        // только поверх тех фрагментов кольца, которые физически находятся дальше.
-        if (shaderAvailable) {
-            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
-                                   radius, diskIn, diskOut, BlackHoleShader.RenderPass.ACCRETION_DISK);
-        }
-
-        // 4. Рендеринг гигантских vanilla-like билборд-частиц (12–38.4 блоков).
-        // Они, как и диск, depth-test'ятся против горизонта и кольца.
+        // 2. Рендеринг гигантских vanilla-like билборд-частиц (12–38.4 блоков)
         if (!PARTICLES.isEmpty()) {
             renderAccretionParticles(event, camera, camPos, radius);
+        }
+
+        // 3. Рендеринг 3D Кольца Дайсона вокруг Чёрной Дыры (если активировано)
+        if (isDysonActive) {
+            renderDysonRing(event, camera, camPos, dysonRadius, radius);
         }
     }
 
