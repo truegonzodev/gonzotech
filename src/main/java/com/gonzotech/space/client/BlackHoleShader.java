@@ -22,10 +22,10 @@ import java.nio.FloatBuffer;
  *   <li><b>Честное геодезическое линзирование Шварцшильда:</b> луч света искривляется в гравитационном поле ЧД,
  *       естественным образом проецируя заднюю сторону аккреционного диска в верхнюю и нижнюю арки (Interstellar halo)
  *       без дублирования колец, разрывов или паразитных кайм.</li>
- *   <li><b>Белое фотонное кольцо Эйнштейна (Photon Ring / Halo):</b> сверхъяркое белое свечение прямо по кромке
- *       горизонта событий (как на скриншоте 2), сохраняющее четкость на любом расстоянии.</li>
- *   <li><b>Компактный аккреционный диск:</b> радиус от {@code 1.5 r_s} (180 при {@code r_s=120})
- *       до {@code 3.33 r_s} (400 при {@code r_s=120}).</li>
+ *   <li><b>Белое фотонное кольцо Эйнштейна (Photon Ring / Halo):</b> сверхъяркое белое сияние строго по внешней
+ *       кромке тени ЧД (по границе сжатого зазора с аккреционным диском), сохраняющее четкость на любом расстоянии.</li>
+ *   <li><b>Сжатый зазор ISCO:</b> внутренний радиус диска {@code 1.38 r_s} (165 блоков при {@code r_s=120})
+ *       до {@code 3.33 r_s} (400 блоков при {@code r_s=120}).</li>
  *   <li><b>Релятивистский эффект Доплера (Doppler Beaming):</b> усиление яркости и синее смещение набегающей стороны диска,
  *       багровое затухание удаляющейся стороны.</li>
  *   <li><b>Высокая производительность (160+ FPS):</b> раннее отсечение лучей вне конуса ЧД, оптимизированное
@@ -118,7 +118,7 @@ public final class BlackHoleShader {
             if (u < 0.0 || u > 1.0) return vec4(0.0);
 
             // Радиальный профиль свечения
-            float radial = pow(u, 0.4) * pow(1.0 - u, 1.5) * 4.0;
+            float radial = pow(u, 0.35) * pow(1.0 - u, 1.5) * 4.2;
 
             // Базис в плоскости диска
             vec3 tangentX = normalize(abs(n.y) < 0.99 ? cross(vec3(0.0, 1.0, 0.0), n) : cross(vec3(1.0, 0.0, 0.0), n));
@@ -187,25 +187,12 @@ public final class BlackHoleShader {
             float sinTheta = sqrt(sinThetaSq);
             float b = D * sinTheta; // Прицельный параметр луча
 
-            // Параметры диска по требованиям: от 180 до 400 при rs=120
+            // Параметры диска: сжатый зазор ISCO от 1.38 rs (165 блоков) до 3.33 rs (400 блоков)
             vec3 n = normalize(u_diskNormal);
-            float Rin = 1.50 * rs; // 180 блоков при rs=120
-            float Rout = 3.33 * rs; // 400 блоков при rs=120
+            float Rin = 1.38 * rs;
+            float Rout = 3.33 * rs;
 
-            // Критический прицельный радиус захвата фотонов b_c
-            float b_c = rs * 2.598076 * sqrt(max(0.001, 1.0 - rs / max(D, rs * 0.99)));
-
-            // 1. БЕЛОЕ ФОТОННОЕ КОЛЬЦО ЭЙНШТЕЙНА (Photon Halo) прямо по горизонту событий
-            vec3 whitePhotonRing = vec3(0.0);
-            if (cosTheta > 0.0) {
-                float ringDist = (b - b_c) / (rs * 0.035);
-                if (ringDist > -0.05 && ringDist < 2.2) {
-                    float ringIntensity = exp(-ringDist * ringDist * 2.5) * 4.5;
-                    whitePhotonRing = vec3(1.0, 0.98, 0.95) * ringIntensity;
-                }
-            }
-
-            // 2. БЫСТРЫЙ ВЫХОД ДЛЯ ПИКСЕЛЕЙ ВНЕ ЗОНЫ ЧД И ДИСКА (ускорение до 160+ FPS)
+            // 1. БЫСТРЫЙ ВЫХОД ДЛЯ ПИКСЕЛЕЙ ВНЕ ЗОНЫ ЧД И ДИСКА (ускорение до 160+ FPS)
             if (D > Rout && (cosTheta < 0.0 || b > Rout * 1.25)) {
                 // Проверяем прямое пересечение диска без гравитационного искривления
                 float denom = dot(rayDir, n);
@@ -231,8 +218,7 @@ public final class BlackHoleShader {
                 return;
             }
 
-            // 3. ЧИСЛЕННОЕ РЕЛЯТИВИСТСКОЕ ИНТЕГРИРОВАНИЕ ГЕОДЕЗИЧЕСКИХ (Шварцшильд / Гаргантюа)
-            // Единый искривленный луч — ноль дублирующихся колец!
+            // 2. ЧИСЛЕННОЕ РЕЛЯТИВИСТСКОЕ ИНТЕГРИРОВАНИЕ ГЕОДЕЗИЧЕСКИХ (Шварцшильд / Гаргантюа)
             vec3 x = u_camPos;
             vec3 v = rayDir;
             vec3 L = cross(x, v);
@@ -243,11 +229,13 @@ public final class BlackHoleShader {
             float firstDiskDist = -1.0;
             bool hitHorizon = false;
             vec3 horizonHitPos = vec3(0.0);
+            float r_min = 1e9;
 
             const int MAX_STEPS = 24; // Оптимизировано для высокого FPS
 
             for (int i = 0; i < MAX_STEPS; i++) {
                 float r = length(x);
+                if (r < r_min) r_min = r;
 
                 // 1. Фотон поглощен горизонтом событий
                 if (r <= rs * 1.01) {
@@ -262,7 +250,7 @@ public final class BlackHoleShader {
                 }
 
                 // Адаптивный шаг интегрирования
-                float ds = clamp(r * 0.22, rs * 0.10, rs * 0.45);
+                float ds = clamp(r * 0.22, rs * 0.09, rs * 0.45);
 
                 // Релятивистское ускорение фотона: a = -1.5 * rs * L^2 / r^5 * x
                 float r5 = r * r * r * r * r;
@@ -271,6 +259,7 @@ public final class BlackHoleShader {
                 // Шаг позиции (Verlet)
                 vec3 x_next = x + v * ds + 0.5 * a * ds * ds;
                 float r_next = length(x_next);
+                if (r_next < r_min) r_min = r_next;
 
                 // Ускорение в следующей точке
                 float r5_next = r_next * r_next * r_next * r_next * r_next;
@@ -309,18 +298,25 @@ public final class BlackHoleShader {
                 v = v_next;
             }
 
-            // 4. ИТОГОВАЯ КОМПОЗИЦИЯ С БЕЛЫМ ФОТОННЫМ КОЛЬЦОМ
+            // 3. БЕЛОЕ ФОТОННОЕ КОЛЬЦО ЭЙНШТЕЙНА (Photon Halo)
+            // Строго огибает внешнюю границу тени горизонта событий (по красной линии на фото 3)
+            vec3 whitePhotonHalo = vec3(0.0);
+            if (!hitHorizon && r_min < 1.48 * rs) {
+                float edgeFactor = clamp((1.48 * rs - r_min) / (0.47 * rs), 0.0, 1.0);
+                float ringIntensity = pow(edgeFactor, 3.2) * 5.5;
+                whitePhotonHalo = vec3(1.0, 0.98, 0.95) * ringIntensity;
+            }
+
+            // 4. ИТОГОВАЯ КОМПОЗИЦИЯ
             if (hitHorizon) {
-                // Горизонт событий: тень ЧД + передний диск + белое кольцо фотонов
-                vec3 finalRgb = accumColor + whitePhotonRing;
-                fragColor = vec4(finalRgb, 1.0);
+                fragColor = vec4(accumColor, 1.0);
 
                 vec3 hitCam = horizonHitPos - u_camPos;
                 vec4 hitClip = u_projMatrix * (u_viewMat * vec4(hitCam, 0.0));
                 gl_FragDepth = (hitClip.z / hitClip.w) * 0.5 + 0.5;
             } else {
-                vec3 finalRgb = accumColor + whitePhotonRing;
-                float finalAlpha = clamp(accumAlpha + (length(whitePhotonRing) > 0.05 ? 1.0 : 0.0), 0.0, 1.0);
+                vec3 finalRgb = accumColor + whitePhotonHalo;
+                float finalAlpha = clamp(accumAlpha + (length(whitePhotonHalo) > 0.05 ? 1.0 : 0.0), 0.0, 1.0);
                 fragColor = vec4(finalRgb, finalAlpha);
 
                 if (firstDiskDist > 0.0 && accumAlpha > 0.25) {

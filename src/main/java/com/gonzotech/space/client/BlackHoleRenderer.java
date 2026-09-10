@@ -41,11 +41,12 @@ import java.util.List;
  *
  * <p>Особенности:
  * <ul>
- *   <li>Высокопроизводительный GPU-шейдер ({@link BlackHoleShader}) с белым фотонным кольцом,
- *       компактным аккреционным диском (180–400 блоков) и плавными арками Интерстеллара (160+ FPS).</li>
- *   <li>Гигантские vanilla-like билборд-частицы пыли (10–32 блока), летающие по орбите диска со скоростью
- *       5.0..0.5 б/сек, с динамическим остыванием (#fffcf2 → #ffd000 → #990011 → прозрачный серый)
+ *   <li>Высокопроизводительный GPU-шейдер ({@link BlackHoleShader}) с белым фотонным кольцом
+ *       по внешней кромке тени, сжатым зазором ISCO (165–400 блоков) и плавными арками Интерстеллара (160+ FPS).</li>
+ *   <li>Гигантские vanilla-like билборд-частицы пыли (12–38.4 блока), летающие по орбите диска со скоростью
+ *       20.0..0.5 б/сек, с динамическим остыванием (#fffcf2 → #ffd000 → #990011 → прозрачный серый)
  *       и уменьшением на 90% за время жизни (10–20 сек).</li>
+ *   <li>Математическое и буферное отсечение частиц, находящихся за горизонтом событий ЧД.</li>
  * </ul>
  */
 public final class BlackHoleRenderer {
@@ -63,7 +64,7 @@ public final class BlackHoleRenderer {
     public static final float RADIUS_ZANGLER_11 = 200.0F;
 
     /** Текстура ванильной пиксельной пылинки 8x8 px. */
-    private static final ResourceLocation DUST_TEXTURE =
+    public static final ResourceLocation DUST_TEXTURE =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/particle/dust.png");
 
     /** Целевое среднее число активных частиц на орбите (~150-170). */
@@ -89,7 +90,7 @@ public final class BlackHoleRenderer {
         float angle;           // Текущий азимутальный угол (радианы)
         float heightOffset;    // Смещение по нормали плоскости диска (толщина диска)
         float orbitalSpeed;    // Угловая скорость (радианы/тик)
-        float initialSize;     // Начальный размер при спавне (10..32 блока)
+        float initialSize;     // Начальный размер при спавне (12..38.4 блока)
         int age;               // Текущий возраст (тики)
         int maxAge;            // Полное время жизни (10..20 сек = 200..400 тиков)
 
@@ -109,7 +110,7 @@ public final class BlackHoleRenderer {
      * Спавн одной новой орбитальной частицы по физическим параметрам диска.
      */
     private static AccretionParticle createParticle(float bhRadius, boolean randomAge) {
-        float rIn = 1.50F * bhRadius;  // 180 блоков при rs=120
+        float rIn = 1.38F * bhRadius;  // 165 блоков при rs=120
         float rOut = 3.33F * bhRadius; // 400 блоков при rs=120
 
         // 1. Радиальное распределение: шанс спавна на краю диска на 40% ниже, чем вблизи
@@ -122,19 +123,19 @@ public final class BlackHoleRenderer {
         }
         float r = rIn + u * (rOut - rIn);
 
-        // 2. Скорость: вблизи максимальная 5.0 блоков/сек, на краю диска 0.5 блоков/сек
-        float speedBlocksPerSec = Mth.lerp(u, 5.0F, 0.5F);
-        float speedBlocksPerTick = speedBlocksPerSec / 20.0F; // 0.25 .. 0.025 блоков/тик
+        // 2. Скорость: вблизи максимальная 20.0 блоков/сек, на краю диска 0.5 блоков/сек
+        float speedBlocksPerSec = Mth.lerp(u, 20.0F, 0.5F);
+        float speedBlocksPerTick = speedBlocksPerSec / 20.0F; // 1.0 .. 0.025 блоков/тик
         float orbitalSpeed = speedBlocksPerTick / r;          // радианы/тик
 
         // 3. Время жизни: 10–20 секунд (200–400 клиентских тиков)
         int maxAge = 200 + RANDOM.nextInt(201);
         int age = randomAge ? RANDOM.nextInt(maxAge) : 0;
 
-        // 4. Начальный размер: от 10 до 32 блоков.
-        // Шанс спавна больших частиц (32 блока) на краю диска заметно ниже
-        float minSize = Mth.lerp(u, 18.0F, 10.0F);
-        float maxSize = Mth.lerp(u, 32.0F, 16.0F);
+        // 4. Начальный размер: от 12.0 до 38.4 блоков (+20% к размеру).
+        // Шанс спавна больших частиц (38.4 блока) на краю диска заметно ниже
+        float minSize = Mth.lerp(u, 21.6F, 12.0F);
+        float maxSize = Mth.lerp(u, 38.4F, 19.2F);
         float initialSize = minSize + RANDOM.nextFloat() * (maxSize - minSize);
 
         // 5. Начальный угол и высота в диске (толщина ±6 блоков)
@@ -243,16 +244,16 @@ public final class BlackHoleRenderer {
             mvStack.popMatrix();
         }
 
-        // 2. Рендеринг гигантских vanilla-like билборд-частиц (10–32 блока)
+        // 2. Рендеринг гигантских vanilla-like билборд-частиц (12–38.4 блоков)
         if (!PARTICLES.isEmpty()) {
-            renderAccretionParticles(event, camera, camPos);
+            renderAccretionParticles(event, camera, camPos, radius);
         }
     }
 
     /**
      * Отрисовка гигантских vanilla-like билборд-частиц (32x32 px спрайт) с динамическим остыванием.
      */
-    private static void renderAccretionParticles(RenderLevelStageEvent event, Camera camera, Vec3 camPos) {
+    private static void renderAccretionParticles(RenderLevelStageEvent event, Camera camera, Vec3 camPos, float bhRadius) {
         Vector3f normal = BlackHoleShader.DISK_NORMAL;
         Vector3f ex = new Vector3f(0.0F, 1.0F, 0.0F).cross(normal).normalize();
         Vector3f ez = new Vector3f(normal).cross(ex).normalize();
@@ -262,6 +263,14 @@ public final class BlackHoleRenderer {
         Vector3f camUp = new Vector3f(0.0F, 1.0F, 0.0F).rotate(camRot);
 
         Matrix4f mvMatrix = event.getModelViewMatrix();
+
+        // Вектор от камеры к центру ЧД
+        double toCx = CENTER_X - camPos.x;
+        double toCy = CENTER_Y - camPos.y;
+        double toCz = CENTER_Z - camPos.z;
+        double distCSq = toCx * toCx + toCy * toCy + toCz * toCz;
+        double shadowRadius = bhRadius * 1.35; // Радиус поглощающей тени ЧД
+        double shadowRadiusSq = shadowRadius * shadowRadius;
 
         Matrix4fStack mvStack = RenderSystem.getModelViewStack();
         mvStack.pushMatrix();
@@ -285,9 +294,37 @@ public final class BlackHoleRenderer {
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 
         for (AccretionParticle p : PARTICLES) {
+            // Мировые координаты частицы на орбите
+            float cosT = (float) Math.cos(p.angle);
+            float sinT = (float) Math.sin(p.angle);
+
+            float px = (float) (CENTER_X + p.radius * (cosT * ex.x() + sinT * ez.x()) + normal.x() * p.heightOffset);
+            float py = (float) (CENTER_Y + p.radius * (cosT * ex.y() + sinT * ez.y()) + normal.y() * p.heightOffset);
+            float pz = (float) (CENTER_Z + p.radius * (cosT * ex.z() + sinT * ez.z()) + normal.z() * p.heightOffset);
+
+            // Вектор от камеры к частице
+            double toPx = px - camPos.x;
+            double toPy = py - camPos.y;
+            double toPz = pz - camPos.z;
+            double distPSq = toPx * toPx + toPy * toPy + toPz * toPz;
+            double distP = Math.sqrt(distPSq);
+
+            // Отсечение частиц, находящихся ЗА Чёрной Дырой
+            double dirX = toPx / distP;
+            double dirY = toPy / distP;
+            double dirZ = toPz / distP;
+
+            double tProj = toCx * dirX + toCy * dirY + toCz * dirZ;
+            if (tProj > 0.0 && tProj < distP) {
+                double perpDistSq = distCSq - (tProj * tProj);
+                if (perpDistSq < shadowRadiusSq) {
+                    continue; // Частица скрыта за горизонтом событий ЧД
+                }
+            }
+
             float progress = (float) p.age / (float) p.maxAge; // 0.0 -> 1.0
 
-            // 1. Размер: уменьшается вплоть до 90% (становится 1.0..3.2 блоков)
+            // 1. Размер: уменьшается на 90% (становится 1.2..3.84 блоков)
             float currentSize = p.initialSize * (1.0F - 0.90F * progress);
             float hs = currentSize * 0.5F;
 
@@ -321,18 +358,10 @@ public final class BlackHoleRenderer {
                 alpha = (1.0F - progress) / 0.35F;
             }
 
-            // 4. Мировые координаты частицы на орбите
-            float cosT = (float) Math.cos(p.angle);
-            float sinT = (float) Math.sin(p.angle);
-
-            float px = (float) (CENTER_X + p.radius * (cosT * ex.x() + sinT * ez.x()) + normal.x() * p.heightOffset);
-            float py = (float) (CENTER_Y + p.radius * (cosT * ex.y() + sinT * ez.y()) + normal.y() * p.heightOffset);
-            float pz = (float) (CENTER_Z + p.radius * (cosT * ex.z() + sinT * ez.z()) + normal.z() * p.heightOffset);
-
             // Координаты относительно камеры
-            float rx = (float) (px - camPos.x);
-            float ry = (float) (py - camPos.y);
-            float rz = (float) (pz - camPos.z);
+            float rx = (float) toPx;
+            float ry = (float) toPy;
+            float rz = (float) toPz;
 
             // Векторы билборда
             float rX = camRight.x() * hs;
