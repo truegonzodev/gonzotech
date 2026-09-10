@@ -39,16 +39,12 @@ import java.util.List;
  *       нижнее ({@code horizonArgb}) — как ванильное небо, разделённое на верх и
  *       низ. Цвета интерполируются между «дневными» и «ночными» по времени суток
  *       и получают закатный оттенок у горизонта.</li>
+ *   <li>ЗВЁЗДНОЕ ПОЛЕ — квады звёзд строятся в касательной плоскости к небесной сфере
+ *       и строго ориентированы лицом к наблюдателю в центре (billboard towards origin).</li>
  *   <li>Небесные тела ({@link CelestialBody}) — через ванильный
  *       {@link RenderType#celestial} и общий {@link MultiBufferSource.BufferSource},
- *       что гарантирует корректный шейдер/текстуру/блендинг (солнце «светится»
- *       поверх неба, как ванильное). Раньше ручной {@code BufferUploader} путь
- *       падал в GL и тела были невидимы.</li>
+ *       что гарантирует корректный шейдер/текстуру/блендинг.</li>
  * </ol>
- *
- * <p>КЛЮЧЕВОЙ ФИКС тумана: в MC 1.21.2+ туман — шейдерный юниформ; на время неба
- * ставим {@link FogParameters#NO_FOG}, иначе плотный туман биома «съедает» и
- * купол, и тела.
  */
 public class SpaceSkyEffects extends DimensionSpecialEffects {
 
@@ -56,12 +52,6 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
     /**
      * Радиус купола неба и дистанция отрисовки небесных тел в блоках.
-     *
-     * <p>Ванильный скайбокс рисуется на 100 блоках от камеры. Слишком большое
-     * значение (напр. 512) обрезается дальней плоскостью отсечения (far plane
-     * проекции = renderDistance * 16), из-за чего при дистанции прорисовки 8–12
-     * чанков (128–192 блока) небо полностью пропадало. 100 блоков гарантированно
-     * попадает в frustum при любых настройках дальности (даже 2 чанка = 64/96).
      */
     private static final float SKY_DISTANCE = 100.0F;
 
@@ -74,8 +64,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private final int horizonNightArgb;
 
     /**
-     * Цвет заката/рассвета у горизонта (0xAARRGGBB). Накладывается на горизонт в
-     * сумеречное время. Если прозрачный (alpha=0), закат не окрашивает небо.
+     * Цвет заката/рассвета у горизонта (0xAARRGGBB).
      */
     private final int sunsetArgb;
 
@@ -84,54 +73,34 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
     /**
      * Главное светило мира (первое с типом SUN), определяющее суточный цикл
-     * освещения и цвета купола. Если тел типа SUN нет — берётся ванильный цикл.
+     * освещения и цвета купола.
      */
     private final CelestialBody primarySun;
 
     /**
      * Множитель дневного освещения (0..1), применяемый к «дневному» добавочному
      * свету лайтмапа.
-     *
-     * <p>0.30 для Луны (день темнее на 70%), 0.12 для Европы (день темнее на
-     * 88%), 1.0 для Марса (ванильное освещение не трогаем). Ночной пол (0.2)
-     * остаётся неизменным.
      */
     private final float daylightScale;
 
     /**
-     * Яркость звёзд ночью (0..1). 0.60 на Марсе, 0.80 на Луне, 0.88 на Европе,
-     * 0.90 в открытом космосе.
+     * Яркость звёзд ночью (0..1).
      */
     private final float starNightBrightness;
 
     /**
-     * Яркость звёзд днём (0..1). 0.0 на Марсе (атмосфера засвечивает днём), 0.70
-     * на Луне (вакуум), 0.85 на Европе, 0.90 в открытом космосе.
+     * Яркость звёзд днём (0..1).
      */
     private final float starDayBrightness;
 
     /**
-     * Фиксированный дневной коэффициент (0..1) для пустых орбит (нет смены дня/ночи).
-     * {@code -1.0} означает обычный динамический цикл по положению солнца.
+     * Фиксированный дневной коэффициент (0..1) для пустых орбит.
      */
     private final float fixedDaylight;
 
     /** Множитель плотности тумана для мира. */
     private final float fogFactor;
 
-    /**
-     * @param fogFactor            множитель плотности тумана (0 = кристально чисто).
-     * @param zenithDayArgb        зенит день (0xAARRGGBB).
-     * @param zenithNightArgb      зенит ночь (0xAARRGGBB).
-     * @param horizonDayArgb       горизонт день (0xAARRGGBB).
-     * @param horizonNightArgb     горизонт ночь (0xAARRGGBB).
-     * @param sunsetArgb           оттенок заката/рассвета на горизонте.
-     * @param bodies               список небесных тел.
-     * @param daylightScale        множитель дневной яркости (0..1); {@code 1.0} —
-     *                             не трогать освещение (ванильное поведение).
-     * @param starNightBrightness  яркость звёзд ночью (0..1).
-     * @param starDayBrightness    яркость звёзд днём (0..1); {@code 0} — днём не видны.
-     */
     public SpaceSkyEffects(float fogFactor,
                            int zenithDayArgb, int zenithNightArgb,
                            int horizonDayArgb, int horizonNightArgb,
@@ -145,10 +114,6 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             starNightBrightness, starDayBrightness, -1.0F);
     }
 
-    /**
-     * @param fixedDaylight фиксированный дневной коэффициент (0..1) — нет смены
-     *                      дня/ночи (пустые орбиты); {@code -1} = обычный цикл.
-     */
     public SpaceSkyEffects(float fogFactor,
                            int zenithDayArgb, int zenithNightArgb,
                            int horizonDayArgb, int horizonNightArgb,
@@ -158,7 +123,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float starNightBrightness,
                            float starDayBrightness,
                            float fixedDaylight) {
-        super(Float.NaN, false, normalSkyType(), false, true);
+        super(192.0F, true, normalSkyType(), false, false);
         this.fogFactor = fogFactor;
         this.zenithDayArgb = zenithDayArgb;
         this.zenithNightArgb = zenithNightArgb;
@@ -371,29 +336,103 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 
-    private static float[] starPositions = null;
+    /**
+     * Структура предрассчитанных вершин и параметров звёздного неба.
+     */
+    private static final class StarVertexData {
+        final float[] positions; // 12 float (4 вершины по 3 координаты x,y,z) на звезду
+        final float[] baseAlpha;  // Базовая яркость звезды (0.35 .. 1.0)
+        final int count;
+
+        StarVertexData(float[] positions, float[] baseAlpha, int count) {
+            this.positions = positions;
+            this.baseAlpha = baseAlpha;
+            this.count = count;
+        }
+    }
+
+    private static StarVertexData starData = null;
 
     private static void ensureStarsBuilt() {
-        if (starPositions != null) {
+        if (starData != null) {
             return;
         }
         int count = 1500;
-        starPositions = new float[count * 3];
+        float[] positions = new float[count * 12];
+        float[] baseAlpha = new float[count];
+
         RandomSource rand = RandomSource.create(10842L);
+        int starIdx = 0;
+
         for (int i = 0; i < count; i++) {
             float x = rand.nextFloat() * 2.0F - 1.0F;
             float y = rand.nextFloat() * 2.0F - 1.0F;
             float z = rand.nextFloat() * 2.0F - 1.0F;
             float lenSq = x * x + y * y + z * z;
-            if (lenSq > 0.01F && lenSq <= 1.0F) {
-                float inv = (SKY_DISTANCE - 2.0F) / Mth.sqrt(lenSq);
-                starPositions[i * 3]     = x * inv;
-                starPositions[i * 3 + 1] = y * inv;
-                starPositions[i * 3 + 2] = z * inv;
-            } else {
+            if (lenSq <= 0.01F || lenSq > 1.0F) {
                 i--;
+                continue;
             }
+
+            float len = Mth.sqrt(lenSq);
+            float inv = (SKY_DISTANCE - 2.0F) / len;
+            float px = x * inv;
+            float py = y * inv;
+            float pz = z * inv;
+
+            // Единичный вектор нормали от центра сферы (0, 0, 0) к звезде
+            float nx = px / (SKY_DISTANCE - 2.0F);
+            float ny = py / (SKY_DISTANCE - 2.0F);
+            float nz = pz / (SKY_DISTANCE - 2.0F);
+
+            // Вектор up, не коллинеарный нормали
+            float upX = 0.0F, upY = 1.0F, upZ = 0.0F;
+            if (Math.abs(ny) > 0.95F) {
+                upX = 1.0F;
+                upY = 0.0F;
+                upZ = 0.0F;
+            }
+
+            // Касательный вектор u = cross(up, n)
+            float ux = upY * nz - upZ * ny;
+            float uy = upZ * nx - upX * nz;
+            float uz = upX * ny - upY * nx;
+            float uLen = Mth.sqrt(ux * ux + uy * uy + uz * uz);
+            ux /= uLen; uy /= uLen; uz /= uLen;
+
+            // Касательный вектор v = cross(n, u)
+            float vx = ny * uz - nz * uy;
+            float vy = nz * ux - nx * uz;
+            float vz = nx * uy - ny * ux;
+
+            // Размер звезды: большинство мелкие (0.15..0.25), часть средних, редкие яркие гиганты
+            float szRand = rand.nextFloat();
+            float sz = 0.15F + szRand * szRand * 0.22F;
+
+            // 4 вершины квада звезды, строго ориентированного лицом к наблюдателю в центре (0,0,0)
+            int b = starIdx * 12;
+            positions[b]     = px - ux * sz - vx * sz;
+            positions[b + 1] = py - uy * sz - vy * sz;
+            positions[b + 2] = pz - uz * sz - vz * sz;
+
+            positions[b + 3] = px + ux * sz - vx * sz;
+            positions[b + 4] = py + uy * sz - vy * sz;
+            positions[b + 5] = pz + uz * sz - vz * sz;
+
+            positions[b + 6] = px + ux * sz + vx * sz;
+            positions[b + 7] = py + uy * sz + vy * sz;
+            positions[b + 8] = pz + uz * sz + vz * sz;
+
+            positions[b + 9]  = px - ux * sz + vx * sz;
+            positions[b + 10] = py - uy * sz + vy * sz;
+            positions[b + 11] = pz - uz * sz + vz * sz;
+
+            // Базовая индивидуальная яркость звезды
+            baseAlpha[starIdx] = 0.35F + rand.nextFloat() * 0.65F;
+            starIdx++;
         }
+
+        starData = new StarVertexData(positions, baseAlpha, count);
     }
 
     private void renderStars(Matrix4f m, float brightness) {
@@ -401,26 +440,31 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        int a = (int) (Mth.clamp(brightness, 0.0F, 1.0F) * 255.0F);
-        if (a <= 0) return;
+        RenderSystem.blendFunc(
+            GlStateManager.SourceFactor.SRC_ALPHA,
+            GlStateManager.DestFactor.ONE);
 
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        float starSize = 0.35F;
-        int count = starPositions.length / 3;
-        for (int i = 0; i < count; i++) {
-            float x = starPositions[i * 3];
-            float y = starPositions[i * 3 + 1];
-            float z = starPositions[i * 3 + 2];
+        int count = starData.count;
+        float[] pos = starData.positions;
+        float[] alphas = starData.baseAlpha;
 
-            buf.addVertex(m, x - starSize, y - starSize, z).setColor(255, 255, 255, a);
-            buf.addVertex(m, x + starSize, y - starSize, z).setColor(255, 255, 255, a);
-            buf.addVertex(m, x + starSize, y + starSize, z).setColor(255, 255, 255, a);
-            buf.addVertex(m, x - starSize, y + starSize, z).setColor(255, 255, 255, a);
+        for (int i = 0; i < count; i++) {
+            float starAlpha = alphas[i] * brightness;
+            int a = (int) (Mth.clamp(starAlpha, 0.0F, 1.0F) * 255.0F);
+            if (a <= 0) continue;
+
+            int b = i * 12;
+            buf.addVertex(m, pos[b],     pos[b + 1], pos[b + 2]).setColor(255, 255, 255, a);
+            buf.addVertex(m, pos[b + 3], pos[b + 4], pos[b + 5]).setColor(255, 255, 255, a);
+            buf.addVertex(m, pos[b + 6], pos[b + 7], pos[b + 8]).setColor(255, 255, 255, a);
+            buf.addVertex(m, pos[b + 9], pos[b + 10], pos[b + 11]).setColor(255, 255, 255, a);
         }
 
         BufferUploader.drawWithShader(buf.buildOrThrow());
+        RenderSystem.defaultBlendFunc();
     }
 
     private void renderBodies(ClientLevel level, float partialTick, Matrix4f baseMatrix) {
