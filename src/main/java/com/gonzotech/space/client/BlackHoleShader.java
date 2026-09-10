@@ -17,13 +17,24 @@ import java.nio.FloatBuffer;
 /**
  * Релятивистский GPU-шейдер Чёрных Дыр (Гаргантюа / Интерстеллар).
  *
- * <p>Геометрия и физические параметры:
+ * <p>Точные параметры измерений:
  * <ul>
- *   <li><b>Горизонт событий (чернота []):</b> радиус {@code r_s} (120 блоков для Yx989-k2, 200 блоков для Zangler-11).</li>
- *   <li><b>Фотонное кольцо (Photon Ring):</b> тончайший сверхъяркий белый обод на критическом прицельном радиусе
- *       {@code b_c ≈ 2.598 r_s} прямо по внешней кромке горизонта (бирюзовая линия на схеме).</li>
- *   <li><b>Зазор ISCO (область Ч):</b> пространство 15 блоков между горизонтом (120) и аккреционным диском (135).</li>
- *   <li><b>Аккреционный диск (область А):</b> от {@code 1.125 r_s} (135 блоков) до {@code 3.333 r_s} (400 блоков).</li>
+ *   <li><b>yx989_k2:</b>
+ *     <ul>
+ *       <li>Горизонт событий: {@code 120} блоков</li>
+ *       <li>Фотонное кольцо: {@code 132 - 140} блоков</li>
+ *       <li>ISCO-зазор: {@code 120 - 135} блоков</li>
+ *       <li>Аккреционный диск: {@code 138 - 500} блоков</li>
+ *     </ul>
+ *   </li>
+ *   <li><b>zangler_11:</b>
+ *     <ul>
+ *       <li>Горизонт событий: {@code 200} блоков</li>
+ *       <li>Фотонное кольцо: {@code 220 - 228} блоков</li>
+ *       <li>ISCO-зазор: {@code 200 - 223} блоков</li>
+ *       <li>Аккреционный диск: {@code 225 - 1200} блоков</li>
+ *     </ul>
+ *   </li>
  * </ul>
  */
 public final class BlackHoleShader {
@@ -44,6 +55,10 @@ public final class BlackHoleShader {
     private static int uProjMatrixLoc = -1;
     private static int uTanFovLoc = -1;
     private static int uRadiusLoc = -1;
+    private static int uRingMinLoc = -1;
+    private static int uRingMaxLoc = -1;
+    private static int uDiskInLoc = -1;
+    private static int uDiskOutLoc = -1;
     private static int uTimeLoc = -1;
     private static int uDiskNormalLoc = -1;
 
@@ -76,6 +91,10 @@ public final class BlackHoleShader {
         uniform mat4 u_projMatrix;
         uniform vec2 u_tanFov;
         uniform float u_radius;
+        uniform float u_ringMin;
+        uniform float u_ringMax;
+        uniform float u_diskIn;
+        uniform float u_diskOut;
         uniform float u_time;
         uniform vec3 u_diskNormal;
 
@@ -181,38 +200,18 @@ public final class BlackHoleShader {
             float sinTheta = sqrt(sinThetaSq);
             float b = D * sinTheta; // Прицельный параметр луча
 
-            // Параметры диска и зазора:
-            // Горизонт: 1.0 * rs (120 блоков при rs=120)
-            // Зазор ISCO (область Ч): от 1.0 * rs до 1.125 * rs (120..135 блоков)
-            // Диск (область А): от 1.125 * rs до 3.333 * rs (135..400 блоков)
             vec3 n = normalize(u_diskNormal);
-            float Rin = 1.125 * rs;  // 135 блоков при rs=120
-            float Rout = 3.333 * rs; // 400 блоков при rs=120
 
-            // Критический прицельный радиус захвата фотонов b_c
-            float b_c = rs * 2.598076 * sqrt(max(0.001, 1.0 - rs / max(D, rs * 0.99)));
-
-            // 1. БЕЛОЕ ФОТОННОЕ КОЛЬЦО (Photon Ring):
-            // Проходит прямо по внешней границе тени горизонта в зазоре перед диском (бирюзовая линия на схеме)
-            vec3 whitePhotonRing = vec3(0.0);
-            if (cosTheta > 0.0) {
-                float ringDist = (b - b_c) / (rs * 0.035);
-                if (ringDist > -0.05 && ringDist < 2.0) {
-                    float ringIntensity = exp(-ringDist * ringDist * 2.5) * 5.0;
-                    whitePhotonRing = vec3(1.0, 0.98, 0.95) * ringIntensity;
-                }
-            }
-
-            // 2. БЫСТРЫЙ ВЫХОД ДЛЯ ПИКСЕЛЕЙ ВНЕ ЗОНЫ ЧД И ДИСКА (ускорение до 160+ FPS)
-            if (D > Rout && (cosTheta < 0.0 || b > Rout * 1.25)) {
+            // 1. БЫСТРЫЙ ВЫХОД ДЛЯ ПИКСЕЛЕЙ ВНЕ ЗОНЫ ЧД И ДИСКА (ускорение до 160+ FPS)
+            if (D > u_diskOut && (cosTheta < 0.0 || b > u_diskOut * 1.25)) {
                 float denom = dot(rayDir, n);
                 if (abs(denom) > 0.0001) {
                     float t = -dot(u_camPos, n) / denom;
                     if (t > 0.0) {
                         vec3 hit = u_camPos + t * rayDir;
                         float r = length(hit);
-                        if (r >= Rin && r <= Rout) {
-                            vec4 sample = sampleAccretionDisk(hit, r, rayDir, rs, u_time, n, Rin, Rout);
+                        if (r >= u_diskIn && r <= u_diskOut) {
+                            vec4 sample = sampleAccretionDisk(hit, r, rayDir, rs, u_time, n, u_diskIn, u_diskOut);
                             if (sample.a > 0.005) {
                                 fragColor = sample;
                                 vec3 hitCam = t * rayDir;
@@ -228,7 +227,7 @@ public final class BlackHoleShader {
                 return;
             }
 
-            // 3. ЧИСЛЕННОЕ РЕЛЯТИВИСТСКОЕ ИНТЕГРИРОВАНИЕ ГЕОДЕЗИЧЕСКИХ (Шварцшильд / Гаргантюа)
+            // 2. ЧИСЛЕННОЕ РЕЛЯТИВИСТСКОЕ ИНТЕГРИРОВАНИЕ ГЕОДЕЗИЧЕСКИХ (Шварцшильд / Гаргантюа)
             vec3 x = u_camPos;
             vec3 v = rayDir;
             vec3 L = cross(x, v);
@@ -239,26 +238,28 @@ public final class BlackHoleShader {
             float firstDiskDist = -1.0;
             bool hitHorizon = false;
             vec3 horizonHitPos = vec3(0.0);
+            float r_min = 1e9;
 
             const int MAX_STEPS = 24; // Оптимизировано для высокого FPS
 
             for (int i = 0; i < MAX_STEPS; i++) {
                 float r = length(x);
+                if (r < r_min) r_min = r;
 
                 // 1. Фотон поглощен горизонтом событий
-                if (r <= rs * 1.01) {
+                if (r <= rs * 1.005) {
                     hitHorizon = true;
                     horizonHitPos = x;
                     break;
                 }
 
                 // 2. Фотон ушел за пределы аккреционного диска
-                if (r > Rout * 1.3 && dot(x, v) > 0.0) {
+                if (r > u_diskOut * 1.25 && dot(x, v) > 0.0) {
                     break;
                 }
 
                 // Адаптивный шаг интегрирования
-                float ds = clamp(r * 0.22, rs * 0.09, rs * 0.45);
+                float ds = clamp(r * 0.22, rs * 0.08, rs * 0.45);
 
                 // Релятивистское ускорение фотона: a = -1.5 * rs * L^2 / r^5 * x
                 float r5 = r * r * r * r * r;
@@ -267,6 +268,7 @@ public final class BlackHoleShader {
                 // Шаг позиции (Verlet)
                 vec3 x_next = x + v * ds + 0.5 * a * ds * ds;
                 float r_next = length(x_next);
+                if (r_next < r_min) r_min = r_next;
 
                 // Ускорение в следующей точке
                 float r5_next = r_next * r_next * r_next * r_next * r_next;
@@ -284,8 +286,8 @@ public final class BlackHoleShader {
                     vec3 x_cross = mix(x, x_next, tau);
                     float r_cross = length(x_cross);
 
-                    if (r_cross >= Rin && r_cross <= Rout) {
-                        vec4 diskSample = sampleAccretionDisk(x_cross, r_cross, v_next, rs, u_time, n, Rin, Rout);
+                    if (r_cross >= u_diskIn && r_cross <= u_diskOut) {
+                        vec4 diskSample = sampleAccretionDisk(x_cross, r_cross, v_next, rs, u_time, n, u_diskIn, u_diskOut);
                         if (diskSample.a > 0.005) {
                             accumColor += (1.0 - accumAlpha) * diskSample.rgb;
                             accumAlpha += (1.0 - accumAlpha) * diskSample.a;
@@ -303,6 +305,18 @@ public final class BlackHoleShader {
 
                 x = x_next;
                 v = v_next;
+            }
+
+            // 3. БЕЛОЕ ФОТОННОЕ КОЛЬЦО (Photon ring) по точным границам u_ringMin .. u_ringMax
+            vec3 whitePhotonRing = vec3(0.0);
+            if (!hitHorizon && r_min >= rs) {
+                float rMid = 0.5 * (u_ringMin + u_ringMax);
+                float rHalf = 0.5 * (u_ringMax - u_ringMin) + 2.0;
+                float dist = abs(r_min - rMid) / rHalf;
+                if (dist < 2.5) {
+                    float intensity = exp(-dist * dist * 2.5) * 5.5;
+                    whitePhotonRing = vec3(1.0, 0.98, 0.95) * intensity;
+                }
             }
 
             // 4. ИТОГОВАЯ КОМПОЗИЦИЯ
@@ -372,6 +386,10 @@ public final class BlackHoleShader {
             uProjMatrixLoc = GL20.glGetUniformLocation(programId, "u_projMatrix");
             uTanFovLoc = GL20.glGetUniformLocation(programId, "u_tanFov");
             uRadiusLoc = GL20.glGetUniformLocation(programId, "u_radius");
+            uRingMinLoc = GL20.glGetUniformLocation(programId, "u_ringMin");
+            uRingMaxLoc = GL20.glGetUniformLocation(programId, "u_ringMax");
+            uDiskInLoc = GL20.glGetUniformLocation(programId, "u_diskIn");
+            uDiskOutLoc = GL20.glGetUniformLocation(programId, "u_diskOut");
             uTimeLoc = GL20.glGetUniformLocation(programId, "u_time");
             uDiskNormalLoc = GL20.glGetUniformLocation(programId, "u_diskNormal");
 
@@ -425,10 +443,12 @@ public final class BlackHoleShader {
     }
 
     /**
-     * Отрисовка Чёрной Дыры с релятивистским геодезическим линзированием и белым фотонным кольцом.
+     * Отрисовка Чёрной Дыры с точными числовыми параметрами диска и фотонного кольца.
      */
     public static void render(Vec3 camPos, Matrix4f modelViewMatrix,
-                              Matrix4f projectionMatrix, float radius) {
+                              Matrix4f projectionMatrix, float radius,
+                              float ringMin, float ringMax,
+                              float diskIn, float diskOut) {
         if (!init()) {
             return;
         }
@@ -463,8 +483,12 @@ public final class BlackHoleShader {
         float tanFovY = 1.0F / projectionMatrix.m11();
         GL20.glUniform2f(uTanFovLoc, tanFovX, tanFovY);
 
-        // 6. Радиус Шварцшильда
+        // 6. Точные числовые параметры геометрии ЧД
         GL20.glUniform1f(uRadiusLoc, radius);
+        GL20.glUniform1f(uRingMinLoc, ringMin);
+        GL20.glUniform1f(uRingMaxLoc, ringMax);
+        GL20.glUniform1f(uDiskInLoc, diskIn);
+        GL20.glUniform1f(uDiskOutLoc, diskOut);
 
         // 7. Плавное время анимации плазмы
         float time = (float) ((System.nanoTime() / 1_000_000L) % 100_000_000L) * 0.001F;

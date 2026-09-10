@@ -33,20 +33,24 @@ import java.util.List;
 /**
  * Рендерер горизонта событий, гравитационного линзирования и гигантских орбитальных частиц Чёрных Дыр.
  *
- * <p>Рисует релятивистскую Чёрную Дыру в координатах (0, 160, 0):
+ * <p>Точные параметры измерений:
  * <ul>
- *   <li><b>Yx989-k2</b>: радиус Шварцшильда 120 блоков</li>
- *   <li><b>Zangler-11</b>: радиус Шварцшильда 200 блоков</li>
- * </ul>
- *
- * <p>Особенности:
- * <ul>
- *   <li>Высокопроизводительный GPU-шейдер ({@link BlackHoleShader}) с белым фотонным кольцом
- *       в зазоре ISCO, аккреционным диском (135–400 блоков) и плавными арками Интерстеллара (160+ FPS).</li>
- *   <li>Гигантские vanilla-like билборд-частицы пыли (12–38.4 блока), летающие по орбите диска (135–400 блоков)
- *       со скоростью 20.0..0.5 б/сек, с динамическим остыванием (#fffcf2 → #ffd000 → #990011 → прозрачный серый)
- *       и уменьшением на 90% за время жизни (10–20 сек).</li>
- *   <li>Честное лучевое отсечение частиц, находящихся за гравитационной тенью горизонта событий ЧД.</li>
+ *   <li><b>yx989_k2:</b>
+ *     <ul>
+ *       <li>Горизонт событий: {@code 120} блоков</li>
+ *       <li>Фотонное кольцо: {@code 132 - 140} блоков</li>
+ *       <li>ISCO-зазор: {@code 120 - 135} блоков</li>
+ *       <li>Аккреционный диск: {@code 138 - 500} блоков</li>
+ *     </ul>
+ *   </li>
+ *   <li><b>zangler_11:</b>
+ *     <ul>
+ *       <li>Горизонт событий: {@code 200} блоков</li>
+ *       <li>Фотонное кольцо: {@code 220 - 228} блоков</li>
+ *       <li>ISCO-зазор: {@code 200 - 223} блоков</li>
+ *       <li>Аккреционный диск: {@code 225 - 1200} блоков</li>
+ *     </ul>
+ *   </li>
  * </ul>
  */
 public final class BlackHoleRenderer {
@@ -59,9 +63,19 @@ public final class BlackHoleRenderer {
     public static final double CENTER_Y = 160.0;
     public static final double CENTER_Z = 0.0;
 
-    /** Радиусы горизонта событий по измерениям. */
+    // === ПАРАМЕТРЫ ДЛЯ BLACKHOLE_YX989_K2 ===
     public static final float RADIUS_YX989_K2 = 120.0F;
+    public static final float RING_MIN_YX989_K2 = 132.0F;
+    public static final float RING_MAX_YX989_K2 = 140.0F;
+    public static final float DISK_IN_YX989_K2 = 138.0F;
+    public static final float DISK_OUT_YX989_K2 = 500.0F;
+
+    // === ПАРАМЕТРЫ ДЛЯ BLACKHOLE_ZANGLER_11 ===
     public static final float RADIUS_ZANGLER_11 = 200.0F;
+    public static final float RING_MIN_ZANGLER_11 = 220.0F;
+    public static final float RING_MAX_ZANGLER_11 = 228.0F;
+    public static final float DISK_IN_ZANGLER_11 = 225.0F;
+    public static final float DISK_OUT_ZANGLER_11 = 1200.0F;
 
     /** Текстура ванильной пиксельной пылинки 8x8 px. */
     public static final ResourceLocation DUST_TEXTURE =
@@ -107,12 +121,9 @@ public final class BlackHoleRenderer {
     }
 
     /**
-     * Спавн одной новой орбитальной частицы по физическим параметрам диска.
+     * Спавн одной новой орбитальной частицы по точным границам диска.
      */
-    private static AccretionParticle createParticle(float bhRadius, boolean randomAge) {
-        float rIn = 1.125F * bhRadius;  // 135 блоков при rs=120 (аккреционный диск)
-        float rOut = 3.333F * bhRadius; // 400 блоков при rs=120
-
+    private static AccretionParticle createParticle(float diskIn, float diskOut, boolean randomAge) {
         // 1. Радиальное распределение: шанс спавна на краю диска на 40% ниже, чем вблизи
         float u;
         while (true) {
@@ -121,7 +132,7 @@ public final class BlackHoleRenderer {
                 break;
             }
         }
-        float r = rIn + u * (rOut - rIn);
+        float r = diskIn + u * (diskOut - diskIn);
 
         // 2. Скорость: вблизи максимальная 20.0 блоков/сек, на краю диска 0.5 блоков/сек
         float speedBlocksPerSec = Mth.lerp(u, 20.0F, 0.5F);
@@ -133,7 +144,6 @@ public final class BlackHoleRenderer {
         int age = randomAge ? RANDOM.nextInt(maxAge) : 0;
 
         // 4. Начальный размер: от 12.0 до 38.4 блоков (+20% к размеру).
-        // Шанс спавна больших частиц (38.4 блока) на краю диска заметно ниже
         float minSize = Mth.lerp(u, 21.6F, 12.0F);
         float maxSize = Mth.lerp(u, 38.4F, 19.2F);
         float initialSize = minSize + RANDOM.nextFloat() * (maxSize - minSize);
@@ -157,11 +167,13 @@ public final class BlackHoleRenderer {
         }
 
         ResourceKey<Level> dim = level.dimension();
-        float radius;
+        float diskIn, diskOut;
         if (dim == SpaceDimensions.BLACKHOLE_YX989_K2) {
-            radius = RADIUS_YX989_K2;
+            diskIn = DISK_IN_YX989_K2;
+            diskOut = DISK_OUT_YX989_K2;
         } else if (dim == SpaceDimensions.BLACKHOLE_ZANGLER_11) {
-            radius = RADIUS_ZANGLER_11;
+            diskIn = DISK_IN_ZANGLER_11;
+            diskOut = DISK_OUT_ZANGLER_11;
         } else {
             PARTICLES.clear();
             return;
@@ -170,7 +182,7 @@ public final class BlackHoleRenderer {
         // Если список пуст при первом входе — сразу инициализируем ~160 частиц с разным возрастом
         if (PARTICLES.isEmpty()) {
             for (int i = 0; i < TARGET_PARTICLE_COUNT; i++) {
-                PARTICLES.add(createParticle(radius, true));
+                PARTICLES.add(createParticle(diskIn, diskOut, true));
             }
         }
 
@@ -192,7 +204,7 @@ public final class BlackHoleRenderer {
 
         // Спавним новые частицы для поддержания стабильной популяции ~150-170
         while (PARTICLES.size() < TARGET_PARTICLE_COUNT) {
-            PARTICLES.add(createParticle(radius, false));
+            PARTICLES.add(createParticle(diskIn, diskOut, false));
         }
     }
 
@@ -212,11 +224,19 @@ public final class BlackHoleRenderer {
         }
 
         ResourceKey<Level> dim = level.dimension();
-        float radius;
+        float radius, ringMin, ringMax, diskIn, diskOut;
         if (dim == SpaceDimensions.BLACKHOLE_YX989_K2) {
             radius = RADIUS_YX989_K2;
+            ringMin = RING_MIN_YX989_K2;
+            ringMax = RING_MAX_YX989_K2;
+            diskIn = DISK_IN_YX989_K2;
+            diskOut = DISK_OUT_YX989_K2;
         } else if (dim == SpaceDimensions.BLACKHOLE_ZANGLER_11) {
             radius = RADIUS_ZANGLER_11;
+            ringMin = RING_MIN_ZANGLER_11;
+            ringMax = RING_MAX_ZANGLER_11;
+            diskIn = DISK_IN_ZANGLER_11;
+            diskOut = DISK_OUT_ZANGLER_11;
         } else {
             return; // Не измерение с чёрной дырой
         }
@@ -226,7 +246,8 @@ public final class BlackHoleRenderer {
 
         // 1. Основной рендер релятивистской Чёрной Дыры через GPU-шейдер
         if (BlackHoleShader.init()) {
-            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(), radius);
+            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
+                                   radius, ringMin, ringMax, diskIn, diskOut);
         } else {
             // Запасной путь (fallback)
             float rx = (float) (CENTER_X - camPos.x);
