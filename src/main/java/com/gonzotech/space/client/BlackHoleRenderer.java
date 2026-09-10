@@ -38,16 +38,18 @@ import java.util.List;
  *   <li><b>yx989_k2:</b>
  *     <ul>
  *       <li>Горизонт событий ($r_s$): {@code 120} блоков</li>
- *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда (критический радиус $b_c$)</li>
- *       <li>Аккреционный диск: {@code 180 - 400} блоков (от {@code 1.50 r_s} до {@code 3.33 r_s})</li>
+ *       <li>Фотонное кольцо (из 6000e90): белое кольцо Эйнштейна по критическому радиусу $b_c$</li>
+ *       <li>ГЭП / Внутренний край $R_{in}$ (из 6000e90): {@code 180} блоков ($1.50\, r_s$)</li>
+ *       <li>Внешний радиус диска $R_{out}$ (ласт патч): {@code 500} блоков</li>
  *       <li>Кольцо Дайсона: радиус {@code 360} блоков (с геометрическим отсечением за тенью ЧД)</li>
  *     </ul>
  *   </li>
  *   <li><b>zangler_11:</b>
  *     <ul>
  *       <li>Горизонт событий ($r_s$): {@code 200} блоков</li>
- *       <li>Фотонное кольцо: вдоль границы тени Шварцшильда (критический радиус $b_c$)</li>
- *       <li>Аккреционный диск: {@code 300 - 666} блоков (от {@code 1.50 r_s} до {@code 3.33 r_s})</li>
+ *       <li>Фотонное кольцо (из 6000e90): белое кольцо Эйнштейна по критическому радиусу $b_c$</li>
+ *       <li>ГЭП / Внутренний край $R_{in}$ (из 6000e90): {@code 300} блоков ($1.50\, r_s$)</li>
+ *       <li>Внешний радиус диска $R_{out}$ (ласт патч): {@code 1300} блоков</li>
  *       <li>Кольцо Дайсона: радиус {@code 750} блоков (с геометрическим отсечением за тенью ЧД)</li>
  *     </ul>
  *   </li>
@@ -65,14 +67,14 @@ public final class BlackHoleRenderer {
 
     // === ФИНАЛЬНЫЕ ПАРАМЕТРЫ ДЛЯ BLACKHOLE_YX989_K2 ===
     public static final float RADIUS_YX989_K2 = 120.0F;
-    public static final float DISK_IN_YX989_K2 = 180.0F;
-    public static final float DISK_OUT_YX989_K2 = 400.0F;
+    public static final float DISK_IN_YX989_K2 = 180.0F;   // ГЭП из 6000e90 (1.50 * rs)
+    public static final float DISK_OUT_YX989_K2 = 500.0F;  // Максимальный радиус диска
     public static final float DYSON_RING_YX989_K2 = 360.0F;
 
     // === ФИНАЛЬНЫЕ ПАРАМЕТРЫ ДЛЯ BLACKHOLE_ZANGLER_11 ===
     public static final float RADIUS_ZANGLER_11 = 200.0F;
-    public static final float DISK_IN_ZANGLER_11 = 300.0F;
-    public static final float DISK_OUT_ZANGLER_11 = 666.0F;
+    public static final float DISK_IN_ZANGLER_11 = 300.0F;   // ГЭП из 6000e90 (1.50 * rs)
+    public static final float DISK_OUT_ZANGLER_11 = 1300.0F; // Максимальный радиус диска
     public static final float DYSON_RING_ZANGLER_11 = 750.0F;
 
     /** Текстура ванильной пиксельной пылинки 8x8 px. */
@@ -217,15 +219,19 @@ public final class BlackHoleRenderer {
         }
 
         ResourceKey<Level> dim = level.dimension();
-        float radius, dysonRadius;
+        float radius, diskIn, diskOut, dysonRadius;
         boolean isDysonActive;
 
         if (dim == SpaceDimensions.BLACKHOLE_YX989_K2) {
             radius = RADIUS_YX989_K2;
+            diskIn = DISK_IN_YX989_K2;
+            diskOut = DISK_OUT_YX989_K2;
             dysonRadius = DYSON_RING_YX989_K2;
             isDysonActive = SpaceSkyState.yx989Dyson;
         } else if (dim == SpaceDimensions.BLACKHOLE_ZANGLER_11) {
             radius = RADIUS_ZANGLER_11;
+            diskIn = DISK_IN_ZANGLER_11;
+            diskOut = DISK_OUT_ZANGLER_11;
             dysonRadius = DYSON_RING_ZANGLER_11;
             isDysonActive = SpaceSkyState.zanglerDyson;
         } else {
@@ -237,7 +243,8 @@ public final class BlackHoleRenderer {
 
         // 1. Основной рендер релятивистской Чёрной Дыры через GPU-шейдер
         if (BlackHoleShader.init()) {
-            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(), radius);
+            BlackHoleShader.render(camPos, event.getModelViewMatrix(), event.getProjectionMatrix(),
+                                   radius, diskIn, diskOut);
         } else {
             // Запасной путь (fallback)
             float rx = (float) (CENTER_X - camPos.x);

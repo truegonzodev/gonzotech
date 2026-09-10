@@ -17,19 +17,14 @@ import java.nio.FloatBuffer;
 /**
  * Релятивистский GPU-шейдер Чёрных Дыр (Гаргантюа / Интерстеллар).
  *
- * <p>Полный эталонный откат к коммиту {@code 6000e90}:
+ * <p>Конфигурация параметров:
  * <ul>
- *   <li><b>Честное геодезическое линзирование Шварцшильда:</b> луч света искривляется в гравитационном поле ЧД,
- *       естественным образом проецируя заднюю сторону аккреционного диска в верхнюю и нижнюю арки (Interstellar halo)
- *       без дублирования колец, разрывов или паразитных кайм.</li>
- *   <li><b>Белое фотонное кольцо Эйнштейна (Photon Ring / Halo):</b> сверхъяркое белое свечение прямо по кромке
- *       горизонта событий на критическом прицельном радиусе $b_c$, сохраняющее идеальную форму и четкость на любом расстоянии.</li>
- *   <li><b>Компактный аккреционный диск:</b> радиус от {@code 1.5 r_s} (180 при {@code r_s=120})
- *       до {@code 3.33 r_s} (400 при {@code r_s=120}).</li>
- *   <li><b>Релятивистский эффект Доплера (Doppler Beaming):</b> усиление яркости и синее смещение набегающей стороны диска,
- *       багровое затухание удаляющейся стороны.</li>
- *   <li><b>Высокая производительность (160+ FPS):</b> раннее отсечение лучей вне конуса ЧД, оптимизированное
- *       адаптивное интегрирование (24 шага) и быстрый 2-октавный турбулентный шум плазмы.</li>
+ *   <li><b>Параметры ГЭПА и Фотонного кольца (из коммита {@code 6000e90}):</b>
+ *       Внутренний край аккреционного диска $R_{in} = 1.50\, r_s$ (ISCO gap) и сверхъяркое белое фотонное кольцо
+ *       Эйнштейна, математически центрированное на критическом прицельном радиусе $b_c$.</li>
+ *   <li><b>Максимальный радиус диска $R_{out}$ (из ласт патча):</b>
+ *       {@code 500} блоков для yx989_k2 и {@code 1300} блоков для zangler_11.</li>
+ *   <li><b>Честное геодезическое искривление лучей Шварцшильда</b> и релятивистский эффект Доплера (Doppler Beaming).</li>
  * </ul>
  */
 public final class BlackHoleShader {
@@ -50,6 +45,8 @@ public final class BlackHoleShader {
     private static int uProjMatrixLoc = -1;
     private static int uTanFovLoc = -1;
     private static int uRadiusLoc = -1;
+    private static int uDiskInLoc = -1;
+    private static int uDiskOutLoc = -1;
     private static int uTimeLoc = -1;
     private static int uDiskNormalLoc = -1;
 
@@ -82,6 +79,8 @@ public final class BlackHoleShader {
         uniform mat4 u_projMatrix;
         uniform vec2 u_tanFov;
         uniform float u_radius;
+        uniform float u_diskIn;
+        uniform float u_diskOut;
         uniform float u_time;
         uniform vec3 u_diskNormal;
 
@@ -187,15 +186,14 @@ public final class BlackHoleShader {
             float sinTheta = sqrt(sinThetaSq);
             float b = D * sinTheta; // Прицельный параметр луча
 
-            // Параметры диска по требованиям: от 1.50 rs до 3.33 rs
             vec3 n = normalize(u_diskNormal);
-            float Rin = 1.50 * rs;
-            float Rout = 3.33 * rs;
+            float Rin = u_diskIn;
+            float Rout = u_diskOut;
 
-            // Критический прицельный радиус захвата фотонов b_c
+            // Критический прицельный радиус захвата фотонов b_c (из 6000e90)
             float b_c = rs * 2.598076 * sqrt(max(0.001, 1.0 - rs / max(D, rs * 0.99)));
 
-            // 1. БЕЛОЕ ФОТОННОЕ КОЛЬЦО ЭЙНШТЕЙНА (Photon Halo) прямо по горизонту событий
+            // 1. БЕЛОЕ ФОТОННОЕ КОЛЬЦО ЭЙНШТЕЙНА (Photon Ring / Halo) по горизонту событий (из 6000e90)
             vec3 whitePhotonRing = vec3(0.0);
             if (cosTheta > 0.0) {
                 float ringDist = (b - b_c) / (rs * 0.035);
@@ -232,7 +230,6 @@ public final class BlackHoleShader {
             }
 
             // 3. ЧИСЛЕННОЕ РЕЛЯТИВИСТСКОЕ ИНТЕГРИРОВАНИЕ ГЕОДЕЗИЧЕСКИХ (Шварцшильд / Гаргантюа)
-            // Единый искривленный луч — ноль дублирующихся колец!
             vec3 x = u_camPos;
             vec3 v = rayDir;
             vec3 L = cross(x, v);
@@ -244,7 +241,7 @@ public final class BlackHoleShader {
             bool hitHorizon = false;
             vec3 horizonHitPos = vec3(0.0);
 
-            const int MAX_STEPS = 24; // Оптимизировано для высокого FPS
+            const int MAX_STEPS = 28; // Плавное релятивистское искривление
 
             for (int i = 0; i < MAX_STEPS; i++) {
                 float r = length(x);
@@ -309,7 +306,7 @@ public final class BlackHoleShader {
                 v = v_next;
             }
 
-            // 4. ИТОГОВАЯ КОМПОЗИЦИЯ С БЕЛЫМ ФОТОННЫМ КОЛЬЦОМ
+            // 4. ИТОГОВАЯ КОМПОЗИЦИЯ С БЕЛЫМ ФОТОННЫМ КОЛЬЦОМ ИЗ 6000e90
             if (hitHorizon) {
                 // Горизонт событий: тень ЧД + передний диск + белое кольцо фотонов
                 vec3 finalRgb = accumColor + whitePhotonRing;
@@ -377,6 +374,8 @@ public final class BlackHoleShader {
             uProjMatrixLoc = GL20.glGetUniformLocation(programId, "u_projMatrix");
             uTanFovLoc = GL20.glGetUniformLocation(programId, "u_tanFov");
             uRadiusLoc = GL20.glGetUniformLocation(programId, "u_radius");
+            uDiskInLoc = GL20.glGetUniformLocation(programId, "u_diskIn");
+            uDiskOutLoc = GL20.glGetUniformLocation(programId, "u_diskOut");
             uTimeLoc = GL20.glGetUniformLocation(programId, "u_time");
             uDiskNormalLoc = GL20.glGetUniformLocation(programId, "u_diskNormal");
 
@@ -430,10 +429,11 @@ public final class BlackHoleShader {
     }
 
     /**
-     * Отрисовка Чёрной Дыры с релятивистским геодезическим линзированием и белым фотонным кольцом.
+     * Отрисовка Чёрной Дыры с релятивистским геодезическим линзированием, гэпом и белым фотонным кольцом.
      */
     public static void render(Vec3 camPos, Matrix4f modelViewMatrix,
-                              Matrix4f projectionMatrix, float radius) {
+                              Matrix4f projectionMatrix, float radius,
+                              float diskIn, float diskOut) {
         if (!init()) {
             return;
         }
@@ -468,8 +468,10 @@ public final class BlackHoleShader {
         float tanFovY = 1.0F / projectionMatrix.m11();
         GL20.glUniform2f(uTanFovLoc, tanFovX, tanFovY);
 
-        // 6. Радиус Шварцшильда
+        // 6. Радиус Шварцшильда, гэп и внешний радиус диска
         GL20.glUniform1f(uRadiusLoc, radius);
+        GL20.glUniform1f(uDiskInLoc, diskIn);
+        GL20.glUniform1f(uDiskOutLoc, diskOut);
 
         // 7. Плавное время анимации плазмы
         float time = (float) ((System.nanoTime() / 1_000_000L) % 100_000_000L) * 0.001F;
