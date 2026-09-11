@@ -18,9 +18,11 @@
 4. сервер считал score;
 5. если dimensional score был достаточен и не было conflicts, прогресс открывался.
 
-Проблема состоит не в обычном клиенте, а в изменённом клиенте или ручной отправке пакетов. Сервер не проверял, что формула действительно выросла из seed-пазла этого мира. Поэтому теоретически можно было послать самостоятельное `F = F` или другую удобную самосогласованную формулу и получить открытие/предмет, не решая текущую задачу.
+Проблема состояла **не в обычном клиенте**. В штатном интерфейсе target-величина уже стояла в locked slot слева и не была доступна в лотке: обычный игрок не мог собрать `F = F`, просто перетащив вторую `F` из tray.
 
-Клиентский интерфейс никогда не должен быть границей безопасности в мультиплеере: пользовательский клиент можно изменить. Границей должен быть сервер.
+Проблема была только в изменённом клиенте или ручной отправке пакетов. Такой клиент может создать `SubmitPayload` напрямую и не обязан следовать ограничениям GUI/лотка. Сервер тогда не проверял, что присланная формула действительно выросла из seed-пазла этого мира, поэтому самостоятельное `F = F` служит примером *сетевого forged payload*, а не обычного игрового действия. Аналогично можно было отправить любую другую удобную самосогласованную формулу и получить открытие/предмет, не решая текущую задачу.
+
+Клиентский интерфейс не является границей безопасности в мультиплеере: пользовательский клиент можно изменить. Границей должен быть сервер.
 
 ### Что не было целью patch
 
@@ -97,11 +99,11 @@ F · t = (m · a) / Hz
 
 | Вариант | Почему |
 |---|---|
-| Отдельное `F = F` | В нём нет исходного skeleton текущего puzzle. |
+| Отдельное `F = F`, вручную сформированное изменённым клиентом | В нём нет исходного skeleton текущего puzzle. Штатный UI и до patch не выдавал вторую target-величину из лотка. |
 | Пересозданная с нуля формула с правильной размерностью | Она не содержит обязательные узлы seed-задачи. |
 | Подмена locked `m` на другую величину | Locked slot должен иметь исходный quantity ID. |
 | Перенос target на правую сторону | Target должен остаться server-locked частью левой стороны. |
-| Добавление target `F` в новый/пустой slot ради тавтологии | Игрок не может подставлять target в управляемые им slots. |
+| Добавление target `F` в новый/пустой slot ради тавтологии вручную сформированным payload | Сервер повторяет правило уже существующего UI: target нельзя подставить в управляемый игроком slot. |
 | Quantity следующего tier или закрытый secret | Сервер сверяет доступность с progress игрока, а не с UI клиента. |
 | Добавленное `+`, `−`, power или bare number | Стандартный интерфейс доски таких added-узлов не создаёт; допустимы только added `×` и `÷`. |
 | Дублирующиеся node IDs | Они могут исказить ID-keyed maps evaluator'а, поэтому отвергаются до вычислений. |
@@ -277,7 +279,7 @@ IDs добавленных игроком nodes остаются клиентс�
 | `src/main/java/com/gonzotech/chalkboard/network/ChalkboardNetwork.java` | C2S packet bounds, authoritative Save/Submit flow, Sync fallback для невалидного save. |
 | `src/main/java/com/gonzotech/chalkboard/core/Serde.java` | Bounded и complete JSON parse expression trees. |
 | `src/main/java/com/gonzotech/chalkboard/core/ChalkboardWorldData.java` | Единый overworld cache и stable baseline node IDs. |
-| `src/main/java/com/gonzotech/chalkboard/core/SelfTest.java` | Headless regression scenario для валидного `F·t = m·a/Hz`, `F=F`, locked substitution, unavailable quantities и malformed JSON. |
+| `src/main/java/com/gonzotech/chalkboard/core/SelfTest.java` | Headless regression scenario для валидного `F·t = m·a/Hz`, вручную сформированного сетевого `F=F`, locked substitution, unavailable quantities и malformed JSON. |
 | `src/main/java/com/gonzotech/chalkboard/core/Evaluator.java` | Не менялся: остаётся единственным общим score engine. |
 | `src/main/java/com/gonzotech/chalkboard/core/Manipulate.java` | Не менялся: описывает разрешённые клиентские transformations, на которые ориентируется validator. |
 | `src/main/java/com/gonzotech/chalkboard/progress/PlayerChalkboardProgress.java` | Не менялся по формату; хранит formulas/drawing/progression per player. |
@@ -373,7 +375,7 @@ ChalkboardSubmissionValidator.validateClaim(puzzle, expression, isInfiniteMode, 
 В `SelfTest` добавлены проверки:
 
 - сервер принимает честное `F*t = m*a/Hz` с score 98;
-- сервер отклоняет независимое `F=F`;
+- сервер отклоняет независимое `F=F`, если оно вручную прислано изменённым клиентом;
 - сервер отклоняет замену locked component;
 - сервер отклоняет added quantity без доступа;
 - `Serde` отклоняет expression с отсутствующим child.
@@ -434,7 +436,7 @@ ChalkboardWorldData.get
 Serde.fromJson
 ```
 
-Полный откат server-authority patch вернёт старую уязвимость `F=F`, поэтому предпочтительный путь при будущем баге — исправить конкретное правило validator'а или миграцию старого save, а не отключать весь validator.
+Полный откат server-authority patch снова заставит сервер доверять client-crafted standalone formula (например, вручную отправленному `F=F`, несмотря на то что штатный UI такого не строит). Поэтому предпочтительный путь при будущем баге — исправить конкретное правило validator'а или миграцию старого save, а не отключать весь validator.
 
 При расширении board UI нужно сначала обновить validator. Например, если UI когда-нибудь официально научится добавлять power/add/sub nodes, validator должен явно описывать безопасную structural form этих операций; иначе честный новый UI будет корректно отвергнут сервером как неизвестная трансформация.
 
