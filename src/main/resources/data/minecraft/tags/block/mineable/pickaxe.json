@@ -112,6 +112,8 @@
     "gonzotech:cobble_generator",
     "gonzotech:crusher",
     "gonzotech:centrifuge",
+    "gonzotech:singular_heat_source",
+    "gonzotech:singular_energy_source",
     "gonzotech:item_filter",
     "gonzotech:item_scavenger",
     "gonzotech:lunar_stone",

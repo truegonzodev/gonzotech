@@ -354,6 +354,16 @@ public final class MachineDefs {
     public static final double COBBLE_CHANCE_LAVA_TO_OBSIDIAN = 0.0016; // 0.16% ведро лавы → ведро обсидиана
     public static final double COBBLE_CHANCE_PICKAXE_BREAK = 0.0009;    // 0.09% кирка ломается (пропадает)
 
+    // ═══════════════════════ АДМИНСКИЕ СИНГУЛЯРНЫЕ ИСТОЧНИКИ ═══════════════════════
+    // Не имеют буфера: это виртуальный budget, который каждый тик напрямую
+    // предлагает PipeRouting. Реально принятый поток всегда ограничивают провод,
+    // теплотруба и/или входной лимит получателя.
+
+    /** Верхний предел виртуальной подачи singular heat source: 100 000 GTH/t. */
+    public static final long SINGULAR_SOURCE_GTH_OUTPUT = 100_000L * MILLI;
+    /** Верхний предел виртуальной подачи singular energy source: 100 000 GTU/t. */
+    public static final long SINGULAR_SOURCE_GTU_OUTPUT = 100_000L * MILLI;
+
     // ═══════════════════════════ ДРОБИЛКА ═══════════════════════════
     // Блок руды/камень → raw и host-зависимые побочные материалы. Шкала GTU
     // задаёт скорость текущей операции при её запуске: пустая — 100 тиков,

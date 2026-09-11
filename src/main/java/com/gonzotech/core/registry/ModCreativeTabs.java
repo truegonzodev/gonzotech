@@ -136,7 +136,7 @@ public class ModCreativeTabs {
             .build()
     );
 
-    /** «Приколы Gonzo Tech» — бесполезные/шуточные предметы. */
+    /** «Приколы Gonzo Tech» — шуточные предметы и некарфтящиеся админ-инструменты. */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> GAGS_TAB = CREATIVE_TABS.register(
         "gags",
         () -> CreativeModeTab.builder()
@@ -147,6 +147,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());
+                // Админские сингулярности — специально не имеют crafting recipes.
+                output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_HEAT_SOURCE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_ENERGY_SOURCE_ITEM.get());
             })
             .build()
     );

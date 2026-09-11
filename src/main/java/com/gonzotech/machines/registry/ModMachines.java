@@ -10,6 +10,8 @@ import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.PumpBlock;
+import com.gonzotech.machines.block.SingularEnergySourceBlock;
+import com.gonzotech.machines.block.SingularHeatSourceBlock;
 import com.gonzotech.machines.block.StirlingBlock;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
@@ -126,6 +128,14 @@ public final class ModMachines {
     public static final DeferredBlock<CentrifugeBlock> CENTRIFUGE =
         BLOCKS.registerBlock("centrifuge", CentrifugeBlock::new, machineMetal());
 
+    /** Creative-only GTH emitter without an internal storage or crafting recipe. */
+    public static final DeferredBlock<SingularHeatSourceBlock> SINGULAR_HEAT_SOURCE =
+        BLOCKS.registerBlock("singular_heat_source", SingularHeatSourceBlock::new, machineMetal());
+
+    /** Creative-only GTU emitter without an internal storage or crafting recipe. */
+    public static final DeferredBlock<SingularEnergySourceBlock> SINGULAR_ENERGY_SOURCE =
+        BLOCKS.registerBlock("singular_energy_source", SingularEnergySourceBlock::new, lightMetal());
+
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
     // пассивны: слив дотягивает PipeRouting (труба не тикает). noOcclusion, модель не
@@ -234,6 +244,14 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> CENTRIFUGE_ITEM =
         ITEMS.registerSimpleBlockItem("centrifuge", CENTRIFUGE);
+
+    /** Админский источник: выдаётся только вкладкой «Приколы»/командой. */
+    public static final DeferredItem<BlockItem> SINGULAR_HEAT_SOURCE_ITEM =
+        ITEMS.registerSimpleBlockItem("singular_heat_source", SINGULAR_HEAT_SOURCE);
+
+    /** Админский источник: выдаётся только вкладкой «Приколы»/командой. */
+    public static final DeferredItem<BlockItem> SINGULAR_ENERGY_SOURCE_ITEM =
+        ITEMS.registerSimpleBlockItem("singular_energy_source", SINGULAR_ENERGY_SOURCE);
 
     public static final DeferredItem<BlockItem> WIRE_ITEM =
         ITEMS.registerSimpleBlockItem("first_wire", WIRE);

@@ -232,6 +232,8 @@
   "block.gonzotech.condenser": "Конденсатор",
   "block.gonzotech.pump": "Помпа",
   "block.gonzotech.accumulator": "Энергохранилище",
+  "block.gonzotech.singular_heat_source": "Сингулярный источник тепла",
+  "block.gonzotech.singular_energy_source": "Сингулярный источник энергии",
   "block.gonzotech.cobble_generator": "Генератор булыжника",
   "block.gonzotech.first_wire": "Провод",
   "block.gonzotech.first_heat_pipe": "Теплотруба",

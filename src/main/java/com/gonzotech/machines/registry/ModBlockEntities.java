@@ -10,6 +10,8 @@ import com.gonzotech.machines.block.entity.CondenserBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.block.entity.PumpBlockEntity;
+import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
+import com.gonzotech.machines.block.entity.SingularHeatSourceBlockEntity;
 import com.gonzotech.machines.block.entity.StirlingBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -65,6 +67,14 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<CentrifugeBlockEntity>> CENTRIFUGE =
         BLOCK_ENTITIES.register("centrifuge", () -> new BlockEntityType<>(
             CentrifugeBlockEntity::new, false, ModMachines.CENTRIFUGE.get()));
+
+    public static final Supplier<BlockEntityType<SingularHeatSourceBlockEntity>> SINGULAR_HEAT_SOURCE =
+        BLOCK_ENTITIES.register("singular_heat_source", () -> new BlockEntityType<>(
+            SingularHeatSourceBlockEntity::new, false, ModMachines.SINGULAR_HEAT_SOURCE.get()));
+
+    public static final Supplier<BlockEntityType<SingularEnergySourceBlockEntity>> SINGULAR_ENERGY_SOURCE =
+        BLOCK_ENTITIES.register("singular_energy_source", () -> new BlockEntityType<>(
+            SingularEnergySourceBlockEntity::new, false, ModMachines.SINGULAR_ENERGY_SOURCE.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> ITEM_FILTER =
         BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(
