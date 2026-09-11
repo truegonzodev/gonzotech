@@ -37,8 +37,8 @@ public class ChalkboardNetwork {
 
     /** Bound client-controlled formula data before it can enter a persistent attachment. */
     public static final int MAX_EXPR_JSON_BYTES = Serde.MAX_JSON_CHARS;
-    /** Chalk strokes are visual only, but must not turn one save packet into unbounded player data. */
-    public static final int MAX_DRAWING_JSON_BYTES = 128 * 1024;
+    /** Chalk strokes are visual only; retain the pre-patch 256 KiB payload allowance. */
+    public static final int MAX_DRAWING_JSON_BYTES = 256 * 1024;
     private static final int MAX_TEXT_BYTES = 512;
 
     // ───────────────────────── Payloads ─────────────────────────
