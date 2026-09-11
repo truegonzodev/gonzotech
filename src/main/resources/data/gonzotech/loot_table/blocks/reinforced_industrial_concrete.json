@@ -11,7 +11,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "gonzotech:reinforced_industrial_concrete"
+          "name": "gonzotech:industrial_concrete"
         }
       ]
     }

@@ -1,4 +1,134 @@
 {
   "type": "minecraft:block",
-  "pools": []
+  "pools": [
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "gonzotech:composite_pipe",
+          "properties": {
+            "has_first_wire": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gonzotech:first_wire"
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "gonzotech:composite_pipe",
+          "properties": {
+            "has_first_heat_pipe": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gonzotech:first_heat_pipe"
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "gonzotech:composite_pipe",
+          "properties": {
+            "has_first_item_pipe": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gonzotech:first_item_pipe"
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "gonzotech:composite_pipe",
+          "properties": {
+            "has_first_water_pipe": "true",
+            "has_first_steam_pipe": "false"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gonzotech:first_water_pipe"
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "gonzotech:composite_pipe",
+          "properties": {
+            "has_first_water_pipe": "false",
+            "has_first_steam_pipe": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gonzotech:first_steam_pipe"
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "gonzotech:composite_pipe",
+          "properties": {
+            "has_first_water_pipe": "true",
+            "has_first_steam_pipe": "true"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "gonzotech:first_universal_fluid_pipe"
+        }
+      ]
+    }
+  ]
 }

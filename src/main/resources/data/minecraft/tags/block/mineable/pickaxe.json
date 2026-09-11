@@ -117,6 +117,20 @@
     "gonzotech:martian_stone",
     "gonzotech:rich_martian_stone",
     "gonzotech:superdense_ice",
-    "gonzotech:meteor"
+    "gonzotech:meteor",
+    "gonzotech:armor_concrete",
+    "gonzotech:reinforced_armor_concrete",
+    "gonzotech:durable_concrete",
+    "gonzotech:porcelain",
+    "gonzotech:slag_concrete",
+    "gonzotech:industrial_concrete",
+    "gonzotech:reinforced_industrial_concrete",
+    "gonzotech:europan_ice",
+    "gonzotech:first_water_pipe",
+    "gonzotech:first_steam_pipe",
+    "gonzotech:first_item_pipe",
+    "gonzotech:first_water_node",
+    "gonzotech:first_steam_node",
+    "gonzotech:first_item_node"
   ]
 }

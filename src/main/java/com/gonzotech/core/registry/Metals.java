@@ -1,6 +1,7 @@
 package com.gonzotech.core.registry;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Нейтральный (без зависимостей) реестр «металлов» мода — единый источник правды
@@ -38,6 +39,35 @@ public final class Metals {
         "telluride_ingot", "bismuth_ingot", "rhenium_ingot", "radium_ingot",
         "lithium_ingot"
     );
+
+    /**
+     * Классификация блоков-хранилищ по утверждённой таблице материалов.
+     * <p>
+     * Серный блок намеренно не включён: у него отдельные свойства (NETHERRACK,
+     * 3.0 hardness, 1.0 blast resistance, friction 0.70) в {@link ModBlocks}.
+     * Чистые дополнительные металлы, не перечисленные здесь, остаются в обычной
+     * группе; «Alloy & Extra» в списке слитков не означает, что каждый из них —
+     * сплав.
+     */
+    private static final Set<String> SOFT_STORAGE_METALS = Set.of(
+        "lead", "lithium"
+    );
+
+    /** Вольфрам и все зарегистрированные сплавы/композиционные материалы. */
+    private static final Set<String> HARD_STORAGE_METALS = Set.of(
+        "tungsten",
+        "steel", "stainless_steel", "corten_steel", "cast_iron",
+        "nitinol", "invar", "ferromagnetic", "cantor", "vitreloy",
+        "semiconductor", "vr20", "stellite", "alnico", "telluride"
+    );
+
+    public static boolean hasSoftStorageBlock(String metalId) {
+        return SOFT_STORAGE_METALS.contains(metalId);
+    }
+
+    public static boolean hasHardStorageBlock(String metalId) {
+        return HARD_STORAGE_METALS.contains(metalId);
+    }
 
     /**
      * Металлы БЕЗ пыли (у них есть слиток, но пыль не делаем). Йод, марганец,

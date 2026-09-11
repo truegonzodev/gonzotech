@@ -64,13 +64,8 @@
     "gonzotech:rhenium_block",
     "gonzotech:radium_block",
     "gonzotech:lithium_block",
-    "gonzotech:first_wire",
-    "gonzotech:first_heat_pipe",
-    "gonzotech:first_heat_node",
-    "gonzotech:composite_pipe",
-    "gonzotech:first_wire_node",
-    "gonzotech:first_universal_fluid_pipe",
-    "gonzotech:first_universal_fluid_node",
-    "gonzotech:cobble_generator"
+    "gonzotech:armor_concrete",
+    "gonzotech:industrial_concrete",
+    "gonzotech:meteor"
   ]
 }

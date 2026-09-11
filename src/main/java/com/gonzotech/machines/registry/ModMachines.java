@@ -45,66 +45,92 @@ public final class ModMachines {
     public static final DeferredRegister.Items ITEMS =
         DeferredRegister.createItems(GonzoTechMod.MOD_ID);
 
-    private static BlockBehaviour.Properties metal() {
+    /**
+     * Базовые свойства машин и логистики из утверждённой таблицы. Они намеренно
+     * не требуют корректного инструмента для дропа: кирка остаётся лишь лучшим
+     * инструментом через тег minecraft:mineable/pickaxe.
+     */
+    private static BlockBehaviour.Properties material(SoundType sound, float hardness, float explosionResistance) {
         return BlockBehaviour.Properties.of()
             .mapColor(MapColor.METAL)
-            .sound(SoundType.METAL)
-            .strength(3.5f, 6.0f)
-            .requiresCorrectToolForDrops();
+            .sound(sound)
+            .strength(hardness, explosionResistance);
+    }
+
+    /** Топка, котёл и электропечь. */
+    private static BlockBehaviour.Properties machineMetal() {
+        return material(SoundType.METAL, 3.5f, 6.0f);
+    }
+
+    /** Помпа, генератор Стирлинга, конденсатор и генератор булыжника. */
+    private static BlockBehaviour.Properties machineCopper() {
+        return material(SoundType.COPPER, 3.5f, 5.0f);
+    }
+
+    /** Энергохранилище, провод и его узел. */
+    private static BlockBehaviour.Properties lightMetal() {
+        return material(SoundType.METAL, 1.9f, 6.0f);
+    }
+
+    /** Остальные трубы и узлы. */
+    private static BlockBehaviour.Properties copperLogistics() {
+        return material(SoundType.COPPER, 1.5f, 5.0f);
+    }
+
+    /** Фильтр и отсеиватель: медный звук, но корпус прочнее тонкой трубы. */
+    private static BlockBehaviour.Properties copperLogisticsMachine() {
+        return material(SoundType.COPPER, 3.5f, 6.0f);
     }
 
     /**
-     * Как {@link #metal()}, но с {@code .noOcclusion()} — для блоков с кастомной
-     * 3D-моделью, которая НЕ является полным кубом (например котёл). Без этого
-     * Minecraft считает блок полным непрозрачным кубом и на стыках отсекает грани
-     * (выступающие части «пропадают», соседние блоки затеняются некорректно).
+     * Как {@link #machineMetal()}, но с {@code .noOcclusion()} — для блоков с
+     * кастомной 3D-моделью, которая НЕ является полным кубом (котёл).
      */
-    private static BlockBehaviour.Properties metalCustomShape() {
-        return metal().noOcclusion();
+    private static BlockBehaviour.Properties machineMetalCustomShape() {
+        return machineMetal().noOcclusion();
     }
 
     // ─────────────────────────── блоки ───────────────────────────
 
     public static final DeferredBlock<FireboxBlock> FIREBOX =
-        BLOCKS.registerBlock("firebox", FireboxBlock::new, metal());
+        BLOCKS.registerBlock("firebox", FireboxBlock::new, machineMetal());
 
     public static final DeferredBlock<BoilerBlock> BOILER =
-        BLOCKS.registerBlock("boiler", BoilerBlock::new, metalCustomShape());
+        BLOCKS.registerBlock("boiler", BoilerBlock::new, machineMetalCustomShape());
 
     public static final DeferredBlock<StirlingBlock> STIRLING =
-        BLOCKS.registerBlock("stirling_generator", StirlingBlock::new, metal());
+        BLOCKS.registerBlock("stirling_generator", StirlingBlock::new, machineCopper());
 
     public static final DeferredBlock<ElectricFurnaceBlock> ELECTRIC_FURNACE =
-        BLOCKS.registerBlock("electric_furnace", ElectricFurnaceBlock::new, metal());
+        BLOCKS.registerBlock("electric_furnace", ElectricFurnaceBlock::new, machineMetal());
 
     public static final DeferredBlock<CondenserBlock> CONDENSER =
-        BLOCKS.registerBlock("condenser", CondenserBlock::new, metal());
+        BLOCKS.registerBlock("condenser", CondenserBlock::new, machineCopper());
 
     public static final DeferredBlock<PumpBlock> PUMP =
-        BLOCKS.registerBlock("pump", PumpBlock::new, metal());
+        BLOCKS.registerBlock("pump", PumpBlock::new, machineCopper());
 
     public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR =
-        BLOCKS.registerBlock("accumulator", AccumulatorBlock::new, metal());
+        BLOCKS.registerBlock("accumulator", AccumulatorBlock::new, lightMetal());
 
     public static final DeferredBlock<CobbleGeneratorBlock> COBBLE_GENERATOR =
-        BLOCKS.registerBlock("cobble_generator", CobbleGeneratorBlock::new, metal());
+        BLOCKS.registerBlock("cobble_generator", CobbleGeneratorBlock::new, machineCopper());
 
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
     // пассивны: слив дотягивает PipeRouting (труба не тикает). noOcclusion, модель не
     // полный куб (тонкая труба).
 
+    private static BlockBehaviour.Properties powerLine() {
+        return lightMetal().noOcclusion();
+    }
+
     private static BlockBehaviour.Properties pipe() {
-        return BlockBehaviour.Properties.of()
-            .mapColor(MapColor.METAL)
-            .sound(SoundType.METAL)
-            .strength(1.5f, 6.0f)
-            .requiresCorrectToolForDrops()
-            .noOcclusion();
+        return copperLogistics().noOcclusion();
     }
 
     public static final DeferredBlock<PipeBlock> WIRE =
-        BLOCKS.registerBlock("first_wire", props -> new PipeBlock(props, PipeType.WIRE), pipe());
+        BLOCKS.registerBlock("first_wire", props -> new PipeBlock(props, PipeType.WIRE), powerLine());
 
     public static final DeferredBlock<PipeBlock> HEAT_PIPE =
         BLOCKS.registerBlock("first_heat_pipe", props -> new PipeBlock(props, PipeType.HEAT), pipe());
@@ -121,7 +147,7 @@ public final class ModMachines {
 
     // Блоки-узлы: та же труба, но открыта во все 6 сторон (ветвления/уголки).
     public static final DeferredBlock<NodeBlock> WIRE_NODE =
-        BLOCKS.registerBlock("first_wire_node", props -> new NodeBlock(props, PipeType.WIRE), pipe());
+        BLOCKS.registerBlock("first_wire_node", props -> new NodeBlock(props, PipeType.WIRE), powerLine());
 
     public static final DeferredBlock<NodeBlock> HEAT_NODE =
         BLOCKS.registerBlock("first_heat_node", props -> new NodeBlock(props, PipeType.HEAT), pipe());
@@ -162,10 +188,10 @@ public final class ModMachines {
     // блок-якорь второй сети, без меню.
 
     public static final DeferredBlock<ItemFilterBlock> ITEM_FILTER =
-        BLOCKS.registerBlock("item_filter", ItemFilterBlock::new, metal());
+        BLOCKS.registerBlock("item_filter", ItemFilterBlock::new, copperLogisticsMachine());
 
     public static final DeferredBlock<ItemScavengerBlock> ITEM_SCAVENGER =
-        BLOCKS.registerBlock("item_scavenger", ItemScavengerBlock::new, metal());
+        BLOCKS.registerBlock("item_scavenger", ItemScavengerBlock::new, copperLogisticsMachine());
 
     // ─────────────────────────── предметы-блоки ───────────────────────────
 

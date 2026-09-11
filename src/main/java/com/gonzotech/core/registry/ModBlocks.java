@@ -59,32 +59,35 @@ public class ModBlocks {
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.STONE)
             .sound(SoundType.GRAVEL)
-            .strength(0.6f, 0.6f)
+            .strength(1.1f, 1.6f)
     );
 
     // ─────────────────────── Материалы переработки: строительные блоки ───────────────────────
-    // Это визуальные строительные заготовки: у всех пока одинаковые базовые свойства
-    // каменного блока. Рецепты, прочность и специальные эффекты будут определены отдельно.
+    // Свойства уже соответствуют утверждённой таблице. Требуемый вид/тир кирки
+    // задаётся ресурсными тегами minecraft:mineable/pickaxe и minecraft:needs_*_tool.
     public static final DeferredBlock<Block> ARMOR_CONCRETE = BLOCKS.registerSimpleBlock(
-        "armor_concrete", constructionMaterialProperties());
+        "armor_concrete", constructionMaterialProperties(SoundType.STONE, 12.0f, 14.0f, 0.59f));
     public static final DeferredBlock<Block> REINFORCED_ARMOR_CONCRETE = BLOCKS.registerSimpleBlock(
-        "reinforced_armor_concrete", constructionMaterialProperties());
+        "reinforced_armor_concrete", constructionMaterialProperties(SoundType.HEAVY_CORE, 20.0f, 24.0f, 0.57f));
     public static final DeferredBlock<Block> DURABLE_CONCRETE = BLOCKS.registerSimpleBlock(
-        "durable_concrete", constructionMaterialProperties());
+        "durable_concrete", constructionMaterialProperties(SoundType.STONE, 8.0f, 46.0f, 0.58f));
     public static final DeferredBlock<Block> PORCELAIN = BLOCKS.registerSimpleBlock(
-        "porcelain", constructionMaterialProperties());
+        "porcelain", constructionMaterialProperties(SoundType.STONE, 1.0f, 3.0f, 0.60f));
     public static final DeferredBlock<Block> SLAG_CONCRETE = BLOCKS.registerSimpleBlock(
-        "slag_concrete", constructionMaterialProperties());
+        "slag_concrete", constructionMaterialProperties(SoundType.TUFF, 3.0f, 3.0f, 0.60f));
     public static final DeferredBlock<Block> INDUSTRIAL_CONCRETE = BLOCKS.registerSimpleBlock(
-        "industrial_concrete", constructionMaterialProperties());
+        "industrial_concrete", constructionMaterialProperties(SoundType.STONE, 5.0f, 6.0f, 0.60f));
     public static final DeferredBlock<Block> REINFORCED_INDUSTRIAL_CONCRETE = BLOCKS.registerSimpleBlock(
-        "reinforced_industrial_concrete", constructionMaterialProperties());
+        "reinforced_industrial_concrete", constructionMaterialProperties(SoundType.STONE, 10.0f, 8.0f, 0.60f));
 
-    private static BlockBehaviour.Properties constructionMaterialProperties() {
+    private static BlockBehaviour.Properties constructionMaterialProperties(
+        SoundType sound, float hardness, float explosionResistance, float friction
+    ) {
         return BlockBehaviour.Properties.of()
             .mapColor(MapColor.STONE)
-            .sound(SoundType.STONE)
-            .strength(2.0f, 6.0f)
+            .sound(sound)
+            .strength(hardness, explosionResistance)
+            .friction(friction)
             .requiresCorrectToolForDrops();
     }
 
@@ -93,13 +96,43 @@ public class ModBlocks {
     // грубые: породы — как камень, грунты/песок — как земля/песок. Все блоки
     // копаются киркой (породы) / лопатой (грунты, песок) — теги ниже в data/.
 
+    /**
+     * Свойства блока-хранилища: normal = 5.0/6.0, soft = −30%/−40%, hard =
+     * +75%/+50%. Серный блок задан отдельно, согласно утверждённой таблице.
+     */
+    private static BlockBehaviour.Properties metalBlockProperties(String metalId) {
+        if (metalId.equals("sulfur")) {
+            return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_YELLOW)
+                .sound(SoundType.NETHERRACK)
+                .strength(3.0f, 1.0f)
+                .friction(0.70f)
+                .requiresCorrectToolForDrops();
+        }
+
+        float hardness = 5.0f;
+        float explosionResistance = 6.0f;
+        if (Metals.hasSoftStorageBlock(metalId)) {
+            hardness *= 0.70f;
+            explosionResistance *= 0.60f;
+        } else if (Metals.hasHardStorageBlock(metalId)) {
+            hardness *= 1.75f;
+            explosionResistance *= 1.50f;
+        }
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(hardness, explosionResistance)
+            .requiresCorrectToolForDrops();
+    }
+
     /** Луна: базовая порода недр (аналог камня). */
     public static final DeferredBlock<Block> LUNAR_STONE = BLOCKS.registerSimpleBlock(
         "lunar_stone",
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.STONE)
             .sound(SoundType.STONE)
-            .strength(1.5f, 6.0f)
+            .strength(3.2f, 5.0f)
             .requiresCorrectToolForDrops()
     );
 
@@ -109,7 +142,7 @@ public class ModBlocks {
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.STONE)
             .sound(SoundType.STONE)
-            .strength(2.0f, 6.0f)
+            .strength(4.0f, 5.0f)
             .requiresCorrectToolForDrops()
     );
 
@@ -121,7 +154,7 @@ public class ModBlocks {
             BlockBehaviour.Properties.of()
                 .mapColor(MapColor.SAND)
                 .sound(SoundType.SAND)
-                .strength(0.5f, 0.5f)
+                .strength(1.1f, 0.5f)
         );
 
     /** Марс: базовая порода недр. */
@@ -130,7 +163,7 @@ public class ModBlocks {
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.COLOR_ORANGE)
             .sound(SoundType.STONE)
-            .strength(1.5f, 6.0f)
+            .strength(3.2f, 5.0f)
             .requiresCorrectToolForDrops()
     );
 
@@ -140,7 +173,7 @@ public class ModBlocks {
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.COLOR_ORANGE)
             .sound(SoundType.STONE)
-            .strength(2.0f, 6.0f)
+            .strength(4.0f, 5.0f)
             .requiresCorrectToolForDrops()
     );
 
@@ -150,7 +183,7 @@ public class ModBlocks {
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.COLOR_ORANGE)
             .sound(SoundType.GRAVEL)
-            .strength(0.6f, 0.6f)
+            .strength(1.6f, 1.2f)
     );
 
     /** Европа: «сверхплотный лёд» глубинного панциря (не тает, скользкий). */
@@ -158,9 +191,9 @@ public class ModBlocks {
         "superdense_ice",
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.ICE)
-            .sound(SoundType.GLASS)
-            .strength(2.0f, 6.0f)
-            .friction(0.98f)
+            .sound(SoundType.STONE)
+            .strength(70.0f, 10.0f)
+            .friction(0.992f)
             .requiresCorrectToolForDrops()
     );
 
@@ -170,8 +203,9 @@ public class ModBlocks {
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.ICE)
             .sound(SoundType.GLASS)
-            .strength(1.0f, 3.0f)
-            .friction(0.98f)
+            .strength(1.0f, 1.0f)
+            .friction(0.94f)
+            .requiresCorrectToolForDrops()
     );
 
     /** Метеорит: тёмная космическая порода парящих глыб (орбиты/открытый космос). */
@@ -179,8 +213,8 @@ public class ModBlocks {
         "meteor",
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.COLOR_GRAY)
-            .sound(SoundType.STONE)
-            .strength(2.0f, 8.0f)
+            .sound(SoundType.DEEPSLATE)
+            .strength(9.0f, 8.0f)
             .requiresCorrectToolForDrops()
     );
 
@@ -236,17 +270,13 @@ public class ModBlocks {
             ORE_BLOCKS.put(ore.id(), byHost);
         }
 
-        // Фаза 3 — блоки-хранилища из 9 слитков (у каждого слитка, без исключений).
-        // Металлически «звонкие» и прочные, как ванильный iron_block; служат также
-        // основанием маяка (тег beacon_base_blocks проставляется в data-паке).
+        // Блоки-хранилища из слитков: мягкие/обычные/прочные материалы имеют
+        // разные утверждённые значения hardness и blast resistance; серный блок
+        // намеренно особый. Все остаются базой маяка (тег beacon_base_blocks).
         for (String ingotId : Metals.INGOT_IDS) {
-            String blockId = Metals.base(ingotId) + "_block";
-            BlockBehaviour.Properties props = BlockBehaviour.Properties.of()
-                .mapColor(MapColor.METAL)
-                .sound(SoundType.METAL)
-                .strength(5.0f, 6.0f)
-                .requiresCorrectToolForDrops();
-            METAL_BLOCKS.put(blockId, BLOCKS.registerSimpleBlock(blockId, props));
+            String metalId = Metals.base(ingotId);
+            String blockId = metalId + "_block";
+            METAL_BLOCKS.put(blockId, BLOCKS.registerSimpleBlock(blockId, metalBlockProperties(metalId)));
         }
     }
 
