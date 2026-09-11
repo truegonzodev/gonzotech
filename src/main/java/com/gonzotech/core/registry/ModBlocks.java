@@ -62,6 +62,32 @@ public class ModBlocks {
             .strength(0.6f, 0.6f)
     );
 
+    // ─────────────────────── Материалы переработки: строительные блоки ───────────────────────
+    // Это визуальные строительные заготовки: у всех пока одинаковые базовые свойства
+    // каменного блока. Рецепты, прочность и специальные эффекты будут определены отдельно.
+    public static final DeferredBlock<Block> ARMOR_CONCRETE = BLOCKS.registerSimpleBlock(
+        "armor_concrete", constructionMaterialProperties());
+    public static final DeferredBlock<Block> REINFORCED_ARMOR_CONCRETE = BLOCKS.registerSimpleBlock(
+        "reinforced_armor_concrete", constructionMaterialProperties());
+    public static final DeferredBlock<Block> DURABLE_CONCRETE = BLOCKS.registerSimpleBlock(
+        "durable_concrete", constructionMaterialProperties());
+    public static final DeferredBlock<Block> PORCELAIN = BLOCKS.registerSimpleBlock(
+        "porcelain", constructionMaterialProperties());
+    public static final DeferredBlock<Block> SLAG_CONCRETE = BLOCKS.registerSimpleBlock(
+        "slag_concrete", constructionMaterialProperties());
+    public static final DeferredBlock<Block> INDUSTRIAL_CONCRETE = BLOCKS.registerSimpleBlock(
+        "industrial_concrete", constructionMaterialProperties());
+    public static final DeferredBlock<Block> REINFORCED_INDUSTRIAL_CONCRETE = BLOCKS.registerSimpleBlock(
+        "reinforced_industrial_concrete", constructionMaterialProperties());
+
+    private static BlockBehaviour.Properties constructionMaterialProperties() {
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(2.0f, 6.0f)
+            .requiresCorrectToolForDrops();
+    }
+
     // ─────────────────────────── Фаза 4: блоки космоса ───────────────────────────
     // Плейсхолдер-текстуры (см. textures/block/*.png). Балансы прочности пока
     // грубые: породы — как камень, грунты/песок — как земля/песок. Все блоки

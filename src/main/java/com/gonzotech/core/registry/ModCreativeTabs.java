@@ -89,6 +89,14 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.LUNAR_DIRT_ITEM.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.LUNAR_DIRT_ITEM.get());
+                // Строительные материалы переработки — в согласованном порядке.
+                output.accept(ModItems.ARMOR_CONCRETE_ITEM.get());
+                output.accept(ModItems.REINFORCED_ARMOR_CONCRETE_ITEM.get());
+                output.accept(ModItems.DURABLE_CONCRETE_ITEM.get());
+                output.accept(ModItems.PORCELAIN_ITEM.get());
+                output.accept(ModItems.SLAG_CONCRETE_ITEM.get());
+                output.accept(ModItems.INDUSTRIAL_CONCRETE_ITEM.get());
+                output.accept(ModItems.REINFORCED_INDUSTRIAL_CONCRETE_ITEM.get());
                 // Фаза 4 — блоки космоса.
                 output.accept(ModItems.LUNAR_STONE_ITEM.get());
                 output.accept(ModItems.RICH_LUNAR_STONE_ITEM.get());
@@ -111,6 +119,15 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.PSEUDO_COIL.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.PSEUDO_COIL.get());
+                output.accept(ModItems.GRANITE_GRIT.get());
+                output.accept(ModItems.ANDESITE_GRIT.get());
+                output.accept(ModItems.DIORITE_GRIT.get());
+                output.accept(ModItems.TRIO_GRIT.get());
+                output.accept(ModItems.CLINKER_GRIT.get());
+                output.accept(ModItems.ARMOR_MIX.get());
+                output.accept(ModItems.ANDESITE_SILICATE_CLINKER.get());
+                output.accept(ModItems.WHITE_PORCELAIN_BATCH.get());
+                output.accept(ModItems.REBAR.get());
             })
             .build()
     );
