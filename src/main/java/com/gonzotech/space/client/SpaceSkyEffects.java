@@ -55,6 +55,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      */
     private static final float SKY_DISTANCE = 100.0F;
 
+    /** Полуразмер ванильного лунного квада: от -20 до +20. */
+    static final float VANILLA_MOON_HALF_SIZE = 20.0F;
+
+    /** Отдельный 4×2 atlas фаз луны Оверворлда. */
+    private static final String OVERWORLD_MOON_PHASES_PATH =
+        "textures/environment/overworld/moon_phases.png";
+
     /** Цвета зенита: дневной и ночной (0xAARRGGBB). */
     private final int zenithDayArgb;
     private final int zenithNightArgb;
@@ -475,12 +482,28 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             GlStateManager.SourceFactor.SRC_ALPHA,
             GlStateManager.DestFactor.ONE);
 
-        BufferBuilder buf = Tesselator.getInstance()
-            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-
         int count = starData.count;
         float[] pos = starData.positions;
         float[] alphas = starData.baseAlpha;
+
+        // Near dawn/dusk every float alpha can round down to byte alpha 0.  Do
+        // not even begin a buffer in that case: BufferBuilder.buildOrThrow()
+        // correctly rejects an empty buffer, which previously crashed the client.
+        boolean hasVisibleStar = false;
+        for (int i = 0; i < count; i++) {
+            int a = (int) (Mth.clamp(alphas[i] * brightness, 0.0F, 1.0F) * 255.0F);
+            if (a > 0) {
+                hasVisibleStar = true;
+                break;
+            }
+        }
+        if (!hasVisibleStar) {
+            RenderSystem.defaultBlendFunc();
+            return;
+        }
+
+        BufferBuilder buf = Tesselator.getInstance()
+            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         for (int i = 0; i < count; i++) {
             float starAlpha = alphas[i] * brightness;
@@ -552,20 +575,47 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         RenderSystem.setShaderColor(
             r / 255F * tint[0], g / 255F * tint[1], b / 255F * tint[2], a / 255F);
 
+        boolean isVanillaMoonPhases = isOverworldMoonPhases(body.texture());
         ResourceLocation tex = resolveTexture(body.texture());
 
         RenderSystem.setShaderTexture(0, tex);
 
-        float[] v = animationV(tex);
-        float v0 = v[0], v1 = v[1];
+        float u0 = 0.0F;
+        float u1 = 1.0F;
+        float v0;
+        float v1;
+        if (isVanillaMoonPhases) {
+            // Vanilla's moon atlas contains four columns and two rows.  Keep its
+            // indexing and UV orientation so a stock moon_phases.png can replace
+            // this repository placeholder without any code changes.
+            int phase = Math.floorMod(level.getMoonPhase(), 8);
+            int column = phase % 4;
+            int row = phase / 4;
+            u0 = column / 4.0F;
+            u1 = (column + 1) / 4.0F;
+            v0 = row / 2.0F;
+            v1 = (row + 1) / 2.0F;
+        } else {
+            float[] v = animationV(tex);
+            v0 = v[0];
+            v1 = v[1];
+        }
 
-        float sz = body.size();
+        float sz = isVanillaMoonPhases ? VANILLA_MOON_HALF_SIZE : body.size();
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(0.0F, v0);
-        buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(1.0F, v0);
-        buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(1.0F, v1);
-        buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(0.0F, v1);
+        if (isVanillaMoonPhases) {
+            // Match vanilla's horizontal UV order as well as its ±20 quad size.
+            buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(u1, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(u0, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(u0, v1);
+            buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(u1, v1);
+        } else {
+            buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(u0, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(u1, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(u1, v1);
+            buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(u0, v1);
+        }
         BufferUploader.drawWithShader(buf.buildOrThrow());
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -577,9 +627,19 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private static final java.util.Map<String, ResourceLocation> VARIANT_CACHE =
         new java.util.concurrent.ConcurrentHashMap<>();
 
+    private static boolean isOverworldMoonPhases(ResourceLocation texture) {
+        return OVERWORLD_MOON_PHASES_PATH.equals(texture.getPath());
+    }
+
     private ResourceLocation resolveTexture(ResourceLocation base) {
         String path = base.getPath();
         if (!path.endsWith(".png")) {
+            return base;
+        }
+
+        // The phase atlas has no Dyson/black-hole variants: it must always stay
+        // the Overworld's dedicated vanilla-compatible resource.
+        if (isOverworldMoonPhases(base)) {
             return base;
         }
 
