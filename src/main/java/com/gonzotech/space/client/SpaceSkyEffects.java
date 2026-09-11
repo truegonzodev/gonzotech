@@ -55,6 +55,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      */
     private static final float SKY_DISTANCE = 100.0F;
 
+    /**
+     * Звёзды находятся за небесными телами (квады тел лежат на SKY_DISTANCE),
+     * но рисуются после купола без depth-write, поэтому сам купол их не скрывает.
+     */
+    private static final float STAR_DISTANCE = SKY_DISTANCE + 2.0F;
+
     /** Полуразмер ванильного лунного квада: от -20 до +20. */
     static final float VANILLA_MOON_HALF_SIZE = 20.0F;
 
@@ -254,6 +260,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         mvStack.pushMatrix();
         mvStack.identity();
 
+        // Background order is intentional: dome → stars → celestial bodies.
+        // Stars are geometrically farther than the bodies, while the dome has no
+        // depth-write and is drawn first so it cannot cover the star field.
         renderDome(modelViewMatrix, zenith, horizon);
 
         float starBrightness = Mth.lerp(dayFrac, starNightBrightness, starDayBrightness);
@@ -413,15 +422,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             }
 
             float len = Mth.sqrt(lenSq);
-            float inv = (SKY_DISTANCE - 2.0F) / len;
+            float inv = STAR_DISTANCE / len;
             float px = x * inv;
             float py = y * inv;
             float pz = z * inv;
 
             // Единичный вектор нормали от центра сферы (0, 0, 0) к звезде
-            float nx = px / (SKY_DISTANCE - 2.0F);
-            float ny = py / (SKY_DISTANCE - 2.0F);
-            float nz = pz / (SKY_DISTANCE - 2.0F);
+            float nx = px / STAR_DISTANCE;
+            float ny = py / STAR_DISTANCE;
+            float nz = pz / STAR_DISTANCE;
 
             // Вектор up, не коллинеарный нормали
             float upX = 0.0F, upY = 1.0F, upZ = 0.0F;
@@ -478,9 +487,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        RenderSystem.blendFunc(
-            GlStateManager.SourceFactor.SRC_ALPHA,
-            GlStateManager.DestFactor.ONE);
+        // Vanilla-style alpha compositing keeps this background layer from
+        // accumulating its light through later celestial-body passes.
+        RenderSystem.defaultBlendFunc();
 
         int count = starData.count;
         float[] pos = starData.positions;
