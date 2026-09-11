@@ -511,6 +511,6 @@
   "block.gonzotech.centrifuge": "Центрифуга ЦФ1УР",
   "block.gonzotech.crusher": "Дробилка руды",
   "gui.gonzotech.hot_water": "Кипяток: %s / %s mB",
-  "gui.gonzotech.centrifuge.washing_progress": "Промывка: %s / %s тиков",
+  "gui.gonzotech.centrifuge.washing_progress": "Промывка: %s%%",
   "gui.gonzotech.crusher.crushing_progress": "Дробление: %s%%"
 }

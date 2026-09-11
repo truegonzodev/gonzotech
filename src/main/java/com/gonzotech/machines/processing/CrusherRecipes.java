@@ -24,6 +24,36 @@ public final class CrusherRecipes {
 
     private static final int CHANCE_SCALE = 1_000;
 
+    /**
+     * Vanilla ores use the same server-side host table as mod ores.  Their primary
+     * result is the vanilla material normally obtained from that ore; only its
+     * enclosing rock changes the remaining three rolls.
+     */
+    private static final List<InputRecipe> VANILLA_ORE_RECIPES = List.of(
+        vanillaOre(Blocks.COPPER_ORE, Items.RAW_COPPER, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_COPPER_ORE, Items.RAW_COPPER, Host.DEEPSLATE),
+        vanillaOre(Blocks.IRON_ORE, Items.RAW_IRON, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_IRON_ORE, Items.RAW_IRON, Host.DEEPSLATE),
+        vanillaOre(Blocks.GOLD_ORE, Items.RAW_GOLD, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_GOLD_ORE, Items.RAW_GOLD, Host.DEEPSLATE),
+        vanillaOre(Blocks.DIAMOND_ORE, Items.DIAMOND, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_DIAMOND_ORE, Items.DIAMOND, Host.DEEPSLATE),
+        vanillaOre(Blocks.COAL_ORE, Items.COAL, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_COAL_ORE, Items.COAL, Host.DEEPSLATE),
+        vanillaOre(Blocks.LAPIS_ORE, Items.LAPIS_LAZULI, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_LAPIS_ORE, Items.LAPIS_LAZULI, Host.DEEPSLATE),
+        vanillaOre(Blocks.REDSTONE_ORE, Items.REDSTONE, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_REDSTONE_ORE, Items.REDSTONE, Host.DEEPSLATE),
+        vanillaOre(Blocks.EMERALD_ORE, Items.EMERALD, Host.STONE),
+        vanillaOre(Blocks.DEEPSLATE_EMERALD_ORE, Items.EMERALD, Host.DEEPSLATE),
+        vanillaOre(Blocks.NETHER_GOLD_ORE, Items.RAW_GOLD, Host.NETHER),
+        vanillaOre(Blocks.NETHER_QUARTZ_ORE, Items.QUARTZ, Host.NETHER),
+        vanillaOre(Blocks.ANCIENT_DEBRIS, Items.NETHERITE_SCRAP, Host.NETHER),
+        // Gilded blackstone is the remaining vanilla gold ore source in the Nether;
+        // it shares the Netherrack-host mining byproducts with nether gold ore.
+        vanillaOre(Blocks.GILDED_BLACKSTONE, Items.RAW_GOLD, Host.NETHER)
+    );
+
     private static final List<InputRecipe> ROCK_RECIPES = List.of(
         r(block(Blocks.GRANITE), recipe(
             guaranteed(grit(ModItems.GRANITE_GRIT)), chance(nugget("lead_nugget"), 40), chance(nugget("aluminum_nugget"), 30), none())),
@@ -74,22 +104,33 @@ public final class CrusherRecipes {
             }
         }
 
+        for (InputRecipe recipe : VANILLA_ORE_RECIPES) {
+            if (input.is(recipe.input().get())) return recipe.recipe();
+        }
         for (InputRecipe recipe : ROCK_RECIPES) {
             if (input.is(recipe.input().get())) return recipe.recipe();
         }
         return null;
     }
 
+    private static InputRecipe vanillaOre(Block input, Item primary, Host host) {
+        return r(block(input), hostOreRecipe(vanilla(primary), host));
+    }
+
     private static Recipe gonzoOreRecipe(String oreId, Host host) {
-        ItemRef raw = raw(oreId);
+        return hostOreRecipe(raw(oreId), host);
+    }
+
+    /** The exact host-based outcome table shared by Gonzo and vanilla ore blocks. */
+    private static Recipe hostOreRecipe(ItemRef primary, Host host) {
         return switch (host) {
-            case STONE -> recipe(guaranteed(raw), chance(raw, 200), guaranteed(grit(ModItems.TRIO_GRIT)), chance(nugget("lithium_nugget"), 200));
-            case DEEPSLATE -> recipe(guaranteed(raw), chance(raw, 200), chance(nugget("titanium_nugget"), 100), chance(nugget("rhenium_nugget"), 50));
-            case NETHER -> recipe(guaranteed(raw), chance(raw, 200), chance(nugget("lead_nugget"), 330), chance(nugget("platinum_nugget"), 50));
+            case STONE -> recipe(guaranteed(primary), chance(primary, 200), guaranteed(grit(ModItems.TRIO_GRIT)), chance(nugget("lithium_nugget"), 200));
+            case DEEPSLATE -> recipe(guaranteed(primary), chance(primary, 200), chance(nugget("titanium_nugget"), 100), chance(nugget("rhenium_nugget"), 50));
+            case NETHER -> recipe(guaranteed(primary), chance(primary, 200), chance(nugget("lead_nugget"), 330), chance(nugget("platinum_nugget"), 50));
             // OreDefinition currently exposes only calcite_calcium_ore. Keeping
             // this branch host-based means a future calcite-host ore gets the
             // exact same outputs without an ore-specific client decision.
-            case CALCITE -> recipe(guaranteed(raw), chance(raw, 200), chance(vanilla(Items.BONE_MEAL), 200), chance(nugget("neodymium_nugget"), 50));
+            case CALCITE -> recipe(guaranteed(primary), chance(primary, 200), chance(vanilla(Items.BONE_MEAL), 200), chance(nugget("neodymium_nugget"), 50));
         };
     }
 

@@ -30,11 +30,6 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
     }
 
     @Override
-    protected boolean usesRasterMachineSlotHover() {
-        return true;
-    }
-
-    @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
         int barY = y + 17;
         int barW = 16;
@@ -64,7 +59,7 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, washX, washY, washW, washH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.centrifuge.washing_progress", menu.washProgress(), MachineDefs.CENTRIFUGE_WASH_TICKS)),
+                Component.translatable("gui.gonzotech.centrifuge.washing_progress", menu.washProgressPercent())),
                 mouseX, mouseY);
         }
     }

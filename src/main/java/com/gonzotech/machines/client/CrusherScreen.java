@@ -29,11 +29,6 @@ public class CrusherScreen extends MachineScreen<CrusherMenu> {
     }
 
     @Override
-    protected boolean usesRasterMachineSlotHover() {
-        return true;
-    }
-
-    @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
         int gtuX = x + 28;
         int barY = y + 17;

@@ -511,6 +511,6 @@
   "block.gonzotech.centrifuge": "Centrifuge CF1UR",
   "block.gonzotech.crusher": "Ore Crusher",
   "gui.gonzotech.hot_water": "Hot water: %s / %s mB",
-  "gui.gonzotech.centrifuge.washing_progress": "Washing: %s / %s ticks",
+  "gui.gonzotech.centrifuge.washing_progress": "Washing: %s%%",
   "gui.gonzotech.crusher.crushing_progress": "Crushing: %s%%"
 }

@@ -56,4 +56,10 @@ public class CentrifugeMenu extends BaseMachineMenu {
     public int washTotal() {
         return data.get(3);
     }
+
+    /** UI value; the server keeps the exact paid-tick count internally. */
+    public int washProgressPercent() {
+        int total = washTotal();
+        return total <= 0 ? 0 : Math.min(100, (int) ((long) washProgress() * 100L / total));
+    }
 }
