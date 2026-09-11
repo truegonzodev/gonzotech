@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 
 /**
  * Общая база экранов машин — «слоёный пирог» под рисованный PNG-GUI.
@@ -51,6 +52,8 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     protected static final ResourceLocation BAR_WATER = gui("bar_water.png");
     protected static final ResourceLocation BAR_STEAM = gui("bar_steam.png");
     protected static final ResourceLocation BAR_GTU = gui("bar_gtu.png");
+    /** 16×16 raster tint used by processing machines for hovered logical slots. */
+    private static final ResourceLocation SLOT_HOVER = gui("slot_hover.png");
 
     private GuiMask mask = GuiMask.forTexture(null, 0, 0);
 
@@ -102,7 +105,32 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
         this.renderBackground(g, mouseX, mouseY, partial);
         super.render(g, mouseX, mouseY, partial);
+        drawRasterSlotHover(g, mouseX, mouseY);
         this.renderTooltip(g, mouseX, mouseY);
+    }
+
+    /**
+     * Processing screens opt into a PNG overlay instead of asking runtime code to
+     * construct a slot-hover shape.  The image's 16×16 outer bounds start at the
+     * logical {@link Slot#x}/{@link Slot#y}, exactly like its matching slot frame.
+     */
+    protected boolean usesRasterMachineSlotHover() {
+        return false;
+    }
+
+    private void drawRasterSlotHover(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (!usesRasterMachineSlotHover()) return;
+        int count = Math.min(menu.machineSlotCount(), menu.slots.size());
+        for (int index = 0; index < count; index++) {
+            Slot slot = menu.slots.get(index);
+            int slotX = leftPos + slot.x;
+            int slotY = topPos + slot.y;
+            if (inRect(mouseX, mouseY, slotX, slotY, 16, 16)) {
+                graphics.blit(RenderType::guiTextured, SLOT_HOVER, slotX, slotY,
+                    0f, 0f, 16, 16, 16, 16);
+                return;
+            }
+        }
     }
 
     /** Убираем ВЕСЬ текст-подписи (название машины, «Инвентарь»). */

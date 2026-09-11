@@ -200,8 +200,22 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     }
 
     @Override
-    public Vec3 getBrightnessDependentFogColor(Vec3 biomeFogColor, float daylight) {
-        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, Mth.clamp(daylight, 0f, 1f));
+    public Vec3 getBrightnessDependentFogColor(Vec3 biomeFogColor, float rendererDaylight) {
+        /*
+         * Never use the renderer's generic Overworld daylight value here: it has
+         * no knowledge of a fixed/custom sun cycle and was the source of a second,
+         * visibly late white-to-black fog timeline.  The dome and fog now both use
+         * this effect's daylight function and the identical dawn/dusk overlay.
+         * The fog callback does not receive a partial tick, so the current level
+         * time is sampled directly; that differs from sky rendering by at most one
+         * client frame, rather than by a whole vanilla day/night phase.
+         */
+        ClientLevel level = Minecraft.getInstance().level;
+        float dayFrac = level != null
+            ? daylightFactor(level, 0.0F)
+            : Mth.clamp(rendererDaylight, 0.0F, 1.0F);
+        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
+        horizon = overlayArgb(horizon, sunsetArgb, sunsetFactor(dayFrac));
         double r = ((horizon >>> 16) & 0xFF) / 255.0;
         double g = ((horizon >>> 8) & 0xFF) / 255.0;
         double b = (horizon & 0xFF) / 255.0;

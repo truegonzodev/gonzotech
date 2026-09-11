@@ -354,6 +354,53 @@ public final class MachineDefs {
     public static final double COBBLE_CHANCE_LAVA_TO_OBSIDIAN = 0.0016; // 0.16% ведро лавы → ведро обсидиана
     public static final double COBBLE_CHANCE_PICKAXE_BREAK = 0.0009;    // 0.09% кирка ломается (пропадает)
 
+    // ═══════════════════════════ ДРОБИЛКА ═══════════════════════════
+    // Блок руды/камень → raw и host-зависимые побочные материалы. Шкала GTU
+    // задаёт скорость текущей операции при её запуске: пустая — 100 тиков,
+    // полная — 80 тиков. GTU за рабочий тик берётся по текущему запасу.
+
+    /** Максимум GTU в дробилке (mGTU: 16 080 GTU). */
+    public static final int CRUSHER_GTU_CAPACITY = 16_080 * MILLI;
+    /** Максимальный приём GTU за тик (mGTU: 214 GTU/t). */
+    public static final int CRUSHER_GTU_INTAKE = 214 * MILLI;
+
+    /** Базовая длительность дробления при пустой шкале, тиков. */
+    public static final int CRUSHER_BASE_TICKS = 100;
+    /** Длительность дробления при полном GTU-буфере, тиков. */
+    public static final int CRUSHER_FULL_TICKS = 80;
+    /** Fixed-point units for progress: fits ContainerData and makes 100/80 exact. */
+    public static final int CRUSHER_PROGRESS_TOTAL = 20_000;
+    /** Базовый расход дробилки ниже 4 000 GTU, mGTU/t. */
+    public static final int CRUSHER_GTU_MILLI_PER_TICK_MIN = 4_000;
+    /** Расход дробилки при полном буфере, mGTU/t (5.5 GTU/t). */
+    public static final int CRUSHER_GTU_MILLI_PER_TICK_MAX = 5_500;
+    /** Граница запаса, до которой расход остаётся ровно 4 GTU/t, mGTU. */
+    public static final int CRUSHER_GTU_LOW_COST_THRESHOLD = 4_000 * MILLI;
+
+    /**
+     * Скорость текущей операции для исходного наполнения GTU. 200 units/t даёт
+     * 100 тиков, 250 units/t — 80; промежуточные 51 ступень достаточно плавны
+     * для шкалы, не жертвуя точными граничными значениями.
+     */
+    public static int crusherProgressUnitsPerTick(long storedGtuMilli) {
+        long stored = Math.max(0L, Math.min((long) CRUSHER_GTU_CAPACITY, storedGtuMilli));
+        return CRUSHER_PROGRESS_TOTAL / CRUSHER_BASE_TICKS
+            + (int) (stored * (CRUSHER_PROGRESS_TOTAL / CRUSHER_FULL_TICKS
+                - CRUSHER_PROGRESS_TOTAL / CRUSHER_BASE_TICKS) / CRUSHER_GTU_CAPACITY);
+    }
+
+    /**
+     * Текущая цена рабочего тика. До 4 000 GTU — 4.0 GTU/t; затем линейно,
+     * без float, поднимается до ровно 5.5 GTU/t при 16 080 GTU.
+     */
+    public static int crusherGtuMilliPerTick(long storedGtuMilli) {
+        long stored = Math.max(0L, Math.min((long) CRUSHER_GTU_CAPACITY, storedGtuMilli));
+        if (stored <= CRUSHER_GTU_LOW_COST_THRESHOLD) return CRUSHER_GTU_MILLI_PER_TICK_MIN;
+        long span = CRUSHER_GTU_CAPACITY - (long) CRUSHER_GTU_LOW_COST_THRESHOLD;
+        return CRUSHER_GTU_MILLI_PER_TICK_MIN + (int) ((stored - CRUSHER_GTU_LOW_COST_THRESHOLD)
+            * (CRUSHER_GTU_MILLI_PER_TICK_MAX - CRUSHER_GTU_MILLI_PER_TICK_MIN) / span);
+    }
+
     // ═══════════════════════════ ЦЕНТРИФУГА ЦФ1УР ═══════════════════════════
     // Атомная эра: промывка raw-руд и рудных блоков. GTU хранится в milli, а
     // жидкостные буферы — в mB. Цифры операции намеренно даны также суммарно:

@@ -30,6 +30,11 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
     }
 
     @Override
+    protected boolean usesRasterMachineSlotHover() {
+        return true;
+    }
+
+    @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
         int barY = y + 17;
         int barW = 16;

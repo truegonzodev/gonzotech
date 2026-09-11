@@ -98,6 +98,14 @@ public class ModItems {
     public static final DeferredItem<Item> IRON_DUST =
         ITEMS.registerSimpleItem("iron_dust");
 
+    /** Ваниль не имеет медного самородка; он нужен для выходов ЦФ1УР и дробилки. */
+    public static final DeferredItem<Item> COPPER_NUGGET =
+        ITEMS.registerSimpleItem("copper_nugget");
+
+    /** Чистый кремний — редкая побочка алмазной руды в ЦФ1УР. */
+    public static final DeferredItem<Item> SILICON =
+        ITEMS.registerSimpleItem("silicon");
+
     /**
      * Фаза 3 — «прикол»: ведро обсидиана. Бесполезный предмет: ведро лавы в
      * инвентаре при попадании в воду «застывает» в него (см. WaterPhase3Events).
@@ -248,6 +256,9 @@ public class ModItems {
                 NUGGET_ITEMS.put(nuggetId, ITEMS.registerSimpleItem(nuggetId));
             }
         }
+        // Медный самородок намеренно последний: как copper/iron dust после
+        // основной коллекции пылей, он не меняет порядок существующих ресурсов.
+        NUGGET_ITEMS.put("copper_nugget", COPPER_NUGGET);
 
         for (int i = 1; i <= 16; i++) {
             final int num = i;

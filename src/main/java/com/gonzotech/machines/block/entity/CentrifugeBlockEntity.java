@@ -377,6 +377,25 @@ public class CentrifugeBlockEntity extends BaseMachineBlockEntity
         }
     }
 
+    /**
+     * A running wash has already consumed its input, so its server-rolled results
+     * must not disappear if the machine is broken before it can publish them.
+     * Called by the block before its ordinary inventory contents are dropped.
+     */
+    public void dropPendingOutputsForBreak() {
+        if (level == null || level.isClientSide()) return;
+        for (int i = 0; i < pendingOutputs.length; i++) {
+            ItemStack pending = pendingOutputs[i];
+            if (pending.isEmpty()) continue;
+            net.minecraft.world.Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(),
+                worldPosition.getZ(), pending.copy());
+            pendingOutputs[i] = ItemStack.EMPTY;
+        }
+        washProgress = 0;
+        washTotal = 0;
+        setChanged();
+    }
+
     // ─────────────────────────── menu ───────────────────────────
 
     @Override

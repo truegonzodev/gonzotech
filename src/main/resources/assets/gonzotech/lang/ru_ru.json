@@ -290,6 +290,8 @@
   "block.gonzotech.lunar_dirt": "Лунный грунт",
   "item.gonzotech.copper_dust": "Медная пыль",
   "item.gonzotech.iron_dust": "Железная пыль",
+  "item.gonzotech.copper_nugget": "Медный самородок",
+  "item.gonzotech.silicon": "Кремний",
   "item.gonzotech.granite_grit": "Гранитная крошка",
   "item.gonzotech.andesite_grit": "Андезитовая крошка",
   "item.gonzotech.diorite_grit": "Диоритовая крошка",
@@ -491,7 +493,6 @@
   "hud.gonzotech.psyche.chemical": "Химическое заражение",
   "item.gonzotech.dosimeter": "Дозиметр",
   "item.gonzotech.uv_meter": "УФ-радиометр",
-
   "block.gonzotech.lunar_stone": "Лунная порода",
   "block.gonzotech.rich_lunar_stone": "Богатая лунная порода",
   "block.gonzotech.lunar_sand": "Лунный песок",
@@ -501,7 +502,6 @@
   "block.gonzotech.superdense_ice": "Сверхплотный лёд",
   "block.gonzotech.europan_ice": "Европианский лёд",
   "block.gonzotech.meteor": "Метеорит",
-
   "dimension.gonzotech.moon": "Луна",
   "dimension.gonzotech.mars": "Марс",
   "dimension.gonzotech.europa": "Европа",
@@ -509,6 +509,8 @@
   "biome.gonzotech.mars": "Поверхность Марса",
   "biome.gonzotech.europa": "Ледяной панцирь Европы",
   "block.gonzotech.centrifuge": "Центрифуга ЦФ1УР",
+  "block.gonzotech.crusher": "Дробилка руды",
   "gui.gonzotech.hot_water": "Кипяток: %s / %s mB",
-  "gui.gonzotech.centrifuge.washing_progress": "Промывка: %s / %s тиков"
+  "gui.gonzotech.centrifuge.washing_progress": "Промывка: %s / %s тиков",
+  "gui.gonzotech.crusher.crushing_progress": "Дробление: %s%%"
 }

@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "copper_nugget",
+  "ingredients": [ "minecraft:copper_ingot" ],
+  "result": { "id": "gonzotech:copper_nugget", "count": 9 }
+}

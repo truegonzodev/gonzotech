@@ -290,6 +290,8 @@
   "block.gonzotech.lunar_dirt": "Lunar Dirt",
   "item.gonzotech.copper_dust": "Copper Dust",
   "item.gonzotech.iron_dust": "Iron Dust",
+  "item.gonzotech.copper_nugget": "Copper Nugget",
+  "item.gonzotech.silicon": "Silicon",
   "item.gonzotech.granite_grit": "Granite Grit",
   "item.gonzotech.andesite_grit": "Andesite Grit",
   "item.gonzotech.diorite_grit": "Diorite Grit",
@@ -491,7 +493,6 @@
   "hud.gonzotech.psyche.chemical": "Chemical Contamination",
   "item.gonzotech.dosimeter": "Dosimeter",
   "item.gonzotech.uv_meter": "UV Radiometer",
-
   "block.gonzotech.lunar_stone": "Lunar Stone",
   "block.gonzotech.rich_lunar_stone": "Rich Lunar Stone",
   "block.gonzotech.lunar_sand": "Lunar Sand",
@@ -501,7 +502,6 @@
   "block.gonzotech.superdense_ice": "Superdense Ice",
   "block.gonzotech.europan_ice": "Europan Ice",
   "block.gonzotech.meteor": "Meteorite",
-
   "dimension.gonzotech.moon": "The Moon",
   "dimension.gonzotech.mars": "Mars",
   "dimension.gonzotech.europa": "Europa",
@@ -509,6 +509,8 @@
   "biome.gonzotech.mars": "Martian Surface",
   "biome.gonzotech.europa": "Europan Ice Sheet",
   "block.gonzotech.centrifuge": "Centrifuge CF1UR",
+  "block.gonzotech.crusher": "Ore Crusher",
   "gui.gonzotech.hot_water": "Hot water: %s / %s mB",
-  "gui.gonzotech.centrifuge.washing_progress": "Washing: %s / %s ticks"
+  "gui.gonzotech.centrifuge.washing_progress": "Washing: %s / %s ticks",
+  "gui.gonzotech.crusher.crushing_progress": "Crushing: %s%%"
 }

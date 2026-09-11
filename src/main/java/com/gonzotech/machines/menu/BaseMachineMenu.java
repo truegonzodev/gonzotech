@@ -43,7 +43,8 @@ public abstract class BaseMachineMenu extends AbstractContainerMenu {
         }
     }
 
-    protected int machineSlotCount() {
+    /** Number of slots at the head of {@link #slots} that belong to this machine. */
+    public int machineSlotCount() {
         return machineSlots;
     }
 

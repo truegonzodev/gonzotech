@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.AccumulatorBlock;
 import com.gonzotech.machines.block.BoilerBlock;
 import com.gonzotech.machines.block.CentrifugeBlock;
+import com.gonzotech.machines.block.CrusherBlock;
 import com.gonzotech.machines.block.CobbleGeneratorBlock;
 import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
@@ -117,6 +118,10 @@ public final class ModMachines {
     public static final DeferredBlock<CobbleGeneratorBlock> COBBLE_GENERATOR =
         BLOCKS.registerBlock("cobble_generator", CobbleGeneratorBlock::new, machineCopper());
 
+    /** Дробилка: первая стадия извлечения raw-материала из рудного блока. */
+    public static final DeferredBlock<CrusherBlock> CRUSHER =
+        BLOCKS.registerBlock("crusher", CrusherBlock::new, machineMetal());
+
     /** ЦФ1УР — атомная центрифуга для первой стадии промывки руд. */
     public static final DeferredBlock<CentrifugeBlock> CENTRIFUGE =
         BLOCKS.registerBlock("centrifuge", CentrifugeBlock::new, machineMetal());
@@ -223,6 +228,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> COBBLE_GENERATOR_ITEM =
         ITEMS.registerSimpleBlockItem("cobble_generator", COBBLE_GENERATOR);
+
+    public static final DeferredItem<BlockItem> CRUSHER_ITEM =
+        ITEMS.registerSimpleBlockItem("crusher", CRUSHER);
 
     public static final DeferredItem<BlockItem> CENTRIFUGE_ITEM =
         ITEMS.registerSimpleBlockItem("centrifuge", CENTRIFUGE);

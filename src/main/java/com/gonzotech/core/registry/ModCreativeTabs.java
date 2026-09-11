@@ -30,6 +30,7 @@ public class ModCreativeTabs {
                 ModItems.METAL_BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
                 ModItems.DUST_ITEMS.values().forEach(item -> output.accept(item.get()));
                 ModItems.NUGGET_ITEMS.values().forEach(item -> output.accept(item.get()));
+                output.accept(ModItems.SILICON.get());
             })
             .build()
     );
@@ -58,7 +59,6 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ACCUMULATOR_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.COBBLE_GENERATOR_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
 
                 // Логистика — трубы энергосети + гаечный ключ.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get());
@@ -76,6 +76,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get());
+                // Технологическая цепочка обработки руды завершает список машин.
+                output.accept(com.gonzotech.machines.registry.ModMachines.CRUSHER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
             })
             .build()
     );
