@@ -354,6 +354,55 @@ public final class MachineDefs {
     public static final double COBBLE_CHANCE_LAVA_TO_OBSIDIAN = 0.0016; // 0.16% ведро лавы → ведро обсидиана
     public static final double COBBLE_CHANCE_PICKAXE_BREAK = 0.0009;    // 0.09% кирка ломается (пропадает)
 
+    // ═══════════════════════════ ЦЕНТРИФУГА ЦФ1УР ═══════════════════════════
+    // Атомная эра: промывка raw-руд и рудных блоков. GTU хранится в milli, а
+    // жидкостные буферы — в mB. Цифры операции намеренно даны также суммарно:
+    // за 240 тиков списывается РОВНО 366 GTU и 1000 mB кипятка.
+
+    /** Максимум GTU в центрифуге (mGTU: 24 060 GTU). */
+    public static final int CENTRIFUGE_GTU_CAPACITY = 24_060 * MILLI;
+    /** Максимальный приём GTU за тик (mGTU: 192 GTU/t). */
+    public static final int CENTRIFUGE_GTU_INTAKE = 192 * MILLI;
+    /** Паразитная разрядка накопленного GTU (mGTU: 0.01 GTU/t). */
+    public static final int CENTRIFUGE_GTU_LOSS_PER_TICK = 10;
+
+    /** Максимум видимого буфера кипятка, mB. */
+    public static final int CENTRIFUGE_HOT_WATER_CAPACITY = 12_000;
+    /** Ёмкость скрытого буфера обычной воды, mB. */
+    public static final int CENTRIFUGE_WATER_CAPACITY = 12_000;
+    /** Максимальный приём обычной воды за тик, mB. */
+    public static final int CENTRIFUGE_WATER_INTAKE = 1_000;
+    /** Максимальный приём пара за тик; пар сразу становится кипятком 1:1, mB. */
+    public static final int CENTRIFUGE_STEAM_INTAKE = 1_000;
+
+    /** Обычная вода, превращаемая в кипяток за один рабочий тик, mB. */
+    public static final int CENTRIFUGE_WATER_TO_HOT_WATER_PER_TICK = 16;
+    /** Цена превращения 16 mB воды в 16 mB кипятка (mGTU: 1.6 GTU/t). */
+    public static final int CENTRIFUGE_WATER_HEAT_GTU_MILLI_PER_TICK = 1_600;
+    /** Паразитное охлаждение: кипяток → обычная вода, mB/t. */
+    public static final int CENTRIFUGE_HOT_WATER_COOLING_PER_TICK = 1;
+
+    /** Длительность одной промывки (12 секунд), тиков. */
+    public static final int CENTRIFUGE_WASH_TICKS = 240;
+    /** Полный расход кипятка на одну промывку, mB. */
+    public static final int CENTRIFUGE_HOT_WATER_PER_WASH = 1_000;
+    /** Полный расход GTU на одну промывку, mGTU (366 GTU). */
+    public static final int CENTRIFUGE_GTU_MILLI_PER_WASH = 366 * MILLI;
+    /** Точный расход GTU при каждом тике промывки (mGTU: 1.525 GTU/t). */
+    public static final int CENTRIFUGE_WASH_GTU_MILLI_PER_TICK =
+        CENTRIFUGE_GTU_MILLI_PER_WASH / CENTRIFUGE_WASH_TICKS;
+
+    /**
+     * Кипяток, который должен быть списан именно на тик с номером
+     * {@code progress} (0..239). Формула распределяет 1000 mB без округления
+     * «в никуда»: за всю операцию получится в точности 1000 mB (4 или 5 mB/t).
+     */
+    public static int centrifugeHotWaterCostForProgressTick(int progress) {
+        int p = Math.max(0, Math.min(CENTRIFUGE_WASH_TICKS - 1, progress));
+        return ((p + 1) * CENTRIFUGE_HOT_WATER_PER_WASH / CENTRIFUGE_WASH_TICKS)
+            - (p * CENTRIFUGE_HOT_WATER_PER_WASH / CENTRIFUGE_WASH_TICKS);
+    }
+
     // ═══════════════════════════ ВОДА (провайдеры-вёдра) ═══════════════════════════
 
     /** Обычное ведро воды → mB. */

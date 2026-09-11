@@ -58,6 +58,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ACCUMULATOR_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.COBBLE_GENERATOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
 
                 // Логистика — трубы энергосети + гаечный ключ.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get());

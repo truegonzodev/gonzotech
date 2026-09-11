@@ -3,6 +3,7 @@ package com.gonzotech.machines.registry;
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.entity.AccumulatorBlockEntity;
 import com.gonzotech.machines.block.entity.BoilerBlockEntity;
+import com.gonzotech.machines.block.entity.CentrifugeBlockEntity;
 import com.gonzotech.machines.block.entity.CobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.CondenserBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
@@ -55,6 +56,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<CobbleGeneratorBlockEntity>> COBBLE_GENERATOR =
         BLOCK_ENTITIES.register("cobble_generator", () -> new BlockEntityType<>(
             CobbleGeneratorBlockEntity::new, false, ModMachines.COBBLE_GENERATOR.get()));
+
+    public static final Supplier<BlockEntityType<CentrifugeBlockEntity>> CENTRIFUGE =
+        BLOCK_ENTITIES.register("centrifuge", () -> new BlockEntityType<>(
+            CentrifugeBlockEntity::new, false, ModMachines.CENTRIFUGE.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> ITEM_FILTER =
         BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(

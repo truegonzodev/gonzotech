@@ -3,6 +3,7 @@ package com.gonzotech.machines.registry;
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.menu.AccumulatorMenu;
 import com.gonzotech.machines.menu.BoilerMenu;
+import com.gonzotech.machines.menu.CentrifugeMenu;
 import com.gonzotech.machines.menu.CobbleGeneratorMenu;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.menu.FireboxMenu;
@@ -45,6 +46,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<CobbleGeneratorMenu>> COBBLE_GENERATOR =
         MENUS.register("cobble_generator", () -> IMenuTypeExtension.create(CobbleGeneratorMenu::new));
+
+    public static final Supplier<MenuType<CentrifugeMenu>> CENTRIFUGE =
+        MENUS.register("centrifuge", () -> IMenuTypeExtension.create(CentrifugeMenu::new));
 
     public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> ITEM_FILTER =
         MENUS.register("item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));

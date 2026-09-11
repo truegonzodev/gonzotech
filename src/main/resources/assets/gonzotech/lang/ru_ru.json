@@ -507,5 +507,8 @@
   "dimension.gonzotech.europa": "Европа",
   "biome.gonzotech.moon": "Поверхность Луны",
   "biome.gonzotech.mars": "Поверхность Марса",
-  "biome.gonzotech.europa": "Ледяной панцирь Европы"
+  "biome.gonzotech.europa": "Ледяной панцирь Европы",
+  "block.gonzotech.centrifuge": "Центрифуга ЦФ1УР",
+  "gui.gonzotech.hot_water": "Кипяток: %s / %s mB",
+  "gui.gonzotech.centrifuge.washing_progress": "Промывка: %s / %s тиков"
 }

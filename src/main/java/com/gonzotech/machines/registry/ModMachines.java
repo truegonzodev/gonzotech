@@ -3,6 +3,7 @@ package com.gonzotech.machines.registry;
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.AccumulatorBlock;
 import com.gonzotech.machines.block.BoilerBlock;
+import com.gonzotech.machines.block.CentrifugeBlock;
 import com.gonzotech.machines.block.CobbleGeneratorBlock;
 import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
@@ -116,6 +117,10 @@ public final class ModMachines {
     public static final DeferredBlock<CobbleGeneratorBlock> COBBLE_GENERATOR =
         BLOCKS.registerBlock("cobble_generator", CobbleGeneratorBlock::new, machineCopper());
 
+    /** ЦФ1УР — атомная центрифуга для первой стадии промывки руд. */
+    public static final DeferredBlock<CentrifugeBlock> CENTRIFUGE =
+        BLOCKS.registerBlock("centrifuge", CentrifugeBlock::new, machineMetal());
+
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
     // пассивны: слив дотягивает PipeRouting (труба не тикает). noOcclusion, модель не
@@ -218,6 +223,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> COBBLE_GENERATOR_ITEM =
         ITEMS.registerSimpleBlockItem("cobble_generator", COBBLE_GENERATOR);
+
+    public static final DeferredItem<BlockItem> CENTRIFUGE_ITEM =
+        ITEMS.registerSimpleBlockItem("centrifuge", CENTRIFUGE);
 
     public static final DeferredItem<BlockItem> WIRE_ITEM =
         ITEMS.registerSimpleBlockItem("first_wire", WIRE);

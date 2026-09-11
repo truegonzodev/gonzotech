@@ -507,5 +507,8 @@
   "dimension.gonzotech.europa": "Europa",
   "biome.gonzotech.moon": "Lunar Surface",
   "biome.gonzotech.mars": "Martian Surface",
-  "biome.gonzotech.europa": "Europan Ice Sheet"
+  "biome.gonzotech.europa": "Europan Ice Sheet",
+  "block.gonzotech.centrifuge": "Centrifuge CF1UR",
+  "gui.gonzotech.hot_water": "Hot water: %s / %s mB",
+  "gui.gonzotech.centrifuge.washing_progress": "Washing: %s / %s ticks"
 }
