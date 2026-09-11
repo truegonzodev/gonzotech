@@ -12,9 +12,12 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -148,6 +151,11 @@ public final class ItemFilterRouting {
                         perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
                         ItemFlowTracker.record(level, pos, one.getItem(), 1);
+                        // Пишем каждый реально выбранный сегмент, чтобы
+                        // Universal Node в транзитной ветке видел поток Items.
+                        for (BlockPos pipe : s.path()) {
+                            ItemFlowTracker.record(level, pipe, one.getItem(), 1);
+                        }
                         break;
                     }
                 }
@@ -197,8 +205,8 @@ public final class ItemFilterRouting {
 
     // ─────────────────────────── обход сети (BFS) ───────────────────────────
 
-    /** Приёмник: контейнер + сторона, которой к нему прилегает труба. */
-    private record ItemRouting_Sink(Container container, Direction face) {
+    /** Приёмник и точный маршрут item-труб до него. */
+    private record ItemRouting_Sink(Container container, Direction face, List<BlockPos> path) {
     }
 
     /** Источник: позиция контейнера + его грань, обращённая к Фильтру. */
@@ -214,6 +222,7 @@ public final class ItemFilterRouting {
     private static void collectSinksFromCarrier(Level level, BlockPos root,
                                                 List<BlockPos> exclude, List<ItemRouting_Sink> out) {
         Set<BlockPos> visited = new HashSet<>();
+        Map<Long, BlockPos> parents = new HashMap<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
         // Стартуем с прилегающих к корню труб.
         BlockState rootState = level.getBlockState(root);
@@ -227,13 +236,17 @@ public final class ItemFilterRouting {
                 // Труба должна быть открыта навстречу корню; корень-носитель — во все стороны.
                 if (!opensToward(nstate, dir.getOpposite())) continue;
                 if (rootIsCarrier && !opensToward(rootState, dir)) continue;
-                if (visited.add(npos)) queue.add(npos);
+                if (visited.add(npos)) {
+                    // Корень — фильтр/отсеиватель, а не сегмент трубы на пути.
+                    parents.put(npos.asLong(), null);
+                    queue.add(npos);
+                }
             } else if (rootIsCarrier) {
                 // Корень (напр. если бы был носителем) может отдавать прямо в контейнер.
                 if (exclude.contains(npos)) continue;
                 if (!opensToward(rootState, dir)) continue;
                 Container cc = HopperBlockEntity.getContainerAt(level, npos);
-                if (cc != null) out.add(new ItemRouting_Sink(cc, dir.getOpposite()));
+                if (cc != null) out.add(new ItemRouting_Sink(cc, dir.getOpposite(), List.of()));
             }
         }
 
@@ -249,7 +262,10 @@ public final class ItemFilterRouting {
 
                 if (isItemPipe(nstate)) {
                     if (!pipesConnect(pstate, nstate, dir)) continue;
-                    if (visited.add(npos)) queue.add(npos);
+                    if (visited.add(npos)) {
+                        parents.put(npos.asLong(), pipe);
+                        queue.add(npos);
+                    }
                     continue;
                 }
                 if (exclude.contains(npos)) continue;
@@ -257,9 +273,19 @@ public final class ItemFilterRouting {
                 if (!opensToward(pstate, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 Container c = HopperBlockEntity.getContainerAt(level, npos);
-                if (c != null) out.add(new ItemRouting_Sink(c, dir.getOpposite()));
+                if (c != null) out.add(new ItemRouting_Sink(c, dir.getOpposite(), pathTo(pipe, parents)));
             }
         }
+    }
+
+    /** Восстанавливает выбранный BFS-маршрут от первой трубы после корня. */
+    private static List<BlockPos> pathTo(BlockPos end, Map<Long, BlockPos> parents) {
+        List<BlockPos> path = new ArrayList<>();
+        for (BlockPos at = end; at != null; at = parents.get(at.asLong())) {
+            path.add(at);
+        }
+        Collections.reverse(path);
+        return path;
     }
 
     // ─────────────────────────── мелкие помощники ───────────────────────────

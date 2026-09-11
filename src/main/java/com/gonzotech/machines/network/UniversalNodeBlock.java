@@ -76,6 +76,17 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
         builder.add(AXIS, MODE, WATERLOGGED);
     }
 
+    @Override
+    protected boolean hasAnalogOutputSignal(BlockState state) {
+        return true;
+    }
+
+    /** 0..5 — число реально активных потоков Wire, Heat, Water, Steam и Items. */
+    @Override
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return UniversalNodeComparator.signal(level, pos);
+    }
+
     // ─────────────────────────── PipeCarrier ───────────────────────────
 
     /** Несёт все типы первого тира: провод, теплотрубу, жидкости (вода+пар), предметы. */
@@ -149,13 +160,19 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())) TurbineStructure.portRemoved(level, pos);
+        if (!state.is(newState.getBlock())) {
+            TurbineStructure.portRemoved(level, pos);
+            UniversalNodeComparator.forget(level, pos);
+        }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         ItemRouting.tickExtract(level, pos, state);
+        // Тик уже нужен предметной части узла каждый такт; заодно дёшево проверяем
+        // переходы 0..5. Neighbour update вызывается только на фактическом переходе.
+        UniversalNodeComparator.update(level, pos);
         level.scheduleTick(pos, this, ItemPipeBlock.TICK_INTERVAL);
     }
 

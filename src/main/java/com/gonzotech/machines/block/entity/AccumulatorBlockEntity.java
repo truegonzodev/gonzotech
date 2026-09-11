@@ -1,5 +1,6 @@
 package com.gonzotech.machines.block.entity;
 
+import com.gonzotech.machines.energy.ComparatorOutput;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
@@ -41,6 +42,9 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
     private final GtBuffer gtu = new GtBuffer((long) MachineDefs.ACCUMULATOR_GTU_CAPACITY);
 
+    /** Последнее опубликованное значение компаратора; не сохраняется, т.к. вычисляется из буфера. */
+    private int lastComparatorOutput;
+
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int i) {
@@ -73,6 +77,27 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
         return gtu;
     }
 
+    /** Аналоговый выход по заполненности внутреннего GTU-буфера. */
+    public int comparatorOutput() {
+        return ComparatorOutput.from(gtu);
+    }
+
+    /** Уведомляет компараторы только при пересечении очередной ступени 0..15. */
+    private void updateComparatorOutput() {
+        int next = comparatorOutput();
+        if (next == lastComparatorOutput) return;
+        lastComparatorOutput = next;
+        if (level != null && !level.isClientSide()) {
+            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        updateComparatorOutput();
+    }
+
     public ContainerData data() {
         return data;
     }
@@ -81,7 +106,12 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
     @Override
     public long receiveGtu(long amount, boolean simulate) {
-        return gtu.receive(Math.min(amount, (long) MachineDefs.ACCUMULATOR_GTU_INTAKE), simulate);
+        long accepted = gtu.receive(Math.min(amount, (long) MachineDefs.ACCUMULATOR_GTU_INTAKE), simulate);
+        if (!simulate && accepted > 0) {
+            setChanged();
+            updateComparatorOutput();
+        }
+        return accepted;
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────
@@ -104,6 +134,7 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
         if (changed) {
             be.setChanged();
+            be.updateComparatorOutput();
         }
     }
 

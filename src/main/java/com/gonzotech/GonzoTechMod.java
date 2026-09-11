@@ -54,6 +54,7 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
             com.gonzotech.machines.network.FlowTracker.clearAll();
             com.gonzotech.machines.network.ItemFlowTracker.clearAll();
+            com.gonzotech.machines.network.UniversalNodeComparator.clearAll();
             com.gonzotech.machines.network.FluidBudgetLedger.clearAll();
             com.gonzotech.machines.turbine.TurbineStructure.clearAll();
         });
