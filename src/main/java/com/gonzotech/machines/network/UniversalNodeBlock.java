@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.turbine.TurbineStructure;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -140,9 +141,16 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!state.is(oldState.getBlock())) TurbineStructure.portPlaced(level, pos);
         if (!level.isClientSide()) {
             level.scheduleTick(pos, this, ItemPipeBlock.TICK_INTERVAL);
         }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) TurbineStructure.portRemoved(level, pos);
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override
@@ -151,11 +159,23 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
         level.scheduleTick(pos, this, ItemPipeBlock.TICK_INTERVAL);
     }
 
-    // ─────────────────────────── гаечный ключ ───────────────────────────
+    // ─────────────────────────── ПКМ / гаечный ключ ───────────────────────────
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                               Player player, BlockHitResult hit) {
+        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.PASS;
+    }
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+            return InteractionResult.SUCCESS;
+        }
         if (stack.getItem() instanceof WrenchItem) {
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE).next();

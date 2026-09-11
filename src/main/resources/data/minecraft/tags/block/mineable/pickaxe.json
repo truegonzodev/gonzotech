@@ -135,6 +135,8 @@
     "gonzotech:first_item_pipe",
     "gonzotech:first_water_node",
     "gonzotech:first_steam_node",
-    "gonzotech:first_item_node"
+    "gonzotech:first_item_node",
+    "gonzotech:turbine_casing",
+    "gonzotech:turbine_rotor"
   ]
 }

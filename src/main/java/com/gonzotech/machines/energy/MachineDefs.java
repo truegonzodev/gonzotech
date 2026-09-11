@@ -223,6 +223,34 @@ public final class MachineDefs {
     /** Макс. отдача GTU соседям за тик (mGTU: 40 GTU/t). */
     public static final int STIRLING_GTU_OUTPUT = 40 * MILLI;
 
+    // ═══════════════════════════ ПАРОВАЯ ТУРБИНА (многоблок) ═══════════════════════════
+    // Полный прямоугольный параллелепипед: внутренняя полость заполнена роторами.
+    // Характеристики равны BASE × M(N), где M=N·(1-(N/100)^1.778).
+
+    /** Внешняя грань турбины не может быть меньше трёх блоков по любой оси. */
+    public static final int TURBINE_MIN_DIMENSION = 3;
+    /** N=100 даёт нулевой множитель, дальше он отрицателен: N>=100 не формирует турбину. */
+    public static final int TURBINE_MAX_ROTORS_EXCLUSIVE = 100;
+    /** Показатель деградации эффективности при чрезмерном количестве роторов. */
+    public static final double TURBINE_ROTOR_CURVE_EXPONENT = 1.778D;
+
+    /** Базовый буфер GTU на один эффективный ротор, целых GTU. */
+    public static final int TURBINE_GTU_CAPACITY_PER_EFFECTIVE_ROTOR = 64;
+    /** Базовый буфер Steam на один эффективный ротор, mB. */
+    public static final int TURBINE_STEAM_CAPACITY_PER_EFFECTIVE_ROTOR = 1_000;
+    /** Базовый общий приём Steam на один эффективный ротор, mB/t. */
+    public static final int TURBINE_STEAM_INTAKE_PER_EFFECTIVE_ROTOR = 100;
+    /** Базовый максимальный расход Steam на один эффективный ротор, mB/t. */
+    public static final int TURBINE_STEAM_CONSUMPTION_PER_EFFECTIVE_ROTOR = 64;
+
+    /** Эталон конверсии: 56 mB Steam превращаются в 1.5 GTU. */
+    public static final int TURBINE_REFERENCE_STEAM_MB = 56;
+    /** 1.5 GTU, выраженные во внутренней milli-точности. */
+    public static final int TURBINE_GTU_PER_REFERENCE_STEAM_MILLI = 1_500;
+
+    /** Предохранитель: одна турбина запускает максимум столько маршрутов выдачи GTU за тик. */
+    public static final int TURBINE_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
+
     // ═══════════════════════════ ЭЛЕКТРОПЕЧЬ (Electric Furnace) ═══════════════════════════
     // GTU → переплавка (160% ванили). Работает при примыкающем стирлинге.
 

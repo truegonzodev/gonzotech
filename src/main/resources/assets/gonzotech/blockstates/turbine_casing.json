@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "formed=false": { "model": "gonzotech:block/turbine_casing" },
+    "formed=true":  { "model": "gonzotech:block/turbine_casing_formed" }
+  }
+}

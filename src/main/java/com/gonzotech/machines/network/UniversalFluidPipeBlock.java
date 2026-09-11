@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.turbine.TurbineStructure;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -65,6 +66,9 @@ public class UniversalFluidPipeBlock extends PipeBlock {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+            return InteractionResult.SUCCESS;
+        }
         if (stack.getItem() instanceof WrenchItem) {
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE).next();

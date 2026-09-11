@@ -514,5 +514,11 @@
   "block.gonzotech.crusher": "Дробилка руды",
   "gui.gonzotech.hot_water": "Кипяток: %s / %s mB",
   "gui.gonzotech.centrifuge.washing_progress": "Промывка: %s%%",
-  "gui.gonzotech.crusher.crushing_progress": "Дробление: %s%%"
+  "gui.gonzotech.crusher.crushing_progress": "Дробление: %s%%",
+  "block.gonzotech.turbine_casing": "Корпус турбины",
+  "block.gonzotech.turbine_rotor": "Ротор турбины",
+  "gui.gonzotech.turbine.steam": "Пар турбины: %s / %s mB",
+  "gui.gonzotech.turbine.rotors": "Роторов: %s",
+  "gui.gonzotech.turbine.steam_rate": "Расход пара: %s mB/т",
+  "gui.gonzotech.turbine.gtu_rate": "Номинальная мощность: %s GTU/т"
 }

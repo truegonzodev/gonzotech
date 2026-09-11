@@ -13,6 +13,8 @@ import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.SingularEnergySourceBlock;
 import com.gonzotech.machines.block.SingularHeatSourceBlock;
 import com.gonzotech.machines.block.StirlingBlock;
+import com.gonzotech.machines.block.TurbineCasingBlock;
+import com.gonzotech.machines.block.TurbineRotorBlock;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.ItemFilterBlock;
@@ -136,6 +138,14 @@ public final class ModMachines {
     public static final DeferredBlock<SingularEnergySourceBlock> SINGULAR_ENERGY_SOURCE =
         BLOCKS.registerBlock("singular_energy_source", SingularEnergySourceBlock::new, lightMetal());
 
+    /** Бесшовный после формирования внешний корпус прямоугольной паровой турбины. */
+    public static final DeferredBlock<TurbineCasingBlock> TURBINE_CASING =
+        BLOCKS.registerBlock("turbine_casing", TurbineCasingBlock::new, machineMetal());
+
+    /** Единственно допустимое содержимое внутреннего объёма турбины. */
+    public static final DeferredBlock<TurbineRotorBlock> TURBINE_ROTOR =
+        BLOCKS.registerBlock("turbine_rotor", TurbineRotorBlock::new, machineMetal());
+
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
     // пассивны: слив дотягивает PipeRouting (труба не тикает). noOcclusion, модель не
@@ -252,6 +262,12 @@ public final class ModMachines {
     /** Админский источник: выдаётся только вкладкой «Приколы»/командой. */
     public static final DeferredItem<BlockItem> SINGULAR_ENERGY_SOURCE_ITEM =
         ITEMS.registerSimpleBlockItem("singular_energy_source", SINGULAR_ENERGY_SOURCE);
+
+    public static final DeferredItem<BlockItem> TURBINE_CASING_ITEM =
+        ITEMS.registerSimpleBlockItem("turbine_casing", TURBINE_CASING);
+
+    public static final DeferredItem<BlockItem> TURBINE_ROTOR_ITEM =
+        ITEMS.registerSimpleBlockItem("turbine_rotor", TURBINE_ROTOR);
 
     public static final DeferredItem<BlockItem> WIRE_ITEM =
         ITEMS.registerSimpleBlockItem("first_wire", WIRE);

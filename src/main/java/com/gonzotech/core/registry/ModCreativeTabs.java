@@ -54,6 +54,8 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get());

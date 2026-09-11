@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.turbine.TurbineStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -140,6 +141,54 @@ public final class PipeRouting {
     }
 
     /**
+     * Слив из специального встроенного порта многоблока, который сам является
+     * PipeCarrier. В отличие от {@link #drain} стартовая нода уже лежит в сети,
+     * поэтому обход начинается с неё, а не с соседней трубы. Остальные порты той
+     * же турбины исключаются, чтобы GTU не «заходил обратно» в корпус.
+     *
+     * <p>Лимит конкретной port-ноды рассчитывает контроллер до вызова. Метод не
+     * вводит общий сетевой ledger и сохраняет семантику обычного PipeRouting.</p>
+     */
+    public static long drainFromTurbinePort(Level level, BlockPos port, PipeType type, long budget, long rotation,
+                                            BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
+        if (budget <= 0 || !isPipe(level.getBlockState(port), type)) return 0;
+
+        TreeMap<Long, Transfer.Receiver> receivers = new TreeMap<>();
+        Map<Long, BlockPos> parent = new HashMap<>();
+        Deque<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        parent.put(port.asLong(), null);
+        queue.add(port);
+        visited.add(port);
+
+        while (!queue.isEmpty()) {
+            BlockPos pipe = queue.poll();
+            BlockState pstate = level.getBlockState(pipe);
+            PipeMode mode = modeOf(pstate, type);
+            for (Direction dir : Direction.values()) {
+                BlockPos next = pipe.relative(dir);
+                // Через другую встроенную ноду не идём: порт — это граница
+                // машины, не внутренняя связка из проводов.
+                if (!next.equals(port) && TurbineStructure.isMember(level, next)) continue;
+                BlockState nextState = level.getBlockState(next);
+                if (isPipe(nextState, type)) {
+                    if (!pipesConnect(pstate, nextState, type, dir)) continue;
+                    if (visited.add(next)) {
+                        parent.put(next.asLong(), pipe);
+                        queue.add(next);
+                    }
+                    continue;
+                }
+                if (!machineConnects(pstate, type, dir) || !mode.deliversToMachine()) continue;
+                List<PathStep> path = buildPath(level, pipe, next, parent);
+                addReceiver(level, next, port, receivers, receiverOf, type, path);
+            }
+        }
+        if (receivers.isEmpty()) return 0;
+        return Transfer.distributeAmong(new ArrayList<>(receivers.values()), budget, rotation);
+    }
+
+    /**
      * Лимит слива за тик, если рядом есть труба типа {@code type}, принимающая слив
      * из машины (грань открыта к машине, режим AUTO/PULL — совпадает с условием
      * старта BFS в {@link #collectThroughPipes}). Возвращает {@code -1}, если такой
@@ -250,6 +299,13 @@ public final class PipeRouting {
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
             BlockState pstate = level.getBlockState(pipe);
+            // Steam-порт турбины — это сама нода, а не BlockEntity за нодой.
+            // Регистрируем его как виртуальный приёмник, но продолжаем BFS: та
+            // же нода остаётся нормальной частью паровой сети.
+            if (type == PipeType.STEAM) {
+                addTurbineSteamReceiver(level, pipe, fromPos, receivers,
+                    buildPath(level, pipe, pipe, parent));
+            }
             PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
@@ -305,6 +361,16 @@ public final class PipeRouting {
         Transfer.Receiver r = receiverOf.apply(be, pos);
         if (r == null) return;
         receivers.put(key, path == null ? r : recording(level, r, type, path));
+    }
+
+    /** Добавляет виртуальный SteamSink встроенного turbine port-а в обход без BE у ноды. */
+    private static void addTurbineSteamReceiver(Level level, BlockPos pos, BlockPos fromPos,
+                                                TreeMap<Long, Transfer.Receiver> receivers,
+                                                List<PathStep> path) {
+        if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
+        Transfer.Receiver receiver = TurbineStructure.steamReceiverAt(level, pos);
+        if (receiver == null) return;
+        receivers.put(pos.asLong(), recording(level, receiver, PipeType.STEAM, path));
     }
 
     /**

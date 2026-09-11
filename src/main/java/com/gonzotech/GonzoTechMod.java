@@ -55,6 +55,7 @@ public class GonzoTechMod {
             com.gonzotech.machines.network.FlowTracker.clearAll();
             com.gonzotech.machines.network.ItemFlowTracker.clearAll();
             com.gonzotech.machines.network.FluidBudgetLedger.clearAll();
+            com.gonzotech.machines.turbine.TurbineStructure.clearAll();
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);

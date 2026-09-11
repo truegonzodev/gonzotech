@@ -13,6 +13,7 @@ import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
 import com.gonzotech.machines.block.entity.SingularHeatSourceBlockEntity;
 import com.gonzotech.machines.block.entity.StirlingBlockEntity;
+import com.gonzotech.machines.block.entity.TurbineRotorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -75,6 +76,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<SingularEnergySourceBlockEntity>> SINGULAR_ENERGY_SOURCE =
         BLOCK_ENTITIES.register("singular_energy_source", () -> new BlockEntityType<>(
             SingularEnergySourceBlockEntity::new, false, ModMachines.SINGULAR_ENERGY_SOURCE.get()));
+
+    public static final Supplier<BlockEntityType<TurbineRotorBlockEntity>> TURBINE_ROTOR =
+        BLOCK_ENTITIES.register("turbine_rotor", () -> new BlockEntityType<>(
+            TurbineRotorBlockEntity::new, false, ModMachines.TURBINE_ROTOR.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> ITEM_FILTER =
         BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(

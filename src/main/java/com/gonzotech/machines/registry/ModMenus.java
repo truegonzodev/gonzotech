@@ -10,6 +10,7 @@ import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.menu.PumpMenu;
 import com.gonzotech.machines.menu.StirlingMenu;
+import com.gonzotech.machines.menu.TurbineMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
@@ -35,6 +36,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<StirlingMenu>> STIRLING =
         MENUS.register("stirling", () -> IMenuTypeExtension.create(StirlingMenu::new));
+
+    public static final Supplier<MenuType<TurbineMenu>> TURBINE =
+        MENUS.register("turbine", () -> IMenuTypeExtension.create(TurbineMenu::new));
 
     public static final Supplier<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE =
         MENUS.register("electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));

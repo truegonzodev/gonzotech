@@ -16,6 +16,7 @@ public final class MachineClient {
         event.register(ModMenus.FIREBOX.get(), FireboxScreen::new);
         event.register(ModMenus.BOILER.get(), BoilerScreen::new);
         event.register(ModMenus.STIRLING.get(), StirlingScreen::new);
+        event.register(ModMenus.TURBINE.get(), TurbineScreen::new);
         event.register(ModMenus.ELECTRIC_FURNACE.get(), ElectricFurnaceScreen::new);
         event.register(ModMenus.PUMP.get(), PumpScreen::new);
         event.register(ModMenus.ACCUMULATOR.get(), AccumulatorScreen::new);

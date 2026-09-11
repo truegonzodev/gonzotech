@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "controller=false,formed=false": { "model": "gonzotech:block/turbine_rotor" },
+    "controller=false,formed=true":  { "model": "gonzotech:block/turbine_rotor" },
+    "controller=true,formed=false":  { "model": "gonzotech:block/turbine_rotor" },
+    "controller=true,formed=true":   { "model": "gonzotech:block/turbine_rotor" }
+  }
+}
