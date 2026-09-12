@@ -217,7 +217,10 @@ public final class TurbineSmartCtmBakedModel implements IDynamicBakedModel {
         Uv uv = mapping.map(localU, localV);
         builder.addVertex(position.x, position.y, position.z)
             .setColor(1.0F, 1.0F, 1.0F, 1.0F)
-            .setUv(sprite.getU(uv.u), sprite.getV(uv.v))
+            // TextureAtlasSprite coordinates are normalized 0..1. UvMap stays
+            // in logical texture pixels (0..16), so every crop must be scaled
+            // before looking up the sprite's atlas location.
+            .setUv(sprite.getU(uv.u / 16.0F), sprite.getV(uv.v / 16.0F))
             .setLight(0)
             .setNormal(face.getStepX(), face.getStepY(), face.getStepZ());
     }
