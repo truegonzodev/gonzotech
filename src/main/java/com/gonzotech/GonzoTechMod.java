@@ -10,6 +10,7 @@ import com.gonzotech.core.registry.ModCreativeTabs;
 import com.gonzotech.core.registry.ModDataComponents;
 import com.gonzotech.core.registry.ModFeatures;
 import com.gonzotech.core.registry.ModItems;
+import com.gonzotech.core.registry.ModRecipeSerializers;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import com.gonzotech.machines.registry.ModMachines;
 import com.gonzotech.machines.registry.ModMenus;
@@ -42,6 +43,7 @@ public class GonzoTechMod {
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
         ModDataComponents.register(modEventBus);
+        ModRecipeSerializers.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);

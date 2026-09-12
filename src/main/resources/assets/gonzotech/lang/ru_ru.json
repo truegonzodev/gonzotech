@@ -562,5 +562,9 @@
   "block.gonzotech.second_item_scavenger": "Отсеиватель II",
   "block.gonzotech.second_pump": "Помпа II",
   "block.gonzotech.second_cobble_generator": "Генератор булыжника II",
-  "block.gonzotech.second_composite_pipe": "Связка труб II"
+  "block.gonzotech.second_composite_pipe": "Связка труб II",
+  "itemGroup.gonzotech.equipment": "Снаряжение Gonzo Tech",
+  "item.gonzotech.alloy_pickaxe": "Кирка из сплава",
+  "item.gonzotech.alloy_sword": "Меч из сплава",
+  "item.gonzotech.alloy_chestplate": "Нагрудник из сплава"
 }

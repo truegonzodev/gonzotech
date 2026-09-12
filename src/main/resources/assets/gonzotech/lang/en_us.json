@@ -562,5 +562,9 @@
   "block.gonzotech.second_item_scavenger": "Item Scavenger II",
   "block.gonzotech.second_pump": "Pump II",
   "block.gonzotech.second_cobble_generator": "Cobblestone Generator II",
-  "block.gonzotech.second_composite_pipe": "Pipe Bundle II"
+  "block.gonzotech.second_composite_pipe": "Pipe Bundle II",
+  "itemGroup.gonzotech.equipment": "Gonzo Tech Equipment",
+  "item.gonzotech.alloy_pickaxe": "Alloy Pickaxe",
+  "item.gonzotech.alloy_sword": "Alloy Sword",
+  "item.gonzotech.alloy_chestplate": "Alloy Chestplate"
 }

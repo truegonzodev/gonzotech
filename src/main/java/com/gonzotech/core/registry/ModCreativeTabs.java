@@ -113,6 +113,20 @@ public class ModCreativeTabs {
 
     // ─────────────────────────── Фаза 3: новые вкладки ───────────────────────────
 
+    /** «Снаряжение Gonzo Tech» — будущая линейка вооружения и брони из сплавов. */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EQUIPMENT_TAB = CREATIVE_TABS.register(
+        "equipment",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.gonzotech.equipment"))
+            .icon(() -> new ItemStack(ModItems.ALLOY_PICKAXE.get()))
+            .displayItems((params, output) -> {
+                output.accept(ModItems.ALLOY_PICKAXE.get());
+                output.accept(ModItems.ALLOY_SWORD.get());
+                output.accept(ModItems.ALLOY_CHESTPLATE.get());
+            })
+            .build()
+    );
+
     /** «Блоки Gonzo Tech» — размещаемые декоративные/тестовые блоки. */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> BLOCKS_TAB = CREATIVE_TABS.register(
         "blocks",

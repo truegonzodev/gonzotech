@@ -2,6 +2,9 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.item.DiscoveryItem;
+import com.gonzotech.core.item.AlloyChestplateItem;
+import com.gonzotech.core.item.AlloyPickaxeItem;
+import com.gonzotech.core.item.AlloySwordItem;
 import com.gonzotech.core.item.CustomAlloyItem;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
@@ -70,6 +73,14 @@ public class ModItems {
      */
     public static final DeferredItem<CustomAlloyItem> CUSTOM_ALLOY =
         ITEMS.registerItem("custom_alloy", CustomAlloyItem::new);
+
+    /** Dynamic equipment stamped from one exact {@link CustomAlloyItem} composition. */
+    public static final DeferredItem<AlloyPickaxeItem> ALLOY_PICKAXE =
+        ITEMS.registerItem("alloy_pickaxe", AlloyPickaxeItem::new);
+    public static final DeferredItem<AlloySwordItem> ALLOY_SWORD =
+        ITEMS.registerItem("alloy_sword", AlloySwordItem::new);
+    public static final DeferredItem<AlloyChestplateItem> ALLOY_CHESTPLATE =
+        ITEMS.registerItem("alloy_chestplate", AlloyChestplateItem::new);
 
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =
