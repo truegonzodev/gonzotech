@@ -1,6 +1,825 @@
 {
-  "variants": {
-    "formed=false": { "model": "gonzotech:block/turbine_casing" },
-    "formed=true":  { "model": "gonzotech:block/turbine_casing_formed" }
-  }
+  "__comment": "Static CTM-lite: frame/port bits are calculated only at turbine formation. The renderer only combines a seamless base with 12 reusable rail models.",
+  "multipart": [
+    {
+      "when": {
+        "formed": "false"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_casing"
+      }
+    },
+    {
+      "when": {
+        "formed": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_casing_formed"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_down_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_down_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_up_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_up_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_west_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_west_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_east_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_east_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_west_down"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_west_up"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_east_down"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_east_up"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_down_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_down_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_down_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_down_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_down_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_down_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_up_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_up_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_up_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_up_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_up_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_west_up_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_down_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_down_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_down_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_down_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_down_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_down_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_up_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_up_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_up_north"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_up_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_up_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "corner_east_up_south"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_down",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_down",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_down",
+        "port_2": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_down",
+        "port_3": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_up",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_up",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_up",
+        "port_2": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_up",
+        "port_3": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_north",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_north",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_north",
+        "port_2": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_north",
+        "port_3": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_south",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_south",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_south",
+        "port_2": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_south",
+        "port_3": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_west",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_west",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_west",
+        "port_2": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_west",
+        "port_3": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_east",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_east",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_east",
+        "port_2": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "face_east",
+        "port_3": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_down_north",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_down_north",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_down_south",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_down_south",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_up_north",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_up_north",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_up_south",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_down_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_x_up_south",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_x_up_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_west_north",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_west_north",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_west_south",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_west_south",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_east_north",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_east_north",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_east_south",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_west_south"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_y_east_south",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_y_east_north"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_west_down",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_west_down",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_west_up",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_west_up",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_east_down",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_down"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_east_down",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_east_up",
+        "port_0": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_west_up"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "frame": "edge_z_east_up",
+        "port_1": "true"
+      },
+      "apply": {
+        "model": "gonzotech:block/turbine_frame_z_east_down"
+      }
+    }
+  ]
 }

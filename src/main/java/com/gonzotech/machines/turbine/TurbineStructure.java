@@ -143,6 +143,7 @@ public final class TurbineStructure {
             return false;
         }
         index(level, build);
+        applyFormVisuals(level, build);
         controller.markIndexRestored();
         return true;
     }
@@ -182,6 +183,7 @@ public final class TurbineStructure {
             && samePositions(build.steamPorts, controller.steamPorts())
             && samePositions(build.wirePorts, controller.wirePorts())) {
             index(level, build);
+            applyFormVisuals(level, build);
             controller.markIndexRestored();
             return;
         }
@@ -197,10 +199,20 @@ public final class TurbineStructure {
         controller.configureStructure(build.min, build.max, build.rotors,
             toLongArray(build.steamPorts), toLongArray(build.wirePorts));
 
+        applyFormVisuals(level, build);
+        index(level, build);
+    }
+
+    /**
+     * Запекает CTM-рамку ровно в blockstate при успешной сборке. Рендер получает
+     * готовые флаги и не делает ни одного поиска соседей/границ каждый кадр.
+     */
+    private static void applyFormVisuals(ServerLevel level, Build build) {
         for (BlockPos pos : build.allParts) {
             BlockState state = level.getBlockState(pos);
-            if (state.getBlock() instanceof TurbineCasingBlock && !state.getValue(TurbinePartBlock.FORMED)) {
-                level.setBlock(pos, state.setValue(TurbinePartBlock.FORMED, true), Block.UPDATE_CLIENTS);
+            if (state.getBlock() instanceof TurbineCasingBlock) {
+                BlockState next = formedCasingState(level, build, pos, state);
+                if (!next.equals(state)) level.setBlock(pos, next, Block.UPDATE_CLIENTS);
             } else if (state.getBlock() instanceof TurbineRotorBlock) {
                 boolean controllerRotor = pos.equals(build.root);
                 BlockState next = state
@@ -209,7 +221,101 @@ public final class TurbineStructure {
                 if (!next.equals(state)) level.setBlock(pos, next, Block.UPDATE_CLIENTS);
             }
         }
-        index(level, build);
+    }
+
+    /** Получает готовый blockstate корпуса с профилем внешнего каркаса и каймой портов. */
+    private static BlockState formedCasingState(ServerLevel level, Build build, BlockPos pos, BlockState state) {
+        List<net.minecraft.core.Direction> boundary = boundaryDirections(build, pos);
+        TurbineCasingBlock.FrameProfile profile = frameProfile(boundary);
+        boolean[] portBorders = new boolean[4];
+
+        if (boundary.size() == 1) {
+            // Плоская грань: четыре направления в постоянном мировом порядке.
+            // Порядок Direction.values() одинаково использован в multipart JSON.
+            int index = 0;
+            net.minecraft.core.Direction normal = boundary.getFirst();
+            for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+                if (direction.getAxis() != normal.getAxis()) {
+                    portBorders[index++] = isServicePortAt(level, build, pos.relative(direction));
+                }
+            }
+        } else if (boundary.size() == 2) {
+            // На ребре внешняя обводка уже рисует продольную линию. Дополнительно
+            // нужны только две линии к портам, лежащим на соседних плоских гранях.
+            portBorders[0] = isServicePortAt(level, build, pos.relative(boundary.get(0).getOpposite()));
+            portBorders[1] = isServicePortAt(level, build, pos.relative(boundary.get(1).getOpposite()));
+        }
+        // В углу все три внешних ребра уже нарисованы; дополнительной каймы нет.
+
+        return state
+            .setValue(TurbinePartBlock.FORMED, true)
+            .setValue(TurbineCasingBlock.FRAME, profile)
+            .setValue(TurbineCasingBlock.PORT_0, portBorders[0])
+            .setValue(TurbineCasingBlock.PORT_1, portBorders[1])
+            .setValue(TurbineCasingBlock.PORT_2, portBorders[2])
+            .setValue(TurbineCasingBlock.PORT_3, portBorders[3]);
+    }
+
+    private static List<net.minecraft.core.Direction> boundaryDirections(Build build, BlockPos pos) {
+        List<net.minecraft.core.Direction> result = new ArrayList<>(3);
+        if (pos.getX() == build.min.getX()) result.add(net.minecraft.core.Direction.WEST);
+        else if (pos.getX() == build.max.getX()) result.add(net.minecraft.core.Direction.EAST);
+        if (pos.getY() == build.min.getY()) result.add(net.minecraft.core.Direction.DOWN);
+        else if (pos.getY() == build.max.getY()) result.add(net.minecraft.core.Direction.UP);
+        if (pos.getZ() == build.min.getZ()) result.add(net.minecraft.core.Direction.NORTH);
+        else if (pos.getZ() == build.max.getZ()) result.add(net.minecraft.core.Direction.SOUTH);
+        return result;
+    }
+
+    private static boolean isServicePortAt(ServerLevel level, Build build, BlockPos pos) {
+        if (pos.getX() < build.min.getX() || pos.getX() > build.max.getX()
+            || pos.getY() < build.min.getY() || pos.getY() > build.max.getY()
+            || pos.getZ() < build.min.getZ() || pos.getZ() > build.max.getZ()) return false;
+        BlockState state = level.getBlockState(pos);
+        return isShellBlock(state) && !(state.getBlock() instanceof TurbineCasingBlock);
+    }
+
+    private static TurbineCasingBlock.FrameProfile frameProfile(List<net.minecraft.core.Direction> boundary) {
+        if (boundary.size() == 1) {
+            return switch (boundary.getFirst()) {
+                case DOWN -> TurbineCasingBlock.FrameProfile.FACE_DOWN;
+                case UP -> TurbineCasingBlock.FrameProfile.FACE_UP;
+                case NORTH -> TurbineCasingBlock.FrameProfile.FACE_NORTH;
+                case SOUTH -> TurbineCasingBlock.FrameProfile.FACE_SOUTH;
+                case WEST -> TurbineCasingBlock.FrameProfile.FACE_WEST;
+                case EAST -> TurbineCasingBlock.FrameProfile.FACE_EAST;
+            };
+        }
+        boolean west = boundary.contains(net.minecraft.core.Direction.WEST);
+        boolean east = boundary.contains(net.minecraft.core.Direction.EAST);
+        boolean down = boundary.contains(net.minecraft.core.Direction.DOWN);
+        boolean up = boundary.contains(net.minecraft.core.Direction.UP);
+        boolean north = boundary.contains(net.minecraft.core.Direction.NORTH);
+        boolean south = boundary.contains(net.minecraft.core.Direction.SOUTH);
+
+        if (boundary.size() == 2) {
+            if (down && north) return TurbineCasingBlock.FrameProfile.EDGE_X_DOWN_NORTH;
+            if (down && south) return TurbineCasingBlock.FrameProfile.EDGE_X_DOWN_SOUTH;
+            if (up && north) return TurbineCasingBlock.FrameProfile.EDGE_X_UP_NORTH;
+            if (up && south) return TurbineCasingBlock.FrameProfile.EDGE_X_UP_SOUTH;
+            if (west && north) return TurbineCasingBlock.FrameProfile.EDGE_Y_WEST_NORTH;
+            if (west && south) return TurbineCasingBlock.FrameProfile.EDGE_Y_WEST_SOUTH;
+            if (east && north) return TurbineCasingBlock.FrameProfile.EDGE_Y_EAST_NORTH;
+            if (east && south) return TurbineCasingBlock.FrameProfile.EDGE_Y_EAST_SOUTH;
+            if (west && down) return TurbineCasingBlock.FrameProfile.EDGE_Z_WEST_DOWN;
+            if (west && up) return TurbineCasingBlock.FrameProfile.EDGE_Z_WEST_UP;
+            if (east && down) return TurbineCasingBlock.FrameProfile.EDGE_Z_EAST_DOWN;
+            if (east && up) return TurbineCasingBlock.FrameProfile.EDGE_Z_EAST_UP;
+        }
+        if (west && down && north) return TurbineCasingBlock.FrameProfile.CORNER_WEST_DOWN_NORTH;
+        if (west && down && south) return TurbineCasingBlock.FrameProfile.CORNER_WEST_DOWN_SOUTH;
+        if (west && up && north) return TurbineCasingBlock.FrameProfile.CORNER_WEST_UP_NORTH;
+        if (west && up && south) return TurbineCasingBlock.FrameProfile.CORNER_WEST_UP_SOUTH;
+        if (east && down && north) return TurbineCasingBlock.FrameProfile.CORNER_EAST_DOWN_NORTH;
+        if (east && down && south) return TurbineCasingBlock.FrameProfile.CORNER_EAST_DOWN_SOUTH;
+        if (east && up && north) return TurbineCasingBlock.FrameProfile.CORNER_EAST_UP_NORTH;
+        if (east && up && south) return TurbineCasingBlock.FrameProfile.CORNER_EAST_UP_SOUTH;
+        return TurbineCasingBlock.FrameProfile.NONE;
     }
 
     /** Связная компонента допустимых деталей; ограничение защищает от случайной стены корпусов. */
@@ -359,7 +465,14 @@ public final class TurbineStructure {
                     BlockPos pos = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(pos);
                     if (state.getBlock() instanceof TurbineCasingBlock && state.getValue(TurbinePartBlock.FORMED)) {
-                        level.setBlock(pos, state.setValue(TurbinePartBlock.FORMED, false), Block.UPDATE_CLIENTS);
+                        BlockState next = state
+                            .setValue(TurbinePartBlock.FORMED, false)
+                            .setValue(TurbineCasingBlock.FRAME, TurbineCasingBlock.FrameProfile.NONE)
+                            .setValue(TurbineCasingBlock.PORT_0, false)
+                            .setValue(TurbineCasingBlock.PORT_1, false)
+                            .setValue(TurbineCasingBlock.PORT_2, false)
+                            .setValue(TurbineCasingBlock.PORT_3, false);
+                        level.setBlock(pos, next, Block.UPDATE_CLIENTS);
                     } else if (state.getBlock() instanceof TurbineRotorBlock) {
                         BlockState next = state
                             .setValue(TurbinePartBlock.FORMED, false)
