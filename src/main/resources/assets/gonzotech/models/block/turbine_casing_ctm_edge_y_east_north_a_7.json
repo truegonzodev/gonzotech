@@ -3,10 +3,10 @@
   "textures": {
     "down": "gonzotech:block/turbine_casing_formed",
     "up": "gonzotech:block/turbine_casing_formed",
-    "north": "gonzotech:block/turbine_casing_ctm_9_4",
+    "north": "gonzotech:block/turbine/turbine_casing_ctm_9_4",
     "south": "gonzotech:block/turbine_casing_formed",
     "west": "gonzotech:block/turbine_casing_formed",
-    "east": "gonzotech:block/turbine_casing_ctm_b_9",
+    "east": "gonzotech:block/turbine/turbine_casing_ctm_b_9",
     "particle": "gonzotech:block/turbine_casing_formed"
   }
 }

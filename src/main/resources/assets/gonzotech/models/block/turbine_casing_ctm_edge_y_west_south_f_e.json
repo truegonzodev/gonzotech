@@ -4,8 +4,8 @@
     "down": "gonzotech:block/turbine_casing_formed",
     "up": "gonzotech:block/turbine_casing_formed",
     "north": "gonzotech:block/turbine_casing_formed",
-    "south": "gonzotech:block/turbine_casing_ctm_f_6",
-    "west": "gonzotech:block/turbine_casing_ctm_f_1",
+    "south": "gonzotech:block/turbine/turbine_casing_ctm_f_6",
+    "west": "gonzotech:block/turbine/turbine_casing_ctm_f_1",
     "east": "gonzotech:block/turbine_casing_formed",
     "particle": "gonzotech:block/turbine_casing_formed"
   }

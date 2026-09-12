@@ -2,11 +2,11 @@
   "parent": "minecraft:block/cube",
   "textures": {
     "down": "gonzotech:block/turbine_casing_formed",
-    "up": "gonzotech:block/turbine_casing_ctm_f_1",
+    "up": "gonzotech:block/turbine/turbine_casing_ctm_f_1",
     "north": "gonzotech:block/turbine_casing_formed",
     "south": "gonzotech:block/turbine_casing_formed",
     "west": "gonzotech:block/turbine_casing_formed",
-    "east": "gonzotech:block/turbine_casing_ctm_f_4",
+    "east": "gonzotech:block/turbine/turbine_casing_ctm_f_4",
     "particle": "gonzotech:block/turbine_casing_formed"
   }
 }
