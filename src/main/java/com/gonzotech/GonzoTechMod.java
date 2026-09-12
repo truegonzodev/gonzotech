@@ -7,6 +7,7 @@ import com.gonzotech.core.network.CesiumBlastRequestPayload;
 import com.gonzotech.core.ore.CesiumOreBlock;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.core.registry.ModCreativeTabs;
+import com.gonzotech.core.registry.ModDataComponents;
 import com.gonzotech.core.registry.ModFeatures;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.registry.ModBlockEntities;
@@ -40,6 +41,7 @@ public class GonzoTechMod {
 
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
+        ModDataComponents.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
@@ -74,6 +76,7 @@ public class GonzoTechMod {
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
+            modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
             // Texture-only Smart CTM корпусной оболочки турбины.
             modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).

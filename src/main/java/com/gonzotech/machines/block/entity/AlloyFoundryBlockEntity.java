@@ -1,6 +1,5 @@
 package com.gonzotech.machines.block.entity;
 
-import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.menu.AlloyFoundryMenu;
 import com.gonzotech.machines.processing.AlloyFoundryRecipes;
 import com.gonzotech.machines.registry.ModBlockEntities;
@@ -13,7 +12,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -22,9 +20,9 @@ import java.util.Map;
 /**
  * Завод сплавов: 5×5 входная сетка и один выход.
  *
- * <p>Это первая, намеренно бесплатная и мгновенная стадия машины: раз в серверный
- * тик она выполняет максимум одну полностью проверенную именную плавку. Ни GTU,
- * ни скрытых таймеров здесь нет. Лимит «одна плавка в тик» делает потребление,
+ * <p>Машина намеренно бесплатна и мгновенна: раз в серверный тик она выполняет
+ * максимум одну полностью проверенную пропорциональную плавку. Ни GTU, ни
+ * скрытых таймеров здесь нет. Лимит «одна плавка в тик» делает потребление,
  * выдачу и поведение при заполненном output атомарными и предсказуемыми.</p>
  */
 public final class AlloyFoundryBlockEntity extends BaseMachineBlockEntity implements WorldlyContainer {
@@ -60,13 +58,12 @@ public final class AlloyFoundryBlockEntity extends BaseMachineBlockEntity implem
 
     private boolean canStore(AlloyFoundryRecipes.Batch batch) {
         ItemStack output = items.get(SLOT_OUTPUT);
+        ItemStack incoming = batch.output();
         if (output.isEmpty()) {
-            // Constructing the prospective stack also keeps this correct if a
-            // future named result uses a component-dependent stack limit.
-            return batch.outputCount() <= Math.min(new ItemStack(batch.output()).getMaxStackSize(), getMaxStackSize());
+            return incoming.getCount() <= Math.min(incoming.getMaxStackSize(), getMaxStackSize());
         }
-        return ItemStack.isSameItemSameComponents(output, new ItemStack(batch.output()))
-            && output.getCount() + batch.outputCount() <= Math.min(output.getMaxStackSize(), getMaxStackSize());
+        return ItemStack.isSameItemSameComponents(output, incoming)
+            && output.getCount() + incoming.getCount() <= Math.min(output.getMaxStackSize(), getMaxStackSize());
     }
 
     private void consume(net.minecraft.world.item.Item item, int count) {
@@ -85,10 +82,11 @@ public final class AlloyFoundryBlockEntity extends BaseMachineBlockEntity implem
 
     private void store(AlloyFoundryRecipes.Batch batch) {
         ItemStack output = items.get(SLOT_OUTPUT);
+        ItemStack incoming = batch.output();
         if (output.isEmpty()) {
-            items.set(SLOT_OUTPUT, new ItemStack(batch.output(), batch.outputCount()));
+            items.set(SLOT_OUTPUT, incoming.copy());
         } else {
-            output.grow(batch.outputCount());
+            output.grow(incoming.getCount());
         }
     }
 
@@ -97,9 +95,9 @@ public final class AlloyFoundryBlockEntity extends BaseMachineBlockEntity implem
         return slot >= 0 && slot < INPUT_SLOTS && isCurrentIngredient(stack);
     }
 
-    /** Only the inputs supported by this first factory pass are accepted. */
+    /** The factory accepts every catalogued material form; matching is server-side. */
     private static boolean isCurrentIngredient(ItemStack stack) {
-        return stack.is(Items.IRON_INGOT) || stack.is(Items.COAL) || stack.is(ModItems.IRON_DUST.get());
+        return AlloyFoundryRecipes.isSupportedInput(stack);
     }
 
     @Override

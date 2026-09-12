@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.item.DiscoveryItem;
+import com.gonzotech.core.item.CustomAlloyItem;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.item.BlockItem;
@@ -63,12 +64,16 @@ public class ModItems {
             props -> new com.gonzotech.chalkboard.item.ScholarNotesItem(props.stacksTo(1)));
 
     /**
-     * Нейтральная болванка процедурного сплава. В первом проходе завод пока
-     * выдаёт только именные результаты; composition/tint Data Components будут
-     * добавлены до того, как этот предмет станет продуктом произвольной плавки.
+     * Нейтральная болванка процедурного сплава. Завод записывает в каждый
+     * созданный stack composition/tint Data Components; пустой creative-stack
+     * остаётся серым образцом без рецептурных характеристик.
      */
-    public static final DeferredItem<Item> CUSTOM_ALLOY =
-        ITEMS.registerSimpleItem("custom_alloy");
+    public static final DeferredItem<CustomAlloyItem> CUSTOM_ALLOY =
+        ITEMS.registerItem("custom_alloy", CustomAlloyItem::new);
+
+    /** Победит — именованный output Завода сплавов, отсутствовавший в старом списке 47 слитков. */
+    public static final DeferredItem<Item> POBEDIT_INGOT =
+        ITEMS.registerSimpleItem("pobedit_ingot");
 
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =

@@ -1,6 +1,12 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "gonzotech:item/custom_alloy"
+    "model": "gonzotech:item/custom_alloy",
+    "tints": [
+      {
+        "type": "gonzotech:alloy_tint",
+        "default": 6902652
+      }
+    ]
   }
 }
