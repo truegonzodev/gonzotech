@@ -231,7 +231,7 @@ public final class TurbineStructure {
 
         if (boundary.size() == 1) {
             // Плоская грань: четыре направления в постоянном мировом порядке.
-            // Порядок Direction.values() одинаково использован в multipart JSON.
+            // Порядок Direction.values() совпадает с генератором CTM-вариантов.
             int index = 0;
             net.minecraft.core.Direction normal = boundary.getFirst();
             for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
@@ -240,12 +240,23 @@ public final class TurbineStructure {
                 }
             }
         } else if (boundary.size() == 2) {
-            // На ребре внешняя обводка уже рисует продольную линию. Дополнительно
-            // нужны только две линии к портам, лежащим на соседних плоских гранях.
+            // Ребро: порты могут быть не только на двух прилегающих плоских
+            // гранях, но и с обоих концов вдоль самого ребра. В последнем случае
+            // обводка рисуется на ОБЕИХ открытых гранях корпуса, огибая порт, а
+            // не считая его ложным новым краем параллелепипеда.
             portBorders[0] = isServicePortAt(level, build, pos.relative(boundary.get(0).getOpposite()));
             portBorders[1] = isServicePortAt(level, build, pos.relative(boundary.get(1).getOpposite()));
+            net.minecraft.core.Direction.Axis freeAxis = freeAxis(boundary);
+            portBorders[2] = isServicePortAt(level, build, pos.relative(negativeDirection(freeAxis)));
+            portBorders[3] = isServicePortAt(level, build, pos.relative(positiveDirection(freeAxis)));
+        } else if (boundary.size() == 3) {
+            // Угловая клетка оболочки тоже может примыкать к service-порту с
+            // внутренней стороны по любой из трёх осей. Для такого порта должны
+            // сохраниться две каймы на двух общих наружных гранях.
+            for (int i = 0; i < 3; i++) {
+                portBorders[i] = isServicePortAt(level, build, pos.relative(boundary.get(i).getOpposite()));
+            }
         }
-        // В углу все три внешних ребра уже нарисованы; дополнительной каймы нет.
 
         return state
             .setValue(TurbinePartBlock.FORMED, true)
@@ -265,6 +276,37 @@ public final class TurbineStructure {
         if (pos.getZ() == build.min.getZ()) result.add(net.minecraft.core.Direction.NORTH);
         else if (pos.getZ() == build.max.getZ()) result.add(net.minecraft.core.Direction.SOUTH);
         return result;
+    }
+
+    /** Единственная ось, не входящая в геометрическое ребро оболочки. */
+    private static net.minecraft.core.Direction.Axis freeAxis(List<net.minecraft.core.Direction> boundary) {
+        for (net.minecraft.core.Direction.Axis axis : net.minecraft.core.Direction.Axis.values()) {
+            boolean used = false;
+            for (net.minecraft.core.Direction direction : boundary) {
+                if (direction.getAxis() == axis) {
+                    used = true;
+                    break;
+                }
+            }
+            if (!used) return axis;
+        }
+        throw new IllegalArgumentException("Corner has no free axis");
+    }
+
+    private static net.minecraft.core.Direction negativeDirection(net.minecraft.core.Direction.Axis axis) {
+        return switch (axis) {
+            case X -> net.minecraft.core.Direction.WEST;
+            case Y -> net.minecraft.core.Direction.DOWN;
+            case Z -> net.minecraft.core.Direction.NORTH;
+        };
+    }
+
+    private static net.minecraft.core.Direction positiveDirection(net.minecraft.core.Direction.Axis axis) {
+        return switch (axis) {
+            case X -> net.minecraft.core.Direction.EAST;
+            case Y -> net.minecraft.core.Direction.UP;
+            case Z -> net.minecraft.core.Direction.SOUTH;
+        };
     }
 
     private static boolean isServicePortAt(ServerLevel level, Build build, BlockPos pos) {
