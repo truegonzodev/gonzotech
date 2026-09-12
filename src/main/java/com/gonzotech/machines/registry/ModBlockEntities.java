@@ -119,8 +119,17 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> SECOND_ITEM_FILTER =
         BLOCK_ENTITIES.register("second_item_filter", () -> new BlockEntityType<>(
             (pos, state) -> new com.gonzotech.machines.block.entity.ItemFilterBlockEntity(
-                SECOND_ITEM_FILTER.get(), pos, state, SecondTierDefs.ITEM_FILTER_SLOTS),
+                secondItemFilterType(), pos, state, SecondTierDefs.ITEM_FILTER_SLOTS),
             false, ModMachines.SECOND_ITEM_FILTER.get()));
+
+    /**
+     * The BE factory is invoked only after DeferredRegister has assigned the
+     * supplier. Keeping the lookup behind a method avoids Java's illegal direct
+     * self-reference in SECOND_ITEM_FILTER's initializer.
+     */
+    private static BlockEntityType<?> secondItemFilterType() {
+        return SECOND_ITEM_FILTER.get();
+    }
 
     public static void register(IEventBus modEventBus) {
         BLOCK_ENTITIES.register(modEventBus);
