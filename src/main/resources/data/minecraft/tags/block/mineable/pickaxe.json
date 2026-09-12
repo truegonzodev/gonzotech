@@ -137,6 +137,27 @@
     "gonzotech:first_steam_node",
     "gonzotech:first_item_node",
     "gonzotech:turbine_casing",
-    "gonzotech:turbine_rotor"
+    "gonzotech:turbine_rotor",
+    "gonzotech:second_wire",
+    "gonzotech:second_heat_pipe",
+    "gonzotech:second_water_pipe",
+    "gonzotech:second_steam_pipe",
+    "gonzotech:second_item_pipe",
+    "gonzotech:second_universal_fluid_pipe",
+    "gonzotech:second_wire_node",
+    "gonzotech:second_heat_node",
+    "gonzotech:second_water_node",
+    "gonzotech:second_steam_node",
+    "gonzotech:second_item_node",
+    "gonzotech:second_universal_fluid_node",
+    "gonzotech:second_universal_node",
+    "gonzotech:second_accumulator",
+    "gonzotech:second_electric_furnace",
+    "gonzotech:second_alloy_foundry",
+    "gonzotech:second_grinder",
+    "gonzotech:second_item_filter",
+    "gonzotech:second_item_scavenger",
+    "gonzotech:second_pump",
+    "gonzotech:second_cobble_generator"
   ]
 }

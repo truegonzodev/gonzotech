@@ -330,19 +330,29 @@ public final class TurbineStructure {
             || block == ModMachines.STEAM_NODE.get()
             || block == ModMachines.UNIVERSAL_FLUID_NODE.get()
             || block == ModMachines.WIRE_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get();
+            || block == ModMachines.UNIVERSAL_NODE.get()
+            || block == ModMachines.SECOND_STEAM_NODE.get()
+            || block == ModMachines.SECOND_UNIVERSAL_FLUID_NODE.get()
+            || block == ModMachines.SECOND_WIRE_NODE.get()
+            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
     }
 
     private static boolean isSteamPort(BlockState state) {
         Block block = state.getBlock();
         return block == ModMachines.STEAM_NODE.get()
             || block == ModMachines.UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get();
+            || block == ModMachines.UNIVERSAL_NODE.get()
+            || block == ModMachines.SECOND_STEAM_NODE.get()
+            || block == ModMachines.SECOND_UNIVERSAL_FLUID_NODE.get()
+            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
     }
 
     private static boolean isWirePort(BlockState state) {
         Block block = state.getBlock();
-        return block == ModMachines.WIRE_NODE.get() || block == ModMachines.UNIVERSAL_NODE.get();
+        return block == ModMachines.WIRE_NODE.get()
+            || block == ModMachines.UNIVERSAL_NODE.get()
+            || block == ModMachines.SECOND_WIRE_NODE.get()
+            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
     }
 
     private static long[] toLongArray(List<BlockPos> positions) {

@@ -18,6 +18,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,12 @@ public class ItemFilterBlockEntity extends BlockEntity implements MenuProvider, 
     }
 
     public ItemFilterBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.ITEM_FILTER.get(), pos, state);
+        this(ModBlockEntities.ITEM_FILTER.get(), pos, state);
+    }
+
+    /** Создаёт копию фильтра с самостоятельным типом BlockEntity. */
+    public ItemFilterBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
+        super(blockEntityType, pos, state);
     }
 
     /** Серверный тик: один проход мгновенной фильтрующей маршрутизации. */
@@ -191,7 +197,7 @@ public class ItemFilterBlockEntity extends BlockEntity implements MenuProvider, 
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.item_filter");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Nullable

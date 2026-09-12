@@ -33,7 +33,7 @@ public class ItemFilterBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected MapCodec<ItemFilterBlock> codec() {
+    protected MapCodec<? extends ItemFilterBlock> codec() {
         return CODEC;
     }
 
@@ -72,7 +72,7 @@ public class ItemFilterBlock extends Block implements EntityBlock {
     }
 
     @SuppressWarnings("unchecked")
-    private static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<A> createTickerHelper(
+    protected static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<A> createTickerHelper(
         BlockEntityType<A> given, BlockEntityType<E> expected, BlockEntityTicker<? super E> ticker) {
         return expected == given ? (BlockEntityTicker<A>) ticker : null;
     }

@@ -20,7 +20,7 @@ public class AccumulatorBlock extends MachineBlock {
     }
 
     @Override
-    protected MapCodec<AccumulatorBlock> codec() {
+    protected MapCodec<? extends AccumulatorBlock> codec() {
         return CODEC;
     }
 

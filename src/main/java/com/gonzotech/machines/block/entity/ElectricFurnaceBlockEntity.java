@@ -20,6 +20,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -85,7 +86,15 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
     };
 
     public ElectricFurnaceBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.ELECTRIC_FURNACE.get(), pos, state, 2);
+        this(ModBlockEntities.ELECTRIC_FURNACE.get(), pos, state);
+    }
+
+    /**
+     * Внутренний конструктор для функционально идентичной машины другого
+     * открытия: состояние и баланс остаются общими, тип BE — свой.
+     */
+    public ElectricFurnaceBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
+        super(blockEntityType, pos, state, 2);
     }
 
     public GtBuffer gtuBuffer() {
@@ -218,7 +227,7 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.electric_furnace");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Override

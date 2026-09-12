@@ -81,6 +81,31 @@ public class ModCreativeTabs {
                 // Технологическая цепочка обработки руды завершает список машин.
                 output.accept(com.gonzotech.machines.registry.ModMachines.CRUSHER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
+
+
+                // Второе открытие: пока все характеристики совпадают с первым
+                // уровнем, но порядок уже фиксирует будущую progression-витрину.
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WIRE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_HEAT_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WATER_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAM_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_UNIVERSAL_FLUID_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WIRE_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_HEAT_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WATER_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAM_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_UNIVERSAL_FLUID_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_UNIVERSAL_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ACCUMULATOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_SCAVENGER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get());
             })
             .build()
     );

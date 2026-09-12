@@ -18,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -70,7 +71,15 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
     };
 
     public AccumulatorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.ACCUMULATOR.get(), pos, state, 0);
+        this(ModBlockEntities.ACCUMULATOR.get(), pos, state);
+    }
+
+    /**
+     * Внутренний конструктор для функционально идентичной машины другого
+     * открытия: состояние и баланс остаются общими, тип BE — свой.
+     */
+    public AccumulatorBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
+        super(blockEntityType, pos, state, 0);
     }
 
     public GtBuffer gtuBuffer() {
@@ -188,7 +197,7 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.accumulator");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Override
