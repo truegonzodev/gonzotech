@@ -1,6 +1,6 @@
 {
   "loader": "gonzotech:smart_ctm",
-  "ambientocclusion": true,
+  "ambientocclusion": false,
   "textures": {
     "base": "gonzotech:block/turbine_casing_formed",
     "line": "gonzotech:block/turbine/turbine_ctm_line",
