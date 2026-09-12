@@ -225,9 +225,9 @@ public final class PipeRouting {
             if (!machineConnects(pstate, type, dir)) continue;
             if (!modeOf(pstate, type).acceptsFromMachine()) continue;
             if (!isUniversal(pstate)) continue;
-            long remain = MachineDefsUniversalOutput() - FluidBudgetLedger.used(level, ppos);
-            if (remain > bestLimit) {
-                bestLimit = remain;
+            long limit = pipeEntryLimit(level, ppos, pstate, type);
+            if (limit > bestLimit) {
+                bestLimit = limit;
                 best = ppos;
             }
         }
@@ -237,10 +237,13 @@ public final class PipeRouting {
     /** Лимит одной прилегающей трубы. Универсальная — остаток общего бюджета. */
     private static long pipeEntryLimit(Level level, BlockPos ppos, BlockState pstate, PipeType type) {
         if (isUniversal(pstate)) {
-            long remain = Math.max(0, MachineDefsUniversalOutput() - FluidBudgetLedger.used(level, ppos));
-            return scaleByFactor(remain, pstate, type);
+            // Apply a universal node's factor to the WHOLE shared budget before
+            // subtracting Water/Steam already sent this tick. Scaling each
+            // remaining slice would let two streams exceed its actual 0.9 cap.
+            long capacity = scaleByFactor(universalFluidBudget(pstate), pstate, type);
+            return Math.max(0, capacity - FluidBudgetLedger.used(level, ppos));
         }
-        return scaleByFactor(type.maxThroughput(), pstate, type);
+        return scaleByFactor(carrierThroughput(pstate, type), pstate, type);
     }
 
     /**
@@ -260,14 +263,25 @@ public final class PipeRouting {
     private static boolean isUniversal(BlockState state) {
         // Одиночная универсальная труба/узел, универсальный УЗЕЛ (несёт вода+пар в
         // одном общем бюджете), либо пучок, где FLUID-угол занят универсальной
-        // трубой (вода+пар вместе) — во всех случаях общий бюджет 800 mB/t.
+        // трубой (вода+пар вместе). Лимит берётся у конкретного carrier'а: 800
+        // mB/t у первого уровня и 1500 mB/t у второго.
         return state.getBlock() instanceof UniversalFluidPipeBlock
             || state.getBlock() instanceof UniversalNodeBlock
             || CompositePipeBlock.carriesUniversalFluid(state);
     }
 
-    private static long MachineDefsUniversalOutput() {
-        return com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT;
+    /** Общий fluid budget конкретного universal carrier'а (800 у I, 1500 у II). */
+    private static long universalFluidBudget(BlockState state) {
+        return state.getBlock() instanceof PipeCarrier carrier
+            ? carrier.sharedFluidThroughputLimit(state)
+            : com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT;
+    }
+
+    /** Базовая пропускная способность конкретного carrier'а по ресурсу. */
+    private static long carrierThroughput(BlockState state, PipeType type) {
+        return state.getBlock() instanceof PipeCarrier carrier
+            ? carrier.throughputLimit(state, type)
+            : type.maxThroughput();
     }
 
     /** BFS по трубам от машины; наполняет {@code receivers} машинами за трубами. */

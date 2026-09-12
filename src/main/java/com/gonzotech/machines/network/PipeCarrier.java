@@ -39,4 +39,30 @@ public interface PipeCarrier {
     default double throughputFactor(BlockState state, PipeType type) {
         return 1.0;
     }
+
+    /**
+     * Базовый лимит данного конкретного carrier'а. Первый уровень возвращает
+     * значение из {@link PipeType}; второй переопределяет его, не меняя первого.
+     */
+    default long throughputLimit(BlockState state, PipeType type) {
+        return type.maxThroughput();
+    }
+
+    /**
+     * Дискретный лимит одного точного Item за тик. Для не-предметных ресурсов
+     * не используется. Это отдельное значение, потому что общий item budget и
+     * число одновременно обслуживаемых типов — разные балансные параметры.
+     */
+    default int perItemThroughputLimit(BlockState state, PipeType type) {
+        return ItemRouting.PER_ITEM_TICK_CAP;
+    }
+
+    /**
+     * Общий Water + Steam бюджет carrier'а универсальной жидкости. Метод
+     * запрашивается только у универсального carrier'а; обычный первый уровень
+     * сохраняет утверждённые 800 mB/t.
+     */
+    default long sharedFluidThroughputLimit(BlockState state) {
+        return com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT;
+    }
 }

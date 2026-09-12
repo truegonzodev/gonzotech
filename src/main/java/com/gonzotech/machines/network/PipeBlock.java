@@ -209,10 +209,11 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
         // Универсальная жидк.труба в руке → собрать связку: она займёт FLUID-угол
         // (вода+пар). Нельзя, если эта труба сама жидкостная (угол уже занят).
         if (!connectsAllSides() && CompositePipeBlock.isUniversalPipeItem(stack)
-            && !this.pipeType.isFluid() && ModCompositeAccess.get() != null) {
+            && !this.pipeType.isFluid() && ModCompositeAccess.getFor(this) != null
+            && ModCompositeAccess.sameTier(this, stack)) {
             if (!level.isClientSide()) {
                 Direction.Axis axis = state.getValue(AXIS);
-                BlockState composite = ModCompositeAccess.get().defaultBlockState()
+                BlockState composite = ModCompositeAccess.getFor(this).defaultBlockState()
                     .setValue(AXIS, axis)
                     .setValue(CompositePipeBlock.AXIS_LOWER, axis)
                     .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))
@@ -231,10 +232,11 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
         if (!connectsAllSides()) {
             PipeType adding = CompositePipeBlock.pipeTypeOf(stack);
             boolean fluidClash = adding != null && adding.isFluid() && this.pipeType.isFluid();
-            if (adding != null && adding != this.pipeType && !fluidClash && ModCompositeAccess.get() != null) {
+            if (adding != null && adding != this.pipeType && !fluidClash
+                && ModCompositeAccess.getFor(this) != null && ModCompositeAccess.sameTier(this, stack)) {
                 if (!level.isClientSide()) {
                     Direction.Axis axis = state.getValue(AXIS);
-                    BlockState composite = ModCompositeAccess.get().defaultBlockState()
+                    BlockState composite = ModCompositeAccess.getFor(this).defaultBlockState()
                         .setValue(AXIS, axis)
                         .setValue(CompositePipeBlock.AXIS_LOWER, axis)
                         .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))

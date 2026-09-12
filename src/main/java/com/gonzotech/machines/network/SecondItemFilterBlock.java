@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.block.entity.ItemFilterBlockEntity;
+import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
@@ -11,9 +12,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Фильтр предметов второго открытия. Пока это точная рабочая копия первого
- * фильтра (те же 3 ghost-слота, 5-слотовый буфер и маршрутизация), с отдельным
- * BlockEntityType для будущего независимого баланса.
+ * Фильтр предметов второго открытия: 5 ghost-слотов и поток пять типов по
+ * две штуки за тик. Буфер и маршрутизация совпадают с первым уровнем.
  */
 public final class SecondItemFilterBlock extends ItemFilterBlock {
 
@@ -30,7 +30,18 @@ public final class SecondItemFilterBlock extends ItemFilterBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new ItemFilterBlockEntity(ModBlockEntities.SECOND_ITEM_FILTER.get(), pos, state);
+        return new ItemFilterBlockEntity(ModBlockEntities.SECOND_ITEM_FILTER.get(), pos, state,
+            SecondTierDefs.ITEM_FILTER_SLOTS);
+    }
+
+    @Override
+    public int itemThroughputLimit() {
+        return (int) SecondTierDefs.ITEM_THROUGHPUT;
+    }
+
+    @Override
+    public int perItemThroughputLimit() {
+        return SecondTierDefs.ITEM_PER_TYPE_THROUGHPUT;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.gonzotech.machines.block;
 
-import com.gonzotech.machines.block.entity.PumpBlockEntity;
+import com.gonzotech.machines.block.entity.SecondPumpBlockEntity;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
@@ -11,8 +11,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Помпа второго открытия; до отдельного балансного patch использует ровно ту же
- * механику, буферы и лимиты, что и помпа первого открытия.
+ * Помпа второго открытия; работает без предметных слотов: только шкалы ресурсов и откачка воды.
+ * Её баланс независим от помпы первого уровня.
  */
 public final class SecondPumpBlock extends PumpBlock {
 
@@ -29,12 +29,12 @@ public final class SecondPumpBlock extends PumpBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new PumpBlockEntity(ModBlockEntities.SECOND_PUMP.get(), pos, state);
+        return new SecondPumpBlockEntity(pos, state);
     }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.SECOND_PUMP.get(), PumpBlockEntity::serverTick);
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.SECOND_PUMP.get(), SecondPumpBlockEntity::serverTick);
     }
 }

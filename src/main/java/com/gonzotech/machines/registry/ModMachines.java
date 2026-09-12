@@ -24,6 +24,14 @@ import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.ItemFilterBlock;
 import com.gonzotech.machines.network.SecondItemFilterBlock;
+import com.gonzotech.machines.network.SecondCompositePipeBlock;
+import com.gonzotech.machines.network.SecondItemNodeBlock;
+import com.gonzotech.machines.network.SecondItemPipeBlock;
+import com.gonzotech.machines.network.SecondNodeBlock;
+import com.gonzotech.machines.network.SecondPipeBlock;
+import com.gonzotech.machines.network.SecondUniversalFluidNodeBlock;
+import com.gonzotech.machines.network.SecondUniversalFluidPipeBlock;
+import com.gonzotech.machines.network.SecondUniversalNodeBlock;
 import com.gonzotech.machines.network.ItemScavengerBlock;
 import com.gonzotech.machines.network.ItemNodeBlock;
 import com.gonzotech.machines.network.ItemPipeBlock;
@@ -218,6 +226,11 @@ public final class ModMachines {
     public static final DeferredBlock<CompositePipeBlock> COMPOSITE_PIPE =
         BLOCKS.registerBlock("composite_pipe", CompositePipeBlock::new, pipe());
 
+
+    /** Внутренняя связка труб II, формируется только из совместимых труб II. */
+    public static final DeferredBlock<SecondCompositePipeBlock> SECOND_COMPOSITE_PIPE =
+        BLOCKS.registerBlock("second_composite_pipe", SecondCompositePipeBlock::new, pipe());
+
     // ─────────────────────────── фильтр + отсеиватель ───────────────────────────
     // Фильтр — активный полный куб с меню (3 ghost-слота): пропускает совпавшее в
     // свою выходную сеть, отсеянное — в сеть Отсеивателя. Отсеиватель — пассивный
@@ -235,44 +248,44 @@ public final class ModMachines {
     // первого уровня. Отдельные registry-id/BlockEntityType оставляют для второго
     // открытия независимую точку роста, не меняя рабочие значения первого.
 
-    public static final DeferredBlock<PipeBlock> SECOND_WIRE =
-        BLOCKS.registerBlock("second_wire", props -> new PipeBlock(props, PipeType.WIRE), powerLine());
+    public static final DeferredBlock<SecondPipeBlock> SECOND_WIRE =
+        BLOCKS.registerBlock("second_wire", props -> new SecondPipeBlock(props, PipeType.WIRE), powerLine());
 
-    public static final DeferredBlock<PipeBlock> SECOND_HEAT_PIPE =
-        BLOCKS.registerBlock("second_heat_pipe", props -> new PipeBlock(props, PipeType.HEAT), pipe());
+    public static final DeferredBlock<SecondPipeBlock> SECOND_HEAT_PIPE =
+        BLOCKS.registerBlock("second_heat_pipe", props -> new SecondPipeBlock(props, PipeType.HEAT), pipe());
 
-    public static final DeferredBlock<PipeBlock> SECOND_WATER_PIPE =
-        BLOCKS.registerBlock("second_water_pipe", props -> new PipeBlock(props, PipeType.WATER), pipe());
+    public static final DeferredBlock<SecondPipeBlock> SECOND_WATER_PIPE =
+        BLOCKS.registerBlock("second_water_pipe", props -> new SecondPipeBlock(props, PipeType.WATER), pipe());
 
-    public static final DeferredBlock<PipeBlock> SECOND_STEAM_PIPE =
-        BLOCKS.registerBlock("second_steam_pipe", props -> new PipeBlock(props, PipeType.STEAM), pipe());
+    public static final DeferredBlock<SecondPipeBlock> SECOND_STEAM_PIPE =
+        BLOCKS.registerBlock("second_steam_pipe", props -> new SecondPipeBlock(props, PipeType.STEAM), pipe());
 
-    public static final DeferredBlock<ItemPipeBlock> SECOND_ITEM_PIPE =
-        BLOCKS.registerBlock("second_item_pipe", ItemPipeBlock::new, pipe());
+    public static final DeferredBlock<SecondItemPipeBlock> SECOND_ITEM_PIPE =
+        BLOCKS.registerBlock("second_item_pipe", SecondItemPipeBlock::new, pipe());
 
-    public static final DeferredBlock<UniversalFluidPipeBlock> SECOND_UNIVERSAL_FLUID_PIPE =
-        BLOCKS.registerBlock("second_universal_fluid_pipe", UniversalFluidPipeBlock::new, pipe());
+    public static final DeferredBlock<SecondUniversalFluidPipeBlock> SECOND_UNIVERSAL_FLUID_PIPE =
+        BLOCKS.registerBlock("second_universal_fluid_pipe", SecondUniversalFluidPipeBlock::new, pipe());
 
-    public static final DeferredBlock<NodeBlock> SECOND_WIRE_NODE =
-        BLOCKS.registerBlock("second_wire_node", props -> new NodeBlock(props, PipeType.WIRE), powerLine());
+    public static final DeferredBlock<SecondNodeBlock> SECOND_WIRE_NODE =
+        BLOCKS.registerBlock("second_wire_node", props -> new SecondNodeBlock(props, PipeType.WIRE), powerLine());
 
-    public static final DeferredBlock<NodeBlock> SECOND_HEAT_NODE =
-        BLOCKS.registerBlock("second_heat_node", props -> new NodeBlock(props, PipeType.HEAT), pipe());
+    public static final DeferredBlock<SecondNodeBlock> SECOND_HEAT_NODE =
+        BLOCKS.registerBlock("second_heat_node", props -> new SecondNodeBlock(props, PipeType.HEAT), pipe());
 
-    public static final DeferredBlock<NodeBlock> SECOND_WATER_NODE =
-        BLOCKS.registerBlock("second_water_node", props -> new NodeBlock(props, PipeType.WATER), pipe());
+    public static final DeferredBlock<SecondNodeBlock> SECOND_WATER_NODE =
+        BLOCKS.registerBlock("second_water_node", props -> new SecondNodeBlock(props, PipeType.WATER), pipe());
 
-    public static final DeferredBlock<NodeBlock> SECOND_STEAM_NODE =
-        BLOCKS.registerBlock("second_steam_node", props -> new NodeBlock(props, PipeType.STEAM), pipe());
+    public static final DeferredBlock<SecondNodeBlock> SECOND_STEAM_NODE =
+        BLOCKS.registerBlock("second_steam_node", props -> new SecondNodeBlock(props, PipeType.STEAM), pipe());
 
-    public static final DeferredBlock<ItemNodeBlock> SECOND_ITEM_NODE =
-        BLOCKS.registerBlock("second_item_node", ItemNodeBlock::new, pipe());
+    public static final DeferredBlock<SecondItemNodeBlock> SECOND_ITEM_NODE =
+        BLOCKS.registerBlock("second_item_node", SecondItemNodeBlock::new, pipe());
 
-    public static final DeferredBlock<UniversalFluidNodeBlock> SECOND_UNIVERSAL_FLUID_NODE =
-        BLOCKS.registerBlock("second_universal_fluid_node", UniversalFluidNodeBlock::new, pipe());
+    public static final DeferredBlock<SecondUniversalFluidNodeBlock> SECOND_UNIVERSAL_FLUID_NODE =
+        BLOCKS.registerBlock("second_universal_fluid_node", SecondUniversalFluidNodeBlock::new, pipe());
 
-    public static final DeferredBlock<UniversalNodeBlock> SECOND_UNIVERSAL_NODE =
-        BLOCKS.registerBlock("second_universal_node", UniversalNodeBlock::new, pipe());
+    public static final DeferredBlock<SecondUniversalNodeBlock> SECOND_UNIVERSAL_NODE =
+        BLOCKS.registerBlock("second_universal_node", SecondUniversalNodeBlock::new, pipe());
 
     public static final DeferredBlock<SecondAccumulatorBlock> SECOND_ACCUMULATOR =
         BLOCKS.registerBlock("second_accumulator", SecondAccumulatorBlock::new, lightMetal());

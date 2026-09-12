@@ -51,7 +51,12 @@ public final class ItemFilterRouting {
     public static void tick(Level level, BlockPos pos, BlockState state, ItemFilterBlockEntity be) {
         if (level.isClientSide()) return;
 
-        int budget = (int) T.maxThroughput();
+        int budget = state.getBlock() instanceof ItemFilterBlock filter
+            ? filter.itemThroughputLimit()
+            : (int) T.maxThroughput();
+        int perItemCap = state.getBlock() instanceof ItemFilterBlock filter
+            ? filter.perItemThroughputLimit()
+            : ItemRouting.PER_ITEM_TICK_CAP;
         if (budget <= 0) return;
 
         // Приёмники «прошедшего» — выходная сеть Фильтра (item-трубы от Фильтра).
@@ -93,13 +98,13 @@ public final class ItemFilterRouting {
 
         long rotation = level.getGameTime();
         int moved = 0;
-        // Лимит на КАЖДЫЙ вид за тик (как у труб): 1 шт/т, суммарно budget=5 шт/т.
+        // Лимиты экземпляра: первый tier оставляет 1×5, Filter II задаёт 2×5.
         java.util.Map<net.minecraft.world.item.Item, Integer> perItem = new java.util.HashMap<>();
 
         // (a) Транзитный буфер Фильтра — предметы, пришедшие ВРЕЗКОЙ по трубам.
         // Тянем их без canTake-проверки (буфер её запрещает для внешних, но сам
         // Фильтр свой буфер раздавать обязан).
-        moved = drainContainer(level, pos, be, null, be, pass, reject, budget, moved, rotation, perItem, true);
+        moved = drainContainer(level, pos, be, null, be, pass, reject, budget, moved, rotation, perItem, perItemCap, true);
 
         // (b) Прилегающие контейнеры-источники (режим «воронка»).
         for (Source source : sources) {
@@ -107,7 +112,7 @@ public final class ItemFilterRouting {
             Container src = HopperBlockEntity.getContainerAt(level, source.pos());
             if (src == null) continue;
             moved = drainContainer(level, pos, be, source.face(), src,
-                pass, reject, budget, moved, rotation, perItem, false);
+                pass, reject, budget, moved, rotation, perItem, perItemCap, false);
         }
     }
 
@@ -124,14 +129,14 @@ public final class ItemFilterRouting {
                                       List<ItemRouting_Sink> pass, List<ItemRouting_Sink> reject,
                                       int budget, int moved, long rotation,
                                       java.util.Map<net.minecraft.world.item.Item, Integer> perItem,
-                                      boolean ignoreCanTake) {
+                                      int perItemCap, boolean ignoreCanTake) {
         for (int slot : ItemRouting.extractableSlots(src, srcFace)) {
             if (moved >= budget) break;
             while (moved < budget) {
                 ItemStack cur = src.getItem(slot);
                 if (cur.isEmpty()) break;
                 if (!ignoreCanTake && !ItemRouting.canTake(src, slot, cur, srcFace)) break;
-                if (perItem.getOrDefault(cur.getItem(), 0) >= ItemRouting.PER_ITEM_TICK_CAP) break;
+                if (perItem.getOrDefault(cur.getItem(), 0) >= perItemCap) break;
 
                 boolean matched = matches(be, cur);
                 List<ItemRouting_Sink> targets = matched ? pass : reject;

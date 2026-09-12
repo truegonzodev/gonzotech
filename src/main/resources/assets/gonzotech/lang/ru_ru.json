@@ -541,5 +541,6 @@
   "block.gonzotech.second_item_filter": "Фильтр предметов II",
   "block.gonzotech.second_item_scavenger": "Отсеиватель II",
   "block.gonzotech.second_pump": "Помпа II",
-  "block.gonzotech.second_cobble_generator": "Генератор булыжника II"
+  "block.gonzotech.second_cobble_generator": "Генератор булыжника II",
+  "block.gonzotech.second_composite_pipe": "Связка труб II"
 }

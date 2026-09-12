@@ -229,7 +229,8 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
         // Добавление универсальной жидк.трубы: занимает весь FLUID-угол (вода+пар),
         // если он ещё свободен.
-        if (isUniversalPipeItem(stack) && fluidCornerFree(state)) {
+        if (isUniversalPipeItem(stack) && isSecondTierPipeItem(stack) == (this instanceof SecondTierPipe)
+            && fluidCornerFree(state)) {
             if (!level.isClientSide()) {
                 level.setBlock(pos, withUniversalFluid(state), Block.UPDATE_ALL);
                 if (!player.getAbilities().instabuild) stack.shrink(1);
@@ -239,7 +240,8 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
         // Добавление ещё одной трубы в связку: используем предмет-трубу другого типа.
         PipeType adding = pipeTypeOf(stack);
-        if (adding != null && !state.getValue(PRESENT.get(adding)) && canAdd(state, adding)) {
+        if (adding != null && isSecondTierPipeItem(stack) == (this instanceof SecondTierPipe)
+            && !state.getValue(PRESENT.get(adding)) && canAdd(state, adding)) {
             if (!level.isClientSide()) {
                 level.setBlock(pos, state.setValue(PRESENT.get(adding), true), Block.UPDATE_ALL);
                 // Если в пучок добавили предметную трубу — запускаем забор-тик
@@ -341,6 +343,11 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         return stack.getItem() instanceof BlockItem bi
             && bi.getBlock() instanceof UniversalFluidPipeBlock u
             && !u.connectsAllSides();
+    }
+
+    /** Принадлежит ли BlockItem трубы/узла второму открытию. */
+    static boolean isSecondTierPipeItem(ItemStack stack) {
+        return stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof SecondTierPipe;
     }
 
     /** Заняты ли в пучке ОБА жидкостных флага (вода+пар) — т.е. FLUID-угол универсальный. */

@@ -42,6 +42,16 @@ public class ItemFilterBlock extends Block implements EntityBlock {
         return new ItemFilterBlockEntity(pos, state);
     }
 
+    /** Total item budget per tick for this filter block. */
+    public int itemThroughputLimit() {
+        return (int) PipeType.ITEM.maxThroughput();
+    }
+
+    /** Maximum count of one exact item type per tick for this filter block. */
+    public int perItemThroughputLimit() {
+        return ItemRouting.PER_ITEM_TICK_CAP;
+    }
+
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;

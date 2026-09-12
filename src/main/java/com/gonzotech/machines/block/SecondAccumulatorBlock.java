@@ -1,6 +1,6 @@
 package com.gonzotech.machines.block;
 
-import com.gonzotech.machines.block.entity.AccumulatorBlockEntity;
+import com.gonzotech.machines.block.entity.SecondAccumulatorBlockEntity;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
@@ -13,9 +13,8 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Аккумулятор второго открытия.
  *
- * <p>Пока это намеренно точная функциональная копия первого аккумулятора: отдельный
- * BlockEntityType нужен только потому, что NeoForge привязывает тип BE к списку
- * допустимых блоков. Баланс второго уровня будет вынесен в отдельный patch.</p>
+ * <p>Использует самостоятельный BlockEntity второго уровня: первый аккумулятор
+ * остаётся неизменным, включая свой баланс и сохранённые миры.</p>
  */
 public final class SecondAccumulatorBlock extends AccumulatorBlock {
 
@@ -31,14 +30,21 @@ public final class SecondAccumulatorBlock extends AccumulatorBlock {
     }
 
     @Override
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof SecondAccumulatorBlockEntity accumulator
+            ? accumulator.comparatorOutput()
+            : 0;
+    }
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new AccumulatorBlockEntity(ModBlockEntities.SECOND_ACCUMULATOR.get(), pos, state);
+        return new SecondAccumulatorBlockEntity(pos, state);
     }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
         return FireboxBlock.createTickerHelper(type, ModBlockEntities.SECOND_ACCUMULATOR.get(),
-            AccumulatorBlockEntity::serverTick);
+            SecondAccumulatorBlockEntity::serverTick);
     }
 }

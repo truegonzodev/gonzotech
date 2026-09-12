@@ -130,6 +130,8 @@ public class GonzoTechMod {
         // Дать пакету network ссылки на блоки труб (сборка/разборка связки).
         com.gonzotech.machines.network.ModCompositeAccess.set(
             com.gonzotech.machines.registry.ModMachines.COMPOSITE_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.setSecond(
+            com.gonzotech.machines.registry.ModMachines.SECOND_COMPOSITE_PIPE.get());
         com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
             com.gonzotech.machines.network.PipeType.WIRE,
             com.gonzotech.machines.registry.ModMachines.WIRE.get());

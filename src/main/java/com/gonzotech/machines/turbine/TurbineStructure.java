@@ -120,7 +120,7 @@ public final class TurbineStructure {
     public static long outputPortLimit(Level level, BlockPos port) {
         BlockState state = level.getBlockState(port);
         if (!isWirePort(state) || !(state.getBlock() instanceof PipeCarrier carrier)) return 0;
-        long base = PipeType.WIRE.maxThroughput();
+        long base = carrier.throughputLimit(state, PipeType.WIRE);
         double factor = carrier.throughputFactor(state, PipeType.WIRE);
         return factor < 1.0D ? Math.max(1L, (long) Math.floor(base * factor)) : base;
     }

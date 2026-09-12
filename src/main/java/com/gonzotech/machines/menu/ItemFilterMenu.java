@@ -35,7 +35,7 @@ public class ItemFilterMenu extends AbstractContainerMenu {
         this.filterSlots = be.filterSize();
 
         // 3 ghost-слота по центру верхней зоны.
-        int gx = 62;
+        int gx = 89 - filterSlots * 9;
         int gy = 20;
         for (int i = 0; i < filterSlots; i++) {
             addSlot(new GhostSlot(be, i, gx + i * 18, gy));
@@ -151,5 +151,5 @@ public class ItemFilterMenu extends AbstractContainerMenu {
 
     /** Пустой контейнер-заглушка для позиционирования ghost-слотов. */
     private static final net.minecraft.world.SimpleContainer DUMMY =
-        new net.minecraft.world.SimpleContainer(ItemFilterBlockEntity.FILTER_SLOTS);
+        new net.minecraft.world.SimpleContainer(ItemFilterBlockEntity.MAX_FILTER_SLOTS);
 }

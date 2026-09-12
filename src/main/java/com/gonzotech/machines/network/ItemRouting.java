@@ -77,7 +77,8 @@ public final class ItemRouting {
         // Пропускная у этой точки забора = базовая × коэффициент блока
         // (универсальный узел = 0.9, обычные трубы/узлы = 1.0). Минимум 1.
         double factor = carrier.throughputFactor(state, T);
-        int budget = (int) Math.max(1, Math.floor(T.maxThroughput() * factor));
+        int budget = (int) Math.max(1, Math.floor(carrier.throughputLimit(state, T) * factor));
+        int perItemCap = Math.max(1, carrier.perItemThroughputLimit(state, T));
         if (budget <= 0) return 0;
 
         int moved = 0;
@@ -96,7 +97,7 @@ public final class ItemRouting {
             List<Sink> sinks = collectSinks(level, pos, srcPos);
             if (sinks.isEmpty()) continue;
 
-            int done = pushItems(level, pos, src, srcFace, sinks, budget);
+            int done = pushItems(level, pos, src, srcFace, sinks, budget, perItemCap);
             moved += done;
             budget -= done;
         }
@@ -114,7 +115,7 @@ public final class ItemRouting {
      * уголь»). Возвращает число перемещённых.
      */
     private static int pushItems(Level level, BlockPos pipePos, Container src, Direction srcFace,
-                                 List<Sink> sinks, int budget) {
+                                 List<Sink> sinks, int budget, int perItemCap) {
         int moved = 0;
         long rotation = level.getGameTime();
         int n = sinks.size();
@@ -130,7 +131,7 @@ public final class ItemRouting {
                 if (cur.isEmpty()) break;
                 if (!canTake(src, slot, cur, srcFace)) break;
                 // Лимит на этот вид уже исчерпан за тик — к следующему слоту.
-                if (perItem.getOrDefault(cur.getItem(), 0) >= PER_ITEM_TICK_CAP) break;
+                if (perItem.getOrDefault(cur.getItem(), 0) >= perItemCap) break;
 
                 ItemStack one = cur.copy();
                 one.setCount(1);

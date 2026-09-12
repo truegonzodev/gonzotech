@@ -1,6 +1,6 @@
 package com.gonzotech.machines.block;
 
-import com.gonzotech.machines.block.entity.CobbleGeneratorBlockEntity;
+import com.gonzotech.machines.block.entity.SecondCobbleGeneratorBlockEntity;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
@@ -11,8 +11,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Генератор булыжника второго открытия. Его рабочая логика сейчас совпадает с
- * первым уровнем; отдельный BlockEntityType оставляет уровень готовым к балансу.
+ * Генератор булыжника второго открытия. Использует независимую фиксированную 60-тактную логику без слота
+ * кирки; генератор первого уровня не изменяется.
  */
 public final class SecondCobbleGeneratorBlock extends CobbleGeneratorBlock {
 
@@ -29,13 +29,13 @@ public final class SecondCobbleGeneratorBlock extends CobbleGeneratorBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new CobbleGeneratorBlockEntity(ModBlockEntities.SECOND_COBBLE_GENERATOR.get(), pos, state);
+        return new SecondCobbleGeneratorBlockEntity(pos, state);
     }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
         return FireboxBlock.createTickerHelper(type, ModBlockEntities.SECOND_COBBLE_GENERATOR.get(),
-            CobbleGeneratorBlockEntity::serverTick);
+            SecondCobbleGeneratorBlockEntity::serverTick);
     }
 }
