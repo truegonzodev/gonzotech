@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "cesium_ingot",
+  "ingredient": "gonzotech:cesium_dust",
+  "result": {
+    "id": "gonzotech:cesium_ingot"
+  },
+  "experience": 1.0,
+  "cookingtime": 200
+}

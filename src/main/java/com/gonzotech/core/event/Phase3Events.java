@@ -44,8 +44,8 @@ import java.util.UUID;
  *       {@code AbstractFurnaceBlockEntityMixin} прямо в тике печи; в наших машинах —
  *       {@code SmeltSideEffects}.)</li>
  *   <li><b>Цезий в воде</b> ({@link PlayerTickEvent.Post}) — если в инвентаре есть
- *       цезиевая руда, поллуцит, слиток, самородок или пыль цезия и игрок в воде,
- *       каждые 8 тиков — взрыв силой 1 в игроке. Выброшенный реактивный stack в
+ *       цезиевая руда, поллуцит, слиток, самородок, пыль или блок цезия и игрок в
+ *       воде, каждые 8 тиков — взрыв силой 1 в игроке. Выброшенный реактивный stack в
  *       воде также взрывается один раз и расходуется.</li>
  *   <li><b>Ведро лавы в воде</b> — если у игрока в инвентаре ведро лавы и он в воде,
  *       оно превращается в бесполезное ведро обсидиана; аналогично — если ведро
@@ -420,16 +420,16 @@ public final class Phase3Events {
 
     /**
      * Полный и намеренно явный список реактивных форм цезия. Поллуцит — это
-     * {@code raw_cesium}; рудные BlockItem'ы оставлены для совместимости с
-     * исходной механикой. Блок-хранилище сюда не входит: он уже является
-     * строительным материалом, а не переносимой реактивной формой.
+     * {@code raw_cesium}; рудные BlockItem'ы и цезиевый блок-хранилище также
+     * считаются реактивными переносимыми формами.
      */
     private static boolean isWaterReactiveCesium(ItemStack stack) {
         if (stack.isEmpty()) return false;
         if (stack.is(ModItems.RAW_ORE_ITEMS.get("cesium").get())
             || stack.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get())
             || stack.is(ModItems.NUGGET_ITEMS.get("cesium_nugget").get())
-            || stack.is(ModItems.DUST_ITEMS.get("cesium_dust").get())) {
+            || stack.is(ModItems.DUST_ITEMS.get("cesium_dust").get())
+            || stack.is(ModItems.METAL_BLOCK_ITEMS.get("cesium_block").get())) {
             return true;
         }
         for (var oreBlock : ModItems.ORE_BLOCK_ITEMS.get("cesium").values()) {

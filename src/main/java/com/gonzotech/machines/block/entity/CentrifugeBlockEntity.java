@@ -31,7 +31,9 @@ import net.minecraft.world.level.block.state.BlockState;
  * ровно 366 GTU и 1000 mB кипятка. Броски побочных выходов серверные; до
  * уничтожения входа машина уже знает все четыре результата и атомарно проверяет
  * закреплённые slots. Поэтому заполненный output не превращает редкую побочку в
- * «невидимый ноль», а перезапуск/выгрузка чанка не вызывает повторный бросок.</p>
+ * «невидимый ноль», а перезапуск/выгрузка чанка не вызывает повторный бросок.
+ * Если в конце операции появляется цезиевая пыль, кипяток вызывает тот же
+ * разрушающий взрыв, что и печи; дробилка такой побочный эффект не использует.</p>
  */
 public class CentrifugeBlockEntity extends BaseMachineBlockEntity
     implements GtuSink, WaterSink, SteamSink, WorldlyContainer {
@@ -207,7 +209,7 @@ public class CentrifugeBlockEntity extends BaseMachineBlockEntity
         if (be.washTotal == 0 && be.tryStartWash(server)) {
             changed = true;
         }
-        if (be.washTotal > 0 && be.tickWash()) {
+        if (be.washTotal > 0 && be.tickWash(server)) {
             changed = true;
         }
 
@@ -243,11 +245,11 @@ public class CentrifugeBlockEntity extends BaseMachineBlockEntity
     }
 
     /** Advances a running wash by at most one paid tick; it simply pauses when a resource is missing. */
-    private boolean tickWash() {
+    private boolean tickWash(ServerLevel server) {
         // The saved output is emitted only after all 240 costs were paid. This extra
         // capacity check guards against malformed NBT/external mods without loss.
         if (washProgress >= washTotal) {
-            return tryFinishWash();
+            return tryFinishWash(server);
         }
 
         int waterCost = MachineDefs.centrifugeHotWaterCostForProgressTick(washProgress);
@@ -259,14 +261,19 @@ public class CentrifugeBlockEntity extends BaseMachineBlockEntity
         gtu.extract(MachineDefs.CENTRIFUGE_WASH_GTU_MILLI_PER_TICK, false);
         washProgress++;
         if (washProgress >= washTotal) {
-            tryFinishWash();
+            tryFinishWash(server);
         }
         return true;
     }
 
-    /** Atomically publishes all pending results into their four fixed slots. */
-    private boolean tryFinishWash() {
+    /**
+     * Atomically publishes all pending results into their four fixed slots. A cesium
+     * primary output is then handled by the same destructive side-effect helper as
+     * furnace output, after all outputs are publishable and before a new wash starts.
+     */
+    private boolean tryFinishWash(ServerLevel server) {
         if (!canStoreAll(pendingOutputs)) return false;
+        ItemStack primaryOutput = pendingOutputs[0].copy();
         for (int i = 0; i < pendingOutputs.length; i++) {
             ItemStack pending = pendingOutputs[i];
             if (pending.isEmpty()) continue;
@@ -281,6 +288,11 @@ public class CentrifugeBlockEntity extends BaseMachineBlockEntity
         }
         washProgress = 0;
         washTotal = 0;
+
+        // ЦФ1УР выдаёт цезиевую пыль из поллуцита при наличии настоящего кипятка.
+        // После публикации output helper корректно выбросит его ровно один раз,
+        // очистит inventory и разрушит центрифугу взрывом силы 2.
+        SmeltSideEffects.apply(server, worldPosition, primaryOutput, this);
         return true;
     }
 
