@@ -2,6 +2,7 @@ package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.AccumulatorBlock;
+import com.gonzotech.machines.block.AlloyFoundryBlock;
 import com.gonzotech.machines.block.BoilerBlock;
 import com.gonzotech.machines.block.CentrifugeBlock;
 import com.gonzotech.machines.block.CrusherBlock;
@@ -293,9 +294,9 @@ public final class ModMachines {
     public static final DeferredBlock<SecondElectricFurnaceBlock> SECOND_ELECTRIC_FURNACE =
         BLOCKS.registerBlock("second_electric_furnace", SecondElectricFurnaceBlock::new, machineMetal());
 
-    /** Размещаемая заготовка: processing/GUI намеренно будут добавлены отдельной задачей. */
-    public static final DeferredBlock<SecondMachineStubBlock> SECOND_ALLOY_FOUNDRY =
-        BLOCKS.registerBlock("second_alloy_foundry", SecondMachineStubBlock::new, machineMetal());
+    /** Завод сплавов II: 5×5 сетка и первые беспитательные именные плавки. */
+    public static final DeferredBlock<AlloyFoundryBlock> SECOND_ALLOY_FOUNDRY =
+        BLOCKS.registerBlock("second_alloy_foundry", AlloyFoundryBlock::new, machineMetal());
 
     /** Размещаемая заготовка: processing/GUI намеренно будут добавлены отдельной задачей. */
     public static final DeferredBlock<SecondMachineStubBlock> SECOND_GRINDER =

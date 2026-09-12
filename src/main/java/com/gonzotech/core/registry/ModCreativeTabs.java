@@ -27,6 +27,9 @@ public class ModCreativeTabs {
                 ModItems.RAW_ORE_ITEMS.values().forEach(item -> output.accept(item.get()));
                 // Порядок во вкладке: слитки → блоки → пыль → самородки.
                 ModItems.INGOT_ITEMS.values().forEach(item -> output.accept(item.get()));
+                // The generic alloy blank is already visible for inspection, but
+                // is not produced until the future composition/tint pass.
+                output.accept(ModItems.CUSTOM_ALLOY.get());
                 ModItems.METAL_BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
                 ModItems.DUST_ITEMS.values().forEach(item -> output.accept(item.get()));
                 ModItems.NUGGET_ITEMS.values().forEach(item -> output.accept(item.get()));

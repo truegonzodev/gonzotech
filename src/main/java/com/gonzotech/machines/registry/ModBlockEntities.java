@@ -2,6 +2,7 @@ package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.entity.AccumulatorBlockEntity;
+import com.gonzotech.machines.block.entity.AlloyFoundryBlockEntity;
 import com.gonzotech.machines.block.entity.BoilerBlockEntity;
 import com.gonzotech.machines.block.entity.CentrifugeBlockEntity;
 import com.gonzotech.machines.block.entity.CrusherBlockEntity;
@@ -89,6 +90,11 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<SecondCobbleGeneratorBlockEntity>> SECOND_COBBLE_GENERATOR =
         BLOCK_ENTITIES.register("second_cobble_generator", () -> new BlockEntityType<>(
             SecondCobbleGeneratorBlockEntity::new, false, ModMachines.SECOND_COBBLE_GENERATOR.get()));
+
+    /** Functional 5×5 alloy foundry of the second discovery. */
+    public static final Supplier<BlockEntityType<AlloyFoundryBlockEntity>> ALLOY_FOUNDRY =
+        BLOCK_ENTITIES.register("second_alloy_foundry", () -> new BlockEntityType<>(
+            AlloyFoundryBlockEntity::new, false, ModMachines.SECOND_ALLOY_FOUNDRY.get()));
 
     public static final Supplier<BlockEntityType<CrusherBlockEntity>> CRUSHER =
         BLOCK_ENTITIES.register("crusher", () -> new BlockEntityType<>(

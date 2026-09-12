@@ -25,6 +25,7 @@ public final class MachineClient {
         event.register(ModMenus.SECOND_PUMP.get(), SecondPumpScreen::new);
         event.register(ModMenus.SECOND_ACCUMULATOR.get(), SecondAccumulatorScreen::new);
         event.register(ModMenus.SECOND_COBBLE_GENERATOR.get(), SecondCobbleGeneratorScreen::new);
+        event.register(ModMenus.ALLOY_FOUNDRY.get(), AlloyFoundryScreen::new);
         event.register(ModMenus.CRUSHER.get(), CrusherScreen::new);
         event.register(ModMenus.CENTRIFUGE.get(), CentrifugeScreen::new);
         event.register(ModMenus.ITEM_FILTER.get(), ItemFilterScreen::new);

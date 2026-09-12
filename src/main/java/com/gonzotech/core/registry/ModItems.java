@@ -62,6 +62,14 @@ public class ModItems {
         ITEMS.registerItem("scholar_notes",
             props -> new com.gonzotech.chalkboard.item.ScholarNotesItem(props.stacksTo(1)));
 
+    /**
+     * Нейтральная болванка процедурного сплава. В первом проходе завод пока
+     * выдаёт только именные результаты; composition/tint Data Components будут
+     * добавлены до того, как этот предмет станет продуктом произвольной плавки.
+     */
+    public static final DeferredItem<Item> CUSTOM_ALLOY =
+        ITEMS.registerSimpleItem("custom_alloy");
+
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =
         ITEMS.registerSimpleItem("pseudo_coil");

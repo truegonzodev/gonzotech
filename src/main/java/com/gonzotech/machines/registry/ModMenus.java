@@ -2,6 +2,7 @@ package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.menu.AccumulatorMenu;
+import com.gonzotech.machines.menu.AlloyFoundryMenu;
 import com.gonzotech.machines.menu.BoilerMenu;
 import com.gonzotech.machines.menu.CentrifugeMenu;
 import com.gonzotech.machines.menu.CrusherMenu;
@@ -67,6 +68,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<SecondCobbleGeneratorMenu>> SECOND_COBBLE_GENERATOR =
         MENUS.register("second_cobble_generator", () -> IMenuTypeExtension.create(SecondCobbleGeneratorMenu::new));
+
+    public static final Supplier<MenuType<AlloyFoundryMenu>> ALLOY_FOUNDRY =
+        MENUS.register("second_alloy_foundry", () -> IMenuTypeExtension.create(AlloyFoundryMenu::new));
 
     public static final Supplier<MenuType<CrusherMenu>> CRUSHER =
         MENUS.register("crusher", () -> IMenuTypeExtension.create(CrusherMenu::new));
