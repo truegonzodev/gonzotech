@@ -14,7 +14,7 @@ import java.util.Set;
  * Правила Фазы 3:
  * <ul>
  *   <li>Блок-хранилище ({@code <metal>_block}) — у КАЖДОГО слитка.</li>
- *   <li>Пыль ({@code <metal>_dust}) — у всех, КРОМЕ iodine/manganese/sulfur/mercury.</li>
+ *   <li>Пыль ({@code <metal>_dust}) — у всех, КРОМЕ iodine/sulfur/mercury.</li>
  *   <li>Самородок ({@code <metal>_nugget}) — у всех, КРОМЕ iodine/manganese/sulfur.</li>
  * </ul>
  */
@@ -70,11 +70,11 @@ public final class Metals {
     }
 
     /**
-     * Металлы БЕЗ пыли (у них есть слиток, но пыль не делаем). Йод, марганец,
-     * сера, ртуть — по требованию заказчика.
+     * Металлы БЕЗ пыли (у них есть слиток, но пыль не делаем). Марганцевая
+     * пыль существует, поскольку нужна как пылевой вход рецепта Кантора.
      */
     private static final List<String> NO_DUST = List.of(
-        "iodine", "manganese", "sulfur", "mercury"
+        "iodine", "sulfur", "mercury"
     );
 
     /**

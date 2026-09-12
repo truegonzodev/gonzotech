@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "alnico_dust",
+  "ingredients": [
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:nickel_dust",
+    "gonzotech:cobalt_dust",
+    "gonzotech:cobalt_dust",
+    "gonzotech:aluminum_dust"
+  ],
+  "result": {
+    "id": "gonzotech:alnico_dust",
+    "count": 5
+  }
+}

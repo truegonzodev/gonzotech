@@ -44,7 +44,11 @@ public record AlloyComposition(Map<ResourceLocation, Integer> parts) {
 
         int gcd = 0;
         for (int value : ordered.values()) gcd = gcd(gcd, value);
-        if (gcd > 1) ordered.replaceAll((id, value) -> value / gcd);
+        if (gcd > 1) {
+            for (Map.Entry<ResourceLocation, Integer> entry : ordered.entrySet()) {
+                entry.setValue(entry.getValue() / gcd);
+            }
+        }
         parts = Collections.unmodifiableMap(ordered);
     }
 

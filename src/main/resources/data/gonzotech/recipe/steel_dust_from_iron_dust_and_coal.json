@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "steel_dust",
+  "ingredients": [
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "minecraft:coal"
+  ],
+  "result": {
+    "id": "gonzotech:steel_dust",
+    "count": 2
+  }
+}

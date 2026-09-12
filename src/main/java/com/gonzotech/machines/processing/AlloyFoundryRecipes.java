@@ -32,8 +32,6 @@ public final class AlloyFoundryRecipes {
         preset("stainless_steel_ingot", 7, parts("gonzotech:steel", 40, "gonzotech:chromium", 20, "gonzotech:nickel", 10)),
         preset("corten_steel_ingot", 25, parts("minecraft:iron", 190, "minecraft:copper", 30,
             "gonzotech:chromium", 10, "gonzotech:nickel", 20)),
-        preset("pobedit_ingot", 6, parts("gonzotech:steel", 20, "gonzotech:tungsten", 30,
-            "gonzotech:cobalt", 10, "minecraft:coal", 10)),
         preset("nitinol_ingot", 2, parts("gonzotech:nickel", 10, "gonzotech:titanium", 10)),
         preset("invar_ingot", 6, parts("minecraft:iron", 30, "gonzotech:nickel", 20, "gonzotech:stainless_steel", 10)),
         preset("ferromagnetic_ingot", 5, parts("minecraft:iron", 30, "gonzotech:cobalt", 10, "gonzotech:nickel", 10)),
@@ -122,9 +120,6 @@ public final class AlloyFoundryRecipes {
     }
 
     private static Item outputItem(String id) {
-        // Pobedit is the new named preset output. It intentionally stays outside
-        // the pre-existing 47-source-material catalog until it gets full forms.
-        if (id.equals("pobedit_ingot")) return ModItems.POBEDIT_INGOT.get();
         var item = ModItems.INGOT_ITEMS.get(id);
         if (item == null) throw new IllegalStateException("Unregistered alloy output: " + id);
         return item.get();

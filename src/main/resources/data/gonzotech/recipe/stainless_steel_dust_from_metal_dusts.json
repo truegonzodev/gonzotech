@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "stainless_steel_dust",
+  "ingredients": [
+    "gonzotech:steel_dust",
+    "gonzotech:steel_dust",
+    "gonzotech:steel_dust",
+    "gonzotech:steel_dust",
+    "gonzotech:chromium_dust",
+    "gonzotech:chromium_dust",
+    "gonzotech:nickel_dust"
+  ],
+  "result": {
+    "id": "gonzotech:stainless_steel_dust",
+    "count": 5
+  }
+}

@@ -71,10 +71,6 @@ public class ModItems {
     public static final DeferredItem<CustomAlloyItem> CUSTOM_ALLOY =
         ITEMS.registerItem("custom_alloy", CustomAlloyItem::new);
 
-    /** Победит — именованный output Завода сплавов, отсутствовавший в старом списке 47 слитков. */
-    public static final DeferredItem<Item> POBEDIT_INGOT =
-        ITEMS.registerSimpleItem("pobedit_ingot");
-
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =
         ITEMS.registerSimpleItem("pseudo_coil");
