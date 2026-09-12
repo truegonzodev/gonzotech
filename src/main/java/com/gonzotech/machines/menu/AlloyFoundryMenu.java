@@ -5,12 +5,13 @@ import com.gonzotech.machines.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Меню Завода сплавов: 25 независимых входных ячеек 5×5 и единственный output.
+ * Меню Завода сплавов II: 25 независимых входных ячеек 5×5 и один output.
  * Позиция ингредиента не несёт смысла — сервер агрегирует состав всей сетки.
  */
 public final class AlloyFoundryMenu extends BaseMachineMenu {
@@ -19,13 +20,17 @@ public final class AlloyFoundryMenu extends BaseMachineMenu {
 
     public AlloyFoundryMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
         this(id, inventory,
-            MenuHelper.readBlockEntity(inventory, buffer, AlloyFoundryBlockEntity.class));
+            MenuHelper.readBlockEntity(inventory, buffer, AlloyFoundryBlockEntity.class),
+            new SimpleContainerData(3));
     }
 
+    /** Server-side convenience overload; keeps the block entity's authoritative data source. */
     public AlloyFoundryMenu(int id, Inventory inventory, AlloyFoundryBlockEntity be) {
-        // There are no resource bars or a timed operation in the free first pass,
-        // but BaseMachineMenu still provides authoritative inventory and shift-click.
-        super(ModMenus.ALLOY_FOUNDRY.get(), id, be, new SimpleContainerData(0), MACHINE_SLOTS);
+        this(id, inventory, be, be.data());
+    }
+
+    public AlloyFoundryMenu(int id, Inventory inventory, AlloyFoundryBlockEntity be, ContainerData data) {
+        super(ModMenus.ALLOY_FOUNDRY.get(), id, be, data, MACHINE_SLOTS);
 
         for (int row = 0; row < AlloyFoundryBlockEntity.GRID_HEIGHT; row++) {
             for (int col = 0; col < AlloyFoundryBlockEntity.GRID_WIDTH; col++) {
@@ -35,6 +40,23 @@ public final class AlloyFoundryMenu extends BaseMachineMenu {
         }
         addSlot(new OutputOnlySlot(be, AlloyFoundryBlockEntity.SLOT_OUTPUT, 132, 54));
         addPlayerInventory(inventory, 8, 140);
+    }
+
+    public int gtu() {
+        return data.get(0);
+    }
+
+    public int alloyProgress() {
+        return data.get(1);
+    }
+
+    public int alloyTotal() {
+        return data.get(2);
+    }
+
+    public int alloyProgressPercent() {
+        int total = alloyTotal();
+        return total <= 0 ? 0 : Math.min(100, (int) ((long) alloyProgress() * 100L / total));
     }
 
     /** Input slot whose client checks use exactly the server container rule. */

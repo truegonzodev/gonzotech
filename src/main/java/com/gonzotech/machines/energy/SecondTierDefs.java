@@ -47,6 +47,25 @@ public final class SecondTierDefs {
     public static final int ELECTRIC_GTU_MILLI_PER_TICK_REMAINDER =
         ELECTRIC_GTU_PER_ITEM % ELECTRIC_COOK_TIME;
 
+    // ─────────────────────────── завод сплавов II ───────────────────────────
+
+    /** Максимум GTU в заводе сплавов II (mGTU: 1640 GTU). */
+    public static final int ALLOY_FOUNDRY_GTU_CAPACITY = 1_640 * MachineDefs.MILLI;
+    /** Совокупный максимум приёма GTU от всех сетей за тик (mGTU: 220 GTU/t). */
+    public static final int ALLOY_FOUNDRY_GTU_INTAKE = 220 * MachineDefs.MILLI;
+    /** Базовая продолжительность одной плавки. */
+    public static final int ALLOY_FOUNDRY_BASE_TICKS = 80;
+    /** Дополнительная продолжительность на каждый предмет в исходной сетке 5×5. */
+    public static final int ALLOY_FOUNDRY_TICKS_PER_INGREDIENT = 8;
+    /** Ровный расход работающего завода (mGTU: 2.8 GTU/t). */
+    public static final int ALLOY_FOUNDRY_GTU_MILLI_PER_TICK = 2_800;
+
+    /** Exact duration for an already validated 5×5-grid transaction. */
+    public static int alloyFoundryTicksForIngredients(int ingredientItems) {
+        return Math.addExact(ALLOY_FOUNDRY_BASE_TICKS,
+            Math.multiplyExact(Math.max(0, ingredientItems), ALLOY_FOUNDRY_TICKS_PER_INGREDIENT));
+    }
+
     // ─────────────────────────── фильтр II ───────────────────────────
 
     public static final int ITEM_FILTER_SLOTS = 5;

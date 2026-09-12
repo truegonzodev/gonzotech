@@ -540,6 +540,7 @@
   "block.gonzotech.second_alloy_foundry": "Завод сплавов II",
   "gui.gonzotech.alloy_foundry.auto": "АВТО",
   "gui.gonzotech.alloy_foundry.output": "ВЫХОД",
+  "gui.gonzotech.alloy_foundry.alloying_progress": "Сплавление: %s%%",
   "item.gonzotech.custom_alloy": "Пользовательский сплав",
   "tooltip.gonzotech.custom_alloy.blank": "Ожидает состав сплава",
   "tooltip.gonzotech.custom_alloy.part": "- %s порц.: %s",

@@ -37,4 +37,12 @@ public final class AlloyFoundryBlock extends MachineBlock {
         return FireboxBlock.createTickerHelper(type, ModBlockEntities.ALLOY_FOUNDRY.get(),
             AlloyFoundryBlockEntity::serverTick);
     }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof AlloyFoundryBlockEntity foundry) {
+            foundry.dropPendingOutputForBreak();
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
 }

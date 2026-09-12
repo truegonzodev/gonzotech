@@ -98,6 +98,15 @@ public final class AlloyFoundryRecipes {
             output = output.copy();
             ingredients = Map.copyOf(ingredients);
         }
+
+        /** Total ingot/dust/nugget item count consumed by this all-grid transaction. */
+        public int ingredientItemCount() {
+            int count = 0;
+            for (int amount : ingredients.values()) {
+                count = Math.addExact(count, amount);
+            }
+            return count;
+        }
     }
 
     private record Preset(String outputIngotId, int outputCount, Map<ResourceLocation, Integer> ratio) {
