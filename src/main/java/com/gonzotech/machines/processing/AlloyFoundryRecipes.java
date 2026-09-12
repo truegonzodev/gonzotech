@@ -19,8 +19,9 @@ import java.util.Map;
  * preset matches only when every input material belongs to that preset and all
  * amounts are one common multiple of its ratio. Thus a corten load cannot be
  * misread as an invar batch plus ignored leftovers. If no preset matches, a
- * grid consisting exclusively of generic-eligible materials produces a
- * component-bearing {@code custom_alloy}.</p>
+ * grid must contain at least two distinct generic-eligible materials before it
+ * can produce a component-bearing {@code custom_alloy}; a pure material is not
+ * an alloy and therefore never starts an operation.</p>
  */
 public final class AlloyFoundryRecipes {
 
@@ -60,8 +61,9 @@ public final class AlloyFoundryRecipes {
     /**
      * Returns one all-grid transaction, or {@code null} when the current mixture
      * is incomplete/unsupported. Named results always have priority over generic
-     * output. All input forms are aggregated first, so dust is equal to its ingot
-     * and ten nuggets equal one portion.
+     * output, so the one-material iron → cast-iron preset remains valid. All input
+     * forms are aggregated first, so dust is equal to its ingot and ten nuggets
+     * equal one portion. A generic alloy needs at least two distinct materials.
      */
     public static Batch find(Iterable<ItemStack> contents) {
         Input input = Input.collect(contents);
@@ -75,7 +77,12 @@ public final class AlloyFoundryRecipes {
             }
         }
 
-        if (!input.allGeneric || input.totalUnits < MIN_CUSTOM_ALLOY_UNITS
+        // A single material is not a custom alloy. This check deliberately runs
+        // after named presets, preserving the intentional iron → cast-iron path.
+        // materialUnits is keyed by material id, so an ingot plus nuggets/dust of
+        // the same metal still counts as one material and does not start a batch.
+        if (input.materialUnits.size() < 2 || !input.allGeneric
+            || input.totalUnits < MIN_CUSTOM_ALLOY_UNITS
             || input.totalUnits % AlloyMaterialCatalog.UNITS_PER_PORTION != 0) {
             return null;
         }
