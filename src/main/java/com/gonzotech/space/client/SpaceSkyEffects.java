@@ -114,6 +114,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     /** Множитель плотности тумана для мира. */
     private final float fogFactor;
 
+    /**
+     * Whether this sky effect consumes vanilla weather rendering/ticking.
+     * Space worlds keep this enabled as a defensive second layer after their
+     * no-precipitation biomes; the Overworld explicitly leaves it disabled.
+     */
+    private final boolean suppressesPrecipitation;
+
     public SpaceSkyEffects(float cloudHeight,
                            boolean hasGround,
                            float fogFactor,
@@ -126,7 +133,28 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float starDayBrightness) {
         this(cloudHeight, hasGround, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
             horizonNightArgb, sunsetArgb, bodies, daylightScale,
-            starNightBrightness, starDayBrightness, -1.0F);
+            starNightBrightness, starDayBrightness, -1.0F, true);
+    }
+
+    /**
+     * Full normal-cycle constructor with an explicit weather-rendering policy.
+     * Only the custom Overworld effect passes {@code false}; every actual space
+     * dimension retains its deliberately dry behaviour.
+     */
+    public SpaceSkyEffects(float cloudHeight,
+                           boolean hasGround,
+                           float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness,
+                           boolean suppressesPrecipitation) {
+        this(cloudHeight, hasGround, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, daylightScale,
+            starNightBrightness, starDayBrightness, -1.0F, suppressesPrecipitation);
     }
 
     public SpaceSkyEffects(float cloudHeight,
@@ -140,8 +168,26 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float starNightBrightness,
                            float starDayBrightness,
                            float fixedDaylight) {
+        this(cloudHeight, hasGround, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, daylightScale,
+            starNightBrightness, starDayBrightness, fixedDaylight, true);
+    }
+
+    public SpaceSkyEffects(float cloudHeight,
+                           boolean hasGround,
+                           float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness,
+                           float fixedDaylight,
+                           boolean suppressesPrecipitation) {
         super(cloudHeight, hasGround, normalSkyType(), false, false);
         this.fogFactor = fogFactor;
+        this.suppressesPrecipitation = suppressesPrecipitation;
         this.zenithDayArgb = zenithDayArgb;
         this.zenithNightArgb = zenithNightArgb;
         this.horizonDayArgb = horizonDayArgb;
@@ -230,12 +276,17 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     @Override
     public boolean renderSnowAndRain(ClientLevel level, int ticks, float partialTick,
                                      double camX, double camY, double camZ) {
-        return true;
+        // true cancels vanilla particles; false lets the Overworld render its
+        // normal rain and snow after this custom sky has been drawn.
+        return suppressesPrecipitation;
     }
 
     @Override
     public boolean tickRain(ClientLevel level, int ticks, Camera camera) {
-        return true;
+        // Keep the client rain/drip particle tick in lockstep with the render
+        // decision. Server-side snow placement is independently governed by
+        // each biome's has_precipitation flag.
+        return suppressesPrecipitation;
     }
 
     @Override

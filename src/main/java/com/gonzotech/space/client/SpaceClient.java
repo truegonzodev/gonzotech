@@ -45,7 +45,9 @@ public final class SpaceClient {
             /*sunset    */ 0xDCFFA64A,
             bodies,
             /*daylightScale*/ 1.00F,
-            /*starNight*/ 0.80F, /*starDay*/ 0.00F);
+            /*starNight*/ 0.80F, /*starDay*/ 0.00F,
+            // The custom celestial renderer must not consume normal terrestrial weather.
+            /*suppressesPrecipitation*/ false);
     }
 
     // ---- ЛУНА: тёмно-синее→багрянец(закат)→почти чёрное; Земля висит на СЗ ----
