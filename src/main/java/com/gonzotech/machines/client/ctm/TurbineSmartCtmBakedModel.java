@@ -296,11 +296,11 @@ public final class TurbineSmartCtmBakedModel implements IDynamicBakedModel {
 
     @FunctionalInterface
     private interface UvMap {
-        Uv BASE = Uv::new;
-        Uv TOP_LINE = Uv::new;
-        Uv RIGHT_LINE = (u, v) -> new Uv(v, 16 - u);
-        Uv BOTTOM_LINE = (u, v) -> new Uv(u, 16 - v);
-        Uv LEFT_LINE = (u, v) -> new Uv(v, u);
+        UvMap BASE = Uv::new;
+        UvMap TOP_LINE = Uv::new;
+        UvMap RIGHT_LINE = (u, v) -> new Uv(v, 16 - u);
+        UvMap BOTTOM_LINE = (u, v) -> new Uv(u, 16 - v);
+        UvMap LEFT_LINE = (u, v) -> new Uv(v, u);
 
         Uv map(float u, float v);
     }
