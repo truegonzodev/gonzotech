@@ -11,8 +11,9 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
  * Внешний корпус прямоугольной паровой турбины.
  *
  * <p>При сборке {@link #FRAME} сохраняет положение блока на границе всего
- * параллелепипеда, а четыре {@code port_*} бита — локальные рёбра вокруг
- * service-порта. Это статический, дешёвый CTM: модели не сканируют мир во
+ * параллелепипеда, четыре {@code port_*} бита — локальные рёбра вокруг
+ * service-порта, а {@code cap_*} — 2×2 уголки на диагональных клетках вокруг
+ * него. Это статический, дешёвый CTM: модели не сканируют мир во
  * время рендера и не требуют BlockEntity у каждого корпуса.</p>
  */
 public final class TurbineCasingBlock extends TurbinePartBlock {
@@ -26,6 +27,11 @@ public final class TurbineCasingBlock extends TurbinePartBlock {
     public static final BooleanProperty PORT_1 = BooleanProperty.create("port_1");
     public static final BooleanProperty PORT_2 = BooleanProperty.create("port_2");
     public static final BooleanProperty PORT_3 = BooleanProperty.create("port_3");
+    /** 2×2 угловые cap-тексели на диагональных клетках вокруг service-порта. */
+    public static final BooleanProperty CAP_0 = BooleanProperty.create("cap_0");
+    public static final BooleanProperty CAP_1 = BooleanProperty.create("cap_1");
+    public static final BooleanProperty CAP_2 = BooleanProperty.create("cap_2");
+    public static final BooleanProperty CAP_3 = BooleanProperty.create("cap_3");
 
     public TurbineCasingBlock(Properties properties) {
         super(properties);
@@ -35,7 +41,11 @@ public final class TurbineCasingBlock extends TurbinePartBlock {
             .setValue(PORT_0, false)
             .setValue(PORT_1, false)
             .setValue(PORT_2, false)
-            .setValue(PORT_3, false));
+            .setValue(PORT_3, false)
+            .setValue(CAP_0, false)
+            .setValue(CAP_1, false)
+            .setValue(CAP_2, false)
+            .setValue(CAP_3, false));
     }
 
     @Override
@@ -46,7 +56,7 @@ public final class TurbineCasingBlock extends TurbinePartBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(FRAME, PORT_0, PORT_1, PORT_2, PORT_3);
+        builder.add(FRAME, PORT_0, PORT_1, PORT_2, PORT_3, CAP_0, CAP_1, CAP_2, CAP_3);
     }
 
     /**

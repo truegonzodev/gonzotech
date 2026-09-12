@@ -228,6 +228,7 @@ public final class TurbineStructure {
         List<net.minecraft.core.Direction> boundary = boundaryDirections(build, pos);
         TurbineCasingBlock.FrameProfile profile = frameProfile(boundary);
         boolean[] portBorders = new boolean[4];
+        boolean[] cornerCaps = diagonalCornerCaps(level, build, pos, boundary);
 
         if (boundary.size() == 1) {
             // Плоская грань: четыре направления в постоянном мировом порядке.
@@ -264,7 +265,62 @@ public final class TurbineStructure {
             .setValue(TurbineCasingBlock.PORT_0, portBorders[0])
             .setValue(TurbineCasingBlock.PORT_1, portBorders[1])
             .setValue(TurbineCasingBlock.PORT_2, portBorders[2])
-            .setValue(TurbineCasingBlock.PORT_3, portBorders[3]);
+            .setValue(TurbineCasingBlock.PORT_3, portBorders[3])
+            .setValue(TurbineCasingBlock.CAP_0, cornerCaps[0])
+            .setValue(TurbineCasingBlock.CAP_1, cornerCaps[1])
+            .setValue(TurbineCasingBlock.CAP_2, cornerCaps[2])
+            .setValue(TurbineCasingBlock.CAP_3, cornerCaps[3]);
+    }
+
+    /**
+     * Запекает 2×2 corner caps в диагональных клетках вокруг каждого порта.
+     *
+     * <p>В отличие от {@code port_*}, которые принадлежат четырём прямым
+     * соседям порта, эти флаги принадлежат именно диагональным клеткам из
+     * схемы {@code [у][к][у] / [к][д][к] / [у][к][у]}. Для каждой видимой
+     * грани перебираются две касательные оси. На плоской грани это даёт четыре
+     * диагонали, на ребре — две на каждую из двух граней, в углу — по одной на
+     * грань. Порядок полностью повторён в генераторе JSON-моделей.</p>
+     */
+    private static boolean[] diagonalCornerCaps(ServerLevel level, Build build, BlockPos pos,
+                                                  List<net.minecraft.core.Direction> boundary) {
+        boolean[] result = new boolean[4];
+        int index = 0;
+        for (net.minecraft.core.Direction normal : boundary) {
+            net.minecraft.core.Direction.Axis firstAxis = null;
+            net.minecraft.core.Direction.Axis secondAxis = null;
+            for (net.minecraft.core.Direction.Axis axis : net.minecraft.core.Direction.Axis.values()) {
+                if (axis == normal.getAxis()) continue;
+                if (firstAxis == null) firstAxis = axis;
+                else secondAxis = axis;
+            }
+            for (net.minecraft.core.Direction first : surfaceDirections(build, pos, firstAxis)) {
+                for (net.minecraft.core.Direction second : surfaceDirections(build, pos, secondAxis)) {
+                    if (index >= result.length) {
+                        throw new IllegalStateException("Too many diagonal turbine corner caps");
+                    }
+                    result[index++] = isServicePortAt(level, build, pos.relative(first).relative(second));
+                }
+            }
+        }
+        return result;
+    }
+
+    /** Направления вдоль оси, которые ещё остаются в bounding parallelepiped. */
+    private static List<net.minecraft.core.Direction> surfaceDirections(Build build, BlockPos pos,
+                                                                          net.minecraft.core.Direction.Axis axis) {
+        int coordinate = coordinate(pos, axis);
+        if (coordinate == coordinate(build.min, axis)) return List.of(positiveDirection(axis));
+        if (coordinate == coordinate(build.max, axis)) return List.of(negativeDirection(axis));
+        return List.of(negativeDirection(axis), positiveDirection(axis));
+    }
+
+    private static int coordinate(BlockPos pos, net.minecraft.core.Direction.Axis axis) {
+        return switch (axis) {
+            case X -> pos.getX();
+            case Y -> pos.getY();
+            case Z -> pos.getZ();
+        };
     }
 
     private static List<net.minecraft.core.Direction> boundaryDirections(Build build, BlockPos pos) {
@@ -513,7 +569,11 @@ public final class TurbineStructure {
                             .setValue(TurbineCasingBlock.PORT_0, false)
                             .setValue(TurbineCasingBlock.PORT_1, false)
                             .setValue(TurbineCasingBlock.PORT_2, false)
-                            .setValue(TurbineCasingBlock.PORT_3, false);
+                            .setValue(TurbineCasingBlock.PORT_3, false)
+                            .setValue(TurbineCasingBlock.CAP_0, false)
+                            .setValue(TurbineCasingBlock.CAP_1, false)
+                            .setValue(TurbineCasingBlock.CAP_2, false)
+                            .setValue(TurbineCasingBlock.CAP_3, false);
                         level.setBlock(pos, next, Block.UPDATE_CLIENTS);
                     } else if (state.getBlock() instanceof TurbineRotorBlock) {
                         BlockState next = state
