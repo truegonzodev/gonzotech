@@ -9,13 +9,14 @@ import com.gonzotech.machines.processing.AlloyMaterialCatalog;
 import com.gonzotech.machines.processing.AlloyProperties;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Unit;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.DamageResistant;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.Tool;
@@ -226,9 +227,11 @@ public final class AlloyEquipmentStats {
             result.remove(DataComponents.ENCHANTABLE);
         }
         if (properties.heatResistance() >= LAVA_RESISTANCE_THRESHOLD) {
-            result.set(DataComponents.FIRE_RESISTANT, Unit.INSTANCE);
+            // In 1.21.4, the former FIRE_RESISTANT flag is DAMAGE_RESISTANT
+            // scoped to the vanilla fire/lava damage-type tag.
+            result.set(DataComponents.DAMAGE_RESISTANT, new DamageResistant(DamageTypeTags.IS_FIRE));
         } else {
-            result.remove(DataComponents.FIRE_RESISTANT);
+            result.remove(DataComponents.DAMAGE_RESISTANT);
         }
     }
 
