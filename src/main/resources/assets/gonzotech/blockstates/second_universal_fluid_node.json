@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "gonzotech:block/first_universal_fluid_node"
+    }
+  }
+}

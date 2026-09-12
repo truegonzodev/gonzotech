@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "cantor_dust",
+  "ingredients": [
+    "gonzotech:cobalt_dust",
+    "gonzotech:chromium_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:manganese_dust",
+    "gonzotech:nickel_dust"
+  ],
+  "result": {
+    "id": "gonzotech:cantor_dust",
+    "count": 3
+  }
+}

@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.item.DiscoveryItem;
+import com.gonzotech.core.item.CustomAlloyItem;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.item.BlockItem;
@@ -62,9 +63,57 @@ public class ModItems {
         ITEMS.registerItem("scholar_notes",
             props -> new com.gonzotech.chalkboard.item.ScholarNotesItem(props.stacksTo(1)));
 
+    /**
+     * Нейтральная болванка процедурного сплава. Завод записывает в каждый
+     * созданный stack composition/tint Data Components; пустой creative-stack
+     * остаётся серым образцом без рецептурных характеристик.
+     */
+    public static final DeferredItem<CustomAlloyItem> CUSTOM_ALLOY =
+        ITEMS.registerItem("custom_alloy", CustomAlloyItem::new);
+
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =
         ITEMS.registerSimpleItem("pseudo_coil");
+
+    // ─────────────────────── Материалы переработки: компоненты ───────────────────────
+    // Пока это только зарегистрированные ингредиенты с placeholder-ресурсами: рецепты
+    // и машинная переработка будут добавлены отдельной, согласованной задачей.
+    public static final DeferredItem<Item> GRANITE_GRIT =
+        ITEMS.registerSimpleItem("granite_grit");
+    public static final DeferredItem<Item> ANDESITE_GRIT =
+        ITEMS.registerSimpleItem("andesite_grit");
+    public static final DeferredItem<Item> DIORITE_GRIT =
+        ITEMS.registerSimpleItem("diorite_grit");
+    public static final DeferredItem<Item> TRIO_GRIT =
+        ITEMS.registerSimpleItem("trio_grit");
+    public static final DeferredItem<Item> CLINKER_GRIT =
+        ITEMS.registerSimpleItem("clinker_grit");
+    public static final DeferredItem<Item> ARMOR_MIX =
+        ITEMS.registerSimpleItem("armor_mix");
+    public static final DeferredItem<Item> ANDESITE_SILICATE_CLINKER =
+        ITEMS.registerSimpleItem("andesite_silicate_clinker");
+    public static final DeferredItem<Item> WHITE_PORCELAIN_BATCH =
+        ITEMS.registerSimpleItem("white_porcelain_batch");
+    public static final DeferredItem<Item> REBAR =
+        ITEMS.registerSimpleItem("rebar");
+
+    /**
+     * Пыли ванильных металлов для побочных выходов ЦФ1УР. Они намеренно не добавлены
+     * в Metals.INGOT_IDS: сами слитки принадлежат vanilla, а у мода нет их блоков или
+     * самородков. В DUST_ITEMS они добавляются после всех существующих GT-пылей.
+     */
+    public static final DeferredItem<Item> COPPER_DUST =
+        ITEMS.registerSimpleItem("copper_dust");
+    public static final DeferredItem<Item> IRON_DUST =
+        ITEMS.registerSimpleItem("iron_dust");
+
+    /** Ваниль не имеет медного самородка; он нужен для выходов ЦФ1УР и дробилки. */
+    public static final DeferredItem<Item> COPPER_NUGGET =
+        ITEMS.registerSimpleItem("copper_nugget");
+
+    /** Чистый кремний — редкая побочка алмазной руды в ЦФ1УР. */
+    public static final DeferredItem<Item> SILICON =
+        ITEMS.registerSimpleItem("silicon");
 
     /**
      * Фаза 3 — «прикол»: ведро обсидиана. Бесполезный предмет: ведро лавы в
@@ -135,6 +184,23 @@ public class ModItems {
     public static final DeferredItem<BlockItem> LUNAR_DIRT_ITEM =
         ITEMS.registerSimpleBlockItem("lunar_dirt", ModBlocks.LUNAR_DIRT);
 
+    // ─────────────────────── Материалы переработки: строительные блоки ───────────────────────
+    // Декоративные блоки-заготовки без рецептов и специальной механики.
+    public static final DeferredItem<BlockItem> ARMOR_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("armor_concrete", ModBlocks.ARMOR_CONCRETE);
+    public static final DeferredItem<BlockItem> REINFORCED_ARMOR_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("reinforced_armor_concrete", ModBlocks.REINFORCED_ARMOR_CONCRETE);
+    public static final DeferredItem<BlockItem> DURABLE_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("durable_concrete", ModBlocks.DURABLE_CONCRETE);
+    public static final DeferredItem<BlockItem> PORCELAIN_ITEM =
+        ITEMS.registerSimpleBlockItem("porcelain", ModBlocks.PORCELAIN);
+    public static final DeferredItem<BlockItem> SLAG_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("slag_concrete", ModBlocks.SLAG_CONCRETE);
+    public static final DeferredItem<BlockItem> INDUSTRIAL_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("industrial_concrete", ModBlocks.INDUSTRIAL_CONCRETE);
+    public static final DeferredItem<BlockItem> REINFORCED_INDUSTRIAL_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("reinforced_industrial_concrete", ModBlocks.REINFORCED_INDUSTRIAL_CONCRETE);
+
     // ─────────────────────── Фаза 4: BlockItem'ы блоков космоса ───────────────────────
     public static final DeferredItem<BlockItem> LUNAR_STONE_ITEM =
         ITEMS.registerSimpleBlockItem("lunar_stone", ModBlocks.LUNAR_STONE);
@@ -188,12 +254,20 @@ public class ModItems {
                 DUST_ITEMS.put(dustId, ITEMS.registerSimpleItem(dustId));
             }
         }
+        // ВАЖНО: эти две vanilla-пыли идут строго после всех уже существующих GT-пылей,
+        // но до самородков, поэтому не засоряют хвост вкладки ресурсов.
+        DUST_ITEMS.put("copper_dust", COPPER_DUST);
+        DUST_ITEMS.put("iron_dust", IRON_DUST);
+
         for (String ingotId : INGOT_IDS) {
             if (Metals.hasNugget(ingotId)) {
                 String nuggetId = Metals.base(ingotId) + "_nugget";
                 NUGGET_ITEMS.put(nuggetId, ITEMS.registerSimpleItem(nuggetId));
             }
         }
+        // Медный самородок намеренно последний: как copper/iron dust после
+        // основной коллекции пылей, он не меняет порядок существующих ресурсов.
+        NUGGET_ITEMS.put("copper_nugget", COPPER_NUGGET);
 
         for (int i = 1; i <= 16; i++) {
             final int num = i;

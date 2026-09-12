@@ -27,9 +27,11 @@ public class ModCreativeTabs {
                 ModItems.RAW_ORE_ITEMS.values().forEach(item -> output.accept(item.get()));
                 // Порядок во вкладке: слитки → блоки → пыль → самородки.
                 ModItems.INGOT_ITEMS.values().forEach(item -> output.accept(item.get()));
+                output.accept(ModItems.CUSTOM_ALLOY.get());
                 ModItems.METAL_BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
                 ModItems.DUST_ITEMS.values().forEach(item -> output.accept(item.get()));
                 ModItems.NUGGET_ITEMS.values().forEach(item -> output.accept(item.get()));
+                output.accept(ModItems.SILICON.get());
             })
             .build()
     );
@@ -53,6 +55,8 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get());
@@ -75,6 +79,34 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get());
+                // Технологическая цепочка обработки руды завершает список машин.
+                output.accept(com.gonzotech.machines.registry.ModMachines.CRUSHER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
+
+
+                // Второе открытие: пока все характеристики совпадают с первым
+                // уровнем, но порядок уже фиксирует будущую progression-витрину.
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WIRE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_HEAT_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WATER_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAM_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_UNIVERSAL_FLUID_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WIRE_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_HEAT_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WATER_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAM_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_UNIVERSAL_FLUID_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_UNIVERSAL_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ACCUMULATOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_SCAVENGER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get());
             })
             .build()
     );
@@ -89,6 +121,14 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.LUNAR_DIRT_ITEM.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.LUNAR_DIRT_ITEM.get());
+                // Строительные материалы переработки — в согласованном порядке.
+                output.accept(ModItems.ARMOR_CONCRETE_ITEM.get());
+                output.accept(ModItems.REINFORCED_ARMOR_CONCRETE_ITEM.get());
+                output.accept(ModItems.DURABLE_CONCRETE_ITEM.get());
+                output.accept(ModItems.PORCELAIN_ITEM.get());
+                output.accept(ModItems.SLAG_CONCRETE_ITEM.get());
+                output.accept(ModItems.INDUSTRIAL_CONCRETE_ITEM.get());
+                output.accept(ModItems.REINFORCED_INDUSTRIAL_CONCRETE_ITEM.get());
                 // Фаза 4 — блоки космоса.
                 output.accept(ModItems.LUNAR_STONE_ITEM.get());
                 output.accept(ModItems.RICH_LUNAR_STONE_ITEM.get());
@@ -111,11 +151,20 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.PSEUDO_COIL.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.PSEUDO_COIL.get());
+                output.accept(ModItems.GRANITE_GRIT.get());
+                output.accept(ModItems.ANDESITE_GRIT.get());
+                output.accept(ModItems.DIORITE_GRIT.get());
+                output.accept(ModItems.TRIO_GRIT.get());
+                output.accept(ModItems.CLINKER_GRIT.get());
+                output.accept(ModItems.ARMOR_MIX.get());
+                output.accept(ModItems.ANDESITE_SILICATE_CLINKER.get());
+                output.accept(ModItems.WHITE_PORCELAIN_BATCH.get());
+                output.accept(ModItems.REBAR.get());
             })
             .build()
     );
 
-    /** «Приколы Gonzo Tech» — бесполезные/шуточные предметы. */
+    /** «Приколы Gonzo Tech» — шуточные предметы и некарфтящиеся админ-инструменты. */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> GAGS_TAB = CREATIVE_TABS.register(
         "gags",
         () -> CreativeModeTab.builder()
@@ -126,6 +175,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());
+                // Админские сингулярности — специально не имеют crafting recipes.
+                output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_HEAT_SOURCE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_ENERGY_SOURCE_ITEM.get());
             })
             .build()
     );

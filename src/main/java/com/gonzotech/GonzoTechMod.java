@@ -7,6 +7,7 @@ import com.gonzotech.core.network.CesiumBlastRequestPayload;
 import com.gonzotech.core.ore.CesiumOreBlock;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.core.registry.ModCreativeTabs;
+import com.gonzotech.core.registry.ModDataComponents;
 import com.gonzotech.core.registry.ModFeatures;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.registry.ModBlockEntities;
@@ -40,6 +41,7 @@ public class GonzoTechMod {
 
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
+        ModDataComponents.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
@@ -54,7 +56,9 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
             com.gonzotech.machines.network.FlowTracker.clearAll();
             com.gonzotech.machines.network.ItemFlowTracker.clearAll();
+            com.gonzotech.machines.network.UniversalNodeComparator.clearAll();
             com.gonzotech.machines.network.FluidBudgetLedger.clearAll();
+            com.gonzotech.machines.turbine.TurbineStructure.clearAll();
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
@@ -72,6 +76,9 @@ public class GonzoTechMod {
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
+            modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
+            // Texture-only Smart CTM корпусной оболочки турбины.
+            modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
             NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
             // Три HUD-шкалы «психики» слева от хотбара.
@@ -126,6 +133,8 @@ public class GonzoTechMod {
         // Дать пакету network ссылки на блоки труб (сборка/разборка связки).
         com.gonzotech.machines.network.ModCompositeAccess.set(
             com.gonzotech.machines.registry.ModMachines.COMPOSITE_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.setSecond(
+            com.gonzotech.machines.registry.ModMachines.SECOND_COMPOSITE_PIPE.get());
         com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
             com.gonzotech.machines.network.PipeType.WIRE,
             com.gonzotech.machines.registry.ModMachines.WIRE.get());

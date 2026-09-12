@@ -2,12 +2,20 @@ package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.menu.AccumulatorMenu;
+import com.gonzotech.machines.menu.AlloyFoundryMenu;
 import com.gonzotech.machines.menu.BoilerMenu;
+import com.gonzotech.machines.menu.CentrifugeMenu;
+import com.gonzotech.machines.menu.CrusherMenu;
 import com.gonzotech.machines.menu.CobbleGeneratorMenu;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.menu.PumpMenu;
 import com.gonzotech.machines.menu.StirlingMenu;
+import com.gonzotech.machines.menu.SecondAccumulatorMenu;
+import com.gonzotech.machines.menu.SecondCobbleGeneratorMenu;
+import com.gonzotech.machines.menu.SecondElectricFurnaceMenu;
+import com.gonzotech.machines.menu.SecondPumpMenu;
+import com.gonzotech.machines.menu.TurbineMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
@@ -34,17 +42,41 @@ public final class ModMenus {
     public static final Supplier<MenuType<StirlingMenu>> STIRLING =
         MENUS.register("stirling", () -> IMenuTypeExtension.create(StirlingMenu::new));
 
+    public static final Supplier<MenuType<TurbineMenu>> TURBINE =
+        MENUS.register("turbine", () -> IMenuTypeExtension.create(TurbineMenu::new));
+
     public static final Supplier<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE =
         MENUS.register("electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));
+
+    public static final Supplier<MenuType<SecondElectricFurnaceMenu>> SECOND_ELECTRIC_FURNACE =
+        MENUS.register("second_electric_furnace", () -> IMenuTypeExtension.create(SecondElectricFurnaceMenu::new));
 
     public static final Supplier<MenuType<PumpMenu>> PUMP =
         MENUS.register("pump", () -> IMenuTypeExtension.create(PumpMenu::new));
 
+    public static final Supplier<MenuType<SecondPumpMenu>> SECOND_PUMP =
+        MENUS.register("second_pump", () -> IMenuTypeExtension.create(SecondPumpMenu::new));
+
     public static final Supplier<MenuType<AccumulatorMenu>> ACCUMULATOR =
         MENUS.register("accumulator", () -> IMenuTypeExtension.create(AccumulatorMenu::new));
 
+    public static final Supplier<MenuType<SecondAccumulatorMenu>> SECOND_ACCUMULATOR =
+        MENUS.register("second_accumulator", () -> IMenuTypeExtension.create(SecondAccumulatorMenu::new));
+
     public static final Supplier<MenuType<CobbleGeneratorMenu>> COBBLE_GENERATOR =
         MENUS.register("cobble_generator", () -> IMenuTypeExtension.create(CobbleGeneratorMenu::new));
+
+    public static final Supplier<MenuType<SecondCobbleGeneratorMenu>> SECOND_COBBLE_GENERATOR =
+        MENUS.register("second_cobble_generator", () -> IMenuTypeExtension.create(SecondCobbleGeneratorMenu::new));
+
+    public static final Supplier<MenuType<AlloyFoundryMenu>> ALLOY_FOUNDRY =
+        MENUS.register("second_alloy_foundry", () -> IMenuTypeExtension.create(AlloyFoundryMenu::new));
+
+    public static final Supplier<MenuType<CrusherMenu>> CRUSHER =
+        MENUS.register("crusher", () -> IMenuTypeExtension.create(CrusherMenu::new));
+
+    public static final Supplier<MenuType<CentrifugeMenu>> CENTRIFUGE =
+        MENUS.register("centrifuge", () -> IMenuTypeExtension.create(CentrifugeMenu::new));
 
     public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> ITEM_FILTER =
         MENUS.register("item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));

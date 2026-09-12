@@ -23,7 +23,7 @@ public class PumpBlock extends MachineBlock {
     }
 
     @Override
-    protected MapCodec<PumpBlock> codec() {
+    protected MapCodec<? extends PumpBlock> codec() {
         return CODEC;
     }
 

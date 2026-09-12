@@ -44,7 +44,9 @@ import java.util.UUID;
  *       {@code AbstractFurnaceBlockEntityMixin} прямо в тике печи; в наших машинах —
  *       {@code SmeltSideEffects}.)</li>
  *   <li><b>Цезий в воде</b> ({@link PlayerTickEvent.Post}) — если в инвентаре есть
- *       цезиевая руда/поллуцит и игрок в воде, каждые 8 тиков — взрыв силой 1 в игроке.</li>
+ *       цезиевая руда, поллуцит, слиток, самородок, пыль или блок цезия и игрок в
+ *       воде, каждые 8 тиков — взрыв силой 1 в игроке. Выброшенный реактивный stack в
+ *       воде также взрывается один раз и расходуется.</li>
  *   <li><b>Ведро лавы в воде</b> — если у игрока в инвентаре ведро лавы и он в воде,
  *       оно превращается в бесполезное ведро обсидиана; аналогично — если ведро
  *       лавы <i>выброшено</i> предметом в воду ({@link EntityTickEvent.Post}).</li>
@@ -193,24 +195,42 @@ public final class Phase3Events {
             player.containerMenu.broadcastChanges();
         }
 
-        // 3. Цезий/поллуцит в инвентаре → взрыв силой 1 в игроке каждые 8 тиков.
-        if (level.getGameTime() % WATER_EFFECT_INTERVAL == 0 && hasCesium(inv)) {
+        // 3. Любая реактивная форма цезия в инвентаре → взрыв силой 1 в игроке
+        // каждые 8 тиков. Это оставляет старое поведение inventory-стаков без
+        // расхода материала; выброшенный stack обрабатывается ниже и расходуется.
+        if (level.getGameTime() % WATER_EFFECT_INTERVAL == 0 && hasWaterReactiveCesium(inv)) {
             level.explode(null,
                 player.getX(), player.getY(), player.getZ(),
                 CESIUM_WATER_EXPLOSION, Level.ExplosionInteraction.NONE);
         }
     }
 
-    // ─────────────── 4b. Выброшенное ведро лавы (item entity) в воде ───────────────
+    // ─────────────── 4b. Выброшенные предметы в воде ───────────────────────
 
     @SubscribeEvent
     public static void onEntityTick(EntityTickEvent.Post event) {
         if (!(event.getEntity() instanceof ItemEntity itemEntity)) return;
-        if (itemEntity.level().isClientSide()) return;
-        if (!itemEntity.isInWater()) return;
-        ItemStack st = itemEntity.getItem();
-        if (st.isEmpty() || !st.is(Items.LAVA_BUCKET)) return;
-        itemEntity.setItem(new ItemStack(ModItems.OBSIDIAN_BUCKET.get(), st.getCount()));
+        if (!(itemEntity.level() instanceof ServerLevel level) || !itemEntity.isInWater()) return;
+
+        ItemStack stack = itemEntity.getItem();
+        if (stack.isEmpty()) return;
+
+        // У выброшенного материала реакция должна быть одноразовой: весь stack
+        // химически расходуется до взрыва, поэтому на следующем EntityTick нет
+        // источника для бесконечной цепочки взрывов.
+        if (isWaterReactiveCesium(stack)) {
+            double x = itemEntity.getX();
+            double y = itemEntity.getY();
+            double z = itemEntity.getZ();
+            itemEntity.discard();
+            level.explode(null, x, y, z, CESIUM_WATER_EXPLOSION, Level.ExplosionInteraction.NONE);
+            return;
+        }
+
+        // Ведро лавы в воде остаётся прежним безвредным «приколом».
+        if (stack.is(Items.LAVA_BUCKET)) {
+            itemEntity.setItem(new ItemStack(ModItems.OBSIDIAN_BUCKET.get(), stack.getCount()));
+        }
     }
 
     // ─────────────────── 5. Заметки учёного при первом входе ───────────────────
@@ -390,16 +410,30 @@ public final class Phase3Events {
         return n - remaining;
     }
 
-    /** Есть ли в инвентаре цезиевая руда (любой host-вариант) или поллуцит (raw_cesium). */
-    private static boolean hasCesium(Inventory inv) {
-        net.minecraft.world.item.Item raw = ModItems.RAW_ORE_ITEMS.get("cesium").get();
-        for (int i = 0; i < inv.getContainerSize(); i++) {
-            ItemStack st = inv.getItem(i);
-            if (st.isEmpty()) continue;
-            if (st.is(raw)) return true;
-            for (var byHost : ModItems.ORE_BLOCK_ITEMS.get("cesium").values()) {
-                if (st.is(byHost.get())) return true;
-            }
+    /** Есть ли в инвентаре хотя бы одна форма цезия, реагирующая с водой. */
+    private static boolean hasWaterReactiveCesium(Inventory inventory) {
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            if (isWaterReactiveCesium(inventory.getItem(slot))) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Полный и намеренно явный список реактивных форм цезия. Поллуцит — это
+     * {@code raw_cesium}; рудные BlockItem'ы и цезиевый блок-хранилище также
+     * считаются реактивными переносимыми формами.
+     */
+    private static boolean isWaterReactiveCesium(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        if (stack.is(ModItems.RAW_ORE_ITEMS.get("cesium").get())
+            || stack.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get())
+            || stack.is(ModItems.NUGGET_ITEMS.get("cesium_nugget").get())
+            || stack.is(ModItems.DUST_ITEMS.get("cesium_dust").get())
+            || stack.is(ModItems.METAL_BLOCK_ITEMS.get("cesium_block").get())) {
+            return true;
+        }
+        for (var oreBlock : ModItems.ORE_BLOCK_ITEMS.get("cesium").values()) {
+            if (stack.is(oreBlock.get())) return true;
         }
         return false;
     }

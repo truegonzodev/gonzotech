@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.turbine.TurbineStructure;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -65,6 +66,9 @@ public class UniversalFluidPipeBlock extends PipeBlock {
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+            return InteractionResult.SUCCESS;
+        }
         if (stack.getItem() instanceof WrenchItem) {
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE).next();
@@ -78,10 +82,11 @@ public class UniversalFluidPipeBlock extends PipeBlock {
         // добавляемый тип. Узлы и жидк.трубы не подходят. Только у обычной (не-узел).
         if (!connectsAllSides()) {
             PipeType adding = CompositePipeBlock.pipeTypeOf(stack);
-            if (adding != null && !adding.isFluid() && ModCompositeAccess.get() != null) {
+            if (adding != null && !adding.isFluid()
+                && ModCompositeAccess.getFor(this) != null && ModCompositeAccess.sameTier(this, stack)) {
                 if (!level.isClientSide()) {
                     Direction.Axis axis = state.getValue(AXIS);
-                    BlockState composite = ModCompositeAccess.get().defaultBlockState()
+                    BlockState composite = ModCompositeAccess.getFor(this).defaultBlockState()
                         .setValue(AXIS, axis)
                         .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))
                         .setValue(CompositePipeBlock.PRESENT.get(adding), true)

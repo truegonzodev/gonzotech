@@ -230,7 +230,13 @@ public final class BlackHoleShader {
             }
 
             // 3. ЧИСЛЕННОЕ РЕЛЯТИВИСТСКОЕ ИНТЕГРИРОВАНИЕ ГЕОДЕЗИЧЕСКИХ (Шварцшильд / Гаргантюа)
-            vec3 x = u_camPos;
+            // Start just outside the only volume that can contain the hole or
+            // the disk.  With the old camera-origin start, 28 bounded steps
+            // could not reach a small hole from >~1.5 km, leaving a transparent
+            // pixel through which the star background showed.
+            float integrationRadius = max(Rout * 1.3, rs * 3.0);
+            float emptySpaceAdvance = max(0.0, D - integrationRadius);
+            vec3 x = u_camPos + rayDir * emptySpaceAdvance;
             vec3 v = rayDir;
             vec3 L = cross(x, v);
             float L2 = dot(L, L);

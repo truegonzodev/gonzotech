@@ -1,0 +1,7 @@
+{
+  "__comment": "Smart CTM: formed casing uses one custom model. Its eight-neighbour topology is resolved into cached, non-overlapping base/line/outer/inner face quads during chunk mesh construction; no CTM blockstate variants or generated model lookup table.",
+  "variants": {
+    "formed=false": { "model": "gonzotech:block/turbine_casing" },
+    "formed=true": { "model": "gonzotech:block/turbine_casing_ctm" }
+  }
+}

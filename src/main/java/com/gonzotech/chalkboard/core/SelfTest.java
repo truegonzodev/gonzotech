@@ -63,7 +63,46 @@ public final class SelfTest {
         expect("LHS penalty applied", b4.lhsPenalty == 4);
         expect("factors cancelled", b4.cancelledIds.size() == 4);
 
-        // 5. Solver guarantees a solvable puzzle on every difficulty
+        // 5. Server authority: keep the seed skeleton, yet accept a legitimate
+        //    F * t = (m * a) / Hz transformation at the normal score of 98.
+        Expr.Slot targetF = new Expr.Slot("s_force", "force", true, false);
+        Expr.Slot lockedMass = new Expr.Slot("s_mass", "mass", true, false);
+        Expr.Slot lockedAccel = new Expr.Slot("s_accel", "accel", true, false);
+        Expr.Op baseRhs = new Expr.Op("op_mass_accel", Expr.OpKind.MUL, lockedMass, lockedAccel, false);
+        Expr.Eq baseDiscovery = new Expr.Eq("eq_force", targetF, baseRhs);
+        GameSolver.Puzzle authorityPuzzle = new GameSolver.Puzzle(
+                baseDiscovery, Quantities.get("force"),
+                java.util.List.of("s_force", "s_mass", "s_accel"), java.util.Map.of(),
+                100.0, 0, 1, "authority test", "");
+
+        Expr transformed = new Expr.Eq("eq_force",
+                Expr.Op.added(Expr.OpKind.MUL, targetF,
+                        new Expr.Slot("s_time", "time", false, true)),
+                Expr.Op.added(Expr.OpKind.DIV, baseRhs,
+                        new Expr.Slot("s_hz", "frequency", false, true)));
+        ChalkboardSubmissionValidator.Result validClaim = ChalkboardSubmissionValidator.validateClaim(
+                authorityPuzzle, transformed, false,
+                q -> q.id().equals("time") || q.id().equals("frequency"));
+        expect("server accepts honest F*t = m*a/Hz", validClaim.accepted());
+        expect("honest transformation scores 98", validClaim.analysis() != null
+                && Math.abs(validClaim.analysis().sFinal - 98.0) < 0.01);
+
+        Expr forgedTautology = new Expr.Eq("eq_force", targetF,
+                new Expr.Slot("s_forged", "force", false, false));
+        expect("server rejects F = F without puzzle skeleton",
+                !ChalkboardSubmissionValidator.validateClaim(authorityPuzzle, forgedTautology, false, q -> true).accepted());
+
+        Expr swappedLockedMass = new Expr.Eq("eq_force", targetF,
+                new Expr.Op("op_mass_accel", Expr.OpKind.MUL,
+                        new Expr.Slot("s_mass", "length", true, false), lockedAccel, false));
+        expect("server rejects modified locked component",
+                !ChalkboardSubmissionValidator.validateDraft(authorityPuzzle, swappedLockedMass, q -> true).accepted());
+        expect("server rejects unavailable added quantities",
+                !ChalkboardSubmissionValidator.validateClaim(authorityPuzzle, transformed, false, q -> false).accepted());
+        expect("serde rejects expression with missing child",
+                Serde.fromJson("{\"type\":\"eq\",\"id\":\"eq\",\"left\":{\"type\":\"slot\",\"id\":\"s\"}}") == null);
+
+        // 6. Solver guarantees a solvable puzzle on every difficulty
         for (int level = 1; level <= 3; level++) {
             GameSolver.Puzzle p = GameSolver.generate(level);
             int locked = p.lockedSlotIds().size();

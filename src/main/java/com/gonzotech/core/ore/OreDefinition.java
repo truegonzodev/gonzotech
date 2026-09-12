@@ -7,10 +7,11 @@ import java.util.List;
 /**
  * Полная классификация рудных блоков (см. addendum: таблица высот/жил/host-вариантов).
  * <p>
- * Единственный источник правды для регистрации блоков/предметов
- * ({@link com.gonzotech.core.registry.ModBlocks}, {@link com.gonzotech.core.registry.ModItems})
- * и для генератора ассетов/датапака ({@code tools/generate_ore_content.py}) —
- * держите оба места синхронными, пока не подключён нормальный datagen.
+ * Единый источник правды для Java-регистрации блоков и предметов
+ * ({@link com.gonzotech.core.registry.ModBlocks}, {@link com.gonzotech.core.registry.ModItems}).
+ * Рудный пласт зафиксирован как готовый: его datapack-ресурсы (worldgen, loot,
+ * recipes и теги) уже хранятся в {@code src/main/resources}. Устаревшего
+ * внешнего генератора ассетов для него больше нет.
  *
  * @param id           id металла, напр. "aluminum"
  * @param minY         нижняя граница генерации (оверворлд)

@@ -18,6 +18,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,13 +41,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ItemFilterBlockEntity extends BlockEntity implements MenuProvider, WorldlyContainer {
 
-    /** Число слотов-образцов фильтра. */
+    /** Число слотов-образцов фильтра первого открытия. */
     public static final int FILTER_SLOTS = 3;
+    /** Наибольшее число ghost-слотов у текущих уровней (нужно меню-заглушке). */
+    public static final int MAX_FILTER_SLOTS = 5;
     /** Размер транзитного буфера (входящий поток из труб ждёт здесь раздачи). */
     public static final int BUFFER_SLOTS = 5;
 
+    private final int filterSlots;
     /** Образцы (ghost). НЕ инвентарь — не отдаются автоматизации, только шаблоны. */
-    private final NonNullList<ItemStack> filter = NonNullList.withSize(FILTER_SLOTS, ItemStack.EMPTY);
+    private final NonNullList<ItemStack> filter;
     /** Транзитный буфер (реальные предметы, пришедшие по трубам во Фильтр). */
     private final NonNullList<ItemStack> buffer = NonNullList.withSize(BUFFER_SLOTS, ItemStack.EMPTY);
     private static final int[] BUFFER_SLOT_IDS = buildSlotIds(BUFFER_SLOTS);
@@ -58,7 +62,21 @@ public class ItemFilterBlockEntity extends BlockEntity implements MenuProvider, 
     }
 
     public ItemFilterBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.ITEM_FILTER.get(), pos, state);
+        this(ModBlockEntities.ITEM_FILTER.get(), pos, state, FILTER_SLOTS);
+    }
+
+    /** Создаёт фильтр с самостоятельным типом BE и заданным числом ghost-слотов. */
+    public ItemFilterBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
+        this(blockEntityType, pos, state, FILTER_SLOTS);
+    }
+
+    public ItemFilterBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state, int filterSlots) {
+        super(blockEntityType, pos, state);
+        if (filterSlots < 1 || filterSlots > MAX_FILTER_SLOTS) {
+            throw new IllegalArgumentException("Unsupported item-filter slot count: " + filterSlots);
+        }
+        this.filterSlots = filterSlots;
+        this.filter = NonNullList.withSize(filterSlots, ItemStack.EMPTY);
     }
 
     /** Серверный тик: один проход мгновенной фильтрующей маршрутизации. */
@@ -69,7 +87,7 @@ public class ItemFilterBlockEntity extends BlockEntity implements MenuProvider, 
     // ─────────────────────────── доступ к образцам ───────────────────────────
 
     public int filterSize() {
-        return FILTER_SLOTS;
+        return filterSlots;
     }
 
     public ItemStack getFilter(int index) {
@@ -191,7 +209,7 @@ public class ItemFilterBlockEntity extends BlockEntity implements MenuProvider, 
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.item_filter");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Nullable

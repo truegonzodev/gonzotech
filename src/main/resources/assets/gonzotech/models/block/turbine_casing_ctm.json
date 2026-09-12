@@ -1,0 +1,11 @@
+{
+  "loader": "gonzotech:smart_ctm",
+  "ambientocclusion": false,
+  "textures": {
+    "base": "gonzotech:block/turbine_casing_formed",
+    "line": "gonzotech:block/turbine/turbine_ctm_line",
+    "outer_corner": "gonzotech:block/turbine/turbine_ctm_outer_corner",
+    "inner_corner": "gonzotech:block/turbine/turbine_ctm_inner_corner",
+    "particle": "gonzotech:block/turbine_casing_formed"
+  }
+}

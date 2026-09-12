@@ -1,5 +1,6 @@
 package com.gonzotech.machines.block.entity;
 
+import com.gonzotech.machines.energy.ComparatorOutput;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.ResourceBuffer;
@@ -40,6 +41,8 @@ import net.minecraft.world.level.block.state.BlockState;
 public class StirlingBlockEntity extends BaseMachineBlockEntity implements SteamSink, GtuSink {
 
     private final ResourceBuffer steam = new ResourceBuffer(MachineDefs.STIRLING_STEAM_CAPACITY);
+    /** Последнее опубликованное значение компаратора; вычисляется заново после загрузки. */
+    private int lastComparatorOutput;
     // GTU — в GtBuffer (BigInteger, милли); пар/вода остаются в mB (int).
     private final GtBuffer gtu = new GtBuffer((long) MachineDefs.STIRLING_GTU_CAPACITY);
     /** Внутренний буфер воды на возврат в котёл (в GUI не показывается). */
@@ -86,6 +89,27 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
         return steam;
     }
 
+    /** Аналоговый выход по заполненности накопленного пара. */
+    public int comparatorOutput() {
+        return ComparatorOutput.from(steam);
+    }
+
+    /** Уведомляет компараторы только при пересечении очередной ступени 0..15. */
+    private void updateComparatorOutput() {
+        int next = comparatorOutput();
+        if (next == lastComparatorOutput) return;
+        lastComparatorOutput = next;
+        if (level != null && !level.isClientSide()) {
+            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        updateComparatorOutput();
+    }
+
     public GtBuffer gtuBuffer() {
         return gtu;
     }
@@ -102,7 +126,12 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
 
     @Override
     public long receiveSteam(long amount, boolean simulate) {
-        return steam.receive(Math.min(amount, (long) MachineDefs.STIRLING_STEAM_INTAKE), simulate);
+        long accepted = steam.receive(Math.min(amount, (long) MachineDefs.STIRLING_STEAM_INTAKE), simulate);
+        if (!simulate && accepted > 0) {
+            setChanged();
+            updateComparatorOutput();
+        }
+        return accepted;
     }
 
     @Override
@@ -173,6 +202,7 @@ public class StirlingBlockEntity extends BaseMachineBlockEntity implements Steam
 
         if (changed) {
             be.setChanged();
+            be.updateComparatorOutput();
         }
     }
 

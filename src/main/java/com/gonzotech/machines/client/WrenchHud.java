@@ -246,6 +246,11 @@ public final class WrenchHud {
             && com.gonzotech.machines.network.CompositePipeBlock.carriesUniversalFluid(state)) {
             return Component.translatable("block.gonzotech.first_universal_fluid_pipe");
         }
+        // Одиночная труба второго открытия должна показывать своё имя, хотя её
+        // ресурс и сетевой лимит пока совпадают с первым уровнем.
+        if (state.getBlock() instanceof PipeBlock) {
+            return state.getBlock().getName();
+        }
         return Component.translatable("block.gonzotech." + part.id());
     }
 

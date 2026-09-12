@@ -2,10 +2,10 @@ package com.gonzotech.chalkboard.network;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.core.Analysis;
+import com.gonzotech.chalkboard.core.ChalkboardSubmissionValidator;
 import com.gonzotech.chalkboard.core.ChalkboardWorldData;
 import com.gonzotech.chalkboard.core.DimVec;
 import com.gonzotech.chalkboard.core.DiscoveryDef;
-import com.gonzotech.chalkboard.core.Evaluator;
 import com.gonzotech.chalkboard.core.Expr;
 import com.gonzotech.chalkboard.core.GameSolver;
 import com.gonzotech.chalkboard.core.Quantities;
@@ -29,10 +29,17 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChalkboardNetwork {
+
+    /** Bound client-controlled formula data before it can enter a persistent attachment. */
+    public static final int MAX_EXPR_JSON_BYTES = Serde.MAX_JSON_CHARS;
+    /** Chalk strokes are visual only; retain the pre-patch 256 KiB payload allowance. */
+    public static final int MAX_DRAWING_JSON_BYTES = 256 * 1024;
+    private static final int MAX_TEXT_BYTES = 512;
 
     // ───────────────────────── Payloads ─────────────────────────
 
@@ -56,8 +63,8 @@ public class ChalkboardNetwork {
         public static final StreamCodec<RegistryFriendlyByteBuf, SaveExprPayload> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.INT, SaveExprPayload::discoveryIndex,
-                        ByteBufCodecs.stringUtf8(262144), SaveExprPayload::exprJson,
-                        ByteBufCodecs.stringUtf8(262144), SaveExprPayload::drawingJson,
+                        ByteBufCodecs.stringUtf8(MAX_EXPR_JSON_BYTES), SaveExprPayload::exprJson,
+                        ByteBufCodecs.stringUtf8(MAX_DRAWING_JSON_BYTES), SaveExprPayload::drawingJson,
                         SaveExprPayload::new
                 );
 
@@ -74,7 +81,7 @@ public class ChalkboardNetwork {
         public static final StreamCodec<RegistryFriendlyByteBuf, SubmitPayload> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.INT, SubmitPayload::discoveryIndex,
-                        ByteBufCodecs.stringUtf8(262144), SubmitPayload::exprJson,
+                        ByteBufCodecs.stringUtf8(MAX_EXPR_JSON_BYTES), SubmitPayload::exprJson,
                         SubmitPayload::new
                 );
 
@@ -106,30 +113,30 @@ public class ChalkboardNetwork {
                 StreamCodec.of(
                         (buf, val) -> {
                             buf.writeVarInt(val.currentDiscoveryIndex());
-                            buf.writeUtf(val.titleRu(), 262144);
-                            buf.writeUtf(val.titleEn(), 262144);
-                            buf.writeUtf(val.targetId(), 262144);
-                            buf.writeUtf(val.targetSymbol(), 262144);
-                            buf.writeUtf(val.targetNameRu(), 262144);
-                            buf.writeUtf(val.targetNameEn(), 262144);
-                            buf.writeUtf(val.targetUnit(), 262144);
-                            buf.writeUtf(val.exprJson(), 262144);
-                            buf.writeUtf(val.drawingJson(), 262144);
+                            buf.writeUtf(val.titleRu(), MAX_TEXT_BYTES);
+                            buf.writeUtf(val.titleEn(), MAX_TEXT_BYTES);
+                            buf.writeUtf(val.targetId(), MAX_TEXT_BYTES);
+                            buf.writeUtf(val.targetSymbol(), MAX_TEXT_BYTES);
+                            buf.writeUtf(val.targetNameRu(), MAX_TEXT_BYTES);
+                            buf.writeUtf(val.targetNameEn(), MAX_TEXT_BYTES);
+                            buf.writeUtf(val.targetUnit(), MAX_TEXT_BYTES);
+                            buf.writeUtf(val.exprJson(), MAX_EXPR_JSON_BYTES);
+                            buf.writeUtf(val.drawingJson(), MAX_DRAWING_JSON_BYTES);
                             buf.writeVarInt(val.trayTier());
                             ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()).encode(buf, val.unlockedSecrets());
                             buf.writeBoolean(val.cheatsEnabled());
                         },
                         buf -> new SyncDataPayload(
                                 buf.readVarInt(),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
-                                buf.readUtf(262144),
+                                buf.readUtf(MAX_TEXT_BYTES),
+                                buf.readUtf(MAX_TEXT_BYTES),
+                                buf.readUtf(MAX_TEXT_BYTES),
+                                buf.readUtf(MAX_TEXT_BYTES),
+                                buf.readUtf(MAX_TEXT_BYTES),
+                                buf.readUtf(MAX_TEXT_BYTES),
+                                buf.readUtf(MAX_TEXT_BYTES),
+                                buf.readUtf(MAX_EXPR_JSON_BYTES),
+                                buf.readUtf(MAX_DRAWING_JSON_BYTES),
                                 buf.readVarInt(),
                                 ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()).decode(buf),
                                 buf.readBoolean()
@@ -159,16 +166,14 @@ public class ChalkboardNetwork {
                 })
         );
 
-        // C2S Save Expr & Drawing
+        // C2S Save Expr & Drawing.  A save is not a trusted shortcut around claim validation:
+        // it is only accepted for the player's current server-owned discovery and legal board tree.
         registrar.playToServer(
                 SaveExprPayload.TYPE,
                 SaveExprPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof ServerPlayer player) {
-                        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
-                        progress.setSavedExpr(payload.discoveryIndex(), payload.exprJson());
-                        progress.setGlobalDrawingJson(payload.drawingJson());
-                        player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
+                        handleSave(player, payload);
                     }
                 })
         );
@@ -223,9 +228,15 @@ public class ChalkboardNetwork {
         }
 
         String savedExpr = progress.getSavedExpr(discIdx);
-        String exprJson = (savedExpr != null && !savedExpr.isEmpty()) ? savedExpr : Serde.toJson(puzzle.expr());
+        Expr savedTree = isUtf8Within(savedExpr, MAX_EXPR_JSON_BYTES) ? Serde.fromJson(savedExpr) : null;
+        boolean validSavedTree = savedTree != null && ChalkboardSubmissionValidator.validateDraft(
+                puzzle, savedTree, quantity -> canUseQuantity(player, progress, quantity)).accepted();
+        String exprJson = validSavedTree ? savedExpr : Serde.toJson(puzzle.expr());
 
-        String drawingJson = progress.getGlobalDrawingJson();
+        // Older worlds may contain data saved before the C2S limits existed.
+        // Never let such an attachment make a later sync packet exceed its codec bound.
+        String savedDrawing = progress.getGlobalDrawingJson();
+        String drawingJson = isUtf8Within(savedDrawing, MAX_DRAWING_JSON_BYTES) ? savedDrawing : "";
 
         Quantity target = puzzle.target();
         boolean cheats = player.isCreative() || player.hasPermissions(2);
@@ -249,82 +260,123 @@ public class ChalkboardNetwork {
         PacketDistributor.sendToPlayer(player, payload);
     }
 
+    private static void handleSave(ServerPlayer player, SaveExprPayload payload) {
+        if (payload.discoveryIndex() < 0
+                || payload.discoveryIndex() != player.getData(ModAttachments.CHALKBOARD_PROGRESS).getCurrentDiscoveryIndex()
+                || payload.exprJson() == null
+                || payload.exprJson().length() > MAX_EXPR_JSON_BYTES
+                || payload.drawingJson() == null
+                || payload.drawingJson().length() > MAX_DRAWING_JSON_BYTES) {
+            return;
+        }
+
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        Expr expr = Serde.fromJson(payload.exprJson());
+        if (expr == null) return;
+
+        GameSolver.Puzzle puzzle = ChalkboardWorldData.get(player.serverLevel())
+                .getPuzzle(progress.getCurrentDiscoveryIndex());
+        ChalkboardSubmissionValidator.Result result = ChalkboardSubmissionValidator.validateDraft(
+                puzzle, expr, quantity -> canUseQuantity(player, progress, quantity));
+        if (!result.accepted()) return;
+
+        progress.setSavedExpr(progress.getCurrentDiscoveryIndex(), payload.exprJson());
+        progress.setGlobalDrawingJson(payload.drawingJson());
+        player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
+    }
+
     private static void handleSubmission(ServerPlayer player, int discoveryIndex, String exprJson) {
+        if (exprJson == null || exprJson.length() > MAX_EXPR_JSON_BYTES) return;
+
         ServerLevel level = player.serverLevel();
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        int currentIndex = progress.getCurrentDiscoveryIndex();
+        // Never parse or reward a stale/future client-selected board index.
+        if (discoveryIndex < 0 || discoveryIndex != currentIndex) return;
 
         Expr expr = Serde.fromJson(exprJson);
         if (expr == null) return;
 
-        Analysis analysis = Evaluator.analyze(expr, progress.isInfiniteMode());
-        if (analysis.sD != null && analysis.sD >= 90.0 && analysis.conflicts.isEmpty()) {
-            checkSecretUnlocks(player, progress, analysis);
+        GameSolver.Puzzle puzzle = ChalkboardWorldData.get(level).getPuzzle(currentIndex);
+        boolean isInfiniteMode = progress.isInfiniteMode();
+        ChalkboardSubmissionValidator.Result validation = ChalkboardSubmissionValidator.validateClaim(
+                puzzle, expr, isInfiniteMode, quantity -> canUseQuantity(player, progress, quantity));
+        if (!validation.accepted()) return;
 
-            if (discoveryIndex == progress.getCurrentDiscoveryIndex()) {
-                boolean isInfiniteMode = progress.isInfiniteMode();
-                int currentStage = progress.getCurrentDiscoveryIndex() + 1;
+        Analysis analysis = validation.analysis();
+        int currentStage = currentIndex + 1;
 
-                progress.advanceDiscovery();
-                player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
+        // Secret discoveries are a consequence of an already verified current puzzle,
+        // never of an arbitrary client expression.
+        checkSecretUnlocks(player, progress, analysis);
+        progress.advanceDiscovery();
+        player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
 
-                if (!isInfiniteMode && discoveryIndex == 15) {
-                    // Just completed Discovery 16! (0-indexed 15)
-                    // Award consumable Discovery item 16 ONCE
-                    int awardNum = 16;
-                    ItemStack awardStack = new ItemStack(ModItems.getDiscoveryItem(awardNum).get());
-                    if (!player.getInventory().add(awardStack)) {
-                        player.drop(awardStack, false);
-                    }
-
-                    level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                            SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
-
-                    player.displayClientMessage(
-                            Component.translatable("gui.gonzotech.chalkboard.discovery_prefix", awardNum)
-                                    .append(" ")
-                                    .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
-                                    .withStyle(ChatFormatting.GREEN),
-                            true
-                    );
-                } else if (!isInfiniteMode && discoveryIndex < 15) {
-                    // Completed Discovery 1..15
-                    int awardNum = discoveryIndex + 1;
-                    ItemStack awardStack = new ItemStack(ModItems.getDiscoveryItem(awardNum).get());
-                    if (!player.getInventory().add(awardStack)) {
-                        player.drop(awardStack, false);
-                    }
-
-                    level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                            SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
-
-                    player.displayClientMessage(
-                            Component.translatable("gui.gonzotech.chalkboard.discovery_prefix", awardNum)
-                                    .append(" ")
-                                    .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
-                                    .withStyle(ChatFormatting.GREEN),
-                            true
-                    );
-                } else {
-                    // Infinite Mode completion (Stage 17+)!
-                    long xpSeed = level.getSeed() ^ ((long) currentStage * 0x5DEECE66DL);
-                    java.util.Random xpRng = new java.util.Random(xpSeed);
-                    int xpReward = 5000 + xpRng.nextInt(10001); // 5000 to 15000 XP
-
-                    player.giveExperiencePoints(xpReward);
-
-                    level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                            SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
-
-                    player.displayClientMessage(
-                            Component.translatable("gui.gonzotech.chalkboard.infinite_xp_award", currentStage, xpReward)
-                                    .withStyle(ChatFormatting.GOLD),
-                            true
-                    );
-                }
-
-                sendSyncToPlayer(player);
+        if (!isInfiniteMode && currentIndex == 15) {
+            // Just completed Discovery 16! (0-indexed 15)
+            // Award consumable Discovery item 16 ONCE
+            int awardNum = 16;
+            ItemStack awardStack = new ItemStack(ModItems.getDiscoveryItem(awardNum).get());
+            if (!player.getInventory().add(awardStack)) {
+                player.drop(awardStack, false);
             }
+
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+            player.displayClientMessage(
+                    Component.translatable("gui.gonzotech.chalkboard.discovery_prefix", awardNum)
+                            .append(" ")
+                            .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
+                            .withStyle(ChatFormatting.GREEN),
+                    true
+            );
+        } else if (!isInfiniteMode) {
+            // Completed Discovery 1..15
+            int awardNum = currentIndex + 1;
+            ItemStack awardStack = new ItemStack(ModItems.getDiscoveryItem(awardNum).get());
+            if (!player.getInventory().add(awardStack)) {
+                player.drop(awardStack, false);
+            }
+
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+            player.displayClientMessage(
+                    Component.translatable("gui.gonzotech.chalkboard.discovery_prefix", awardNum)
+                            .append(" ")
+                            .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
+                            .withStyle(ChatFormatting.GREEN),
+                    true
+            );
+        } else {
+            // Infinite Mode completion (Stage 17+)!
+            long xpSeed = level.getSeed() ^ ((long) currentStage * 0x5DEECE66DL);
+            java.util.Random xpRng = new java.util.Random(xpSeed);
+            int xpReward = 5000 + xpRng.nextInt(10001); // 5000 to 15000 XP
+
+            player.giveExperiencePoints(xpReward);
+
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+            player.displayClientMessage(
+                    Component.translatable("gui.gonzotech.chalkboard.infinite_xp_award", currentStage, xpReward)
+                            .withStyle(ChatFormatting.GOLD),
+                    true
+            );
         }
+
+        sendSyncToPlayer(player);
+    }
+
+    /** Creative/op board mode intentionally exposes every tray quantity, matching the server sync flag. */
+    private static boolean canUseQuantity(ServerPlayer player, PlayerChalkboardProgress progress, Quantity quantity) {
+        return player.isCreative() || player.hasPermissions(2) || progress.isQuantityUnlocked(quantity);
+    }
+
+    private static boolean isUtf8Within(String value, int maxBytes) {
+        return value != null && value.getBytes(StandardCharsets.UTF_8).length <= maxBytes;
     }
 
     private static void checkSecretUnlocks(ServerPlayer player, PlayerChalkboardProgress progress, Analysis analysis) {

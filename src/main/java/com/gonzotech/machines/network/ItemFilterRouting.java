@@ -12,9 +12,12 @@ import net.minecraft.world.level.block.entity.HopperBlockEntity;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -48,7 +51,12 @@ public final class ItemFilterRouting {
     public static void tick(Level level, BlockPos pos, BlockState state, ItemFilterBlockEntity be) {
         if (level.isClientSide()) return;
 
-        int budget = (int) T.maxThroughput();
+        int budget = state.getBlock() instanceof ItemFilterBlock filter
+            ? filter.itemThroughputLimit()
+            : (int) T.maxThroughput();
+        int perItemCap = state.getBlock() instanceof ItemFilterBlock filter
+            ? filter.perItemThroughputLimit()
+            : ItemRouting.PER_ITEM_TICK_CAP;
         if (budget <= 0) return;
 
         // Приёмники «прошедшего» — выходная сеть Фильтра (item-трубы от Фильтра).
@@ -90,13 +98,13 @@ public final class ItemFilterRouting {
 
         long rotation = level.getGameTime();
         int moved = 0;
-        // Лимит на КАЖДЫЙ вид за тик (как у труб): 1 шт/т, суммарно budget=5 шт/т.
+        // Лимиты экземпляра: первый tier оставляет 1×5, Filter II задаёт 2×5.
         java.util.Map<net.minecraft.world.item.Item, Integer> perItem = new java.util.HashMap<>();
 
         // (a) Транзитный буфер Фильтра — предметы, пришедшие ВРЕЗКОЙ по трубам.
         // Тянем их без canTake-проверки (буфер её запрещает для внешних, но сам
         // Фильтр свой буфер раздавать обязан).
-        moved = drainContainer(level, pos, be, null, be, pass, reject, budget, moved, rotation, perItem, true);
+        moved = drainContainer(level, pos, be, null, be, pass, reject, budget, moved, rotation, perItem, perItemCap, true);
 
         // (b) Прилегающие контейнеры-источники (режим «воронка»).
         for (Source source : sources) {
@@ -104,7 +112,7 @@ public final class ItemFilterRouting {
             Container src = HopperBlockEntity.getContainerAt(level, source.pos());
             if (src == null) continue;
             moved = drainContainer(level, pos, be, source.face(), src,
-                pass, reject, budget, moved, rotation, perItem, false);
+                pass, reject, budget, moved, rotation, perItem, perItemCap, false);
         }
     }
 
@@ -121,14 +129,14 @@ public final class ItemFilterRouting {
                                       List<ItemRouting_Sink> pass, List<ItemRouting_Sink> reject,
                                       int budget, int moved, long rotation,
                                       java.util.Map<net.minecraft.world.item.Item, Integer> perItem,
-                                      boolean ignoreCanTake) {
+                                      int perItemCap, boolean ignoreCanTake) {
         for (int slot : ItemRouting.extractableSlots(src, srcFace)) {
             if (moved >= budget) break;
             while (moved < budget) {
                 ItemStack cur = src.getItem(slot);
                 if (cur.isEmpty()) break;
                 if (!ignoreCanTake && !ItemRouting.canTake(src, slot, cur, srcFace)) break;
-                if (perItem.getOrDefault(cur.getItem(), 0) >= ItemRouting.PER_ITEM_TICK_CAP) break;
+                if (perItem.getOrDefault(cur.getItem(), 0) >= perItemCap) break;
 
                 boolean matched = matches(be, cur);
                 List<ItemRouting_Sink> targets = matched ? pass : reject;
@@ -148,6 +156,11 @@ public final class ItemFilterRouting {
                         perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
                         ItemFlowTracker.record(level, pos, one.getItem(), 1);
+                        // Пишем каждый реально выбранный сегмент, чтобы
+                        // Universal Node в транзитной ветке видел поток Items.
+                        for (BlockPos pipe : s.path()) {
+                            ItemFlowTracker.record(level, pipe, one.getItem(), 1);
+                        }
                         break;
                     }
                 }
@@ -197,8 +210,8 @@ public final class ItemFilterRouting {
 
     // ─────────────────────────── обход сети (BFS) ───────────────────────────
 
-    /** Приёмник: контейнер + сторона, которой к нему прилегает труба. */
-    private record ItemRouting_Sink(Container container, Direction face) {
+    /** Приёмник и точный маршрут item-труб до него. */
+    private record ItemRouting_Sink(Container container, Direction face, List<BlockPos> path) {
     }
 
     /** Источник: позиция контейнера + его грань, обращённая к Фильтру. */
@@ -214,6 +227,7 @@ public final class ItemFilterRouting {
     private static void collectSinksFromCarrier(Level level, BlockPos root,
                                                 List<BlockPos> exclude, List<ItemRouting_Sink> out) {
         Set<BlockPos> visited = new HashSet<>();
+        Map<Long, BlockPos> parents = new HashMap<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
         // Стартуем с прилегающих к корню труб.
         BlockState rootState = level.getBlockState(root);
@@ -227,13 +241,17 @@ public final class ItemFilterRouting {
                 // Труба должна быть открыта навстречу корню; корень-носитель — во все стороны.
                 if (!opensToward(nstate, dir.getOpposite())) continue;
                 if (rootIsCarrier && !opensToward(rootState, dir)) continue;
-                if (visited.add(npos)) queue.add(npos);
+                if (visited.add(npos)) {
+                    // Корень — фильтр/отсеиватель, а не сегмент трубы на пути.
+                    parents.put(npos.asLong(), null);
+                    queue.add(npos);
+                }
             } else if (rootIsCarrier) {
                 // Корень (напр. если бы был носителем) может отдавать прямо в контейнер.
                 if (exclude.contains(npos)) continue;
                 if (!opensToward(rootState, dir)) continue;
                 Container cc = HopperBlockEntity.getContainerAt(level, npos);
-                if (cc != null) out.add(new ItemRouting_Sink(cc, dir.getOpposite()));
+                if (cc != null) out.add(new ItemRouting_Sink(cc, dir.getOpposite(), List.of()));
             }
         }
 
@@ -249,7 +267,10 @@ public final class ItemFilterRouting {
 
                 if (isItemPipe(nstate)) {
                     if (!pipesConnect(pstate, nstate, dir)) continue;
-                    if (visited.add(npos)) queue.add(npos);
+                    if (visited.add(npos)) {
+                        parents.put(npos.asLong(), pipe);
+                        queue.add(npos);
+                    }
                     continue;
                 }
                 if (exclude.contains(npos)) continue;
@@ -257,9 +278,19 @@ public final class ItemFilterRouting {
                 if (!opensToward(pstate, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 Container c = HopperBlockEntity.getContainerAt(level, npos);
-                if (c != null) out.add(new ItemRouting_Sink(c, dir.getOpposite()));
+                if (c != null) out.add(new ItemRouting_Sink(c, dir.getOpposite(), pathTo(pipe, parents)));
             }
         }
+    }
+
+    /** Восстанавливает выбранный BFS-маршрут от первой трубы после корня. */
+    private static List<BlockPos> pathTo(BlockPos end, Map<Long, BlockPos> parents) {
+        List<BlockPos> path = new ArrayList<>();
+        for (BlockPos at = end; at != null; at = parents.get(at.asLong())) {
+            path.add(at);
+        }
+        Collections.reverse(path);
+        return path;
     }
 
     // ─────────────────────────── мелкие помощники ───────────────────────────

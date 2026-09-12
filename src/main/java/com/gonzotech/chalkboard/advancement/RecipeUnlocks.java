@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Показ рецептов машин в книге рецептов по «Открытиям» (Фаза 3).
+ * Показ рецептов в книге рецептов по «Открытиям» (Фаза 3).
  * <p>
- * Сами рецепты машин ФИЗИЧЕСКИ доступны всегда (файлы в data/.../recipe) —
- * котёл/топку/стирлинг/конденсатор можно скрафтить руками до любого «Открытия».
- * Но в КНИГЕ рецептов они скрыты, пока не активировано «Открытие 1»: тогда мы
- * выдаём (awardRecipesByKey) весь набор рецептов машин игроку.
+ * Эти crafting-рецепты ФИЗИЧЕСКИ доступны всегда (файлы в data/.../recipe),
+ * но их подсказки в КНИГЕ скрыты до соответствующего «Открытия»: здесь они
+ * выдаются игроку через {@code awardRecipesByKey}. Исключение — отдельные
+ * рецепты с физическим crafting-гейтом из {@code Phase3Events}.
  * <p>
  * Доска резонанса открыта априори собственным reward-advancement и здесь не
  * фигурирует. Эл. печь до «Открытия 1» ещё и физически «закрыта» гейтом крафта
@@ -57,6 +57,19 @@ public final class RecipeUnlocks {
             // Логистика: сортировка предметов
             "gonzotech:item_filter",
             "gonzotech:item_scavenger"
+        ),
+        2, List.of(
+            // Пылевые сплавы верстака. Они физически крафтятся по обычным
+            // shapeless-рецептам, но появляются в книге только после Открытия 2.
+            "gonzotech:steel_dust_from_iron_dust_and_coal",
+            "gonzotech:stainless_steel_dust_from_metal_dusts",
+            "gonzotech:nitinol_dust_from_metal_dusts",
+            "gonzotech:invar_dust_from_metal_dusts",
+            "gonzotech:ferromagnetic_dust_from_metal_dusts",
+            "gonzotech:cantor_dust_from_metal_dusts",
+            "gonzotech:vr20_dust_from_metal_dusts",
+            "gonzotech:alnico_dust_from_metal_dusts",
+            "gonzotech:telluride_dust_from_metal_dusts"
         )
     );
 

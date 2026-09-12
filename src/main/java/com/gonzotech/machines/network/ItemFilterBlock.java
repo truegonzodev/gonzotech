@@ -33,13 +33,23 @@ public class ItemFilterBlock extends Block implements EntityBlock {
     }
 
     @Override
-    protected MapCodec<ItemFilterBlock> codec() {
+    protected MapCodec<? extends ItemFilterBlock> codec() {
         return CODEC;
     }
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ItemFilterBlockEntity(pos, state);
+    }
+
+    /** Total item budget per tick for this filter block. */
+    public int itemThroughputLimit() {
+        return (int) PipeType.ITEM.maxThroughput();
+    }
+
+    /** Maximum count of one exact item type per tick for this filter block. */
+    public int perItemThroughputLimit() {
+        return ItemRouting.PER_ITEM_TICK_CAP;
     }
 
     @Override
@@ -72,7 +82,7 @@ public class ItemFilterBlock extends Block implements EntityBlock {
     }
 
     @SuppressWarnings("unchecked")
-    private static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<A> createTickerHelper(
+    protected static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<A> createTickerHelper(
         BlockEntityType<A> given, BlockEntityType<E> expected, BlockEntityTicker<? super E> ticker) {
         return expected == given ? (BlockEntityTicker<A>) ticker : null;
     }

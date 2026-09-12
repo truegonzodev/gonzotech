@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.turbine.TurbineStructure;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -124,6 +125,20 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
             .setValue(WATERLOGGED, fluid.getType() == Fluids.WATER);
     }
 
+    // Любая существующая нода может быть service-портом турбины. Проверка самого
+    // многоблока запускается только для whitelist-кандидатов внутри TurbineStructure.
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!state.is(oldState.getBlock())) TurbineStructure.portPlaced(level, pos);
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) TurbineStructure.portRemoved(level, pos);
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
     // ─────────────────────────── waterlogging ───────────────────────────
 
     @Override
@@ -161,11 +176,26 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
         return shapeFor(state);
     }
 
-    // ─────────────────────────── гаечный ключ ───────────────────────────
+    // ─────────────────────────── ПКМ / гаечный ключ ───────────────────────────
+
+    /** Встроенная service-нода сформированной турбины всегда открывает её общее GUI. */
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                               Player player, BlockHitResult hit) {
+        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+            return InteractionResult.SUCCESS;
+        }
+        return InteractionResult.PASS;
+    }
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
+        // В составе турбины даже ПКМ ключом принадлежит общему интерфейсу,
+        // иначе «ПКМ по любому блоку» имел бы неожиданное исключение.
+        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+            return InteractionResult.SUCCESS;
+        }
         // Ключ — прокрутить режим этой трубы. Никаких сообщений в action-bar:
         // тип/режим/поток и так живьём висят над прицелом (WrenchHud).
         if (stack.getItem() instanceof WrenchItem) {
@@ -179,10 +209,11 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
         // Универсальная жидк.труба в руке → собрать связку: она займёт FLUID-угол
         // (вода+пар). Нельзя, если эта труба сама жидкостная (угол уже занят).
         if (!connectsAllSides() && CompositePipeBlock.isUniversalPipeItem(stack)
-            && !this.pipeType.isFluid() && ModCompositeAccess.get() != null) {
+            && !this.pipeType.isFluid() && ModCompositeAccess.getFor(this) != null
+            && ModCompositeAccess.sameTier(this, stack)) {
             if (!level.isClientSide()) {
                 Direction.Axis axis = state.getValue(AXIS);
-                BlockState composite = ModCompositeAccess.get().defaultBlockState()
+                BlockState composite = ModCompositeAccess.getFor(this).defaultBlockState()
                     .setValue(AXIS, axis)
                     .setValue(CompositePipeBlock.AXIS_LOWER, axis)
                     .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))
@@ -201,10 +232,11 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
         if (!connectsAllSides()) {
             PipeType adding = CompositePipeBlock.pipeTypeOf(stack);
             boolean fluidClash = adding != null && adding.isFluid() && this.pipeType.isFluid();
-            if (adding != null && adding != this.pipeType && !fluidClash && ModCompositeAccess.get() != null) {
+            if (adding != null && adding != this.pipeType && !fluidClash
+                && ModCompositeAccess.getFor(this) != null && ModCompositeAccess.sameTier(this, stack)) {
                 if (!level.isClientSide()) {
                     Direction.Axis axis = state.getValue(AXIS);
-                    BlockState composite = ModCompositeAccess.get().defaultBlockState()
+                    BlockState composite = ModCompositeAccess.getFor(this).defaultBlockState()
                         .setValue(AXIS, axis)
                         .setValue(CompositePipeBlock.AXIS_LOWER, axis)
                         .setValue(CompositePipeBlock.WATERLOGGED, state.getValue(WATERLOGGED))
