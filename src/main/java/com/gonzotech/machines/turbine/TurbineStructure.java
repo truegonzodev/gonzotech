@@ -204,14 +204,15 @@ public final class TurbineStructure {
     }
 
     /**
-     * Запекает CTM-рамку ровно в blockstate при успешной сборке. Рендер получает
-     * готовые флаги и не делает ни одного поиска соседей/границ каждый кадр.
+     * Помечает части как сформированные. Визуальная connected-texture topology
+     * больше не сериализуется в BlockState: client Smart CTM собирает её при
+     * пересборке section из восьми соседей каждой видимой грани.
      */
     private static void applyFormVisuals(ServerLevel level, Build build) {
         for (BlockPos pos : build.allParts) {
             BlockState state = level.getBlockState(pos);
             if (state.getBlock() instanceof TurbineCasingBlock) {
-                BlockState next = formedCasingState(level, build, pos, state);
+                BlockState next = state.setValue(TurbinePartBlock.FORMED, true);
                 if (!next.equals(state)) level.setBlock(pos, next, Block.UPDATE_CLIENTS);
             } else if (state.getBlock() instanceof TurbineRotorBlock) {
                 boolean controllerRotor = pos.equals(build.root);
@@ -221,199 +222,6 @@ public final class TurbineStructure {
                 if (!next.equals(state)) level.setBlock(pos, next, Block.UPDATE_CLIENTS);
             }
         }
-    }
-
-    /** Получает готовый blockstate корпуса с профилем внешнего каркаса и каймой портов. */
-    private static BlockState formedCasingState(ServerLevel level, Build build, BlockPos pos, BlockState state) {
-        List<net.minecraft.core.Direction> boundary = boundaryDirections(build, pos);
-        TurbineCasingBlock.FrameProfile profile = frameProfile(boundary);
-        boolean[] portBorders = new boolean[4];
-        boolean[] cornerCaps = diagonalCornerCaps(level, build, pos, boundary);
-
-        if (boundary.size() == 1) {
-            // Плоская грань: четыре направления в постоянном мировом порядке.
-            // Порядок Direction.values() совпадает с генератором CTM-вариантов.
-            int index = 0;
-            net.minecraft.core.Direction normal = boundary.getFirst();
-            for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
-                if (direction.getAxis() != normal.getAxis()) {
-                    portBorders[index++] = isServicePortAt(level, build, pos.relative(direction));
-                }
-            }
-        } else if (boundary.size() == 2) {
-            // Ребро: порты могут быть не только на двух прилегающих плоских
-            // гранях, но и с обоих концов вдоль самого ребра. В последнем случае
-            // обводка рисуется на ОБЕИХ открытых гранях корпуса, огибая порт, а
-            // не считая его ложным новым краем параллелепипеда.
-            portBorders[0] = isServicePortAt(level, build, pos.relative(boundary.get(0).getOpposite()));
-            portBorders[1] = isServicePortAt(level, build, pos.relative(boundary.get(1).getOpposite()));
-            net.minecraft.core.Direction.Axis freeAxis = freeAxis(boundary);
-            portBorders[2] = isServicePortAt(level, build, pos.relative(negativeDirection(freeAxis)));
-            portBorders[3] = isServicePortAt(level, build, pos.relative(positiveDirection(freeAxis)));
-        } else if (boundary.size() == 3) {
-            // Угловая клетка оболочки тоже может примыкать к service-порту с
-            // внутренней стороны по любой из трёх осей. Для такого порта должны
-            // сохраниться две каймы на двух общих наружных гранях.
-            for (int i = 0; i < 3; i++) {
-                portBorders[i] = isServicePortAt(level, build, pos.relative(boundary.get(i).getOpposite()));
-            }
-        }
-
-        return state
-            .setValue(TurbinePartBlock.FORMED, true)
-            .setValue(TurbineCasingBlock.FRAME, profile)
-            .setValue(TurbineCasingBlock.PORT_0, portBorders[0])
-            .setValue(TurbineCasingBlock.PORT_1, portBorders[1])
-            .setValue(TurbineCasingBlock.PORT_2, portBorders[2])
-            .setValue(TurbineCasingBlock.PORT_3, portBorders[3])
-            .setValue(TurbineCasingBlock.CAP_0, cornerCaps[0])
-            .setValue(TurbineCasingBlock.CAP_1, cornerCaps[1])
-            .setValue(TurbineCasingBlock.CAP_2, cornerCaps[2])
-            .setValue(TurbineCasingBlock.CAP_3, cornerCaps[3]);
-    }
-
-    /**
-     * Запекает 2×2 corner caps в диагональных клетках вокруг каждого порта.
-     *
-     * <p>В отличие от {@code port_*}, которые принадлежат четырём прямым
-     * соседям порта, эти флаги принадлежат именно диагональным клеткам из
-     * схемы {@code [у][к][у] / [к][д][к] / [у][к][у]}. Для каждой видимой
-     * грани перебираются две касательные оси. На плоской грани это даёт четыре
-     * диагонали, на ребре — две на каждую из двух граней, в углу — по одной на
-     * грань. Порядок полностью повторён в генераторе JSON-моделей.</p>
-     */
-    private static boolean[] diagonalCornerCaps(ServerLevel level, Build build, BlockPos pos,
-                                                  List<net.minecraft.core.Direction> boundary) {
-        boolean[] result = new boolean[4];
-        int index = 0;
-        for (net.minecraft.core.Direction normal : boundary) {
-            net.minecraft.core.Direction.Axis firstAxis = null;
-            net.minecraft.core.Direction.Axis secondAxis = null;
-            for (net.minecraft.core.Direction.Axis axis : net.minecraft.core.Direction.Axis.values()) {
-                if (axis == normal.getAxis()) continue;
-                if (firstAxis == null) firstAxis = axis;
-                else secondAxis = axis;
-            }
-            for (net.minecraft.core.Direction first : surfaceDirections(build, pos, firstAxis)) {
-                for (net.minecraft.core.Direction second : surfaceDirections(build, pos, secondAxis)) {
-                    if (index >= result.length) {
-                        throw new IllegalStateException("Too many diagonal turbine corner caps");
-                    }
-                    result[index++] = isServicePortAt(level, build, pos.relative(first).relative(second));
-                }
-            }
-        }
-        return result;
-    }
-
-    /** Направления вдоль оси, которые ещё остаются в bounding parallelepiped. */
-    private static List<net.minecraft.core.Direction> surfaceDirections(Build build, BlockPos pos,
-                                                                          net.minecraft.core.Direction.Axis axis) {
-        int coordinate = coordinate(pos, axis);
-        if (coordinate == coordinate(build.min, axis)) return List.of(positiveDirection(axis));
-        if (coordinate == coordinate(build.max, axis)) return List.of(negativeDirection(axis));
-        return List.of(negativeDirection(axis), positiveDirection(axis));
-    }
-
-    private static int coordinate(BlockPos pos, net.minecraft.core.Direction.Axis axis) {
-        return switch (axis) {
-            case X -> pos.getX();
-            case Y -> pos.getY();
-            case Z -> pos.getZ();
-        };
-    }
-
-    private static List<net.minecraft.core.Direction> boundaryDirections(Build build, BlockPos pos) {
-        List<net.minecraft.core.Direction> result = new ArrayList<>(3);
-        if (pos.getX() == build.min.getX()) result.add(net.minecraft.core.Direction.WEST);
-        else if (pos.getX() == build.max.getX()) result.add(net.minecraft.core.Direction.EAST);
-        if (pos.getY() == build.min.getY()) result.add(net.minecraft.core.Direction.DOWN);
-        else if (pos.getY() == build.max.getY()) result.add(net.minecraft.core.Direction.UP);
-        if (pos.getZ() == build.min.getZ()) result.add(net.minecraft.core.Direction.NORTH);
-        else if (pos.getZ() == build.max.getZ()) result.add(net.minecraft.core.Direction.SOUTH);
-        return result;
-    }
-
-    /** Единственная ось, не входящая в геометрическое ребро оболочки. */
-    private static net.minecraft.core.Direction.Axis freeAxis(List<net.minecraft.core.Direction> boundary) {
-        for (net.minecraft.core.Direction.Axis axis : net.minecraft.core.Direction.Axis.values()) {
-            boolean used = false;
-            for (net.minecraft.core.Direction direction : boundary) {
-                if (direction.getAxis() == axis) {
-                    used = true;
-                    break;
-                }
-            }
-            if (!used) return axis;
-        }
-        throw new IllegalArgumentException("Corner has no free axis");
-    }
-
-    private static net.minecraft.core.Direction negativeDirection(net.minecraft.core.Direction.Axis axis) {
-        return switch (axis) {
-            case X -> net.minecraft.core.Direction.WEST;
-            case Y -> net.minecraft.core.Direction.DOWN;
-            case Z -> net.minecraft.core.Direction.NORTH;
-        };
-    }
-
-    private static net.minecraft.core.Direction positiveDirection(net.minecraft.core.Direction.Axis axis) {
-        return switch (axis) {
-            case X -> net.minecraft.core.Direction.EAST;
-            case Y -> net.minecraft.core.Direction.UP;
-            case Z -> net.minecraft.core.Direction.SOUTH;
-        };
-    }
-
-    private static boolean isServicePortAt(ServerLevel level, Build build, BlockPos pos) {
-        if (pos.getX() < build.min.getX() || pos.getX() > build.max.getX()
-            || pos.getY() < build.min.getY() || pos.getY() > build.max.getY()
-            || pos.getZ() < build.min.getZ() || pos.getZ() > build.max.getZ()) return false;
-        BlockState state = level.getBlockState(pos);
-        return isShellBlock(state) && !(state.getBlock() instanceof TurbineCasingBlock);
-    }
-
-    private static TurbineCasingBlock.FrameProfile frameProfile(List<net.minecraft.core.Direction> boundary) {
-        if (boundary.size() == 1) {
-            return switch (boundary.getFirst()) {
-                case DOWN -> TurbineCasingBlock.FrameProfile.FACE_DOWN;
-                case UP -> TurbineCasingBlock.FrameProfile.FACE_UP;
-                case NORTH -> TurbineCasingBlock.FrameProfile.FACE_NORTH;
-                case SOUTH -> TurbineCasingBlock.FrameProfile.FACE_SOUTH;
-                case WEST -> TurbineCasingBlock.FrameProfile.FACE_WEST;
-                case EAST -> TurbineCasingBlock.FrameProfile.FACE_EAST;
-            };
-        }
-        boolean west = boundary.contains(net.minecraft.core.Direction.WEST);
-        boolean east = boundary.contains(net.minecraft.core.Direction.EAST);
-        boolean down = boundary.contains(net.minecraft.core.Direction.DOWN);
-        boolean up = boundary.contains(net.minecraft.core.Direction.UP);
-        boolean north = boundary.contains(net.minecraft.core.Direction.NORTH);
-        boolean south = boundary.contains(net.minecraft.core.Direction.SOUTH);
-
-        if (boundary.size() == 2) {
-            if (down && north) return TurbineCasingBlock.FrameProfile.EDGE_X_DOWN_NORTH;
-            if (down && south) return TurbineCasingBlock.FrameProfile.EDGE_X_DOWN_SOUTH;
-            if (up && north) return TurbineCasingBlock.FrameProfile.EDGE_X_UP_NORTH;
-            if (up && south) return TurbineCasingBlock.FrameProfile.EDGE_X_UP_SOUTH;
-            if (west && north) return TurbineCasingBlock.FrameProfile.EDGE_Y_WEST_NORTH;
-            if (west && south) return TurbineCasingBlock.FrameProfile.EDGE_Y_WEST_SOUTH;
-            if (east && north) return TurbineCasingBlock.FrameProfile.EDGE_Y_EAST_NORTH;
-            if (east && south) return TurbineCasingBlock.FrameProfile.EDGE_Y_EAST_SOUTH;
-            if (west && down) return TurbineCasingBlock.FrameProfile.EDGE_Z_WEST_DOWN;
-            if (west && up) return TurbineCasingBlock.FrameProfile.EDGE_Z_WEST_UP;
-            if (east && down) return TurbineCasingBlock.FrameProfile.EDGE_Z_EAST_DOWN;
-            if (east && up) return TurbineCasingBlock.FrameProfile.EDGE_Z_EAST_UP;
-        }
-        if (west && down && north) return TurbineCasingBlock.FrameProfile.CORNER_WEST_DOWN_NORTH;
-        if (west && down && south) return TurbineCasingBlock.FrameProfile.CORNER_WEST_DOWN_SOUTH;
-        if (west && up && north) return TurbineCasingBlock.FrameProfile.CORNER_WEST_UP_NORTH;
-        if (west && up && south) return TurbineCasingBlock.FrameProfile.CORNER_WEST_UP_SOUTH;
-        if (east && down && north) return TurbineCasingBlock.FrameProfile.CORNER_EAST_DOWN_NORTH;
-        if (east && down && south) return TurbineCasingBlock.FrameProfile.CORNER_EAST_DOWN_SOUTH;
-        if (east && up && north) return TurbineCasingBlock.FrameProfile.CORNER_EAST_UP_NORTH;
-        if (east && up && south) return TurbineCasingBlock.FrameProfile.CORNER_EAST_UP_SOUTH;
-        return TurbineCasingBlock.FrameProfile.NONE;
     }
 
     /** Связная компонента допустимых деталей; ограничение защищает от случайной стены корпусов. */
@@ -563,17 +371,7 @@ public final class TurbineStructure {
                     BlockPos pos = new BlockPos(x, y, z);
                     BlockState state = level.getBlockState(pos);
                     if (state.getBlock() instanceof TurbineCasingBlock && state.getValue(TurbinePartBlock.FORMED)) {
-                        BlockState next = state
-                            .setValue(TurbinePartBlock.FORMED, false)
-                            .setValue(TurbineCasingBlock.FRAME, TurbineCasingBlock.FrameProfile.NONE)
-                            .setValue(TurbineCasingBlock.PORT_0, false)
-                            .setValue(TurbineCasingBlock.PORT_1, false)
-                            .setValue(TurbineCasingBlock.PORT_2, false)
-                            .setValue(TurbineCasingBlock.PORT_3, false)
-                            .setValue(TurbineCasingBlock.CAP_0, false)
-                            .setValue(TurbineCasingBlock.CAP_1, false)
-                            .setValue(TurbineCasingBlock.CAP_2, false)
-                            .setValue(TurbineCasingBlock.CAP_3, false);
+                        BlockState next = state.setValue(TurbinePartBlock.FORMED, false);
                         level.setBlock(pos, next, Block.UPDATE_CLIENTS);
                     } else if (state.getBlock() instanceof TurbineRotorBlock) {
                         BlockState next = state

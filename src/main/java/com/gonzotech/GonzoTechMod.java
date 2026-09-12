@@ -74,6 +74,8 @@ public class GonzoTechMod {
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
+            // Texture-only Smart CTM корпусной оболочки турбины.
+            modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
             NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
             // Три HUD-шкалы «психики» слева от хотбара.
