@@ -1,825 +1,464 @@
 {
-  "__comment": "Static CTM-lite: frame/port bits are calculated only at turbine formation. The renderer only combines a seamless base with 12 reusable rail models.",
-  "multipart": [
-    {
-      "when": {
-        "formed": "false"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_casing"
-      }
-    },
-    {
-      "when": {
-        "formed": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_casing_formed"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_down_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_down_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_up_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_up_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_west_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_west_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_east_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_east_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_west_down"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_west_up"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_east_down"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_east_up"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_down_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_down_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_down_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_down_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_down_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_down_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_up_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_up_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_up_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_up_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_up_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_west_up_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_down_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_down_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_down_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_down_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_down_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_down_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_up_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_up_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_up_north"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_up_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_up_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "corner_east_up_south"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_down",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_down",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_down",
-        "port_2": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_down",
-        "port_3": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_up",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_up",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_up",
-        "port_2": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_up",
-        "port_3": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_north",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_north",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_north",
-        "port_2": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_north",
-        "port_3": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_south",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_south",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_south",
-        "port_2": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_south",
-        "port_3": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_west",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_west",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_west",
-        "port_2": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_west",
-        "port_3": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_east",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_east",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_east",
-        "port_2": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "face_east",
-        "port_3": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_down_north",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_down_north",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_down_south",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_down_south",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_up_north",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_up_north",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_up_south",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_down_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_x_up_south",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_x_up_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_west_north",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_west_north",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_west_south",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_west_south",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_east_north",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_east_north",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_east_south",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_west_south"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_y_east_south",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_y_east_north"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_west_down",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_west_down",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_west_up",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_west_up",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_east_down",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_down"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_east_down",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_east_up",
-        "port_0": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_west_up"
-      }
-    },
-    {
-      "when": {
-        "formed": "true",
-        "frame": "edge_z_east_up",
-        "port_1": "true"
-      },
-      "apply": {
-        "model": "gonzotech:block/turbine_frame_z_east_down"
-      }
+  "__comment": "Texture CTM-lite. Formation writes frame/port bits once; each legal combination maps to a normal cube whose six 16px faces select only one of 16 reusable rim masks. No protruding geometry and no render-time neighbour scan.",
+  "variants": {
+    "formed=false": {
+      "model": "gonzotech:block/turbine_casing"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_0"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_1"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_2"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_3"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_4"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_5"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_6"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_7"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_8"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_9"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_a"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_b"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_c"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_d"
+    },
+    "formed=true,frame=face_down,port_0=false,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_e"
+    },
+    "formed=true,frame=face_down,port_0=true,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_down_f"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_0"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_1"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_2"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_3"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_4"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_5"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_6"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_7"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_8"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_9"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_a"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_b"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_c"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_d"
+    },
+    "formed=true,frame=face_up,port_0=false,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_e"
+    },
+    "formed=true,frame=face_up,port_0=true,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_up_f"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_0"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_1"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_2"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_3"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_4"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_5"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_6"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_7"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_8"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_9"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_a"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_b"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_c"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_d"
+    },
+    "formed=true,frame=face_north,port_0=false,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_e"
+    },
+    "formed=true,frame=face_north,port_0=true,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_north_f"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_0"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_1"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_2"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_3"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_4"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_5"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_6"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_7"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_8"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_9"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_a"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_b"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_c"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_d"
+    },
+    "formed=true,frame=face_south,port_0=false,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_e"
+    },
+    "formed=true,frame=face_south,port_0=true,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_south_f"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_0"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_1"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_2"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_3"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_4"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_5"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_6"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_7"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_8"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_9"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_a"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_b"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_c"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_d"
+    },
+    "formed=true,frame=face_west,port_0=false,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_e"
+    },
+    "formed=true,frame=face_west,port_0=true,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_west_f"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_0"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=false,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_1"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_2"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=true,port_2=false,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_3"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_4"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=false,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_5"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_6"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=true,port_2=true,port_3=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_7"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_8"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=false,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_9"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_a"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=true,port_2=false,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_b"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_c"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=false,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_d"
+    },
+    "formed=true,frame=face_east,port_0=false,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_e"
+    },
+    "formed=true,frame=face_east,port_0=true,port_1=true,port_2=true,port_3=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_face_east_f"
+    },
+    "formed=true,frame=edge_x_down_north,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_north_0"
+    },
+    "formed=true,frame=edge_x_down_north,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_north_1"
+    },
+    "formed=true,frame=edge_x_down_north,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_north_2"
+    },
+    "formed=true,frame=edge_x_down_north,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_north_3"
+    },
+    "formed=true,frame=edge_x_down_south,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_south_0"
+    },
+    "formed=true,frame=edge_x_down_south,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_south_1"
+    },
+    "formed=true,frame=edge_x_down_south,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_south_2"
+    },
+    "formed=true,frame=edge_x_down_south,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_down_south_3"
+    },
+    "formed=true,frame=edge_x_up_north,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_north_0"
+    },
+    "formed=true,frame=edge_x_up_north,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_north_1"
+    },
+    "formed=true,frame=edge_x_up_north,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_north_2"
+    },
+    "formed=true,frame=edge_x_up_north,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_north_3"
+    },
+    "formed=true,frame=edge_x_up_south,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_south_0"
+    },
+    "formed=true,frame=edge_x_up_south,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_south_1"
+    },
+    "formed=true,frame=edge_x_up_south,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_south_2"
+    },
+    "formed=true,frame=edge_x_up_south,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_x_up_south_3"
+    },
+    "formed=true,frame=edge_y_west_north,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_north_0"
+    },
+    "formed=true,frame=edge_y_west_north,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_north_1"
+    },
+    "formed=true,frame=edge_y_west_north,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_north_2"
+    },
+    "formed=true,frame=edge_y_west_north,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_north_3"
+    },
+    "formed=true,frame=edge_y_west_south,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_south_0"
+    },
+    "formed=true,frame=edge_y_west_south,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_south_1"
+    },
+    "formed=true,frame=edge_y_west_south,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_south_2"
+    },
+    "formed=true,frame=edge_y_west_south,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_west_south_3"
+    },
+    "formed=true,frame=edge_y_east_north,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_north_0"
+    },
+    "formed=true,frame=edge_y_east_north,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_north_1"
+    },
+    "formed=true,frame=edge_y_east_north,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_north_2"
+    },
+    "formed=true,frame=edge_y_east_north,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_north_3"
+    },
+    "formed=true,frame=edge_y_east_south,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_south_0"
+    },
+    "formed=true,frame=edge_y_east_south,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_south_1"
+    },
+    "formed=true,frame=edge_y_east_south,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_south_2"
+    },
+    "formed=true,frame=edge_y_east_south,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_y_east_south_3"
+    },
+    "formed=true,frame=edge_z_west_down,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_down_0"
+    },
+    "formed=true,frame=edge_z_west_down,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_down_1"
+    },
+    "formed=true,frame=edge_z_west_down,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_down_2"
+    },
+    "formed=true,frame=edge_z_west_down,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_down_3"
+    },
+    "formed=true,frame=edge_z_west_up,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_up_0"
+    },
+    "formed=true,frame=edge_z_west_up,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_up_1"
+    },
+    "formed=true,frame=edge_z_west_up,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_up_2"
+    },
+    "formed=true,frame=edge_z_west_up,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_west_up_3"
+    },
+    "formed=true,frame=edge_z_east_down,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_down_0"
+    },
+    "formed=true,frame=edge_z_east_down,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_down_1"
+    },
+    "formed=true,frame=edge_z_east_down,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_down_2"
+    },
+    "formed=true,frame=edge_z_east_down,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_down_3"
+    },
+    "formed=true,frame=edge_z_east_up,port_0=false,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_up_0"
+    },
+    "formed=true,frame=edge_z_east_up,port_0=true,port_1=false": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_up_1"
+    },
+    "formed=true,frame=edge_z_east_up,port_0=false,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_up_2"
+    },
+    "formed=true,frame=edge_z_east_up,port_0=true,port_1=true": {
+      "model": "gonzotech:block/turbine_casing_ctm_edge_z_east_up_3"
+    },
+    "formed=true,frame=corner_west_down_north": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_west_down_north_0"
+    },
+    "formed=true,frame=corner_west_down_south": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_west_down_south_0"
+    },
+    "formed=true,frame=corner_west_up_north": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_west_up_north_0"
+    },
+    "formed=true,frame=corner_west_up_south": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_west_up_south_0"
+    },
+    "formed=true,frame=corner_east_down_north": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_east_down_north_0"
+    },
+    "formed=true,frame=corner_east_down_south": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_east_down_south_0"
+    },
+    "formed=true,frame=corner_east_up_north": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_east_up_north_0"
+    },
+    "formed=true,frame=corner_east_up_south": {
+      "model": "gonzotech:block/turbine_casing_ctm_corner_east_up_south_0"
     }
-  ]
+  }
 }
