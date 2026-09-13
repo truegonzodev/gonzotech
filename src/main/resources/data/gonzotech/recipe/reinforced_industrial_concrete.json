@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CRC",
+    "RCR",
+    "CRC"
+  ],
+  "key": {
+    "C": "gonzotech:clinker_grit",
+    "R": "gonzotech:rebar"
+  },
+  "result": {
+    "id": "gonzotech:reinforced_industrial_concrete",
+    "count": 1
+  }
+}

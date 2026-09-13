@@ -6,6 +6,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.item.crafting.Recipe;
 
 import java.util.List;
@@ -56,7 +57,22 @@ public final class RecipeUnlocks {
             "gonzotech:first_universal_node",
             // Логистика: сортировка предметов
             "gonzotech:item_filter",
-            "gonzotech:item_scavenger"
+            "gonzotech:item_scavenger",
+            // Строительные материалы II. Рецепты физически доступны всегда,
+            // но в книге появляются вместе с Открытием 1.
+            "gonzotech:trio_grit",
+            "gonzotech:clinker_grit_from_trio_grit_smelting",
+            "gonzotech:armor_mix",
+            "gonzotech:andesite_silicate_clinker",
+            "gonzotech:white_porcelain_batch",
+            "gonzotech:rebar",
+            "gonzotech:armor_concrete",
+            "gonzotech:durable_concrete",
+            "gonzotech:porcelain",
+            "gonzotech:industrial_concrete",
+            "gonzotech:reinforced_armor_concrete",
+            "gonzotech:reinforced_industrial_concrete",
+            "gonzotech:slag_concrete"
         ),
         2, List.of(
             // Пылевые сплавы верстака. Они физически крафтятся по обычным
@@ -81,7 +97,19 @@ public final class RecipeUnlocks {
     private static final List<String> RECIPES_ALWAYS = List.of(
         "gonzotech:chalkboard",
         "gonzotech:pseudo_coil",
-        "gonzotech:scholar_notes"
+        "gonzotech:scholar_notes",
+        // Намеренно крафтовый «сломанный механизм» всегда должен быть виден.
+        "gonzotech:botched_mechanism"
+    );
+
+    /** 20 minutes of accumulated Minecraft play time. */
+    private static final int TWENTY_MINUTES_PLAY_TIME_TICKS = 20 * 60 * 20;
+
+    /** Recipes deliberately revealed only after twenty minutes in this world. */
+    private static final List<String> RECIPES_AFTER_TWENTY_MINUTES = List.of(
+        "gonzotech:radioactive_slime_block",
+        "gonzotech:charcoal_from_dead_log",
+        "gonzotech:plastic_waste"
     );
 
     private RecipeUnlocks() {
@@ -90,6 +118,18 @@ public final class RecipeUnlocks {
     /** Выдать игроку рецепты, доступные априори (вызывать при каждом входе). */
     public static void grantAlwaysUnlocked(ServerPlayer player) {
         grant(player, RECIPES_ALWAYS);
+    }
+
+    /**
+     * Reveal the three time-gated recipe-book entries after this player's own
+     * accumulated {@link Stats#PLAY_TIME play time}; this is not world time.
+     * Safe to call on every server player tick and at login.
+     */
+    public static void grantAfterTwentyMinutesPlayed(ServerPlayer player) {
+        int playTime = player.getStats().getValue(Stats.CUSTOM.get(Stats.PLAY_TIME));
+        if (playTime >= TWENTY_MINUTES_PLAY_TIME_TICKS) {
+            grant(player, RECIPES_AFTER_TWENTY_MINUTES);
+        }
     }
 
     /** Выдать игроку рецепты для всех уже активированных «Открытий». Идемпотентно. */

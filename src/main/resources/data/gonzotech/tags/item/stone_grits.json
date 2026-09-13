@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:granite_grit",
+    "gonzotech:andesite_grit",
+    "gonzotech:diorite_grit"
+  ]
+}

@@ -2,11 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "category": "building",
   "pattern": [
-    "SS",
-    "SS"
+    "SR",
+    "RS"
   ],
   "key": {
-    "S": "minecraft:sculk"
+    "S": "minecraft:sculk",
+    "R": "minecraft:stone_bricks"
   },
   "result": {
     "id": "gonzotech:sculk_bricks",

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:granite_grit",
+    "gonzotech:andesite_grit",
+    "gonzotech:diorite_grit"
+  ],
+  "result": {
+    "id": "gonzotech:trio_grit",
+    "count": 2
+  }
+}

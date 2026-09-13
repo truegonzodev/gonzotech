@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "gonzotech:trio_grit",
+  "result": {
+    "id": "gonzotech:clinker_grit",
+    "count": 1
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

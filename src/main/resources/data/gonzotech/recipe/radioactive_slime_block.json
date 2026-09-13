@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SSS",
+    "SUS",
+    "SSS"
+  ],
+  "key": {
+    "S": "minecraft:slime_ball",
+    "U": "gonzotech:uranium_nugget"
+  },
+  "result": {
+    "id": "gonzotech:radioactive_slime_block",
+    "count": 1
+  }
+}

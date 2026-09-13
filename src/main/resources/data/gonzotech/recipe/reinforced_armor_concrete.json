@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "ARA",
+    "RAR",
+    "ARA"
+  ],
+  "key": {
+    "A": "gonzotech:armor_mix",
+    "R": "gonzotech:rebar"
+  },
+  "result": {
+    "id": "gonzotech:reinforced_armor_concrete",
+    "count": 1
+  }
+}

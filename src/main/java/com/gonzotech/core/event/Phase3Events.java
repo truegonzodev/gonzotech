@@ -1,7 +1,9 @@
 package com.gonzotech.core.event;
 
+import com.gonzotech.chalkboard.advancement.RecipeUnlocks;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
+import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -13,9 +15,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
@@ -172,14 +177,35 @@ public final class Phase3Events {
         }
     }
 
-    // ─────────────────── 3+4. Эффекты в воде (цезий / ведро лавы) ───────────────────
+    // ─────────────────── 3. Лава на красной пыли → багровый обсидиан ───────────────────
+
+    /**
+     * Intercept the exact fluid replacement rather than watching redstone as a
+     * neighbour: crimson obsidian is made only when lava actually flows into
+     * redstone dust, including a flowing (not just source) lava block.
+     */
+    @SubscribeEvent
+    public static void onLavaPlacesOverRedstone(BlockEvent.FluidPlaceBlockEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+        if (!event.getOriginalState().is(Blocks.REDSTONE_WIRE)) return;
+        if (!level.getFluidState(event.getLiquidPos()).is(Fluids.LAVA)) return;
+
+        event.setNewState(ModBlocks.CRIMSON_OBSIDIAN.get().defaultBlockState());
+    }
+
+    // ─────────────────── 4+5. Эффекты в воде (цезий / ведро лавы) ───────────────────
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
         if (!(player.level() instanceof ServerLevel level)) return;
-        if (!player.isInWater()) return;
 
+        // These recipes are unlocked by each player's persistent PLAY_TIME, not
+        // by a global clock. It has to run before the water-only early return.
+        RecipeUnlocks.grantAfterTwentyMinutesPlayed(serverPlayer);
+
+        if (!player.isInWater()) return;
         Inventory inv = player.getInventory();
 
         // 4. Ведро лавы в инвентаре → ведро обсидиана (каждый тик в воде).
