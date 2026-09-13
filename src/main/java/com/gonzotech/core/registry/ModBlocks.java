@@ -9,6 +9,7 @@ import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DropExperienceBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SlimeBlock;
 import net.minecraft.world.level.block.SoundType;
@@ -128,8 +129,9 @@ public class ModBlocks {
         BlockBehaviour.Properties.ofFullCopy(Blocks.SAND).sound(SoundType.GRAVEL).strength(0.5f, 0.5f));
     public static final DeferredBlock<Block> DEAD_STONE = BLOCKS.registerSimpleBlock(
         "dead_stone", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).strength(2.55f, 6.0f));
-    public static final DeferredBlock<Block> DEAD_LOG = BLOCKS.registerSimpleBlock(
-        "dead_log", BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG));
+    /** Ванильный pillar-state нужен: копируемые свойства OAK_LOG считывают AXIS. */
+    public static final DeferredBlock<RotatedPillarBlock> DEAD_LOG = BLOCKS.registerBlock(
+        "dead_log", RotatedPillarBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG));
     public static final DeferredBlock<Block> CORIUM = BLOCKS.registerSimpleBlock(
         "corium", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
