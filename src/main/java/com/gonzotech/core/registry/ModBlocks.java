@@ -122,10 +122,10 @@ public class ModBlocks {
     // ───────────────────────────── Декорации радиации ─────────────────────────────
     public static final DeferredBlock<Block> DEAD_DIRT = BLOCKS.registerSimpleBlock(
         "dead_dirt", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
-            .sound(SoundType.DIRT).strength(1.05f, 6.0f));
+            .sound(SoundType.GRAVEL).strength(1.05f, 6.0f));
     public static final DeferredBlock<com.gonzotech.space.block.GonzoFallingBlock> DEAD_SAND = BLOCKS.registerBlock(
         "dead_sand", com.gonzotech.space.block.GonzoFallingBlock::new,
-        BlockBehaviour.Properties.ofFullCopy(Blocks.SAND).sound(SoundType.DIRT).strength(0.5f, 0.5f));
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SAND).sound(SoundType.GRAVEL).strength(0.5f, 0.5f));
     public static final DeferredBlock<Block> DEAD_STONE = BLOCKS.registerSimpleBlock(
         "dead_stone", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).strength(2.55f, 6.0f));
     public static final DeferredBlock<Block> DEAD_LOG = BLOCKS.registerSimpleBlock(
@@ -156,7 +156,7 @@ public class ModBlocks {
     public static final DeferredBlock<Block> SILICON_CACHE = BLOCKS.registerSimpleBlock(
         "silicon_cache", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     public static final DeferredBlock<Block> PLASTIC_WASTE = BLOCKS.registerSimpleBlock(
-        "plastic_waste", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.DIRT));
+        "plastic_waste", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.GRAVEL));
 
     private static BlockBehaviour.Properties sculkBrickProperties() {
         return BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BRICKS).sound(SoundType.SCULK);
