@@ -158,8 +158,25 @@
     "gonzotech:second_item_filter",
     "gonzotech:second_item_scavenger",
     "gonzotech:second_pump",
-    "gonzotech:second_cobble_generator"
-,
-    "gonzotech:second_composite_pipe"
+    "gonzotech:second_cobble_generator",
+    "gonzotech:second_composite_pipe",
+    "gonzotech:crimson_obsidian",
+    "gonzotech:sculk_bricks",
+    "gonzotech:chiseled_sculk_bricks",
+    "gonzotech:smooth_sculk_bricks",
+    "gonzotech:sculk_brick_stairs",
+    "gonzotech:sculk_brick_slab",
+    "gonzotech:sculk_brick_wall",
+    "gonzotech:dead_dirt",
+    "gonzotech:dead_stone",
+    "gonzotech:corium",
+    "gonzotech:waste_barrel",
+    "gonzotech:weathered_plating",
+    "gonzotech:debris",
+    "gonzotech:weathered_debris",
+    "gonzotech:mechanisms",
+    "gonzotech:weathered_mechanisms",
+    "gonzotech:silicon_cache",
+    "gonzotech:plastic_waste"
   ]
 }

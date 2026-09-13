@@ -143,6 +143,32 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SLAG_CONCRETE_ITEM.get());
                 output.accept(ModItems.INDUSTRIAL_CONCRETE_ITEM.get());
                 output.accept(ModItems.REINFORCED_INDUSTRIAL_CONCRETE_ITEM.get());
+                // Саспенс: скалковые руины/данжи.
+                output.accept(ModItems.LEAD_STAINED_GLASS_ITEM.get());
+                output.accept(ModItems.CRIMSON_OBSIDIAN_ITEM.get());
+                output.accept(ModItems.SCULK_BRICKS_ITEM.get());
+                output.accept(ModItems.CHISELED_SCULK_BRICKS_ITEM.get());
+                output.accept(ModItems.SMOOTH_SCULK_BRICKS_ITEM.get());
+                output.accept(ModItems.SCULK_BRICK_STAIRS_ITEM.get());
+                output.accept(ModItems.SCULK_BRICK_SLAB_ITEM.get());
+                output.accept(ModItems.SCULK_BRICK_WALL_ITEM.get());
+                // Радиация: блоки радиоактивных зон и комплексов.
+                output.accept(ModItems.DEAD_DIRT_ITEM.get());
+                output.accept(ModItems.DEAD_SAND_ITEM.get());
+                output.accept(ModItems.DEAD_STONE_ITEM.get());
+                output.accept(ModItems.DEAD_LOG_ITEM.get());
+                output.accept(ModItems.CORIUM_ITEM.get());
+                output.accept(ModItems.WASTE_BARREL_ITEM.get());
+                output.accept(ModItems.DEAD_SLIME_BLOCK_ITEM.get());
+                output.accept(ModItems.RADIOACTIVE_SLIME_BLOCK_ITEM.get());
+                // Метеоры и старые механизмы: строительные элементы руин.
+                output.accept(ModItems.WEATHERED_PLATING_ITEM.get());
+                output.accept(ModItems.DEBRIS_ITEM.get());
+                output.accept(ModItems.WEATHERED_DEBRIS_ITEM.get());
+                output.accept(ModItems.MECHANISMS_ITEM.get());
+                output.accept(ModItems.WEATHERED_MECHANISMS_ITEM.get());
+                output.accept(ModItems.SILICON_CACHE_ITEM.get());
+                output.accept(ModItems.PLASTIC_WASTE_ITEM.get());
                 // Фаза 4 — блоки космоса.
                 output.accept(ModItems.LUNAR_STONE_ITEM.get());
                 output.accept(ModItems.RICH_LUNAR_STONE_ITEM.get());

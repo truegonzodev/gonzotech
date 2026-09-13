@@ -7,8 +7,14 @@ import com.gonzotech.core.ore.IodineOreBlock;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DropExperienceBlock;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.SlimeBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.TransparentBlock;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
@@ -89,6 +95,71 @@ public class ModBlocks {
             .strength(hardness, explosionResistance)
             .friction(friction)
             .requiresCorrectToolForDrops();
+    }
+
+    // ─────────────────────── Декорации для данжей: «саспенс» ───────────────────────
+    // Обычные кубы и ванильные формы кирпичей: специальные модели/BE не нужны.
+    public static final DeferredBlock<TransparentBlock> LEAD_STAINED_GLASS = BLOCKS.registerBlock(
+        "lead_stained_glass", TransparentBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
+    public static final DeferredBlock<Block> CRIMSON_OBSIDIAN = BLOCKS.registerSimpleBlock(
+        "crimson_obsidian", BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN));
+    public static final DeferredBlock<Block> SCULK_BRICKS = BLOCKS.registerSimpleBlock(
+        "sculk_bricks", sculkBrickProperties());
+    public static final DeferredBlock<Block> CHISELED_SCULK_BRICKS = BLOCKS.registerSimpleBlock(
+        "chiseled_sculk_bricks", sculkBrickProperties());
+    public static final DeferredBlock<Block> SMOOTH_SCULK_BRICKS = BLOCKS.registerSimpleBlock(
+        "smooth_sculk_bricks", sculkBrickProperties());
+    public static final DeferredBlock<StairBlock> SCULK_BRICK_STAIRS = BLOCKS.registerBlock(
+        "sculk_brick_stairs",
+        properties -> new StairBlock(SCULK_BRICKS.get().defaultBlockState(), properties),
+        sculkBrickProperties());
+    public static final DeferredBlock<SlabBlock> SCULK_BRICK_SLAB = BLOCKS.registerBlock(
+        "sculk_brick_slab", SlabBlock::new, sculkBrickProperties());
+    /** «Ограда» следует vanilla-логике stone-brick wall, а не деревянного fence. */
+    public static final DeferredBlock<WallBlock> SCULK_BRICK_WALL = BLOCKS.registerBlock(
+        "sculk_brick_wall", WallBlock::new, sculkBrickProperties());
+
+    // ───────────────────────────── Декорации радиации ─────────────────────────────
+    public static final DeferredBlock<Block> DEAD_DIRT = BLOCKS.registerSimpleBlock(
+        "dead_dirt", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
+            .sound(SoundType.DIRT).strength(1.05f, 6.0f));
+    public static final DeferredBlock<com.gonzotech.space.block.GonzoFallingBlock> DEAD_SAND = BLOCKS.registerBlock(
+        "dead_sand", com.gonzotech.space.block.GonzoFallingBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SAND).sound(SoundType.DIRT).strength(0.5f, 0.5f));
+    public static final DeferredBlock<Block> DEAD_STONE = BLOCKS.registerSimpleBlock(
+        "dead_stone", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).strength(2.55f, 6.0f));
+    public static final DeferredBlock<Block> DEAD_LOG = BLOCKS.registerSimpleBlock(
+        "dead_log", BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG));
+    public static final DeferredBlock<Block> CORIUM = BLOCKS.registerSimpleBlock(
+        "corium", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
+    /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
+    public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
+        "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+            .sound(SoundType.METAL).strength(2.0f, 6.0f));
+    public static final DeferredBlock<SlimeBlock> DEAD_SLIME_BLOCK = BLOCKS.registerBlock(
+        "dead_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
+    public static final DeferredBlock<SlimeBlock> RADIOACTIVE_SLIME_BLOCK = BLOCKS.registerBlock(
+        "radioactive_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
+
+    // ─────────────────── Декорации метеоров и старых механизмов ───────────────────
+    public static final DeferredBlock<Block> WEATHERED_PLATING = BLOCKS.registerSimpleBlock(
+        "weathered_plating", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.COPPER));
+    public static final DeferredBlock<Block> DEBRIS = BLOCKS.registerSimpleBlock(
+        "debris", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
+    public static final DeferredBlock<Block> WEATHERED_DEBRIS = BLOCKS.registerSimpleBlock(
+        "weathered_debris", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.COPPER));
+    /** Единственный анимированный куб: textures/block/mechanisms.png.mcmeta. */
+    public static final DeferredBlock<Block> MECHANISMS = BLOCKS.registerSimpleBlock(
+        "mechanisms", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
+    public static final DeferredBlock<Block> WEATHERED_MECHANISMS = BLOCKS.registerSimpleBlock(
+        "weathered_mechanisms", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.COPPER));
+    public static final DeferredBlock<Block> SILICON_CACHE = BLOCKS.registerSimpleBlock(
+        "silicon_cache", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
+    public static final DeferredBlock<Block> PLASTIC_WASTE = BLOCKS.registerSimpleBlock(
+        "plastic_waste", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.DIRT));
+
+    private static BlockBehaviour.Properties sculkBrickProperties() {
+        return BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BRICKS).sound(SoundType.SCULK);
     }
 
     // ─────────────────────────── Фаза 4: блоки космоса ───────────────────────────

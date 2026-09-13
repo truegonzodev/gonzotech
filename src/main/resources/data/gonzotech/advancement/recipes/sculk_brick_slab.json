@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:sculk_brick_slab",
+      "gonzotech:sculk_brick_slab_from_stonecutter"
+    ]
+  },
+  "criteria": {
+    "has_sculk_bricks": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:sculk_bricks"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_sculk_bricks"
+    ]
+  ]
+}

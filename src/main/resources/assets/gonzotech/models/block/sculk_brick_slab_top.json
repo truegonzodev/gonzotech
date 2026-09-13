@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "gonzotech:block/sculk_bricks",
+    "side": "gonzotech:block/sculk_bricks",
+    "top": "gonzotech:block/sculk_bricks"
+  }
+}

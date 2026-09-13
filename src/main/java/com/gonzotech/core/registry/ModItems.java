@@ -212,6 +212,56 @@ public class ModItems {
     public static final DeferredItem<BlockItem> REINFORCED_INDUSTRIAL_CONCRETE_ITEM =
         ITEMS.registerSimpleBlockItem("reinforced_industrial_concrete", ModBlocks.REINFORCED_INDUSTRIAL_CONCRETE);
 
+    // ──────────────── Декоративные блоки данжей: саспенс / радиация / метеоры ────────────────
+    public static final DeferredItem<BlockItem> LEAD_STAINED_GLASS_ITEM =
+        ITEMS.registerSimpleBlockItem("lead_stained_glass", ModBlocks.LEAD_STAINED_GLASS);
+    public static final DeferredItem<BlockItem> CRIMSON_OBSIDIAN_ITEM =
+        ITEMS.registerSimpleBlockItem("crimson_obsidian", ModBlocks.CRIMSON_OBSIDIAN);
+    public static final DeferredItem<BlockItem> SCULK_BRICKS_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_bricks", ModBlocks.SCULK_BRICKS);
+    public static final DeferredItem<BlockItem> CHISELED_SCULK_BRICKS_ITEM =
+        ITEMS.registerSimpleBlockItem("chiseled_sculk_bricks", ModBlocks.CHISELED_SCULK_BRICKS);
+    public static final DeferredItem<BlockItem> SMOOTH_SCULK_BRICKS_ITEM =
+        ITEMS.registerSimpleBlockItem("smooth_sculk_bricks", ModBlocks.SMOOTH_SCULK_BRICKS);
+    public static final DeferredItem<BlockItem> SCULK_BRICK_STAIRS_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_brick_stairs", ModBlocks.SCULK_BRICK_STAIRS);
+    public static final DeferredItem<BlockItem> SCULK_BRICK_SLAB_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_brick_slab", ModBlocks.SCULK_BRICK_SLAB);
+    public static final DeferredItem<BlockItem> SCULK_BRICK_WALL_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_brick_wall", ModBlocks.SCULK_BRICK_WALL);
+
+    public static final DeferredItem<BlockItem> DEAD_DIRT_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_dirt", ModBlocks.DEAD_DIRT);
+    public static final DeferredItem<BlockItem> DEAD_SAND_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_sand", ModBlocks.DEAD_SAND);
+    public static final DeferredItem<BlockItem> DEAD_STONE_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_stone", ModBlocks.DEAD_STONE);
+    public static final DeferredItem<BlockItem> DEAD_LOG_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_log", ModBlocks.DEAD_LOG);
+    public static final DeferredItem<BlockItem> CORIUM_ITEM =
+        ITEMS.registerSimpleBlockItem("corium", ModBlocks.CORIUM);
+    public static final DeferredItem<BlockItem> WASTE_BARREL_ITEM =
+        ITEMS.registerSimpleBlockItem("waste_barrel", ModBlocks.WASTE_BARREL);
+    public static final DeferredItem<BlockItem> DEAD_SLIME_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_slime_block", ModBlocks.DEAD_SLIME_BLOCK);
+    public static final DeferredItem<BlockItem> RADIOACTIVE_SLIME_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("radioactive_slime_block", ModBlocks.RADIOACTIVE_SLIME_BLOCK);
+
+    public static final DeferredItem<BlockItem> WEATHERED_PLATING_ITEM =
+        ITEMS.registerSimpleBlockItem("weathered_plating", ModBlocks.WEATHERED_PLATING);
+    public static final DeferredItem<BlockItem> DEBRIS_ITEM =
+        ITEMS.registerSimpleBlockItem("debris", ModBlocks.DEBRIS);
+    public static final DeferredItem<BlockItem> WEATHERED_DEBRIS_ITEM =
+        ITEMS.registerSimpleBlockItem("weathered_debris", ModBlocks.WEATHERED_DEBRIS);
+    public static final DeferredItem<BlockItem> MECHANISMS_ITEM =
+        ITEMS.registerSimpleBlockItem("mechanisms", ModBlocks.MECHANISMS);
+    public static final DeferredItem<BlockItem> WEATHERED_MECHANISMS_ITEM =
+        ITEMS.registerSimpleBlockItem("weathered_mechanisms", ModBlocks.WEATHERED_MECHANISMS);
+    public static final DeferredItem<BlockItem> SILICON_CACHE_ITEM =
+        ITEMS.registerSimpleBlockItem("silicon_cache", ModBlocks.SILICON_CACHE);
+    public static final DeferredItem<BlockItem> PLASTIC_WASTE_ITEM =
+        ITEMS.registerSimpleBlockItem("plastic_waste", ModBlocks.PLASTIC_WASTE);
+
     // ─────────────────────── Фаза 4: BlockItem'ы блоков космоса ───────────────────────
     public static final DeferredItem<BlockItem> LUNAR_STONE_ITEM =
         ITEMS.registerSimpleBlockItem("lunar_stone", ModBlocks.LUNAR_STONE);

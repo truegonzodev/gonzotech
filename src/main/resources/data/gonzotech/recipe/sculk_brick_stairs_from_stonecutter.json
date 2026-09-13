@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "gonzotech:sculk_bricks",
+  "result": {
+    "id": "gonzotech:sculk_brick_stairs",
+    "count": 1
+  }
+}

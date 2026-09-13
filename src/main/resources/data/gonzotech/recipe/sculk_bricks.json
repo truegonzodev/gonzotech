@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SS",
+    "SS"
+  ],
+  "key": {
+    "S": "minecraft:sculk"
+  },
+  "result": {
+    "id": "gonzotech:sculk_bricks",
+    "count": 4
+  }
+}
