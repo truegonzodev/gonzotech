@@ -174,16 +174,11 @@ public final class AlloyEquipmentStats {
 
         ItemAttributeModifiers hostAttributes = host.get(DataComponents.ATTRIBUTE_MODIFIERS);
         if (hostAttributes == null) hostAttributes = ItemAttributeModifiers.EMPTY;
-        ItemAttributeModifiers attributes = hostAttributes
-            .withModifierAdded(Attributes.ATTACK_DAMAGE,
-                modifier("alloy_brittleness_attack_damage", brittlenessToolBonus(properties.brittleness()),
-                    AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.MAINHAND)
-            .withModifierAdded(Attributes.ATTACK_SPEED,
-                modifier("alloy_weight_attack_speed", weightAttackSpeedBonus(properties.weight()),
-                    AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.MAINHAND);
-        result.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes);
+        // Fold dynamic values into the host modifiers rather than append separate
+        // entries. The normal vanilla green damage/speed rows then remain the only
+        // combat-stat rows in the tooltip.
+        result.set(DataComponents.ATTRIBUTE_MODIFIERS, adjustToolAttributes(hostAttributes,
+            brittlenessToolBonus(properties.brittleness()), weightAttackSpeedBonus(properties.weight())));
 
         if (properties.inertness() < INERTNESS_ENCHANTMENT_LOCK) {
             Enchantable hostEnchantability = host.get(DataComponents.ENCHANTABLE);
@@ -235,14 +230,35 @@ public final class AlloyEquipmentStats {
         }
     }
 
+    private static ItemAttributeModifiers adjustToolAttributes(ItemAttributeModifiers hostAttributes,
+                                                               double damageBonus, double attackSpeedBonus) {
+        ItemAttributeModifiers.Builder result = ItemAttributeModifiers.builder();
+        for (ItemAttributeModifiers.Entry entry : hostAttributes.modifiers()) {
+            AttributeModifier modifier = entry.modifier();
+            if (entry.slot() == EquipmentSlotGroup.MAINHAND
+                && modifier.operation() == AttributeModifier.Operation.ADD_VALUE) {
+                if (entry.attribute().equals(Attributes.ATTACK_DAMAGE)) {
+                    modifier = new AttributeModifier(modifier.id(), modifier.amount() + damageBonus, modifier.operation());
+                } else if (entry.attribute().equals(Attributes.ATTACK_SPEED)) {
+                    modifier = new AttributeModifier(modifier.id(), modifier.amount() + attackSpeedBonus,
+                        modifier.operation());
+                }
+            }
+            result.add(entry.attribute(), modifier, entry.slot());
+        }
+        return result.build().withTooltip(hostAttributes.showInTooltip());
+    }
+
     private static Tool adjustToolMiningSpeed(Tool hostTool, double speedBonus) {
         List<Tool.Rule> adjustedRules = new ArrayList<>(hostTool.rules().size());
         for (Tool.Rule rule : hostTool.rules()) {
             Optional<Float> adjustedSpeed = rule.speed().map(speed -> Math.max(0.1F, (float) (speed + speedBonus)));
             adjustedRules.add(new Tool.Rule(rule.blocks(), adjustedSpeed, rule.correctForDrops()));
         }
-        return new Tool(adjustedRules, Math.max(0.1F, (float) (hostTool.defaultMiningSpeed() + speedBonus)),
-            hostTool.damagePerBlock());
+        // The default speed governs every block not covered by a vanilla host-tool
+        // rule. Keep it unmodified so B/M only affect the pickaxe/sword's intended
+        // material categories (stone ores for a pickaxe, cobwebs for a sword, etc.).
+        return new Tool(adjustedRules, hostTool.defaultMiningSpeed(), hostTool.damagePerBlock());
     }
 
     private static Item hostItem(Kind kind, AlloyMaterialCatalog.ToolTier tier) {

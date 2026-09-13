@@ -556,7 +556,6 @@
   "tooltip.gonzotech.custom_alloy.tier.iron": "железный",
   "tooltip.gonzotech.custom_alloy.tier.diamond": "алмазный",
   "tooltip.gonzotech.custom_alloy.tier.netherite_plus": "незеритовый+",
-  "tooltip.gonzotech.custom_alloy.color": "Цвет: %s",
   "block.gonzotech.second_grinder": "Измельчитель II (болванка)",
   "block.gonzotech.second_item_filter": "Фильтр предметов II",
   "block.gonzotech.second_item_scavenger": "Отсеиватель II",

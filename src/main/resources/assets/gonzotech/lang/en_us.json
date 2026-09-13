@@ -556,7 +556,6 @@
   "tooltip.gonzotech.custom_alloy.tier.iron": "Iron",
   "tooltip.gonzotech.custom_alloy.tier.diamond": "Diamond",
   "tooltip.gonzotech.custom_alloy.tier.netherite_plus": "Netherite+",
-  "tooltip.gonzotech.custom_alloy.color": "Color: %s",
   "block.gonzotech.second_grinder": "Grinder II (Stub)",
   "block.gonzotech.second_item_filter": "Item Filter II",
   "block.gonzotech.second_item_scavenger": "Item Scavenger II",
