@@ -12,8 +12,6 @@
     "gonzotech:deepslate_cesium_ore",
     "gonzotech:deepslate_iridium_ore",
     "gonzotech:deepslate_osmium_ore",
-    "gonzotech:reinforced_armor_concrete",
-    "gonzotech:reinforced_industrial_concrete",
-    "gonzotech:superdense_ice"
+    "gonzotech:reinforced_industrial_concrete"
   ]
 }

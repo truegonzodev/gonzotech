@@ -7,9 +7,12 @@ import com.gonzotech.core.registry.ModDataComponents;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.processing.AlloyMaterialCatalog;
 import com.gonzotech.machines.processing.AlloyProperties;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -21,6 +24,7 @@ import net.minecraft.world.item.component.DyedItemColor;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.Tool;
 import net.minecraft.world.item.enchantment.Enchantable;
+import net.minecraft.world.level.block.Block;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +46,10 @@ public final class AlloyEquipmentStats {
     private static final int INERTNESS_ENCHANTMENT_LOCK = 50;
     private static final int LAVA_RESISTANCE_THRESHOLD = 70;
     private static final double CHESTPLATE_ARMOR_MULTIPLIER = 1.7D;
+
+    /** Blocks reserved for the explicit level-5 netherite-plus alloy pickaxe. */
+    private static final TagKey<Block> NEEDS_NETHERITE_PLUS_TOOL = TagKey.create(Registries.BLOCK,
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "needs_netherite_plus_tool"));
 
     private AlloyEquipmentStats() {
     }
@@ -155,6 +163,19 @@ public final class AlloyEquipmentStats {
         return (1.0D + 4.0D * clampPercent(properties.strength()) / 100.0D) * CHESTPLATE_ARMOR_MULTIPLIER;
     }
 
+    /**
+     * The chestplate's vanilla-style toughness follows its material host: iron
+     * 0.5, diamond 1.8, and the custom level-5 netherite-plus host 2.5.
+     */
+    public static double chestplateArmorToughness(AlloyProperties properties) {
+        return switch (properties.toolTier()) {
+            case STONE -> 0.0D;
+            case IRON -> 0.5D;
+            case DIAMOND -> 1.8D;
+            case NETHERITE_PLUS -> 2.5D;
+        };
+    }
+
     /** M becomes 0–80% knockback resistance and 0 to -15% total movement speed. */
     public static double armorKnockbackResistance(AlloyProperties properties) {
         return 0.8D * clampPercent(properties.weight()) / 100.0D;
@@ -169,7 +190,7 @@ public final class AlloyEquipmentStats {
         Tool hostTool = host.get(DataComponents.TOOL);
         if (hostTool != null) {
             double miningBonus = brittlenessToolBonus(properties.brittleness()) + weightMiningSpeedBonus(properties.weight());
-            result.set(DataComponents.TOOL, adjustToolMiningSpeed(hostTool, miningBonus));
+            result.set(DataComponents.TOOL, adjustToolMiningSpeed(hostTool, kind, properties.toolTier(), miningBonus));
         }
 
         ItemAttributeModifiers hostAttributes = host.get(DataComponents.ATTRIBUTE_MODIFIERS);
@@ -196,6 +217,12 @@ public final class AlloyEquipmentStats {
                 modifier("alloy_chestplate_knockback_resistance", armorKnockbackResistance(properties),
                     AttributeModifier.Operation.ADD_VALUE),
                 EquipmentSlotGroup.CHEST);
+        double armorToughness = chestplateArmorToughness(properties);
+        if (armorToughness > 0.0D) {
+            attributes.add(Attributes.ARMOR_TOUGHNESS,
+                modifier("alloy_chestplate_armor_toughness", armorToughness, AttributeModifier.Operation.ADD_VALUE),
+                EquipmentSlotGroup.CHEST);
+        }
         double movementModifier = armorMovementSpeedModifier(properties);
         if (movementModifier != 0.0D) {
             attributes.add(Attributes.MOVEMENT_SPEED,
@@ -249,8 +276,17 @@ public final class AlloyEquipmentStats {
         return result.build().withTooltip(hostAttributes.showInTooltip());
     }
 
-    private static Tool adjustToolMiningSpeed(Tool hostTool, double speedBonus) {
-        List<Tool.Rule> adjustedRules = new ArrayList<>(hostTool.rules().size());
+    private static Tool adjustToolMiningSpeed(Tool hostTool, Kind kind, AlloyMaterialCatalog.ToolTier tier,
+                                               double speedBonus) {
+        List<Tool.Rule> adjustedRules = new ArrayList<>(hostTool.rules().size() + 1);
+        if (kind == Kind.PICKAXE && tier == AlloyMaterialCatalog.ToolTier.NETHERITE_PLUS) {
+            // The higher-priority positive rule overrides the netherite host's
+            // negative rule for the level-5-only block tag. It is a named tag so
+            // future level-5 blocks can be added through data without new code.
+            BuiltInRegistries.BLOCK.get(NEEDS_NETHERITE_PLUS_TOOL).ifPresent(blocks ->
+                adjustedRules.add(Tool.Rule.minesAndDrops(blocks, topMiningSpeed(hostTool)))
+            );
+        }
         for (Tool.Rule rule : hostTool.rules()) {
             Optional<Float> adjustedSpeed = rule.speed().map(speed -> Math.max(0.1F, (float) (speed + speedBonus)));
             adjustedRules.add(new Tool.Rule(rule.blocks(), adjustedSpeed, rule.correctForDrops()));
@@ -259,6 +295,19 @@ public final class AlloyEquipmentStats {
         // rule. Keep it unmodified so B/M only affect the pickaxe/sword's intended
         // material categories (stone ores for a pickaxe, cobwebs for a sword, etc.).
         return new Tool(adjustedRules, hostTool.defaultMiningSpeed(), hostTool.damagePerBlock());
+    }
+
+    /**
+     * Use the host pickaxe's ordinary fastest rule for level-5 blocks. Dynamic
+     * B/M speed remains confined to pre-existing host rules, never this added
+     * level rule or {@link Tool#defaultMiningSpeed()}.
+     */
+    private static float topMiningSpeed(Tool tool) {
+        float speed = tool.defaultMiningSpeed();
+        for (Tool.Rule rule : tool.rules()) {
+            if (rule.speed().isPresent()) speed = Math.max(speed, rule.speed().get());
+        }
+        return speed;
     }
 
     private static Item hostItem(Kind kind, AlloyMaterialCatalog.ToolTier tier) {

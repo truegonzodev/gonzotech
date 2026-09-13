@@ -120,17 +120,26 @@ public final class AlloyMaterialCatalog {
         return builder.build();
     }
 
+    /**
+     * Mining levels used by dynamic alloy tools. They mirror vanilla's stone 1,
+     * iron 2 and diamond 3; netherite-plus is an explicit new level 5 rather
+     * than a renamed level-4 netherite host.
+     */
     public enum ToolTier {
-        STONE(0), IRON(1), DIAMOND(2), NETHERITE_PLUS(3);
+        STONE(1), IRON(2), DIAMOND(3), NETHERITE_PLUS(5);
 
-        private final int rank;
+        private final int miningLevel;
 
-        ToolTier(int rank) {
-            this.rank = rank;
+        ToolTier(int miningLevel) {
+            this.miningLevel = miningLevel;
+        }
+
+        public int miningLevel() {
+            return miningLevel;
         }
 
         public boolean isAtLeast(ToolTier other) {
-            return rank >= other.rank;
+            return miningLevel >= other.miningLevel;
         }
     }
 

@@ -1,0 +1,13 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:botched_mechanism"
+    ]
+  },
+  "criteria": {
+    "automatic": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

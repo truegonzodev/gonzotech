@@ -193,7 +193,7 @@ public class ModBlocks {
             .mapColor(MapColor.ICE)
             .sound(SoundType.STONE)
             .strength(70.0f, 10.0f)
-            .friction(0.992f)
+            .friction(0.9938f)
             .requiresCorrectToolForDrops()
     );
 
