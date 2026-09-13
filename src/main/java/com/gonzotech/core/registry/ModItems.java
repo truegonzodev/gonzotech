@@ -156,6 +156,13 @@ public class ModItems {
     public static final DeferredItem<Item> UV_METER =
         ITEMS.registerSimpleItem("uv_meter");
 
+    /**
+     * Клиентский спидометр: пока он в главной или дополнительной руке, над
+     * хотбаром каждую игровую тик-итерацию видна скорость в блоках за секунду.
+     */
+    public static final DeferredItem<Item> SPEEDOMETER =
+        ITEMS.registerSimpleItem("speedometer");
+
 
     // ─── «Приколы»: два сусла (еда с тошнотой) ───
 

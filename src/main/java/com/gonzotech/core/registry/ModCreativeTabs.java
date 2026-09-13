@@ -49,6 +49,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.DOSIMETER.get());
                 output.accept(ModItems.UV_METER.get());
+                output.accept(ModItems.SPEEDOMETER.get());
                 ModItems.DISCOVERY_ITEMS.forEach(item -> output.accept(item.get()));
 
                 // Фаза 2 — паровая ветка энергетики.

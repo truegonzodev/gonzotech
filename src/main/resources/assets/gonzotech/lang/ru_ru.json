@@ -588,5 +588,7 @@
   "block.gonzotech.mechanisms": "Механизмы",
   "block.gonzotech.weathered_mechanisms": "Ветхие механизмы",
   "block.gonzotech.silicon_cache": "Кремниевый схрон",
-  "block.gonzotech.plastic_waste": "Пластиковый мусор"
+  "block.gonzotech.plastic_waste": "Пластиковый мусор",
+  "item.gonzotech.speedometer": "Спидометр",
+  "hud.gonzotech.speedometer": "Скорость - %s блоков/сек"
 }

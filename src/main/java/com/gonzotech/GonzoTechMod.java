@@ -85,6 +85,8 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
             // Три HUD-шкалы «психики» слева от хотбара.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
+            // Спидометр измеряет клиентскую скорость и выводит её над хотбаром.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
             modEventBus.addListener(com.gonzotech.space.client.SpaceClient::onRegisterDimensionEffects);
             // Фаза 4 — рендерер горизонта событий Чёрных Дыр.

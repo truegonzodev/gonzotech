@@ -588,5 +588,7 @@
   "block.gonzotech.mechanisms": "Mechanisms",
   "block.gonzotech.weathered_mechanisms": "Weathered Mechanisms",
   "block.gonzotech.silicon_cache": "Silicon Cache",
-  "block.gonzotech.plastic_waste": "Plastic Waste"
+  "block.gonzotech.plastic_waste": "Plastic Waste",
+  "item.gonzotech.speedometer": "Speedometer",
+  "hud.gonzotech.speedometer": "Speed - %s blocks/sec"
 }
