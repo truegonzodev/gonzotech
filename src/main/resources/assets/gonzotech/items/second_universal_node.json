@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "gonzotech:block/first_universal_node"
+    "model": "gonzotech:block/second_universal_node"
   }
 }

@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "gonzotech:block/item_scavenger"
+    "model": "gonzotech:block/second_item_scavenger"
   }
 }

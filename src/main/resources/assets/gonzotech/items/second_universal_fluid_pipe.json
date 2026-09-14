@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "gonzotech:block/first_universal_fluid_pipe"
+    "model": "gonzotech:block/second_universal_fluid_pipe"
   }
 }
