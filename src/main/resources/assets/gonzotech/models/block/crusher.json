@@ -1,8 +1,8 @@
 {
   "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "top": "gonzotech:block/crusher_top",
-    "bottom": "gonzotech:block/crusher_top",
-    "side": "gonzotech:block/crusher"
+    "top": "gonzotech:block/second/crusher_top",
+    "bottom": "gonzotech:block/second/crusher_top",
+    "side": "gonzotech:block/second/crusher"
   }
 }

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/superdense_ice"
+    "all": "gonzotech:block/planets/superdense_ice"
   }
 }

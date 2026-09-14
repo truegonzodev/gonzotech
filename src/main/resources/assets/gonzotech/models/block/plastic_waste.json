@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/plastic_waste"
+    "all": "gonzotech:block/desolation/plastic_waste"
   }
 }

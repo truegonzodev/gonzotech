@@ -1,4 +1,4 @@
 {
   "parent": "minecraft:block/cube_all",
-  "textures": { "all": "gonzotech:block/item_scavenger" }
+  "textures": { "all": "gonzotech:block/first/item_scavenger" }
 }

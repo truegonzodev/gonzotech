@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/vr20_nugget"
+    "layer0": "gonzotech:item/nuggets/vr20_nugget"
   }
 }

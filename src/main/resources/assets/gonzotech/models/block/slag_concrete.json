@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/slag_concrete"
+    "all": "gonzotech:block/industry/slag_concrete"
   }
 }

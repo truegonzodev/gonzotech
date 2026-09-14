@@ -150,7 +150,7 @@ public class ModBlocks {
         "debris", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     public static final DeferredBlock<Block> WEATHERED_DEBRIS = BLOCKS.registerSimpleBlock(
         "weathered_debris", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.COPPER));
-    /** Единственный анимированный куб: textures/block/mechanisms.png.mcmeta. */
+    /** Единственный анимированный куб: textures/block/desolation/mechanisms.png.mcmeta. */
     public static final DeferredBlock<Block> MECHANISMS = BLOCKS.registerSimpleBlock(
         "mechanisms", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     public static final DeferredBlock<Block> WEATHERED_MECHANISMS = BLOCKS.registerSimpleBlock(

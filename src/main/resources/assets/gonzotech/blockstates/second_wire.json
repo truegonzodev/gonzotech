@@ -1,36 +1,36 @@
 {
   "variants": {
     "axis=z,mode=auto": {
-      "model": "gonzotech:block/first_wire"
+      "model": "gonzotech:block/second_wire"
     },
     "axis=y,mode=auto": {
-      "model": "gonzotech:block/first_wire",
+      "model": "gonzotech:block/second_wire",
       "x": 90
     },
     "axis=x,mode=auto": {
-      "model": "gonzotech:block/first_wire",
+      "model": "gonzotech:block/second_wire",
       "y": 90
     },
     "axis=z,mode=pull": {
-      "model": "gonzotech:block/first_wire"
+      "model": "gonzotech:block/second_wire"
     },
     "axis=y,mode=pull": {
-      "model": "gonzotech:block/first_wire",
+      "model": "gonzotech:block/second_wire",
       "x": 90
     },
     "axis=x,mode=pull": {
-      "model": "gonzotech:block/first_wire",
+      "model": "gonzotech:block/second_wire",
       "y": 90
     },
     "axis=z,mode=push": {
-      "model": "gonzotech:block/first_wire"
+      "model": "gonzotech:block/second_wire"
     },
     "axis=y,mode=push": {
-      "model": "gonzotech:block/first_wire",
+      "model": "gonzotech:block/second_wire",
       "x": 90
     },
     "axis=x,mode=push": {
-      "model": "gonzotech:block/first_wire",
+      "model": "gonzotech:block/second_wire",
       "y": 90
     }
   }

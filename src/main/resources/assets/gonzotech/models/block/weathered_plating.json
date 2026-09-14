@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/weathered_plating"
+    "all": "gonzotech:block/desolation/weathered_plating"
   }
 }

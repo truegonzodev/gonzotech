@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/tellurium_dust"
+    "layer0": "gonzotech:item/dust/tellurium_dust"
   }
 }

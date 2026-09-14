@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/crimson_obsidian"
+    "all": "gonzotech:block/industry/crimson_obsidian"
   }
 }

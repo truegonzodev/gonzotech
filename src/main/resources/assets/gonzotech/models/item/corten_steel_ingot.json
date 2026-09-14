@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/corten_steel_ingot"
+    "layer0": "gonzotech:item/ingots/corten_steel_ingot"
   }
 }

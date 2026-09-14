@@ -2,8 +2,8 @@
   "credit": "Placeholder (author supplies textures)",
   "render_type": "minecraft:cutout",
   "textures": {
-    "0": "gonzotech:block/steam_pipe",
-    "particle": "gonzotech:block/steam_pipe"
+    "0": "gonzotech:block/first/steam_pipe",
+    "particle": "gonzotech:block/first/steam_pipe"
   },
   "elements": [
     {

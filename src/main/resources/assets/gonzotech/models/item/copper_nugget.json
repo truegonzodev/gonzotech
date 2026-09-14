@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/copper_nugget"
+    "layer0": "gonzotech:item/nuggets/copper_nugget"
   }
 }

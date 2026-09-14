@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "gonzotech:block/first_water_node"
+      "model": "gonzotech:block/second_water_node"
     }
   }
 }

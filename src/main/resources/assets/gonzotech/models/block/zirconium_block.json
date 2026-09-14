@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/zirconium_block"
+    "all": "gonzotech:block/fullmetall/zirconium_block"
   }
 }

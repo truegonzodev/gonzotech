@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/neodymium_ingot"
+    "layer0": "gonzotech:item/ingots/neodymium_ingot"
   }
 }
