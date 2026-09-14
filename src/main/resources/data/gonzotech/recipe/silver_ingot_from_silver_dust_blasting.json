@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "silver_ingot",
+  "ingredient": "gonzotech:silver_dust",
+  "result": {
+    "id": "gonzotech:silver_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "stellite_ingot",
+  "ingredient": "gonzotech:stellite_dust",
+  "result": {
+    "id": "gonzotech:stellite_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

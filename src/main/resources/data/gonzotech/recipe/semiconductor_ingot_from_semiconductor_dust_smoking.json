@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "semiconductor_ingot",
+  "ingredient": "gonzotech:semiconductor_dust",
+  "result": {
+    "id": "gonzotech:semiconductor_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

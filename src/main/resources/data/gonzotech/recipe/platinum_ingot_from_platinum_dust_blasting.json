@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "platinum_ingot",
+  "ingredient": "gonzotech:platinum_dust",
+  "result": {
+    "id": "gonzotech:platinum_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "steel_ingot",
+  "ingredient": "gonzotech:steel_dust",
+  "result": {
+    "id": "gonzotech:steel_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

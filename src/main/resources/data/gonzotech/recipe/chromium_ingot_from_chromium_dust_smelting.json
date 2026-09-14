@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "chromium_ingot",
+  "ingredient": "gonzotech:chromium_dust",
+  "result": {
+    "id": "gonzotech:chromium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:stainless_steel_ingot_from_stainless_steel_dust_smelting",
+      "gonzotech:stainless_steel_ingot_from_stainless_steel_dust_blasting",
+      "gonzotech:stainless_steel_ingot_from_stainless_steel_dust_smoking"
+    ]
+  },
+  "criteria": {
+    "has_dust": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:stainless_steel_dust"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dust"
+    ]
+  ]
+}

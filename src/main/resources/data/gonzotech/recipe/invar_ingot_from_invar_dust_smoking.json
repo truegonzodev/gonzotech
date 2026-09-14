@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "invar_ingot",
+  "ingredient": "gonzotech:invar_dust",
+  "result": {
+    "id": "gonzotech:invar_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "plutonium_ingot",
+  "ingredient": "gonzotech:plutonium_dust",
+  "result": {
+    "id": "gonzotech:plutonium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "vr20_ingot",
+  "ingredient": "gonzotech:vr20_dust",
+  "result": {
+    "id": "gonzotech:vr20_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

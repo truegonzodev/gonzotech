@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "boron_ingot",
+  "ingredient": "gonzotech:boron_dust",
+  "result": {
+    "id": "gonzotech:boron_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

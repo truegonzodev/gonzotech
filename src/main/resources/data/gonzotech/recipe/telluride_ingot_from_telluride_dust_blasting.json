@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "telluride_ingot",
+  "ingredient": "gonzotech:telluride_dust",
+  "result": {
+    "id": "gonzotech:telluride_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

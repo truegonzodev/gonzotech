@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "lithium_ingot",
+  "ingredient": "gonzotech:lithium_dust",
+  "result": {
+    "id": "gonzotech:lithium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

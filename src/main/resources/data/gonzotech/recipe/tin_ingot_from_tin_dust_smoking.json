@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "tin_ingot",
+  "ingredient": "gonzotech:tin_dust",
+  "result": {
+    "id": "gonzotech:tin_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

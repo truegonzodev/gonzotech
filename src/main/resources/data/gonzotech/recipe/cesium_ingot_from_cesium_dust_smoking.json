@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "cesium_ingot",
+  "ingredient": "gonzotech:cesium_dust",
+  "result": {
+    "id": "gonzotech:cesium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}
