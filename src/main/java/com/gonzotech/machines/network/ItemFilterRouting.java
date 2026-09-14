@@ -31,7 +31,8 @@ import java.util.Set;
  *   <li>предмет, <b>совпавший</b> с образцами Фильтра, гонит по его ВЫХОДНОЙ сети
  *       предметных труб (BFS от Фильтра), равномерно раскидывая по приёмникам;</li>
  *   <li>предмет, <b>не совпавший</b>, отдаёт в сеть прилегающего ОТСЕИВАТЕЛЯ (BFS
- *       от него — отдельная цепь, НЕ назад в Фильтр);</li>
+ *       от него — отдельная цепь, НЕ назад в Фильтр), либо удаляет прямо в нём,
+ *       если Отсеиватель запитан redstone;</li>
  *   <li>если девать предмет некуда — он НЕ извлекается (обратное давление), то
  *       есть «несовпавшее без отсеивателя остаётся в механизме».</li>
  * </ol>
@@ -51,27 +52,20 @@ public final class ItemFilterRouting {
     public static void tick(Level level, BlockPos pos, BlockState state, ItemFilterBlockEntity be) {
         if (level.isClientSide()) return;
 
-        int budget = state.getBlock() instanceof ItemFilterBlock filter
-            ? filter.itemThroughputLimit()
-            : (int) T.maxThroughput();
-        int perItemCap = state.getBlock() instanceof ItemFilterBlock filter
-            ? filter.perItemThroughputLimit()
-            : ItemRouting.PER_ITEM_TICK_CAP;
-        if (budget <= 0) return;
-
         // Приёмники «прошедшего» — выходная сеть Фильтра (item-трубы от Фильтра).
         // Приёмники «отсеянного» — сеть Отсеивателя, если он приткнут к грани.
         List<ItemRouting_Sink> pass = new ArrayList<>();
         List<ItemRouting_Sink> reject = new ArrayList<>();
         List<Source> sources = new ArrayList<>();
         List<BlockPos> sourcePositions = new ArrayList<>();
+        List<ScavengerEndpoint> scavengers = new ArrayList<>();
 
-        Set<BlockPos> scavengers = new HashSet<>();
         for (Direction dir : Direction.values()) {
             BlockPos npos = pos.relative(dir);
             BlockState nstate = level.getBlockState(npos);
-            if (ItemScavengerBlock.isScavenger(nstate)) {
-                scavengers.add(npos);
+            if (nstate.getBlock() instanceof ItemScavengerBlock scavenger) {
+                scavengers.add(new ScavengerEndpoint(npos, scavenger.itemThroughputLimit(),
+                    scavenger.perItemThroughputLimit(), scavenger.isPowered(level, npos)));
                 continue;
             }
             if (isItemPipe(nstate)) continue; // трубы — часть выходной сети, не источник
@@ -87,78 +81,136 @@ public final class ItemFilterRouting {
         // Выходная сеть Фильтра: BFS по item-трубам, начиная с самого Фильтра.
         collectSinksFromCarrier(level, pos, sourcePositions, pass);
 
-        // Сеть Отсеивателя(ей): BFS от каждого отсеивателя (его собственная цепь).
-        for (BlockPos sc : scavengers) {
-            collectSinksFromCarrier(level, sc, sourcePositions, reject);
+        // Powered scavenger — это мусорка. Он намеренно имеет приоритет над
+        // подключённой к нему сетью: reject-предметы удаляются сразу в блоке.
+        // При нескольких смежных Отсеивателях первый в порядке Direction служит
+        // визуальной точкой поглощения, а быстрый endpoint задаёт общий лимит.
+        ScavengerEndpoint poweredEndpoint = null;
+        for (ScavengerEndpoint scavenger : scavengers) {
+            if (poweredEndpoint == null && scavenger.powered()) {
+                poweredEndpoint = scavenger;
+            }
+        }
+        BlockPos poweredScavenger = poweredEndpoint == null ? null : poweredEndpoint.pos();
+        int rejectLimit = 0;
+        int rejectPerItemCap = 0;
+        if (poweredEndpoint != null) {
+            // Powered endpoint owns the deletion branch, including its own tier limit.
+            rejectLimit = poweredEndpoint.throughputLimit();
+            rejectPerItemCap = poweredEndpoint.perItemThroughputLimit();
+        } else {
+            // Без redstone Отсеиватель сохраняет старую роль корня второй сети.
+            for (ScavengerEndpoint scavenger : scavengers) {
+                rejectLimit = Math.max(rejectLimit, scavenger.throughputLimit());
+                rejectPerItemCap = Math.max(rejectPerItemCap, scavenger.perItemThroughputLimit());
+                collectSinksFromCarrier(level, scavenger.pos(), sourcePositions, reject);
+            }
         }
 
         boolean bufferHasItems = !be.isEmpty();
         if (sources.isEmpty() && !bufferHasItems) return;
-        if (pass.isEmpty() && reject.isEmpty()) return;
+
+        int passLimit = state.getBlock() instanceof ItemFilterBlock filter
+            ? filter.itemThroughputLimit()
+            : (int) T.maxThroughput();
+        int passPerItemCap = state.getBlock() instanceof ItemFilterBlock filter
+            ? filter.perItemThroughputLimit()
+            : ItemRouting.PER_ITEM_TICK_CAP;
+
+        // Совпавшее и отсеиваемое имеют собственные branch-limits. Поэтому
+        // Scavenger II действительно разрешает 10/2 reject-поток, не делая
+        // Filter I быстрее. Общий лимит забора остаётся максимальным лимитом
+        // одной подключённой части, а не суммой двух веток: Filter II +
+        // Scavenger II по-прежнему обрабатывают максимум 10 предметов за тик.
+        // Если у ветки нет места назначения, её budget = 0 и предмет остаётся
+        // в источнике как обратное давление.
+        int activePassLimit = pass.isEmpty() ? 0 : passLimit;
+        int activePassPerItemCap = pass.isEmpty() ? 0 : passPerItemCap;
+        int activeRejectLimit = (poweredScavenger == null && reject.isEmpty()) ? 0 : rejectLimit;
+        int activeRejectPerItemCap = activeRejectLimit == 0 ? 0 : rejectPerItemCap;
+        ChannelBudget passBudget = new ChannelBudget(activePassLimit, activePassPerItemCap);
+        ChannelBudget rejectBudget = new ChannelBudget(activeRejectLimit, activeRejectPerItemCap);
+        ChannelBudget totalBudget = new ChannelBudget(Math.max(activePassLimit, activeRejectLimit),
+            Math.max(activePassPerItemCap, activeRejectPerItemCap));
+        if (totalBudget.exhausted()) return;
 
         long rotation = level.getGameTime();
         int moved = 0;
-        // Лимиты экземпляра: первый tier оставляет 1×5, Filter II задаёт 2×5.
-        java.util.Map<net.minecraft.world.item.Item, Integer> perItem = new java.util.HashMap<>();
 
-        // (a) Транзитный буфер Фильтра — предметы, пришедшие ВРЕЗКОЙ по трубам.
+        // (a) Транзитный буфер Фильтра — предметы, пришедшие в него по трубам.
         // Тянем их без canTake-проверки (буфер её запрещает для внешних, но сам
         // Фильтр свой буфер раздавать обязан).
-        moved = drainContainer(level, pos, be, null, be, pass, reject, budget, moved, rotation, perItem, perItemCap, true);
+        moved = drainContainer(level, pos, be, null, be, pass, reject, poweredScavenger,
+            passBudget, rejectBudget, totalBudget, moved, rotation, true);
 
         // (b) Прилегающие контейнеры-источники (режим «воронка»).
         for (Source source : sources) {
-            if (moved >= budget) break;
+            if (totalBudget.exhausted()) break;
             Container src = HopperBlockEntity.getContainerAt(level, source.pos());
             if (src == null) continue;
-            moved = drainContainer(level, pos, be, source.face(), src,
-                pass, reject, budget, moved, rotation, perItem, perItemCap, false);
+            moved = drainContainer(level, pos, be, source.face(), src, pass, reject, poweredScavenger,
+                passBudget, rejectBudget, totalBudget, moved, rotation, false);
         }
     }
 
     /**
-     * Вытягивает предметы из одного контейнера {@code src} и раздаёт их по
-     * сетям (совпавшее → {@code pass}, иначе → {@code reject}), уважая общий
-     * бюджет и лимит на вид. {@code ignoreCanTake=true} — для собственного буфера
-     * Фильтра (там внешняя выемка запрещена, но сам Фильтр обязан раздавать).
+     * Вытягивает предметы из одного контейнера {@code src} и направляет их в
+     * pass/reject-ветку. Бюджеты веток независимы: это позволяет Отсеивателю II
+     * иметь собственные 10/2 item limits. {@code ignoreCanTake=true} — для
+     * собственного буфера Фильтра, который сам Фильтр имеет право раздавать.
      *
-     * @return обновлённое суммарное число перемещённых за тик
+     * @return обновлённая последовательность перемещений за тик (для round-robin)
      */
     private static int drainContainer(Level level, BlockPos pos, ItemFilterBlockEntity be,
                                       Direction srcFace, Container src,
                                       List<ItemRouting_Sink> pass, List<ItemRouting_Sink> reject,
-                                      int budget, int moved, long rotation,
-                                      java.util.Map<net.minecraft.world.item.Item, Integer> perItem,
-                                      int perItemCap, boolean ignoreCanTake) {
+                                      BlockPos poweredScavenger,
+                                      ChannelBudget passBudget, ChannelBudget rejectBudget,
+                                      ChannelBudget totalBudget, int moved, long rotation, boolean ignoreCanTake) {
         for (int slot : ItemRouting.extractableSlots(src, srcFace)) {
-            if (moved >= budget) break;
-            while (moved < budget) {
+            if (totalBudget.exhausted()) break;
+            while (!totalBudget.exhausted()) {
                 ItemStack cur = src.getItem(slot);
                 if (cur.isEmpty()) break;
                 if (!ignoreCanTake && !ItemRouting.canTake(src, slot, cur, srcFace)) break;
-                if (perItem.getOrDefault(cur.getItem(), 0) >= perItemCap) break;
 
                 boolean matched = matches(be, cur);
-                List<ItemRouting_Sink> targets = matched ? pass : reject;
+                ChannelBudget budget = matched ? passBudget : rejectBudget;
+                if (!budget.canMove(cur.getItem()) || !totalBudget.canMove(cur.getItem())) break;
 
                 ItemStack one = cur.copy();
                 one.setCount(1);
 
+                if (!matched && poweredScavenger != null) {
+                    // Redstone-powered scavenger burns reject items at the direct
+                    // filter/scavenger connection, even when a pipe is attached.
+                    src.removeItem(slot, 1);
+                    src.setChanged();
+                    budget.record(one.getItem());
+                    totalBudget.record(one.getItem());
+                    moved++;
+                    ItemFlowTracker.record(level, pos, one.getItem(), 1);
+                    ItemFlowTracker.record(level, poweredScavenger, one.getItem(), 1);
+                    continue;
+                }
+
+                List<ItemRouting_Sink> targets = matched ? pass : reject;
                 boolean placed = false;
                 int n = targets.size();
                 for (int k = 0; k < n; k++) {
                     int idx = (int) Math.floorMod(rotation + moved + k, n);
-                    ItemRouting_Sink s = targets.get(idx);
-                    if (ItemRouting.insertOne(s.container(), s.face(), one)) {
+                    ItemRouting_Sink sink = targets.get(idx);
+                    if (ItemRouting.insertOne(sink.container(), sink.face(), one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();
+                        budget.record(one.getItem());
+                        totalBudget.record(one.getItem());
                         moved++;
-                        perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
                         ItemFlowTracker.record(level, pos, one.getItem(), 1);
                         // Пишем каждый реально выбранный сегмент, чтобы
                         // Universal Node в транзитной ветке видел поток Items.
-                        for (BlockPos pipe : s.path()) {
+                        for (BlockPos pipe : sink.path()) {
                             ItemFlowTracker.record(level, pipe, one.getItem(), 1);
                         }
                         break;
@@ -168,6 +220,31 @@ public final class ItemFilterRouting {
             }
         }
         return moved;
+    }
+
+    /** Отдельный limiter pass/reject-ветки, включая cap одного точного Item. */
+    private static final class ChannelBudget {
+        private int remaining;
+        private final int perItemCap;
+        private final Map<net.minecraft.world.item.Item, Integer> perItem = new HashMap<>();
+
+        ChannelBudget(int total, int perItemCap) {
+            this.remaining = Math.max(0, total);
+            this.perItemCap = Math.max(0, perItemCap);
+        }
+
+        boolean exhausted() {
+            return remaining <= 0;
+        }
+
+        boolean canMove(net.minecraft.world.item.Item item) {
+            return !exhausted() && perItem.getOrDefault(item, 0) < perItemCap;
+        }
+
+        void record(net.minecraft.world.item.Item item) {
+            remaining--;
+            perItem.merge(item, 1, Integer::sum);
+        }
     }
 
     // ─────────────────────────── совпадение с образцами ───────────────────────────
@@ -216,6 +293,11 @@ public final class ItemFilterRouting {
 
     /** Источник: позиция контейнера + его грань, обращённая к Фильтру. */
     private record Source(BlockPos pos, Direction face) {
+    }
+
+    /** Прилегающий Отсеиватель и его лимиты собственной reject-ветки. */
+    private record ScavengerEndpoint(BlockPos pos, int throughputLimit,
+                                     int perItemThroughputLimit, boolean powered) {
     }
 
     /**

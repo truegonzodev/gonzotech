@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.machines.block.entity.ItemFilterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -116,6 +117,43 @@ public final class PipeFlowNetwork {
         }
     }
 
+    /** Клиент → сервер: запрос contents транзитного буфера конкретного Фильтра. */
+    public record FilterStorageRequestPayload(BlockPos pos) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<FilterStorageRequestPayload> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "filter_storage_request"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, FilterStorageRequestPayload> STREAM_CODEC =
+            StreamCodec.composite(BlockPos.STREAM_CODEC, FilterStorageRequestPayload::pos,
+                FilterStorageRequestPayload::new);
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * Сервер → клиент: суммарное содержимое очереди Фильтра. Предметы передаются
+     * registry id, а counts суммируются по точному Item (components в HUD не нужны).
+     */
+    public record FilterStoragePayload(BlockPos pos, java.util.List<ResourceLocation> items,
+                                       java.util.List<Integer> counts) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<FilterStoragePayload> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "filter_storage"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, FilterStoragePayload> STREAM_CODEC =
+            StreamCodec.composite(
+                BlockPos.STREAM_CODEC, FilterStoragePayload::pos,
+                ResourceLocation.STREAM_CODEC.apply(ByteBufCodecs.list()), FilterStoragePayload::items,
+                ByteBufCodecs.VAR_INT.apply(ByteBufCodecs.list()), FilterStoragePayload::counts,
+                FilterStoragePayload::new);
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Регистрация всех пакетов. Вызывается из {@code GonzoTechMod#registerPayloads}. */
     public static void register(PayloadRegistrar registrar) {
         registrar.playToServer(
@@ -147,6 +185,21 @@ public final class PipeFlowNetwork {
             ItemFlowPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() ->
                 com.gonzotech.machines.client.WrenchHud.acceptItemFlow(payload)));
+
+        registrar.playToServer(
+            FilterStorageRequestPayload.TYPE,
+            FilterStorageRequestPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                if (context.player() instanceof ServerPlayer player) {
+                    respondFilterStorage(player, payload.pos());
+                }
+            }));
+
+        registrar.playToClient(
+            FilterStoragePayload.TYPE,
+            FilterStoragePayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                com.gonzotech.machines.client.WrenchHud.acceptFilterStorage(payload)));
     }
 
     /** Максимальная дистанция (блоков), в пределах которой отвечаем на запрос. */
@@ -206,6 +259,30 @@ public final class PipeFlowNetwork {
             counts.add(entries.get(i).getValue());
         }
         PacketDistributor.sendToPlayer(player, new ItemFlowPayload(pos, items, counts));
+    }
+
+    /** Отвечает содержимым транзитной очереди Filter I/II для HUD гаечного ключа. */
+    private static void respondFilterStorage(ServerPlayer player, BlockPos pos) {
+        ServerLevel level = player.serverLevel();
+        if (pos.distToCenterSqr(player.getX(), player.getY(), player.getZ()) > MAX_DISTANCE_SQR) return;
+        if (!(level.getBlockState(pos).getBlock() instanceof ItemFilterBlock)) return;
+        if (!(level.getBlockEntity(pos) instanceof ItemFilterBlockEntity filter)) return;
+
+        // LinkedHashMap сохраняет порядок первых занятых слотов в очереди: HUD
+        // читается как реальное содержимое буфера, а одинаковые Item суммируются.
+        java.util.Map<net.minecraft.world.item.Item, Integer> queued = new java.util.LinkedHashMap<>();
+        for (int slot = 0; slot < filter.getContainerSize(); slot++) {
+            net.minecraft.world.item.ItemStack stack = filter.getItem(slot);
+            if (!stack.isEmpty()) queued.merge(stack.getItem(), stack.getCount(), Integer::sum);
+        }
+
+        java.util.List<ResourceLocation> items = new java.util.ArrayList<>();
+        java.util.List<Integer> counts = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<net.minecraft.world.item.Item, Integer> entry : queued.entrySet()) {
+            items.add(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()));
+            counts.add(entry.getValue());
+        }
+        PacketDistributor.sendToPlayer(player, new FilterStoragePayload(pos, items, counts));
     }
 
     /** Положительная мировая сторона оси: +X=восток, +Y=верх, +Z=юг. */

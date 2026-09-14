@@ -26,6 +26,7 @@ import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.ItemFilterBlock;
 import com.gonzotech.machines.network.SecondItemFilterBlock;
+import com.gonzotech.machines.network.SecondItemScavengerBlock;
 import com.gonzotech.machines.network.SecondCompositePipeBlock;
 import com.gonzotech.machines.network.SecondItemNodeBlock;
 import com.gonzotech.machines.network.SecondItemPipeBlock;
@@ -234,9 +235,9 @@ public final class ModMachines {
         BLOCKS.registerBlock("second_composite_pipe", SecondCompositePipeBlock::new, pipe());
 
     // ─────────────────────────── фильтр + отсеиватель ───────────────────────────
-    // Фильтр — активный полный куб с меню (3 ghost-слота): пропускает совпавшее в
-    // свою выходную сеть, отсеянное — в сеть Отсеивателя. Отсеиватель — пассивный
-    // блок-якорь второй сети, без меню.
+    // Фильтр — активный полный куб с меню: пропускает совпавшее в свою выходную
+    // сеть, отсеянное — в reject-ветку Отсеивателя. Отсеиватель без меню: без
+    // redstone он корень этой сети, с redstone он удаляет reject-предметы.
 
     public static final DeferredBlock<ItemFilterBlock> ITEM_FILTER =
         BLOCKS.registerBlock("item_filter", ItemFilterBlock::new, copperLogisticsMachine());
@@ -246,9 +247,6 @@ public final class ModMachines {
 
 
     // ─────────────────────────── второе открытие ───────────────────────────
-    // До отдельного балансового patch это полноценные функциональные копии
-    // первого уровня. Отдельные registry-id/BlockEntityType оставляют для второго
-    // открытия независимую точку роста, не меняя рабочие значения первого.
 
     public static final DeferredBlock<SecondPipeBlock> SECOND_WIRE =
         BLOCKS.registerBlock("second_wire", props -> new SecondPipeBlock(props, PipeType.WIRE), powerLine());
@@ -310,8 +308,8 @@ public final class ModMachines {
     public static final DeferredBlock<SecondItemFilterBlock> SECOND_ITEM_FILTER =
         BLOCKS.registerBlock("second_item_filter", SecondItemFilterBlock::new, copperLogisticsMachine());
 
-    public static final DeferredBlock<ItemScavengerBlock> SECOND_ITEM_SCAVENGER =
-        BLOCKS.registerBlock("second_item_scavenger", ItemScavengerBlock::new, copperLogisticsMachine());
+    public static final DeferredBlock<SecondItemScavengerBlock> SECOND_ITEM_SCAVENGER =
+        BLOCKS.registerBlock("second_item_scavenger", SecondItemScavengerBlock::new, copperLogisticsMachine());
 
     public static final DeferredBlock<SecondPumpBlock> SECOND_PUMP =
         BLOCKS.registerBlock("second_pump", SecondPumpBlock::new, machineCopper());
