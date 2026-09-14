@@ -14,7 +14,8 @@ import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
 import com.gonzotech.machines.block.SecondElectricFurnaceBlock;
-import com.gonzotech.machines.block.SecondMachineStubBlock;
+import com.gonzotech.machines.block.SecondGrinderBlock;
+import com.gonzotech.machines.block.SecondPressBlock;
 import com.gonzotech.machines.block.SecondPumpBlock;
 import com.gonzotech.machines.block.SingularEnergySourceBlock;
 import com.gonzotech.machines.block.SingularHeatSourceBlock;
@@ -298,9 +299,13 @@ public final class ModMachines {
     public static final DeferredBlock<AlloyFoundryBlock> SECOND_ALLOY_FOUNDRY =
         BLOCKS.registerBlock("second_alloy_foundry", AlloyFoundryBlock::new, machineMetal());
 
-    /** Размещаемая заготовка: processing/GUI намеренно будут добавлены отдельной задачей. */
-    public static final DeferredBlock<SecondMachineStubBlock> SECOND_GRINDER =
-        BLOCKS.registerBlock("second_grinder", SecondMachineStubBlock::new, machineMetal());
+    /** Измельчитель II: два слота, 35 оплачиваемых тиков, слитки/кварц/raw Mn. */
+    public static final DeferredBlock<SecondGrinderBlock> SECOND_GRINDER =
+        BLOCKS.registerBlock("second_grinder", SecondGrinderBlock::new, machineMetal());
+
+    /** Пресс II: мгновенный ход, затем 60 тиков возврата пуансона. */
+    public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
+        BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
 
     public static final DeferredBlock<SecondItemFilterBlock> SECOND_ITEM_FILTER =
         BLOCKS.registerBlock("second_item_filter", SecondItemFilterBlock::new, copperLogisticsMachine());
@@ -458,6 +463,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_GRINDER_ITEM =
         ITEMS.registerSimpleBlockItem("second_grinder", SECOND_GRINDER);
+
+    public static final DeferredItem<BlockItem> SECOND_PRESS_ITEM =
+        ITEMS.registerSimpleBlockItem("second_press", SECOND_PRESS);
 
     public static final DeferredItem<BlockItem> SECOND_ITEM_FILTER_ITEM =
         ITEMS.registerSimpleBlockItem("second_item_filter", SECOND_ITEM_FILTER);

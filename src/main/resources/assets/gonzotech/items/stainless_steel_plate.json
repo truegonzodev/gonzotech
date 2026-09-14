@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "gonzotech:block/second_grinder"
+    "model": "gonzotech:item/stainless_steel_plate"
   }
 }

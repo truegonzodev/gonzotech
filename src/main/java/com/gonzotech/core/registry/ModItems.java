@@ -86,6 +86,37 @@ public class ModItems {
     public static final DeferredItem<Item> PSEUDO_COIL =
         ITEMS.registerSimpleItem("pseudo_coil");
 
+    // ─────────────────────── Прессованные компоненты ───────────────────────
+    // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».
+    public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
+    public static final DeferredItem<Item> COPPER_WIRE = ITEMS.registerSimpleItem("copper_wire");
+    public static final DeferredItem<Item> ALUMINUM_PLATE = ITEMS.registerSimpleItem("aluminum_plate");
+    public static final DeferredItem<Item> ALUMINUM_WIRE = ITEMS.registerSimpleItem("aluminum_wire");
+    public static final DeferredItem<Item> IRON_PLATE = ITEMS.registerSimpleItem("iron_plate");
+    public static final DeferredItem<Item> STEEL_PLATE = ITEMS.registerSimpleItem("steel_plate");
+    public static final DeferredItem<Item> NICKEL_PLATE = ITEMS.registerSimpleItem("nickel_plate");
+    public static final DeferredItem<Item> STAINLESS_STEEL_PLATE = ITEMS.registerSimpleItem("stainless_steel_plate");
+    public static final DeferredItem<Item> GOLD_PLATE = ITEMS.registerSimpleItem("gold_plate");
+    public static final DeferredItem<Item> GOLD_WIRE = ITEMS.registerSimpleItem("gold_wire");
+    public static final DeferredItem<Item> SILVER_WIRE = ITEMS.registerSimpleItem("silver_wire");
+    public static final DeferredItem<Item> REDSTONE_PLATE = ITEMS.registerSimpleItem("redstone_plate");
+    public static final DeferredItem<Item> REDSTONE_CORE = ITEMS.registerSimpleItem("redstone_core");
+    public static final DeferredItem<Item> TITANIUM_PLATE = ITEMS.registerSimpleItem("titanium_plate");
+    public static final DeferredItem<Item> SEMICONDUCTOR_PLATE = ITEMS.registerSimpleItem("semiconductor_plate");
+    public static final DeferredItem<Item> SEMICONDUCTOR_CORE = ITEMS.registerSimpleItem("semiconductor_core");
+
+    /** Reusable selectors for the press; they are never consumed by a stamp. */
+    public static final DeferredItem<Item> FLAT_PUNCH =
+        ITEMS.registerItem("flat_punch", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> WEDGE_PUNCH =
+        ITEMS.registerItem("wedge_punch", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> INGOT_FORM =
+        ITEMS.registerItem("ingot_form", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> PLATE_FORM =
+        ITEMS.registerItem("plate_form", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> CORE_FORM =
+        ITEMS.registerItem("core_form", props -> new Item(props.stacksTo(1)));
+
     // ─────────────────────── Материалы переработки: компоненты ───────────────────────
     // Пока это только зарегистрированные ингредиенты с placeholder-ресурсами: рецепты
     // и машинная переработка будут добавлены отдельной, согласованной задачей.

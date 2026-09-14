@@ -16,6 +16,8 @@ import com.gonzotech.machines.block.entity.SingularHeatSourceBlockEntity;
 import com.gonzotech.machines.block.entity.SecondAccumulatorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondCobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondElectricFurnaceBlockEntity;
+import com.gonzotech.machines.block.entity.SecondGrinderBlockEntity;
+import com.gonzotech.machines.block.entity.SecondPressBlockEntity;
 import com.gonzotech.machines.block.entity.SecondPumpBlockEntity;
 import com.gonzotech.machines.block.entity.StirlingBlockEntity;
 import com.gonzotech.machines.block.entity.TurbineRotorBlockEntity;
@@ -95,6 +97,14 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<AlloyFoundryBlockEntity>> ALLOY_FOUNDRY =
         BLOCK_ENTITIES.register("second_alloy_foundry", () -> new BlockEntityType<>(
             AlloyFoundryBlockEntity::new, false, ModMachines.SECOND_ALLOY_FOUNDRY.get()));
+
+    public static final Supplier<BlockEntityType<SecondGrinderBlockEntity>> SECOND_GRINDER =
+        BLOCK_ENTITIES.register("second_grinder", () -> new BlockEntityType<>(
+            SecondGrinderBlockEntity::new, false, ModMachines.SECOND_GRINDER.get()));
+
+    public static final Supplier<BlockEntityType<SecondPressBlockEntity>> SECOND_PRESS =
+        BLOCK_ENTITIES.register("second_press", () -> new BlockEntityType<>(
+            SecondPressBlockEntity::new, false, ModMachines.SECOND_PRESS.get()));
 
     public static final Supplier<BlockEntityType<CrusherBlockEntity>> CRUSHER =
         BLOCK_ENTITIES.register("crusher", () -> new BlockEntityType<>(

@@ -14,6 +14,8 @@ import com.gonzotech.machines.menu.StirlingMenu;
 import com.gonzotech.machines.menu.SecondAccumulatorMenu;
 import com.gonzotech.machines.menu.SecondCobbleGeneratorMenu;
 import com.gonzotech.machines.menu.SecondElectricFurnaceMenu;
+import com.gonzotech.machines.menu.SecondGrinderMenu;
+import com.gonzotech.machines.menu.SecondPressMenu;
 import com.gonzotech.machines.menu.SecondPumpMenu;
 import com.gonzotech.machines.menu.TurbineMenu;
 import net.minecraft.core.registries.Registries;
@@ -71,6 +73,12 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<AlloyFoundryMenu>> ALLOY_FOUNDRY =
         MENUS.register("second_alloy_foundry", () -> IMenuTypeExtension.create(AlloyFoundryMenu::new));
+
+    public static final Supplier<MenuType<SecondGrinderMenu>> SECOND_GRINDER =
+        MENUS.register("second_grinder", () -> IMenuTypeExtension.create(SecondGrinderMenu::new));
+
+    public static final Supplier<MenuType<SecondPressMenu>> SECOND_PRESS =
+        MENUS.register("second_press", () -> IMenuTypeExtension.create(SecondPressMenu::new));
 
     public static final Supplier<MenuType<CrusherMenu>> CRUSHER =
         MENUS.register("crusher", () -> IMenuTypeExtension.create(CrusherMenu::new));

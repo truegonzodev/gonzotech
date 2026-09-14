@@ -66,6 +66,28 @@ public final class SecondTierDefs {
             Math.multiplyExact(Math.max(0, ingredientItems), ALLOY_FOUNDRY_TICKS_PER_INGREDIENT));
     }
 
+    // ─────────────────────────── измельчитель II ───────────────────────────
+
+    /** Буфер измельчителя II (mGTU: 96 GTU). */
+    public static final int GRINDER_GTU_CAPACITY = 96 * MachineDefs.MILLI;
+    /** Совокупный максимум приёма GTU за тик (mGTU: 96 GTU/t). */
+    public static final int GRINDER_GTU_INTAKE = 96 * MachineDefs.MILLI;
+    /** Ровная стоимость одного рабочего тика (mGTU: 2.6 GTU/t). */
+    public static final int GRINDER_GTU_MILLI_PER_TICK = 2_600;
+    /** Одна операция измельчения занимает ровно 35 оплачиваемых тиков. */
+    public static final int GRINDER_TICKS = 35;
+
+    // ─────────────────────────── пресс II ───────────────────────────
+
+    /** Буфер пресса II (mGTU: 2482 GTU). */
+    public static final int PRESS_GTU_CAPACITY = 2_482 * MachineDefs.MILLI;
+    /** Совокупный максимум приёма GTU за тик (mGTU: 128 GTU/t). */
+    public static final int PRESS_GTU_INTAKE = 128 * MachineDefs.MILLI;
+    /** Стоимость мгновенного рабочего хода (mGTU: 126 GTU). */
+    public static final int PRESS_GTU_PER_STAMP = 126 * MachineDefs.MILLI;
+    /** КД возврата пуансона/шкала «Усталость», тиков. */
+    public static final int PRESS_FATIGUE_TICKS = 60;
+
     // ─────────────────────────── фильтр II ───────────────────────────
 
     public static final int ITEM_FILTER_SLOTS = 5;

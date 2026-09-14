@@ -104,6 +104,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PRESS_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_SCAVENGER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());
@@ -192,6 +193,27 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.PSEUDO_COIL.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.PSEUDO_COIL.get());
+                output.accept(ModItems.COPPER_PLATE.get());
+                output.accept(ModItems.COPPER_WIRE.get());
+                output.accept(ModItems.ALUMINUM_PLATE.get());
+                output.accept(ModItems.ALUMINUM_WIRE.get());
+                output.accept(ModItems.IRON_PLATE.get());
+                output.accept(ModItems.STEEL_PLATE.get());
+                output.accept(ModItems.NICKEL_PLATE.get());
+                output.accept(ModItems.STAINLESS_STEEL_PLATE.get());
+                output.accept(ModItems.GOLD_PLATE.get());
+                output.accept(ModItems.GOLD_WIRE.get());
+                output.accept(ModItems.SILVER_WIRE.get());
+                output.accept(ModItems.REDSTONE_PLATE.get());
+                output.accept(ModItems.REDSTONE_CORE.get());
+                output.accept(ModItems.TITANIUM_PLATE.get());
+                output.accept(ModItems.SEMICONDUCTOR_PLATE.get());
+                output.accept(ModItems.SEMICONDUCTOR_CORE.get());
+                output.accept(ModItems.FLAT_PUNCH.get());
+                output.accept(ModItems.WEDGE_PUNCH.get());
+                output.accept(ModItems.INGOT_FORM.get());
+                output.accept(ModItems.PLATE_FORM.get());
+                output.accept(ModItems.CORE_FORM.get());
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());
                 output.accept(ModItems.DIORITE_GRIT.get());
