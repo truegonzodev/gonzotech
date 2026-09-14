@@ -6,6 +6,8 @@ import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,6 +17,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -177,20 +180,57 @@ public final class Phase3Events {
         }
     }
 
-    // ─────────────────── 3. Лава на красной пыли → багровый обсидиан ───────────────────
+    // ──────────────── 3. Источник лавы + красная пыль → багровый обсидиан ────────────────
 
     /**
-     * Intercept the exact fluid replacement rather than watching redstone as a
-     * neighbour: crimson obsidian is made only when lava actually flows into
-     * redstone dust, including a flowing (not just source) lava block.
+     * Covers the inverse placement order: redstone dust can be placed beside an
+     * existing source-lava block. The bucket mixin handles placing the source
+     * onto/next to dust; this event handles placing dust next to a source.
+     * <p>
+     * The upper face of lava is explicitly excluded: dust directly above a
+     * source lava block is allowed and must not trigger the reaction.
      */
     @SubscribeEvent
-    public static void onLavaPlacesOverRedstone(BlockEvent.FluidPlaceBlockEvent event) {
+    public static void onRedstoneOrLavaNeighbourChanged(BlockEvent.NeighborNotifyEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        if (!event.getOriginalState().is(Blocks.REDSTONE_WIRE)) return;
-        if (!level.getFluidState(event.getLiquidPos()).is(Fluids.LAVA)) return;
 
-        event.setNewState(ModBlocks.CRIMSON_OBSIDIAN.get().defaultBlockState());
+        BlockPos changedPos = event.getPos();
+        if (isLavaSource(level, changedPos)) {
+            transformLavaIfTouchingRedstone(level, changedPos);
+            return;
+        }
+
+        if (!level.getBlockState(changedPos).is(Blocks.REDSTONE_WIRE)) return;
+        for (Direction fromDustToLava : Direction.values()) {
+            // If the lava is below this dust, the dust lies above the lava.
+            // That single (upper) side is deliberately non-reactive.
+            if (fromDustToLava == Direction.DOWN) continue;
+
+            BlockPos lavaPos = changedPos.relative(fromDustToLava);
+            if (isLavaSource(level, lavaPos)) {
+                transformLavaToCrimsonObsidian(level, lavaPos);
+            }
+        }
+    }
+
+    /** True precisely for a full vanilla lava source, never for flowing lava. */
+    private static boolean isLavaSource(ServerLevel level, BlockPos pos) {
+        return level.getFluidState(pos).isSourceOfType(Fluids.LAVA);
+    }
+
+    /** Check the five allowed sides of a source lava block for redstone dust. */
+    private static void transformLavaIfTouchingRedstone(ServerLevel level, BlockPos lavaPos) {
+        for (Direction direction : Direction.values()) {
+            if (direction == Direction.UP) continue;
+            if (level.getBlockState(lavaPos.relative(direction)).is(Blocks.REDSTONE_WIRE)) {
+                transformLavaToCrimsonObsidian(level, lavaPos);
+                return;
+            }
+        }
+    }
+
+    private static void transformLavaToCrimsonObsidian(ServerLevel level, BlockPos lavaPos) {
+        level.setBlock(lavaPos, ModBlocks.CRIMSON_OBSIDIAN.get().defaultBlockState(), Block.UPDATE_ALL);
     }
 
     // ─────────────────── 4+5. Эффекты в воде (цезий / ведро лавы) ───────────────────

@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "tag": "gonzotech:stone_grits"
-    },
-    {
-      "tag": "gonzotech:stone_grits"
-    },
-    {
-      "tag": "gonzotech:stone_grits"
-    },
+    "#gonzotech:stone_grits",
+    "#gonzotech:stone_grits",
+    "#gonzotech:stone_grits",
     "minecraft:clay_ball"
   ],
   "result": {

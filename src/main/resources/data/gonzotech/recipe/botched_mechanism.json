@@ -5,9 +5,7 @@
     "minecraft:pufferfish",
     "minecraft:iron_ingot",
     "gonzotech:pseudo_coil",
-    {
-      "tag": "gonzotech:music_discs"
-    }
+    "#gonzotech:music_discs"
   ],
   "result": {
     "id": "gonzotech:botched_mechanism",
