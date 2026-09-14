@@ -86,6 +86,12 @@ public class ModItems {
     public static final DeferredItem<Item> PSEUDO_COIL =
         ITEMS.registerSimpleItem("pseudo_coil");
 
+    /** Базовая катушка и собранный из неё индуктивный компонент. */
+    public static final DeferredItem<Item> COIL =
+        ITEMS.registerSimpleItem("coil");
+    public static final DeferredItem<Item> INDUCTIVE_MODULE =
+        ITEMS.registerSimpleItem("inductive_module");
+
     // ─────────────────────── Прессованные компоненты ───────────────────────
     // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».
     public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");

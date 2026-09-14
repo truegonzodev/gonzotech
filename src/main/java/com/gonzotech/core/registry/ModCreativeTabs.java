@@ -214,6 +214,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.INGOT_FORM.get());
                 output.accept(ModItems.PLATE_FORM.get());
                 output.accept(ModItems.CORE_FORM.get());
+                output.accept(ModItems.COIL.get());
+                output.accept(ModItems.INDUCTIVE_MODULE.get());
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());
                 output.accept(ModItems.DIORITE_GRIT.get());

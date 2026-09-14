@@ -613,6 +613,8 @@
   "item.gonzotech.plate_form": "Plate Form",
   "item.gonzotech.core_form": "Core Form",
   "block.gonzotech.second_press": "Press II",
+  "item.gonzotech.coil": "Coil",
+  "item.gonzotech.inductive_module": "Inductive Module",
   "gui.gonzotech.grinder.grinding_progress": "Grinding: %s%%",
   "gui.gonzotech.press.fatigue": "Fatigue: %s%%"
 }
