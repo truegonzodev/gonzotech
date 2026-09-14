@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Pump II screen: the inherited art is used only for the two resource gauges. */
+/** Pump II screen with its own paired PNG sheets and two resource gauges. */
 public final class SecondPumpScreen extends MachineScreen<SecondPumpMenu> {
 
     public SecondPumpScreen(SecondPumpMenu menu, Inventory inv, Component title) {
@@ -18,12 +18,12 @@ public final class SecondPumpScreen extends MachineScreen<SecondPumpMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("pump_gui_bg.png");
+        return gui("second_pump_gui_bg.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("pump_gui.png");
+        return gui("second_pump_gui.png");
     }
 
     @Override

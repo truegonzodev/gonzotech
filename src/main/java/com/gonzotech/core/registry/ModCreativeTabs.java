@@ -85,8 +85,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
 
 
-                // Второе открытие: пока все характеристики совпадают с первым
-                // уровнем, но порядок уже фиксирует будущую progression-витрину.
+                // Порядок фиксирует progression-витрину второго открытия.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WIRE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_HEAT_PIPE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_WATER_PIPE_ITEM.get());

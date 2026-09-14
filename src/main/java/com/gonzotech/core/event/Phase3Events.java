@@ -76,7 +76,7 @@ public final class Phase3Events {
      * Сюда попадают «физически закрытые» рецепты: до нужного «Открытия» крафт
      * тратит ингредиенты, но выдаёт бесполезный {@code botched_mechanism}. Кроме
      * эл. печи (задел Фазы 3) здесь ВСЯ логистика первого тира и станки Открытия 1
-     * (помпа/аккумулятор/генератор булыжника). ИСКЛЮЧЕНИЕ — гаечный ключ: он
+     * (помпа/аккумулятор/генератор булыжника) и части паровой турбины. ИСКЛЮЧЕНИЕ — гаечный ключ: он
      * крафтится всегда (рецепт лишь скрыт в книге до Открытия 1).
      * <p>
      * Котёл/топка/стирлинг/конденсатор здесь НЕ фигурируют: их можно крафтить до
@@ -116,7 +116,10 @@ public final class Phase3Events {
                 Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get(), 1),
                 // Сортировка предметов
                 Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get(), 1)
+                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get(), 1),
+                // Части многоблочной паровой турбины.
+                Map.entry(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get(), 1)
             );
         }
         return craftGate;

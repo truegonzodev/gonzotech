@@ -38,6 +38,9 @@ public final class RecipeUnlocks {
             "gonzotech:pump",
             "gonzotech:accumulator",
             "gonzotech:cobble_generator",
+            // Части паровой турбины
+            "gonzotech:turbine_casing",
+            "gonzotech:turbine_rotor",
             // Логистика: инструмент
             "gonzotech:wrench",
             // Логистика: трубы

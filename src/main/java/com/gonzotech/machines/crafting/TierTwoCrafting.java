@@ -48,6 +48,7 @@ public final class TierTwoCrafting {
         "gonzotech:second_press",
         "gonzotech:second_cobble_generator",
         "gonzotech:second_alloy_foundry",
+        "gonzotech:crusher",
         "gonzotech:centrifuge",
         "gonzotech:second_electric_furnace",
         "gonzotech:second_accumulator",
@@ -72,7 +73,7 @@ public final class TierTwoCrafting {
         "gonzotech:second_pump"
     );
 
-    /** Prevents a 33-entry recipe-book grant on every player tick. Cleared on logout. */
+    /** Prevents a 34-entry recipe-book grant on every player tick. Cleared on logout. */
     private static final Set<UUID> BOOK_GRANTED = ConcurrentHashMap.newKeySet();
 
     private TierTwoCrafting() {
@@ -138,6 +139,7 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_PRESS_ITEM.get()
             || item == ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get()
             || item == ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get()
+            || item == ModMachines.CRUSHER_ITEM.get()
             // This confirmed recipe intentionally crafts the existing centrifuge.
             || item == ModMachines.CENTRIFUGE_ITEM.get()
             || item == ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get()

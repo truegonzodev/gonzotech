@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Reuses the electric-furnace art while rendering two independently working lanes. */
+/** Electric Furnace II art has two independently rendered working lanes. */
 public final class SecondElectricFurnaceScreen extends MachineScreen<SecondElectricFurnaceMenu> {
 
     public SecondElectricFurnaceScreen(SecondElectricFurnaceMenu menu, Inventory inv, Component title) {
@@ -18,12 +18,12 @@ public final class SecondElectricFurnaceScreen extends MachineScreen<SecondElect
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("electric_furnace_gui_bg.png");
+        return gui("second_electric_furnace_gui_bg.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("electric_furnace_gui.png");
+        return gui("second_electric_furnace_gui.png");
     }
 
     @Override

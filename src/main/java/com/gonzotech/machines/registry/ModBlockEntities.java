@@ -53,8 +53,6 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("electric_furnace", () -> new BlockEntityType<>(
             ElectricFurnaceBlockEntity::new, false, ModMachines.ELECTRIC_FURNACE.get()));
 
-
-    /** Собственный тип BE второго открытия; логика/баланс пока общие с первым. */
     public static final Supplier<BlockEntityType<SecondElectricFurnaceBlockEntity>> SECOND_ELECTRIC_FURNACE =
         BLOCK_ENTITIES.register("second_electric_furnace", () -> new BlockEntityType<>(
             SecondElectricFurnaceBlockEntity::new, false, ModMachines.SECOND_ELECTRIC_FURNACE.get()));
@@ -67,8 +65,6 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("pump", () -> new BlockEntityType<>(
             PumpBlockEntity::new, false, ModMachines.PUMP.get()));
 
-
-    /** Собственный тип BE второго открытия; логика/баланс пока общие с первым. */
     public static final Supplier<BlockEntityType<SecondPumpBlockEntity>> SECOND_PUMP =
         BLOCK_ENTITIES.register("second_pump", () -> new BlockEntityType<>(
             SecondPumpBlockEntity::new, false, ModMachines.SECOND_PUMP.get()));
@@ -77,8 +73,6 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("accumulator", () -> new BlockEntityType<>(
             AccumulatorBlockEntity::new, false, ModMachines.ACCUMULATOR.get()));
 
-
-    /** Собственный тип BE второго открытия; логика/баланс пока общие с первым. */
     public static final Supplier<BlockEntityType<SecondAccumulatorBlockEntity>> SECOND_ACCUMULATOR =
         BLOCK_ENTITIES.register("second_accumulator", () -> new BlockEntityType<>(
             SecondAccumulatorBlockEntity::new, false, ModMachines.SECOND_ACCUMULATOR.get()));
@@ -87,8 +81,6 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("cobble_generator", () -> new BlockEntityType<>(
             CobbleGeneratorBlockEntity::new, false, ModMachines.COBBLE_GENERATOR.get()));
 
-
-    /** Собственный тип BE второго открытия; логика/баланс пока общие с первым. */
     public static final Supplier<BlockEntityType<SecondCobbleGeneratorBlockEntity>> SECOND_COBBLE_GENERATOR =
         BLOCK_ENTITIES.register("second_cobble_generator", () -> new BlockEntityType<>(
             SecondCobbleGeneratorBlockEntity::new, false, ModMachines.SECOND_COBBLE_GENERATOR.get()));
@@ -130,8 +122,6 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(
             com.gonzotech.machines.block.entity.ItemFilterBlockEntity::new, false, ModMachines.ITEM_FILTER.get()));
 
-
-    /** Собственный тип BE второго открытия; фильтр остаётся полной копией первого. */
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> SECOND_ITEM_FILTER =
         BLOCK_ENTITIES.register("second_item_filter", () -> new BlockEntityType<>(
             (pos, state) -> new com.gonzotech.machines.block.entity.ItemFilterBlockEntity(

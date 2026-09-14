@@ -247,7 +247,7 @@ public final class WrenchHud {
             return Component.translatable("block.gonzotech.first_universal_fluid_pipe");
         }
         // Одиночная труба второго открытия должна показывать своё имя, хотя её
-        // ресурс и сетевой лимит пока совпадают с первым уровнем.
+        // ресурс определяется типом трубы, а сетевой лимит — уровнем её carrier-блока.
         if (state.getBlock() instanceof PipeBlock) {
             return state.getBlock().getName();
         }

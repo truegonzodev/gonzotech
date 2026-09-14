@@ -17,8 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
 /**
- * ФИЛЬТР предметов — полный куб с {@link ItemFilterBlockEntity} и меню (3
- * ghost-слота). Активен: каждый тик тянет из прилегающих контейнеров и раскидывает
+ * ФИЛЬТР предметов — полный куб с {@link ItemFilterBlockEntity} и меню
+ * с зависящим от уровня числом ghost-слотов. Активен: каждый тик тянет из прилегающих контейнеров и раскидывает
  * поток по правилам ({@link ItemFilterRouting}). ПКМ пустой рукой — открыть меню.
  * <p>
  * Форма — обычный полный куб (в отличие от тонких труб), поэтому это НЕ

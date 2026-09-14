@@ -20,6 +20,11 @@ public final class AlloyFoundryScreen extends MachineScreen<AlloyFoundryMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
+        return gui("alloy_foundry_gui_bg.png");
+    }
+
+    @Override
+    protected ResourceLocation foregroundTexture() {
         return gui("alloy_foundry_gui.png");
     }
 
@@ -42,9 +47,6 @@ public final class AlloyFoundryScreen extends MachineScreen<AlloyFoundryMenu> {
         drawVBarTex(graphics, gtuX, gtuY, gtuW, gtuH, gtu, BAR_GTU);
         drawHBarTex(graphics, progressX, progressY, progressW, progressH, progress, BAR_SMELTING);
 
-        // Keep the output legend clear of the energy bar on the left.
-        graphics.drawString(this.font, Component.translatable("gui.gonzotech.alloy_foundry.output"),
-            x + 132, y + 43, 0xAAB7C4, false);
 
         if (inRect(mouseX, mouseY, gtuX, gtuY, gtuW, gtuH)) {
             graphics.renderComponentTooltip(this.font, List.of(

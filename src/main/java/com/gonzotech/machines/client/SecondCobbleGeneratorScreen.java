@@ -19,12 +19,12 @@ public final class SecondCobbleGeneratorScreen extends MachineScreen<SecondCobbl
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("cobble_generator_gui_bg.png");
+        return gui("second_cobble_generator_gui_bg.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("cobble_generator_gui.png");
+        return gui("second_cobble_generator_gui.png");
     }
 
     @Override
