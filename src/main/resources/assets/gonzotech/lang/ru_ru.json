@@ -613,12 +613,6 @@
   "item.gonzotech.plate_form": "Форма для пластины",
   "item.gonzotech.core_form": "Форма для сердечника",
   "block.gonzotech.second_press": "Пресс II",
-  "gui.gonzotech.grinder.input": "ВВОД",
-  "gui.gonzotech.grinder.output": "ВЫХОД",
   "gui.gonzotech.grinder.grinding_progress": "Измельчение: %s%%",
-  "gui.gonzotech.press.input": "СЫРЬЁ",
-  "gui.gonzotech.press.output": "ВЫХОД",
-  "gui.gonzotech.press.form": "ФОРМА",
-  "gui.gonzotech.press.punch": "ПУАНСОН",
   "gui.gonzotech.press.fatigue": "Усталость: %s%%"
 }

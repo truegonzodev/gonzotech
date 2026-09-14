@@ -613,12 +613,6 @@
   "item.gonzotech.plate_form": "Plate Form",
   "item.gonzotech.core_form": "Core Form",
   "block.gonzotech.second_press": "Press II",
-  "gui.gonzotech.grinder.input": "INPUT",
-  "gui.gonzotech.grinder.output": "OUTPUT",
   "gui.gonzotech.grinder.grinding_progress": "Grinding: %s%%",
-  "gui.gonzotech.press.input": "INPUT",
-  "gui.gonzotech.press.output": "OUTPUT",
-  "gui.gonzotech.press.form": "FORM",
-  "gui.gonzotech.press.punch": "PUNCH",
   "gui.gonzotech.press.fatigue": "Fatigue: %s%%"
 }
