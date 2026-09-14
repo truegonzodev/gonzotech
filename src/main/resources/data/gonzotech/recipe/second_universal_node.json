@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "W F",
+    "NHN",
+    "T I"
+  ],
+  "key": {
+    "W": "gonzotech:second_wire_node",
+    "F": "gonzotech:second_universal_fluid_pipe",
+    "N": "gonzotech:nickel_plate",
+    "H": "minecraft:hopper",
+    "T": "gonzotech:second_heat_pipe",
+    "I": "gonzotech:second_item_pipe"
+  },
+  "result": {
+    "id": "gonzotech:second_universal_node",
+    "count": 1
+  }
+}

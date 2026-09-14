@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "ICT",
+    "FBD",
+    "WXP"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "C": "gonzotech:cast_iron_block",
+    "T": "minecraft:iron_trapdoor",
+    "F": "minecraft:flint",
+    "B": "minecraft:bucket",
+    "D": "minecraft:diamond",
+    "W": "gonzotech:first_wire_node",
+    "X": "minecraft:iron_block",
+    "P": "gonzotech:pseudo_coil"
+  },
+  "result": {
+    "id": "gonzotech:second_grinder",
+    "count": 1
+  }
+}

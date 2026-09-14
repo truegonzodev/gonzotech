@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CMP",
+    "OBO",
+    "XXX"
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "M": "minecraft:minecart",
+    "P": "gonzotech:pseudo_coil",
+    "O": "minecraft:piston",
+    "B": "gonzotech:boiler",
+    "X": "gonzotech:cast_iron_block"
+  },
+  "result": {
+    "id": "gonzotech:second_press",
+    "count": 1
+  }
+}

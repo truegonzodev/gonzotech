@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "CPC",
+    "PPP",
+    "CPC"
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "P": "gonzotech:second_water_pipe"
+  },
+  "result": {
+    "id": "gonzotech:second_water_node",
+    "count": 1
+  }
+}

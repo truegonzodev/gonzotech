@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "WRW",
+    "WRW",
+    "WRW"
+  ],
+  "key": {
+    "W": "gonzotech:copper_wire",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "gonzotech:coil",
+    "count": 2
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "PPP",
+    "AAA",
+    "NNN"
+  ],
+  "key": {
+    "P": "minecraft:paper",
+    "A": "gonzotech:aluminum_wire",
+    "N": "gonzotech:nickel_plate"
+  },
+  "result": {
+    "id": "gonzotech:second_wire",
+    "count": 10
+  },
+  "group": "gonzotech:second_wire"
+}

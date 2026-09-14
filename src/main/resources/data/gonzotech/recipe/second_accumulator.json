@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SRI",
+    "MOM",
+    "WSW"
+  ],
+  "key": {
+    "S": "gonzotech:steel_plate",
+    "R": "minecraft:redstone_block",
+    "I": "gonzotech:iron_plate",
+    "M": "gonzotech:inductive_module",
+    "O": "gonzotech:crimson_obsidian",
+    "W": "gonzotech:first_wire_node"
+  },
+  "result": {
+    "id": "gonzotech:second_accumulator",
+    "count": 1
+  }
+}

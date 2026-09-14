@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "C I",
+    "PHP",
+    "C C"
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "I": "gonzotech:iron_plate",
+    "P": "gonzotech:second_item_pipe",
+    "H": "minecraft:chest"
+  },
+  "result": {
+    "id": "gonzotech:second_item_node",
+    "count": 1
+  }
+}
