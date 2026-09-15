@@ -187,11 +187,10 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
             changed = true;
         }
 
-        // Crossing the critical threshold is a terminal event: the center block is
-        // intentionally replaced too, so its BlockEntity can no longer keep burning.
+        // Above the thresholds the machine rolls once per second for a 5%
+        // ignition and a 3% melt of one random block in the 3×3×3 around it.
         if (be.gth.amountAsLong() > NuclearDefs.NUCLEAR_FIREBOX_CORIUM_THRESHOLD) {
-            ThermalHazards.meltToCorium(server, pos);
-            return;
+            ThermalHazards.maybeMeltToCorium(server, pos);
         }
         if (be.gth.amountAsLong() > NuclearDefs.NUCLEAR_FIREBOX_IGNITION_THRESHOLD) {
             ThermalHazards.maybeIgniteAround(server, pos);

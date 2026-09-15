@@ -1,10 +1,10 @@
 package com.gonzotech.machines.nuclear;
 
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.BaseFireBlock;
@@ -12,60 +12,100 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Common heat-fire and three-by-three meltdown behavior for nuclear thermal blocks. */
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Вероятностная тепловая опасность ядерных блоков.
+ * <p>
+ * Каждый игровой тик с {@code gameTime % 20 == 0} (раз в секунду) при GTH выше
+ * порога машина бросает два независимых кубика на 3×3×3 объём вокруг себя:
+ * <ul>
+ *   <li>5% — на одном случайном горючем блоке разгорается огонь;</li>
+ *   <li>3% — один случайный незащищённый блок плавится в расплавленный
+ *       кориум (топка) или в лаву (вольфрамовый абсорбер).</li>
+ * </ul>
+ * Проверка самих порогов остаётся за вызывающим (BlockEntity машины).
+ */
 public final class ThermalHazards {
+
+    /** Шанс возгорания одного блока в проценте за секунду. */
+    public static final int IGNITION_CHANCE_PERCENT = 5;
+    /** Шанс плавления одного блока в проценте за секунду. */
+    public static final int MELT_CHANCE_PERCENT = 3;
 
     private ThermalHazards() {
     }
 
     /**
-     * At most once per second, has a 25% chance to place fire over one random block
-     * of the horizontal 3×3 footprint. The threshold caller owns the decision.
+     * 5% в секунду: один случайный горюемый блок в 3×3×3 вокруг центра
+     * загорается (огонь ставится поверх него, как от зажигалки).
      */
     public static void maybeIgniteAround(ServerLevel level, BlockPos center) {
-        if (level.getGameTime() % 20L != 0L || level.random.nextInt(4) != 0) return;
-        RandomSource random = level.random;
-        BlockPos base = center.offset(random.nextInt(3) - 1, 0, random.nextInt(3) - 1);
-        BlockPos fire = base.above();
-        if (level.getBlockState(fire).isAir() && BaseFireBlock.canBePlacedAt(level, fire, Direction.UP)) {
-            level.setBlock(fire, Blocks.FIRE.defaultBlockState(), Block.UPDATE_ALL);
+        if (level.getGameTime() % 20L != 0L || level.random.nextInt(100) >= IGNITION_CHANCE_PERCENT) return;
+        List<BlockPos> candidates = new ArrayList<>();
+        for (BlockPos target : cubeAround(center)) {
+            if (target.equals(center)) continue;
+            if (!level.isLoaded(target)) continue;
+            BlockState state = level.getBlockState(target);
+            BlockPos fire = target.above();
+            if (state.ignitedByLava() && level.getBlockState(fire).isAir()
+                && BaseFireBlock.canBePlacedAt(level, fire, Direction.UP)) {
+                candidates.add(target);
+            }
         }
-    }
-
-    /** Touching an overheated source block ignites a player for four seconds. */
-    public static void igniteTouchingPlayer(Entity entity) {
-        if (entity instanceof Player && !entity.fireImmune()) {
-            entity.igniteForSeconds(4.0F);
-        }
+        if (candidates.isEmpty()) return;
+        BlockPos base = candidates.get(level.random.nextInt(candidates.size()));
+        level.setBlock(base.above(), BaseFireBlock.getState(level, base), Block.UPDATE_ALL);
     }
 
     /**
-     * Replaces every non-protected position in the horizontal 3×3 footprint with
-     * molten corium source fluid. The solidified corium block appears only where
-     * this lava meets water (see {@code MoltenCoriumBlock}).
+     * 3% в секунду: один случайный незащищённый блок в 3×3×3 вокруг центра
+     * становится источником расплавленного кориума.
      */
-    public static void meltToCorium(ServerLevel level, BlockPos center) {
-        replaceFootprint(level, center, ModBlocks.MOLTEN_CORIUM.get().defaultBlockState());
+    public static void maybeMeltToCorium(ServerLevel level, BlockPos center) {
+        maybeMeltAround(level, center, ModBlocks.MOLTEN_CORIUM.get().defaultBlockState());
     }
 
-    /** Replaces every non-protected position in the horizontal 3×3 footprint with vanilla lava source fluid. */
-    public static void meltToLava(ServerLevel level, BlockPos center) {
-        replaceFootprint(level, center, Blocks.LAVA.defaultBlockState());
+    /** 3% в секунду: то же, но в источник ванильной лавы (вольфрамовый абсорбер). */
+    public static void maybeMeltToLava(ServerLevel level, BlockPos center) {
+        maybeMeltAround(level, center, Blocks.LAVA.defaultBlockState());
     }
 
-    private static void replaceFootprint(ServerLevel level, BlockPos center, BlockState replacement) {
+    private static void maybeMeltAround(ServerLevel level, BlockPos center, BlockState replacement) {
+        if (level.getGameTime() % 20L != 0L || level.random.nextInt(100) >= MELT_CHANCE_PERCENT) return;
+        List<BlockPos> candidates = new ArrayList<>();
+        for (BlockPos target : cubeAround(center)) {
+            if (target.equals(center)) continue;
+            if (!level.isLoaded(target)) continue;
+            BlockState state = level.getBlockState(target);
+            // Пустоту плавить нечего — плавится только реальный блок.
+            if (state.isAir() || isMeltProtected(state)) continue;
+            candidates.add(target);
+        }
+        if (candidates.isEmpty()) return;
+        level.setBlock(candidates.get(level.random.nextInt(candidates.size())), replacement, Block.UPDATE_ALL);
+    }
+
+    /** 27 позиций куба 3×3×3, центрированного на машине. */
+    private static List<BlockPos> cubeAround(BlockPos center) {
+        List<BlockPos> result = new ArrayList<>(27);
         for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                BlockPos target = center.offset(dx, 0, dz);
-                if (isMeltProtected(level.getBlockState(target))) continue;
-                level.setBlock(target, replacement, Block.UPDATE_ALL);
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    result.add(center.offset(dx, dy, dz));
+                }
             }
         }
+        return result;
     }
 
-    /** Explicitly protected materials plus admin/world-integrity blocks. */
+    /**
+     * Материалы, не плавящиеся в кориум/лаву: обсидиановые, служебные
+     * блоки целостности мира, суперплотный лёд, ядерные машины и
+     * долговечный бетон.
+     */
     private static boolean isMeltProtected(BlockState state) {
-        Block block = state.getBlock();
         if (state.is(Blocks.OBSIDIAN) || state.is(Blocks.CRYING_OBSIDIAN)
             || state.is(ModBlocks.CRIMSON_OBSIDIAN.get()) || state.is(Blocks.BEDROCK)
             || state.is(Blocks.BARRIER) || state.is(Blocks.COMMAND_BLOCK)
@@ -74,11 +114,20 @@ public final class ThermalHazards {
             || state.is(Blocks.JIGSAW) || state.is(Blocks.LIGHT)
             || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY)
             || state.is(ModBlocks.SUPERDENSE_ICE.get())
-            || state.is(ModBlocks.TUNGSTEN_ABSORBER.get())) {
+            || state.is(ModBlocks.DURABLE_CONCRETE.get())
+            || state.is(ModBlocks.TUNGSTEN_ABSORBER.get())
+            || state.is(ModMachines.NUCLEAR_FIREBOX.get())) {
             return true;
         }
-        // VR-20 and stellite are registered through the common metal-block map.
-        return block == ModBlocks.METAL_BLOCKS.get("vr20_block").get()
-            || block == ModBlocks.METAL_BLOCKS.get("stellite_block").get();
+        // VR-20 и стеллит регистрируются через общую карту металлических блоков.
+        return state.getBlock() == ModBlocks.METAL_BLOCKS.get("vr20_block").get()
+            || state.getBlock() == ModBlocks.METAL_BLOCKS.get("stellite_block").get();
+    }
+
+    /** Касание перегретого блока поджигает игрока на четыре секунды. */
+    public static void igniteTouchingPlayer(Entity entity) {
+        if (entity instanceof Player && !entity.fireImmune()) {
+            entity.igniteForSeconds(4.0F);
+        }
     }
 }

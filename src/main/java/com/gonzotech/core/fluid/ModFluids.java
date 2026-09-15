@@ -39,6 +39,7 @@ public final class ModFluids {
             .viscosity(6_000)
             .temperature(1_300)
             .lightLevel(15)
+            .canDrown(false)
             .canConvertToSource(false)
             .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL_LAVA)
             .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY_LAVA)

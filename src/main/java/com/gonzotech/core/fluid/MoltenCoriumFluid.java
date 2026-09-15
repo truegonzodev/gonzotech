@@ -4,8 +4,13 @@ import com.gonzotech.core.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevel;
+import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -65,6 +70,59 @@ public abstract class MoltenCoriumFluid extends BaseFlowingFluid {
             }
         }
         super.spreadTo(level, pos, state, direction, flowingState);
+    }
+
+    /**
+     * Как ванильная лава, кориум поджигает горючие блоки: каждый случайный
+     * тик источника/потока есть шанс разжечь огонь у соседнего горючего
+     * блока (дублирует {@code LavaFluid#randomTick} из 1.21.4).
+     */
+    @Override
+    protected boolean isRandomlyTicking() {
+        return true;
+    }
+
+    @Override
+    protected void randomTick(ServerLevel level, BlockPos pos, FluidState state, RandomSource random) {
+        if (!level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) return;
+        int passes = random.nextInt(3);
+        if (passes > 0) {
+            BlockPos testPos = pos;
+            for (int pass = 0; pass < passes; pass++) {
+                testPos = testPos.offset(random.nextInt(3) - 1, 1, random.nextInt(3) - 1);
+                if (!level.isLoaded(testPos)) return;
+                BlockState blockState = level.getBlockState(testPos);
+                if (blockState.isAir()) {
+                    if (hasFlammableNeighbours(level, testPos)) {
+                        level.setBlockAndUpdate(testPos, BaseFireBlock.getState(level, testPos));
+                        return;
+                    }
+                } else if (blockState.blocksMotion()) {
+                    return;
+                }
+            }
+        } else {
+            for (int i = 0; i < 3; i++) {
+                BlockPos testPos = pos.offset(random.nextInt(3) - 1, 0, random.nextInt(3) - 1);
+                if (!level.isLoaded(testPos)) return;
+                if (level.isEmptyBlock(testPos.above()) && isFlammable(level, testPos)) {
+                    level.setBlockAndUpdate(testPos.above(), BaseFireBlock.getState(level, testPos));
+                }
+            }
+        }
+    }
+
+    private static boolean hasFlammableNeighbours(LevelReader level, BlockPos pos) {
+        for (Direction direction : Direction.values()) {
+            if (isFlammable(level, pos.relative(direction))) return true;
+        }
+        return false;
+    }
+
+    private static boolean isFlammable(LevelReader level, BlockPos pos) {
+        return level.isInsideBuildHeight(pos.getY()) && !level.hasChunkAt(pos)
+            ? false
+            : level.getBlockState(pos).ignitedByLava();
     }
 
     /** Источник (статичный уровень, уровень = 8). */

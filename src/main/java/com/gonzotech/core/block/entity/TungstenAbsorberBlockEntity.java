@@ -21,8 +21,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public final class TungstenAbsorberBlockEntity extends BlockEntity implements GthSink {
 
     private final GtBuffer gth = new GtBuffer((long) NuclearDefs.TUNGSTEN_ABSORBER_GTH_CAPACITY);
-    /** Prevents repeatedly rewriting the same protected tungsten-centered 3×3 footprint every tick. */
-    private boolean moltenReleaseTriggered;
 
     public TungstenAbsorberBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TUNGSTEN_ABSORBER.get(), pos, state);
@@ -63,15 +61,10 @@ public final class TungstenAbsorberBlockEntity extends BlockEntity implements Gt
             changed = true;
         }
 
+        // Above the thresholds the absorber rolls once per second for a 5%
+        // ignition and a 3% melt of one random block in the 3×3×3 around it.
         if (absorber.gth.amountAsLong() > NuclearDefs.TUNGSTEN_ABSORBER_LAVA_THRESHOLD) {
-            if (!absorber.moltenReleaseTriggered) {
-                ThermalHazards.meltToLava(server, pos);
-                absorber.moltenReleaseTriggered = true;
-                changed = true;
-            }
-        } else {
-            // A later independently caused overheat is allowed to make one new release.
-            absorber.moltenReleaseTriggered = false;
+            ThermalHazards.maybeMeltToLava(server, pos);
         }
         if (absorber.gth.amountAsLong() > NuclearDefs.TUNGSTEN_ABSORBER_IGNITION_THRESHOLD) {
             ThermalHazards.maybeIgniteAround(server, pos);
@@ -97,13 +90,11 @@ public final class TungstenAbsorberBlockEntity extends BlockEntity implements Gt
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         gth.save(tag, "Gth");
-        tag.putBoolean("MoltenReleaseTriggered", moltenReleaseTriggered);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         gth.load(tag, "Gth");
-        moltenReleaseTriggered = tag.getBoolean("MoltenReleaseTriggered");
     }
 }
