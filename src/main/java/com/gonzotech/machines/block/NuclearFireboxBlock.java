@@ -47,7 +47,7 @@ public final class NuclearFireboxBlock extends MachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return createTickerHelper(type, ModBlockEntities.NUCLEAR_FIREBOX.get(), NuclearFireboxBlockEntity::serverTick);
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.NUCLEAR_FIREBOX.get(), NuclearFireboxBlockEntity::serverTick);
     }
 
     @Override

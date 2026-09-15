@@ -39,9 +39,13 @@ public final class ThermalHazards {
         }
     }
 
-    /** Replaces every non-protected position in the horizontal 3×3 footprint with corium source fluid. */
+    /**
+     * Replaces every non-protected position in the horizontal 3×3 footprint with
+     * molten corium source fluid. The solidified corium block appears only where
+     * this lava meets water (see {@code MoltenCoriumBlock}).
+     */
     public static void meltToCorium(ServerLevel level, BlockPos center) {
-        replaceFootprint(level, center, ModBlocks.CORIUM.get().defaultBlockState());
+        replaceFootprint(level, center, ModBlocks.MOLTEN_CORIUM.get().defaultBlockState());
     }
 
     /** Replaces every non-protected position in the horizontal 3×3 footprint with vanilla lava source fluid. */

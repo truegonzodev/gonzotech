@@ -52,4 +52,6 @@ public final class NuclearDefs {
     public static final int TUNGSTEN_ABSORBER_IGNITION_THRESHOLD = 50_000 * MachineDefs.MILLI;
     /** Strictly above this stored GTH, the tungsten block melts its 3×3 footprint into lava. */
     public static final int TUNGSTEN_ABSORBER_LAVA_THRESHOLD = 94_000 * MachineDefs.MILLI;
+    /** Extra tungsten-absorber heat dissipation per adjacent superdense ice block, in mGTH/t. */
+    public static final int SUPERDENSE_ICE_COOLING_PER_BLOCK = 32 * MachineDefs.MILLI;
 }

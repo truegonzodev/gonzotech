@@ -41,8 +41,10 @@ public class GonzoTechMod {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::registerPayloads);
 
-        ModBlocks.register(modEventBus);
+        // Жидкости регистрируются ДО блоков: LiquidBlock расплавленного кориума
+        // берёт источник жидкости из уже заполненного регистра при своём событии.
         ModFluids.register(modEventBus);
+        ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
         ModDataComponents.register(modEventBus);
         ModRecipeSerializers.register(modEventBus);
@@ -81,6 +83,10 @@ public class GonzoTechMod {
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
+            // Клиентские текстуры/тинт расплавленного кориума.
+            modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);
+            // Развёртка и тинт надетой брони custom_alloy.
+            modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
             // Texture-only Smart CTM корпусной оболочки турбины.
             modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).

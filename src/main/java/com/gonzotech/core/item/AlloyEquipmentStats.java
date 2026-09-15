@@ -231,9 +231,9 @@ public final class AlloyEquipmentStats {
                 EquipmentSlotGroup.CHEST);
         }
         result.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes.build());
-        // Leather's vanilla equipment layer is dyeable. It is used as the temporary
-        // neutral worn model until the dedicated alloy armor texture arrives; its
-        // color is taken directly from the same exact alloy tint component.
+        // Надетая броня рендерится на собственной leather-UV развёртке
+        // custom_alloy_layer_1 (AlloyClient#onRegisterClientExtensions); DYED_COLOR
+        // хранится как запасной источник цвета — тот же точный тинт сплава.
         AlloyTint tint = result.get(ModDataComponents.ALLOY_TINT.get());
         result.set(DataComponents.DYED_COLOR, new DyedItemColor(tint.argb() & 0x00FFFFFF, false));
         if (properties.inertness() < INERTNESS_ENCHANTMENT_LOCK) {

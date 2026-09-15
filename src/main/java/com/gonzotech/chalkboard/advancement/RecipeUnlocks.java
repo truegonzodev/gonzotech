@@ -89,6 +89,10 @@ public final class RecipeUnlocks {
             "gonzotech:vr20_dust_from_metal_dusts",
             "gonzotech:alnico_dust_from_metal_dusts",
             "gonzotech:telluride_dust_from_metal_dusts"
+        ),
+        6, List.of(
+            // Физически крафтится всегда, в книге появляется с Открытием 6.
+            "gonzotech:superdense_ice"
         )
     );
 

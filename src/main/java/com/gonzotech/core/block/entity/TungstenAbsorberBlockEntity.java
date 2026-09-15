@@ -1,5 +1,6 @@
 package com.gonzotech.core.block.entity;
 
+import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.NuclearDefs;
 import com.gonzotech.machines.energy.Sinks.GthSink;
@@ -58,7 +59,7 @@ public final class TungstenAbsorberBlockEntity extends BlockEntity implements Gt
         if (!(level instanceof ServerLevel server)) return;
         boolean changed = false;
         if (!absorber.gth.isEmpty()) {
-            absorber.gth.extract(NuclearDefs.TUNGSTEN_ABSORBER_GTH_LOSS, false);
+            absorber.gth.extract(coolingPerTick(level, pos), false);
             changed = true;
         }
 
@@ -76,6 +77,20 @@ public final class TungstenAbsorberBlockEntity extends BlockEntity implements Gt
             ThermalHazards.maybeIgniteAround(server, pos);
         }
         if (changed) absorber.setChanged();
+    }
+
+    /**
+     * Base dissipation plus 32 GTH/t for every superdense ice block touching the
+     * tungsten absorber from one of the six face directions.
+     */
+    private static long coolingPerTick(Level level, BlockPos pos) {
+        long loss = (long) NuclearDefs.TUNGSTEN_ABSORBER_GTH_LOSS;
+        for (Direction direction : Direction.values()) {
+            if (level.getBlockState(pos.relative(direction)).is(ModBlocks.SUPERDENSE_ICE.get())) {
+                loss += NuclearDefs.SUPERDENSE_ICE_COOLING_PER_BLOCK;
+            }
+        }
+        return loss;
     }
 
     @Override

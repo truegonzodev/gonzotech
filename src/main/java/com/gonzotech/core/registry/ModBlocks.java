@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.ChalkboardBlock;
 import com.gonzotech.core.block.TungstenAbsorberBlock;
 import com.gonzotech.core.fluid.ModFluids;
+import com.gonzotech.core.fluid.MoltenCoriumBlock;
 import com.gonzotech.core.ore.CesiumOreBlock;
 import com.gonzotech.core.ore.IodineOreBlock;
 import com.gonzotech.core.ore.OreDefinition;
@@ -139,9 +140,12 @@ public class ModBlocks {
     /** Ванильный pillar-state нужен: копируемые свойства OAK_LOG считывают AXIS. */
     public static final DeferredBlock<RotatedPillarBlock> DEAD_LOG = BLOCKS.registerBlock(
         "dead_log", RotatedPillarBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG));
+    /** Застывший кориум — результат реакции расплавленного кориума с водой (аналог обсидиана). */
+    public static final DeferredBlock<Block> CORIUM = BLOCKS.registerSimpleBlock(
+        "corium", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     /** Gray lava-like fluid block produced by Nuclear Firebox meltdown. */
-    public static final DeferredBlock<LiquidBlock> CORIUM = BLOCKS.registerBlock(
-        "corium", properties -> new LiquidBlock(ModFluids.CORIUM_SOURCE, properties),
+    public static final DeferredBlock<LiquidBlock> MOLTEN_CORIUM = BLOCKS.registerBlock(
+        "molten_corium", properties -> new MoltenCoriumBlock(ModFluids.MOLTEN_CORIUM.get(), properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.LAVA));
     /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
