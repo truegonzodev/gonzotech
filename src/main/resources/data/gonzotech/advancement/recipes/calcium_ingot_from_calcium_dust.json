@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:calcium_ingot_from_calcium_dust_smelting",
+      "gonzotech:calcium_ingot_from_calcium_dust_blasting",
+      "gonzotech:calcium_ingot_from_calcium_dust_smoking"
+    ]
+  },
+  "criteria": {
+    "has_dust": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:calcium_dust"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dust"
+    ]
+  ]
+}

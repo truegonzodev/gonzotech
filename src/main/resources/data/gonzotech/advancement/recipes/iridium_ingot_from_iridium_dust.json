@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:iridium_ingot_from_iridium_dust_smelting",
+      "gonzotech:iridium_ingot_from_iridium_dust_blasting",
+      "gonzotech:iridium_ingot_from_iridium_dust_smoking"
+    ]
+  },
+  "criteria": {
+    "has_dust": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:iridium_dust"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dust"
+    ]
+  ]
+}

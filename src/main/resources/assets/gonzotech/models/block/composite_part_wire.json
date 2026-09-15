@@ -2,8 +2,8 @@
   "credit": "Placeholder (author supplies textures)",
   "render_type": "minecraft:cutout",
   "textures": {
-    "0": "gonzotech:block/wire",
-    "particle": "gonzotech:block/wire"
+    "0": "gonzotech:block/first/wire",
+    "particle": "gonzotech:block/first/wire"
   },
   "elements": [
     {

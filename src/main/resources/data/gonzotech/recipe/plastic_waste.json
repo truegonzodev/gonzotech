@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:slime_ball",
+    "minecraft:slime_ball",
+    "minecraft:clay_ball",
+    "minecraft:resin_clump",
+    "minecraft:honeycomb"
+  ],
+  "result": {
+    "id": "gonzotech:plastic_waste",
+    "count": 16
+  }
+}

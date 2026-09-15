@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:invar_ingot_from_invar_dust_smelting",
+      "gonzotech:invar_ingot_from_invar_dust_blasting",
+      "gonzotech:invar_ingot_from_invar_dust_smoking"
+    ]
+  },
+  "criteria": {
+    "has_dust": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:invar_dust"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dust"
+    ]
+  ]
+}

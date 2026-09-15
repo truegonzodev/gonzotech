@@ -28,6 +28,7 @@ import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.FluidState;
@@ -103,7 +104,15 @@ public class PumpBlockEntity extends BaseMachineBlockEntity implements GtuSink, 
     };
 
     public PumpBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.PUMP.get(), pos, state, 2);
+        this(ModBlockEntities.PUMP.get(), pos, state);
+    }
+
+    /**
+     * Внутренний конструктор для функционально идентичной машины другого
+     * открытия: состояние и баланс остаются общими, тип BE — свой.
+     */
+    public PumpBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
+        super(blockEntityType, pos, state, 2);
     }
 
     public GtBuffer gtuBuffer() {
@@ -344,7 +353,7 @@ public class PumpBlockEntity extends BaseMachineBlockEntity implements GtuSink, 
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.pump");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Override

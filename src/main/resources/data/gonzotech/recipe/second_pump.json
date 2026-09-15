@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "ILI",
+    "BBH",
+    "CSC"
+  ],
+  "key": {
+    "I": "gonzotech:iron_plate",
+    "L": "minecraft:iron_trapdoor",
+    "B": "minecraft:bucket",
+    "H": "minecraft:hopper",
+    "C": "gonzotech:cast_iron_ingot",
+    "S": "gonzotech:steel_ingot"
+  },
+  "result": {
+    "id": "gonzotech:second_pump",
+    "count": 1
+  }
+}

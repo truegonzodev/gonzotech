@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "KBS",
+    "OEO",
+    "WSI"
+  ],
+  "key": {
+    "K": "gonzotech:coil",
+    "B": "gonzotech:steel_block",
+    "S": "gonzotech:steel_plate",
+    "O": "minecraft:piston",
+    "E": "gonzotech:boiler",
+    "W": "gonzotech:first_wire_node",
+    "I": "gonzotech:iron_plate"
+  },
+  "result": {
+    "id": "gonzotech:second_cobble_generator",
+    "count": 1
+  }
+}

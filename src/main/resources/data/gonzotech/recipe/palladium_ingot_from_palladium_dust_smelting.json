@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "palladium_ingot",
+  "ingredient": "gonzotech:palladium_dust",
+  "result": {
+    "id": "gonzotech:palladium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

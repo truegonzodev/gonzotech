@@ -2,6 +2,10 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.item.DiscoveryItem;
+import com.gonzotech.core.item.AlloyChestplateItem;
+import com.gonzotech.core.item.AlloyPickaxeItem;
+import com.gonzotech.core.item.AlloySwordItem;
+import com.gonzotech.core.item.CustomAlloyItem;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.item.BlockItem;
@@ -62,9 +66,102 @@ public class ModItems {
         ITEMS.registerItem("scholar_notes",
             props -> new com.gonzotech.chalkboard.item.ScholarNotesItem(props.stacksTo(1)));
 
+    /**
+     * Нейтральная болванка процедурного сплава. Завод записывает в каждый
+     * созданный stack composition/tint Data Components; пустой creative-stack
+     * остаётся серым образцом без рецептурных характеристик.
+     */
+    public static final DeferredItem<CustomAlloyItem> CUSTOM_ALLOY =
+        ITEMS.registerItem("custom_alloy", CustomAlloyItem::new);
+
+    /** Dynamic equipment stamped from one exact {@link CustomAlloyItem} composition. */
+    public static final DeferredItem<AlloyPickaxeItem> ALLOY_PICKAXE =
+        ITEMS.registerItem("alloy_pickaxe", AlloyPickaxeItem::new);
+    public static final DeferredItem<AlloySwordItem> ALLOY_SWORD =
+        ITEMS.registerItem("alloy_sword", AlloySwordItem::new);
+    public static final DeferredItem<AlloyChestplateItem> ALLOY_CHESTPLATE =
+        ITEMS.registerItem("alloy_chestplate", AlloyChestplateItem::new);
+
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =
         ITEMS.registerSimpleItem("pseudo_coil");
+
+    /** Базовая катушка и собранный из неё индуктивный компонент. */
+    public static final DeferredItem<Item> COIL =
+        ITEMS.registerSimpleItem("coil");
+    public static final DeferredItem<Item> INDUCTIVE_MODULE =
+        ITEMS.registerSimpleItem("inductive_module");
+
+    // ─────────────────────── Прессованные компоненты ───────────────────────
+    // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».
+    public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
+    public static final DeferredItem<Item> COPPER_WIRE = ITEMS.registerSimpleItem("copper_wire");
+    public static final DeferredItem<Item> ALUMINUM_PLATE = ITEMS.registerSimpleItem("aluminum_plate");
+    public static final DeferredItem<Item> ALUMINUM_WIRE = ITEMS.registerSimpleItem("aluminum_wire");
+    public static final DeferredItem<Item> IRON_PLATE = ITEMS.registerSimpleItem("iron_plate");
+    public static final DeferredItem<Item> STEEL_PLATE = ITEMS.registerSimpleItem("steel_plate");
+    public static final DeferredItem<Item> NICKEL_PLATE = ITEMS.registerSimpleItem("nickel_plate");
+    public static final DeferredItem<Item> STAINLESS_STEEL_PLATE = ITEMS.registerSimpleItem("stainless_steel_plate");
+    public static final DeferredItem<Item> GOLD_PLATE = ITEMS.registerSimpleItem("gold_plate");
+    public static final DeferredItem<Item> GOLD_WIRE = ITEMS.registerSimpleItem("gold_wire");
+    public static final DeferredItem<Item> SILVER_WIRE = ITEMS.registerSimpleItem("silver_wire");
+    public static final DeferredItem<Item> REDSTONE_PLATE = ITEMS.registerSimpleItem("redstone_plate");
+    public static final DeferredItem<Item> REDSTONE_CORE = ITEMS.registerSimpleItem("redstone_core");
+    public static final DeferredItem<Item> TITANIUM_PLATE = ITEMS.registerSimpleItem("titanium_plate");
+    public static final DeferredItem<Item> SEMICONDUCTOR_PLATE = ITEMS.registerSimpleItem("semiconductor_plate");
+    public static final DeferredItem<Item> SEMICONDUCTOR_CORE = ITEMS.registerSimpleItem("semiconductor_core");
+
+    /** Reusable selectors for the press; they are never consumed by a stamp. */
+    public static final DeferredItem<Item> FLAT_PUNCH =
+        ITEMS.registerItem("flat_punch", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> WEDGE_PUNCH =
+        ITEMS.registerItem("wedge_punch", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> INGOT_FORM =
+        ITEMS.registerItem("ingot_form", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> PLATE_FORM =
+        ITEMS.registerItem("plate_form", props -> new Item(props.stacksTo(1)));
+    public static final DeferredItem<Item> CORE_FORM =
+        ITEMS.registerItem("core_form", props -> new Item(props.stacksTo(1)));
+
+    // ─────────────────────── Материалы переработки: компоненты ───────────────────────
+    // Пока это только зарегистрированные ингредиенты с placeholder-ресурсами: рецепты
+    // и машинная переработка будут добавлены отдельной, согласованной задачей.
+    public static final DeferredItem<Item> GRANITE_GRIT =
+        ITEMS.registerSimpleItem("granite_grit");
+    public static final DeferredItem<Item> ANDESITE_GRIT =
+        ITEMS.registerSimpleItem("andesite_grit");
+    public static final DeferredItem<Item> DIORITE_GRIT =
+        ITEMS.registerSimpleItem("diorite_grit");
+    public static final DeferredItem<Item> TRIO_GRIT =
+        ITEMS.registerSimpleItem("trio_grit");
+    public static final DeferredItem<Item> CLINKER_GRIT =
+        ITEMS.registerSimpleItem("clinker_grit");
+    public static final DeferredItem<Item> ARMOR_MIX =
+        ITEMS.registerSimpleItem("armor_mix");
+    public static final DeferredItem<Item> ANDESITE_SILICATE_CLINKER =
+        ITEMS.registerSimpleItem("andesite_silicate_clinker");
+    public static final DeferredItem<Item> WHITE_PORCELAIN_BATCH =
+        ITEMS.registerSimpleItem("white_porcelain_batch");
+    public static final DeferredItem<Item> REBAR =
+        ITEMS.registerSimpleItem("rebar");
+
+    /**
+     * Пыли ванильных металлов для побочных выходов ЦФ1УР. Они намеренно не добавлены
+     * в Metals.INGOT_IDS: сами слитки принадлежат vanilla, а у мода нет их блоков или
+     * самородков. В DUST_ITEMS они добавляются после всех существующих GT-пылей.
+     */
+    public static final DeferredItem<Item> COPPER_DUST =
+        ITEMS.registerSimpleItem("copper_dust");
+    public static final DeferredItem<Item> IRON_DUST =
+        ITEMS.registerSimpleItem("iron_dust");
+
+    /** Ваниль не имеет медного самородка; он нужен для выходов ЦФ1УР и дробилки. */
+    public static final DeferredItem<Item> COPPER_NUGGET =
+        ITEMS.registerSimpleItem("copper_nugget");
+
+    /** Чистый кремний — редкая побочка алмазной руды в ЦФ1УР. */
+    public static final DeferredItem<Item> SILICON =
+        ITEMS.registerSimpleItem("silicon");
 
     /**
      * Фаза 3 — «прикол»: ведро обсидиана. Бесполезный предмет: ведро лавы в
@@ -95,6 +192,13 @@ public class ModItems {
      */
     public static final DeferredItem<Item> UV_METER =
         ITEMS.registerSimpleItem("uv_meter");
+
+    /**
+     * Клиентский спидометр: пока он в главной или дополнительной руке, над
+     * хотбаром каждую игровую тик-итерацию видна скорость в блоках за секунду.
+     */
+    public static final DeferredItem<Item> SPEEDOMETER =
+        ITEMS.registerSimpleItem("speedometer");
 
 
     // ─── «Приколы»: два сусла (еда с тошнотой) ───
@@ -134,6 +238,73 @@ public class ModItems {
     /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */
     public static final DeferredItem<BlockItem> LUNAR_DIRT_ITEM =
         ITEMS.registerSimpleBlockItem("lunar_dirt", ModBlocks.LUNAR_DIRT);
+
+    // ─────────────────────── Материалы переработки: строительные блоки ───────────────────────
+    // Декоративные блоки-заготовки без рецептов и специальной механики.
+    public static final DeferredItem<BlockItem> ARMOR_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("armor_concrete", ModBlocks.ARMOR_CONCRETE);
+    public static final DeferredItem<BlockItem> REINFORCED_ARMOR_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("reinforced_armor_concrete", ModBlocks.REINFORCED_ARMOR_CONCRETE);
+    public static final DeferredItem<BlockItem> DURABLE_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("durable_concrete", ModBlocks.DURABLE_CONCRETE);
+    public static final DeferredItem<BlockItem> PORCELAIN_ITEM =
+        ITEMS.registerSimpleBlockItem("porcelain", ModBlocks.PORCELAIN);
+    public static final DeferredItem<BlockItem> SLAG_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("slag_concrete", ModBlocks.SLAG_CONCRETE);
+    public static final DeferredItem<BlockItem> INDUSTRIAL_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("industrial_concrete", ModBlocks.INDUSTRIAL_CONCRETE);
+    public static final DeferredItem<BlockItem> REINFORCED_INDUSTRIAL_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("reinforced_industrial_concrete", ModBlocks.REINFORCED_INDUSTRIAL_CONCRETE);
+
+    // ──────────────── Декоративные блоки данжей: саспенс / радиация / метеоры ────────────────
+    public static final DeferredItem<BlockItem> LEAD_STAINED_GLASS_ITEM =
+        ITEMS.registerSimpleBlockItem("lead_stained_glass", ModBlocks.LEAD_STAINED_GLASS);
+    public static final DeferredItem<BlockItem> CRIMSON_OBSIDIAN_ITEM =
+        ITEMS.registerSimpleBlockItem("crimson_obsidian", ModBlocks.CRIMSON_OBSIDIAN);
+    public static final DeferredItem<BlockItem> SCULK_BRICKS_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_bricks", ModBlocks.SCULK_BRICKS);
+    public static final DeferredItem<BlockItem> CHISELED_SCULK_BRICKS_ITEM =
+        ITEMS.registerSimpleBlockItem("chiseled_sculk_bricks", ModBlocks.CHISELED_SCULK_BRICKS);
+    public static final DeferredItem<BlockItem> SMOOTH_SCULK_BRICKS_ITEM =
+        ITEMS.registerSimpleBlockItem("smooth_sculk_bricks", ModBlocks.SMOOTH_SCULK_BRICKS);
+    public static final DeferredItem<BlockItem> SCULK_BRICK_STAIRS_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_brick_stairs", ModBlocks.SCULK_BRICK_STAIRS);
+    public static final DeferredItem<BlockItem> SCULK_BRICK_SLAB_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_brick_slab", ModBlocks.SCULK_BRICK_SLAB);
+    public static final DeferredItem<BlockItem> SCULK_BRICK_WALL_ITEM =
+        ITEMS.registerSimpleBlockItem("sculk_brick_wall", ModBlocks.SCULK_BRICK_WALL);
+
+    public static final DeferredItem<BlockItem> DEAD_DIRT_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_dirt", ModBlocks.DEAD_DIRT);
+    public static final DeferredItem<BlockItem> DEAD_SAND_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_sand", ModBlocks.DEAD_SAND);
+    public static final DeferredItem<BlockItem> DEAD_STONE_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_stone", ModBlocks.DEAD_STONE);
+    public static final DeferredItem<BlockItem> DEAD_LOG_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_log", ModBlocks.DEAD_LOG);
+    public static final DeferredItem<BlockItem> CORIUM_ITEM =
+        ITEMS.registerSimpleBlockItem("corium", ModBlocks.CORIUM);
+    public static final DeferredItem<BlockItem> WASTE_BARREL_ITEM =
+        ITEMS.registerSimpleBlockItem("waste_barrel", ModBlocks.WASTE_BARREL);
+    public static final DeferredItem<BlockItem> DEAD_SLIME_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("dead_slime_block", ModBlocks.DEAD_SLIME_BLOCK);
+    public static final DeferredItem<BlockItem> RADIOACTIVE_SLIME_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("radioactive_slime_block", ModBlocks.RADIOACTIVE_SLIME_BLOCK);
+
+    public static final DeferredItem<BlockItem> WEATHERED_PLATING_ITEM =
+        ITEMS.registerSimpleBlockItem("weathered_plating", ModBlocks.WEATHERED_PLATING);
+    public static final DeferredItem<BlockItem> DEBRIS_ITEM =
+        ITEMS.registerSimpleBlockItem("debris", ModBlocks.DEBRIS);
+    public static final DeferredItem<BlockItem> WEATHERED_DEBRIS_ITEM =
+        ITEMS.registerSimpleBlockItem("weathered_debris", ModBlocks.WEATHERED_DEBRIS);
+    public static final DeferredItem<BlockItem> MECHANISMS_ITEM =
+        ITEMS.registerSimpleBlockItem("mechanisms", ModBlocks.MECHANISMS);
+    public static final DeferredItem<BlockItem> WEATHERED_MECHANISMS_ITEM =
+        ITEMS.registerSimpleBlockItem("weathered_mechanisms", ModBlocks.WEATHERED_MECHANISMS);
+    public static final DeferredItem<BlockItem> SILICON_CACHE_ITEM =
+        ITEMS.registerSimpleBlockItem("silicon_cache", ModBlocks.SILICON_CACHE);
+    public static final DeferredItem<BlockItem> PLASTIC_WASTE_ITEM =
+        ITEMS.registerSimpleBlockItem("plastic_waste", ModBlocks.PLASTIC_WASTE);
 
     // ─────────────────────── Фаза 4: BlockItem'ы блоков космоса ───────────────────────
     public static final DeferredItem<BlockItem> LUNAR_STONE_ITEM =
@@ -188,12 +359,20 @@ public class ModItems {
                 DUST_ITEMS.put(dustId, ITEMS.registerSimpleItem(dustId));
             }
         }
+        // ВАЖНО: эти две vanilla-пыли идут строго после всех уже существующих GT-пылей,
+        // но до самородков, поэтому не засоряют хвост вкладки ресурсов.
+        DUST_ITEMS.put("copper_dust", COPPER_DUST);
+        DUST_ITEMS.put("iron_dust", IRON_DUST);
+
         for (String ingotId : INGOT_IDS) {
             if (Metals.hasNugget(ingotId)) {
                 String nuggetId = Metals.base(ingotId) + "_nugget";
                 NUGGET_ITEMS.put(nuggetId, ITEMS.registerSimpleItem(nuggetId));
             }
         }
+        // Медный самородок намеренно последний: как copper/iron dust после
+        // основной коллекции пылей, он не меняет порядок существующих ресурсов.
+        NUGGET_ITEMS.put("copper_nugget", COPPER_NUGGET);
 
         for (int i = 1; i <= 16; i++) {
             final int num = i;

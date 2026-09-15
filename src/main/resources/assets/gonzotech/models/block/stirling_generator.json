@@ -1,8 +1,8 @@
 {
   "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "top": "gonzotech:block/stirling_generator_top",
-    "bottom": "gonzotech:block/stirling_generator_top",
-    "side": "gonzotech:block/stirling_generator"
+    "top": "gonzotech:block/first/stirling_generator_top",
+    "bottom": "gonzotech:block/first/stirling_generator_top",
+    "side": "gonzotech:block/first/stirling_generator"
   }
 }

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "telluride_dust",
+  "ingredients": [
+    "gonzotech:bismuth_dust",
+    "gonzotech:bismuth_dust",
+    "gonzotech:tellurium_dust",
+    "gonzotech:tellurium_dust",
+    "gonzotech:tellurium_dust"
+  ],
+  "result": {
+    "id": "gonzotech:telluride_dust",
+    "count": 4
+  }
+}

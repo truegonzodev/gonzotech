@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/alnico_block"
+    "all": "gonzotech:block/fullmetall/alnico_block"
   }
 }

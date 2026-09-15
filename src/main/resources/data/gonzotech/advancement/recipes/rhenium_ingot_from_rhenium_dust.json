@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:rhenium_ingot_from_rhenium_dust_smelting",
+      "gonzotech:rhenium_ingot_from_rhenium_dust_blasting",
+      "gonzotech:rhenium_ingot_from_rhenium_dust_smoking"
+    ]
+  },
+  "criteria": {
+    "has_dust": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:rhenium_dust"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dust"
+    ]
+  ]
+}

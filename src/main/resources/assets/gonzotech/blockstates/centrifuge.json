@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/centrifuge" },
+    "facing=east":  { "model": "gonzotech:block/centrifuge", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/centrifuge", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/centrifuge", "y": 270 }
+  }
+}

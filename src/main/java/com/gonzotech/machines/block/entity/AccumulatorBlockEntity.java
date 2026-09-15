@@ -1,5 +1,6 @@
 package com.gonzotech.machines.block.entity;
 
+import com.gonzotech.machines.energy.ComparatorOutput;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
@@ -17,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -40,6 +42,9 @@ import net.minecraft.world.level.block.state.BlockState;
 public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements GtuSink {
 
     private final GtBuffer gtu = new GtBuffer((long) MachineDefs.ACCUMULATOR_GTU_CAPACITY);
+
+    /** Последнее опубликованное значение компаратора; не сохраняется, т.к. вычисляется из буфера. */
+    private int lastComparatorOutput;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -66,11 +71,40 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
     };
 
     public AccumulatorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.ACCUMULATOR.get(), pos, state, 0);
+        this(ModBlockEntities.ACCUMULATOR.get(), pos, state);
+    }
+
+    /**
+     * Внутренний конструктор для функционально идентичной машины другого
+     * открытия: состояние и баланс остаются общими, тип BE — свой.
+     */
+    public AccumulatorBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
+        super(blockEntityType, pos, state, 0);
     }
 
     public GtBuffer gtuBuffer() {
         return gtu;
+    }
+
+    /** Аналоговый выход по заполненности внутреннего GTU-буфера. */
+    public int comparatorOutput() {
+        return ComparatorOutput.from(gtu);
+    }
+
+    /** Уведомляет компараторы только при пересечении очередной ступени 0..15. */
+    private void updateComparatorOutput() {
+        int next = comparatorOutput();
+        if (next == lastComparatorOutput) return;
+        lastComparatorOutput = next;
+        if (level != null && !level.isClientSide()) {
+            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        updateComparatorOutput();
     }
 
     public ContainerData data() {
@@ -81,7 +115,12 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
     @Override
     public long receiveGtu(long amount, boolean simulate) {
-        return gtu.receive(Math.min(amount, (long) MachineDefs.ACCUMULATOR_GTU_INTAKE), simulate);
+        long accepted = gtu.receive(Math.min(amount, (long) MachineDefs.ACCUMULATOR_GTU_INTAKE), simulate);
+        if (!simulate && accepted > 0) {
+            setChanged();
+            updateComparatorOutput();
+        }
+        return accepted;
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────
@@ -104,6 +143,7 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
         if (changed) {
             be.setChanged();
+            be.updateComparatorOutput();
         }
     }
 
@@ -157,7 +197,7 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.accumulator");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Override

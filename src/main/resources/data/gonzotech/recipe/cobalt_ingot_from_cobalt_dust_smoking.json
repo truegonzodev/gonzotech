@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "cobalt_ingot",
+  "ingredient": "gonzotech:cobalt_dust",
+  "result": {
+    "id": "gonzotech:cobalt_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

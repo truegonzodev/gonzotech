@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "vr20_dust",
+  "ingredients": [
+    "gonzotech:tungsten_dust",
+    "gonzotech:tungsten_dust",
+    "gonzotech:tungsten_dust",
+    "gonzotech:tungsten_dust",
+    "gonzotech:rhenium_dust"
+  ],
+  "result": {
+    "id": "gonzotech:vr20_dust",
+    "count": 3
+  }
+}

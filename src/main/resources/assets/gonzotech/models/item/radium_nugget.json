@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/radium_nugget"
+    "layer0": "gonzotech:item/nuggets/radium_nugget"
   }
 }

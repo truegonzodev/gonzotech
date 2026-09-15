@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "bismuth_ingot",
+  "ingredient": "gonzotech:bismuth_dust",
+  "result": {
+    "id": "gonzotech:bismuth_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

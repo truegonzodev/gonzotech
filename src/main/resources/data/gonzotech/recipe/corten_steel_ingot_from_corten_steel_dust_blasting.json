@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "corten_steel_ingot",
+  "ingredient": "gonzotech:corten_steel_dust",
+  "result": {
+    "id": "gonzotech:corten_steel_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

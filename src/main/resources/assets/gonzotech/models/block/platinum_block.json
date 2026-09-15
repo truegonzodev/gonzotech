@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/platinum_block"
+    "all": "gonzotech:block/fullmetall/platinum_block"
   }
 }

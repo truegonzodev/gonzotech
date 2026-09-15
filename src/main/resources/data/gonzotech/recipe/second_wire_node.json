@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "NWN",
+    "W W",
+    "NWN"
+  ],
+  "key": {
+    "N": "gonzotech:nickel_plate",
+    "W": "gonzotech:second_wire"
+  },
+  "result": {
+    "id": "gonzotech:second_wire_node",
+    "count": 1
+  }
+}

@@ -55,6 +55,19 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      */
     private static final float SKY_DISTANCE = 100.0F;
 
+    /**
+     * Звёзды находятся за небесными телами (квады тел лежат на SKY_DISTANCE),
+     * но рисуются после купола без depth-write, поэтому сам купол их не скрывает.
+     */
+    private static final float STAR_DISTANCE = SKY_DISTANCE + 2.0F;
+
+    /** Полуразмер ванильного лунного квада: от -20 до +20. */
+    static final float VANILLA_MOON_HALF_SIZE = 20.0F;
+
+    /** Отдельный 4×2 atlas фаз луны Оверворлда. */
+    private static final String OVERWORLD_MOON_PHASES_PATH =
+        "textures/environment/overworld/moon_phases.png";
+
     /** Цвета зенита: дневной и ночной (0xAARRGGBB). */
     private final int zenithDayArgb;
     private final int zenithNightArgb;
@@ -101,6 +114,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     /** Множитель плотности тумана для мира. */
     private final float fogFactor;
 
+    /**
+     * Whether this sky effect consumes vanilla weather rendering/ticking.
+     * Space worlds keep this enabled as a defensive second layer after their
+     * no-precipitation biomes; the Overworld explicitly leaves it disabled.
+     */
+    private final boolean suppressesPrecipitation;
+
     public SpaceSkyEffects(float cloudHeight,
                            boolean hasGround,
                            float fogFactor,
@@ -113,7 +133,28 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float starDayBrightness) {
         this(cloudHeight, hasGround, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
             horizonNightArgb, sunsetArgb, bodies, daylightScale,
-            starNightBrightness, starDayBrightness, -1.0F);
+            starNightBrightness, starDayBrightness, -1.0F, true);
+    }
+
+    /**
+     * Full normal-cycle constructor with an explicit weather-rendering policy.
+     * Only the custom Overworld effect passes {@code false}; every actual space
+     * dimension retains its deliberately dry behaviour.
+     */
+    public SpaceSkyEffects(float cloudHeight,
+                           boolean hasGround,
+                           float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness,
+                           boolean suppressesPrecipitation) {
+        this(cloudHeight, hasGround, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, daylightScale,
+            starNightBrightness, starDayBrightness, -1.0F, suppressesPrecipitation);
     }
 
     public SpaceSkyEffects(float cloudHeight,
@@ -127,8 +168,26 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                            float starNightBrightness,
                            float starDayBrightness,
                            float fixedDaylight) {
+        this(cloudHeight, hasGround, fogFactor, zenithDayArgb, zenithNightArgb, horizonDayArgb,
+            horizonNightArgb, sunsetArgb, bodies, daylightScale,
+            starNightBrightness, starDayBrightness, fixedDaylight, true);
+    }
+
+    public SpaceSkyEffects(float cloudHeight,
+                           boolean hasGround,
+                           float fogFactor,
+                           int zenithDayArgb, int zenithNightArgb,
+                           int horizonDayArgb, int horizonNightArgb,
+                           int sunsetArgb,
+                           List<CelestialBody> bodies,
+                           float daylightScale,
+                           float starNightBrightness,
+                           float starDayBrightness,
+                           float fixedDaylight,
+                           boolean suppressesPrecipitation) {
         super(cloudHeight, hasGround, normalSkyType(), false, false);
         this.fogFactor = fogFactor;
+        this.suppressesPrecipitation = suppressesPrecipitation;
         this.zenithDayArgb = zenithDayArgb;
         this.zenithNightArgb = zenithNightArgb;
         this.horizonDayArgb = horizonDayArgb;
@@ -187,8 +246,22 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     }
 
     @Override
-    public Vec3 getBrightnessDependentFogColor(Vec3 biomeFogColor, float daylight) {
-        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, Mth.clamp(daylight, 0f, 1f));
+    public Vec3 getBrightnessDependentFogColor(Vec3 biomeFogColor, float rendererDaylight) {
+        /*
+         * Never use the renderer's generic Overworld daylight value here: it has
+         * no knowledge of a fixed/custom sun cycle and was the source of a second,
+         * visibly late white-to-black fog timeline.  The dome and fog now both use
+         * this effect's daylight function and the identical dawn/dusk overlay.
+         * The fog callback does not receive a partial tick, so the current level
+         * time is sampled directly; that differs from sky rendering by at most one
+         * client frame, rather than by a whole vanilla day/night phase.
+         */
+        ClientLevel level = Minecraft.getInstance().level;
+        float dayFrac = level != null
+            ? daylightFactor(level, 0.0F)
+            : Mth.clamp(rendererDaylight, 0.0F, 1.0F);
+        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
+        horizon = overlayArgb(horizon, sunsetArgb, sunsetFactor(dayFrac));
         double r = ((horizon >>> 16) & 0xFF) / 255.0;
         double g = ((horizon >>> 8) & 0xFF) / 255.0;
         double b = (horizon & 0xFF) / 255.0;
@@ -203,12 +276,17 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     @Override
     public boolean renderSnowAndRain(ClientLevel level, int ticks, float partialTick,
                                      double camX, double camY, double camZ) {
-        return true;
+        // true cancels vanilla particles; false lets the Overworld render its
+        // normal rain and snow after this custom sky has been drawn.
+        return suppressesPrecipitation;
     }
 
     @Override
     public boolean tickRain(ClientLevel level, int ticks, Camera camera) {
-        return true;
+        // Keep the client rain/drip particle tick in lockstep with the render
+        // decision. Server-side snow placement is independently governed by
+        // each biome's has_precipitation flag.
+        return suppressesPrecipitation;
     }
 
     @Override
@@ -247,6 +325,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         mvStack.pushMatrix();
         mvStack.identity();
 
+        // Background order is intentional: dome → stars → celestial bodies.
+        // Stars are geometrically farther than the bodies, while the dome has no
+        // depth-write and is drawn first so it cannot cover the star field.
         renderDome(modelViewMatrix, zenith, horizon);
 
         float starBrightness = Mth.lerp(dayFrac, starNightBrightness, starDayBrightness);
@@ -406,15 +487,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             }
 
             float len = Mth.sqrt(lenSq);
-            float inv = (SKY_DISTANCE - 2.0F) / len;
+            float inv = STAR_DISTANCE / len;
             float px = x * inv;
             float py = y * inv;
             float pz = z * inv;
 
             // Единичный вектор нормали от центра сферы (0, 0, 0) к звезде
-            float nx = px / (SKY_DISTANCE - 2.0F);
-            float ny = py / (SKY_DISTANCE - 2.0F);
-            float nz = pz / (SKY_DISTANCE - 2.0F);
+            float nx = px / STAR_DISTANCE;
+            float ny = py / STAR_DISTANCE;
+            float nz = pz / STAR_DISTANCE;
 
             // Вектор up, не коллинеарный нормали
             float upX = 0.0F, upY = 1.0F, upZ = 0.0F;
@@ -471,16 +552,32 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        RenderSystem.blendFunc(
-            GlStateManager.SourceFactor.SRC_ALPHA,
-            GlStateManager.DestFactor.ONE);
-
-        BufferBuilder buf = Tesselator.getInstance()
-            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        // Vanilla-style alpha compositing keeps this background layer from
+        // accumulating its light through later celestial-body passes.
+        RenderSystem.defaultBlendFunc();
 
         int count = starData.count;
         float[] pos = starData.positions;
         float[] alphas = starData.baseAlpha;
+
+        // Near dawn/dusk every float alpha can round down to byte alpha 0.  Do
+        // not even begin a buffer in that case: BufferBuilder.buildOrThrow()
+        // correctly rejects an empty buffer, which previously crashed the client.
+        boolean hasVisibleStar = false;
+        for (int i = 0; i < count; i++) {
+            int a = (int) (Mth.clamp(alphas[i] * brightness, 0.0F, 1.0F) * 255.0F);
+            if (a > 0) {
+                hasVisibleStar = true;
+                break;
+            }
+        }
+        if (!hasVisibleStar) {
+            RenderSystem.defaultBlendFunc();
+            return;
+        }
+
+        BufferBuilder buf = Tesselator.getInstance()
+            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         for (int i = 0; i < count; i++) {
             float starAlpha = alphas[i] * brightness;
@@ -552,20 +649,47 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         RenderSystem.setShaderColor(
             r / 255F * tint[0], g / 255F * tint[1], b / 255F * tint[2], a / 255F);
 
+        boolean isVanillaMoonPhases = isOverworldMoonPhases(body.texture());
         ResourceLocation tex = resolveTexture(body.texture());
 
         RenderSystem.setShaderTexture(0, tex);
 
-        float[] v = animationV(tex);
-        float v0 = v[0], v1 = v[1];
+        float u0 = 0.0F;
+        float u1 = 1.0F;
+        float v0;
+        float v1;
+        if (isVanillaMoonPhases) {
+            // Vanilla's moon atlas contains four columns and two rows.  Keep its
+            // indexing and UV orientation so a stock moon_phases.png can replace
+            // this repository placeholder without any code changes.
+            int phase = Math.floorMod(level.getMoonPhase(), 8);
+            int column = phase % 4;
+            int row = phase / 4;
+            u0 = column / 4.0F;
+            u1 = (column + 1) / 4.0F;
+            v0 = row / 2.0F;
+            v1 = (row + 1) / 2.0F;
+        } else {
+            float[] v = animationV(tex);
+            v0 = v[0];
+            v1 = v[1];
+        }
 
-        float sz = body.size();
+        float sz = isVanillaMoonPhases ? VANILLA_MOON_HALF_SIZE : body.size();
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(0.0F, v0);
-        buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(1.0F, v0);
-        buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(1.0F, v1);
-        buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(0.0F, v1);
+        if (isVanillaMoonPhases) {
+            // Match vanilla's horizontal UV order as well as its ±20 quad size.
+            buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(u1, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(u0, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(u0, v1);
+            buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(u1, v1);
+        } else {
+            buf.addVertex(m, -sz, SKY_DISTANCE, -sz).setUv(u0, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE, -sz).setUv(u1, v0);
+            buf.addVertex(m,  sz, SKY_DISTANCE,  sz).setUv(u1, v1);
+            buf.addVertex(m, -sz, SKY_DISTANCE,  sz).setUv(u0, v1);
+        }
         BufferUploader.drawWithShader(buf.buildOrThrow());
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -577,9 +701,19 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private static final java.util.Map<String, ResourceLocation> VARIANT_CACHE =
         new java.util.concurrent.ConcurrentHashMap<>();
 
+    private static boolean isOverworldMoonPhases(ResourceLocation texture) {
+        return OVERWORLD_MOON_PHASES_PATH.equals(texture.getPath());
+    }
+
     private ResourceLocation resolveTexture(ResourceLocation base) {
         String path = base.getPath();
         if (!path.endsWith(".png")) {
+            return base;
+        }
+
+        // The phase atlas has no Dyson/black-hole variants: it must always stay
+        // the Overworld's dedicated vanilla-compatible resource.
+        if (isOverworldMoonPhases(base)) {
             return base;
         }
 

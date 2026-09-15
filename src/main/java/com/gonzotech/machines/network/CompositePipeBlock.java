@@ -4,17 +4,13 @@ import com.gonzotech.machines.item.WrenchItem;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -28,7 +24,6 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -234,7 +229,8 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
         // Добавление универсальной жидк.трубы: занимает весь FLUID-угол (вода+пар),
         // если он ещё свободен.
-        if (isUniversalPipeItem(stack) && fluidCornerFree(state)) {
+        if (isUniversalPipeItem(stack) && isSecondTierPipeItem(stack) == (this instanceof SecondTierPipe)
+            && fluidCornerFree(state)) {
             if (!level.isClientSide()) {
                 level.setBlock(pos, withUniversalFluid(state), Block.UPDATE_ALL);
                 if (!player.getAbilities().instabuild) stack.shrink(1);
@@ -244,7 +240,8 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
         // Добавление ещё одной трубы в связку: используем предмет-трубу другого типа.
         PipeType adding = pipeTypeOf(stack);
-        if (adding != null && !state.getValue(PRESENT.get(adding)) && canAdd(state, adding)) {
+        if (adding != null && isSecondTierPipeItem(stack) == (this instanceof SecondTierPipe)
+            && !state.getValue(PRESENT.get(adding)) && canAdd(state, adding)) {
             if (!level.isClientSide()) {
                 level.setBlock(pos, state.setValue(PRESENT.get(adding), true), Block.UPDATE_ALL);
                 // Если в пучок добавили предметную трубу — запускаем забор-тик
@@ -317,28 +314,10 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         return true;
     }
 
-    // ─────────────────────────── дроп компонентов ───────────────────────────
-
-    @Override
-    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
-        // Дропаем по одной трубе каждого несомого типа (связку «разбираем»).
-        // Особый случай: FLUID-угол занят универсальной трубой (вода+пар вместе) —
-        // тогда вместо двух жидк.труб дропаем ОДНУ универсальную.
-        List<ItemStack> drops = new ArrayList<>();
-        boolean universalFluid = carriesUniversalFluid(state);
-        if (universalFluid) {
-            Item uni = BuiltInRegistries.ITEM.getValue(
-                ResourceLocation.fromNamespaceAndPath("gonzotech", "first_universal_fluid_pipe"));
-            if (uni != Items.AIR) drops.add(new ItemStack(uni));
-        }
-        for (PipeType t : PipeType.values()) {
-            if (!state.getValue(PRESENT.get(t))) continue;
-            if (universalFluid && t.isFluid()) continue; // уже выдали как универсальную
-            Item item = BuiltInRegistries.ITEM.getValue(ResourceLocation.fromNamespaceAndPath("gonzotech", t.id()));
-            if (item != Items.AIR) drops.add(new ItemStack(item));
-        }
-        return drops;
-    }
+    // Дропы связки описаны в data/gonzotech/loot_table/blocks/composite_pipe.json:
+    // state-условия возвращают каждый присутствующий компонент и применяют
+    // minecraft:survives_explosion к каждому из них. Две жидкостные flags вместе
+    // означают одну универсальную жидкостную трубу.
 
     /**
      * {@link PipeType} предмета-ТРУБЫ, или {@code null} если это не обычная труба.
@@ -364,6 +343,11 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         return stack.getItem() instanceof BlockItem bi
             && bi.getBlock() instanceof UniversalFluidPipeBlock u
             && !u.connectsAllSides();
+    }
+
+    /** Принадлежит ли BlockItem трубы/узла второму открытию. */
+    static boolean isSecondTierPipeItem(ItemStack stack) {
+        return stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof SecondTierPipe;
     }
 
     /** Заняты ли в пучке ОБА жидкостных флага (вода+пар) — т.е. FLUID-угол универсальный. */

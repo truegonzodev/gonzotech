@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "GGG",
+    "GLG",
+    "GGG"
+  ],
+  "key": {
+    "G": "minecraft:glass",
+    "L": "gonzotech:lead_ingot"
+  },
+  "result": {
+    "id": "gonzotech:lead_stained_glass",
+    "count": 8
+  }
+}

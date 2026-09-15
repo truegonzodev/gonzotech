@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " S ",
+    "HCD",
+    " S "
+  ],
+  "key": {
+    "S": "gonzotech:steel_ingot",
+    "H": "minecraft:hopper",
+    "C": "gonzotech:cast_iron_ingot",
+    "D": "minecraft:chest"
+  },
+  "result": {
+    "id": "gonzotech:second_item_pipe",
+    "count": 10
+  }
+}

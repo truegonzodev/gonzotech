@@ -223,6 +223,34 @@ public final class MachineDefs {
     /** Макс. отдача GTU соседям за тик (mGTU: 40 GTU/t). */
     public static final int STIRLING_GTU_OUTPUT = 40 * MILLI;
 
+    // ═══════════════════════════ ПАРОВАЯ ТУРБИНА (многоблок) ═══════════════════════════
+    // Полный прямоугольный параллелепипед: внутренняя полость заполнена роторами.
+    // Характеристики равны BASE × M(N), где M=N·(1-(N/100)^1.778).
+
+    /** Внешняя грань турбины не может быть меньше трёх блоков по любой оси. */
+    public static final int TURBINE_MIN_DIMENSION = 3;
+    /** N=100 даёт нулевой множитель, дальше он отрицателен: N>=100 не формирует турбину. */
+    public static final int TURBINE_MAX_ROTORS_EXCLUSIVE = 100;
+    /** Показатель деградации эффективности при чрезмерном количестве роторов. */
+    public static final double TURBINE_ROTOR_CURVE_EXPONENT = 1.778D;
+
+    /** Базовый буфер GTU на один эффективный ротор, целых GTU. */
+    public static final int TURBINE_GTU_CAPACITY_PER_EFFECTIVE_ROTOR = 64;
+    /** Базовый буфер Steam на один эффективный ротор, mB. */
+    public static final int TURBINE_STEAM_CAPACITY_PER_EFFECTIVE_ROTOR = 1_000;
+    /** Базовый общий приём Steam на один эффективный ротор, mB/t. */
+    public static final int TURBINE_STEAM_INTAKE_PER_EFFECTIVE_ROTOR = 100;
+    /** Базовый максимальный расход Steam на один эффективный ротор, mB/t. */
+    public static final int TURBINE_STEAM_CONSUMPTION_PER_EFFECTIVE_ROTOR = 64;
+
+    /** Эталон конверсии: 56 mB Steam превращаются в 1.5 GTU. */
+    public static final int TURBINE_REFERENCE_STEAM_MB = 56;
+    /** 1.5 GTU, выраженные во внутренней milli-точности. */
+    public static final int TURBINE_GTU_PER_REFERENCE_STEAM_MILLI = 1_500;
+
+    /** Предохранитель: одна турбина запускает максимум столько маршрутов выдачи GTU за тик. */
+    public static final int TURBINE_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
+
     // ═══════════════════════════ ЭЛЕКТРОПЕЧЬ (Electric Furnace) ═══════════════════════════
     // GTU → переплавка (160% ванили). Работает при примыкающем стирлинге.
 
@@ -353,6 +381,112 @@ public final class MachineDefs {
     // Глобальные шансы при СОЗДАНИИ виртуального булыжника (единожды, не на тик).
     public static final double COBBLE_CHANCE_LAVA_TO_OBSIDIAN = 0.0016; // 0.16% ведро лавы → ведро обсидиана
     public static final double COBBLE_CHANCE_PICKAXE_BREAK = 0.0009;    // 0.09% кирка ломается (пропадает)
+
+    // ═══════════════════════ АДМИНСКИЕ СИНГУЛЯРНЫЕ ИСТОЧНИКИ ═══════════════════════
+    // Не имеют буфера: это виртуальный budget, который каждый тик напрямую
+    // предлагает PipeRouting. Реально принятый поток всегда ограничивают провод,
+    // теплотруба и/или входной лимит получателя.
+
+    /** Верхний предел виртуальной подачи singular heat source: 100 000 GTH/t. */
+    public static final long SINGULAR_SOURCE_GTH_OUTPUT = 100_000L * MILLI;
+    /** Верхний предел виртуальной подачи singular energy source: 100 000 GTU/t. */
+    public static final long SINGULAR_SOURCE_GTU_OUTPUT = 100_000L * MILLI;
+
+    // ═══════════════════════════ ДРОБИЛКА ═══════════════════════════
+    // Блок руды/камень → raw и host-зависимые побочные материалы. Шкала GTU
+    // задаёт скорость текущей операции при её запуске: пустая — 100 тиков,
+    // полная — 80 тиков. GTU за рабочий тик берётся по текущему запасу.
+
+    /** Максимум GTU в дробилке (mGTU: 16 080 GTU). */
+    public static final int CRUSHER_GTU_CAPACITY = 16_080 * MILLI;
+    /** Максимальный приём GTU за тик (mGTU: 214 GTU/t). */
+    public static final int CRUSHER_GTU_INTAKE = 214 * MILLI;
+
+    /** Базовая длительность дробления при пустой шкале, тиков. */
+    public static final int CRUSHER_BASE_TICKS = 100;
+    /** Длительность дробления при полном GTU-буфере, тиков. */
+    public static final int CRUSHER_FULL_TICKS = 80;
+    /** Fixed-point units for progress: fits ContainerData and makes 100/80 exact. */
+    public static final int CRUSHER_PROGRESS_TOTAL = 20_000;
+    /** Базовый расход дробилки ниже 4 000 GTU, mGTU/t. */
+    public static final int CRUSHER_GTU_MILLI_PER_TICK_MIN = 4_000;
+    /** Расход дробилки при полном буфере, mGTU/t (5.5 GTU/t). */
+    public static final int CRUSHER_GTU_MILLI_PER_TICK_MAX = 5_500;
+    /** Граница запаса, до которой расход остаётся ровно 4 GTU/t, mGTU. */
+    public static final int CRUSHER_GTU_LOW_COST_THRESHOLD = 4_000 * MILLI;
+
+    /**
+     * Скорость текущей операции для исходного наполнения GTU. 200 units/t даёт
+     * 100 тиков, 250 units/t — 80; промежуточные 51 ступень достаточно плавны
+     * для шкалы, не жертвуя точными граничными значениями.
+     */
+    public static int crusherProgressUnitsPerTick(long storedGtuMilli) {
+        long stored = Math.max(0L, Math.min((long) CRUSHER_GTU_CAPACITY, storedGtuMilli));
+        return CRUSHER_PROGRESS_TOTAL / CRUSHER_BASE_TICKS
+            + (int) (stored * (CRUSHER_PROGRESS_TOTAL / CRUSHER_FULL_TICKS
+                - CRUSHER_PROGRESS_TOTAL / CRUSHER_BASE_TICKS) / CRUSHER_GTU_CAPACITY);
+    }
+
+    /**
+     * Текущая цена рабочего тика. До 4 000 GTU — 4.0 GTU/t; затем линейно,
+     * без float, поднимается до ровно 5.5 GTU/t при 16 080 GTU.
+     */
+    public static int crusherGtuMilliPerTick(long storedGtuMilli) {
+        long stored = Math.max(0L, Math.min((long) CRUSHER_GTU_CAPACITY, storedGtuMilli));
+        if (stored <= CRUSHER_GTU_LOW_COST_THRESHOLD) return CRUSHER_GTU_MILLI_PER_TICK_MIN;
+        long span = CRUSHER_GTU_CAPACITY - (long) CRUSHER_GTU_LOW_COST_THRESHOLD;
+        return CRUSHER_GTU_MILLI_PER_TICK_MIN + (int) ((stored - CRUSHER_GTU_LOW_COST_THRESHOLD)
+            * (CRUSHER_GTU_MILLI_PER_TICK_MAX - CRUSHER_GTU_MILLI_PER_TICK_MIN) / span);
+    }
+
+    // ═══════════════════════════ ЦЕНТРИФУГА ЦФ1УР ═══════════════════════════
+    // Атомная эра: промывка raw-руд и рудных блоков. GTU хранится в milli, а
+    // жидкостные буферы — в mB. Цифры операции намеренно даны также суммарно:
+    // за 240 тиков списывается РОВНО 366 GTU и 1000 mB кипятка.
+
+    /** Максимум GTU в центрифуге (mGTU: 24 060 GTU). */
+    public static final int CENTRIFUGE_GTU_CAPACITY = 24_060 * MILLI;
+    /** Максимальный приём GTU за тик (mGTU: 192 GTU/t). */
+    public static final int CENTRIFUGE_GTU_INTAKE = 192 * MILLI;
+    /** Паразитная разрядка накопленного GTU (mGTU: 0.01 GTU/t). */
+    public static final int CENTRIFUGE_GTU_LOSS_PER_TICK = 10;
+
+    /** Максимум видимого буфера кипятка, mB. */
+    public static final int CENTRIFUGE_HOT_WATER_CAPACITY = 12_000;
+    /** Ёмкость скрытого буфера обычной воды, mB. */
+    public static final int CENTRIFUGE_WATER_CAPACITY = 12_000;
+    /** Максимальный приём обычной воды за тик, mB. */
+    public static final int CENTRIFUGE_WATER_INTAKE = 1_000;
+    /** Максимальный приём пара за тик; пар сразу становится кипятком 1:1, mB. */
+    public static final int CENTRIFUGE_STEAM_INTAKE = 1_000;
+
+    /** Обычная вода, превращаемая в кипяток за один рабочий тик, mB. */
+    public static final int CENTRIFUGE_WATER_TO_HOT_WATER_PER_TICK = 16;
+    /** Цена превращения 16 mB воды в 16 mB кипятка (mGTU: 1.6 GTU/t). */
+    public static final int CENTRIFUGE_WATER_HEAT_GTU_MILLI_PER_TICK = 1_600;
+    /** Паразитное охлаждение: кипяток → обычная вода, mB/t. */
+    public static final int CENTRIFUGE_HOT_WATER_COOLING_PER_TICK = 1;
+
+    /** Длительность одной промывки (12 секунд), тиков. */
+    public static final int CENTRIFUGE_WASH_TICKS = 240;
+    /** Полный расход кипятка на одну промывку, mB. */
+    public static final int CENTRIFUGE_HOT_WATER_PER_WASH = 1_000;
+    /** Полный расход GTU на одну промывку, mGTU (366 GTU). */
+    public static final int CENTRIFUGE_GTU_MILLI_PER_WASH = 366 * MILLI;
+    /** Точный расход GTU при каждом тике промывки (mGTU: 1.525 GTU/t). */
+    public static final int CENTRIFUGE_WASH_GTU_MILLI_PER_TICK =
+        CENTRIFUGE_GTU_MILLI_PER_WASH / CENTRIFUGE_WASH_TICKS;
+
+    /**
+     * Кипяток, который должен быть списан именно на тик с номером
+     * {@code progress} (0..239). Формула распределяет 1000 mB без округления
+     * «в никуда»: за всю операцию получится в точности 1000 mB (4 или 5 mB/t).
+     */
+    public static int centrifugeHotWaterCostForProgressTick(int progress) {
+        int p = Math.max(0, Math.min(CENTRIFUGE_WASH_TICKS - 1, progress));
+        return ((p + 1) * CENTRIFUGE_HOT_WATER_PER_WASH / CENTRIFUGE_WASH_TICKS)
+            - (p * CENTRIFUGE_HOT_WATER_PER_WASH / CENTRIFUGE_WASH_TICKS);
+    }
 
     // ═══════════════════════════ ВОДА (провайдеры-вёдра) ═══════════════════════════
 

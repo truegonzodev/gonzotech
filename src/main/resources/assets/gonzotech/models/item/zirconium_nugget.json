@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/zirconium_nugget"
+    "layer0": "gonzotech:item/nuggets/zirconium_nugget"
   }
 }

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "osmium_ingot",
+  "ingredient": "gonzotech:osmium_dust",
+  "result": {
+    "id": "gonzotech:osmium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

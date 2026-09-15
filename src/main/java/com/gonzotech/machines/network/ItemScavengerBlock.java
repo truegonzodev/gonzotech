@@ -1,18 +1,22 @@
 package com.gonzotech.machines.network;
 
 import com.mojang.serialization.MapCodec;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * ОТСЕИВАТЕЛЬ — пассивный блок-маркер БЕЗ меню и без {@code BlockEntity}.
  * <p>
- * Сам ничего не делает: он лишь «якорь» второй выходной сети для прилегающего
- * {@link ItemFilterBlock}. Когда Фильтр отсеивает несовпавший предмет, он ищет
- * Отсеиватель у своих граней и гонит поток по ЕГО цепи предметных труб (BFS от
- * отсеивателя, не назад в Фильтр — см. {@link ItemFilterRouting}).
+ * Он работает только как вторая, reject-ветка непосредственно прилегающего
+ * {@link ItemFilterBlock}: несовпавший с шаблонами предмет Фильтр отправляет в
+ * сеть предметных труб, начинающуюся у Отсеивателя (см. {@link ItemFilterRouting}).
+ * Самостоятельно он не извлекает предметы из контейнеров.
  * <p>
- * Меню/GUI нет — вся настройка у Фильтра. Форма — полный куб.
+ * Если Отсеиватель получает redstone-сигнал, он становится конечной точкой reject
+ * ветки: Фильтр удаляет предметы сразу в нём, не продолжая поиск подключённых к
+ * нему труб или контейнеров. Без сигнала сохраняется обычная маршрутизация.
  */
 public class ItemScavengerBlock extends Block {
 
@@ -23,8 +27,23 @@ public class ItemScavengerBlock extends Block {
     }
 
     @Override
-    protected MapCodec<ItemScavengerBlock> codec() {
+    protected MapCodec<? extends ItemScavengerBlock> codec() {
         return CODEC;
+    }
+
+    /** Общий лимит reject-ветки этого Отсеивателя за тик. */
+    public int itemThroughputLimit() {
+        return (int) PipeType.ITEM.maxThroughput();
+    }
+
+    /** Лимит одного точного вида предмета в reject-ветке за тик. */
+    public int perItemThroughputLimit() {
+        return ItemRouting.PER_ITEM_TICK_CAP;
+    }
+
+    /** true, если соседний redstone-компонент питает этот Отсеиватель. */
+    public boolean isPowered(Level level, BlockPos pos) {
+        return level.hasNeighborSignal(pos);
     }
 
     /** true, если блок в этом состоянии — Отсеиватель. */

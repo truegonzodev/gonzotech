@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/cesium_ore"
+    "all": "gonzotech:block/ore/cesium_ore"
   }
 }

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/platinum_dust"
+    "layer0": "gonzotech:item/dust/platinum_dust"
   }
 }

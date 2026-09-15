@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "BRS",
+    "MBM",
+    "WPI"
+  ],
+  "key": {
+    "B": "minecraft:bucket",
+    "R": "gonzotech:turbine_rotor",
+    "S": "gonzotech:steel_plate",
+    "M": "gonzotech:inductive_module",
+    "W": "gonzotech:first_wire_node",
+    "P": "gonzotech:steel_plate",
+    "I": "gonzotech:iron_plate"
+  },
+  "result": {
+    "id": "gonzotech:centrifuge",
+    "count": 1
+  }
+}

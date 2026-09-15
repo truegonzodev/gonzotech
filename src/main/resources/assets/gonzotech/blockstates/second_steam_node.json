@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "gonzotech:block/second_steam_node"
+    }
+  }
+}

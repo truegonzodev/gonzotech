@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "C I",
+    "LHL",
+    "C C"
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "I": "gonzotech:iron_plate",
+    "L": "minecraft:iron_trapdoor",
+    "H": "minecraft:chest"
+  },
+  "result": {
+    "id": "gonzotech:second_item_filter",
+    "count": 1
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "ferromagnetic_dust",
+  "ingredients": [
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:cobalt_dust",
+    "gonzotech:nickel_dust"
+  ],
+  "result": {
+    "id": "gonzotech:ferromagnetic_dust",
+    "count": 4
+  }
+}

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/radium_block"
+    "all": "gonzotech:block/fullmetall/radium_block"
   }
 }

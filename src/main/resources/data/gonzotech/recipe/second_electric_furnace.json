@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SSS",
+    "MEI",
+    "WSS"
+  ],
+  "key": {
+    "S": "gonzotech:steel_plate",
+    "M": "gonzotech:inductive_module",
+    "E": "gonzotech:electric_furnace",
+    "I": "gonzotech:iron_plate",
+    "W": "gonzotech:first_wire_node"
+  },
+  "result": {
+    "id": "gonzotech:second_electric_furnace",
+    "count": 1
+  }
+}

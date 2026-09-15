@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/silver_ore"
+    "all": "gonzotech:block/ore/silver_ore"
   }
 }

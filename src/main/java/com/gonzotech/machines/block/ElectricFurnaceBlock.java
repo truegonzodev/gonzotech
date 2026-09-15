@@ -20,7 +20,7 @@ public class ElectricFurnaceBlock extends MachineBlock {
     }
 
     @Override
-    protected MapCodec<ElectricFurnaceBlock> codec() {
+    protected MapCodec<? extends ElectricFurnaceBlock> codec() {
         return CODEC;
     }
 

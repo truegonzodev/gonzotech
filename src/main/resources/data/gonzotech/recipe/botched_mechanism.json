@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:pufferfish",
+    "minecraft:iron_ingot",
+    "gonzotech:pseudo_coil",
+    "#gonzotech:music_discs"
+  ],
+  "result": {
+    "id": "gonzotech:botched_mechanism",
+    "count": 1
+  }
+}

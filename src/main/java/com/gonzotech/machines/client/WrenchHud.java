@@ -1,10 +1,13 @@
 package com.gonzotech.machines.client;
 
 import com.gonzotech.machines.energy.GtFormat;
+import com.gonzotech.machines.energy.NuclearDefs;
+import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.PipeBlock;
 import com.gonzotech.machines.network.PipeFlowNetwork;
+import com.gonzotech.machines.network.ItemFilterBlock;
 import com.gonzotech.machines.network.PipeGeometry;
 import com.gonzotech.machines.network.PipeMode;
 import com.gonzotech.machines.network.PipeType;
@@ -30,8 +33,9 @@ import java.util.List;
 /**
  * Клиентская подсказка гаечного ключа. Когда игрок держит {@link WrenchItem} и
  * смотрит на КОНКРЕТНУЮ трубу пучка, поверх HUD показывается её тип, режим и
- * живой поток по двум концам оси. Это ЕДИНСТВЕННЫЙ вывод ключа — сообщений в
- * action-bar/чат при прокрутке режима нет (дублировало бы этот HUD).
+ * живой поток по двум концам оси. При наведении на Фильтр показывается его
+ * server-authoritative транзитная очередь. Сообщений в action-bar/чат при
+ * прокрутке режима нет (дублировало бы HUD).
  * <p>
  * Для блока-узла заголовок — имя самого узла ("Wire Node"), а не тип трубы:
  * узел концептуально не «отрезок трубы», а точка у механизма «забрать всё /
@@ -78,6 +82,23 @@ public final class WrenchHud {
     private static long lastItemRequestTick = Long.MIN_VALUE;
     private static long lastItemRequestPosKey = Long.MIN_VALUE;
 
+    // Кэш server-authoritative транзитной очереди Фильтра. Сам BlockEntity не
+    // обязан постоянно синхронизировать inventory: ключ запрашивает его адресно.
+    private static BlockPos filterStoragePos;
+    private static java.util.List<net.minecraft.network.chat.Component> filterStorageLinesCache = java.util.List.of();
+    private static long filterStorageClientTick = Long.MIN_VALUE;
+    private static long lastFilterRequestTick = Long.MIN_VALUE;
+    private static long lastFilterRequestPosKey = Long.MIN_VALUE;
+
+    // The tungsten block synchronizes its hidden heat store only while the
+    // wrench looks at it; ordinary decorative tungsten stays silent.
+    private static BlockPos tungstenAbsorberPos;
+    private static int tungstenAbsorberGth;
+    private static boolean tungstenAbsorberActive;
+    private static long tungstenAbsorberClientTick = Long.MIN_VALUE;
+    private static long lastTungstenRequestTick = Long.MIN_VALUE;
+    private static long lastTungstenRequestPosKey = Long.MIN_VALUE;
+
     public static void acceptItemFlow(PipeFlowNetwork.ItemFlowPayload payload) {
         itemFlowPos = payload.pos();
         itemFlowClientTick = clientTick;
@@ -93,6 +114,30 @@ public final class WrenchHud {
             lines.add(fl.copy().setStyle(Style.EMPTY.withColor(PipeType.ITEM.color())));
         }
         itemFlowLinesCache = lines;
+    }
+
+    /** Принимает содержимое очереди Filter I/II, запрошенное HUD ключа. */
+    public static void acceptFilterStorage(PipeFlowNetwork.FilterStoragePayload payload) {
+        filterStoragePos = payload.pos();
+        filterStorageClientTick = clientTick;
+        java.util.List<Component> lines = new ArrayList<>();
+        for (int i = 0; i < payload.items().size() && i < payload.counts().size(); i++) {
+            net.minecraft.world.item.Item item =
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(payload.items().get(i));
+            if (item == null) continue;
+            Component name = item.getName(new net.minecraft.world.item.ItemStack(item));
+            lines.add(Component.translatable("hud.gonzotech.filter_queue_line",
+                Component.literal(Integer.toString(payload.counts().get(i))), name));
+        }
+        filterStorageLinesCache = lines;
+    }
+
+    /** Receives a server-authoritative tungsten heat reading for the wrench HUD. */
+    public static void acceptTungstenAbsorber(PipeFlowNetwork.TungstenAbsorberPayload payload) {
+        tungstenAbsorberPos = payload.pos();
+        tungstenAbsorberGth = payload.gth();
+        tungstenAbsorberActive = payload.active();
+        tungstenAbsorberClientTick = clientTick;
     }
 
     public static void acceptFlow(PipeFlowNetwork.FlowPayload payload) {
@@ -126,11 +171,24 @@ public final class WrenchHud {
         BlockPos pos = bhit.getBlockPos();
         BlockState state = mc.level.getBlockState(pos);
 
+        clientTick = mc.level.getGameTime();
+
+        // Обычный вольфрам декоративен. Если к нему подключено тепло, ключ
+        // показывает скрытый GTH-абсорбер и его температурный диапазон.
+        if (state.is(ModBlocks.TUNGSTEN_ABSORBER.get())) {
+            renderTungstenAbsorber(event.getGuiGraphics(), mc, pos);
+            return;
+        }
+
+        // Фильтр — не труба, но ключ показывает его невидимую транзитную очередь.
+        if (state.getBlock() instanceof ItemFilterBlock) {
+            renderFilterStorage(event.getGuiGraphics(), mc, state, pos);
+            return;
+        }
+
         // Какую трубу пучка мы держим на прицеле?
         PipeType part = aimedPart(state, pos, bhit);
         if (part == null) return;
-
-        clientTick = mc.level.getGameTime();
 
         PipeMode mode = modeOf(state, part);
         // Строка 1: имя трубы/узла + режим (напр. «Труба — режим: авто»).
@@ -172,6 +230,81 @@ public final class WrenchHud {
                 lineY += font.lineHeight + 1;
             }
         }
+    }
+
+    /** Renders the hidden tungsten GTH store only after an active server response. */
+    private static void renderTungstenAbsorber(GuiGraphics graphics, Minecraft mc, BlockPos pos) {
+        maybeRequestTungstenAbsorber(pos);
+        if (tungstenAbsorberPos == null || !tungstenAbsorberPos.equals(pos)
+            || clientTick - tungstenAbsorberClientTick > FLOW_STALE_TICKS || !tungstenAbsorberActive) {
+            return;
+        }
+
+        Font font = mc.font;
+        int screenW = graphics.guiWidth();
+        int y = graphics.guiHeight() / 2 - 30;
+        Component title = Component.translatable("hud.gonzotech.tungsten_absorber.title");
+        graphics.drawString(font, title, (screenW - font.width(title)) / 2, y, 0xFFFFFF, true);
+        y += font.lineHeight + 1;
+
+        Component state = tungstenAbsorberGth <= 0
+            ? Component.translatable("hud.gonzotech.tungsten_absorber.cold")
+            : tungstenAbsorberGth <= 12_000
+                ? Component.translatable("hud.gonzotech.tungsten_absorber.warm", tungstenAbsorberGth)
+                : tungstenAbsorberGth <= 60_000
+                    ? Component.translatable("hud.gonzotech.tungsten_absorber.hot", tungstenAbsorberGth)
+                    : Component.translatable("hud.gonzotech.tungsten_absorber.incandescent", tungstenAbsorberGth);
+        int color = tungstenAbsorberGth > NuclearDefs.TUNGSTEN_ABSORBER_IGNITION_THRESHOLD ? 0xFF6A33 : 0xFFFFFF;
+        graphics.drawString(font, state, (screenW - font.width(state)) / 2, y, color, true);
+    }
+
+    private static void maybeRequestTungstenAbsorber(BlockPos pos) {
+        long key = pos.asLong();
+        if (key != lastTungstenRequestPosKey || clientTick - lastTungstenRequestTick >= REQUEST_INTERVAL) {
+            lastTungstenRequestPosKey = key;
+            lastTungstenRequestTick = clientTick;
+            PacketDistributor.sendToServer(new PipeFlowNetwork.TungstenAbsorberRequestPayload(pos));
+        }
+    }
+
+    /** Рисует server-authoritative очередь Фильтра, когда ответ уже пришёл. */
+    private static void renderFilterStorage(GuiGraphics graphics, Minecraft mc, BlockState state, BlockPos pos) {
+        maybeRequestFilterStorage(pos);
+        List<Component> contents = filterStorageLines(pos);
+        if (contents == null) return; // первый ответ сервера обычно приходит на следующий кадр
+
+        Font font = mc.font;
+        int screenW = graphics.guiWidth();
+        int y = graphics.guiHeight() / 2 - 30;
+        Component header = Component.translatable("hud.gonzotech.filter_queue_header", state.getBlock().getName());
+        graphics.drawString(font, header, (screenW - font.width(header)) / 2, y, 0xFFFFFF, true);
+        y += font.lineHeight + 1;
+
+        if (contents.isEmpty()) {
+            Component empty = Component.translatable("hud.gonzotech.filter_queue_empty");
+            graphics.drawString(font, empty, (screenW - font.width(empty)) / 2, y, 0xAAAAAA, true);
+            return;
+        }
+        for (Component line : contents) {
+            graphics.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
+            y += font.lineHeight + 1;
+        }
+    }
+
+    private static void maybeRequestFilterStorage(BlockPos pos) {
+        long key = pos.asLong();
+        if (key != lastFilterRequestPosKey || clientTick - lastFilterRequestTick >= REQUEST_INTERVAL) {
+            lastFilterRequestPosKey = key;
+            lastFilterRequestTick = clientTick;
+            PacketDistributor.sendToServer(new PipeFlowNetwork.FilterStorageRequestPayload(pos));
+        }
+    }
+
+    /** null до первого ответа/после устаревания; пустой list = очередь пуста. */
+    private static List<Component> filterStorageLines(BlockPos pos) {
+        if (filterStoragePos == null || !filterStoragePos.equals(pos)) return null;
+        if (clientTick - filterStorageClientTick > FLOW_STALE_TICKS) return null;
+        return filterStorageLinesCache;
     }
 
     /**
@@ -245,6 +378,11 @@ public final class WrenchHud {
         if (part.isFluid()
             && com.gonzotech.machines.network.CompositePipeBlock.carriesUniversalFluid(state)) {
             return Component.translatable("block.gonzotech.first_universal_fluid_pipe");
+        }
+        // Одиночная труба второго открытия должна показывать своё имя, хотя её
+        // ресурс определяется типом трубы, а сетевой лимит — уровнем её carrier-блока.
+        if (state.getBlock() instanceof PipeBlock) {
+            return state.getBlock().getName();
         }
         return Component.translatable("block.gonzotech." + part.id());
     }

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/lunar_stone"
+    "all": "gonzotech:block/planets/lunar_stone"
   }
 }

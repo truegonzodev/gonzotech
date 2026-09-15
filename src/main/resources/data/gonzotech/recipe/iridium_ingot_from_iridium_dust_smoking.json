@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "iridium_ingot",
+  "ingredient": "gonzotech:iridium_dust",
+  "result": {
+    "id": "gonzotech:iridium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

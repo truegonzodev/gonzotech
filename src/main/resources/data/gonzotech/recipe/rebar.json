@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:iron_bars",
+    "minecraft:iron_bars"
+  ],
+  "result": {
+    "id": "gonzotech:rebar",
+    "count": 4
+  }
+}

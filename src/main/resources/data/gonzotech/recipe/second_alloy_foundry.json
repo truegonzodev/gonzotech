@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "STS",
+    "MBM",
+    "WPI"
+  ],
+  "key": {
+    "S": "gonzotech:steel_plate",
+    "T": "gonzotech:tungsten_ingot",
+    "M": "gonzotech:inductive_module",
+    "B": "gonzotech:boiler",
+    "W": "gonzotech:first_wire_node",
+    "P": "gonzotech:steel_plate",
+    "I": "gonzotech:iron_plate"
+  },
+  "result": {
+    "id": "gonzotech:second_alloy_foundry",
+    "count": 1
+  }
+}

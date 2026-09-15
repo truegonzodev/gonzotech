@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "gonzotech:block/sculk_bircks/chiseled_sculk_bricks"
+  }
+}

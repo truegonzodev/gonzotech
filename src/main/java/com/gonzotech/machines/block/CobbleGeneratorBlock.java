@@ -24,7 +24,7 @@ public class CobbleGeneratorBlock extends MachineBlock {
     }
 
     @Override
-    protected MapCodec<CobbleGeneratorBlock> codec() {
+    protected MapCodec<? extends CobbleGeneratorBlock> codec() {
         return CODEC;
     }
 

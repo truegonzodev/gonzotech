@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/crusher" },
+    "facing=east":  { "model": "gonzotech:block/crusher", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/crusher", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/crusher", "y": 270 }
+  }
+}

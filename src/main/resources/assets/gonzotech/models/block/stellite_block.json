@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/stellite_block"
+    "all": "gonzotech:block/fullmetall/stellite_block"
   }
 }

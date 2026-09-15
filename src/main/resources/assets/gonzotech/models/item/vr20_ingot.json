@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/vr20_ingot"
+    "layer0": "gonzotech:item/ingots/vr20_ingot"
   }
 }

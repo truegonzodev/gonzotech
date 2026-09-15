@@ -25,6 +25,18 @@ public class StirlingBlock extends MachineBlock {
     }
 
     @Override
+    protected boolean hasAnalogOutputSignal(BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof StirlingBlockEntity stirling
+            ? stirling.comparatorOutput()
+            : 0;
+    }
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new StirlingBlockEntity(pos, state);
     }

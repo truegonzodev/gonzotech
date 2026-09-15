@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " I ",
+    "CAC",
+    " C "
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "C": "gonzotech:cast_iron_ingot",
+    "A": "minecraft:diamond"
+  },
+  "result": {
+    "id": "gonzotech:wedge_punch",
+    "count": 1
+  }
+}

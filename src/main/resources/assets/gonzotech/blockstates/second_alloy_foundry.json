@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/second_alloy_foundry" },
+    "facing=east":  { "model": "gonzotech:block/second_alloy_foundry", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/second_alloy_foundry", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/second_alloy_foundry", "y": 270 }
+  }
+}

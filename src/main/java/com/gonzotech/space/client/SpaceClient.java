@@ -32,8 +32,10 @@ public final class SpaceClient {
         List<CelestialBody> bodies = List.of(
             CelestialBody.sun(tex("overworld/sun"), 30F, Motion.SUN,
                 1F, -90F, 0F, 0F),
-            CelestialBody.planet(tex("mars/moon"), 20F, Motion.SUN,
-                1F, -90F, 0F, 180F)
+            // Отдельный 4×2 vanilla-compatible atlas фаз, а не маленькая луна Марса.
+            // Полуразмер ±20 — ровно размер ванильного лунного квада.
+            CelestialBody.planet(tex("overworld/moon_phases"), SpaceSkyEffects.VANILLA_MOON_HALF_SIZE,
+                Motion.SUN, 1F, -90F, 0F, 180F)
         );
         return new SpaceSkyEffects(
             192.0F, true,
@@ -43,7 +45,9 @@ public final class SpaceClient {
             /*sunset    */ 0xDCFFA64A,
             bodies,
             /*daylightScale*/ 1.00F,
-            /*starNight*/ 0.80F, /*starDay*/ 0.00F);
+            /*starNight*/ 0.80F, /*starDay*/ 0.00F,
+            // The custom celestial renderer must not consume normal terrestrial weather.
+            /*suppressesPrecipitation*/ false);
     }
 
     // ---- ЛУНА: тёмно-синее→багрянец(закат)→почти чёрное; Земля висит на СЗ ----

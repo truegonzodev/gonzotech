@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "invar_dust",
+  "ingredients": [
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:iron_dust",
+    "gonzotech:nickel_dust",
+    "gonzotech:nickel_dust",
+    "gonzotech:stainless_steel_dust"
+  ],
+  "result": {
+    "id": "gonzotech:invar_dust",
+    "count": 5
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "zirconium_ingot",
+  "ingredient": "gonzotech:zirconium_dust",
+  "result": {
+    "id": "gonzotech:zirconium_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

@@ -1,5 +1,6 @@
 package com.gonzotech.machines.block.entity;
 
+import com.gonzotech.machines.energy.ComparatorOutput;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.Sinks.GthSink;
@@ -57,6 +58,9 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     // GTH хранится в GtBuffer (BigInteger, милли): у топки капа мала, но единый
     // тип буфера с эндгейм-машинами и отсутствие int-потолка того стоят.
     private final GtBuffer gth = new GtBuffer((long) MachineDefs.FIREBOX_GTH_CAPACITY);
+
+    /** Последнее опубликованное значение компаратора; вычисляется заново после загрузки. */
+    private int lastComparatorOutput;
 
     /** Накопленный опыт за переплавку — выдаётся игроку при заборе результата. */
     private float storedXp;
@@ -121,6 +125,27 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         return gth;
     }
 
+    /** Аналоговый выход по заполненности внутреннего GTH-буфера. */
+    public int comparatorOutput() {
+        return ComparatorOutput.from(gth);
+    }
+
+    /** Уведомляет компараторы только при пересечении очередной ступени 0..15. */
+    private void updateComparatorOutput() {
+        int next = comparatorOutput();
+        if (next == lastComparatorOutput) return;
+        lastComparatorOutput = next;
+        if (level != null && !level.isClientSide()) {
+            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+        }
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        updateComparatorOutput();
+    }
+
     public ContainerData data() {
         return data;
     }
@@ -133,7 +158,12 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveGth(long amount, boolean simulate) {
-        return gth.receive(amount, simulate);
+        long accepted = gth.receive(amount, simulate);
+        if (!simulate && accepted > 0) {
+            setChanged();
+            updateComparatorOutput();
+        }
+        return accepted;
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────
@@ -223,6 +253,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
         if (changed) {
             be.setChanged();
+            be.updateComparatorOutput();
         }
     }
 

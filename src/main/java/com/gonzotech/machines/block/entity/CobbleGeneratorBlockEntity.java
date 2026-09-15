@@ -28,6 +28,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -113,7 +114,15 @@ public class CobbleGeneratorBlockEntity extends BaseMachineBlockEntity
     };
 
     public CobbleGeneratorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.COBBLE_GENERATOR.get(), pos, state, 3);
+        this(ModBlockEntities.COBBLE_GENERATOR.get(), pos, state);
+    }
+
+    /**
+     * Внутренний конструктор для функционально идентичной машины другого
+     * открытия: состояние и баланс остаются общими, тип BE — свой.
+     */
+    public CobbleGeneratorBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState state) {
+        super(blockEntityType, pos, state, 3);
     }
 
     public GtBuffer gtuBuffer() {
@@ -360,7 +369,7 @@ public class CobbleGeneratorBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.cobble_generator");
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
     }
 
     @Override

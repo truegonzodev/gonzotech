@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "#gonzotech:stone_grits",
+    "#gonzotech:stone_grits",
+    "#gonzotech:stone_grits",
+    "minecraft:clay_ball"
+  ],
+  "result": {
+    "id": "gonzotech:slag_concrete",
+    "count": 1
+  }
+}

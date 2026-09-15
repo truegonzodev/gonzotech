@@ -11,9 +11,12 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -74,7 +77,8 @@ public final class ItemRouting {
         // Пропускная у этой точки забора = базовая × коэффициент блока
         // (универсальный узел = 0.9, обычные трубы/узлы = 1.0). Минимум 1.
         double factor = carrier.throughputFactor(state, T);
-        int budget = (int) Math.max(1, Math.floor(T.maxThroughput() * factor));
+        int budget = (int) Math.max(1, Math.floor(carrier.throughputLimit(state, T) * factor));
+        int perItemCap = Math.max(1, carrier.perItemThroughputLimit(state, T));
         if (budget <= 0) return 0;
 
         int moved = 0;
@@ -93,7 +97,7 @@ public final class ItemRouting {
             List<Sink> sinks = collectSinks(level, pos, srcPos);
             if (sinks.isEmpty()) continue;
 
-            int done = pushItems(level, pos, src, srcFace, sinks, budget);
+            int done = pushItems(level, pos, src, srcFace, sinks, budget, perItemCap);
             moved += done;
             budget -= done;
         }
@@ -111,7 +115,7 @@ public final class ItemRouting {
      * уголь»). Возвращает число перемещённых.
      */
     private static int pushItems(Level level, BlockPos pipePos, Container src, Direction srcFace,
-                                 List<Sink> sinks, int budget) {
+                                 List<Sink> sinks, int budget, int perItemCap) {
         int moved = 0;
         long rotation = level.getGameTime();
         int n = sinks.size();
@@ -127,7 +131,7 @@ public final class ItemRouting {
                 if (cur.isEmpty()) break;
                 if (!canTake(src, slot, cur, srcFace)) break;
                 // Лимит на этот вид уже исчерпан за тик — к следующему слоту.
-                if (perItem.getOrDefault(cur.getItem(), 0) >= PER_ITEM_TICK_CAP) break;
+                if (perItem.getOrDefault(cur.getItem(), 0) >= perItemCap) break;
 
                 ItemStack one = cur.copy();
                 one.setCount(1);
@@ -142,8 +146,12 @@ public final class ItemRouting {
                         moved++;
                         perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
-                        // Учёт потока для HUD ключа (предмет → шт/тик).
-                        ItemFlowTracker.record(level, pipePos, one.getItem(), 1);
+                        // Учёт на КАЖДОЙ трубе фактически выбранного пути, а не
+                        // только у точки забора. Так транзит через Universal Node
+                        // считается реальным item-потоком и для его компаратора.
+                        for (BlockPos pipe : sink.path()) {
+                            ItemFlowTracker.record(level, pipe, one.getItem(), 1);
+                        }
                         break;
                     }
                 }
@@ -210,8 +218,8 @@ public final class ItemRouting {
 
     // ─────────────────────────── обход сети (BFS) ───────────────────────────
 
-    /** Приёмник: контейнер и сторона, которой к нему прилегает труба. */
-    private record Sink(Container container, Direction face) {
+    /** Приёмник и точный маршрут труб, по которому предмет физически был передан. */
+    private record Sink(Container container, Direction face, List<BlockPos> path) {
     }
 
     /**
@@ -223,9 +231,11 @@ public final class ItemRouting {
     private static List<Sink> collectSinks(Level level, BlockPos startPipe, BlockPos srcPos) {
         List<Sink> sinks = new ArrayList<>();
         Set<BlockPos> visited = new HashSet<>();
+        Map<Long, BlockPos> parents = new HashMap<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
         queue.add(startPipe);
         visited.add(startPipe);
+        parents.put(startPipe.asLong(), null);
 
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
@@ -239,7 +249,10 @@ public final class ItemRouting {
 
                 if (isItemPipe(nstate)) {
                     if (!pipesConnect(pstate, nstate, dir)) continue;
-                    if (visited.add(npos)) queue.add(npos);
+                    if (visited.add(npos)) {
+                        parents.put(npos.asLong(), pipe);
+                        queue.add(npos);
+                    }
                     continue;
                 }
                 // Контейнер за трубой — приёмник, если труба открыта к нему и отдаёт.
@@ -247,10 +260,20 @@ public final class ItemRouting {
                 if (!opensToward(pstate, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 Container c = containerAt(level, npos);
-                if (c != null) sinks.add(new Sink(c, dir.getOpposite()));
+                if (c != null) sinks.add(new Sink(c, dir.getOpposite(), pathTo(pipe, parents)));
             }
         }
         return sinks;
+    }
+
+    /** Восстанавливает выбранный BFS-маршрут от стартовой трубы до {@code end}. */
+    private static List<BlockPos> pathTo(BlockPos end, Map<Long, BlockPos> parents) {
+        List<BlockPos> path = new ArrayList<>();
+        for (BlockPos at = end; at != null; at = parents.get(at.asLong())) {
+            path.add(at);
+        }
+        Collections.reverse(path);
+        return path;
     }
 
     // ─────────────────────────── мелкие помощники ───────────────────────────

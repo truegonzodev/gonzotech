@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CFW",
+    "KFK",
+    "WFC"
+  ],
+  "key": {
+    "C": "gonzotech:condenser",
+    "F": "gonzotech:ferromagnetic_ingot",
+    "W": "gonzotech:copper_wire",
+    "K": "gonzotech:coil"
+  },
+  "result": {
+    "id": "gonzotech:inductive_module",
+    "count": 1
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:ferromagnetic_ingot_from_ferromagnetic_dust_smelting",
+      "gonzotech:ferromagnetic_ingot_from_ferromagnetic_dust_blasting",
+      "gonzotech:ferromagnetic_ingot_from_ferromagnetic_dust_smoking"
+    ]
+  },
+  "criteria": {
+    "has_dust": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:ferromagnetic_dust"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dust"
+    ]
+  ]
+}

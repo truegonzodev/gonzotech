@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "nitinol_dust",
+  "ingredients": [
+    "gonzotech:nickel_dust",
+    "gonzotech:titanium_dust"
+  ],
+  "result": {
+    "id": "gonzotech:nitinol_dust",
+    "count": 1
+  }
+}

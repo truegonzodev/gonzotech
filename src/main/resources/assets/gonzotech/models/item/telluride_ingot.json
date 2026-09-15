@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/telluride_ingot"
+    "layer0": "gonzotech:item/ingots/telluride_ingot"
   }
 }

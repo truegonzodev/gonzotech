@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "LPL",
+    "UFU",
+    "LPL"
+  ],
+  "key": {
+    "L": "gonzotech:lead_ingot",
+    "P": "gonzotech:steel_plate",
+    "U": "gonzotech:uranium_ingot",
+    "F": "gonzotech:firebox"
+  },
+  "result": {
+    "id": "gonzotech:nuclear_firebox",
+    "count": 1
+  }
+}

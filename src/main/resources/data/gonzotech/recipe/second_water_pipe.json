@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "   ",
+    "CTC",
+    "S  "
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "T": "minecraft:iron_trapdoor",
+    "S": "gonzotech:steel_ingot"
+  },
+  "result": {
+    "id": "gonzotech:second_water_pipe",
+    "count": 10
+  }
+}

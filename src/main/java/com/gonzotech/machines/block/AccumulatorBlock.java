@@ -20,8 +20,20 @@ public class AccumulatorBlock extends MachineBlock {
     }
 
     @Override
-    protected MapCodec<AccumulatorBlock> codec() {
+    protected MapCodec<? extends AccumulatorBlock> codec() {
         return CODEC;
+    }
+
+    @Override
+    protected boolean hasAnalogOutputSignal(BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof AccumulatorBlockEntity accumulator
+            ? accumulator.comparatorOutput()
+            : 0;
     }
 
     @Override

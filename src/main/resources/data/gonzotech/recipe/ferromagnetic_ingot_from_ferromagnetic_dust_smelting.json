@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "ferromagnetic_ingot",
+  "ingredient": "gonzotech:ferromagnetic_dust",
+  "result": {
+    "id": "gonzotech:ferromagnetic_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

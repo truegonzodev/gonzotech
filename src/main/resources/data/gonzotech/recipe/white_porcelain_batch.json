@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:sugar",
+    "minecraft:clay_ball",
+    "gonzotech:diorite_grit",
+    "minecraft:bone_meal",
+    "minecraft:quartz"
+  ],
+  "result": {
+    "id": "gonzotech:white_porcelain_batch",
+    "count": 8
+  }
+}

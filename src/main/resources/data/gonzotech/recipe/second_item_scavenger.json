@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " C ",
+    "HLF",
+    " C "
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "H": "minecraft:chest",
+    "L": "minecraft:iron_trapdoor",
+    "F": "minecraft:hopper"
+  },
+  "result": {
+    "id": "gonzotech:second_item_scavenger",
+    "count": 1
+  }
+}

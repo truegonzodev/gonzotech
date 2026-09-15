@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CIC",
+    "   ",
+    "CIC"
+  ],
+  "key": {
+    "C": "gonzotech:cast_iron_ingot",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "gonzotech:ingot_form",
+    "count": 1
+  }
+}

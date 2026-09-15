@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "misc",
+  "group": "vitreloy_ingot",
+  "ingredient": "gonzotech:vitreloy_dust",
+  "result": {
+    "id": "gonzotech:vitreloy_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

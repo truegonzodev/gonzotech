@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/deepslate_tellurium_ore"
+    "all": "gonzotech:block/ore/deepslate_tellurium_ore"
   }
 }

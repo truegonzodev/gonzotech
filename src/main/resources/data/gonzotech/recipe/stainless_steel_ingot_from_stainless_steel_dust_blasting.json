@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "stainless_steel_ingot",
+  "ingredient": "gonzotech:stainless_steel_dust",
+  "result": {
+    "id": "gonzotech:stainless_steel_ingot"
+  },
+  "experience": 0.0,
+  "cookingtime": 100
+}

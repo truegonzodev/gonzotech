@@ -25,6 +25,18 @@ public class FireboxBlock extends MachineBlock {
     }
 
     @Override
+    protected boolean hasAnalogOutputSignal(BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof FireboxBlockEntity firebox
+            ? firebox.comparatorOutput()
+            : 0;
+    }
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new FireboxBlockEntity(pos, state);
     }

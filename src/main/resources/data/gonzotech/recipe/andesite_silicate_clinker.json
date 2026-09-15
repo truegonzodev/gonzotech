@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:andesite_grit",
+    "gonzotech:andesite_grit",
+    "gonzotech:clinker_grit",
+    "minecraft:glowstone_dust",
+    [
+      "minecraft:flint",
+      "gonzotech:silicon"
+    ]
+  ],
+  "result": {
+    "id": "gonzotech:andesite_silicate_clinker",
+    "count": 4
+  }
+}
