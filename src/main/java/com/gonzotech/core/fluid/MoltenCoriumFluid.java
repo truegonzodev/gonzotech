@@ -1,11 +1,11 @@
 package com.gonzotech.core.fluid;
 
+import com.gonzotech.core.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -19,10 +19,9 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
  * <p>
  * Реакция с водой повторяет ванильную лаву (1.21):
  * <ul>
- *   <li>соседняя вода: источник → блок {@code gonzotech:corium} (защёлка,
- *       аналог «источник лавы → обсидиан»), поток → булыжник (аналог
- *       «поток лавы → булыжник»);</li>
- *   <li>распространение вниз в воду → камень (аналог ванильного stone).</li>
+ *   <li>соседняя вода: источник → блок {@code gonzotech:corium}
+ *       (аналог «источник лавы → обсидиан»), поток → {@code gonzotech:dead_stone};</li>
+ *   <li>распространение вниз в воду → {@code gonzotech:dead_stone}.</li>
  * </ul>
  * Сама реакция с соседней водой реализована в {@link MoltenCoriumBlock}.
  */
@@ -48,7 +47,8 @@ public abstract class MoltenCoriumFluid extends BaseFlowingFluid {
 
     /**
      * Распространение вниз прямо в воду: вместо залития позиция становится
-     * камнем (ванильный lava+water результат) и звучит шипение.
+     * dead_stone и звучит шипение (ванильная лава здесь даёт stone — у нас
+     * свой результат по задумке мира).
      */
     @Override
     protected void spreadTo(LevelAccessor level, BlockPos pos, BlockState state, Direction direction, FluidState flowingState) {
@@ -57,7 +57,8 @@ public abstract class MoltenCoriumFluid extends BaseFlowingFluid {
             if (fluidState.is(FluidTags.WATER)) {
                 if (state.getBlock() instanceof LiquidBlock) {
                     level.setBlock(pos,
-                        net.neoforged.neoforge.event.EventHooks.fireFluidPlaceBlockEvent(level, pos, pos, Blocks.STONE.defaultBlockState()), 3);
+                        net.neoforged.neoforge.event.EventHooks.fireFluidPlaceBlockEvent(
+                            level, pos, pos, ModBlocks.DEAD_STONE.get().defaultBlockState()), 3);
                 }
                 fizz(level, pos);
                 return;
@@ -85,7 +86,7 @@ public abstract class MoltenCoriumFluid extends BaseFlowingFluid {
     }
 
     /** Течущий поток с уровнем 1..7. */
-    public static final class Flowing extends MoltenCoriumFluid implements FlowingFluid {
+    public static final class Flowing extends MoltenCoriumFluid {
 
         public Flowing(Properties properties) {
             super(properties);

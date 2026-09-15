@@ -9,7 +9,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FlowingFluid;
@@ -22,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
  * <ul>
  *   <li>источник рядом с водой → застывший блок {@code gonzotech:corium}
  *       (аналог «лавовый источник → обсидиан»);</li>
- *   <li>поток рядом с водой → булыжник (аналог «текущая лава → булыжник»);</li>
+ *   <li>поток рядом с водой → {@code gonzotech:dead_stone}
+ *       (аналог «текущая лава → булыжник»);</li>
  *   <li>затем обычное распространение, если воды рядом нет.</li>
  * </ul>
  */
@@ -63,14 +63,14 @@ public final class MoltenCoriumBlock extends LiquidBlock {
 
     /**
      * Реакция с примыкающей водой: источник застывает в блок кориум,
-     * поток превращается в булыжник, играет ванильный шипящий звук.
+     * поток превращается в dead_stone, играет ванильный шипящий звук.
      * Возвращает false, если реакция произошла и распространять жидкость не нужно.
      */
     private boolean shouldReactOrSpread(Level level, BlockPos pos, BlockState state) {
         for (Direction direction : POSSIBLE_FLOW_DIRECTIONS) {
             BlockPos adjacent = pos.relative(direction);
             if (level.getFluidState(adjacent).is(FluidTags.WATER)) {
-                Block result = state.getFluidState().isSource() ? ModBlocks.CORIUM.get() : Blocks.COBBLESTONE;
+                Block result = state.getFluidState().isSource() ? ModBlocks.CORIUM.get() : ModBlocks.DEAD_STONE.get();
                 level.setBlockAndUpdate(pos, result.defaultBlockState());
                 level.levelEvent(1501, pos, 0);
                 return false;
