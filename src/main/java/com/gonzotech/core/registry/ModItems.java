@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.item.DiscoveryItem;
+import com.gonzotech.core.item.AlloyArmorItem;
 import com.gonzotech.core.item.AlloyChestplateItem;
 import com.gonzotech.core.item.AlloyPickaxeItem;
 import com.gonzotech.core.item.AlloySwordItem;
@@ -10,6 +11,7 @@ import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.equipment.ArmorType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -81,6 +83,12 @@ public class ModItems {
         ITEMS.registerItem("alloy_sword", AlloySwordItem::new);
     public static final DeferredItem<AlloyChestplateItem> ALLOY_CHESTPLATE =
         ITEMS.registerItem("alloy_chestplate", AlloyChestplateItem::new);
+    public static final DeferredItem<AlloyArmorItem> ALLOY_HELMET =
+        ITEMS.registerItem("alloy_helmet", props -> new AlloyArmorItem(ArmorType.HELMET, props));
+    public static final DeferredItem<AlloyArmorItem> ALLOY_LEGGINGS =
+        ITEMS.registerItem("alloy_leggings", props -> new AlloyArmorItem(ArmorType.LEGGINGS, props));
+    public static final DeferredItem<AlloyArmorItem> ALLOY_BOOTS =
+        ITEMS.registerItem("alloy_boots", props -> new AlloyArmorItem(ArmorType.BOOTS, props));
 
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =

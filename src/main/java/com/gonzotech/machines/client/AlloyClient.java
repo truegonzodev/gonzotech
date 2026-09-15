@@ -29,17 +29,19 @@ public final class AlloyClient {
 
     /**
      * Надетая броня из custom_alloy: вместо ванильных кожаных слоёв рендерится
-     * собственная развёртка {@code custom_alloy_layer_1} (те же UV кожаной брони),
-     * а цвет — тот же взвешенный тинт сплава, что и у предмета в инвентаре
-     * (см. {@link AlloyTintSource}). Без компонента — запасной DYED_COLOR стека.
+     * собственная развёртка {@code custom_alloy_layer_1} (полный 64×32
+     * leather-UV лист: голова/грудь/ноги/ступни), а цвет — тот же взвешенный
+     * тинт сплава, что и у предмета в инвентаре (см. {@link AlloyTintSource}).
+     * Без компонента — запасной DYED_COLOR стека. Humanoid-модель сама
+     * выбирает UV-регион по слоту, которым надета броня, поэтому один лист
+     * покрывает все четыре предмета.
      */
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
-        event.registerItem(new IClientItemExtensions() {
+        IClientItemExtensions alloyArmor = new IClientItemExtensions() {
             @Nullable
             @Override
             public ResourceLocation getArmorTexture(ItemStack stack, EquipmentClientInfo.LayerType type,
                                                     EquipmentClientInfo.Layer layer, ResourceLocation _default) {
-                // Предмет — кираса: для него существует только основной humanoid-слой.
                 return type == EquipmentClientInfo.LayerType.HUMANOID ? CUSTOM_ALLOY_LAYER_1 : null;
             }
 
@@ -49,6 +51,10 @@ public final class AlloyClient {
                 int argb = tint != null ? tint.argb() : DyedItemColor.getOrDefault(stack, 0xFFC0C0C0);
                 return AlloyTintSource.colorFilter(argb);
             }
-        }, ModItems.ALLOY_CHESTPLATE.get());
+        };
+        event.registerItem(alloyArmor, ModItems.ALLOY_CHESTPLATE.get());
+        event.registerItem(alloyArmor, ModItems.ALLOY_HELMET.get());
+        event.registerItem(alloyArmor, ModItems.ALLOY_LEGGINGS.get());
+        event.registerItem(alloyArmor, ModItems.ALLOY_BOOTS.get());
     }
 }

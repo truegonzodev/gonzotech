@@ -126,6 +126,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ALLOY_PICKAXE.get());
                 output.accept(ModItems.ALLOY_SWORD.get());
                 output.accept(ModItems.ALLOY_CHESTPLATE.get());
+                output.accept(ModItems.ALLOY_HELMET.get());
+                output.accept(ModItems.ALLOY_LEGGINGS.get());
+                output.accept(ModItems.ALLOY_BOOTS.get());
             })
             .build()
     );
