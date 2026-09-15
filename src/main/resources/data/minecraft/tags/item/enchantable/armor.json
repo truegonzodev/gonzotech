@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:alloy_chestplate",
+    "gonzotech:alloy_helmet",
+    "gonzotech:alloy_leggings",
+    "gonzotech:alloy_boots"
+  ]
+}

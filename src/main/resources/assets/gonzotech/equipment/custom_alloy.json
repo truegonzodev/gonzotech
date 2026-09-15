@@ -2,13 +2,7 @@
   "layers": {
     "humanoid": [
       {
-        "texture": "gonzotech:custom_alloy_layer_1",
-        "dyeable": {
-          "color_when_undyed": -16777216
-        }
-      },
-      {
-        "texture": "gonzotech:custom_alloy_layer_2",
+        "texture": "gonzotech:custom_alloy",
         "dyeable": {
           "color_when_undyed": -16777216
         }
@@ -16,7 +10,7 @@
     ],
     "humanoid_leggings": [
       {
-        "texture": "gonzotech:custom_alloy_layer_2",
+        "texture": "gonzotech:custom_alloy",
         "dyeable": {
           "color_when_undyed": -16777216
         }
