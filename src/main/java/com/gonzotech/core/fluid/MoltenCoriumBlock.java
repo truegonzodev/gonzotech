@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
@@ -35,6 +36,22 @@ public final class MoltenCoriumBlock extends LiquidBlock {
 
     public MoltenCoriumBlock(FlowingFluid fluid, Properties properties) {
         super(fluid, properties);
+    }
+
+    /**
+     * Лавовое поведение по отношению к сущностям: ванильный
+     * {@link Entity#lavaHurt()} — 4 урона от источника лавы и 15 секунд
+     * горения (сущности с огнестойкостью — внутри самого вызова —
+     * защищены). В 1.21.4 у жидкостей нет своего entity-хука: урон лавы
+     * ваниль даёт по тегу fluid/lava в {@code Entity#tick}, а мы не
+     * завязываемся на тег — блок жидкости вызывается для каждой
+     * пересекающей его сущности (Entity#checkInsideBlocks), поэтому
+     * поведение одинаково независимо от тегов.
+     */
+    @Override
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        super.entityInside(state, level, pos, entity);
+        entity.lavaHurt();
     }
 
     @Override
