@@ -2,11 +2,14 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.ChalkboardBlock;
+import com.gonzotech.core.block.TungstenAbsorberBlock;
+import com.gonzotech.core.fluid.ModFluids;
 import com.gonzotech.core.ore.CesiumOreBlock;
 import com.gonzotech.core.ore.IodineOreBlock;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DropExperienceBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -40,7 +43,11 @@ public class ModBlocks {
      * вида {@code <metal>_block} (у {@code *_ingot} убираем суффикс {@code _ingot}).
      * Все блоки — beacon base (тег {@code minecraft:beacon_base_blocks}).
      */
-    public static final Map<String, DeferredBlock<Block>> METAL_BLOCKS = new LinkedHashMap<>();
+    public static final Map<String, DeferredBlock<? extends Block>> METAL_BLOCKS = new LinkedHashMap<>();
+
+    /** A normal tungsten block becomes a hidden GTH absorber only when heat plumbing touches it. */
+    public static final DeferredBlock<TungstenAbsorberBlock> TUNGSTEN_ABSORBER = BLOCKS.registerBlock(
+        "tungsten_block", TungstenAbsorberBlock::new, metalBlockProperties("tungsten"));
 
     /**
      * Доска резонанса (com.gonzotech.chalkboard) — Фаза 1: просто ставится,
@@ -132,8 +139,10 @@ public class ModBlocks {
     /** Ванильный pillar-state нужен: копируемые свойства OAK_LOG считывают AXIS. */
     public static final DeferredBlock<RotatedPillarBlock> DEAD_LOG = BLOCKS.registerBlock(
         "dead_log", RotatedPillarBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG));
-    public static final DeferredBlock<Block> CORIUM = BLOCKS.registerSimpleBlock(
-        "corium", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
+    /** Gray lava-like fluid block produced by Nuclear Firebox meltdown. */
+    public static final DeferredBlock<LiquidBlock> CORIUM = BLOCKS.registerBlock(
+        "corium", properties -> new LiquidBlock(ModFluids.CORIUM_SOURCE, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.LAVA));
     /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
         "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
@@ -349,7 +358,11 @@ public class ModBlocks {
         for (String ingotId : Metals.INGOT_IDS) {
             String metalId = Metals.base(ingotId);
             String blockId = metalId + "_block";
-            METAL_BLOCKS.put(blockId, BLOCKS.registerSimpleBlock(blockId, metalBlockProperties(metalId)));
+            if (metalId.equals("tungsten")) {
+                METAL_BLOCKS.put(blockId, TUNGSTEN_ABSORBER);
+            } else {
+                METAL_BLOCKS.put(blockId, BLOCKS.registerSimpleBlock(blockId, metalBlockProperties(metalId)));
+            }
         }
     }
 

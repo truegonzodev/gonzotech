@@ -10,6 +10,7 @@ import com.gonzotech.machines.block.CobbleGeneratorBlock;
 import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FireboxBlock;
+import com.gonzotech.machines.block.NuclearFireboxBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
@@ -117,6 +118,10 @@ public final class ModMachines {
 
     public static final DeferredBlock<FireboxBlock> FIREBOX =
         BLOCKS.registerBlock("firebox", FireboxBlock::new, machineMetal());
+
+    /** Discovery-2 heat source: one uranium/thorium fuel slot and a dangerous GTH buffer. */
+    public static final DeferredBlock<NuclearFireboxBlock> NUCLEAR_FIREBOX =
+        BLOCKS.registerBlock("nuclear_firebox", NuclearFireboxBlock::new, machineMetal());
 
     public static final DeferredBlock<BoilerBlock> BOILER =
         BLOCKS.registerBlock("boiler", BoilerBlock::new, machineMetalCustomShape());
@@ -321,6 +326,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
         ITEMS.registerSimpleBlockItem("firebox", FIREBOX);
+
+    public static final DeferredItem<BlockItem> NUCLEAR_FIREBOX_ITEM =
+        ITEMS.registerSimpleBlockItem("nuclear_firebox", NUCLEAR_FIREBOX);
 
     public static final DeferredItem<BlockItem> BOILER_ITEM =
         ITEMS.registerSimpleBlockItem("boiler", BOILER);

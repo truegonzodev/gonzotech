@@ -70,10 +70,11 @@ public final class TierTwoCrafting {
         "gonzotech:second_universal_fluid_node",
         "gonzotech:second_wire_node",
         "gonzotech:second_universal_node",
-        "gonzotech:second_pump"
+        "gonzotech:second_pump",
+        "gonzotech:nuclear_firebox"
     );
 
-    /** Prevents a 34-entry recipe-book grant on every player tick. Cleared on logout. */
+    /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
     private static final Set<UUID> BOOK_GRANTED = ConcurrentHashMap.newKeySet();
 
     private TierTwoCrafting() {
@@ -159,6 +160,7 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_UNIVERSAL_FLUID_NODE_ITEM.get()
             || item == ModMachines.SECOND_WIRE_NODE_ITEM.get()
             || item == ModMachines.SECOND_UNIVERSAL_NODE_ITEM.get()
-            || item == ModMachines.SECOND_PUMP_ITEM.get();
+            || item == ModMachines.SECOND_PUMP_ITEM.get()
+            || item == ModMachines.NUCLEAR_FIREBOX_ITEM.get();
     }
 }

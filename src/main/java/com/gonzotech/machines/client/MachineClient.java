@@ -14,6 +14,7 @@ public final class MachineClient {
 
     public static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenus.FIREBOX.get(), FireboxScreen::new);
+        event.register(ModMenus.NUCLEAR_FIREBOX.get(), NuclearFireboxScreen::new);
         event.register(ModMenus.BOILER.get(), BoilerScreen::new);
         event.register(ModMenus.STIRLING.get(), StirlingScreen::new);
         event.register(ModMenus.TURBINE.get(), TurbineScreen::new);

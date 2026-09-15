@@ -9,6 +9,7 @@ import com.gonzotech.machines.menu.CrusherMenu;
 import com.gonzotech.machines.menu.CobbleGeneratorMenu;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.menu.FireboxMenu;
+import com.gonzotech.machines.menu.NuclearFireboxMenu;
 import com.gonzotech.machines.menu.PumpMenu;
 import com.gonzotech.machines.menu.StirlingMenu;
 import com.gonzotech.machines.menu.SecondAccumulatorMenu;
@@ -37,6 +38,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<FireboxMenu>> FIREBOX =
         MENUS.register("firebox", () -> IMenuTypeExtension.create(FireboxMenu::new));
+
+    public static final Supplier<MenuType<NuclearFireboxMenu>> NUCLEAR_FIREBOX =
+        MENUS.register("nuclear_firebox", () -> IMenuTypeExtension.create(NuclearFireboxMenu::new));
 
     public static final Supplier<MenuType<BoilerMenu>> BOILER =
         MENUS.register("boiler", () -> IMenuTypeExtension.create(BoilerMenu::new));

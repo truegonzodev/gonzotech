@@ -2,6 +2,8 @@ package com.gonzotech.machines.network;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.machines.block.entity.ItemFilterBlockEntity;
+import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
+import com.gonzotech.core.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -154,6 +156,37 @@ public final class PipeFlowNetwork {
         }
     }
 
+    /** Client → server request for the hidden GTH buffer of an active tungsten absorber. */
+    public record TungstenAbsorberRequestPayload(BlockPos pos) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<TungstenAbsorberRequestPayload> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "tungsten_absorber_request"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, TungstenAbsorberRequestPayload> STREAM_CODEC =
+            StreamCodec.composite(BlockPos.STREAM_CODEC, TungstenAbsorberRequestPayload::pos,
+                TungstenAbsorberRequestPayload::new);
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** Server → client heat level and active heat-pipe connection of a tungsten absorber. */
+    public record TungstenAbsorberPayload(BlockPos pos, int gth, boolean active) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<TungstenAbsorberPayload> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "tungsten_absorber"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, TungstenAbsorberPayload> STREAM_CODEC =
+            StreamCodec.composite(
+                BlockPos.STREAM_CODEC, TungstenAbsorberPayload::pos,
+                ByteBufCodecs.VAR_INT, TungstenAbsorberPayload::gth,
+                ByteBufCodecs.BOOL, TungstenAbsorberPayload::active,
+                TungstenAbsorberPayload::new);
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Регистрация всех пакетов. Вызывается из {@code GonzoTechMod#registerPayloads}. */
     public static void register(PayloadRegistrar registrar) {
         registrar.playToServer(
@@ -200,6 +233,21 @@ public final class PipeFlowNetwork {
             FilterStoragePayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() ->
                 com.gonzotech.machines.client.WrenchHud.acceptFilterStorage(payload)));
+
+        registrar.playToServer(
+            TungstenAbsorberRequestPayload.TYPE,
+            TungstenAbsorberRequestPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                if (context.player() instanceof ServerPlayer player) {
+                    respondTungstenAbsorber(player, payload.pos());
+                }
+            }));
+
+        registrar.playToClient(
+            TungstenAbsorberPayload.TYPE,
+            TungstenAbsorberPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                com.gonzotech.machines.client.WrenchHud.acceptTungstenAbsorber(payload)));
     }
 
     /** Максимальная дистанция (блоков), в пределах которой отвечаем на запрос. */
@@ -283,6 +331,16 @@ public final class PipeFlowNetwork {
             counts.add(entry.getValue());
         }
         PacketDistributor.sendToPlayer(player, new FilterStoragePayload(pos, items, counts));
+    }
+
+    /** Sends an authoritative wrench reading only for the special tungsten storage block. */
+    private static void respondTungstenAbsorber(ServerPlayer player, BlockPos pos) {
+        ServerLevel level = player.serverLevel();
+        if (pos.distToCenterSqr(player.getX(), player.getY(), player.getZ()) > MAX_DISTANCE_SQR) return;
+        if (!level.getBlockState(pos).is(ModBlocks.TUNGSTEN_ABSORBER.get())) return;
+        if (!(level.getBlockEntity(pos) instanceof TungstenAbsorberBlockEntity absorber)) return;
+        PacketDistributor.sendToPlayer(player, new TungstenAbsorberPayload(
+            pos, absorber.storedGth(), absorber.hasHeatCarrierConnection()));
     }
 
     /** Положительная мировая сторона оси: +X=восток, +Y=верх, +Z=юг. */

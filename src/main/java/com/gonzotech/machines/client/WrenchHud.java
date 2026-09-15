@@ -1,6 +1,8 @@
 package com.gonzotech.machines.client;
 
 import com.gonzotech.machines.energy.GtFormat;
+import com.gonzotech.machines.energy.NuclearDefs;
+import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.PipeBlock;
@@ -88,6 +90,15 @@ public final class WrenchHud {
     private static long lastFilterRequestTick = Long.MIN_VALUE;
     private static long lastFilterRequestPosKey = Long.MIN_VALUE;
 
+    // The tungsten block synchronizes its hidden heat store only while the
+    // wrench looks at it; ordinary decorative tungsten stays silent.
+    private static BlockPos tungstenAbsorberPos;
+    private static int tungstenAbsorberGth;
+    private static boolean tungstenAbsorberActive;
+    private static long tungstenAbsorberClientTick = Long.MIN_VALUE;
+    private static long lastTungstenRequestTick = Long.MIN_VALUE;
+    private static long lastTungstenRequestPosKey = Long.MIN_VALUE;
+
     public static void acceptItemFlow(PipeFlowNetwork.ItemFlowPayload payload) {
         itemFlowPos = payload.pos();
         itemFlowClientTick = clientTick;
@@ -119,6 +130,14 @@ public final class WrenchHud {
                 Component.literal(Integer.toString(payload.counts().get(i))), name));
         }
         filterStorageLinesCache = lines;
+    }
+
+    /** Receives a server-authoritative tungsten heat reading for the wrench HUD. */
+    public static void acceptTungstenAbsorber(PipeFlowNetwork.TungstenAbsorberPayload payload) {
+        tungstenAbsorberPos = payload.pos();
+        tungstenAbsorberGth = payload.gth();
+        tungstenAbsorberActive = payload.active();
+        tungstenAbsorberClientTick = clientTick;
     }
 
     public static void acceptFlow(PipeFlowNetwork.FlowPayload payload) {
@@ -153,6 +172,13 @@ public final class WrenchHud {
         BlockState state = mc.level.getBlockState(pos);
 
         clientTick = mc.level.getGameTime();
+
+        // Обычный вольфрам декоративен. Если к нему подключено тепло, ключ
+        // показывает скрытый GTH-абсорбер и его температурный диапазон.
+        if (state.is(ModBlocks.TUNGSTEN_ABSORBER.get())) {
+            renderTungstenAbsorber(event.getGuiGraphics(), mc, pos);
+            return;
+        }
 
         // Фильтр — не труба, но ключ показывает его невидимую транзитную очередь.
         if (state.getBlock() instanceof ItemFilterBlock) {
@@ -203,6 +229,41 @@ public final class WrenchHud {
                 g.drawString(font, flow, (screenW - font.width(flow)) / 2, lineY, 0xFFFFFF, true);
                 lineY += font.lineHeight + 1;
             }
+        }
+    }
+
+    /** Renders the hidden tungsten GTH store only after an active server response. */
+    private static void renderTungstenAbsorber(GuiGraphics graphics, Minecraft mc, BlockPos pos) {
+        maybeRequestTungstenAbsorber(pos);
+        if (tungstenAbsorberPos == null || !tungstenAbsorberPos.equals(pos)
+            || clientTick - tungstenAbsorberClientTick > FLOW_STALE_TICKS || !tungstenAbsorberActive) {
+            return;
+        }
+
+        Font font = mc.font;
+        int screenW = graphics.guiWidth();
+        int y = graphics.guiHeight() / 2 - 30;
+        Component title = Component.translatable("hud.gonzotech.tungsten_absorber.title");
+        graphics.drawString(font, title, (screenW - font.width(title)) / 2, y, 0xFFFFFF, true);
+        y += font.lineHeight + 1;
+
+        Component state = tungstenAbsorberGth <= 0
+            ? Component.translatable("hud.gonzotech.tungsten_absorber.cold")
+            : tungstenAbsorberGth <= 12_000
+                ? Component.translatable("hud.gonzotech.tungsten_absorber.warm", tungstenAbsorberGth)
+                : tungstenAbsorberGth <= 60_000
+                    ? Component.translatable("hud.gonzotech.tungsten_absorber.hot", tungstenAbsorberGth)
+                    : Component.translatable("hud.gonzotech.tungsten_absorber.incandescent", tungstenAbsorberGth);
+        int color = tungstenAbsorberGth > NuclearDefs.TUNGSTEN_ABSORBER_IGNITION_THRESHOLD ? 0xFF6A33 : 0xFFFFFF;
+        graphics.drawString(font, state, (screenW - font.width(state)) / 2, y, color, true);
+    }
+
+    private static void maybeRequestTungstenAbsorber(BlockPos pos) {
+        long key = pos.asLong();
+        if (key != lastTungstenRequestPosKey || clientTick - lastTungstenRequestTick >= REQUEST_INTERVAL) {
+            lastTungstenRequestPosKey = key;
+            lastTungstenRequestTick = clientTick;
+            PacketDistributor.sendToServer(new PipeFlowNetwork.TungstenAbsorberRequestPayload(pos));
         }
     }
 

@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.ore.OreDefinition.Host;
+import com.gonzotech.core.fluid.ModFluids;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -54,6 +55,7 @@ public class ModCreativeTabs {
 
                 // Фаза 2 — паровая ветка энергетики.
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.NUCLEAR_FIREBOX_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get());
@@ -159,6 +161,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.DEAD_STONE_ITEM.get());
                 output.accept(ModItems.DEAD_LOG_ITEM.get());
                 output.accept(ModItems.CORIUM_ITEM.get());
+                output.accept(ModFluids.CORIUM_BUCKET.get());
                 output.accept(ModItems.WASTE_BARREL_ITEM.get());
                 output.accept(ModItems.DEAD_SLIME_BLOCK_ITEM.get());
                 output.accept(ModItems.RADIOACTIVE_SLIME_BLOCK_ITEM.get());

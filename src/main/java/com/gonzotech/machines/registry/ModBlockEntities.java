@@ -10,6 +10,8 @@ import com.gonzotech.machines.block.entity.CobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.CondenserBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
+import com.gonzotech.machines.block.entity.NuclearFireboxBlockEntity;
+import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
 import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
 import com.gonzotech.machines.block.entity.SingularHeatSourceBlockEntity;
@@ -40,6 +42,14 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<FireboxBlockEntity>> FIREBOX =
         BLOCK_ENTITIES.register("firebox", () -> new BlockEntityType<>(
             FireboxBlockEntity::new, false, ModMachines.FIREBOX.get()));
+
+    public static final Supplier<BlockEntityType<NuclearFireboxBlockEntity>> NUCLEAR_FIREBOX =
+        BLOCK_ENTITIES.register("nuclear_firebox", () -> new BlockEntityType<>(
+            NuclearFireboxBlockEntity::new, false, ModMachines.NUCLEAR_FIREBOX.get()));
+
+    public static final Supplier<BlockEntityType<TungstenAbsorberBlockEntity>> TUNGSTEN_ABSORBER =
+        BLOCK_ENTITIES.register("tungsten_absorber", () -> new BlockEntityType<>(
+            TungstenAbsorberBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.TUNGSTEN_ABSORBER.get()));
 
     public static final Supplier<BlockEntityType<BoilerBlockEntity>> BOILER =
         BLOCK_ENTITIES.register("boiler", () -> new BlockEntityType<>(
