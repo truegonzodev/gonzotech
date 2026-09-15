@@ -282,9 +282,9 @@ public final class AlloyEquipmentStats {
                 slot);
         }
         result.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes.build());
-        // Надетая броня рендерится на собственной leather-UV развёртке
-        // custom_alloy_layer_1 (AlloyClient#onRegisterClientExtensions); DYED_COLOR
-        // хранится как запасной источник цвета — тот же точный тинт сплава.
+        // Надетая броня рендерится по equipment-ассету (AlloyArmorMaterials):
+        // листы в textures/entity/equipment/humanoid{,_leggings}/custom_alloy.png.
+        // DYED_COLOR хранится как запасной источник цвета — тот же тинт сплава.
         AlloyTint tint = result.get(ModDataComponents.ALLOY_TINT.get());
         result.set(DataComponents.DYED_COLOR, new DyedItemColor(tint.argb() & 0x00FFFFFF, false));
         if (properties.inertness() < INERTNESS_ENCHANTMENT_LOCK) {

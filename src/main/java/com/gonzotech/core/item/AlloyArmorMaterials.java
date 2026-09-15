@@ -18,11 +18,14 @@ import java.util.EnumMap;
  * material (same bare creative-tab stats) that only swaps the equipment
  * asset: the client reads {@code assets/gonzotech/equipment/custom_alloy.json}
  * (the {@code EquipmentAssetManager} scans {@code assets/<ns>/equipment/} of
- * every resource pack), which points the humanoid passes at our two sheets —
- * {@code custom_alloy_layer_1} (helmet/chestplate/boots) and
- * {@code custom_alloy_layer_2} (leggings + inner torso, the lower pass) —
- * and makes them dyeable so the per-stack alloy tint flows through the
- * vanilla dye pipeline.
+ * every resource pack). Each layer's {@code texture} is a short name resolved
+ * by the renderer to {@code textures/entity/equipment/<layer type>/<name>.png}
+ * (the items atlas has a {@code entity/equipment} directory source), so our
+ * sheets live at {@code textures/entity/equipment/humanoid/custom_alloy.png}
+ * (helmet/chestplate/boots) and
+ * {@code textures/entity/equipment/humanoid_leggings/custom_alloy.png}
+ * (leggings + inner torso, the lower pass). Both layers are dyeable so the
+ * per-stack alloy tint flows through the vanilla dye pipeline.
  */
 public final class AlloyArmorMaterials {
 

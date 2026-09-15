@@ -4,29 +4,25 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.component.AlloyTint;
 import com.gonzotech.core.registry.ModDataComponents;
 import com.gonzotech.core.registry.ModItems;
-import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.DyedItemColor;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
-import org.jetbrains.annotations.Nullable;
 
-/** Client-only registrations for custom-alloy items: model tint source + worn armor layer. */
+/**
+ * Client-only registrations for custom-alloy items: model tint source +
+ * worn-armor dye color.
+ * <p>
+ * The worn sheets themselves need no client code: the equipment asset
+ * ({@code assets/gonzotech/equipment/custom_alloy.json}) points each layer at
+ * a short texture name that the 1.21.4 renderer resolves to
+ * {@code textures/entity/equipment/<layer type>/<name>.png} inside the items
+ * atlas, and our PNGs sit exactly there. Only the per-stack tint color needs
+ * a hook, because the alloy items are not in {@code #minecraft:dyeable}.
+ */
 public final class AlloyClient {
-
-    /**
-     * Worn sheets of the custom alloy armor (final art, vanilla leather-UV
-     * layout): {@code layer_1} carries the helmet / chestplate / boots
-     * regions, {@code layer_2} carries the leggings — the lower pass that
-     * sits under the chestplate and boots, exactly like vanilla's
-     * leather_layer_1 / leather_layer_2.
-     */
-    private static final ResourceLocation CUSTOM_ALLOY_LAYER_1 =
-        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/models/armor/custom_alloy_layer_1");
-    private static final ResourceLocation CUSTOM_ALLOY_LAYER_2 =
-        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/models/armor/custom_alloy_layer_2");
 
     private AlloyClient() {
     }
@@ -36,28 +32,15 @@ public final class AlloyClient {
     }
 
     /**
-     * Надетая броня из custom_alloy: вместо ванильных кожаных слоёв
-     * рендерятся собственные листы того же leather-UV расклада —
-     * {@code custom_alloy_layer_1} (шлем/нагрудник/ботинки) на первом
-     * проходе и {@code custom_alloy_layer_2} (поножи, нижний слой под
-     * нагрудником и ботинками + внутренний торс) на втором, как у ванильной
-     * кожаной брони. Цвет — тот же взвешенный тинт сплава, что и у предмета
-     * в инвентаре (см. {@link AlloyTintSource}); без компонента — запасной
-     * DYED_COLOR стека. Humanoid-модель сама выбирает UV-регион по слоту.
+     * Надетая броня из custom_alloy: текстуры слоёв даёт equipment-ассет
+     * (см. {@link AlloyArmorMaterials}); здесь лишь подставляем точный
+     * взвешенный тинт состава вместо ванильного «неокрашенный» цвета —
+     * предметы не входят в {@code #minecraft:dyeable}, поэтому vanilla-по
+     * умолчанию дал бы 0. Цвет тот же, что у предмета в инвентаре
+     * (см. {@link AlloyTintSource}); без компонента — запасной DYED_COLOR стека.
      */
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         IClientItemExtensions alloyArmor = new IClientItemExtensions() {
-            @Nullable
-            @Override
-            public ResourceLocation getArmorTexture(ItemStack stack, EquipmentClientInfo.LayerType type,
-                                                    EquipmentClientInfo.Layer layer, ResourceLocation _default) {
-                if (type != EquipmentClientInfo.LayerType.HUMANOID) return null;
-                // _default — ванильная текстура этого прохода (leather_layer_1
-                // / leather_layer_2): по её имени выбираем свой лист.
-                if (_default.getPath().endsWith("layer_2")) return CUSTOM_ALLOY_LAYER_2;
-                return CUSTOM_ALLOY_LAYER_1;
-            }
-
             @Override
             public int getDefaultDyeColor(ItemStack stack) {
                 AlloyTint tint = stack.get(ModDataComponents.ALLOY_TINT.get());
