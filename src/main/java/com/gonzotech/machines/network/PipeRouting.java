@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.steamgen.SteamGenStructure;
 import com.gonzotech.machines.turbine.TurbineStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -141,16 +142,32 @@ public final class PipeRouting {
     }
 
     /**
-     * Слив из специального встроенного порта многоблока, который сам является
-     * PipeCarrier. В отличие от {@link #drain} стартовая нода уже лежит в сети,
-     * поэтому обход начинается с неё, а не с соседней трубы. Остальные порты той
-     * же турбины исключаются, чтобы GTU не «заходил обратно» в корпус.
-     *
-     * <p>Лимит конкретной port-ноды рассчитывает контроллер до вызова. Метод не
-     * вводит общий сетевой ledger и сохраняет семантику обычного PipeRouting.</p>
+     * Слив из специального встроенного порта турбины, который сам является
+     * PipeCarrier. Делегирует в обобщённый {@link #drainFromMultiblockPort},
+     * исключая из обхода остальные части той же турбины.
      */
     public static long drainFromTurbinePort(Level level, BlockPos port, PipeType type, long budget, long rotation,
                                             BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
+        return drainFromMultiblockPort(level, port, type, budget, rotation, receiverOf,
+            (lvl, pos) -> TurbineStructure.isMember(lvl, pos));
+    }
+
+    /**
+     * Слив из специального встроенного порта многоблока, который сам является
+     * PipeCarrier. В отличие от {@link #drain} стартовая нода уже лежит в сети,
+     * поэтому обход начинается с неё, а не с соседней трубы. Обход
+     * «не заходит» в позиции, отмеченные {@code isMember} (остальные части той
+     * же установки), чтобы ресурс не уходил обратно в корпус.
+     *
+     * <p>Лимит конкретной port-ноды рассчитывает контроллер до вызова. Метод не
+     * вводит общий сетевой ledger и сохраняет семантику обычного PipeRouting.</p>
+     *
+     * @param isMember проверка «принадлежит ли позиция этой установке» (порт сам
+     *                 исключается по {@code !next.equals(port)})
+     */
+    public static long drainFromMultiblockPort(Level level, BlockPos port, PipeType type, long budget, long rotation,
+                                               BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
+                                               BiFunction<Level, BlockPos, Boolean> isMember) {
         if (budget <= 0 || !isPipe(level.getBlockState(port), type)) return 0;
 
         TreeMap<Long, Transfer.Receiver> receivers = new TreeMap<>();
@@ -169,7 +186,7 @@ public final class PipeRouting {
                 BlockPos next = pipe.relative(dir);
                 // Через другую встроенную ноду не идём: порт — это граница
                 // машины, не внутренняя связка из проводов.
-                if (!next.equals(port) && TurbineStructure.isMember(level, next)) continue;
+                if (!next.equals(port) && isMember.apply(level, next)) continue;
                 BlockState nextState = level.getBlockState(next);
                 if (isPipe(nextState, type)) {
                     if (!pipesConnect(pstate, nextState, type, dir)) continue;
@@ -313,11 +330,17 @@ public final class PipeRouting {
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
             BlockState pstate = level.getBlockState(pipe);
-            // Steam-порт турбины — это сама нода, а не BlockEntity за нодой.
-            // Регистрируем его как виртуальный приёмник, но продолжаем BFS: та
-            // же нода остаётся нормальной частью паровой сети.
+            // Порты турбины/парогенератора — это сами ноды, а не BlockEntity за
+            // нодой. Регистрируем их как виртуальные приёмники, но продолжаем
+            // BFS: та же нода остаётся нормальной частью ресурсной сети.
             if (type == PipeType.STEAM) {
                 addTurbineSteamReceiver(level, pipe, fromPos, receivers,
+                    buildPath(level, pipe, pipe, parent));
+            } else if (type == PipeType.WATER) {
+                addSteamGenWaterReceiver(level, pipe, fromPos, receivers,
+                    buildPath(level, pipe, pipe, parent));
+            } else if (type == PipeType.HEAT) {
+                addSteamGenGthReceiver(level, pipe, fromPos, receivers,
                     buildPath(level, pipe, pipe, parent));
             }
             PipeMode mode = modeOf(pstate, type);
@@ -385,6 +408,32 @@ public final class PipeRouting {
         Transfer.Receiver receiver = TurbineStructure.steamReceiverAt(level, pos);
         if (receiver == null) return;
         receivers.put(pos.asLong(), recording(level, receiver, PipeType.STEAM, path));
+    }
+
+    /**
+     * Виртуальный WaterSink водного порта продвинутого парогенератора: насос
+     * «видит» ноду как обычную машину-приёмник за трубой.
+     */
+    private static void addSteamGenWaterReceiver(Level level, BlockPos pos, BlockPos fromPos,
+                                                 TreeMap<Long, Transfer.Receiver> receivers,
+                                                 List<PathStep> path) {
+        if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
+        Transfer.Receiver receiver = SteamGenStructure.waterReceiverAt(level, pos);
+        if (receiver == null) return;
+        receivers.put(pos.asLong(), recording(level, receiver, PipeType.WATER, path));
+    }
+
+    /**
+     * Виртуальный GthSink теплового порта продвинутого парогенератора: топка
+     * «видит» ноду как обычный тепловой потребитель за трубой.
+     */
+    private static void addSteamGenGthReceiver(Level level, BlockPos pos, BlockPos fromPos,
+                                               TreeMap<Long, Transfer.Receiver> receivers,
+                                               List<PathStep> path) {
+        if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
+        Transfer.Receiver receiver = SteamGenStructure.gthReceiverAt(level, pos);
+        if (receiver == null) return;
+        receivers.put(pos.asLong(), recording(level, receiver, PipeType.HEAT, path));
     }
 
     /**

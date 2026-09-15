@@ -65,6 +65,7 @@ public class GonzoTechMod {
             com.gonzotech.machines.network.UniversalNodeComparator.clearAll();
             com.gonzotech.machines.network.FluidBudgetLedger.clearAll();
             com.gonzotech.machines.turbine.TurbineStructure.clearAll();
+            com.gonzotech.machines.steamgen.SteamGenStructure.clearAll();
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);

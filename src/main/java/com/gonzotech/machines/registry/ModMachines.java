@@ -21,6 +21,8 @@ import com.gonzotech.machines.block.SecondPumpBlock;
 import com.gonzotech.machines.block.SingularEnergySourceBlock;
 import com.gonzotech.machines.block.SingularHeatSourceBlock;
 import com.gonzotech.machines.block.StirlingBlock;
+import com.gonzotech.machines.block.SteamGenCasingBlock;
+import com.gonzotech.machines.block.SteamGenCoreBlock;
 import com.gonzotech.machines.block.TurbineCasingBlock;
 import com.gonzotech.machines.block.TurbineRotorBlock;
 import com.gonzotech.machines.item.WrenchItem;
@@ -167,6 +169,14 @@ public final class ModMachines {
     /** Единственно допустимое содержимое внутреннего объёма турбины. */
     public static final DeferredBlock<TurbineRotorBlock> TURBINE_ROTOR =
         BLOCKS.registerBlock("turbine_rotor", TurbineRotorBlock::new, machineMetal());
+
+    /** Бесшовный после формирования корпус продвинутого парогенератора 5×5×5. */
+    public static final DeferredBlock<SteamGenCasingBlock> STEAMGEN_CASING =
+        BLOCKS.registerBlock("steamgen_casing", SteamGenCasingBlock::new, machineMetal());
+
+    /** Ядро продвинутого парогенератора; одно из них — контроллер установки. */
+    public static final DeferredBlock<SteamGenCoreBlock> STEAMGEN_CORE =
+        BLOCKS.registerBlock("steamgen_core", SteamGenCoreBlock::new, machineMetal());
 
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
@@ -370,6 +380,12 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> TURBINE_ROTOR_ITEM =
         ITEMS.registerSimpleBlockItem("turbine_rotor", TURBINE_ROTOR);
+
+    public static final DeferredItem<BlockItem> STEAMGEN_CASING_ITEM =
+        ITEMS.registerSimpleBlockItem("steamgen_casing", STEAMGEN_CASING);
+
+    public static final DeferredItem<BlockItem> STEAMGEN_CORE_ITEM =
+        ITEMS.registerSimpleBlockItem("steamgen_core", STEAMGEN_CORE);
 
     public static final DeferredItem<BlockItem> WIRE_ITEM =
         ITEMS.registerSimpleBlockItem("first_wire", WIRE);

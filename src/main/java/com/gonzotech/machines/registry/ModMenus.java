@@ -11,6 +11,7 @@ import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.menu.NuclearFireboxMenu;
 import com.gonzotech.machines.menu.PumpMenu;
+import com.gonzotech.machines.menu.SteamGenMenu;
 import com.gonzotech.machines.menu.StirlingMenu;
 import com.gonzotech.machines.menu.SecondAccumulatorMenu;
 import com.gonzotech.machines.menu.SecondCobbleGeneratorMenu;
@@ -50,6 +51,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<TurbineMenu>> TURBINE =
         MENUS.register("turbine", () -> IMenuTypeExtension.create(TurbineMenu::new));
+
+    public static final Supplier<MenuType<SteamGenMenu>> STEAMGEN =
+        MENUS.register("steamgen", () -> IMenuTypeExtension.create(SteamGenMenu::new));
 
     public static final Supplier<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE =
         MENUS.register("electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));

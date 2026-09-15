@@ -139,6 +139,8 @@
     "gonzotech:first_item_node",
     "gonzotech:turbine_casing",
     "gonzotech:turbine_rotor",
+    "gonzotech:steamgen_casing",
+    "gonzotech:steamgen_core",
     "gonzotech:second_wire",
     "gonzotech:second_heat_pipe",
     "gonzotech:second_water_pipe",

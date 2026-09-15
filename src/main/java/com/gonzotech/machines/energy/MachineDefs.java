@@ -251,6 +251,49 @@ public final class MachineDefs {
     /** Предохранитель: одна турбина запускает максимум столько маршрутов выдачи GTU за тик. */
     public static final int TURBINE_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
 
+    // ═══════════════ ПРОДВИНУТЫЙ ПАРОГЕНЕРАТОР (многоблок 5×5×5) ═══════════════
+    // Внешний слой — корпус (steamgen_casing), внутренность 3×3×3 — ядра
+    // (steamgen_core) и/или драгоценные блоки-теплообменники. Управление — у
+    // ядра-контроллера в углу (min+1, min+1, min+1).
+    //
+    // Конверсия одного «цикла варки»: 15 mB воды + 11 GTH → 12 mB пара,
+    // умноженного на множитель теплообменников M = 1 + E_avg·(1 + 0.1·(n−1)),
+    // где E_avg — средняя (C+H)/200 по всем n теплообменникам (0..26).
+    // Ядра задают throughput (34 mB пара/т базово на ядро, ДО множителя),
+    // теплообменники — только эффективность преобразования.
+
+    /** Размер стороны корпуса продвинутого парогенератора (фиксированный 5×5×5). */
+    public static final int STEAMGEN_SIZE = 5;
+
+    /** Максимум теплообменников внутри: 27 внутренних слотов − хотя бы одно ядро. */
+    public static final int STEAMGEN_MAX_EXCHANGERS = 26;
+
+    /** Вода: буфер на одно ядро, mB. */
+    public static final int STEAMGEN_WATER_CAPACITY_PER_CORE = 488;
+    /** Пар: буфер на одно ядро, mB. */
+    public static final int STEAMGEN_STEAM_CAPACITY_PER_CORE = 1_526;
+    /** Базовый потолок выработки пара на ядро, mB/т (ДО множителя теплообменников). */
+    public static final int STEAMGEN_STEAM_PER_TICK_PER_CORE = 34;
+    /** Пропускная способность входов/выходов жидкости на ядро, mB/т. */
+    public static final int STEAMGEN_FLUID_IO_PER_CORE = 128;
+    /** GTH: буфер на одно ядро, целых GTH (хранится в milli). */
+    public static final int STEAMGEN_GTH_CAPACITY_PER_CORE = 4_096;
+
+    /** Цикл варки: mB воды на 12 mB базового пара. */
+    public static final int STEAMGEN_WATER_PER_UNIT = 15;
+    /** Цикл варки: GTH на 12 mB базового пара (в milli). */
+    public static final int STEAMGEN_GTH_PER_UNIT_MILLI = 11 * MILLI;
+    /** Цикл варки: mB базового пара (до множителя теплообменников). */
+    public static final int STEAMGEN_STEAM_PER_UNIT = 12;
+
+    /** Делитель (C+H) одного теплообменника: E = (C+H)/200. */
+    public static final int STEAMGEN_EXCHANGER_DIVISOR = 200;
+    /** Прирост бонуса за каждый следующий теплообменник: +0.1 к множителю (1/10). */
+    public static final int STEAMGEN_EXCHANGER_STEP = 10;
+
+    /** Предохранитель: максимум маршрутов выдачи пара за тик (как у турбины). */
+    public static final int STEAMGEN_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
+
     // ═══════════════════════════ ЭЛЕКТРОПЕЧЬ (Electric Furnace) ═══════════════════════════
     // GTU → переплавка (160% ванили). Работает при примыкающем стирлинге.
 

@@ -128,6 +128,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("turbine_rotor", () -> new BlockEntityType<>(
             TurbineRotorBlockEntity::new, false, ModMachines.TURBINE_ROTOR.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity>> STEAMGEN_CORE =
+        BLOCK_ENTITIES.register("steamgen_core", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity::new, false, ModMachines.STEAMGEN_CORE.get()));
+
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> ITEM_FILTER =
         BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(
             com.gonzotech.machines.block.entity.ItemFilterBlockEntity::new, false, ModMachines.ITEM_FILTER.get()));
