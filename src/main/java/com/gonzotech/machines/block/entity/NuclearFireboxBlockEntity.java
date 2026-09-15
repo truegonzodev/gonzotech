@@ -39,6 +39,12 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
     private int litTime;
     private int litDuration;
     private int lastComparatorOutput;
+    /**
+     * Ticks the buffer has been above the corium threshold without a single
+     * reset; at {@link NuclearDefs#NUCLEAR_FIREBOX_SELF_MELT_GRACE_TICKS} the
+     * firebox block itself becomes eligible for melting.
+     */
+    private int overheatTicks;
 
     /**
      * [GTH remainder, GTH thousands, lit remainder, lit thousands, duration
@@ -189,11 +195,20 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
 
         // Above the thresholds the machine rolls once per second for a 5%
         // ignition and a 3% melt of one random block in the 3×3×3 around it.
+        // The first twenty seconds above 64,000 GTH the firebox block itself
+        // is protected; a sustained overheat (no drop below the threshold)
+        // makes the firebox itself a melt candidate.
         if (be.gth.amountAsLong() > NuclearDefs.NUCLEAR_FIREBOX_CORIUM_THRESHOLD) {
-            ThermalHazards.maybeMeltToCorium(server, pos);
+            be.overheatTicks++;
+            boolean selfEligible = be.overheatTicks >= NuclearDefs.NUCLEAR_FIREBOX_SELF_MELT_GRACE_TICKS;
+            ThermalHazards.maybeMeltToCorium(server, pos, selfEligible);
+            changed = true;
+        } else {
+            // Any drop back below 64,000 GTH restarts the grace timer.
+            be.overheatTicks = 0;
         }
         if (be.gth.amountAsLong() > NuclearDefs.NUCLEAR_FIREBOX_IGNITION_THRESHOLD) {
-            ThermalHazards.maybeIgniteAround(server, pos);
+            ThermalHzards.maybeIgniteAround(server, pos);
         }
 
         if (be.pushGth(server, pos)) changed = true;
@@ -242,6 +257,7 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
         gth.save(tag, "Gth");
         tag.putInt("LitTime", litTime);
         tag.putInt("LitDuration", litDuration);
+        tag.putInt("OverheatTicks", overheatTicks);
     }
 
     @Override
@@ -250,6 +266,7 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
         gth.load(tag, "Gth");
         litTime = tag.getInt("LitTime");
         litDuration = tag.getInt("LitDuration");
+        overheatTicks = tag.getInt("OverheatTicks");
     }
 
     @Override

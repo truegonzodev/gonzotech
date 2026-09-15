@@ -1,7 +1,6 @@
 package com.gonzotech.machines.nuclear;
 
 import com.gonzotech.core.registry.ModBlocks;
-import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -62,24 +61,29 @@ public final class ThermalHazards {
     /**
      * 3% в секунду: один случайный незащищённый блок в 3×3×3 вокруг центра
      * становится источником расплавленного кориума.
+     *
+     * @param includeCenter допускает плавление самого центрального блока
+     *                      (топка становится кандидатом после непрерывного
+     *                      перегрева — см. {@code NuclearDefs.NUCLEAR_FIREBOX_SELF_MELT_GRACE_TICKS})
      */
-    public static void maybeMeltToCorium(ServerLevel level, BlockPos center) {
-        maybeMeltAround(level, center, ModBlocks.MOLTEN_CORIUM.get().defaultBlockState());
+    public static void maybeMeltToCorium(ServerLevel level, BlockPos center, boolean includeCenter) {
+        maybeMeltAround(level, center, ModBlocks.MOLTEN_CORIUM.get().defaultBlockState(), includeCenter);
     }
 
     /** 3% в секунду: то же, но в источник ванильной лавы (вольфрамовый абсорбер). */
     public static void maybeMeltToLava(ServerLevel level, BlockPos center) {
-        maybeMeltAround(level, center, Blocks.LAVA.defaultBlockState());
+        maybeMeltAround(level, center, Blocks.LAVA.defaultBlockState(), false);
     }
 
-    private static void maybeMeltAround(ServerLevel level, BlockPos center, BlockState replacement) {
+    private static void maybeMeltAround(ServerLevel level, BlockPos center, BlockState replacement, boolean includeCenter) {
         if (level.getGameTime() % 20L != 0L || level.random.nextInt(100) >= MELT_CHANCE_PERCENT) return;
         List<BlockPos> candidates = new ArrayList<>();
         for (BlockPos target : cubeAround(center)) {
-            if (target.equals(center)) continue;
+            if (!includeCenter && target.equals(center)) continue;
             if (!level.isLoaded(target)) continue;
             BlockState state = level.getBlockState(target);
-            // Пустоту плавить нечего — плавится только реальный блок.
+            // Пустоту плавить нечего: воздух, пещерный/пустотный воздух,
+            // структурная пустота и всё из списка исключений.
             if (state.isAir() || isMeltProtected(state)) continue;
             candidates.add(target);
         }
@@ -102,8 +106,9 @@ public final class ThermalHazards {
 
     /**
      * Материалы, не плавящиеся в кориум/лаву: обсидиановые, служебные
-     * блоки целостности мира, суперплотный лёд, ядерные машины и
-     * долговечный бетон.
+     * блоки целостности мира, суперплотный лёд, вольфрамовый абсорбер,
+     * долговечный бетон. (Сама ядерная топка сюда НЕ входит — она плавится
+     * после непрерывного перегрева, см. {@code NuclearFireboxBlockEntity}.)
      */
     private static boolean isMeltProtected(BlockState state) {
         if (state.is(Blocks.OBSIDIAN) || state.is(Blocks.CRYING_OBSIDIAN)
@@ -115,8 +120,7 @@ public final class ThermalHazards {
             || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY)
             || state.is(ModBlocks.SUPERDENSE_ICE.get())
             || state.is(ModBlocks.DURABLE_CONCRETE.get())
-            || state.is(ModBlocks.TUNGSTEN_ABSORBER.get())
-            || state.is(ModMachines.NUCLEAR_FIREBOX.get())) {
+            || state.is(ModBlocks.TUNGSTEN_ABSORBER.get())) {
             return true;
         }
         // VR-20 и стеллит регистрируются через общую карту металлических блоков.
