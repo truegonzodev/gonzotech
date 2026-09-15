@@ -17,13 +17,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
  * Replaces a lava-bucket source placement with crimson obsidian when it touches
- * redstone dust on any of the five permitted sides.
+ * a redstone block on any of the five permitted sides.
  *
  * <p>{@code FluidPlaceBlockEvent} is intentionally not used here: it is for a
  * fluid producing a block (for example water + lava), rather than the source
  * block placed by a lava bucket. Redirecting this one {@link Level#setBlock}
- * call retains normal bucket success/consumption and works at the exact target
- * block, including a source placed directly into redstone dust.
+ * call retains normal bucket success/consumption and works at the exact
+ * target block.
  */
 @Mixin(BucketItem.class)
 public abstract class BucketItemMixin {
@@ -49,15 +49,16 @@ public abstract class BucketItemMixin {
     }
 
     /**
-     * A redstone block above the source is the only excluded neighbour. A dust
-     * block at the placement position itself is the direct-replacement case.
+     * A redstone block above the source is the only excluded neighbour. The
+     * placement-position check is defensive: unlike redstone dust, a redstone
+     * block is not replaceable, so a lava source can never be placed into it.
      */
     private static boolean touchesReactiveRedstone(Level level, BlockPos lavaPos) {
-        if (level.getBlockState(lavaPos).is(Blocks.REDSTONE_WIRE)) return true;
+        if (level.getBlockState(lavaPos).is(Blocks.REDSTONE_BLOCK)) return true;
 
         for (Direction direction : Direction.values()) {
             if (direction == Direction.UP) continue;
-            if (level.getBlockState(lavaPos.relative(direction)).is(Blocks.REDSTONE_WIRE)) {
+            if (level.getBlockState(lavaPos.relative(direction)).is(Blocks.REDSTONE_BLOCK)) {
                 return true;
             }
         }
