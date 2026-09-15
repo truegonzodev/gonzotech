@@ -5,6 +5,7 @@ import com.gonzotech.machines.processing.AlloyMaterialCatalog;
 import com.gonzotech.machines.processing.AlloyMaterialCatalog.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import net.neoforged.neoforge.registries.DeferredBlock;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -48,13 +49,12 @@ public final class SteamGenHeatExchangers {
         Map<Block, Stats> map = new LinkedHashMap<>();
         // Метальные блоки мода: хост-материал по id (у ключа "<metal>_block"
         // убираем суффикс "_block" — получаем id материала из каталога).
-        for (Map.Entry<String, ?> entry : ModBlocks.METAL_BLOCKS.entrySet()) {
+        for (Map.Entry<String, DeferredBlock<? extends Block>> entry : ModBlocks.METAL_BLOCKS.entrySet()) {
             String metalId = entry.getKey().substring(0, entry.getKey().length() - "_block".length());
             Material material = AlloyMaterialCatalog.material(
                 ResourceLocation.fromNamespaceAndPath("gonzotech", metalId));
             if (material == null) continue;
-            Block block = ((com.neoforged.neoforge.registries.DeferredBlock<?>) entry.getValue()).get();
-            map.put(block, new Stats(material.conductivity(), material.heatResistance()));
+            map.put(entry.getValue().get(), new Stats(material.conductivity(), material.heatResistance()));
         }
         // Ванильные драгоценные блоки — по утверждённой таблице.
         VANILLA_EXCHANGERS.forEach(map::putIfAbsent);
