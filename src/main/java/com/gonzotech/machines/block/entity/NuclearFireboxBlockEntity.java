@@ -208,7 +208,7 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
             be.overheatTicks = 0;
         }
         if (be.gth.amountAsLong() > NuclearDefs.NUCLEAR_FIREBOX_IGNITION_THRESHOLD) {
-            ThermalHzards.maybeIgniteAround(server, pos);
+            ThermalHazards.maybeIgniteAround(server, pos);
         }
 
         if (be.pushGth(server, pos)) changed = true;

@@ -16,9 +16,17 @@ import org.jetbrains.annotations.Nullable;
 /** Client-only registrations for custom-alloy items: model tint source + worn armor layer. */
 public final class AlloyClient {
 
-    /** Leather-UV worn sheet of the custom alloy chestplate (placeholder until final art). */
+    /**
+     * Worn sheets of the custom alloy armor (final art, vanilla leather-UV
+     * layout): {@code layer_1} carries the helmet / chestplate / boots
+     * regions, {@code layer_2} carries the leggings — the lower pass that
+     * sits under the chestplate and boots, exactly like vanilla's
+     * leather_layer_1 / leather_layer_2.
+     */
     private static final ResourceLocation CUSTOM_ALLOY_LAYER_1 =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/models/armor/custom_alloy_layer_1");
+    private static final ResourceLocation CUSTOM_ALLOY_LAYER_2 =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/models/armor/custom_alloy_layer_2");
 
     private AlloyClient() {
     }
@@ -28,13 +36,14 @@ public final class AlloyClient {
     }
 
     /**
-     * Надетая броня из custom_alloy: вместо ванильных кожаных слоёв рендерится
-     * собственная развёртка {@code custom_alloy_layer_1} (полный 64×32
-     * leather-UV лист: голова/грудь/ноги/ступни), а цвет — тот же взвешенный
-     * тинт сплава, что и у предмета в инвентаре (см. {@link AlloyTintSource}).
-     * Без компонента — запасной DYED_COLOR стека. Humanoid-модель сама
-     * выбирает UV-регион по слоту, которым надета броня, поэтому один лист
-     * покрывает все четыре предмета.
+     * Надетая броня из custom_alloy: вместо ванильных кожаных слоёв
+     * рендерятся собственные листы того же leather-UV расклада —
+     * {@code custom_alloy_layer_1} (шлем/нагрудник/ботинки) на первом
+     * проходе и {@code custom_alloy_layer_2} (поножи, нижний слой под
+     * нагрудником и ботинками + внутренний торс) на втором, как у ванильной
+     * кожаной брони. Цвет — тот же взвешенный тинт сплава, что и у предмета
+     * в инвентаре (см. {@link AlloyTintSource}); без компонента — запасной
+     * DYED_COLOR стека. Humanoid-модель сама выбирает UV-регион по слоту.
      */
     public static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         IClientItemExtensions alloyArmor = new IClientItemExtensions() {
@@ -42,7 +51,11 @@ public final class AlloyClient {
             @Override
             public ResourceLocation getArmorTexture(ItemStack stack, EquipmentClientInfo.LayerType type,
                                                     EquipmentClientInfo.Layer layer, ResourceLocation _default) {
-                return type == EquipmentClientInfo.LayerType.HUMANOID ? CUSTOM_ALLOY_LAYER_1 : null;
+                if (type != EquipmentClientInfo.LayerType.HUMANOID) return null;
+                // _default — ванильная текстура этого прохода (leather_layer_1
+                // / leather_layer_2): по её имени выбираем свой лист.
+                if (_default.getPath().endsWith("layer_2")) return CUSTOM_ALLOY_LAYER_2;
+                return CUSTOM_ALLOY_LAYER_1;
             }
 
             @Override

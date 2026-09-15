@@ -28,6 +28,9 @@ public final class NuclearDefs {
     public static final int NUCLEAR_FIREBOX_IGNITION_THRESHOLD = 50_000 * MachineDefs.MILLI;
     /** Strictly above this stored GTH, the reactor melts its 3×3 footprint into corium. */
     public static final int NUCLEAR_FIREBOX_CORIUM_THRESHOLD = 64_000 * MachineDefs.MILLI;
+
+    /** One second equals twenty Minecraft ticks. */
+    public static final int TICKS_PER_SECOND = 20;
     /**
      * Grace period after the GTH crosses {@link #NUCLEAR_FIREBOX_CORIUM_THRESHOLD}.
      * While the buffer stays above the threshold for this whole span without
@@ -36,8 +39,6 @@ public final class NuclearDefs {
      */
     public static final int NUCLEAR_FIREBOX_SELF_MELT_GRACE_TICKS = 20 * TICKS_PER_SECOND;
 
-    /** One second equals twenty Minecraft ticks. */
-    public static final int TICKS_PER_SECOND = 20;
     public static final int URANIUM_INGOT_BURN_TICKS = 900 * TICKS_PER_SECOND;
     public static final int URANIUM_NUGGET_BURN_TICKS = 100 * TICKS_PER_SECOND;
     public static final int URANIUM_BLOCK_BURN_TICKS = 8_100 * TICKS_PER_SECOND;
