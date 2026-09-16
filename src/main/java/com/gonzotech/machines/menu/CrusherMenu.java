@@ -22,11 +22,11 @@ public class CrusherMenu extends BaseMachineMenu {
         super(ModMenus.CRUSHER.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
-        addSlot(new Slot(be, CrusherBlockEntity.SLOT_INPUT, 56, 35));
-        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_PRIMARY_OUTPUT, 110, 17));
-        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_SECONDARY_OUTPUT, 132, 17));
-        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_BYPRODUCT_1, 110, 53));
-        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_BYPRODUCT_2, 132, 53));
+        addSlot(new Slot(be, CrusherBlockEntity.SLOT_INPUT, 62, 35));
+        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_PRIMARY_OUTPUT, 116, 17));
+        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_SECONDARY_OUTPUT, 152, 17));
+        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_BYPRODUCT_1, 116, 53));
+        addSlot(new OutputOnlySlot(be, CrusherBlockEntity.SLOT_BYPRODUCT_2, 152, 53));
         addPlayerInventory(inventory, 8, 84);
     }
 

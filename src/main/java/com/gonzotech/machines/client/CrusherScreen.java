@@ -34,9 +34,9 @@ public class CrusherScreen extends MachineScreen<CrusherMenu> {
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
-        int crushX = x + 76;
+        int crushX = x + 81;
         int crushY = y + 35;
-        int crushW = 24;
+        int crushW = 33;
         int crushH = 16;
 
         float gtu = (float) menu.gtu() / MachineDefs.toUnits(MachineDefs.CRUSHER_GTU_CAPACITY);
