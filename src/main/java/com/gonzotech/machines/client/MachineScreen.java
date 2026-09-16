@@ -51,6 +51,7 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     protected static final ResourceLocation BAR_WATER = gui("bar_water.png");
     protected static final ResourceLocation BAR_STEAM = gui("bar_steam.png");
     protected static final ResourceLocation BAR_GTU = gui("bar_gtu.png");
+    protected static final ResourceLocation BAR_COBBLESTONE = gui("bar_cobblestone.png");
 
     private GuiMask mask = GuiMask.forTexture(null, 0, 0);
 
@@ -180,6 +181,24 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
                 g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
             }
         }
+        g.disableScissor();
+    }
+
+    /**
+     * Горизонтальная шкала из ЕДИНОЙ (не тайлящейся) текстуры ровно w×h:
+     * открывает левые {@code fraction·w} пикселей (растёт слева направо),
+     * как {@link #drawHBarTex}, но текстура блитится одним куском, а не
+     * тайлом 16×16. Тоже клипуется по дырке PNG.
+     */
+    protected void drawHBarTexFull(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
+        int[] clip = clipRect(x, y, w, h);
+        if (clip == null) return;
+        int filled = Math.round(clamp01(fraction) * w);
+        if (filled <= 0) return;
+        int right = Math.min(clip[2], x + filled);
+        if (right <= clip[0]) return;
+        g.enableScissor(clip[0], clip[1], right, clip[3]);
+        g.blit(RenderType::guiTextured, tex, x, y, 0f, 0f, w, h, w, h);
         g.disableScissor();
     }
 
