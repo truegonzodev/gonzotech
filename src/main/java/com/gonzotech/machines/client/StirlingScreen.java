@@ -27,26 +27,31 @@ public class StirlingScreen extends MachineScreen<StirlingMenu> {
 
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
+        // Раскладка 1:1 с бойлером: три шкалы — пар, ГТУ, конденсат.
+        // Индикатор работы («стрелка») удалён.
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
 
-        int watX = x + 14;   // конденсат — слева от шкалы пара
-        int steX = x + 58;
-        int gtuX = x + 102;
+        int steX = x + 80;
+        int gtuX = x + 116;
+        int watX = x + 152;   // конденсат
 
         float water = (float) menu.water() / MachineDefs.STIRLING_WATER_CAPACITY;
         float steam = (float) menu.steam() / MachineDefs.STIRLING_STEAM_CAPACITY;
         float gtu = (float) menu.gtu() / MachineDefs.toUnits(MachineDefs.STIRLING_GTU_CAPACITY);
 
-        drawVBarTex(g, watX, barY, barW, barH, water, BAR_WATER);
         drawVBarTex(g, steX, barY, barW, barH, steam, BAR_STEAM);
         drawVBarTex(g, gtuX, barY, barW, barH, gtu, BAR_GTU);
+        drawVBarTex(g, watX, barY, barW, barH, water, BAR_WATER);
 
-        // Стрелка «пар → GTU» между шкалами.
-        drawHBarTex(g, x + 78, y + 36, 20, 16, menu.running() ? 1f : 0f, BAR_GTU);
-
-        if (inRect(mouseX, mouseY, watX, barY, barW, barH)) {
+        if (inRect(mouseX, mouseY, steX, barY, barW, barH)) {
+            g.renderComponentTooltip(this.font, List.of(
+                Component.translatable("gui.gonzotech.steam", menu.steam(), MachineDefs.STIRLING_STEAM_CAPACITY)), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
+            g.renderComponentTooltip(this.font, List.of(
+                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.STIRLING_GTU_CAPACITY))), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, watX, barY, barW, barH)) {
             int mb = menu.water();
             int pct = MachineDefs.STIRLING_WATER_CAPACITY > 0
                 ? mb * 100 / MachineDefs.STIRLING_WATER_CAPACITY : 0;
@@ -58,12 +63,6 @@ public class StirlingScreen extends MachineScreen<StirlingMenu> {
                 ? Component.translatable("gui.gonzotech.condensate.critical")
                 : Component.translatable("gui.gonzotech.condensate.efficiency", effPermille / 10);
             g.renderComponentTooltip(this.font, List.of(head, detail), mouseX, mouseY);
-        } else if (inRect(mouseX, mouseY, steX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.steam", menu.steam(), MachineDefs.STIRLING_STEAM_CAPACITY)), mouseX, mouseY);
-        } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.STIRLING_GTU_CAPACITY))), mouseX, mouseY);
         }
     }
 }
