@@ -29,10 +29,10 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         // Стрелка прогресса переплавки.
         float cook = menu.cookTotal() > 0 ? (float) menu.cookProgress() / menu.cookTotal() : 0f;
-        drawHBarTex(g, x + 80, y + 34, 24, 16, cook, BAR_SMELTING);
+        drawHBarTex(g, x + 63, y + 36, 50, 14, cook, BAR_SMELTING);
 
         // Шкала GTU слева.
-        int barX = x + 20;
+        int barX = x + 8;
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
