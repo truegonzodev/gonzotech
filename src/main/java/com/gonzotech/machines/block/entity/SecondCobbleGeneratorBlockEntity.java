@@ -132,10 +132,10 @@ public final class SecondCobbleGeneratorBlockEntity extends BaseMachineBlockEnti
         return items.get(SLOT_LAVA).is(Items.LAVA_BUCKET);
     }
 
-    /** First-tier output rarity table, unchanged for level II. */
+    /** Output rarity table: coal 3% (tier-1 is 2%), the rest as in tier-1. */
     private ItemStack rollResult(RandomSource rng) {
         double roll = rng.nextDouble();
-        double threshold = com.gonzotech.machines.energy.MachineDefs.COBBLE_CHANCE_COAL_ORE;
+        double threshold = com.gonzotech.machines.energy.SecondTierDefs.COBBLE_CHANCE_COAL_ORE;
         if (roll < threshold) return new ItemStack(Blocks.COAL_ORE);
         threshold += com.gonzotech.machines.energy.MachineDefs.COBBLE_CHANCE_IRON_ORE;
         if (roll < threshold) return new ItemStack(Blocks.IRON_ORE);

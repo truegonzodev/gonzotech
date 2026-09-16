@@ -258,7 +258,8 @@ public final class MachineDefs {
     //
     // Конверсия одного «цикла варки»: 15 mB воды + 11 GTH → 12 mB пара,
     // умноженного на множитель теплообменников M = 1 + E_avg·(1 + 0.1·(n−1)),
-    // где E_avg — средняя (C+H)/200 по всем n теплообменникам (0..26).
+    // где E_avg — средняя (C+H)/200 по всем n теплообменникам (реально 0..0.75:
+    // максимум C+H = 150 у платины; потолок M = 3.625 при 26 обменниках платины).
     // Ядра задают throughput (34 mB пара/т базово на ядро, ДО множителя),
     // теплообменники — только эффективность преобразования.
 
@@ -421,7 +422,7 @@ public final class MachineDefs {
 
     // Шансы подмены РЕЗУЛЬТАТА при выдаче (в промилле-долях: доля 0..1 * 100000).
     // Проверяются по порядку; первый сработавший заменяет булыжник.
-    public static final double COBBLE_CHANCE_COAL_ORE = 0.05;      // 5% угольная руда
+    public static final double COBBLE_CHANCE_COAL_ORE = 0.02;      // 2% угольная руда
     public static final double COBBLE_CHANCE_IRON_ORE = 0.01;      // 1% железная руда
     public static final double COBBLE_CHANCE_OBSIDIAN = 0.001;     // 0.1% обсидиан
     public static final double COBBLE_CHANCE_GONZO_STONE_ORE = 0.0003; // 0.03% каменная руда gonzotech

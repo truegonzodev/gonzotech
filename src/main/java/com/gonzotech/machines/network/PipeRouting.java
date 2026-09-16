@@ -99,21 +99,22 @@ public final class PipeRouting {
                              BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
         if (budget <= 0) return 0;
 
-        // Пропускная способность трубы/узла бьёт бюджет: если рядом есть труба этого
-        // типа, принимающая слив из машины, то за тик через цепь уходит не больше
-        // maxThroughput единиц — труба «уровня 1» умышленно медленнее выхода машины
-        // (напр. провод 38 GTU/t < аккумулятор 64 GTU/t). Без труб рядом слив идёт
-        // напрямую соседу и лимитом трубы не режется.
+        // Пропускная способность труб бьёт бюджет: если рядом есть трубы этого
+        // типа, принимающие слив из машины, то за тик через сеть уходит не больше
+        // СУММЫ пропускных способностей ВСЕХ прилегающих entry-труб — параллельные
+        // трубы независимые каналы и складываются (2 провода тир-1 = 76 GTU/t).
+        // Труба «уровня 1» умышленно медленнее выхода машины (напр. провод
+        // 38 GTU/t < аккумулятор 64 GTU/t). Без труб рядом слив идёт напрямую
+        // соседу и лимитом трубы не режется.
         //
         // Универсальная жидкостная труба несёт воду+пар с ОБЩИМ бюджетом (800 mB/t):
-        // берём как точку входа лучшую (с наибольшим остатком) прилегающую трубу и
-        // ограничиваем слив её остаточным бюджетом за этот тик; после слива учитываем
-        // фактический объём в {@link FluidBudgetLedger}.
-        BlockPos universalEntry = null;
-        long entryLimit = adjacentEntryLimit(level, fromPos, type);
+        // её entry-лимит — остаток бюджета за этот тик, и общий слив лимитируется
+        // суммой по всем универсальным entry-трубам; после слива фактический объём
+        // учитываем в {@link FluidBudgetLedger} пропорционально остаткам.
+        List<BlockPos> universalEntries = new ArrayList<>();
+        long entryLimit = adjacentEntryLimit(level, fromPos, type, universalEntries);
         if (entryLimit >= 0) {
             budget = Math.min(budget, entryLimit);
-            universalEntry = bestUniversalEntry(level, fromPos, type);
         }
         if (budget <= 0) return 0;
 
@@ -135,8 +136,8 @@ public final class PipeRouting {
 
         if (receivers.isEmpty()) return 0;
         long moved = Transfer.distributeAmong(new ArrayList<>(receivers.values()), budget, rotation);
-        if (universalEntry != null && moved > 0) {
-            FluidBudgetLedger.add(level, universalEntry, moved);
+        if (moved > 0 && !universalEntries.isEmpty()) {
+            recordUniversalUsage(level, universalEntries, type, moved);
         }
         return moved;
     }
@@ -214,51 +215,59 @@ public final class PipeRouting {
     }
 
     /**
-     * Лимит слива за тик, если рядом есть труба типа {@code type}, принимающая слив
+     * Лимит слива за тик, если рядом есть трубы типа {@code type}, принимающие слив
      * из машины (грань открыта к машине, режим AUTO/PULL — совпадает с условием
-     * старта BFS в {@link #collectThroughPipes}). Возвращает {@code -1}, если такой
-     * трубы нет (слив пойдёт напрямую соседу и не режется лимитом трубы).
+     * старта BFS в {@link #collectThroughPipes}). Возвращает {@code -1}, если таких
+     * труб нет (слив пойдёт напрямую соседу и не режется лимитом трубы).
      * <p>
      * Обычная труба даёт статичный {@link PipeType#maxThroughput()}. Универсальная
-     * жидкостная труба ({@link UniversalFluidPipeBlock#isUniversal}) несёт воду+пар
-     * с общим бюджетом на тик, поэтому её лимит — ОСТАТОК бюджета
-     * ({@link FluidBudgetLedger}). Если рядом несколько подходящих труб, берём
-     * наибольший из доступных лимитов (лучшую точку входа).
+     * жидкостная труба ({@link UniversalFluidPipeBlock#isUniversal}) несёт вода+пар
+     * в общем бюджете — её лимит = остаток этого бюджета
+     * ({@link FluidBudgetLedger}). Параллельные entry-трубы <b>суммируются</b>:
+     * каждая — независимый канал, два провода тир-1 пропустят суммарно 76 GTU/t.
+     *
+     * @param universalEntriesOut сюда собираются позиции универсальных entry-труб
+     *                            (для учёта в {@link FluidBudgetLedger} после слива)
      */
-    private static long adjacentEntryLimit(Level level, BlockPos fromPos, PipeType type) {
-        long best = -1;
+    private static long adjacentEntryLimit(Level level, BlockPos fromPos, PipeType type,
+                                           List<BlockPos> universalEntriesOut) {
+        long total = -1;
         for (Direction dir : Direction.values()) {
             BlockPos ppos = fromPos.relative(dir);
             BlockState pstate = level.getBlockState(ppos);
             if (!isPipe(pstate, type)) continue;
             if (!machineConnects(pstate, type, dir)) continue;
             if (!modeOf(pstate, type).acceptsFromMachine()) continue;
-            long limit = pipeEntryLimit(level, ppos, pstate, type);
-            if (limit > best) best = limit;
+            total = (total < 0 ? 0L : total) + pipeEntryLimit(level, ppos, pstate, type);
+            if (isUniversal(pstate)) universalEntriesOut.add(ppos);
         }
-        return best;
+        return total;
     }
 
-    /** Позиция лучшей (наибольший остаток) прилегающей универсальной трубы, или null. */
-    private static BlockPos bestUniversalEntry(Level level, BlockPos fromPos, PipeType type) {
-        // Общий fluid-бюджет и его ledger ведутся только для жидкостей.
-        if (!type.isFluid()) return null;
-        BlockPos best = null;
-        long bestLimit = -1;
-        for (Direction dir : Direction.values()) {
-            BlockPos ppos = fromPos.relative(dir);
-            BlockState pstate = level.getBlockState(ppos);
-            if (!isPipe(pstate, type)) continue;
-            if (!machineConnects(pstate, type, dir)) continue;
-            if (!modeOf(pstate, type).acceptsFromMachine()) continue;
-            if (!isUniversal(pstate)) continue;
-            long limit = pipeEntryLimit(level, ppos, pstate, type);
-            if (limit > bestLimit) {
-                bestLimit = limit;
-                best = ppos;
-            }
+    /**
+     * Учёт прошедшего объёма в ledgers универсальных entry-труб. Одна труба —
+     * весь объём (как раньше). Несколько — пропорционально остаткам бюджета
+     * на момент решения: поток распределяется равномерно по приёмникам (а не по
+     * трубам), поэтому честная атрибуция неизвестна — «fair share» гарантирует,
+     * что ни одна универсальная труба не превысит свой общий бюджет за тик.
+     */
+    private static void recordUniversalUsage(Level level, List<BlockPos> entries, PipeType type, long moved) {
+        if (entries.size() == 1) {
+            FluidBudgetLedger.add(level, entries.get(0), moved);
+            return;
         }
-        return best;
+        long[] remain = new long[entries.size()];
+        long totalRemain = 0;
+        for (int i = 0; i < entries.size(); i++) {
+            remain[i] = Math.max(0L,
+                pipeEntryLimit(level, entries.get(i), level.getBlockState(entries.get(i)), type));
+            totalRemain += remain[i];
+        }
+        if (totalRemain <= 0) return;
+        for (int i = 0; i < entries.size(); i++) {
+            long share = moved * remain[i] / totalRemain;
+            if (share > 0) FluidBudgetLedger.add(level, entries.get(i), share);
+        }
     }
 
     /**

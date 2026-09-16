@@ -176,6 +176,7 @@
 ### 6.2 Маршрутизация
 
 - `PipeRouting.drain` — BFS по сети труб: расходует бюджет (милли), идёт до портов; `drainFromTurbinePort` / `drainFromMultiblockPort` — спец-варианты для портов турбины/многобловок.
+- **Параллельные entry-трубы суммируются** (`adjacentEntryLimit` — сумма по всем прилегающим entry-трубам, а не max одного): 2 провода тир-1 рядом с источником = 76 GTU/t, 2 теплотрубы тир-1 = 776 GTH/t. До 2026-09-17 было max-одной-трубы (2 провода = всё ещё 38). Учёт универсальных труб в `FluidBudgetLedger` при нескольких entry-трубах — «fair share» пропорционально остаткам бюджета (`recordUniversalUsage`).
 - **Универсальные трубы/узлы: throughput ×0.9** (−10%, константа в `PipeRouting`).
 - Предметы: `ItemRouting` (маршрут), `ItemFilterRouting` (фильтры/отсев), `FlowTracker` / `ItemFlowTracker` (учёт в полёте), `FluidBudgetLedger` (книга учёта жидкостей по сети).
 - `PipeGeometry` — геометрия пучка (кто в каком слое), `PipeMode` — режимы (передача/отдача).
