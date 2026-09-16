@@ -294,6 +294,11 @@ public final class MachineDefs {
     /** Предохранитель: максимум маршрутов выдачи пара за тик (как у турбины). */
     public static final int STEAMGEN_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
 
+    /** Паразитное «остывание»: потеря GTH за тик, независимо от чего-либо. */
+    public static final int STEAMGEN_GTH_LOSS = 2 * MILLI;
+    /** Паразитная потеря пара: мB пара за тик, независимо от чего-либо. */
+    public static final int STEAMGEN_STEAM_LOSS = 1;
+
     // ═══════════════════════════ ЭЛЕКТРОПЕЧЬ (Electric Furnace) ═══════════════════════════
     // GTU → переплавка (160% ванили). Работает при примыкающем стирлинге.
 

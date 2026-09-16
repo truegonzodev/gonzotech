@@ -304,6 +304,18 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         boiler.lastSteamMade = 0;
         boolean changed = boiler.burnSteam();
         if (boiler.pushSteam(server)) changed = true;
+
+        // Паразитика: пассивное остывание 2 GTH/t (тепло рассеивается) и
+        // утечка 1 mB пара/т — независимо от нагрузки, но только если ресурс
+        // есть (ничего не создаётся из воздуха).
+        if (!boiler.gth.isEmpty()) {
+            boiler.gth.extract(Math.min(MachineDefs.STEAMGEN_GTH_LOSS, boiler.gth.amountAsLong()), false);
+            changed = true;
+        }
+        if (boiler.steam.amount() > 0) {
+            boiler.steam.extract(Math.min(MachineDefs.STEAMGEN_STEAM_LOSS, boiler.steam.amount()), false);
+            changed = true;
+        }
         if (changed) boiler.setChanged();
     }
 

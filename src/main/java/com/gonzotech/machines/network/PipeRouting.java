@@ -180,6 +180,14 @@ public final class PipeRouting {
 
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
+            // Виртуальный приёмник встроенного порта (паровой порт турбины) —
+            // ровно как в collectThroughPipes: нода сама является и трубой,
+            // и входом машины. Без этой проверки парогенератор не смог бы
+            // кормить турбину: для BFS чужая нода — просто ещё одна труба.
+            if (type == PipeType.STEAM) {
+                addTurbineSteamReceiver(level, pipe, port, receivers,
+                    buildPath(level, pipe, pipe, parent));
+            }
             BlockState pstate = level.getBlockState(pipe);
             PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
@@ -233,6 +241,8 @@ public final class PipeRouting {
 
     /** Позиция лучшей (наибольший остаток) прилегающей универсальной трубы, или null. */
     private static BlockPos bestUniversalEntry(Level level, BlockPos fromPos, PipeType type) {
+        // Общий fluid-бюджет и его ledger ведутся только для жидкостей.
+        if (!type.isFluid()) return null;
         BlockPos best = null;
         long bestLimit = -1;
         for (Direction dir : Direction.values()) {
@@ -251,9 +261,14 @@ public final class PipeRouting {
         return best;
     }
 
-    /** Лимит одной прилегающей трубы. Универсальная — остаток общего бюджета. */
+    /**
+     * Лимит одной прилегающей трубы. Универсальная жидкостная труба/узел несёт
+     * воду+пар в общем бюджете — лимит = остаток этого бюджета. Все прочие
+     * типы (WIRE/HEAT/ITEM) через универсальный узел идут на НОРМАЛЬНОМ
+     * лимите своего типа (×0.9 у узла), общий fluid-бюджет их не касается.
+     */
     private static long pipeEntryLimit(Level level, BlockPos ppos, BlockState pstate, PipeType type) {
-        if (isUniversal(pstate)) {
+        if (isUniversal(pstate) && type.isFluid()) {
             // Apply a universal node's factor to the WHOLE shared budget before
             // subtracting Water/Steam already sent this tick. Scaling each
             // remaining slice would let two streams exceed its actual 0.9 cap.
