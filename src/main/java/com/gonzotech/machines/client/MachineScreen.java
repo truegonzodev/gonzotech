@@ -67,7 +67,10 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         this.titleLabelY = 6;
         this.inventoryLabelX = 8;
         this.inventoryLabelY = this.imageHeight - 94;
-        this.mask = GuiMask.forTexture(foregroundTexture(), texOffsetX(), texOffsetY());
+        // Маска строится под РЕАЛЬНЫЙ размер окна: нестандартные высоты
+        // (завод сплавов 222, фильтр предметов 184) иначе теряют клип ниже 166 px.
+        this.mask = GuiMask.forTexture(foregroundTexture(), texOffsetX(), texOffsetY(),
+            this.imageWidth, this.imageHeight);
     }
 
     // ─────────────────── Настройки PNG-листа (переопределяемые) ───────────────────

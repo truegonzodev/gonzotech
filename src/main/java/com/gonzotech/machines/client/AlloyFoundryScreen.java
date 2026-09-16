@@ -30,13 +30,17 @@ public final class AlloyFoundryScreen extends MachineScreen<AlloyFoundryMenu> {
 
     @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
-        int gtuX = x + 112;
-        int gtuY = y + 17;
+        // GTU-шкала: низ на 125 (бывший 69 + 56 вниз), верх расширен до 110 px,
+        // правее сетки на 40 px от старой позиции.
+        int gtuX = x + 152;
+        int gtuY = y + 15;
         int gtuW = 16;
-        int gtuH = 52;
-        int progressX = x + 112;
-        int progressY = y + 80;
-        int progressW = 48;
+        int gtuH = 110;
+        // Шкала сплавления: под сеткой 5×5, на её ширину (88 = 5×16 + 4×2 гэпа),
+        // левый край совпадает с левым краем сетки, низ выровнен по низу GTU.
+        int progressX = x + 8;
+        int progressY = y + 109;
+        int progressW = 88;
         int progressH = 16;
         int capacity = MachineDefs.toUnits(SecondTierDefs.ALLOY_FOUNDRY_GTU_CAPACITY);
 
