@@ -1,10 +1,12 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
-  "pattern": [ " S ", "SIS", " S " ],
+  "pattern": [ "OPK", "PNP", "KPO" ],
   "key": {
-    "S": "gonzotech:steel_ingot",
-    "I": "minecraft:iron_ingot"
+    "O": "minecraft:iron_ore",
+    "P": "gonzotech:cast_iron_ingot",
+    "K": "gonzotech:calcium_nugget",
+    "N": "gonzotech:pseudo_coil"
   },
   "result": { "id": "gonzotech:turbine_rotor", "count": 1 }
 }

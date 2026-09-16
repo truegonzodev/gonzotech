@@ -59,8 +59,6 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CASING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CORE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get());
@@ -111,6 +109,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_SCAVENGER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get());
+                // Продвинутый парогенератор — в витрине второго открытия.
+                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CORE_ITEM.get());
                 // Ядерная топка замыкает вкладку: самая опасная и поздняя машина.
                 output.accept(com.gonzotech.machines.registry.ModMachines.NUCLEAR_FIREBOX_ITEM.get());
             })

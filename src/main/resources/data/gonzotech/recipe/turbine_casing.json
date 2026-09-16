@@ -1,9 +1,11 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
-  "pattern": [ "SSS", "SIS", "SSS" ],
+  "pattern": [ "BPC", "BIB", "CPB" ],
   "key": {
-    "S": "gonzotech:steel_ingot",
+    "B": "minecraft:iron_bars",
+    "P": "gonzotech:cast_iron_ingot",
+    "C": "gonzotech:calcium_ingot",
     "I": "minecraft:iron_ingot"
   },
   "result": { "id": "gonzotech:turbine_casing", "count": 1 }

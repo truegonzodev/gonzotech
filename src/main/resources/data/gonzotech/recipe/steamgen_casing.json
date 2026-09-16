@@ -1,10 +1,12 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
-  "pattern": [ "SSS", "SIS", "SSS" ],
+  "pattern": [ "SII", "BPB", "IIS" ],
   "key": {
-    "S": "gonzotech:steel_ingot",
-    "I": "minecraft:iron_ingot"
+    "S": "gonzotech:steel_plate",
+    "I": "minecraft:iron_ingot",
+    "B": "minecraft:iron_bars",
+    "P": "gonzotech:cast_iron_ingot"
   },
   "result": { "id": "gonzotech:steamgen_casing", "count": 1 }
 }

@@ -71,7 +71,9 @@ public final class TierTwoCrafting {
         "gonzotech:second_wire_node",
         "gonzotech:second_universal_node",
         "gonzotech:second_pump",
-        "gonzotech:nuclear_firebox"
+        "gonzotech:nuclear_firebox",
+        "gonzotech:steamgen_casing",
+        "gonzotech:steamgen_core"
     );
 
     /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
@@ -161,6 +163,8 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_WIRE_NODE_ITEM.get()
             || item == ModMachines.SECOND_UNIVERSAL_NODE_ITEM.get()
             || item == ModMachines.SECOND_PUMP_ITEM.get()
-            || item == ModMachines.NUCLEAR_FIREBOX_ITEM.get();
+            || item == ModMachines.NUCLEAR_FIREBOX_ITEM.get()
+            || item == ModMachines.STEAMGEN_CASING_ITEM.get()
+            || item == ModMachines.STEAMGEN_CORE_ITEM.get();
     }
 }
