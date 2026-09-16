@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 /**
@@ -33,20 +32,21 @@ import java.util.function.BiFunction;
  * <b>Закон пропускной способности живёт на ТРУБЕ, а не на источнике.</b> За один
  * тик суммарный поток через позицию трубы не превышает её throughput
  * ({@link PipeFlowLedger}: всё, что уже прошло через сегмент в этом тике,
- * вычитается из остатка). Поэтому:
+ * вычитается из остатка). Раскладка идёт по <b>дорожкам (lane)</b> — конкретным
+ * маршрутам «entry-труба → … → приёмник», и из этого следуют обе картины:
  * <ul>
- *   <li>Y-ветка (1 источник → общий ствол → 2 конца): источник отдаёт не больше
- *       остатка ствола, и равномерное деление даёт по 19 на каждый конец тир-1
- *       провода (ствол 38) — не по 38 на каждый;</li>
- *   <li>обратная Y (2 источника → 1 приёмник): общий сегмент пропустит суммарно
- *       только 38 — второй источник увидит, что ствол уже занят, и отдаст остаток
- *       (first-come-first-served по порядку тиков);</li>
+ *   <li><b>честные паралели:</b> приёмник, достижимый из НЕСКОЛЬКИХ entry-труб
+ *       по НЕпересекающимся путям, получает через ВСЕ них (2 независимых провода
+ *       от S к M — по 38 в каждом, M = 76/t у провода тир-1; 3 провода = 114);</li>
+ *   <li><b>слияние в горлышко:</b> ветки, сходящиеся в общий сегмент, делят его
+ *       остаток (Y: ствол 38 → по 19 на каждый конец; обратная Y: первый
+ *       источник заполняет ствол на 38, второй отсечён — first-come-first-served
+ *       по порядку тиков);</li>
  *   <li>механики в режиме авто, принимающие и отдающие одновременно, больше не
  *       гоняют встречные потоки через тот же провод сверх его предела.</li>
  * </ul>
- * Параллельные entry-трубы у ОДНОГО источника суммируются (2 провода = 2
- * канала по 38) — но каждый канал по-прежнему подчиняется общему закону на
- * общих сегментах.
+ * Параллельные entry-трубы у ОДНОГО источника суммируются в бюджете (2 провода =
+ * 2 канала по 38) — но каждый канал и каждый общий сегмент подчиняются закону.
  * <p>
  * Попутно каждому проводу на пути от машины к приёмнику записывается фактически
  * прошедший через него объём ({@link FlowTracker}) — по мировым сторонам, куда
@@ -54,7 +54,8 @@ import java.util.function.BiFunction;
  * на трубе число на HUD НИКОГДА не превышает номинальный throughput трубы.
  * <p>
  * Обход выполняется лишь когда машине реально есть что слить (и провод рядом), а
- * не каждый тик у каждого провода. Стоимость зависит от размера цепи.
+ * не каждый тик у каждого провода. Стоимость зависит от размера цепи (один BFS
+ * на entry-трубу; entry-труб ≤ 6).
  * <p>
  * <b>Соединения.</b> У обычной трубы ровно два конца — по её оси; она открыта
  * соседу ТОЛЬКО через торец. Блок-узел ({@link NodeBlock}) открыт во все 6 сторон
@@ -100,10 +101,17 @@ public final class PipeRouting {
     }
 
     /**
-     * Единая точка слива для машины: собрать приёмники (прямые соседи + машины за
-     * проводами) и раздать им {@code budget} единиц РАВНОМЕРНО
-     * ({@link #distributeWithSegmentCaps} — равномерное «левелинг»-деление с
-     * учётом остатков пропускной способности на общих сегментах путей). С
+     * Дорожка: конкретный маршрут ресурса к приёмнику. Приёмник, достижимый из
+     * нескольких entry-труб, имеет несколько дорожек (честные паралели); суммарно
+     * он ограничен собственным intake — «лишние» дорожки просто получают меньше.
+     */
+    private record Lane(Transfer.Receiver wrapped, List<PathStep> path) {
+    }
+
+    /**
+     * Единая точка слива для машины: собрать дорожки (прямые соседи + маршруты по
+     * проводам от каждой entry-трубы) и раздать по ним {@code budget} единиц
+     * ({@link #distributeLanes} — max-min «левелинг» с законом на трубе). С
      * проводами рядом слив «дотягивается» дальше; без проводов работает как
      * прямая передача соседу (поведение Фазы 2).
      *
@@ -119,39 +127,53 @@ public final class PipeRouting {
                              BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
         if (budget <= 0) return 0;
 
-        // Пропускная способность труб бьёт бюджет: если рядом есть трубы этого
-        // типа, принимающие слив из машины, то за тик через сеть уходит не больше
-        // СУММЫ ОСТАТКОВ ВСЕХ прилегающих entry-труб — параллельные трубы
-        // независимые каналы и складываются (2 провода тир-1 = 76 GTU/t у
-        // источника). Остатки, а не полные лимиты: всё, что уже прошло через
-        // эти трубы в этом тике (другие источники), вычтено
-        // ({@link PipeFlowLedger}). Без труб рядом слив идёт напрямую соседу и
-        // лимитом трубы не режется.
-        long entryLimit = entryLimit(level, fromPos, type);
-        if (entryLimit >= 0) {
-            budget = Math.min(budget, entryLimit);
+        // Entry-трубы — прилегающие трубы этого типа, чья грань принимает слив из
+        // машины (AUTO/PULL). Параллельные entry-трубы — независимые каналы: бюджет
+        // бьётся СУММОЙ их остатков (2 провода тир-1 = 76 GTU/t у источника), и каждая
+        // становится стартом своих дорожек. Остатки, а не полные лимиты: всё, что уже
+        // прошло через эти трубы в этом тике (другие источники), вычтено
+        // ({@link PipeFlowLedger}).
+        List<BlockPos> entries = new ArrayList<>();
+        long entrySum = 0;
+        for (Direction dir : Direction.values()) {
+            BlockPos ppos = fromPos.relative(dir);
+            BlockState pstate = level.getBlockState(ppos);
+            if (!isPipe(pstate, type)) continue;
+            if (!machineConnects(pstate, type, dir)) continue;
+            if (!modeOf(pstate, type).acceptsFromMachine()) continue;
+            entries.add(ppos);
+            entrySum += PipeFlowLedger.remaining(level, ppos, pstate, type);
         }
-        if (budget <= 0) return 0;
+        if (!entries.isEmpty()) {
+            budget = Math.min(budget, entrySum);
+            if (budget <= 0) return 0;
+        }
 
-        // Дедуп приёмников по позиции. Порядок стабилен (TreeMap по asLong) — для
-        // честной ротации остатка в distributeAmong.
-        TreeMap<Long, Transfer.Receiver> receivers = new TreeMap<>();
-        Map<Long, List<PathStep>> paths = new HashMap<>();
+        // Сырой sink приёмника — ОДИН на позицию и делится всеми дорожками к нему
+        // (его собственный intake и ограничивает сумму по дорожкам). Дорожки же —
+        // по (позиция, маршрут).
+        Map<Long, Transfer.Receiver> rawByPos = new HashMap<>();
+        Set<Long> direct = new HashSet<>();
+        List<Lane> lanes = new ArrayList<>();
 
-        // 1) Прямые соседи-приёмники (не трубы, не сам источник). Через провод не
-        // идут — поток по проводам для них не пишем, потолка у них нет.
+        // 1) Прямые соседи-приёмники (не трубы, не сам источник): одна дорожка без
+        // сегментов — прямой поток через трубу не идёт. К той же позиции дорожки по
+        // проводам уже не добавляются (прямая передача приоритетнее и не режется).
         for (Direction dir : Direction.values()) {
             BlockPos npos = fromPos.relative(dir);
-            BlockState nstate = level.getBlockState(npos);
-            if (isPipe(nstate, type)) continue;
-            addReceiver(level, npos, fromPos, receivers, paths, receiverOf, type, null);
+            if (isPipe(level.getBlockState(npos), type)) continue;
+            addDirectReceiver(level, npos, fromPos, rawByPos, direct, lanes, receiverOf);
         }
 
-        // 2) Приёмники за проводами (с путём — он и есть потолок по остаткам).
-        collectThroughPipes(level, fromPos, type, receivers, paths, receiverOf);
+        // 2) Дорожки через провода: отдельный BFS от КАЖДОЙ entry-трубы. Приёмник,
+        // достижимый из двух entry-труб, получает две дорожки (честные паралели);
+        // общие сегменты между дорожками ограничивает закон при раскладке.
+        for (BlockPos entry : entries) {
+            collectLanes(level, fromPos, type, entry, receiverOf, rawByPos, direct, lanes);
+        }
 
-        if (receivers.isEmpty()) return 0;
-        return distributeWithSegmentCaps(level, type, receivers, paths, budget, rotation);
+        if (lanes.isEmpty()) return 0;
+        return distributeLanes(level, type, lanes, budget, rotation);
     }
 
     /**
@@ -173,8 +195,8 @@ public final class PipeRouting {
      * же установки), чтобы ресурс не уходил обратно в корпус.
      *
      * <p>Бюджет порта задаёт контроллер до вызова; общие сегменты за портом
-     * подчиняются тому же закону на трубе ({@link PipeFlowLedger}) — потолок
-     * приёмника = остаток узкого сегмента его пути.</p>
+     * подчиняются тому же закону на трубе ({@link PipeFlowLedger}) в
+     * {@link #distributeLanes}.</p>
      *
      * @param isMember проверка «принадлежит ли позиция этой установке» (порт сам
      *                 исключается по {@code !next.equals(port)})
@@ -184,8 +206,9 @@ public final class PipeRouting {
                                                BiFunction<Level, BlockPos, Boolean> isMember) {
         if (budget <= 0 || !isPipe(level.getBlockState(port), type)) return 0;
 
-        TreeMap<Long, Transfer.Receiver> receivers = new TreeMap<>();
-        Map<Long, List<PathStep>> paths = new HashMap<>();
+        Map<Long, Transfer.Receiver> rawByPos = new HashMap<>();
+        Set<Long> direct = new HashSet<>();
+        List<Lane> lanes = new ArrayList<>();
         Map<Long, BlockPos> parent = new HashMap<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
@@ -195,15 +218,14 @@ public final class PipeRouting {
 
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
-            // Виртуальный приёмник встроенного порта (паровой порт турбины) —
-            // ровно как в collectThroughPipes: нода сама является и трубой,
-            // и входом машины. Без этой проверки парогенератор не смог бы
-            // кормить турбину: для BFS чужая нода — просто ещё одна труба.
-            if (type == PipeType.STEAM) {
-                addTurbineSteamReceiver(level, pipe, port, receivers, paths,
-                    buildPath(level, pipe, pipe, parent));
-            }
             BlockState pstate = level.getBlockState(pipe);
+            // Виртуальный приёмник встроенного порта (паровой порт турбины) —
+            // нода сама является и трубой, и входом машины. Без этой проверки
+            // парогенератор не смог бы кормить турбину: для BFS чужая нода —
+            // просто ещё одна труба.
+            if (type == PipeType.STEAM) {
+                addTurbineLane(level, pipe, port, buildPath(level, pipe, pipe, parent), rawByPos, direct, lanes);
+            }
             PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
                 BlockPos next = pipe.relative(dir);
@@ -221,66 +243,185 @@ public final class PipeRouting {
                 }
                 if (!machineConnects(pstate, type, dir) || !mode.deliversToMachine()) continue;
                 List<PathStep> path = buildPath(level, pipe, next, parent);
-                addReceiver(level, next, port, receivers, paths, receiverOf, type, path);
+                addMachineLane(level, next, port, type, receiverOf, path, rawByPos, direct, lanes);
             }
         }
-        if (receivers.isEmpty()) return 0;
-        return distributeWithSegmentCaps(level, type, receivers, paths, budget, rotation);
+        if (lanes.isEmpty()) return 0;
+        return distributeLanes(level, type, lanes, budget, rotation);
     }
 
     /**
-     * Сумма остатков всех прилегающих entry-труб (см. {@link #drain}).
-     * Возвращает {@code -1}, если таких труб нет (слив пойдёт напрямую соседу и
-     * не режется лимитом трубы).
+     * Прямой сосед (не труба): если это приёмник — сырой sink + дорожка БЕЗ
+     * сегментов (прямая передача, лимитом трубы не режется).
      */
-    private static long entryLimit(Level level, BlockPos fromPos, PipeType type) {
-        long total = -1;
-        for (Direction dir : Direction.values()) {
-            BlockPos ppos = fromPos.relative(dir);
-            BlockState pstate = level.getBlockState(ppos);
-            if (!isPipe(pstate, type)) continue;
-            if (!machineConnects(pstate, type, dir)) continue;
-            if (!modeOf(pstate, type).acceptsFromMachine()) continue;
-            total = (total < 0 ? 0L : total) + PipeFlowLedger.remaining(level, ppos, pstate, type);
-        }
-        return total;
+    private static void addDirectReceiver(Level level, BlockPos pos, BlockPos fromPos,
+                                          Map<Long, Transfer.Receiver> rawByPos,
+                                          Set<Long> direct, List<Lane> lanes,
+                                          BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
+        if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be == null) return;
+        Transfer.Receiver raw = receiverOf.apply(be, pos);
+        if (raw == null) return;
+        rawByPos.put(pos.asLong(), raw);
+        direct.add(pos.asLong());
+        lanes.add(new Lane(raw, null));
     }
 
     /**
-     * «Левелинг» (max-min fair split) с законом на трубе: равномерно поднять
-     * уровень ВСЕХ активных приёмников, но уровень ограничен:
+     * BFS от entry-трубы; каждый найденный приёмник — его дорожка (маршрут
+     * entry→…→приёмник). Позиции с прямой дорожкой пропускаются (прямой поток
+     * через трубу не идёт).
+     */
+    private static void collectLanes(Level level, BlockPos fromPos, PipeType type, BlockPos entry,
+                                     BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
+                                     Map<Long, Transfer.Receiver> rawByPos,
+                                     Set<Long> direct, List<Lane> lanes) {
+        // Родитель каждой посещённой трубы (труба ближе к entry), null у самой entry.
+        Map<Long, BlockPos> parent = new HashMap<>();
+        Deque<BlockPos> queue = new ArrayDeque<>();
+        Set<BlockPos> visited = new HashSet<>();
+        parent.put(entry.asLong(), null);
+        queue.add(entry);
+        visited.add(entry);
+
+        while (!queue.isEmpty()) {
+            BlockPos pipe = queue.poll();
+            BlockState pstate = level.getBlockState(pipe);
+            // Порты турбины/парогенератора — это сами ноды, а не BlockEntity за
+            // нодой. Регистрируем их как дорожки-приёмники, но продолжаем BFS:
+            // та же нода остаётся нормальной частью ресурсной сети.
+            List<PathStep> selfPath = buildPath(level, pipe, pipe, parent);
+            if (type == PipeType.STEAM) {
+                addTurbineLane(level, pipe, fromPos, selfPath, rawByPos, direct, lanes);
+            } else if (type == PipeType.WATER) {
+                addSteamGenWaterLane(level, pipe, fromPos, selfPath, rawByPos, direct, lanes);
+            } else if (type == PipeType.HEAT) {
+                addSteamGenGthLane(level, pipe, fromPos, selfPath, rawByPos, direct, lanes);
+            }
+            PipeMode mode = modeOf(pstate, type);
+            for (Direction dir : Direction.values()) {
+                BlockPos npos = pipe.relative(dir);
+                BlockState nstate = level.getBlockState(npos);
+                if (isPipe(nstate, type)) {
+                    // Соединяем, только если обе грани этого типа открыты навстречу.
+                    if (!pipesConnect(pstate, nstate, type, dir)) continue;
+                    if (visited.add(npos)) {
+                        parent.put(npos.asLong(), pipe);
+                        queue.add(npos);
+                    }
+                    continue;
+                }
+                // Машина за трубой — приёмник, только если грань трубы открыта к ней
+                // и ЭТА труба отдаёт в машину.
+                if (!machineConnects(pstate, type, dir)) continue;
+                if (!mode.deliversToMachine()) continue;
+                List<PathStep> path = buildPath(level, pipe, npos, parent);
+                addMachineLane(level, npos, fromPos, type, receiverOf, path, rawByPos, direct, lanes);
+            }
+        }
+    }
+
+    /**
+     * Машина за трубой: дорожка по маршруту (если позиция без прямой дорожки и
+     * машина — приёмник). Сырой sink кэшируется по позиции — несколько дорожек к
+     * одному приёмнику делят его intake.
+     */
+    private static void addMachineLane(Level level, BlockPos pos, BlockPos fromPos, PipeType type,
+                                       BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
+                                       List<PathStep> path,
+                                       Map<Long, Transfer.Receiver> rawByPos,
+                                       Set<Long> direct, List<Lane> lanes) {
+        if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
+        long key = pos.asLong();
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be == null) return;
+        Transfer.Receiver raw = rawByPos.get(key);
+        if (raw == null) {
+            raw = receiverOf.apply(be, pos);
+            if (raw == null) return;
+            rawByPos.put(key, raw);
+        }
+        lanes.add(new Lane(recording(level, raw, type, path), path));
+    }
+
+    /** Дорожка виртуального SteamSink встроенного turbine port-а (без BE у ноды). */
+    private static void addTurbineLane(Level level, BlockPos pos, BlockPos fromPos, List<PathStep> path,
+                                       Map<Long, Transfer.Receiver> rawByPos, Set<Long> direct, List<Lane> lanes) {
+        if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
+        long key = pos.asLong();
+        Transfer.Receiver raw = rawByPos.get(key);
+        if (raw == null) {
+            raw = TurbineStructure.steamReceiverAt(level, pos);
+            if (raw == null) return;
+            rawByPos.put(key, raw);
+        }
+        lanes.add(new Lane(recording(level, raw, PipeType.STEAM, path), path));
+    }
+
+    /**
+     * Дорожка виртуального WaterSink водного порта продвинутого парогенератора:
+     * насос «видит» ноду как обычный приёмник за трубой.
+     */
+    private static void addSteamGenWaterLane(Level level, BlockPos pos, BlockPos fromPos, List<PathStep> path,
+                                             Map<Long, Transfer.Receiver> rawByPos, Set<Long> direct, List<Lane> lanes) {
+        if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
+        long key = pos.asLong();
+        Transfer.Receiver raw = rawByPos.get(key);
+        if (raw == null) {
+            raw = SteamGenStructure.waterReceiverAt(level, pos);
+            if (raw == null) return;
+            rawByPos.put(key, raw);
+        }
+        lanes.add(new Lane(recording(level, raw, PipeType.WATER, path), path));
+    }
+
+    /**
+     * Дорожка виртуального GthSink теплового порта продвинутого парогенератора:
+     * топка «видит» ноду как обычный тепловой потребитель за трубой.
+     */
+    private static void addSteamGenGthLane(Level level, BlockPos pos, BlockPos fromPos, List<PathStep> path,
+                                           Map<Long, Transfer.Receiver> rawByPos, Set<Long> direct, List<Lane> lanes) {
+        if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
+        long key = pos.asLong();
+        Transfer.Receiver raw = rawByPos.get(key);
+        if (raw == null) {
+            raw = SteamGenStructure.gthReceiverAt(level, pos);
+            if (raw == null) return;
+            rawByPos.put(key, raw);
+        }
+        lanes.add(new Lane(recording(level, raw, PipeType.HEAT, path), path));
+    }
+
+    /**
+     * «Левелинг» (max-min fair split) с законом на трубе, но по ДОРОЖКАМ:
+     * равномерно поднять уровень ВСЕХ активных дорожек, но уровень ограничен:
      * <ul>
-     *   <li>остатком бюджета / числом активных (честное деление);</li>
+     *   <li>остатком бюджета / числом активных дорожек (честное деление);</li>
      *   <li>для КАЖДОЙ позиции трубы: остатком её пропускной способности
-     *       / числом активных приёмников, чей путь через неё идёт. Это и есть
-     *       закон «общий сегмент не берёт больше, чем пропустит»: два приёмника
-     *       на общем стволе 38 получат по 19 (а не по 38), потому что уровень
-     *       бьётся 38/2.</li>
+     *       / числом активных дорожек, чей маршрут через неё идёт. Это и есть
+     *       закон «общий сегмент не берёт больше, чем пропустит»: две дорожки на
+     *       общем стволе 38 получают по 19 (уровень бьётся 38/2), а две
+     *       НЕпересекающиеся дорожки — по 38 каждая (честные паралели).</li>
      * </ul>
-     * Позиция, у которой остаток исчерпан, «замораживает» приёмников на ней
-     * (они не могут взять больше) — уровень продолжает расти у остальных.
-     * Рунд заканчивается исчерпанием бюджета либо полным замораживанием.
-     * Рундов ≤ n+1 (каждый рунд либо снимает с игры ≥1 приёмника, либо
-     * добирает остаток), стоимость O(n × длина путей) — для реальных сетей
-     * ничтожно.
+     * Позиция, у которой остаток исчерпан, «замораживает» идущие через неё
+     * дорожки (они не могут взять больше) — уровень продолжает расти у
+     * остальных. Рунд заканчивается исчерпанием бюджета либо полным
+     * замораживанием; рундов ≤ 2n+1 (каждый рунд либо замораживает ≥1 дорожку,
+     * либо добирает остаток), стоимость O(n × длина маршрутов) — для реальных
+     * сетей ничтожно.
      * <p>
-     * Порядок приёмников стабилен (TreeMap по asLong), ротация остатка —
-     * {@code rotation} (как в {@link Transfer#distributeAmong}).
+     * Порядок дорожек стабилен (порядок обхода), ротация остатка —
+     * {@code rotation}. Выдача дорожкам последовательная: приёмник, чей intake
+     * меньше суммы его дорожек, берёт меньше — поздние дорожки просто получают
+     * 0, и трубы за это «не платят» (биллинг фактического в {@link #recording}).
      *
-     * @param receivers приёмники ({@link #recording}-обёртки с биллингом пути)
-     * @param paths     путь каждой позиции из {@code receivers} (null — прямой
-     *                  сосед без проводов, ограничений сегментов нет)
+     * @param lanes дорожки (обёртки с биллингом маршрута; path = null — прямой
+     *              сосед без сегментов)
      * @return сколько единиц суммарно принято (столько же списать из источника)
      */
-    private static long distributeWithSegmentCaps(Level level, PipeType type,
-                                                  TreeMap<Long, Transfer.Receiver> receivers,
-                                                  Map<Long, List<PathStep>> paths,
-                                                  long budget, long rotation) {
-        List<Transfer.Receiver> list = new ArrayList<>(receivers.values());
-        List<List<PathStep>> pathList = new ArrayList<>(list.size());
-        for (Long key : receivers.keySet()) pathList.add(paths.get(key));
-
-        int n = list.size();
+    private static long distributeLanes(Level level, PipeType type, List<Lane> lanes, long budget, long rotation) {
+        int n = lanes.size();
         if (n == 0 || budget <= 0) return 0;
 
         long[] given = new long[n];
@@ -294,9 +435,9 @@ public final class PipeRouting {
         // разложено в этом вызове (для закона на общих сегментах).
         Map<Long, Long> rem0 = new HashMap<>();
         Map<Long, Long> usage = new HashMap<>();
-        for (List<PathStep> path : pathList) {
-            if (path == null) continue;
-            for (PathStep s : path) {
+        for (Lane lane : lanes) {
+            if (lane.path() == null) continue;
+            for (PathStep s : lane.path()) {
                 long key = s.pipe().asLong();
                 rem0.putIfAbsent(key,
                     PipeFlowLedger.remaining(level, s.pipe(), level.getBlockState(s.pipe()), type));
@@ -308,11 +449,11 @@ public final class PipeRouting {
         while (remaining > 0 && activeCount > 0) {
             long x = remaining / activeCount;
             // Уровень не может поднять позицию выше её остатка, делённого на
-            // число активных приёмников, идущих через неё.
+            // число активных дорожек, идущих через неё.
             for (Long key : rem0.keySet()) {
                 int count = 0;
                 for (int i = 0; i < n; i++) {
-                    if (active[i] && pathHas(pathList.get(i), key)) count++;
+                    if (active[i] && laneHas(lanes.get(i), key)) count++;
                 }
                 if (count > 0) {
                     long rem = rem0.get(key) - usage.get(key);
@@ -324,16 +465,16 @@ public final class PipeRouting {
             for (int i = 0; i < n; i++) {
                 if (!active[i]) continue;
                 given[i] += x;
-                List<PathStep> path = pathList.get(i);
+                List<PathStep> path = lanes.get(i).path();
                 if (path != null) {
                     for (PathStep s : path) usage.merge(s.pipe().asLong(), x, Long::sum);
                 }
             }
             remaining -= x * activeCount;
-            // Заморозить приёмников, чей путь уперся в исчерпанную позицию.
+            // Заморозить дорожки, чей маршрут уперся в исчерпанную позицию.
             for (int i = 0; i < n; i++) {
                 if (!active[i]) continue;
-                List<PathStep> path = pathList.get(i);
+                List<PathStep> path = lanes.get(i).path();
                 if (path == null) continue;
                 for (PathStep s : path) {
                     long key = s.pipe().asLong();
@@ -354,7 +495,7 @@ public final class PipeRouting {
             for (int k = 0; k < n && remaining > 0; k++) {
                 int i = Math.floorMod(start + k, n);
                 if (!active[i]) continue;
-                List<PathStep> path = pathList.get(i);
+                List<PathStep> path = lanes.get(i).path();
                 if (path == null) {
                     given[i]++;
                     remaining--;
@@ -378,84 +519,18 @@ public final class PipeRouting {
 
         long moved = 0;
         for (int i = 0; i < n; i++) {
-            if (given[i] > 0) moved += list.get(i).receive(given[i], false);
+            if (given[i] > 0) moved += lanes.get(i).wrapped().receive(given[i], false);
         }
         return moved;
     }
 
-    /** Проходит ли путь через позицию (asLong). */
-    private static boolean pathHas(List<PathStep> path, long posKey) {
-        if (path == null) return false;
-        for (PathStep s : path) {
+    /** Проходит ли маршрут дорожки через позицию (asLong). */
+    private static boolean laneHas(Lane lane, long posKey) {
+        if (lane.path() == null) return false;
+        for (PathStep s : lane.path()) {
             if (s.pipe().asLong() == posKey) return true;
         }
         return false;
-    }
-
-    /** BFS по трубам от машины; наполняет {@code receivers} (и {@code paths}) машинами за трубами. */
-    private static void collectThroughPipes(
-            Level level, BlockPos fromPos, PipeType type,
-            TreeMap<Long, Transfer.Receiver> receivers,
-            Map<Long, List<PathStep>> paths,
-            BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
-
-        // Родитель каждой посещённой трубы (труба ближе к машине), null у стартовых.
-        // По нему восстанавливаем путь машина→…→труба для записи потока и потолка.
-        Map<Long, BlockPos> parent = new HashMap<>();
-
-        // Старт — прилегающие провода, чья грань принимает слив из машины (AUTO/PULL)
-        // И которые повёрнуты торцом к машине (машина на конце оси, не сбоку).
-        Deque<BlockPos> queue = new ArrayDeque<>();
-        Set<BlockPos> visited = new HashSet<>();
-        for (Direction dir : Direction.values()) {
-            BlockPos ppos = fromPos.relative(dir);
-            BlockState pstate = level.getBlockState(ppos);
-            if (!isPipe(pstate, type)) continue;
-            if (!machineConnects(pstate, type, dir)) continue;
-            if (!modeOf(pstate, type).acceptsFromMachine()) continue;
-            if (visited.add(ppos)) {
-                parent.put(ppos.asLong(), null);
-                queue.add(ppos);
-            }
-        }
-
-        while (!queue.isEmpty()) {
-            BlockPos pipe = queue.poll();
-            BlockState pstate = level.getBlockState(pipe);
-            // Порты турбины/парогенератора — это сами ноды, а не BlockEntity за
-            // нодой. Регистрируем их как виртуальные приёмники, но продолжаем
-            // BFS: та же нода остаётся нормальной частью ресурсной сети.
-            if (type == PipeType.STEAM) {
-                addTurbineSteamReceiver(level, pipe, fromPos, receivers, paths,
-                    buildPath(level, pipe, pipe, parent));
-            } else if (type == PipeType.WATER) {
-                addSteamGenWaterReceiver(level, pipe, fromPos, receivers, paths,
-                    buildPath(level, pipe, pipe, parent));
-            } else if (type == PipeType.HEAT) {
-                addSteamGenGthReceiver(level, pipe, fromPos, receivers, paths,
-                    buildPath(level, pipe, pipe, parent));
-            }
-            PipeMode mode = modeOf(pstate, type);
-            for (Direction dir : Direction.values()) {
-                BlockPos npos = pipe.relative(dir);
-                BlockState nstate = level.getBlockState(npos);
-                if (isPipe(nstate, type)) {
-                    // Соединяем, только если обе грани этого типа открыты навстречу.
-                    if (!pipesConnect(pstate, nstate, type, dir)) continue;
-                    if (visited.add(npos)) {
-                        parent.put(npos.asLong(), pipe);
-                        queue.add(npos);
-                    }
-                    continue;
-                }
-                // Машина за трубой — приёмник, только если грань трубы открыта к ней
-                // и ЭТА труба отдаёт в машину.
-                if (!machineConnects(pstate, type, dir)) continue;
-                if (!mode.deliversToMachine()) continue;
-                List<PathStep> path = buildPath(level, pipe, npos, parent);
-                addReceiver(level, npos, fromPos, receivers, paths, receiverOf, type, path);
-            }
-        }
     }
 
     /**
@@ -477,69 +552,10 @@ public final class PipeRouting {
         return steps;
     }
 
-    private static void addReceiver(
-            Level level, BlockPos pos, BlockPos fromPos,
-            TreeMap<Long, Transfer.Receiver> receivers,
-            Map<Long, List<PathStep>> paths,
-            BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
-            PipeType type, List<PathStep> path) {
-        if (pos.equals(fromPos)) return;
-        long key = pos.asLong();
-        if (receivers.containsKey(key)) return;
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) return;
-        Transfer.Receiver r = receiverOf.apply(be, pos);
-        if (r == null) return;
-        receivers.put(key, path == null ? r : recording(level, r, type, path));
-        if (path != null) paths.put(key, path);
-    }
-
-    /** Добавляет виртуальный SteamSink встроенного turbine port-а в обход без BE у ноды. */
-    private static void addTurbineSteamReceiver(Level level, BlockPos pos, BlockPos fromPos,
-                                                TreeMap<Long, Transfer.Receiver> receivers,
-                                                Map<Long, List<PathStep>> paths,
-                                                List<PathStep> path) {
-        if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
-        Transfer.Receiver receiver = TurbineStructure.steamReceiverAt(level, pos);
-        if (receiver == null) return;
-        receivers.put(pos.asLong(), recording(level, receiver, PipeType.STEAM, path));
-        if (path != null) paths.put(pos.asLong(), path);
-    }
-
-    /**
-     * Виртуальный WaterSink водного порта продвинутого парогенератора: насос
-     * «видит» ноду как обычную машину-приёмник за трубой.
-     */
-    private static void addSteamGenWaterReceiver(Level level, BlockPos pos, BlockPos fromPos,
-                                                 TreeMap<Long, Transfer.Receiver> receivers,
-                                                 Map<Long, List<PathStep>> paths,
-                                                 List<PathStep> path) {
-        if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
-        Transfer.Receiver receiver = SteamGenStructure.waterReceiverAt(level, pos);
-        if (receiver == null) return;
-        receivers.put(pos.asLong(), recording(level, receiver, PipeType.WATER, path));
-        if (path != null) paths.put(pos.asLong(), path);
-    }
-
-    /**
-     * Виртуальный GthSink теплового порта продвинутого парогенератора: топка
-     * «видит» ноду как обычный тепловой потребитель за трубой.
-     */
-    private static void addSteamGenGthReceiver(Level level, BlockPos pos, BlockPos fromPos,
-                                               TreeMap<Long, Transfer.Receiver> receivers,
-                                               Map<Long, List<PathStep>> paths,
-                                               List<PathStep> path) {
-        if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
-        Transfer.Receiver receiver = SteamGenStructure.gthReceiverAt(level, pos);
-        if (receiver == null) return;
-        receivers.put(pos.asLong(), recording(level, receiver, PipeType.HEAT, path));
-        if (path != null) paths.put(pos.asLong(), path);
-    }
-
     /**
      * Обёртка-приёмник: сколько реально принято — столько же
-     * <b>платят</b> все трубы на пути: {@link FlowTracker} (HUD, по сторонам) и
-     * {@link PipeFlowLedger} (закон на трубе, по позициям). Биллинг фактического
+     * <b>платят</b> все трубы на маршруте: {@link FlowTracker} (HUD, по сторонам)
+     * и {@link PipeFlowLedger} (закон на трубе, по позициям). Биллинг фактического
      * принятого объёма, а не предложенного — если приёмник взял меньше (свой
      * intake), трубы за это не платят.
      */
