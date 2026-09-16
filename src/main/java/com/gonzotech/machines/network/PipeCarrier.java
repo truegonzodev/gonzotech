@@ -65,4 +65,16 @@ public interface PipeCarrier {
     default long sharedFluidThroughputLimit(BlockState state) {
         return com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT;
     }
+
+    /**
+     * Является ли блок универсальным жидкостным носителем: одиночная универсальная
+     * труба/узел либо пучок, где FLUID-угол занят универсальной трубой (вода+пар
+     * вместе в общем бюджете). Используется {@link PipeRouting} и
+     * {@link PipeFlowLedger}.
+     */
+    static boolean isUniversal(BlockState state) {
+        return state.getBlock() instanceof UniversalFluidPipeBlock
+            || state.getBlock() instanceof UniversalNodeBlock
+            || CompositePipeBlock.carriesUniversalFluid(state);
+    }
 }

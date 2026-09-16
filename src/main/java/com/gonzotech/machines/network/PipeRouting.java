@@ -30,10 +30,28 @@ import java.util.function.BiFunction;
  * которым можно отдать (грань трубы в режиме {@link PipeMode#deliversToMachine}).
  * Ресурс телепортируется приёмникам за тот же тик.
  * <p>
+ * <b>Закон пропускной способности живёт на ТРУБЕ, а не на источнике.</b> За один
+ * тик суммарный поток через позицию трубы не превышает её throughput
+ * ({@link PipeFlowLedger}: всё, что уже прошло через сегмент в этом тике,
+ * вычитается из остатка). Поэтому:
+ * <ul>
+ *   <li>Y-ветка (1 источник → общий ствол → 2 конца): источник отдаёт не больше
+ *       остатка ствола, и равномерное деление даёт по 19 на каждый конец тир-1
+ *       провода (ствол 38) — не по 38 на каждый;</li>
+ *   <li>обратная Y (2 источника → 1 приёмник): общий сегмент пропустит суммарно
+ *       только 38 — второй источник увидит, что ствол уже занят, и отдаст остаток
+ *       (first-come-first-served по порядку тиков);</li>
+ *   <li>механики в режиме авто, принимающие и отдающие одновременно, больше не
+ *       гоняют встречные потоки через тот же провод сверх его предела.</li>
+ * </ul>
+ * Параллельные entry-трубы у ОДНОГО источника суммируются (2 провода = 2
+ * канала по 38) — но каждый канал по-прежнему подчиняется общему закону на
+ * общих сегментах.
+ * <p>
  * Попутно каждому проводу на пути от машины к приёмнику записывается фактически
  * прошедший через него объём ({@link FlowTracker}) — по мировым сторонам, куда
- * ресурс вышел. Так провод не хранит поток, но HUD гаечного ключа может показать
- * живые числа по концам оси (напр. восток 60, запад 30 при встречных потоках).
+ * ресурс вышел. Так HUD гаечного ключа показывает живые числа, и после закона
+ * на трубе число на HUD НИКОГДА не превышает номинальный throughput трубы.
  * <p>
  * Обход выполняется лишь когда машине реально есть что слить (и провод рядом), а
  * не каждый тик у каждого провода. Стоимость зависит от размера цепи.
@@ -84,8 +102,10 @@ public final class PipeRouting {
     /**
      * Единая точка слива для машины: собрать приёмники (прямые соседи + машины за
      * проводами) и раздать им {@code budget} единиц РАВНОМЕРНО
-     * ({@link Transfer#distributeAmong}). С проводами рядом слив «дотягивается»
-     * дальше; без проводов работает как прямая передача соседу (поведение Фазы 2).
+     * ({@link #distributeWithSegmentCaps} — равномерное «левелинг»-деление с
+     * учётом остатков пропускной способности на общих сегментах путей). С
+     * проводами рядом слив «дотягивается» дальше; без проводов работает как
+     * прямая передача соседу (поведение Фазы 2).
      *
      * @param level      мир
      * @param fromPos    позиция машины-источника (её саму в приёмники не берём)
@@ -101,18 +121,13 @@ public final class PipeRouting {
 
         // Пропускная способность труб бьёт бюджет: если рядом есть трубы этого
         // типа, принимающие слив из машины, то за тик через сеть уходит не больше
-        // СУММЫ пропускных способностей ВСЕХ прилегающих entry-труб — параллельные
-        // трубы независимые каналы и складываются (2 провода тир-1 = 76 GTU/t).
-        // Труба «уровня 1» умышленно медленнее выхода машины (напр. провод
-        // 38 GTU/t < аккумулятор 64 GTU/t). Без труб рядом слив идёт напрямую
-        // соседу и лимитом трубы не режется.
-        //
-        // Универсальная жидкостная труба несёт воду+пар с ОБЩИМ бюджетом (800 mB/t):
-        // её entry-лимит — остаток бюджета за этот тик, и общий слив лимитируется
-        // суммой по всем универсальным entry-трубам; после слива фактический объём
-        // учитываем в {@link FluidBudgetLedger} пропорционально остаткам.
-        List<BlockPos> universalEntries = new ArrayList<>();
-        long entryLimit = adjacentEntryLimit(level, fromPos, type, universalEntries);
+        // СУММЫ ОСТАТКОВ ВСЕХ прилегающих entry-труб — параллельные трубы
+        // независимые каналы и складываются (2 провода тир-1 = 76 GTU/t у
+        // источника). Остатки, а не полные лимиты: всё, что уже прошло через
+        // эти трубы в этом тике (другие источники), вычтено
+        // ({@link PipeFlowLedger}). Без труб рядом слив идёт напрямую соседу и
+        // лимитом трубы не режется.
+        long entryLimit = entryLimit(level, fromPos, type);
         if (entryLimit >= 0) {
             budget = Math.min(budget, entryLimit);
         }
@@ -121,25 +136,22 @@ public final class PipeRouting {
         // Дедуп приёмников по позиции. Порядок стабилен (TreeMap по asLong) — для
         // честной ротации остатка в distributeAmong.
         TreeMap<Long, Transfer.Receiver> receivers = new TreeMap<>();
+        Map<Long, List<PathStep>> paths = new HashMap<>();
 
         // 1) Прямые соседи-приёмники (не трубы, не сам источник). Через провод не
-        // идут — поток по проводам для них не пишем.
+        // идут — поток по проводам для них не пишем, потолка у них нет.
         for (Direction dir : Direction.values()) {
             BlockPos npos = fromPos.relative(dir);
             BlockState nstate = level.getBlockState(npos);
             if (isPipe(nstate, type)) continue;
-            addReceiver(level, npos, fromPos, receivers, receiverOf, type, null);
+            addReceiver(level, npos, fromPos, receivers, paths, receiverOf, type, null);
         }
 
-        // 2) Приёмники за проводами (с записью потока по пути).
-        collectThroughPipes(level, fromPos, type, receivers, receiverOf);
+        // 2) Приёмники за проводами (с путём — он и есть потолок по остаткам).
+        collectThroughPipes(level, fromPos, type, receivers, paths, receiverOf);
 
         if (receivers.isEmpty()) return 0;
-        long moved = Transfer.distributeAmong(new ArrayList<>(receivers.values()), budget, rotation);
-        if (moved > 0 && !universalEntries.isEmpty()) {
-            recordUniversalUsage(level, universalEntries, type, moved);
-        }
-        return moved;
+        return distributeWithSegmentCaps(level, type, receivers, paths, budget, rotation);
     }
 
     /**
@@ -156,12 +168,13 @@ public final class PipeRouting {
     /**
      * Слив из специального встроенного порта многоблока, который сам является
      * PipeCarrier. В отличие от {@link #drain} стартовая нода уже лежит в сети,
-     * поэтому обход начинается с неё, а не с соседней трубы. Обход
+     * поэтому обход начинается с неё, а не из соседней трубы. Обход
      * «не заходит» в позиции, отмеченные {@code isMember} (остальные части той
      * же установки), чтобы ресурс не уходил обратно в корпус.
      *
-     * <p>Лимит конкретной port-ноды рассчитывает контроллер до вызова. Метод не
-     * вводит общий сетевой ledger и сохраняет семантику обычного PipeRouting.</p>
+     * <p>Бюджет порта задаёт контроллер до вызова; общие сегменты за портом
+     * подчиняются тому же закону на трубе ({@link PipeFlowLedger}) — потолок
+     * приёмника = остаток узкого сегмента его пути.</p>
      *
      * @param isMember проверка «принадлежит ли позиция этой установке» (порт сам
      *                 исключается по {@code !next.equals(port)})
@@ -172,6 +185,7 @@ public final class PipeRouting {
         if (budget <= 0 || !isPipe(level.getBlockState(port), type)) return 0;
 
         TreeMap<Long, Transfer.Receiver> receivers = new TreeMap<>();
+        Map<Long, List<PathStep>> paths = new HashMap<>();
         Map<Long, BlockPos> parent = new HashMap<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
         Set<BlockPos> visited = new HashSet<>();
@@ -186,7 +200,7 @@ public final class PipeRouting {
             // и входом машины. Без этой проверки парогенератор не смог бы
             // кормить турбину: для BFS чужая нода — просто ещё одна труба.
             if (type == PipeType.STEAM) {
-                addTurbineSteamReceiver(level, pipe, port, receivers,
+                addTurbineSteamReceiver(level, pipe, port, receivers, paths,
                     buildPath(level, pipe, pipe, parent));
             }
             BlockState pstate = level.getBlockState(pipe);
@@ -207,30 +221,19 @@ public final class PipeRouting {
                 }
                 if (!machineConnects(pstate, type, dir) || !mode.deliversToMachine()) continue;
                 List<PathStep> path = buildPath(level, pipe, next, parent);
-                addReceiver(level, next, port, receivers, receiverOf, type, path);
+                addReceiver(level, next, port, receivers, paths, receiverOf, type, path);
             }
         }
         if (receivers.isEmpty()) return 0;
-        return Transfer.distributeAmong(new ArrayList<>(receivers.values()), budget, rotation);
+        return distributeWithSegmentCaps(level, type, receivers, paths, budget, rotation);
     }
 
     /**
-     * Лимит слива за тик, если рядом есть трубы типа {@code type}, принимающие слив
-     * из машины (грань открыта к машине, режим AUTO/PULL — совпадает с условием
-     * старта BFS в {@link #collectThroughPipes}). Возвращает {@code -1}, если таких
-     * труб нет (слив пойдёт напрямую соседу и не режется лимитом трубы).
-     * <p>
-     * Обычная труба даёт статичный {@link PipeType#maxThroughput()}. Универсальная
-     * жидкостная труба ({@link UniversalFluidPipeBlock#isUniversal}) несёт вода+пар
-     * в общем бюджете — её лимит = остаток этого бюджета
-     * ({@link FluidBudgetLedger}). Параллельные entry-трубы <b>суммируются</b>:
-     * каждая — независимый канал, два провода тир-1 пропустят суммарно 76 GTU/t.
-     *
-     * @param universalEntriesOut сюда собираются позиции универсальных entry-труб
-     *                            (для учёта в {@link FluidBudgetLedger} после слива)
+     * Сумма остатков всех прилегающих entry-труб (см. {@link #drain}).
+     * Возвращает {@code -1}, если таких труб нет (слив пойдёт напрямую соседу и
+     * не режется лимитом трубы).
      */
-    private static long adjacentEntryLimit(Level level, BlockPos fromPos, PipeType type,
-                                           List<BlockPos> universalEntriesOut) {
+    private static long entryLimit(Level level, BlockPos fromPos, PipeType type) {
         long total = -1;
         for (Direction dir : Direction.values()) {
             BlockPos ppos = fromPos.relative(dir);
@@ -238,101 +241,166 @@ public final class PipeRouting {
             if (!isPipe(pstate, type)) continue;
             if (!machineConnects(pstate, type, dir)) continue;
             if (!modeOf(pstate, type).acceptsFromMachine()) continue;
-            total = (total < 0 ? 0L : total) + pipeEntryLimit(level, ppos, pstate, type);
-            if (isUniversal(pstate)) universalEntriesOut.add(ppos);
+            total = (total < 0 ? 0L : total) + PipeFlowLedger.remaining(level, ppos, pstate, type);
         }
         return total;
     }
 
     /**
-     * Учёт прошедшего объёма в ledgers универсальных entry-труб. Одна труба —
-     * весь объём (как раньше). Несколько — пропорционально остаткам бюджета
-     * на момент решения: поток распределяется равномерно по приёмникам (а не по
-     * трубам), поэтому честная атрибуция неизвестна — «fair share» гарантирует,
-     * что ни одна универсальная труба не превысит свой общий бюджет за тик.
+     * «Левелинг» (max-min fair split) с законом на трубе: равномерно поднять
+     * уровень ВСЕХ активных приёмников, но уровень ограничен:
+     * <ul>
+     *   <li>остатком бюджета / числом активных (честное деление);</li>
+     *   <li>для КАЖДОЙ позиции трубы: остатком её пропускной способности
+     *       / числом активных приёмников, чей путь через неё идёт. Это и есть
+     *       закон «общий сегмент не берёт больше, чем пропустит»: два приёмника
+     *       на общем стволе 38 получат по 19 (а не по 38), потому что уровень
+     *       бьётся 38/2.</li>
+     * </ul>
+     * Позиция, у которой остаток исчерпан, «замораживает» приёмников на ней
+     * (они не могут взять больше) — уровень продолжает расти у остальных.
+     * Рунд заканчивается исчерпанием бюджета либо полным замораживанием.
+     * Рундов ≤ n+1 (каждый рунд либо снимает с игры ≥1 приёмника, либо
+     * добирает остаток), стоимость O(n × длина путей) — для реальных сетей
+     * ничтожно.
+     * <p>
+     * Порядок приёмников стабилен (TreeMap по asLong), ротация остатка —
+     * {@code rotation} (как в {@link Transfer#distributeAmong}).
+     *
+     * @param receivers приёмники ({@link #recording}-обёртки с биллингом пути)
+     * @param paths     путь каждой позиции из {@code receivers} (null — прямой
+     *                  сосед без проводов, ограничений сегментов нет)
+     * @return сколько единиц суммарно принято (столько же списать из источника)
      */
-    private static void recordUniversalUsage(Level level, List<BlockPos> entries, PipeType type, long moved) {
-        if (entries.size() == 1) {
-            FluidBudgetLedger.add(level, entries.get(0), moved);
-            return;
+    private static long distributeWithSegmentCaps(Level level, PipeType type,
+                                                  TreeMap<Long, Transfer.Receiver> receivers,
+                                                  Map<Long, List<PathStep>> paths,
+                                                  long budget, long rotation) {
+        List<Transfer.Receiver> list = new ArrayList<>(receivers.values());
+        List<List<PathStep>> pathList = new ArrayList<>(list.size());
+        for (Long key : receivers.keySet()) pathList.add(paths.get(key));
+
+        int n = list.size();
+        if (n == 0 || budget <= 0) return 0;
+
+        long[] given = new long[n];
+        boolean[] active = new boolean[n];
+        for (int i = 0; i < n; i++) active[i] = true;
+        int activeCount = n;
+        long remaining = budget;
+
+        // Остаток каждой позиции НА МОМЕНТ вызова: ledger не обновляется во время
+        // раскладки (биллинг — в recording-обёртке, после). usage — сколько уже
+        // разложено в этом вызове (для закона на общих сегментах).
+        Map<Long, Long> rem0 = new HashMap<>();
+        Map<Long, Long> usage = new HashMap<>();
+        for (List<PathStep> path : pathList) {
+            if (path == null) continue;
+            for (PathStep s : path) {
+                long key = s.pipe().asLong();
+                rem0.putIfAbsent(key,
+                    PipeFlowLedger.remaining(level, s.pipe(), level.getBlockState(s.pipe()), type));
+                usage.putIfAbsent(key, 0L);
+            }
         }
-        long[] remain = new long[entries.size()];
-        long totalRemain = 0;
-        for (int i = 0; i < entries.size(); i++) {
-            remain[i] = Math.max(0L,
-                pipeEntryLimit(level, entries.get(i), level.getBlockState(entries.get(i)), type));
-            totalRemain += remain[i];
+
+        // Рунды левелинга.
+        while (remaining > 0 && activeCount > 0) {
+            long x = remaining / activeCount;
+            // Уровень не может поднять позицию выше её остатка, делённого на
+            // число активных приёмников, идущих через неё.
+            for (Long key : rem0.keySet()) {
+                int count = 0;
+                for (int i = 0; i < n; i++) {
+                    if (active[i] && pathHas(pathList.get(i), key)) count++;
+                }
+                if (count > 0) {
+                    long rem = rem0.get(key) - usage.get(key);
+                    long lim = rem / count;
+                    if (lim < x) x = lim;
+                }
+            }
+            if (x <= 0) break;
+            for (int i = 0; i < n; i++) {
+                if (!active[i]) continue;
+                given[i] += x;
+                List<PathStep> path = pathList.get(i);
+                if (path != null) {
+                    for (PathStep s : path) usage.merge(s.pipe().asLong(), x, Long::sum);
+                }
+            }
+            remaining -= x * activeCount;
+            // Заморозить приёмников, чей путь уперся в исчерпанную позицию.
+            for (int i = 0; i < n; i++) {
+                if (!active[i]) continue;
+                List<PathStep> path = pathList.get(i);
+                if (path == null) continue;
+                for (PathStep s : path) {
+                    long key = s.pipe().asLong();
+                    if (rem0.get(key) - usage.get(key) <= 0) {
+                        active[i] = false;
+                        activeCount--;
+                        break;
+                    }
+                }
+            }
         }
-        if (totalRemain <= 0) return;
-        for (int i = 0; i < entries.size(); i++) {
-            long share = moved * remain[i] / totalRemain;
-            if (share > 0) FluidBudgetLedger.add(level, entries.get(i), share);
+
+        // Остаток (меньше числа активных): по 1 единице с ротацией, пока есть
+        // комната на сегментах. Прямые соседи (без пути) комнаты не теряют.
+        int start = (int) Math.floorMod(rotation, n);
+        while (remaining > 0) {
+            long before = remaining;
+            for (int k = 0; k < n && remaining > 0; k++) {
+                int i = Math.floorMod(start + k, n);
+                if (!active[i]) continue;
+                List<PathStep> path = pathList.get(i);
+                if (path == null) {
+                    given[i]++;
+                    remaining--;
+                    continue;
+                }
+                boolean room = true;
+                for (PathStep s : path) {
+                    long key = s.pipe().asLong();
+                    if (rem0.get(key) - usage.get(key) <= 0) {
+                        room = false;
+                        break;
+                    }
+                }
+                if (!room) continue;
+                for (PathStep s : path) usage.merge(s.pipe().asLong(), 1L, Long::sum);
+                given[i]++;
+                remaining--;
+            }
+            if (remaining == before) break;
         }
-    }
 
-    /**
-     * Лимит одной прилегающей трубы. Универсальная жидкостная труба/узел несёт
-     * воду+пар в общем бюджете — лимит = остаток этого бюджета. Все прочие
-     * типы (WIRE/HEAT/ITEM) через универсальный узел идут на НОРМАЛЬНОМ
-     * лимите своего типа (×0.9 у узла), общий fluid-бюджет их не касается.
-     */
-    private static long pipeEntryLimit(Level level, BlockPos ppos, BlockState pstate, PipeType type) {
-        if (isUniversal(pstate) && type.isFluid()) {
-            // Apply a universal node's factor to the WHOLE shared budget before
-            // subtracting Water/Steam already sent this tick. Scaling each
-            // remaining slice would let two streams exceed its actual 0.9 cap.
-            long capacity = scaleByFactor(universalFluidBudget(pstate), pstate, type);
-            return Math.max(0, capacity - FluidBudgetLedger.used(level, ppos));
+        long moved = 0;
+        for (int i = 0; i < n; i++) {
+            if (given[i] > 0) moved += list.get(i).receive(given[i], false);
         }
-        return scaleByFactor(carrierThroughput(pstate, type), pstate, type);
+        return moved;
     }
 
-    /**
-     * Масштабирует лимит на {@link PipeCarrier#throughputFactor} блока (обычные
-     * трубы — 1.0, универсальный узел — 0.9). Округляем вниз, но минимум 1, чтобы
-     * узел не «замирал» на дробном остатке.
-     */
-    private static long scaleByFactor(long limit, BlockState pstate, PipeType type) {
-        if (limit <= 0) return limit;
-        if (pstate.getBlock() instanceof PipeCarrier carrier) {
-            double f = carrier.throughputFactor(pstate, type);
-            if (f < 1.0) return Math.max(1, (long) Math.floor(limit * f));
+    /** Проходит ли путь через позицию (asLong). */
+    private static boolean pathHas(List<PathStep> path, long posKey) {
+        if (path == null) return false;
+        for (PathStep s : path) {
+            if (s.pipe().asLong() == posKey) return true;
         }
-        return limit;
+        return false;
     }
 
-    private static boolean isUniversal(BlockState state) {
-        // Одиночная универсальная труба/узел, универсальный УЗЕЛ (несёт вода+пар в
-        // одном общем бюджете), либо пучок, где FLUID-угол занят универсальной
-        // трубой (вода+пар вместе). Лимит берётся у конкретного carrier'а: 800
-        // mB/t у первого уровня и 1500 mB/t у второго.
-        return state.getBlock() instanceof UniversalFluidPipeBlock
-            || state.getBlock() instanceof UniversalNodeBlock
-            || CompositePipeBlock.carriesUniversalFluid(state);
-    }
-
-    /** Общий fluid budget конкретного universal carrier'а (800 у I, 1500 у II). */
-    private static long universalFluidBudget(BlockState state) {
-        return state.getBlock() instanceof PipeCarrier carrier
-            ? carrier.sharedFluidThroughputLimit(state)
-            : com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT;
-    }
-
-    /** Базовая пропускная способность конкретного carrier'а по ресурсу. */
-    private static long carrierThroughput(BlockState state, PipeType type) {
-        return state.getBlock() instanceof PipeCarrier carrier
-            ? carrier.throughputLimit(state, type)
-            : type.maxThroughput();
-    }
-
-    /** BFS по трубам от машины; наполняет {@code receivers} машинами за трубами. */
+    /** BFS по трубам от машины; наполняет {@code receivers} (и {@code paths}) машинами за трубами. */
     private static void collectThroughPipes(
             Level level, BlockPos fromPos, PipeType type,
             TreeMap<Long, Transfer.Receiver> receivers,
+            Map<Long, List<PathStep>> paths,
             BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
 
         // Родитель каждой посещённой трубы (труба ближе к машине), null у стартовых.
-        // По нему восстанавливаем путь машина→…→труба для записи потока.
+        // По нему восстанавливаем путь машина→…→труба для записи потока и потолка.
         Map<Long, BlockPos> parent = new HashMap<>();
 
         // Старт — прилегающие провода, чья грань принимает слив из машины (AUTO/PULL)
@@ -358,13 +426,13 @@ public final class PipeRouting {
             // нодой. Регистрируем их как виртуальные приёмники, но продолжаем
             // BFS: та же нода остаётся нормальной частью ресурсной сети.
             if (type == PipeType.STEAM) {
-                addTurbineSteamReceiver(level, pipe, fromPos, receivers,
+                addTurbineSteamReceiver(level, pipe, fromPos, receivers, paths,
                     buildPath(level, pipe, pipe, parent));
             } else if (type == PipeType.WATER) {
-                addSteamGenWaterReceiver(level, pipe, fromPos, receivers,
+                addSteamGenWaterReceiver(level, pipe, fromPos, receivers, paths,
                     buildPath(level, pipe, pipe, parent));
             } else if (type == PipeType.HEAT) {
-                addSteamGenGthReceiver(level, pipe, fromPos, receivers,
+                addSteamGenGthReceiver(level, pipe, fromPos, receivers, paths,
                     buildPath(level, pipe, pipe, parent));
             }
             PipeMode mode = modeOf(pstate, type);
@@ -385,7 +453,7 @@ public final class PipeRouting {
                 if (!machineConnects(pstate, type, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 List<PathStep> path = buildPath(level, pipe, npos, parent);
-                addReceiver(level, npos, fromPos, receivers, receiverOf, type, path);
+                addReceiver(level, npos, fromPos, receivers, paths, receiverOf, type, path);
             }
         }
     }
@@ -412,6 +480,7 @@ public final class PipeRouting {
     private static void addReceiver(
             Level level, BlockPos pos, BlockPos fromPos,
             TreeMap<Long, Transfer.Receiver> receivers,
+            Map<Long, List<PathStep>> paths,
             BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
             PipeType type, List<PathStep> path) {
         if (pos.equals(fromPos)) return;
@@ -422,16 +491,19 @@ public final class PipeRouting {
         Transfer.Receiver r = receiverOf.apply(be, pos);
         if (r == null) return;
         receivers.put(key, path == null ? r : recording(level, r, type, path));
+        if (path != null) paths.put(key, path);
     }
 
     /** Добавляет виртуальный SteamSink встроенного turbine port-а в обход без BE у ноды. */
     private static void addTurbineSteamReceiver(Level level, BlockPos pos, BlockPos fromPos,
                                                 TreeMap<Long, Transfer.Receiver> receivers,
+                                                Map<Long, List<PathStep>> paths,
                                                 List<PathStep> path) {
         if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
         Transfer.Receiver receiver = TurbineStructure.steamReceiverAt(level, pos);
         if (receiver == null) return;
         receivers.put(pos.asLong(), recording(level, receiver, PipeType.STEAM, path));
+        if (path != null) paths.put(pos.asLong(), path);
     }
 
     /**
@@ -440,11 +512,13 @@ public final class PipeRouting {
      */
     private static void addSteamGenWaterReceiver(Level level, BlockPos pos, BlockPos fromPos,
                                                  TreeMap<Long, Transfer.Receiver> receivers,
+                                                 Map<Long, List<PathStep>> paths,
                                                  List<PathStep> path) {
         if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
         Transfer.Receiver receiver = SteamGenStructure.waterReceiverAt(level, pos);
         if (receiver == null) return;
         receivers.put(pos.asLong(), recording(level, receiver, PipeType.WATER, path));
+        if (path != null) paths.put(pos.asLong(), path);
     }
 
     /**
@@ -453,17 +527,21 @@ public final class PipeRouting {
      */
     private static void addSteamGenGthReceiver(Level level, BlockPos pos, BlockPos fromPos,
                                                TreeMap<Long, Transfer.Receiver> receivers,
+                                               Map<Long, List<PathStep>> paths,
                                                List<PathStep> path) {
         if (pos.equals(fromPos) || receivers.containsKey(pos.asLong())) return;
         Transfer.Receiver receiver = SteamGenStructure.gthReceiverAt(level, pos);
         if (receiver == null) return;
         receivers.put(pos.asLong(), recording(level, receiver, PipeType.HEAT, path));
+        if (path != null) paths.put(pos.asLong(), path);
     }
 
     /**
-     * Обёртка-приёмник: сколько реально принято — столько же записываем каждому
-     * проводу на пути в его выходную сторону (учёт фактического потока за тик,
-     * раздельно по типу — в связке типы делят позицию).
+     * Обёртка-приёмник: сколько реально принято — столько же
+     * <b>платят</b> все трубы на пути: {@link FlowTracker} (HUD, по сторонам) и
+     * {@link PipeFlowLedger} (закон на трубе, по позициям). Биллинг фактического
+     * принятого объёма, а не предложенного — если приёмник взял меньше (свой
+     * intake), трубы за это не платят.
      */
     private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path) {
         return (amount, simulate) -> {
@@ -471,6 +549,7 @@ public final class PipeRouting {
             if (!simulate && accepted > 0) {
                 for (PathStep s : path) {
                     FlowTracker.record(level, s.pipe(), type, s.out(), accepted);
+                    PipeFlowLedger.add(level, s.pipe(), type, accepted);
                 }
             }
             return accepted;

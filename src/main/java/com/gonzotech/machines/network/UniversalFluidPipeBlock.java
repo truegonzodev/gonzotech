@@ -23,7 +23,7 @@ import net.minecraft.world.phys.BlockHitResult;
  * <p>
  * <b>Общий бюджет.</b> Вода и пар делят суммарную пропускную способность за тик
  * ({@link com.gonzotech.machines.energy.MachineDefs#UNIVERSAL_FLUID_OUTPUT} =
- * 800 mB/t) — учёт ведёт {@link FluidBudgetLedger} в {@link PipeRouting}. Пар в
+ * 800 mB/t) — учёт ведёт {@link PipeFlowLedger} в {@link PipeRouting}. Пар в
  * котёл она по-прежнему не пихает: это решает сама машина-приёмник (котёл — не
  * {@code SteamSink}).
  * <p>
