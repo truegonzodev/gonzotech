@@ -30,7 +30,7 @@ public class CrusherScreen extends MachineScreen<CrusherMenu> {
 
     @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
-        int gtuX = x + 28;
+        int gtuX = x + 8;
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
