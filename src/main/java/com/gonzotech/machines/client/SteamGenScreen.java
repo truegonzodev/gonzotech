@@ -31,9 +31,9 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
-        int gthX = x + 74;
-        int waterX = x + 100;
-        int steamX = x + 126;
+        int gthX = x + 80;
+        int waterX = x + 116;
+        int steamX = x + 152;
 
         int gthCapacity = menu.gthCapacity();
         int waterCapacity = menu.waterCapacity();
