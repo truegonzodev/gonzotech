@@ -526,6 +526,7 @@
   "gui.gonzotech.hot_water": "Hot water: %s / %s mB",
   "gui.gonzotech.centrifuge.washing_progress": "Washing: %s%%",
   "gui.gonzotech.crusher.crushing_progress": "Crushing: %s%%",
+  "gui.gonzotech.second_cobble_generator.generation_progress": "Generation: %s%%",
   "block.gonzotech.turbine_casing": "Turbine Casing",
   "block.gonzotech.turbine_rotor": "Turbine Rotor",
   "gui.gonzotech.turbine.steam": "Turbine Steam: %s / %s mB",

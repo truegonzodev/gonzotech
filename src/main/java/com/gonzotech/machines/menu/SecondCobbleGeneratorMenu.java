@@ -17,8 +17,8 @@ public final class SecondCobbleGeneratorMenu extends BaseMachineMenu {
 
     public SecondCobbleGeneratorMenu(int id, Inventory inv, SecondCobbleGeneratorBlockEntity be, ContainerData data) {
         super(ModMenus.SECOND_COBBLE_GENERATOR.get(), id, be, data, 2);
-        addSlot(new FilteredSlot(be, SecondCobbleGeneratorBlockEntity.SLOT_LAVA, 26, 35));
-        addSlot(new OutputOnlySlot(be, SecondCobbleGeneratorBlockEntity.SLOT_OUTPUT, 132, 35));
+        addSlot(new FilteredSlot(be, SecondCobbleGeneratorBlockEntity.SLOT_LAVA, 8, 17));
+        addSlot(new OutputOnlySlot(be, SecondCobbleGeneratorBlockEntity.SLOT_OUTPUT, 134, 35));
         addPlayerInventory(inv, 8, 84);
     }
 
@@ -36,6 +36,11 @@ public final class SecondCobbleGeneratorMenu extends BaseMachineMenu {
 
     public int digTotal() {
         return data.get(3);
+    }
+
+    public int digProgressPercent() {
+        int total = digTotal();
+        return total <= 0 ? 0 : Math.min(100, (int) ((long) digProgress() * 100L / total));
     }
 
     private static final class FilteredSlot extends net.minecraft.world.inventory.Slot {
