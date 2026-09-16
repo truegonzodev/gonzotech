@@ -25,8 +25,9 @@ public class BoilerMenu extends BaseMachineMenu {
         super(ModMenus.BOILER.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
-        addSlot(new WaterInputSlot(be, BoilerBlockEntity.SLOT_WATER_IN, 44, 35));
-        addSlot(new OutputOnlySlot(be, BoilerBlockEntity.SLOT_BUCKET_OUT, 44, 57));
+        // Верхний слот — приём вёдер с водой; нижний — забор пустых вёдер.
+        addSlot(new WaterInputSlot(be, BoilerBlockEntity.SLOT_WATER_IN, 8, 17));
+        addSlot(new OutputOnlySlot(be, BoilerBlockEntity.SLOT_BUCKET_OUT, 8, 53));
 
         addPlayerInventory(inv, 8, 84);
     }

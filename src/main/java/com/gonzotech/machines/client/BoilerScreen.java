@@ -31,9 +31,9 @@ public class BoilerScreen extends MachineScreen<BoilerMenu> {
         int barW = 16;
         int barH = 52;
 
-        int gthX = x + 74;
-        int watX = x + 100;
-        int steX = x + 126;
+        int gthX = x + 80;
+        int watX = x + 116;
+        int steX = x + 152;
 
         // menu.gth() — уже в ЦЕЛЫХ единицах, поэтому ёмкость тоже в единицах (÷1000).
         float gth = (float) menu.gth() / MachineDefs.toUnits(MachineDefs.BOILER_GTH_CAPACITY);
