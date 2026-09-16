@@ -48,10 +48,6 @@ public class CrusherScreen extends MachineScreen<CrusherMenu> {
             graphics.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.CRUSHER_GTU_CAPACITY))),
                 mouseX, mouseY);
-        } else if (inRect(mouseX, mouseY, crushX, crushY, crushW, crushH)) {
-            graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.crusher.crushing_progress", menu.crushProgressPercent())),
-                mouseX, mouseY);
         }
     }
 }
