@@ -38,7 +38,7 @@ public final class AlloyFoundryMenu extends BaseMachineMenu {
                 addSlot(new InputSlot(be, slot, 8 + col * 18, 15 + row * 18));
             }
         }
-        addSlot(new OutputOnlySlot(be, AlloyFoundryBlockEntity.SLOT_OUTPUT, 115, 50));
+        addSlot(new OutputOnlySlot(be, AlloyFoundryBlockEntity.SLOT_OUTPUT, 116, 51));
         addPlayerInventory(inventory, 8, 140);
     }
 
