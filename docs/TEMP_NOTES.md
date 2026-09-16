@@ -214,7 +214,28 @@
 
 ---
 
-## 9. Как читать документы
+## 9. «Заметки учёного»: гейтинг страниц и «Познание мира»
+
+- `chalkboard/notes/`: `ScholarNotesContent` (линейный массив 29 страниц `page_N.png`), `ScholarChapter` (5 корешков-эпох, у каждой свой bg-панель `notes_bg_eraN.png` + иконка-предмет), `ScholarPage` (number/chapter/unlock/title/body/showcase/layout: `TEXT_FULL`/`TEXT_LEFT`/`IMAGE_FULL`), `ScholarUnlock`, `ScholarNoteFlags`, `NotesState`.
+- **`ScholarUnlock`** — три семейства условий, вычисляются на клиенте по `NotesState`:
+  - стартовые: `ALWAYS`, `PLAYTIME_5MIN` (≥6000 тиков);
+  - по «Открытиям»: `DISCOVERY_1` (recipe tier 1), `DISCOVERY_2` (recipe tier 2);
+  - **по действию** (флаги, персистентно per-player): `FLAG_CESIUM`, `FLAG_WOLFRAM`, `FLAG_SUN_FADE`.
+- **`NotesState(playtimeTicks, tier1, tier2, noteFlags)`** — клиент собирает из `NotesDataPayload`; GUI `ScholarNotesScreen` кэширует через `NotesNetwork.CLIENT_DATA`.
+- **Сеть** `NotesNetwork`: C2S `NotesRequestPayload` → S2C `NotesDataPayload(playtimeTicks, tier1, tier2, noteFlags)`. `sendToPlayer` читает `Stats.PLAY_TIME` + `isRecipeTierUnlocked(1|2)` + `getNoteFlags()`.
+- **Флаги «Познания мира»** (`PlayerChalkboardProgress.noteFlags`, NBT-поле `noteFlags`, `optionalFieldOf` для старых сейвов):
+  - `cesium` — в инвентаре впервые любая реактивная форма цезия (`Phase3Events.hasWaterReactiveCesium`), скан каждые 40 тиков в `onPlayerTick` (ДО early-return по воде).
+  - `wolfram` — в инвентаре впервые вольфрамовый блок (`ModBlocks.TUNGSTEN_ABSORBER`), тот же скан.
+  - `sun_fade` — `SpaceCommand.setSun(GONE)`: флаг всем онлайн-игрокам (свидетели угасания).
+  - При НОВОМ флаге (`unlockNoteFlag` вернул true) вызывается `NotesNetwork.sendToPlayer` — открытая буклет-GUI обновляется на лету.
+- **Страницы**: 1–14 (эпоха I, как было) + 15–25 (продолжение эпохи I: 15–16 `DISCOVERY_1` — турбина/редстоун, 17–25 `DISCOVERY_2` — дробилка…ядерная топка) + 26–29 (глава II «Познание мира»: 26 `DISCOVERY_1` — багровый обсидиан; 27/28/29 — флаги wolfram/cesium/sun_fade). Закрытые страницы навигация ПРОПУСКАЕТ (prev/next/tab идут по `unlocked(i)`).
+- **Иконка главы II** — `gonzotech:crimson_obsidian` (багровый обсидиан); название — «Познание мира» (`chapter_era2`).
+- **Тексты** страниц — в lang `gui.gonzotech.notes.pN.{title,body}` (ru_ru + en_us), простая разметка `**жирный**` / `*курсив*`. Иллюстрации — `page_15..29.png` (сейчас плейсхолдеры 256×200, автор перерисует).
+- **Честность цифр**: числа в текстах (56 мБ→1,5 GTU, пик ~56 роторов, M-множитель парогена 1,56/2,34, пороги 50K/64K/94K, 112K буфер вольфрама) должны совпадать с `TurbineMath`/`SteamGenMath`/`NuclearDefs`/`MachineDefs`. При правке баланса — править и заметки.
+
+---
+
+## 10. Как читать документы
 
 1. **README.md** (корень) — текущее состояние проекта, таблица статусов, ключевые параметры (чёрные дыры, пароген, ядерная топка).
 2. **Этот файл** — в чём реально живёт код: методы, конвенции, критичные нюансы (GUI-координаты, поворот пучков, data component vs NBT, гейты).

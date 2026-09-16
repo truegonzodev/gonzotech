@@ -1,6 +1,8 @@
 package com.gonzotech.core.event;
 
 import com.gonzotech.chalkboard.advancement.RecipeUnlocks;
+import com.gonzotech.chalkboard.network.NotesNetwork;
+import com.gonzotech.chalkboard.notes.ScholarNoteFlags;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.registry.ModBlocks;
@@ -65,6 +67,9 @@ import java.util.UUID;
  *       15 минут, тихо превращаются в фруктовое сусло 1:1. Без NBT: состояние
  *       (базис количеств + очередь отложенных конверсий) держится в памяти сервера
  *       и чистится на выходе ({@link PlayerEvent.PlayerLoggedOutEvent}).</li>
+ *   <li><b>«Познание мира»</b> ({@link PlayerTickEvent.Post}) — флаги действий для
+ *       «Заметок учёного»: впервые добыта форма цезия → флаг {@code cesium};
+ *       впервые добыт вольфрамовый блок → флаг {@code wolfram}. Скан каждые 40 тиков.</li>
  * </ol>
  */
 public final class Phase3Events {
@@ -248,6 +253,12 @@ public final class Phase3Events {
         // by a global clock. It has to run before the water-only early return.
         RecipeUnlocks.grantAfterTwentyMinutesPlayed(serverPlayer);
 
+        // 8. «Познание мира»: флаги действий для «Заметок учёного». Сканируем
+        // инвентарь редковатый (каждые 2 с) — достаточно для «первая добыча».
+        if (level.getGameTime() % WORLD_KNOWLEDGE_SCAN_INTERVAL == 0) {
+            updateWorldKnowledgeFlags(serverPlayer);
+        }
+
         if (!player.isInWater()) return;
         Inventory inv = player.getInventory();
 
@@ -272,6 +283,49 @@ public final class Phase3Events {
                 player.getX(), player.getY(), player.getZ(),
                 CESIUM_WATER_EXPLOSION, Level.ExplosionInteraction.NONE);
         }
+    }
+
+    // ─────────────── 8. «Познание мира»: флаги «Заметок учёного» ───────────────
+
+    /** Как часто сканировать инвентарь ради флагов (тиков). 2 с — достаточно. */
+    private static final int WORLD_KNOWLEDGE_SCAN_INTERVAL = 40;
+
+    /**
+     * Одноразовые флаги действий главы «Познание мира»:
+     * <ul>
+     *   <li><b>цезий</b> — в инвентаре впервые появилась любая реактивная форма
+     *       цезия (см. {@link #isWaterReactiveCesium}) → открывается страница
+     *       «Цезий, обещание взрыва»;</li>
+     *   <li><b>вольфрам</b> — в инвентаре впервые появился вольфрамовый блок
+     *       (абсорбер) → открывается страница «Вольфрам, большой абсорбер».</li>
+     * </ul>
+     * Флаг пишется в прогресс игрока; при НОВОМ флаге пересылаем состояние
+     * заметок, чтобы открытая буклет-GUI обновилась на лету.
+     */
+    private static void updateWorldKnowledgeFlags(ServerPlayer serverPlayer) {
+        Inventory inv = serverPlayer.getInventory();
+        boolean cesium = hasWaterReactiveCesium(inv);
+        boolean wolfram = hasTungstenBlock(inv);
+        if (!cesium && !wolfram) return;
+
+        PlayerChalkboardProgress progress = serverPlayer.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        boolean changed = false;
+        if (cesium && progress.unlockNoteFlag(ScholarNoteFlags.CESIUM)) changed = true;
+        if (wolfram && progress.unlockNoteFlag(ScholarNoteFlags.WOLFRAM)) changed = true;
+        if (!changed) return;
+
+        serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
+        NotesNetwork.sendToPlayer(serverPlayer);
+    }
+
+    /** Есть ли в инвентаре вольфрамовый блок (абсорбер тепла). */
+    private static boolean hasTungstenBlock(Inventory inventory) {
+        net.minecraft.world.item.Item block = ModItems.METAL_BLOCK_ITEMS.get("tungsten_block").get();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack st = inventory.getItem(slot);
+            if (!st.isEmpty() && st.is(block)) return true;
+        }
+        return false;
     }
 
     // ─────────────── 4b. Выброшенные предметы в воде ───────────────────────

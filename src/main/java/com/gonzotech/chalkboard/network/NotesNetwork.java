@@ -13,6 +13,8 @@ import net.minecraft.stats.Stats;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
+import java.util.List;
+
 /**
  * Отдельный sync для GUI «Заметок учёного»: клиенту нужны данные для gating
  * страниц, которых нет в chalkboard-sync — наигранное время (для страницы
@@ -41,8 +43,12 @@ public final class NotesNetwork {
         }
     }
 
-    /** S2C: наигранное время (тики) + разблокирован ли tier 1. */
-    public record NotesDataPayload(long playtimeTicks, boolean tier1Unlocked) implements CustomPacketPayload {
+    /**
+     * S2C: наигранное время (тики) + активированные «Открытия» (tier 1 / tier 2)
+     * + флаги действий «Познания мира» (см. ScholarNoteFlags).
+     */
+    public record NotesDataPayload(long playtimeTicks, boolean tier1Unlocked, boolean tier2Unlocked,
+                                   List<String> noteFlags) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<NotesDataPayload> TYPE =
                 new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "notes_data"));
 
@@ -50,6 +56,8 @@ public final class NotesNetwork {
                 StreamCodec.composite(
                         ByteBufCodecs.VAR_LONG, NotesDataPayload::playtimeTicks,
                         ByteBufCodecs.BOOL, NotesDataPayload::tier1Unlocked,
+                        ByteBufCodecs.BOOL, NotesDataPayload::tier2Unlocked,
+                        ByteBufCodecs.STRING_UTF8.list(32), NotesDataPayload::noteFlags,
                         NotesDataPayload::new
                 );
 
@@ -85,6 +93,8 @@ public final class NotesNetwork {
         long playtime = player.getStats().getValue(Stats.CUSTOM.get(Stats.PLAY_TIME));
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
         boolean tier1 = progress.isRecipeTierUnlocked(1);
-        PacketDistributor.sendToPlayer(player, new NotesDataPayload(playtime, tier1));
+        boolean tier2 = progress.isRecipeTierUnlocked(2);
+        List<String> flags = List.copyOf(progress.getNoteFlags());
+        PacketDistributor.sendToPlayer(player, new NotesDataPayload(playtime, tier1, tier2, flags));
     }
 }

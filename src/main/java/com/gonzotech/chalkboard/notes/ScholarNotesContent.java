@@ -6,11 +6,19 @@ import java.util.List;
 
 /**
  * Статичное оглавление «Заметок учёного»: линейный массив страниц в порядке
- * буклета. Боковые вкладки — лишь навигация по главам-эпохам.
+ * буклета. Боковые вкладки — лишь навигация по главам.
  *
- * <p>Первая эпоха ({@link ScholarChapter#ERA_1}) — 10 стартовых страниц дневника
- * Гонзо. Разблокировка страниц: {@link ScholarUnlock} (сразу / наиграно >5 мин /
- * после «Открытия 1»). Остальные 4 эпохи пока пусты (заглушки-вкладки).
+ * <p>Глава I ({@link ScholarChapter#ERA_1}) — дневник Гонзо: стартовые 14
+ * страниц + продолжение эпохи I (турбина, редстоун — «Открытие 1»; атомный
+ * пласт: дробилка, измельчитель, металлургия, пресс, завод сплавов,
+ * центрифуга, тир-2, пароген, ядерная топка — «Открытие 2»).
+ *
+ * <p>Глава II ({@link ScholarChapter#ERA_2}) — «Познание мира»: страницы
+ * открываются по <b>действиям</b> игрока в мире (флаги
+ * {@link ScholarNoteFlags}), а не по «Открытиям»; закрытые страницы
+ * пропускаются навигацией, пока событие не произошло.
+ *
+ * <p>Главы III–V пока пусты (заглушки-вкладки).
  */
 public final class ScholarNotesContent {
 
@@ -124,18 +132,133 @@ public final class ScholarNotesContent {
                     "gui.gonzotech.notes.p14.title",
                     "gui.gonzotech.notes.p14.body",
                     List.of("gonzotech:first_universal_node"),
-                    Layout.TEXT_LEFT)
+                    Layout.TEXT_LEFT),
+
+            // ─────────── продолжение эпохи I ───────────
+
+            // 15 — «Паровая турбина» (после «Открытия 1»)
+            new ScholarPage(15, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p15.title",
+                    "gui.gonzotech.notes.p15.body",
+                    List.of("gonzotech:turbine_casing", "gonzotech:turbine_rotor"),
+                    Layout.TEXT_LEFT),
+
+            // 16 — «Механизмы и редстоун» (после «Открытия 1»)
+            new ScholarPage(16, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p16.title",
+                    "gui.gonzotech.notes.p16.body",
+                    List.of("minecraft:comparator", "gonzotech:firebox",
+                            "gonzotech:accumulator", "gonzotech:nuclear_firebox"),
+                    Layout.TEXT_LEFT),
+
+            // 17 — «Дробилка руды» (первая запись после «Открытия 2»)
+            new ScholarPage(17, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p17.title",
+                    "gui.gonzotech.notes.p17.body",
+                    List.of("gonzotech:crusher", "minecraft:stone"),
+                    Layout.TEXT_LEFT),
+
+            // 18 — «Измельчитель II» (после «Открытия 2»)
+            new ScholarPage(18, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p18.title",
+                    "gui.gonzotech.notes.p18.body",
+                    List.of("gonzotech:second_grinder", "gonzotech:iron_dust"),
+                    Layout.TEXT_LEFT),
+
+            // 19 — «Простая металлургия» (после «Открытия 2»)
+            new ScholarPage(19, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p19.title",
+                    "gui.gonzotech.notes.p19.body",
+                    List.of("gonzotech:iron_dust", "minecraft:coal", "gonzotech:steel_dust"),
+                    Layout.TEXT_LEFT),
+
+            // 20 — «Пресс II» (после «Открытия 2»)
+            new ScholarPage(20, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p20.title",
+                    "gui.gonzotech.notes.p20.body",
+                    List.of("gonzotech:second_press", "gonzotech:plate_form",
+                            "gonzotech:flat_punch", "gonzotech:wedge_punch"),
+                    Layout.TEXT_LEFT),
+
+            // 21 — «Завод сплавов» (после «Открытия 2»)
+            new ScholarPage(21, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p21.title",
+                    "gui.gonzotech.notes.p21.body",
+                    List.of("gonzotech:second_alloy_foundry", "gonzotech:custom_alloy"),
+                    Layout.TEXT_LEFT),
+
+            // 22 — «Центрифуга ЦФ1УР» (после «Открытия 2»)
+            new ScholarPage(22, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p22.title",
+                    "gui.gonzotech.notes.p22.body",
+                    List.of("gonzotech:centrifuge"),
+                    Layout.TEXT_LEFT),
+
+            // 23 — «Машины второго поколения» (после «Открытия 2»)
+            new ScholarPage(23, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p23.title",
+                    "gui.gonzotech.notes.p23.body",
+                    List.of("gonzotech:second_wire", "gonzotech:second_accumulator",
+                            "gonzotech:second_electric_furnace", "gonzotech:second_pump",
+                            "gonzotech:second_cobble_generator", "gonzotech:second_universal_node"),
+                    Layout.TEXT_LEFT),
+
+            // 24 — «Продвинутый парогенератор» (после «Открытия 2»)
+            new ScholarPage(24, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p24.title",
+                    "gui.gonzotech.notes.p24.body",
+                    List.of("gonzotech:steamgen_casing", "gonzotech:steamgen_core"),
+                    Layout.TEXT_LEFT),
+
+            // 25 — «Ядерная топка» (после «Открытия 2»)
+            new ScholarPage(25, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p25.title",
+                    "gui.gonzotech.notes.p25.body",
+                    List.of("gonzotech:nuclear_firebox", "gonzotech:uranium_ingot"),
+                    Layout.TEXT_LEFT),
+
+            // ─────────── глава II «Познание мира» (по действиям) ───────────
+
+            // 26 — «Редстоун и лава» (по «Открытию 1» — базовое знание о мире)
+            new ScholarPage(26, ScholarChapter.ERA_2, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p26.title",
+                    "gui.gonzotech.notes.p26.body",
+                    List.of("gonzotech:crimson_obsidian", "minecraft:redstone",
+                            "minecraft:lava_bucket"),
+                    Layout.TEXT_LEFT),
+
+            // 27 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок)
+            new ScholarPage(27, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
+                    "gui.gonzotech.notes.p27.title",
+                    "gui.gonzotech.notes.p27.body",
+                    List.of("gonzotech:tungsten_block", "gonzotech:first_heat_pipe",
+                            "gonzotech:superdense_ice"),
+                    Layout.TEXT_LEFT),
+
+            // 28 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия)
+            new ScholarPage(28, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
+                    "gui.gonzotech.notes.p28.title",
+                    "gui.gonzotech.notes.p28.body",
+                    List.of("gonzotech:raw_cesium", "gonzotech:cesium_ingot"),
+                    Layout.TEXT_LEFT),
+
+            // 29 — «Угасание солнца» (впервые увиден угасший свет)
+            new ScholarPage(29, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_FADE,
+                    "gui.gonzotech.notes.p29.title",
+                    "gui.gonzotech.notes.p29.body",
+                    List.of(),
+                    Layout.TEXT_FULL)
     );
 
     /** Доступна ли страница при данном состоянии игрока. */
-    public static boolean isUnlocked(ScholarPage page, long playtimeTicks, boolean tier1Unlocked) {
-        return page.unlock().isMet(playtimeTicks, tier1Unlocked);
+    public static boolean isUnlocked(ScholarPage page, NotesState state) {
+        return page.unlock().isMet(state);
     }
 
     /** Индекс первой доступной страницы (для стартового экрана). */
-    public static int firstUnlockedIndex(long playtimeTicks, boolean tier1Unlocked) {
+    public static int firstUnlockedIndex(NotesState state) {
         for (int i = 0; i < PAGES.size(); i++) {
-            if (isUnlocked(PAGES.get(i), playtimeTicks, tier1Unlocked)) {
+            if (isUnlocked(PAGES.get(i), state)) {
                 return i;
             }
         }

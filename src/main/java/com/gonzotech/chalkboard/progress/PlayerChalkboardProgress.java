@@ -26,7 +26,10 @@ public class PlayerChalkboardProgress {
                     Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("savedExprJson", Map.of()).forGetter(PlayerChalkboardProgress::getSavedExprJsonStr),
                     Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("savedDrawingJson", Map.of()).forGetter(PlayerChalkboardProgress::getSavedDrawingJsonStr),
                     Codec.STRING.optionalFieldOf("globalDrawingJson", "").forGetter(PlayerChalkboardProgress::getGlobalDrawingJson),
-                    Codec.BOOL.optionalFieldOf("receivedScholarNotes", false).forGetter(PlayerChalkboardProgress::hasReceivedScholarNotes)
+                    Codec.BOOL.optionalFieldOf("receivedScholarNotes", false).forGetter(PlayerChalkboardProgress::hasReceivedScholarNotes),
+                    // Флаги действий «Заметок учёного» (глава «Познание мира»); поле
+                    // необязательное — старые сохранения без него декодируются как пустой набор.
+                    Codec.STRING.listOf().optionalFieldOf("noteFlags", List.of()).forGetter(p -> new ArrayList<>(p.getNoteFlags()))
             ).apply(instance, PlayerChalkboardProgress::new)
     );
 
@@ -37,14 +40,17 @@ public class PlayerChalkboardProgress {
     private final Map<String, String> savedDrawingJson;
     private String globalDrawingJson;
     private boolean receivedScholarNotes;
+    /** Одноразовые флаги действий для «Заметок учёного» (см. ScholarNoteFlags). */
+    private final Set<String> noteFlags;
 
     public PlayerChalkboardProgress() {
-        this(0, List.of(), List.of(), Map.of(), Map.of(), "", false);
+        this(0, List.of(), List.of(), Map.of(), Map.of(), "", false, List.of());
     }
 
     public PlayerChalkboardProgress(int currentDiscoveryIndex, List<Integer> tiers, List<String> secrets,
                                   Map<String, String> savedExpr, Map<String, String> savedDrawing,
-                                  String globalDrawingJson, boolean receivedScholarNotes) {
+                                  String globalDrawingJson, boolean receivedScholarNotes,
+                                  List<String> noteFlags) {
         this.currentDiscoveryIndex = Math.max(0, currentDiscoveryIndex);
         this.unlockedRecipeTiers = new HashSet<>(tiers);
         this.unlockedSecretQuantities = new HashSet<>(secrets);
@@ -52,6 +58,7 @@ public class PlayerChalkboardProgress {
         this.savedDrawingJson = new HashMap<>(savedDrawing);
         this.globalDrawingJson = globalDrawingJson != null ? globalDrawingJson : "";
         this.receivedScholarNotes = receivedScholarNotes;
+        this.noteFlags = new HashSet<>(noteFlags);
     }
 
     /** Выдавались ли игроку «Заметки учёного» (одноразовая выдача при первом входе). */
@@ -61,6 +68,24 @@ public class PlayerChalkboardProgress {
 
     public void setReceivedScholarNotes(boolean value) {
         this.receivedScholarNotes = value;
+    }
+
+    /** Флаги действий «Заметок учёного» (глава «Познание мира»). */
+    public Set<String> getNoteFlags() {
+        return noteFlags;
+    }
+
+    public boolean hasNoteFlag(String flag) {
+        return flag != null && noteFlags.contains(flag);
+    }
+
+    /**
+     * Устанавливает флаг действия. Возвращает true, если флаг был добавлен
+     * именно сейчас (тогда вызывающий должен переслать состояние заметок
+     * игроку, чтобы открытая GUI обновилась).
+     */
+    public boolean unlockNoteFlag(String flag) {
+        return flag != null && noteFlags.add(flag);
     }
 
     public int getCurrentDiscoveryIndex() {

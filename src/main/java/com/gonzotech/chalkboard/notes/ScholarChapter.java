@@ -12,7 +12,9 @@ package com.gonzotech.chalkboard.notes;
  */
 public enum ScholarChapter {
     ERA_1("chapter_era1", "gonzotech:scholar_notes", "notes_bg_era1"),
-    ERA_2("chapter_era2", "gonzotech:firebox", "notes_bg_era2"),
+    // Глава II «Познание мира»: страницы открываются по действиям игрока в мире
+    // (флаги ScholarNoteFlags), а не по «Открытиям». Иконка — багровый обсидиан.
+    ERA_2("chapter_era2", "gonzotech:crimson_obsidian", "notes_bg_era2"),
     ERA_3("chapter_era3", "gonzotech:stirling_generator", "notes_bg_era3"),
     ERA_4("chapter_era4", "gonzotech:first_wire", "notes_bg_era4"),
     ERA_5("chapter_era5", "gonzotech:chalkboard", "notes_bg_era5");

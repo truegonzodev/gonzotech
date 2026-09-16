@@ -1,6 +1,7 @@
 package com.gonzotech.chalkboard.client;
 
 import com.gonzotech.chalkboard.network.NotesNetwork;
+import com.gonzotech.chalkboard.notes.NotesState;
 import com.gonzotech.chalkboard.notes.ScholarChapter;
 import com.gonzotech.chalkboard.notes.ScholarNotesContent;
 import com.gonzotech.chalkboard.notes.ScholarPage;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * GUI-буклет «Заметки учёного» (вариант 2): контейнер (фон панели и вкладки) —
@@ -39,8 +41,9 @@ import java.util.Optional;
  * TEXT_FULL / TEXT_LEFT (правая половина под иллюстрацию) / IMAGE_FULL (только арт).
  * Заголовки — жирные. Длинный текст мотается колёсиком.
  *
- * <p>Разблокировка — {@link com.gonzotech.chalkboard.notes.ScholarUnlock}; данные
- * (наигранное время + tier 1) берутся из {@link NotesNetwork#CLIENT_DATA}.
+ * <p>Разблокировка — {@link com.gonzotech.chalkboard.notes.ScholarUnlock}; состояние
+ * (наигранное время + «Открытия» + флаги «Познания мира») берётся из
+ * {@link NotesNetwork#CLIENT_DATA} и собирается в {@link NotesState}.
  */
 public class ScholarNotesScreen extends Screen {
 
@@ -84,21 +87,19 @@ public class ScholarNotesScreen extends Screen {
     protected void init() {
         this.leftPos = (this.width - FRAME_W) / 2;
         this.topPos = (this.height - FRAME_H) / 2;
-        this.pageIndex = ScholarNotesContent.firstUnlockedIndex(playtime(), tier1());
+        this.pageIndex = ScholarNotesContent.firstUnlockedIndex(state());
         this.scroll = 0;
         // Сбрасываем кэш размеров: если автор перерисовал PNG в другом разрешении
         // и сделал перезагрузку ресурсов (F3+T), подхватим новый размер.
         PNG_SIZE_CACHE.clear();
     }
 
-    private long playtime() {
+    /** Актуальное состояние гейтинга страниц из последнего серверного ответа. */
+    private NotesState state() {
         NotesNetwork.NotesDataPayload d = NotesNetwork.CLIENT_DATA;
-        return d != null ? d.playtimeTicks() : 0L;
-    }
-
-    private boolean tier1() {
-        NotesNetwork.NotesDataPayload d = NotesNetwork.CLIENT_DATA;
-        return d != null && d.tier1Unlocked();
+        if (d == null) return new NotesState(0L, false, false, Set.of());
+        return new NotesState(d.playtimeTicks(), d.tier1Unlocked(), d.tier2Unlocked(),
+                Set.copyOf(d.noteFlags()));
     }
 
     // ─────────────────────────── навигация ───────────────────────────
@@ -106,7 +107,7 @@ public class ScholarNotesScreen extends Screen {
     private boolean unlocked(int idx) {
         List<ScholarPage> pages = ScholarNotesContent.PAGES;
         if (idx < 0 || idx >= pages.size()) return false;
-        return ScholarNotesContent.isUnlocked(pages.get(idx), playtime(), tier1());
+        return ScholarNotesContent.isUnlocked(pages.get(idx), state());
     }
 
     private int nextUnlocked(int from) {

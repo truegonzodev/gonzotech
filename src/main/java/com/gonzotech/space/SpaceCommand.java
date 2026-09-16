@@ -136,6 +136,17 @@ public final class SpaceCommand {
         SpaceSkyNetwork.sendSunStateToAll(server, state);
 
         if (state == SunState.GONE) {
+            // «Познание мира»: каждый онлайн-игрок, ставший свидетелем угасания
+            // Солнца, получает флаг для страницы «Угасание солнца» (одноразовый).
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                com.gonzotech.chalkboard.progress.PlayerChalkboardProgress progress =
+                    p.getData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS);
+                if (progress.unlockNoteFlag(com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_FADE)) {
+                    p.setData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS, progress);
+                    com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(p);
+                }
+            }
+
             // При исчезновении солнца — вечная тьма: time set 18000 + doDaylightCycle false
             for (ResourceKey<Level> dimKey : SOLAR_DIMENSIONS) {
                 ServerLevel lvl = server.getLevel(dimKey);
