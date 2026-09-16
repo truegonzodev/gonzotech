@@ -30,7 +30,7 @@ public final class SecondElectricFurnaceScreen extends MachineScreen<SecondElect
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         // Две стрелки прогресса переплавки (50x14). Tier 2: у каждой — свой
         // тултип «Переплавка: N%».
-        int[] progressX = {x + 63, x + 53};
+        int[] progressX = {x + 63, x + 63};
         int[] progressY = {y + 18, y + 54};
         for (int lane = 0; lane < 2; lane++) {
             float cook = menu.cookTotal(lane) > 0
