@@ -30,8 +30,8 @@ public final class TurbineScreen extends MachineScreen<TurbineMenu> {
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
-        int steamX = x + 51;
-        int gtuX = x + 109;
+        int steamX = x + 98;
+        int gtuX = x + 62;
 
         int steamCapacity = menu.steamCapacity();
         int gtuCapacity = menu.gtuCapacity();
