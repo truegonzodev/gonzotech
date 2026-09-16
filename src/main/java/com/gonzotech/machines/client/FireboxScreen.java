@@ -27,16 +27,16 @@ public class FireboxScreen extends MachineScreen<FireboxMenu> {
 
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        // Индикатор горения топлива (между слотами топлива и нагрузки).
+        // Индикатор горения топлива (вертикальный, между слотами сырья и топлива).
         float lit = menu.litDuration() > 0 ? (float) menu.litTime() / menu.litDuration() : 0f;
-        drawVBarTex(g, x + 46, y + 37, 14, 14, lit, BAR_BURNUP);
+        drawVBarTex(g, x + 44, y + 35, 16, 16, lit, BAR_BURNUP);
 
         // Стрелка прогресса переплавки.
         float cook = menu.cookTotal() > 0 ? (float) menu.cookProgress() / menu.cookTotal() : 0f;
-        drawHBarTex(g, x + 68, y + 34, 24, 16, cook, BAR_SMELTING);
+        drawHBarTex(g, x + 63, y + 36, 50, 14, cook, BAR_SMELTING);
 
-        // Шкала GTH справа.
-        int barX = x + 150;
+        // Шкала GTH слева.
+        int barX = x + 8;
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
