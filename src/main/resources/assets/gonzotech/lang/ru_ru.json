@@ -526,6 +526,7 @@
   "gui.gonzotech.hot_water": "Кипяток: %s / %s mB",
   "gui.gonzotech.centrifuge.washing_progress": "Промывка: %s%%",
   "gui.gonzotech.crusher.crushing_progress": "Дробление: %s%%",
+  "gui.gonzotech.smelting_progress": "Переплавка: %s%%",
   "gui.gonzotech.second_cobble_generator.generation_progress": "Генерация: %s%%",
   "block.gonzotech.turbine_casing": "Корпус турбины",
   "block.gonzotech.turbine_rotor": "Ротор турбины",
