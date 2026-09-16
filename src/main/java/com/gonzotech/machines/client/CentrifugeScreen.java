@@ -35,10 +35,11 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
         int barW = 16;
         int barH = 52;
         int hotWaterX = x + 8;
-        int gtuX = x + 28;
-        int washX = x + 76;
+        int gtuX = x + 26;
+        // Промывка: прогресс-шкала ветки — без тултипа (железное правило).
+        int washX = x + 81;
         int washY = y + 35;
-        int washW = 24;
+        int washW = 33;
         int washH = 16;
 
         float hotWater = (float) menu.hotWater() / MachineDefs.CENTRIFUGE_HOT_WATER_CAPACITY;
@@ -56,10 +57,6 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.CENTRIFUGE_GTU_CAPACITY))),
-                mouseX, mouseY);
-        } else if (inRect(mouseX, mouseY, washX, washY, washW, washH)) {
-            graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.centrifuge.washing_progress", menu.washProgressPercent())),
                 mouseX, mouseY);
         }
     }
