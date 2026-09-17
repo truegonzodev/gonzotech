@@ -360,7 +360,7 @@ public final class SpaceCommand {
         CommandSourceStack source = ctx.getSource();
         var server = source.getServer();
         if (server == null) return 0;
-        long day = LongArgumentType.getLong(ctx, "day");
+        long day = IntegerArgumentType.getInteger(ctx, "day");
         com.gonzotech.sunevent.SunEventData data =
             com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
         data.nextEventDay = day;
