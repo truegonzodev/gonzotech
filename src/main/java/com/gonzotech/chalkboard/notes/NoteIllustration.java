@@ -92,8 +92,12 @@ public record NoteIllustration(
      * Плоская «колода» структуры: стопка слоёв = подстраницы (СНИЗУ ВВЕРХ),
      * каждый слой — сетка {@code cols}×строк. Нефиксированные клетки слоя
      * случайно из пула; стрелки листают слои, таймер перемешивает.
+     * {@code guaranteedId} + {@code minGuaranteed} — среди случайных клеток
+     * ВСЕЙ колоды гарантируется минимум столько клеток с этим id (например,
+     * ядра парогена всегда видны, а не только «драгоценные» блоки).
      */
-    public record DeckView(int cols, List<DeckLayer> layers, String captionKey) {
+    public record DeckView(int cols, List<DeckLayer> layers, String captionKey,
+                           String guaranteedId, int minGuaranteed) {
         public int subpageCount() {
             return layers.size();
         }
@@ -169,10 +173,11 @@ public record NoteIllustration(
      *  (подстраницы снизу вверх); нефиксированные клетки случайно из пула,
      *  {@code cycleTicks} > 0 — перемешиваются («тикают»). */
     public static NoteIllustration structureRightDeck(int cycleTicks, int cols,
-                                                      List<DeckLayer> layers, String captionKey) {
+                                                      List<DeckLayer> layers, String captionKey,
+                                                      String guaranteedId, int minGuaranteed) {
         return new NoteIllustration(NoteIllustrationKind.STRUCTURE_RIGHT,
                 null, null, null, null, null, null, cycleTicks, null, null, null, null,
-                new DeckView(cols, layers, captionKey));
+                new DeckView(cols, layers, captionKey, guaranteedId, minGuaranteed));
     }
 
     /** Брожение: 4 пары «вход → выход». */

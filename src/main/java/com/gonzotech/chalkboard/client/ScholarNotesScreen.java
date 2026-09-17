@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -627,23 +628,60 @@ public class ScholarNotesScreen extends Screen {
 
     /**
      * Плоская «колода»: активный слой (подстраница) сеткой cols×rows.
-     * Нефиксированные клетки — случайно из пула; перемешивание детерминировано
-     * номером кадра (рендер вызывают каждый кадр — раскладка не может
-     * дрожать), новый расклад — каждый cycleTicks.
+     * Случайные клетки — ОДИН расклад на кадр на ВСЮ колоду: один Random на
+     * все слои в фиксированном порядке (не зависит от открытого слоя —
+     * раскладка не дрожит и слои согласованы), новый расклад — каждый
+     * cycleTicks. Перед показом гарантируется минимум {@code minGuaranteed}
+     * клеток с {@code guaranteedId} среди случайных клеток всех слоёв
+     * (ядра парогена всегда видны, а не только «драгоценные» блоки).
      */
     private void drawDeckContent(GuiGraphics g, NoteIllustration.DeckView view, int cycle,
                                  int mouseX, int mouseY) {
-        NoteIllustration.DeckLayer layer = view.layers().get(structureSubpage);
         int cols = view.cols();
+        Random rnd = new Random(((long) cycle + 1) * 1000003L);
+        List<List<String>> rolls = new ArrayList<>(view.layers().size());
+        List<int[]> randomSpots = new ArrayList<>(); // [layerIdx, row-major idx]
+        for (int li = 0; li < view.layers().size(); li++) {
+            NoteIllustration.DeckLayer layer = view.layers().get(li);
+            List<String> cells = new ArrayList<>(layer.fixed().size());
+            boolean roll = layer.pool() != null && !layer.pool().isEmpty();
+            for (int i = 0; i < layer.fixed().size(); i++) {
+                String fixed = layer.fixed().get(i);
+                if (roll && fixed.isEmpty()) {
+                    cells.add(layer.pool().get(rnd.nextInt(layer.pool().size())));
+                    randomSpots.add(new int[]{li, i});
+                } else {
+                    cells.add(fixed);
+                }
+            }
+            rolls.add(cells);
+        }
+        // Гарантия: минимум minGuaranteed ядра (guaranteedId) в случайных клетках
+        // всей колоды; недостающие вписываем в случайные позиции (тот же Random).
+        String guaranteed = view.guaranteedId();
+        if (guaranteed != null && view.minGuaranteed() > 0 && !randomSpots.isEmpty()) {
+            int have = 0;
+            for (List<String> cells : rolls) {
+                for (String id : cells) {
+                    if (guaranteed.equals(id)) have++;
+                }
+            }
+            if (have < view.minGuaranteed()) {
+                List<int[]> candidates = new ArrayList<>(randomSpots);
+                Collections.shuffle(candidates, rnd);
+                for (int[] spot : candidates) {
+                    if (have >= view.minGuaranteed()) break;
+                    List<String> cells = rolls.get(spot[0]);
+                    if (guaranteed.equals(cells.get(spot[1]))) continue;
+                    cells.set(spot[1], guaranteed);
+                    have++;
+                }
+            }
+        }
+        NoteIllustration.DeckLayer layer = view.layers().get(structureSubpage);
+        List<String> cells = rolls.get(structureSubpage);
         int rows = layer.fixed().size() / cols;
-        Random rnd = new Random(((long) cycle + 1) * 1000003L + structureSubpage * 131L);
-        BiFunction<Integer, Integer, String> cell = (gx, gy) -> {
-            String id = layer.fixed().get(gy * cols + gx);
-            if (!id.isEmpty()) return id;
-            List<String> pool = layer.pool();
-            if (pool == null || pool.isEmpty()) return "";
-            return pool.get(rnd.nextInt(pool.size()));
-        };
+        BiFunction<Integer, Integer, String> cell = (gx, gy) -> cells.get(gy * cols + gx);
         drawItemGrid(g, cols, rows, cell, mouseX, mouseY, 0);
     }
 

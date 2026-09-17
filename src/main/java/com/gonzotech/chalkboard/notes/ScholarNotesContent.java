@@ -196,8 +196,10 @@ public final class ScholarNotesContent {
             // справа структура: МИНИМАЛЬНАЯ турбина 3×3×3 (24 корпуса, ротор
             // в центре, паровой узел слева и узел провода справа в среднем ряду
             // передней грани) — 3 подстраницы-СЛОЯ: Нижний/Средний/Верхний слой
+            // Заголовок = продублированный «Паровая турбина» (стр. 15) —
+            // страница-продолжение про турбину (автор 2026-09-18)
             new ScholarPage(16, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
-                    null, null,
+                    "gui.gonzotech.notes.p15.title", null,
                     List.of("gonzotech:turbine_rotor"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingStructure(List.of("minecraft:iron_nugget", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "gonzotech:pseudo_coil", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "minecraft:iron_nugget"), "gonzotech:turbine_rotor",
@@ -244,8 +246,10 @@ public final class ScholarNotesContent {
 
             // 21 — пустая страница после металлургии — слева ферро-пыль, справа нержавейка;
             // витрина — пыли сплавов
+            // Заголовок = продублированный «Простая металлургия» (стр. 20) —
+            // страница-продолжение про сплавы (автор 2026-09-18)
             new ScholarPage(21, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
-                    null, null,
+                    "gui.gonzotech.notes.p20.title", null,
                     List.of("gonzotech:cantor_dust", "gonzotech:ferromagnetic_dust",
                             "gonzotech:stainless_steel_dust", "gonzotech:nitinol_dust",
                             "gonzotech:invar_dust", "gonzotech:vr20_dust",
@@ -309,8 +313,10 @@ public final class ScholarNotesContent {
 
             // 27 — пустая страница после логистики 2 — ЦИКЛ: слева провод 2 (4 варианта:
             // медь/алюминий/золото/серебро), справа остальные трубы тир-2 (3 с на рецепт)
+            // Заголовок = продублированный «Логистика второго поколения» (стр. 26)
+            // — страница-продолжение про логистику тир-2 (автор 2026-09-18)
             new ScholarPage(27, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
-                    null, null, List.of(), Layout.TEXT_LEFT,
+                    "gui.gonzotech.notes.p26.title", null, List.of(), Layout.TEXT_LEFT,
                     NoteIllustration.craftingFullCycling(60,
                             List.of(
                                     new NoteIllustration.Craft(List.of("minecraft:paper", "minecraft:paper", "minecraft:paper", "gonzotech:copper_wire", "gonzotech:copper_wire", "gonzotech:copper_wire", "gonzotech:nickel_plate", "gonzotech:nickel_plate", "minecraft:paper"), "gonzotech:second_wire"),
@@ -472,7 +478,7 @@ public final class ScholarNotesContent {
                 deckLayer5(nodes, null, pool),
                 deckLayer5(plain, null, pool),
                 deckLayer5(plain, casing, null)),
-                NoteIllustration.CAPTION_VIEW_TOP);
+                NoteIllustration.CAPTION_VIEW_TOP, "gonzotech:steamgen_core", 2);
     }
 
     /** Доступна ли страница при данном состоянии игрока. */
