@@ -46,10 +46,14 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, Lis
     }
 
     /**
-     * Минимальная турбина 3×3×3 (стр. после турбины): 24 корпуса, ротор в центре,
-     * паровой узел на верхней грани, узел провода на правой — ровно по валидации
-     * {@code TurbineStructure} (внутри — только роторы, оболочка — корпус/порты,
-     * порт каждого типа ≥1). 4 подстраницы: изо + 3 слоя.
+     * Минимальная турбина 3×3×3 (стр. после турбины) — ровно по валидации
+     * {@code TurbineStructure} (внутри — только ротор, оболочка — корпус/порты,
+     * порт каждого типа ≥1) и схеме автора: слои снизу вверх —
+     *   слой 1: чисто корпуса;
+     *   слой 2: [корпус][корпус][узел пара] / [корпус][ротор][корпус] /
+     *           [корпус][корпус][узел провода];
+     *   слой 3: чисто корпуса.
+     * 4 подстраницы: изо + 3 слоя.
      */
     public static StructureModel turbineMinimum() {
         List<StructureBlock> out = new ArrayList<>();
@@ -60,9 +64,9 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, Lis
                     String id;
                     if (!outer) {
                         id = "gonzotech:turbine_rotor";
-                    } else if (y == 2 && x == 1 && z == 1) {
+                    } else if (y == 1 && x == 2 && z == 0) {
                         id = "gonzotech:first_steam_node";
-                    } else if (x == 2 && y == 1 && z == 1) {
+                    } else if (y == 1 && x == 2 && z == 2) {
                         id = "gonzotech:first_wire_node";
                     } else {
                         id = "gonzotech:turbine_casing";
