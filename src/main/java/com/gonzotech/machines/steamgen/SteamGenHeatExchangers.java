@@ -5,6 +5,7 @@ import com.gonzotech.machines.processing.AlloyMaterialCatalog;
 import com.gonzotech.machines.processing.AlloyMaterialCatalog.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.registries.DeferredBlock;
 
 import java.util.Collections;
@@ -35,10 +36,19 @@ public final class SteamGenHeatExchangers {
     }
 
     /**
-     * Ванильные блоки-теплообменники (явный список по утверждённой таблице).
-     * Заполняется после согласования значений; пока пуст.
+     * Ванильные блоки-теплообменники — явный список по утверждённой таблице
+     * (автор 2026-09-18: «У ванильных же тоже есть статы»): значения —
+     * в {@link AlloyMaterialCatalog} (namespace minecraft). Значение карты =
+     * id хост-материала в каталоге; статы (C, H) берутся из каталога, а не
+     * хардкодятся (единственный источник правды).
      */
-    private static final Map<Block, Stats> VANILLA_EXCHANGERS = new LinkedHashMap<>();
+    private static final Map<Block, String> VANILLA_EXCHANGERS = Map.of(
+        Blocks.IRON_BLOCK, "iron",
+        Blocks.COPPER_BLOCK, "copper",
+        Blocks.GOLD_BLOCK, "gold",
+        Blocks.DIAMOND_BLOCK, "diamond",
+        Blocks.REDSTONE_BLOCK, "redstone"
+    );
 
     private static final Map<Block, Stats> MAP = buildMap();
 
@@ -56,8 +66,14 @@ public final class SteamGenHeatExchangers {
             if (material == null) continue;
             map.put(entry.getValue().get(), new Stats(material.conductivity(), material.heatResistance()));
         }
-        // Ванильные драгоценные блоки — по утверждённой таблице.
-        VANILLA_EXCHANGERS.forEach(map::putIfAbsent);
+        // Ванильные блоки — явный список, статы у хост-материала из каталога
+        // (железо C25+H60, медь 95+35, золото 100+30, алмаз 8+92, редстоун 100+40).
+        for (Map.Entry<Block, String> entry : VANILLA_EXCHANGERS.entrySet()) {
+            Material material = AlloyMaterialCatalog.material(
+                ResourceLocation.fromNamespaceAndPath("minecraft", entry.getValue()));
+            if (material == null) continue;
+            map.put(entry.getKey(), new Stats(material.conductivity(), material.heatResistance()));
+        }
         return Collections.unmodifiableMap(map);
     }
 
