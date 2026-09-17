@@ -1,9 +1,7 @@
 package com.gonzotech.chalkboard.notes;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Статическая модель структуры для иллюстраций «Заметок учёного»
@@ -21,15 +19,6 @@ import java.util.Map;
  */
 public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, List<StructureBlock> blocks) {
 
-    private final Map<Long, StructureBlock> byPos;
-
-    public StructureModel {
-        byPos = new HashMap<>();
-        for (StructureBlock b : blocks) {
-            byPos.put(key(b.x(), b.y(), b.z()), b);
-        }
-    }
-
     /** Ключ ячейки: x*4096 + y*64 + z (размеры до 16 блоков). */
     public static long key(int x, int y, int z) {
         return (long) x * 4096L + (long) y * 64L + z;
@@ -40,9 +29,13 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, Lis
         return 1 + sizeY;
     }
 
-    /** Клетка (x, y, z) модели, или null — воздух. */
+    /** Клетка (x, y, z) модели, или null — воздух. (record не может иметь
+     *  доп. инстанс-полей — ищем по списку; блоков ≤125, вызовы только в GUI). */
     public StructureBlock at(int x, int y, int z) {
-        return byPos.get(key(x, y, z));
+        for (StructureBlock b : blocks) {
+            if (b.x() == x && b.y() == y && b.z() == z) return b;
+        }
+        return null;
     }
 
     /** Топка внизу + котёл на ней (стр. «Топка и котёл»). 3 подстраницы: изо + 2 слоя. */
