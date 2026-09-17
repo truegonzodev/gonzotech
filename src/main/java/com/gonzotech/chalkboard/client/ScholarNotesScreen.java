@@ -32,6 +32,11 @@ import java.util.Set;
  * рисованные PNG; весь текст рисуется шрифтом ради локализации; иллюстрации
  * страниц — рисованный PNG на страницу ({@code page_N.png}).
  *
+ * <p>Две книги: <b>линейная</b> — главы-эпохи (I/III/IV/V) делят одну историю
+ * страниц 1..X, стрелки листают насквозь все открытые главы; <b>отдельная</b> —
+ * «Познание мира» (своя история 1..X по действиям игрока): вкладка отделена от
+ * четырёх эпох, стрелки и счётчик страниц не пересекаются между книгами.
+ *
  * <p>Контейнер = панель-фон ПО ГЛАВЕ ({@code notes_bg_era1..era5.png}, выбирается
  * активной эрой) + {@code notes_unlocked_tab.png} + {@code notes_locked_tab.png}.
  * Иконка-предмет главы, тинт активной вкладки, «?» на закрытой — это РЕНДЕР поверх
@@ -53,6 +58,8 @@ public class ScholarNotesScreen extends Screen {
     private static final int TAB_W = 28;
     private static final int TAB_H = 26;
     private static final int TAB_GAP = 4;
+    /** Разрыв между вкладками линейных эпох и отдельной книгой «Познание мира». */
+    private static final int SIDE_BOOK_GAP = 12;
 
     private static final ResourceLocation TEX_TAB_UNLOCKED =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/notes/notes_unlocked_tab.png");
@@ -110,16 +117,26 @@ public class ScholarNotesScreen extends Screen {
         return ScholarNotesContent.isUnlocked(pages.get(idx), state());
     }
 
+    /** Индекс из той же книги, что и текущая страница
+     *  (линейная эпоха ↔ «Познание мира» не пересекаются). */
+    private boolean sameBook(int idx) {
+        List<ScholarPage> pages = ScholarNotesContent.PAGES;
+        if (idx < 0 || idx >= pages.size() || pageIndex < 0 || pageIndex >= pages.size()) {
+            return false;
+        }
+        return pages.get(idx).chapter().side() == pages.get(pageIndex).chapter().side();
+    }
+
     private int nextUnlocked(int from) {
         for (int i = from + 1; i < ScholarNotesContent.PAGES.size(); i++) {
-            if (unlocked(i)) return i;
+            if (sameBook(i) && unlocked(i)) return i;
         }
         return -1;
     }
 
     private int prevUnlocked(int from) {
         for (int i = from - 1; i >= 0; i--) {
-            if (unlocked(i)) return i;
+            if (sameBook(i) && unlocked(i)) return i;
         }
         return -1;
     }
@@ -187,16 +204,19 @@ public class ScholarNotesScreen extends Screen {
 
     private void drawTabs(GuiGraphics g, int mouseX, int mouseY) {
         tabRects.clear();
-        ScholarChapter[] chapters = ScholarChapter.values();
-        int totalH = chapters.length * TAB_H + (chapters.length - 1) * TAB_GAP;
+        ScholarChapter[] chapters = orderedChapters();
+        int totalH = chapters.length * TAB_H + (chapters.length - 1) * TAB_GAP
+                + (chapters[chapters.length - 1].side() ? SIDE_BOOK_GAP : 0);
         int startY = topPos + (FRAME_H - totalH) / 2;
         int tabX = leftPos - TAB_W + 6;
 
         ScholarChapter active = ScholarNotesContent.PAGES.get(pageIndex).chapter();
 
+        int ty = startY;
         for (int i = 0; i < chapters.length; i++) {
             ScholarChapter ch = chapters[i];
-            int ty = startY + i * (TAB_H + TAB_GAP);
+            // Отдельная книга («Познание мира») отделена разрывом от вкладок эпох.
+            if (ch.side()) ty += SIDE_BOOK_GAP;
             boolean isActive = ch == active;
             boolean available = firstPageOfChapter(ch) >= 0;
             boolean hovered = inRect(mouseX, mouseY, tabX, ty, TAB_W, TAB_H);
@@ -226,7 +246,22 @@ public class ScholarNotesScreen extends Screen {
             }
 
             tabRects.add(new int[]{tabX, ty, TAB_W, TAB_H, ch.ordinal()});
+            ty += TAB_H + TAB_GAP;
         }
+    }
+
+    /** Порядок вкладок: линейные эпохи (порядок enum), затем отдельная книга. */
+    private static ScholarChapter[] orderedChapters() {
+        List<ScholarChapter> linear = new ArrayList<>();
+        List<ScholarChapter> side = new ArrayList<>();
+        for (ScholarChapter ch : ScholarChapter.values()) {
+            if (ch.side()) side.add(ch);
+            else linear.add(ch);
+        }
+        List<ScholarChapter> out = new ArrayList<>(linear.size() + side.size());
+        out.addAll(linear);
+        out.addAll(side);
+        return out.toArray(new ScholarChapter[0]);
     }
 
     private void drawArrows(GuiGraphics g, int mouseX, int mouseY) {
@@ -531,15 +566,21 @@ public class ScholarNotesScreen extends Screen {
         }
     }
 
+    /** Сколько ОТКРЫТЫХ страниц в книге текущей страницы (для «N / M»). */
     private int visibleCount() {
         int c = 0;
-        for (int i = 0; i < ScholarNotesContent.PAGES.size(); i++) if (unlocked(i)) c++;
+        for (int i = 0; i < ScholarNotesContent.PAGES.size(); i++) {
+            if (sameBook(i) && unlocked(i)) c++;
+        }
         return Math.max(1, c);
     }
 
+    /** Позиция открытой страницы среди открытых страниц ЕЁ книги (0-based). */
     private int visibleOrdinal(int idx) {
         int c = 0;
-        for (int i = 0; i < idx; i++) if (unlocked(i)) c++;
+        for (int i = 0; i < idx; i++) {
+            if (sameBook(i) && unlocked(i)) c++;
+        }
         return c;
     }
 

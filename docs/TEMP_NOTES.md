@@ -237,7 +237,7 @@
 
 ## 9. «Заметки учёного»: гейтинг страниц и «Познание мира»
 
-- `chalkboard/notes/`: `ScholarNotesContent` (линейный массив 29 страниц `page_N.png`), `ScholarChapter` (5 корешков-эпох, у каждой свой bg-панель `notes_bg_eraN.png` + иконка-предмет), `ScholarPage` (number/chapter/unlock/title/body/showcase/layout: `TEXT_FULL`/`TEXT_LEFT`/`IMAGE_FULL`), `ScholarUnlock`, `ScholarNoteFlags`, `NotesState`.
+- `chalkboard/notes/`: `ScholarNotesContent` (линейный массив 29 страниц `page_N.png`), `ScholarChapter` (5 корешков-эпох, у каждой свой bg-панель `notes_bg_eraN.png` + иконка-предмет; `side()` — отдельная книга), `ScholarPage` (number/chapter/unlock/title/body/showcase/layout: `TEXT_FULL`/`TEXT_LEFT`/`IMAGE_FULL`), `ScholarUnlock`, `ScholarNoteFlags`, `NotesState`.
 - **`ScholarUnlock`** — три семейства условий, вычисляются на клиенте по `NotesState`:
   - стартовые: `ALWAYS`, `PLAYTIME_5MIN` (≥6000 тиков);
   - по «Открытиям»: `DISCOVERY_1` (recipe tier 1), `DISCOVERY_2` (recipe tier 2);
@@ -250,8 +250,9 @@
   - `sun_fade` — `SpaceCommand.setSun(GONE)`: флаг всем онлайн-игрокам (свидетели угасания).
   - При НОВОМ флаге (`unlockNoteFlag` вернул true) вызывается `NotesNetwork.sendToPlayer` — открытая буклет-GUI обновляется на лету.
 - **Страницы**: 1–14 (эпоха I, как было) + 15–25 (продолжение эпохи I: 15–16 `DISCOVERY_1` — турбина/редстоун, 17–25 `DISCOVERY_2` — дробилка…ядерная топка) + 26–29 (глава II «Познание мира»: 26 `DISCOVERY_1` — багровый обсидиан; 27/28/29 — флаги wolfram/cesium/sun_fade). Закрытые страницы навигация ПРОПУСКАЕТ (prev/next/tab идут по `unlocked(i)`).
+- **Две книги (решение автора 2026-09-17):** линейная — главы-эпохи (I/III/IV/V) делят ОДНУ историю страниц 1..X: стрелки листают насквозь все открытые главы (в будущем — до сфер Дайсона в поздних эпохах); отдельная — «Познание мира» (глава II, `ScholarChapter.side() == true`): СВОЯ линейная история 1..X. Реализация в `ScholarNotesScreen`: вкладки = 4 эпохи + разрыв `SIDE_BOOK_GAP=12px` + вкладка «Познания мира» внизу; `nextUnlocked`/`prevUnlocked`/`visibleCount`/`visibleOrdinal` — только в пределах книги текущей страницы (`sameBook`); стартовый индекс — `ScholarNotesContent.firstUnlockedIndex` (линейная книга; стр. 1 открыта всегда).
 - **Иконка главы II** — `gonzotech:crimson_obsidian` (багровый обсидиан); название — «Познание мира» (`chapter_era2`).
-- **Тексты** страниц — в lang `gui.gonzotech.notes.pN.{title,body}` (ru_ru + en_us), простая разметка `**жирный**` / `*курсив*`. Иллюстрации — `page_15..29.png` (сейчас плейсхолдеры 256×200, автор перерисует).
+- **Тексты** страниц — в lang `gui.gonzotech.notes.pN.{title,body}` (ru_ru + en_us), простая разметка `**жирный**` / `*курсив*`. Иллюстрации — `page_15..29.png` (сейчас пустые ПРОЗРАЧНЫЕ плейсхолдеры 32-bit ARGB 256×200 — автор перерисует; генератор `/home/user/make_transparent_placeholders.py` с полной декодер-проверкой).
 - **Честность цифр**: числа в текстах (56 мБ→1,5 GTU, пик ~56 роторов, M-множитель парогена 1,56/2,34, пороги 50K/64K/94K, 112K буфер вольфрама) должны совпадать с `TurbineMath`/`SteamGenMath`/`NuclearDefs`/`MachineDefs`. При правке баланса — править и заметки.
 
 ---
