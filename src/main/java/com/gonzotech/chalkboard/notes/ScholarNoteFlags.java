@@ -27,6 +27,14 @@ public final class ScholarNoteFlags {
      */
     public static final String DISCOVERY_3 = "discovery_3";
 
+    /**
+     * Наступил ПЕРВЫЙ суневент (багровый день) — выдаётся сервером всем
+     * онлайн-игрокам (SunEventServer). Открывает страницу про ослабевшее
+     * Солнце. (Старый {@link #SUN_FADE} оставлен для GONE-сценария, но
+     * страниц под него пока не планируется.)
+     */
+    public static final String SUN_EVENT = "sun_event";
+
     private ScholarNoteFlags() {
     }
 }

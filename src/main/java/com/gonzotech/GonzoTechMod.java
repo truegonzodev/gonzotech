@@ -79,6 +79,8 @@ public class GonzoTechMod {
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
+        // Суневеты (багровые дни): драйвер + синк при заходе.
+        NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
@@ -140,6 +142,9 @@ public class GonzoTechMod {
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
 
         com.gonzotech.space.SpaceSkyNetwork.register(registrar);
+
+        // Суневеты: nextEventDay/lastEventDay/suneventDays на клиент.
+        com.gonzotech.sunevent.SunEventNetwork.register(registrar);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

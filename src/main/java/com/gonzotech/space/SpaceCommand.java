@@ -28,6 +28,7 @@ import java.util.Set;
  * <ul>
  *   <li>{@code /gonzotech tp <dimension>} — телепорт между измерениями.</li>
  *   <li>{@code /gonzotech debug sun default|dyson|gone|blackhole|blackhole_dyson} — смена состояния Солнца.</li>
+ *   <li>{@code /gonzotech debug sunevent status|reset} — суневеты: состояние / «Икар»-сброс.</li>
  *   <li>{@code /gonzotech debug alpha_centauri default|dyson} — сфера Дайсона для Альфы Центавра.</li>
  *   <li>{@code /gonzotech debug yx989 default|dyson} (алиасы y989, yx989_k2) — кольцо Дайсона Yx989-k2.</li>
  *   <li>{@code /gonzotech debug zangler default|dyson} (алиас zangler_11) — кольцо Дайсона Zangler-11.</li>
@@ -111,6 +112,11 @@ public final class SpaceCommand {
             .then(Commands.literal("default").executes(c -> setStar(c, "zangler", false, "Чёрная Дыра Zangler-11")))
             .then(Commands.literal("dyson").executes(c -> setStar(c, "zangler", true, "Чёрная Дыра Zangler-11")));
 
+        // /gonzotech debug sunevent status|reset — состояние суневетов
+        LiteralArgumentBuilder<CommandSourceStack> suneventDebug = Commands.literal("sunevent")
+            .then(Commands.literal("status").executes(SpaceCommand::suneventStatus))
+            .then(Commands.literal("reset").executes(SpaceCommand::suneventReset));
+
         // /gonzotech debug notes <flag> unlock|forget — debug-гейт по страницам заметок
         LiteralArgumentBuilder<CommandSourceStack> notesDebug = Commands.literal("notes")
             .then(Commands.argument("flag", StringArgumentType.word())
@@ -127,7 +133,8 @@ public final class SpaceCommand {
             .then(yx989K2Debug)
             .then(zanglerDebug)
             .then(zangler11Debug)
-            .then(notesDebug);
+            .then(notesDebug)
+            .then(suneventDebug);
 
         dispatcher.register(
             Commands.literal("gonzotech")
@@ -145,6 +152,13 @@ public final class SpaceCommand {
         }
 
         SpaceSkyNetwork.sendSunStateToAll(server, state);
+
+        // Бонус (2026-09-18): состояние Солнца персистентно — переживает
+        // рестарт сервера (SunEventData), а не только переподключение.
+        com.gonzotech.sunevent.SunEventData sunData =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        sunData.sunState = state;
+        sunData.setDirty();
 
         if (state == SunState.GONE) {
             // «Познание мира»: каждый онлайн-игрок, ставший свидетелем угасания
@@ -209,7 +223,8 @@ public final class SpaceCommand {
         com.gonzotech.chalkboard.notes.ScholarNoteFlags.CESIUM,
         com.gonzotech.chalkboard.notes.ScholarNoteFlags.WOLFRAM,
         com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_FADE,
-        com.gonzotech.chalkboard.notes.ScholarNoteFlags.DISCOVERY_3);
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.DISCOVERY_3,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_EVENT);
 
     private static final SuggestionProvider<CommandSourceStack> NOTE_FLAG_SUGGESTIONS =
         (ctx, builder) -> SharedSuggestionProvider.suggest(
@@ -222,8 +237,9 @@ public final class SpaceCommand {
      * /gonzotech debug notes &lt;flag&gt; unlock|forget — админский debug-гейт по
      * страницам «Заметок учёного» (выполняет игрок — на себя):
      * <ul>
-     *   <li>{@code cesium} / {@code wolfram} / {@code sun_fade} / {@code discovery_3} —
-     *       флаги «Познания мира» (стр. 32-33 / 34 / 35 / 36-40 «Глубокая металлургия»);</li>
+     *   <li>{@code cesium} / {@code wolfram} / {@code sun_fade} / {@code sun_event} /
+     *       {@code discovery_3} — флаги «Познания мира» (стр. 32-33 / 34 / 35 /
+     *       36-40 «Глубокая металлургия»);</li>
      *   <li>{@code discovery_1} / {@code discovery_2} — тир-рецепты 1/2
      *       (все страницы DISCOVERY_1/2, т.ч. редстоун-страница стр. 17);</li>
      *   <li>{@code all} — всё разом: все флаги + оба тира.</li>
@@ -247,7 +263,7 @@ public final class SpaceCommand {
         String what;
 
         switch (raw) {
-            case "cesium", "wolfram", "sun_fade", "discovery_3" -> {
+            case "cesium", "wolfram", "sun_fade", "sun_event", "discovery_3" -> {
                 what = raw;
                 if (unlock) progress.unlockNoteFlag(raw);
                 else progress.forgetNoteFlag(raw);
@@ -279,7 +295,7 @@ public final class SpaceCommand {
             default -> {
                 source.sendFailure(Component.literal(
                     "§c[GonzoTech] Неизвестный флаг заметок: " + raw
-                    + " (доступно: cesium, wolfram, sun_fade, discovery_3, discovery_1, discovery_2, all)"));
+                    + " (доступно: cesium, wolfram, sun_fade, sun_event, discovery_3, discovery_1, discovery_2, all)"));
                 return 0;
             }
         }
@@ -293,6 +309,40 @@ public final class SpaceCommand {
         String action = unlock ? "§2открыто" : "§cзабыто";
         source.sendSuccess(() -> Component.literal(
             "§a[GonzoTech] Заметки " + fname + ": §e" + fwhat + "§a — " + action), true);
+        return 1;
+    }
+
+    /** /gonzotech debug sunevent status — счётчик, ближайший/последний багровые дни. */
+    private static int suneventStatus(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        var server = source.getServer();
+        if (server == null) return 0;
+        com.gonzotech.sunevent.SunEventData data =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        long today = server.overworld().getDayCount();
+        String phase = today == data.nextEventDay ? "§cБАГРОВЫЙ ДЕНЬ"
+            : (data.snowWindowVanillaDay(today) ? "§bснеговое окно (дождь=снег)" : "обычный");
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Суневеты: §e" + data.suneventDays + "§a полных дней, сегодня ванильный день §e"
+            + today + "§a (" + phase + "). Следующий багровый день: §e" + data.nextEventDay
+            + (data.lastEventDay > 0 ? "§a, последний: §e" + data.lastEventDay : "")
+            + "§a. Эффективность солнечных батарей: §e"
+            + (int) Math.round(data.solarMultiplier() * 100) + "%"), true);
+        return 1;
+    }
+
+    /** /gonzotech debug sunevent reset — «Икар»: сброс счётчика и эффективности. */
+    private static int suneventReset(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        var server = source.getServer();
+        if (server == null) return 0;
+        com.gonzotech.sunevent.SunEventData data =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        data.reset();
+        com.gonzotech.sunevent.SunEventNetwork.sendToAll(server.overworld());
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] «Икар»: счётчик суневетов сброшен (батарейки 100%), следующий багровый день: §e"
+            + data.nextEventDay), true);
         return 1;
     }
 

@@ -418,8 +418,10 @@ public final class ScholarNotesContent {
                     Layout.TEXT_FULL,
                     null),
 
-            // 35 — «Угасание солнца» (впервые увиден угасший свет)
-            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_FADE,
+            // 35 — «Ослабевшее солнце» (автор 2026-09-18: открывает ПЕРВЫЙ
+            // суневент — багровый день; текст под GONE заменён; страницы под
+            // GONE пока не планируется)
+            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_EVENT,
                     "gui.gonzotech.notes.p35.title",
                     "gui.gonzotech.notes.p35.body",
                     List.of(),
