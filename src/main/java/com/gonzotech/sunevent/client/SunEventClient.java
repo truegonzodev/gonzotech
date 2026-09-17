@@ -8,17 +8,23 @@ import net.minecraft.client.multiplayer.ClientLevel;
  * <p>Багровость — плавная функция I(t) по времени мира (автор: «вход красным»):
  * <ul>
  *   <li>день E-1, 22000→24000: I 0→1 (ночь сливается в багровый рассвет);</li>
- *   <li>день E, 0→22000: I = 1 (багровый день);</li>
- *   <li>день E, 22000→24000: I 1→0 (ночь после ивента уже нормальная);</li>
+ *   <li>день E, 0→15000: I = 1 (багровый день, до «заката»);</li>
+ *   <li>день E, 15000→17000: I 1→0 (выход — симметрично входу, 2000 тиков);</li>
+ *   <li>ночь с 17000 — обычная (автор: избегать «красной» ночи);</li>
  *   <li>иначе: 0. Текстура солнца красная, когда I &gt; 0 (22000 дня E-1) —
  *       солнце ВСТАЁТ сразу красным.</li>
  * </ul>
+ * Ивент длится ~полдня: от E-1 22000 до E 15000 (автор, 2026-09-18).
  * День E+1 (день после) — обычное небо, но в снеговом окне.
  */
 public final class SunEventClient {
 
-    /** Начало плавно перехода (тики дня): ночь → багровый рассвет / обратно. */
+    /** Начало плавного перехода (тики дня): ночь → багровый рассвет. */
     public static final int FADE_START = 22000;
+    /** Конец багрового дня (тики дня E): ивент гаснет до ночи. */
+    public static final int EVENT_END = 15000;
+    /** Конец плавного выхода 1→0 (тики дня E): с этого часа ночь обычная. */
+    public static final int EVENT_FADE_END = 17000;
     /** Длина игрового дня, тиков. */
     public static final int DAY_LENGTH = 24000;
 
@@ -35,8 +41,11 @@ public final class SunEventClient {
         long day = dayOf(level);
         long time = timeOfDay(level);
         if (day == nextEventDay) {
-            if (time < FADE_START) return 1.0;
-            return 1.0 - (double) (time - FADE_START) / (DAY_LENGTH - FADE_START);
+            if (time < EVENT_END) return 1.0;
+            if (time < EVENT_FADE_END) {
+                return 1.0 - (double) (time - EVENT_END) / (EVENT_FADE_END - EVENT_END);
+            }
+            return 0.0; // ночь после ивента — обычная
         }
         if (day == nextEventDay - 1) {
             if (time < FADE_START) return 0.0;

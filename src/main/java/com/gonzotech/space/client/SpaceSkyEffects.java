@@ -125,8 +125,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     // Суневент (автор: «скaйбокс тинтится багровым оранжевым»): купол поверх дневного цикла.
     private static final int CRIMSON_ZENITH_ARGB = 0xFF4A1410;
     private static final int CRIMSON_HORIZON_ARGB = 0xFFC24A16;
-    // Истощённое солнце светит слабо: daylight-фактор дня E ≈ 0.125 (авторская формула).
-    private static final float CRIMSON_DAYLIGHT_FACTOR = 0.125F;
+    // Истощённое солнце: daylight-коэффициент дня E ≈ 0.05 → полдень ≈ свет 3.6
+    // (автор 2026-09-18: ещё на 15–20% тусклее исходных ~4.5, т.е. 0.125).
+    private static final float CRIMSON_DAYLIGHT_FACTOR = 0.05F;
 
     public SpaceSkyEffects(float cloudHeight,
                            boolean hasGround,
@@ -403,15 +404,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             return Mth.clamp(0.2F + 0.8F * fixedDaylight, 0.0F, 1.0F);
         }
         float dayFrac = daylightFactor(level, partialTick);
-        float base = 0.2F + 0.8F * dayFrac * daylightScale;
-        // Суневент: истощённое солнце (daylight ≈ 0.125). Затемняем дневную долю —
-        // к вечеру/ночи стандартный цикл и так тёмный, дублировать не нужно.
+        // Суневент: истощённое солнце. Дневную компоненту МУЛЬТИПЛИЦИРУЕМ по I(t) —
+        // лерп к константе с фактором I·dayFrac ИНВЕРТИРОВАЛ кривую (полдень становился
+        // темнее утра, автор 2026-09-18). Ночная база 0.2 не трогаем.
+        float daylight = 0.8F * dayFrac * daylightScale;
         double crimson = SunEventClient.crimsonIntensity(level);
         if (crimson > 0.001F) {
-            float eventLight = 0.2F + 0.8F * CRIMSON_DAYLIGHT_FACTOR * daylightScale;
-            return Mth.lerp((float) (crimson * dayFrac), base, eventLight);
+            daylight *= (float) (1.0 - crimson * (1.0 - CRIMSON_DAYLIGHT_FACTOR));
         }
-        return base;
+        return 0.2F + daylight;
     }
 
     private float[] computeBodyTint(float dayFrac) {
