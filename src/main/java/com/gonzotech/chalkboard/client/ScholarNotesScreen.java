@@ -468,7 +468,7 @@ public class ScholarNotesScreen extends Screen {
         // 2) Локализуемые подписи над сетками/панелями.
         switch (kind) {
             case CRAFTING_RIGHT ->
-                    drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_RIGHT_X);
+                    drawCaption(g, craftCaptionOf(il), CAPTION_CRAFT_RIGHT_X);
             case CRAFTING_FULL -> {
                 drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
                 drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_RIGHT_X);
@@ -514,6 +514,11 @@ public class ScholarNotesScreen extends Screen {
         } else if (il.flatView() != null) {
             drawFlatStructure(g, il.flatView(), cycle, mouseX, mouseY);
         }
+    }
+
+    /** Подпись над крафтом: своя (например, «Завод сплавов») либо стандартная «Создание». */
+    private static String craftCaptionOf(NoteIllustration il) {
+        return il.craftCaptionKey() != null ? il.craftCaptionKey() : "gui.gonzotech.notes.illustration.crafting";
     }
 
     private void drawCaption(GuiGraphics g, String key, int centerX) {

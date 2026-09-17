@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
@@ -29,7 +30,7 @@ import java.util.Locale;
  * Покрыто 52 автора (26 рудных + 21 сплав + 5 ванильных) + кремний
  * (53-я строка каталога — реальный предмет). До аттачмента тултипы не видны.
  */
-@EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = net.minecraft.util.Dist.CLIENT)
+@EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = Dist.CLIENT)
 public final class MaterialStatTooltips {
 
     private MaterialStatTooltips() {
