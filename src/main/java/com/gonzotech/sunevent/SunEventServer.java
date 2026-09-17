@@ -63,6 +63,25 @@ public final class SunEventServer {
         }
     }
 
+    /**
+     * Окно «дождь = снег» прямо сейчас: Оверворлд, ванильный день ∈ {E−1, E, E+1}.
+     * (Дождь ли — решает сам ванильный код укладкой; здесь только окно дня.)
+     */
+    public static boolean snowWindowDay(Level level) {
+        if (!(level instanceof ServerLevel serverLevel)
+            || serverLevel.dimension() != Level.OVERWORLD) {
+            return false;
+        }
+        SunEventData data = SunEventNetwork.getData(serverLevel);
+        return data.snowWindowVanillaDay(serverLevel.getDayTime() / 24000L);
+    }
+
+    /** Багровый день E прямо сейчас (для «грозы ×10» — только день E). */
+    public static boolean eventDayNow(ServerLevel level) {
+        SunEventData data = SunEventNetwork.getData(level);
+        return level.getDayTime() / 24000L == data.nextEventDay;
+    }
+
     /** Стр. 35 «Ослабевшее солнце»: флаг всем свидетелям наступившего дня. */
     private static void unlockSunEventFlag(ServerLevel overworld) {
         MinecraftServer server = overworld.getServer();

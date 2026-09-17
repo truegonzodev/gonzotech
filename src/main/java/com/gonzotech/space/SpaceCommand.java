@@ -1,6 +1,7 @@
 package com.gonzotech.space;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -28,7 +29,8 @@ import java.util.Set;
  * <ul>
  *   <li>{@code /gonzotech tp <dimension>} — телепорт между измерениями.</li>
  *   <li>{@code /gonzotech debug sun default|dyson|gone|blackhole|blackhole_dyson} — смена состояния Солнца.</li>
- *   <li>{@code /gonzotech debug sunevent status|reset} — суневеты: состояние / «Икар»-сброс.</li>
+ *   <li>{@code /gonzotech debug sunevent status|reset|window &lt;day&gt;} — суневеты:
+ *       состояние / «Икар»-сброс / тестовое окно (багровый день на указанном дне).</li>
  *   <li>{@code /gonzotech debug alpha_centauri default|dyson} — сфера Дайсона для Альфы Центавра.</li>
  *   <li>{@code /gonzotech debug yx989 default|dyson} (алиасы y989, yx989_k2) — кольцо Дайсона Yx989-k2.</li>
  *   <li>{@code /gonzotech debug zangler default|dyson} (алиас zangler_11) — кольцо Дайсона Zangler-11.</li>
@@ -112,10 +114,13 @@ public final class SpaceCommand {
             .then(Commands.literal("default").executes(c -> setStar(c, "zangler", false, "Чёрная Дыра Zangler-11")))
             .then(Commands.literal("dyson").executes(c -> setStar(c, "zangler", true, "Чёрная Дыра Zangler-11")));
 
-        // /gonzotech debug sunevent status|reset — состояние суневетов
+        // /gonzotech debug sunevent status|reset|window <day> — состояние/«Икар»/тестовое окно
         LiteralArgumentBuilder<CommandSourceStack> suneventDebug = Commands.literal("sunevent")
             .then(Commands.literal("status").executes(SpaceCommand::suneventStatus))
-            .then(Commands.literal("reset").executes(SpaceCommand::suneventReset));
+            .then(Commands.literal("reset").executes(SpaceCommand::suneventReset))
+            .then(Commands.literal("window")
+                .then(Commands.argument("day", LongArgumentType.long())
+                    .executes(SpaceCommand::suneventWindow)));
 
         // /gonzotech debug notes <flag> unlock|forget — debug-гейт по страницам заметок
         LiteralArgumentBuilder<CommandSourceStack> notesDebug = Commands.literal("notes")
@@ -343,6 +348,28 @@ public final class SpaceCommand {
         source.sendSuccess(() -> Component.literal(
             "§a[GonzoTech] «Икар»: счётчик суневетов сброшен (батарейки 100%), следующий багровый день: §e"
             + data.nextEventDay), true);
+        return 1;
+    }
+
+    /**
+     * /gonzotech debug sunevent window &lt;day&gt; — тест: багровый день E на указанном
+     * ванильном дне (снежное окно = day−1..day). Не трогает расписание: на следующем
+     * смене дня драйвер пересчитает nextEventDay по счётчику.
+     */
+    private static int suneventWindow(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        var server = source.getServer();
+        if (server == null) return 0;
+        long day = LongArgumentType.getLong(ctx, "day");
+        com.gonzotech.sunevent.SunEventData data =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        data.nextEventDay = day;
+        data.setDirty();
+        com.gonzotech.sunevent.SunEventNetwork.sendToAll(server.overworld());
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Суневет-тест: ванильный день §e" + day
+            + "§a = багровый день E (снег в окне day−1..day, гроза ×10 в день E). "
+            + "Расписание на следующем смене дня восстановится."), true);
         return 1;
     }
 

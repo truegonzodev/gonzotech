@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -284,6 +285,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     @Override
     public boolean renderSnowAndRain(ClientLevel level, int ticks, float partialTick,
                                      double camX, double camY, double camZ) {
+        // Суневеты: дождь = снег (окно E−1..E+1, Оверворлд, идёт дождь).
+        // Снежинки рисуем сами и отменяем ванильный дождь.
+        if (sunEventSnowNow(level)) {
+            SunEventSnowRenderer.render(partialTick, camX, camY, camZ);
+            return true;
+        }
         // true cancels vanilla particles; false lets the Overworld render its
         // normal rain and snow after this custom sky has been drawn.
         return suppressesPrecipitation;
@@ -294,7 +301,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         // Keep the client rain/drip particle tick in lockstep with the render
         // decision. Server-side snow placement is independently governed by
         // each biome's has_precipitation flag.
-        return suppressesPrecipitation;
+        return suppressesPrecipitation || sunEventSnowNow(level);
+    }
+
+    /** Снежное окно суневетов прямо сейчас (клиент): дождь в Оверворлде + день окна. */
+    private static boolean sunEventSnowNow(ClientLevel level) {
+        return level != null
+            && level.dimension() == Level.OVERWORLD
+            && level.isRaining()
+            && SunEventClient.isSnowWindowDay(level);
     }
 
     @Override
