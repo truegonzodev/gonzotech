@@ -31,6 +31,9 @@ import java.util.Set;
  *   <li>{@code /gonzotech debug alpha_centauri default|dyson} — сфера Дайсона для Альфы Центавра.</li>
  *   <li>{@code /gonzotech debug yx989 default|dyson} (алиасы y989, yx989_k2) — кольцо Дайсона Yx989-k2.</li>
  *   <li>{@code /gonzotech debug zangler default|dyson} (алиас zangler_11) — кольцо Дайсона Zangler-11.</li>
+ *   <li>{@code /gonzotech debug notes <flag> unlock|forget} — debug-гейт по страницам
+ *       «Заметок учёного»: cesium / wolfram / sun_fade (флаги «Познания мира»),
+ *       discovery_1 / discovery_2 (тиры-рецепты), all (всё разом).</li>
  * </ul>
  */
 public final class SpaceCommand {
@@ -108,6 +111,13 @@ public final class SpaceCommand {
             .then(Commands.literal("default").executes(c -> setStar(c, "zangler", false, "Чёрная Дыра Zangler-11")))
             .then(Commands.literal("dyson").executes(c -> setStar(c, "zangler", true, "Чёрная Дыра Zangler-11")));
 
+        // /gonzotech debug notes <flag> unlock|forget — debug-гейт по страницам заметок
+        LiteralArgumentBuilder<CommandSourceStack> notesDebug = Commands.literal("notes")
+            .then(Commands.argument("flag", StringArgumentType.word())
+                .suggests(NOTE_FLAG_SUGGESTIONS)
+                .then(Commands.literal("unlock").executes(c -> notesDebug(c, true)))
+                .then(Commands.literal("forget").executes(c -> notesDebug(c, false))));
+
         LiteralArgumentBuilder<CommandSourceStack> debug = Commands.literal("debug")
             .then(sunDebug)
             .then(alphaDebug)
@@ -116,7 +126,8 @@ public final class SpaceCommand {
             .then(yx989Debug)
             .then(yx989K2Debug)
             .then(zanglerDebug)
-            .then(zangler11Debug);
+            .then(zangler11Debug)
+            .then(notesDebug);
 
         dispatcher.register(
             Commands.literal("gonzotech")
@@ -188,6 +199,99 @@ public final class SpaceCommand {
         String stateName = dyson ? "Кольцо/Сфера Дайсона (АКТИВНО)" : "Обычное состояние (ОТКЛЮЧЕНО)";
         source.sendSuccess(() -> Component.literal(
             "§a[GonzoTech] " + displayName + ": §e" + stateName), true);
+        return 1;
+    }
+
+    // ─────────────────────── debug: заметки учёного ───────────────────────
+
+    /** Все флаги «Познания мира» разом — для {@code all}. */
+    private static final List<String> ALL_NOTE_FLAGS = List.of(
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.CESIUM,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.WOLFRAM,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_FADE);
+
+    private static final SuggestionProvider<CommandSourceStack> NOTE_FLAG_SUGGESTIONS =
+        (ctx, builder) -> SharedSuggestionProvider.suggest(
+            java.util.stream.Stream.concat(
+                ALL_NOTE_FLAGS.stream(),
+                java.util.stream.Stream.of("discovery_1", "discovery_2", "all")),
+            builder);
+
+    /**
+     * /gonzotech debug notes &lt;flag&gt; unlock|forget — админский debug-гейт по
+     * страницам «Заметок учёного» (выполняет игрок — на себя):
+     * <ul>
+     *   <li>{@code cesium} / {@code wolfram} / {@code sun_fade} — флаги
+     *       «Познания мира» (стр. 27/28/29);</li>
+     *   <li>{@code discovery_1} / {@code discovery_2} — тир-рецепты 1/2
+     *       (все страницы DISCOVERY_1/2, т.ч. редстоун-страница стр. 16);</li>
+     *   <li>{@code all} — всё разом: все флаги + оба тира.</li>
+     * </ul>
+     * {@code forget} — обратная операция. После правки состояние заметок и
+     * доски пересылаются игроку, чтобы открытая GUI/книга рецептов обновились.
+     */
+    private static int notesDebug(CommandContext<CommandSourceStack> ctx, boolean unlock) {
+        CommandSourceStack source = ctx.getSource();
+        ServerPlayer player;
+        try {
+            player = source.getPlayerOrException();
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§c[GonzoTech] Эту команду может выполнить только игрок."));
+            return 0;
+        }
+
+        String raw = StringArgumentType.getString(ctx, "flag").toLowerCase(java.util.Locale.ROOT).replace('-', '_');
+        com.gonzotech.chalkboard.progress.PlayerChalkboardProgress progress =
+            player.getData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS);
+        String what;
+
+        switch (raw) {
+            case "cesium", "wolfram", "sun_fade" -> {
+                what = raw;
+                if (unlock) progress.unlockNoteFlag(raw);
+                else progress.forgetNoteFlag(raw);
+            }
+            case "discovery_1" -> {
+                what = "discovery_1";
+                if (unlock) progress.unlockRecipeTier(1);
+                else progress.forgetRecipeTier(1);
+            }
+            case "discovery_2" -> {
+                what = "discovery_2";
+                if (unlock) progress.unlockRecipeTier(2);
+                else progress.forgetRecipeTier(2);
+            }
+            case "all" -> {
+                what = "all";
+                for (String f : ALL_NOTE_FLAGS) {
+                    if (unlock) progress.unlockNoteFlag(f);
+                    else progress.forgetNoteFlag(f);
+                }
+                if (unlock) {
+                    progress.unlockRecipeTier(1);
+                    progress.unlockRecipeTier(2);
+                } else {
+                    progress.forgetRecipeTier(1);
+                    progress.forgetRecipeTier(2);
+                }
+            }
+            default -> {
+                source.sendFailure(Component.literal(
+                    "§c[GonzoTech] Неизвестный флаг заметок: " + raw
+                    + " (доступно: cesium, wolfram, sun_fade, discovery_1, discovery_2, all)"));
+                return 0;
+            }
+        }
+
+        player.setData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS, progress);
+        com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(player);
+        com.gonzotech.chalkboard.network.ChalkboardNetwork.sendSyncToPlayer(player);
+
+        final String fwhat = what;
+        final String fname = player.getGameProfile().getName();
+        String action = unlock ? "§2открыто" : "§cзабыто";
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Заметки " + fname + ": §e" + fwhat + "§a — " + action), true);
         return 1;
     }
 

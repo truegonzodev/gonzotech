@@ -88,6 +88,11 @@ public class PlayerChalkboardProgress {
         return flag != null && noteFlags.add(flag);
     }
 
+    /** Сбрасывает флаг действия (debug). true — флаг был именно сейчас удалён. */
+    public boolean forgetNoteFlag(String flag) {
+        return flag != null && noteFlags.remove(flag);
+    }
+
     public int getCurrentDiscoveryIndex() {
         return currentDiscoveryIndex;
     }
@@ -110,6 +115,11 @@ public class PlayerChalkboardProgress {
 
     public void unlockRecipeTier(int tier) {
         this.unlockedRecipeTiers.add(tier);
+    }
+
+    /** Забыть тир-рецептов (debug). true — тир был именно сейчас снят. */
+    public boolean forgetRecipeTier(int tier) {
+        return this.unlockedRecipeTiers.remove(tier);
     }
 
     public boolean isRecipeTierUnlocked(int tier) {

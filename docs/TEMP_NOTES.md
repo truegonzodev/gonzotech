@@ -254,6 +254,9 @@
 - **Иконка главы II** — `gonzotech:crimson_obsidian` (багровый обсидиан); название — «Познание мира» (`chapter_era2`).
 - **Тексты** страниц — в lang `gui.gonzotech.notes.pN.{title,body}` (ru_ru + en_us), простая разметка `**жирный**` / `*курсив*`. Иллюстрации — `page_15..29.png` (сейчас пустые ПРОЗРАЧНЫЕ плейсхолдеры 32-bit ARGB 256×200 — автор перерисует; генератор `/home/user/make_transparent_placeholders.py` с полной декодер-проверкой).
 - **Честность цифр**: числа в текстах (56 мБ→1,5 GTU, пик ~56 роторов, M-множитель парогена 1,56/2,34, пороги 50K/64K/94K, 112K буфер вольфрама) должны совпадать с `TurbineMath`/`SteamGenMath`/`NuclearDefs`/`MachineDefs`. При правке баланса — править и заметки.
+- **Debug-гейт по страницам заметок (автор 2026-09-17):** `/gonzotech debug notes <flag> unlock|forget` (в `SpaceCommand`, исполняет игрок — на себя, permission 2). Флаги: `cesium` / `wolfram` / `sun_fade` (флаги «Познания мира», стр. 27/28/29), `discovery_1` / `discovery_2` (тиры-рецепты 1/2 — ВСЕ страницы DISCOVERY_1/2, в т.ч. редстоун-страница стр. 16), `all` (всё разом). `forget` — обратная операция. После правки `NotesNetwork.sendToPlayer` + `ChalkboardNetwork.sendSyncToPlayer` — открытая GUI/книга рецептов обновляется на лету. Инверсии `unlockNoteFlag`/`unlockRecipeTier` — `PlayerChalkboardProgress.forgetNoteFlag`/`forgetRecipeTier`.
+- **`/chalkboard step` — БАГАННАЯ команда (автор 2026-09-17), НЕ чинить пока:** ставит только `currentDiscoveryIndex`, НЕ добавляет тир в `unlockedRecipeTiers` → страницы заметок и рецепты НЕ открываются (именно ради неё и сделан `debug notes`). Функционал (stage 1..100) сам по себе не согласован с реальным прогрессом. Будущее: доработать или удалить.
+- **Вкладка достижений:** корень дерева `advancements.gonzotech.discovery_1.title` — с 2026-09-17 «Гонзотех» / «Gonzotech» (было «Открытие 1: ТЭС» / «Discovery 1: TPP»). ПРЕДМЕТ `item.gonzotech.discovery_1` — имя не менялось.
 
 ---
 
