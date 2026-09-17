@@ -7,6 +7,8 @@ import com.gonzotech.chalkboard.notes.NotesState;
 import com.gonzotech.chalkboard.notes.ScholarChapter;
 import com.gonzotech.chalkboard.notes.ScholarNotesContent;
 import com.gonzotech.chalkboard.notes.ScholarPage;
+import com.gonzotech.chalkboard.notes.StructureBlock;
+import com.gonzotech.chalkboard.notes.StructureModel;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
