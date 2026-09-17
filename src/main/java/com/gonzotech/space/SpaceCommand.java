@@ -1,7 +1,7 @@
 package com.gonzotech.space;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -119,7 +119,7 @@ public final class SpaceCommand {
             .then(Commands.literal("status").executes(SpaceCommand::suneventStatus))
             .then(Commands.literal("reset").executes(SpaceCommand::suneventReset))
             .then(Commands.literal("window")
-                .then(Commands.argument("day", LongArgumentType.long())
+                .then(Commands.argument("day", IntegerArgumentType.integer())
                     .executes(SpaceCommand::suneventWindow)));
 
         // /gonzotech debug notes <flag> unlock|forget — debug-гейт по страницам заметок
