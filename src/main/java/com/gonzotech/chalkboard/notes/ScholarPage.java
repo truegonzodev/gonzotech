@@ -3,24 +3,30 @@ package com.gonzotech.chalkboard.notes;
 import java.util.List;
 
 /**
- * Одна страница «Заметок учёного» (вариант 2 — фон/схемы = рисованный PNG на
- * страницу, весь ТЕКСТ рисуется через шрифт ради локализации).
+ * Одна страница «Заметок учёного» (вариант 2 — фон/схемы = PNG, весь ТЕКСТ
+ * рисуется через шрифт ради локализации).
  *
- * <p>Буклет — это просто линейный массив страниц; боковые вкладки-«главы» лишь
- * навигация. Файлы иллюстраций нумеруются по порядку: {@code page_1.png},
- * {@code page_2.png}, … (см. {@link #backgroundPath()}).
+ * <p>Буклет — это просто линейный массив страниц; боковые вкладки-«главы»
+ * лишь навигация.
+ *
+ * <p>База страницы — фон главы ({@code notes_bg_eraN.png}, бумага); личная
+ * картинка на страницу (старая {@code page_N.png}) УБРАНА. Вместо неё —
+ * опциональный ШАБЛОН иллюстрации ({@link #illustration()}, см.
+ * {@link NoteIllustrationKind}): прозрачный PNG-оверлей (сетки/панели) +
+ * предметы, которые GUI рендерит в слоты как на витрине (hover-тултипы).
  *
  * <p>Разблокировка идёт по {@link ScholarUnlock} (сразу / наиграно >5 мин /
- * после «Открытия 1»).
+ * после «Открытия» / по действию).
  *
- * @param number       порядковый номер страницы (1-based) — задаёт {@code page_N.png}.
+ * @param number       порядковый номер страницы (1-based) — только для порядка в буклете.
  * @param chapter      глава-владелец (вкладка слева).
  * @param unlock       условие разблокировки страницы.
  * @param titleKey     lang-ключ заголовка страницы (рисуется жирным);
- *                     {@code null} — пустая страница-иллюстрация (текста нет вообще).
- * @param bodyKey      lang-ключ тела страницы; {@code null} для страниц-иллюстраций.
+ *                     {@code null} — пустая страница (текста нет вообще).
+ * @param bodyKey      lang-ключ тела страницы; {@code null} для страниц без текста.
  * @param showcaseItems id предметов/блоков (namespace c префиксом) для нижней витрины.
- * @param layout       раскладка страницы (текст во всю ширину / слева / только картинка).
+ * @param layout       раскладка ТЕКСТА (во всю ширину / слева).
+ * @param illustration шаблон-иллюстрация + наполнение слотов; {@code null} — чистый лист.
  */
 public record ScholarPage(
         int number,
@@ -29,25 +35,19 @@ public record ScholarPage(
         String titleKey,
         String bodyKey,
         List<String> showcaseItems,
-        Layout layout
+        Layout layout,
+        NoteIllustration illustration
 ) {
-    /** Раскладка содержимого страницы. */
+    /** Раскладка текстового тела страницы. */
     public enum Layout {
         /** Текст во всю ширину страницы. */
         TEXT_FULL,
-        /** Текст в левой половине; правая — под иллюстрацию из PNG. */
-        TEXT_LEFT,
-        /** Только иллюстрация во весь лист (текста нет). */
-        IMAGE_FULL
-    }
-
-    /** Путь PNG-иллюстрации страницы: {@code textures/gui/notes/page_N.png}. */
-    public String backgroundPath() {
-        return "textures/gui/notes/page_" + number + ".png";
+        /** Текст в левой половине; правая — под иллюстрацию (шаблон). */
+        TEXT_LEFT
     }
 
     /** Есть ли у страницы текстовое тело. */
     public boolean hasBody() {
-        return bodyKey != null && layout != Layout.IMAGE_FULL;
+        return bodyKey != null;
     }
 }

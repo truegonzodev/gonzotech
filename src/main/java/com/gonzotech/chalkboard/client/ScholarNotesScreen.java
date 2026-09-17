@@ -1,6 +1,8 @@
 package com.gonzotech.chalkboard.client;
 
 import com.gonzotech.chalkboard.network.NotesNetwork;
+import com.gonzotech.chalkboard.notes.NoteIllustration;
+import com.gonzotech.chalkboard.notes.NoteIllustrationKind;
 import com.gonzotech.chalkboard.notes.NotesState;
 import com.gonzotech.chalkboard.notes.ScholarChapter;
 import com.gonzotech.chalkboard.notes.ScholarNotesContent;
@@ -22,6 +24,7 @@ import net.minecraft.server.packs.resources.Resource;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,12 +41,18 @@ import java.util.Set;
  * четырёх эпох, стрелки и счётчик страниц не пересекаются между книгами.
  *
  * <p>Контейнер = панель-фон ПО ГЛАВЕ ({@code notes_bg_era1..era5.png}, выбирается
- * активной эрой) + {@code notes_unlocked_tab.png} + {@code notes_locked_tab.png}.
- * Иконка-предмет главы, тинт активной вкладки, «?» на закрытой — это РЕНДЕР поверх
- * PNG. Вкладки рисуются ПЕРВЫМИ (уходят под панель).
+ * активной эрой — это и есть бумага страницы) + {@code notes_unlocked_tab.png}
+ * + {@code notes_locked_tab.png}. Иконка-предмет главы, тинт активной вкладки,
+ * «?» на закрытой — это РЕНДЕР поверх PNG. Вкладки рисуются ПЕРВЫМИ
+ * (уходят под панель).
  *
- * <p>Раскладка страницы задаётся per-page ({@link ScholarPage.Layout}):
- * TEXT_FULL / TEXT_LEFT (правая половина под иллюстрацию) / IMAGE_FULL (только арт).
+ * <p>Иллюстрации — ШАБЛОНЫ ({@link com.gonzotech.chalkboard.notes.NoteIllustrationKind}):
+ * прозрачный PNG-оверлей (сетки/панели/стрелки) поверх фона главы + предметы,
+ * которые GUI рендерит в слоты как на витрине (hover-тултипы) + локализуемые
+ * подписи «Создание»/«Структура» шрифтом. Личных PNG на страницу больше нет.
+ *
+ * <p>Раскладка ТЕКСТА задаётся per-page ({@link ScholarPage.Layout}):
+ * TEXT_FULL / TEXT_LEFT (правая половина под иллюстрацию).
  * Заголовки — жирные. Длинный текст мотается колёсиком.
  *
  * <p>Разблокировка — {@link com.gonzotech.chalkboard.notes.ScholarUnlock}; состояние
@@ -187,19 +196,11 @@ public class ScholarNotesScreen extends Screen {
     }
 
     private void drawFrame(GuiGraphics g) {
-        // Фон-панель контейнера зависит от активной главы (эры): у каждой свой bg.
+        // Бумага страницы — фон-панель активной главы (эры): у каждой свой bg.
+        // Иллюстрация (шаблон + предметы) рисуется в drawIllustration().
         ScholarChapter chapter = ScholarNotesContent.PAGES.get(pageIndex).chapter();
         ResourceLocation bg = ResourceLocation.fromNamespaceAndPath("gonzotech", chapter.backgroundPath());
         blit(g, bg, leftPos, topPos, FRAME_W, FRAME_H);
-        ScholarPage page = ScholarNotesContent.PAGES.get(pageIndex);
-        ResourceLocation pageBg = ResourceLocation.fromNamespaceAndPath("gonzotech", page.backgroundPath());
-        // Иллюстрация страницы всегда занимает ОКНО 256×200, но сэмплируется из
-        // реального размера файла: 256×200 → 1:1, 512×400 (или любой) → ужимается
-        // в то же окно = выше плотность пикселей. Размер PNG читаем из заголовка.
-        long size = pngSize(pageBg);
-        int texW = (int) (size >>> 32);
-        int texH = (int) (size & 0xffffffffL);
-        blitScaled(g, pageBg, leftPos, topPos, FRAME_W, FRAME_H, texW, texH);
     }
 
     private void drawTabs(GuiGraphics g, int mouseX, int mouseY) {
@@ -338,6 +339,11 @@ public class ScholarNotesScreen extends Screen {
             this.bodyContentHeight = 0;
         }
 
+        // Шаблон-иллюстрация (сетка/структура + предметы) — если страница её имеет.
+        if (page.illustration() != null) {
+            drawIllustration(g, page, mouseX, mouseY);
+        }
+
         drawShowcase(g, page, mouseX, mouseY);
 
         String pageLabel = (visibleOrdinal(pageIndex) + 1) + " / " + visibleCount();
@@ -389,6 +395,145 @@ public class ScholarNotesScreen extends Screen {
         int thumbY = top + (overflow == 0 ? 0 : (int) ((long) scroll * maxThumbY / overflow));
         g.fill(x, top, x + 2, bottom, 0x33000000);
         g.fill(x, thumbY, x + 2, thumbY + thumbH, INK_FAINT);
+    }
+
+    // ─────────────── шаблонные иллюстрации ───────────────
+
+    /** Слот шаблона: позиция в координатах страницы (256×200) + id предмета. */
+    private record NoteSlot(int x, int y, String itemId) {
+        boolean hasItem() {
+            return itemId != null && !itemId.isEmpty();
+        }
+    }
+
+    // Раскладка слотов — абсолютные координаты страницы (от левого верхнего угла),
+    // совпадают с графическими сетками в PNG-шаблонах (textures/gui/notes/).
+    private static final int[] GRID_Y = {47, 65, 83};
+    private static final int[] GRID_RIGHT_X = {158, 176, 194};
+    private static final int[] GRID_LEFT_X = {50, 68, 86};
+    private static final int RESULT_Y = 120;
+    private static final int[] FERMENT_Y = {40, 68, 96, 124};
+    private static final int FERMENT_IN_X = 135;
+    private static final int FERMENT_OUT_X = 212;
+
+    // Подписи шаблонов шрифтом (локализация; в PNG не запекаются).
+    private static final int CAPTION_Y = 34;
+    private static final int CAPTION_CRAFT_RIGHT_X = 184; // центр правой сетки
+    private static final int CAPTION_CRAFT_LEFT_X = 76;   // центр левой сетки
+    private static final int CAPTION_STRUCTURE_X = 192;   // центр панели структуры
+
+    /** Шаблоны, которых нет в ресурсах (не рисуем и не ищем повторно). */
+    private static final Set<ResourceLocation> MISSING_TEMPLATE_TEX = new HashSet<>();
+
+    /** Шаблон-иллюстрация страницы: PNG-оверлей + подписи + предметы в слотах. */
+    private void drawIllustration(GuiGraphics g, ScholarPage page, int mouseX, int mouseY) {
+        NoteIllustration il = page.illustration();
+        NoteIllustrationKind kind = il.kind();
+
+        // 1) Прозрачный PNG-шаблон (сетки/панели) поверх бумаги главы.
+        //    Файл 256×200 → 1:1, 512×400 → в то же окно (выше плотность).
+        ResourceLocation tex = ResourceLocation.fromNamespaceAndPath(
+                "gonzotech", "textures/gui/notes/" + kind.textureName());
+        if (!MISSING_TEMPLATE_TEX.contains(tex)
+                && Minecraft.getInstance().getResourceManager().getResource(tex).isPresent()) {
+            long size = pngSize(tex);
+            blitScaled(g, tex, leftPos, topPos, FRAME_W, FRAME_H,
+                    (int) (size >>> 32), (int) (size & 0xffffffffL));
+        } else {
+            MISSING_TEMPLATE_TEX.add(tex);
+        }
+
+        // 2) Локализуемые подписи над сетками/панелями.
+        switch (kind) {
+            case CRAFTING_RIGHT ->
+                    drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_RIGHT_X);
+            case CRAFTING_FULL -> {
+                drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
+                drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_RIGHT_X);
+            }
+            case CRAFTING_STRUCTURE -> {
+                drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
+                drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
+            }
+            case STRUCTURE_RIGHT ->
+                    drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
+            case FERMENTATION -> {
+                // Подписи — в самом шаблоне (уникальная иллюстрация).
+            }
+        }
+
+        // 3) Предметы в слотах — как на витрине: renderItem + hover-тултип.
+        for (NoteSlot slot : slotsOf(il)) {
+            if (!slot.hasItem()) continue;
+            ItemStack st = stackOf(slot.itemId());
+            if (st.isEmpty()) continue;
+            int sx = leftPos + slot.x();
+            int sy = topPos + slot.y();
+            g.renderItem(st, sx, sy);
+            if (inRect(mouseX, mouseY, sx, sy, 16, 16)) {
+                tooltipStack = st;
+                tooltipComponent = null;
+                tooltipX = mouseX;
+                tooltipY = mouseY;
+            }
+        }
+    }
+
+    private void drawCaption(GuiGraphics g, String key, int centerX) {
+        String text = Component.translatable(key).getString();
+        int tw = this.font.width(text);
+        g.drawString(this.font, text, leftPos + centerX - tw / 2, CAPTION_Y, INK_FAINT, false);
+    }
+
+    /** Слоты иллюстрации с предметами (шаблон → координаты страницы). */
+    private List<NoteSlot> slotsOf(NoteIllustration il) {
+        List<NoteSlot> out = new ArrayList<>();
+        switch (il.kind()) {
+            case CRAFTING_RIGHT -> {
+                gridSlots(out, GRID_RIGHT_X, il.leftGrid());
+                addResultSlot(out, 176, il.leftResult());
+            }
+            case CRAFTING_FULL -> {
+                gridSlots(out, GRID_LEFT_X, il.leftGrid());
+                addResultSlot(out, 68, il.leftResult());
+                gridSlots(out, GRID_RIGHT_X, il.rightGrid());
+                addResultSlot(out, 176, il.rightResult());
+            }
+            case CRAFTING_STRUCTURE -> {
+                // Справа — панель структуры; раскладка ЕЁ слотов — по каждой структуре (позже).
+                gridSlots(out, GRID_LEFT_X, il.leftGrid());
+                addResultSlot(out, 68, il.leftResult());
+            }
+            case STRUCTURE_RIGHT -> {
+                // Раскладка слотов структуры — по каждой структуре (позже).
+            }
+            case FERMENTATION -> {
+                List<String> inputs = il.fermInputs();
+                List<String> outputs = il.fermOutputs();
+                for (int i = 0; i < FERMENT_Y.length; i++) {
+                    if (inputs != null && i < inputs.size()) {
+                        out.add(new NoteSlot(FERMENT_IN_X, FERMENT_Y[i], inputs.get(i)));
+                    }
+                    if (outputs != null && i < outputs.size()) {
+                        out.add(new NoteSlot(FERMENT_OUT_X, FERMENT_Y[i], outputs.get(i)));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    private void gridSlots(List<NoteSlot> out, int[] xs, List<String> grid) {
+        if (grid == null) return;
+        for (int i = 0; i < 9 && i < grid.size(); i++) {
+            out.add(new NoteSlot(xs[i % 3], GRID_Y[i / 3], grid.get(i)));
+        }
+    }
+
+    private void addResultSlot(List<NoteSlot> out, int x, String item) {
+        if (item != null && !item.isEmpty()) {
+            out.add(new NoteSlot(x, RESULT_Y, item));
+        }
     }
 
     private void drawShowcase(GuiGraphics g, ScholarPage page, int mouseX, int mouseY) {
