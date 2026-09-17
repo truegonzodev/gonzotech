@@ -400,16 +400,11 @@ public final class ScholarNotesContent {
                                     List.of("gonzotech:second_heat_node", "gonzotech:tungsten_block", "")),
                             NoteIllustration.CAPTION_VIEW_SIDE)),
 
-            // 34 — пустая страница под иллюстрацию вольфрамового абсорбера
-            // (работа + крафты; вольфрам — ДВЕ страницы)
-            new ScholarPage(34, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
-                    null, null, List.of(), Layout.TEXT_LEFT, null),
-
-            // 35 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
+            // 34 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
             // текст на ВСЮ страницу, в витрине — все формы цезия
-            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
-                    "gui.gonzotech.notes.p35.title",
-                    "gui.gonzotech.notes.p35.body",
+            new ScholarPage(34, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
+                    "gui.gonzotech.notes.p34.title",
+                    "gui.gonzotech.notes.p34.body",
                     List.of("gonzotech:raw_cesium", "gonzotech:cesium_nugget",
                             "gonzotech:cesium_dust", "gonzotech:cesium_ingot",
                             "gonzotech:cesium_block", "gonzotech:cesium_ore",
@@ -417,10 +412,10 @@ public final class ScholarNotesContent {
                     Layout.TEXT_FULL,
                     null),
 
-            // 36 — «Угасание солнца» (впервые увиден угасший свет)
-            new ScholarPage(36, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_FADE,
-                    "gui.gonzotech.notes.p36.title",
-                    "gui.gonzotech.notes.p36.body",
+            // 35 — «Угасание солнца» (впервые увиден угасший свет)
+            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_FADE,
+                    "gui.gonzotech.notes.p35.title",
+                    "gui.gonzotech.notes.p35.body",
                     List.of(),
                     Layout.TEXT_FULL,
                     null)
@@ -457,8 +452,20 @@ public final class ScholarNotesContent {
         nodes.set(2, "gonzotech:first_steam_node");
         nodes.set(6, "gonzotech:first_heat_node");
         nodes.set(14, "gonzotech:first_water_node");
-        List<String> pool = List.of("gonzotech:steamgen_core", "gonzotech:platinum_block",
-                "gonzotech:plutonium_block", "");
+        // Пул «драгоценных»: ядро + ванильные и мод-блоки металлов (авторский
+        // состав 2026-09-18; плутоний убран) + пусто. Любая клетка — визуально,
+        // валидатору машины пул не обязателен.
+        List<String> pool = List.of(
+                "gonzotech:steamgen_core",
+                "minecraft:gold_block", "minecraft:iron_block",
+                "minecraft:copper_block", "minecraft:diamond_block",
+                "gonzotech:tungsten_block", "gonzotech:alnico_block",
+                "gonzotech:nitinol_block", "gonzotech:telluride_block",
+                "gonzotech:bismuth_block", "gonzotech:rhenium_block",
+                "gonzotech:steel_block", "gonzotech:invar_block",
+                "gonzotech:corten_steel_block", "gonzotech:iodine_block",
+                "gonzotech:manganese_block", "gonzotech:cobalt_block",
+                "gonzotech:platinum_block", "");
         return NoteIllustration.structureRightDeck(60, 5, List.of(
                 deckLayer5(plain, casing, null),
                 deckLayer5(plain, null, pool),
