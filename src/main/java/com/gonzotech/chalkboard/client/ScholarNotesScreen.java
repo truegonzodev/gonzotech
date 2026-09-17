@@ -23,7 +23,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.Resource;
 
-import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.imageio.ImageIO;
 
 /**
  * GUI-буклет «Заметки учёного» (вариант 2): контейнер (фон панели и вкладки) —
@@ -106,8 +104,6 @@ public class ScholarNotesScreen extends Screen {
     /** Прямоугольники навигации подстраниц (экран, пересобираются каждый кадр). */
     private int[] structPrevRect;
     private int[] structNextRect;
-    /** Найденная рамка панели структуры (page coords, лениво из PNG-шаблона). */
-    private int[] structPanel;
 
     public ScholarNotesScreen() {
         super(Component.translatable("gui.gonzotech.notes.title"));
@@ -120,7 +116,6 @@ public class ScholarNotesScreen extends Screen {
         this.pageIndex = ScholarNotesContent.firstUnlockedIndex(state());
         this.scroll = 0;
         this.structureSubpage = 0;
-        this.structPanel = null;
         // Сбрасываем кэш размеров: если автор перерисовал PNG в другом разрешении
         // и сделал перезагрузку ресурсов (F3+T), подхватим новый размер.
         PNG_SIZE_CACHE.clear();
@@ -435,24 +430,14 @@ public class ScholarNotesScreen extends Screen {
     private static final int CAPTION_CRAFT_LEFT_X = 76;   // центр левой сетки
     private static final int CAPTION_STRUCTURE_X = 192;   // центр панели структуры
 
-    // Панель структуры: координаты берём из PNG-плейсхолдера (правая половина),
-    // дефолт — для случая, когда файла нет. Контент центрируется в найденной
-    // рамке (автор рисует арт сам — код следует за рамкой).
-    private static final int[] STRUCT_PANEL_DEFAULT = {136, 40, 248, 148};
-    /** Нижняя граница контента (не лезть в витрину, y 156). */
-    private static final int STRUCT_CONTENT_MAX_Y = 152;
-    /**
-     * Калибровка под авторский арт (автор, скриншот): сдвинуть подпись и сетку
-     * влево (5/9 монит. px при GUI-масштабе 2 ≈ 2/4 page px).
-     * ТОЧКИ ПРИВЯЗКИ: подпись — видимая строка «‹ Заголовок ›» целиком;
-     * сетка — центр прямоугольника сетки. X-якорь обоих = центр авто-рамки
-     * панели (L+R)/2 из PNG-шаблона (нет файла → дефолт {136,40,248,148});
-     * Y-якорь подписи = page y 34, Y-якорь сетки = центр (T..min(B,152)).
-     */
-    private static final int STRUCT_CAPTION_X_SHIFT = -2;
-    private static final int STRUCT_CAPTION_Y_SHIFT = 0;
-    private static final int STRUCT_GRID_X_SHIFT = -4;
-    private static final int STRUCT_GRID_Y_SHIFT = 0;
+    // Точки привязки панели структуры — АБСОЛЮТНЫЕ page coords (256×200),
+    // заданы автором точно под арт (авто-детект рамки убран):
+    /** Подпись «Сборка (1)» / «Слой (N)» ВКЛЮЧАЯ СТРЕЛКИ: левый верхний угол
+     *  описывающего прямоугольника строки — (133, 34); y = CAPTION_Y (34). */
+    private static final int STRUCT_CAPTION_LEFT_X = 133;
+    /** Выкладка слоёв: центр описывающего прямоугольника сетки — (183, 89). */
+    private static final int STRUCT_GRID_CENTER_X = 183;
+    private static final int STRUCT_GRID_CENTER_Y = 89;
 
     /** Шаблоны, которых нет в ресурсах (не рисуем и не ищем повторно). */
     private static final Set<ResourceLocation> MISSING_TEMPLATE_TEX = new HashSet<>();
@@ -477,10 +462,6 @@ public class ScholarNotesScreen extends Screen {
             MISSING_TEMPLATE_TEX.add(tex);
         }
 
-        // Рамка панели структуры (из PNG-шаблона) — подпись и контент
-        // центрируются в ней (код следует за авторским артом).
-        int[] panel = il.structure() != null ? structPanelRect(tex) : null;
-
         // 2) Локализуемые подписи над сетками/панелями.
         switch (kind) {
             case CRAFTING_RIGHT ->
@@ -492,14 +473,14 @@ public class ScholarNotesScreen extends Screen {
             case CRAFTING_STRUCTURE -> {
                 drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
                 if (il.structure() != null) {
-                    drawStructureNav(g, il.structure(), panel);
+                    drawStructureNav(g, il.structure());
                 } else {
                     drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
                 }
             }
             case STRUCTURE_RIGHT -> {
                 if (il.structure() != null) {
-                    drawStructureNav(g, il.structure(), panel);
+                    drawStructureNav(g, il.structure());
                 } else {
                     drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
                 }
@@ -529,9 +510,9 @@ public class ScholarNotesScreen extends Screen {
         }
 
         // 4) Панель структуры: подстраницы («Сборка» / слои «вид сверху»),
-        //    тултипы. Рамка — из PNG-шаблона.
+        //    тултипы. Точки привязки — абсолютные page coords (автор).
         if (il.structure() != null) {
-            drawStructureContent(g, il.structure(), mouseX, mouseY, panel);
+            drawStructureContent(g, il.structure(), mouseX, mouseY);
         }
     }
 
@@ -546,24 +527,24 @@ public class ScholarNotesScreen extends Screen {
     /**
      * Подпись панели структуры + навигация подстраниц
      * «‹  Нижний слой (1)  ›» (котёл-топка — «Сборка (1)» без стрелок).
+     * Привязка — ЛЕВЫЙ ВЕРХНИЙ угол описывающего прямоугольника видимой
+     * строки (стрелки входят в строку): (133, 34) page coords (автор).
      * Прямоугольники ‹ › запоминаются для mouseClicked.
      */
-    private void drawStructureNav(GuiGraphics g, StructureModel model, int[] panel) {
+    private void drawStructureNav(GuiGraphics g, StructureModel model) {
         String title = structureTitle(model, structureSubpage);
         int total = model.subpageCount();
         int cw = this.font.width(title);
         int side = 14;
-        int centerX = (panel[0] + panel[2]) / 2 + STRUCT_CAPTION_X_SHIFT;
-        // Видимая строка «‹  Заголовок  ›» центрируется ЦЕЛИКОМ на centerX:
-        // текст — по centerX, стрелки — точно ±side от краёв текста.
-        int startX = centerX - cw / 2;
+        // Левый край строки: без стрелок — сам текст; со стрелками — левая стрелка.
+        int titleX = STRUCT_CAPTION_LEFT_X + (total > 1 ? side : 0);
+        int capY = topPos + CAPTION_Y;
 
-        int capY = topPos + CAPTION_Y + STRUCT_CAPTION_Y_SHIFT;
-        g.drawString(this.font, title, leftPos + startX, capY, INK_FAINT, false);
+        g.drawString(this.font, title, leftPos + titleX, capY, INK_FAINT, false);
 
         if (total > 1) {
-            int prevX = startX - side;
-            int nextX = startX + cw + side - this.font.width("\u203A");
+            int prevX = titleX - side;
+            int nextX = titleX + cw + side - this.font.width("\u203A");
             int prevCol = structureSubpage > 0 ? INK : 0xFFB9A778;
             int nextCol = structureSubpage < total - 1 ? INK : 0xFFB9A778;
             g.drawString(this.font, "\u2039", leftPos + prevX, capY, prevCol, false);
@@ -590,62 +571,13 @@ public class ScholarNotesScreen extends Screen {
     }
 
     /**
-     * Рамка панели структуры в page coords: правая половина PNG-шаблона
-     * (bbox непрозрачных пикселей в доверенной зоне x 128..252, y 28..162 —
-     * вне её шум/декор сдвигал bbox). Код следует за авторским артом;
-     * файл нет/читается плохо — дефолтная рамка.
-     */
-    private int[] structPanelRect(ResourceLocation tex) {
-        if (structPanel != null) return structPanel;
-        int[] out = STRUCT_PANEL_DEFAULT;
-        try {
-            Optional<Resource> res = Minecraft.getInstance().getResourceManager().getResource(tex);
-            if (res.isPresent()) {
-                BufferedImage img;
-                try (InputStream in = res.get().open()) {
-                    img = ImageIO.read(in);
-                }
-                if (img != null) {
-                    int w = img.getWidth(), h = img.getHeight();
-                    int xMax = Math.min(w, 252 * w / FRAME_W);
-                    int yMin = 28 * h / FRAME_H;
-                    int yMax = Math.min(h, 162 * h / FRAME_H);
-                    int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
-                    int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
-                    for (int x = w / 2; x < xMax; x++) {
-                        for (int y = yMin; y < yMax; y++) {
-                            if ((img.getRGB(x, y) >>> 24) > 0) {
-                                if (x < minX) minX = x;
-                                if (x > maxX) maxX = x;
-                                if (y < minY) minY = y;
-                                if (y > maxY) maxY = y;
-                            }
-                        }
-                    }
-                    if (minX <= maxX && (maxX - minX) * FRAME_W / w > 40 && (maxY - minY) * FRAME_H / h > 40) {
-                        out = new int[]{
-                                minX * FRAME_W / w,
-                                minY * FRAME_H / h,
-                                Math.min(FRAME_W - 1, (maxX + 1) * FRAME_W / w),
-                                Math.min(FRAME_H - 1, (maxY + 1) * FRAME_H / h)
-                        };
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-            // дефолтная рамка
-        }
-        structPanel = out;
-        return out;
-    }
-
-    /**
      * Подстраница структуры — сетка иконок предметов С ГЭПОМ (гэп подчёркивает
      * структурность): «Сборка» — вид спереди модели (передний блок колонки);
      * иначе — слой {@code y = structureSubpage} «вид сверху» (1 = нижний).
-     * Размер иконки = GUI-масштаб + 1 (автор: «интерфейс 2 → иконки 3»).
+     * Центр описывающего прямоугольника сетки — (183, 89) page coords (автор);
+     * размер сетки зависит от GUI-масштаба (иконки = масштаб + 1).
      */
-    private void drawStructureContent(GuiGraphics g, StructureModel model, int mouseX, int mouseY, int[] panel) {
+    private void drawStructureContent(GuiGraphics g, StructureModel model, int mouseX, int mouseY) {
         boolean asm = model.assembly();
         int cols = model.sizeX();
         int rows = asm ? model.sizeY() : model.sizeZ();
@@ -655,15 +587,8 @@ public class ScholarNotesScreen extends Screen {
         int cell = icon + gap;
         int gridW = cols * cell - gap;
         int gridH = rows * cell - gap;
-        int cx0 = panel[0] + 2, cx1 = panel[2] - 2;
-        int cy0 = panel[1] + 2, cy1 = Math.min(panel[3], STRUCT_CONTENT_MAX_Y) - 2;
-        if (gridW > cx1 - cx0 || gridH > cy1 - cy0) {
-            icon = 16; gap = 2; cell = 18;
-            gridW = cols * cell - gap;
-            gridH = rows * cell - gap;
-        }
-        int gx0 = (cx0 + cx1) / 2 - gridW / 2 + STRUCT_GRID_X_SHIFT;
-        int gy0 = (cy0 + cy1) / 2 - gridH / 2 + STRUCT_GRID_Y_SHIFT;
+        int gx0 = STRUCT_GRID_CENTER_X - gridW / 2;
+        int gy0 = STRUCT_GRID_CENTER_Y - gridH / 2;
         float kf = icon / 16f;
         for (int gx = 0; gx < cols; gx++) {
             for (int gy = 0; gy < rows; gy++) {
