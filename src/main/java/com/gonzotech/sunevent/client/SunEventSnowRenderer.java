@@ -76,20 +76,21 @@ public final class SunEventSnowRenderer {
         }
 
         // Биллборд-базис из направления взгляда камеры.
-        Vec3 look = mc.gameRenderer.getMainCamera().getLook(1.0);
-        Vec3 right = look.crossproduct(new Vec3(0.0, 1.0, 0.0));
-        if (right.lengthSquared() < 1.0E-6) {
+        Vec3 look = mc.gameRenderer.getMainCamera().getViewDirection();
+        Vec3 right = look.cross(new Vec3(0.0, 1.0, 0.0));
+        if (right.length() < 1.0E-3) {
             right = new Vec3(1.0, 0.0, 0.0); // взгляд ровно вверх/вниз — дегенерация
         } else {
             right = right.normalize();
         }
-        Vec3 up = right.crossproduct(look).normalize();
+        Vec3 up = right.cross(look).normalize();
         double rx = right.x * SIZE, ry = right.y * SIZE, rz = right.z * SIZE;
         double ux = up.x * SIZE, uy = up.y * SIZE, uz = up.z * SIZE;
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.enableDepthTest();
-        Matrix4f m = RenderSystem.getModelViewStack().top();
+        // joml: Matrix4fStack НАСЛЕДУЕТ Matrix4f — сам стек и есть текущая (верхняя) матрица.
+        Matrix4f m = RenderSystem.getModelViewStack();
 
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
