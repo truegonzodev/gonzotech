@@ -118,6 +118,14 @@ public final class TierTwoCrafting {
 
         int count = crafted.getCount();
         crafted.setCount(0);
+        // Ветка PICKUP «тот же предмет на курсоре»: ванила УВЕЛИЧИВАЕТ курсор ДО
+        // события (grow перед onTake), а в событии — выделенная копия, так что
+        // нуление курсор не спасает. Отменяем прирост (и заодно переполнение
+        // полного стака).
+        ItemStack carried = player.containerMenu.getCarried();
+        if (!carried.isEmpty() && carried.is(crafted.getItem())) {
+            carried.shrink(count);
+        }
         for (int i = 0; i < count; i++) {
             ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
             if (!player.getInventory().add(botched)) {
@@ -130,7 +138,8 @@ public final class TierTwoCrafting {
         );
     }
 
-    private static boolean isGatedOutput(Item item) {
+    /** true, если предмет — «закрытый» вывод Discovery-2 (гейт тира 2). */
+    public static boolean isGatedOutput(Item item) {
         return item == ModItems.COIL.get()
             || item == ModItems.INDUCTIVE_MODULE.get()
             || item == ModItems.WEDGE_PUNCH.get()

@@ -6,7 +6,8 @@
   "refmap": "gonzotech.refmap.json",
   "mixins": [
     "AbstractFurnaceBlockEntityMixin",
-    "BucketItemMixin"
+    "BucketItemMixin",
+    "CraftingMenuMixin"
   ],
   "client": [
     "client.ClientLevelSkyDarkenMixin"

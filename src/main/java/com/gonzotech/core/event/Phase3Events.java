@@ -44,10 +44,15 @@ import java.util.UUID;
 /**
  * Обработчики «мелких фишек» Фазы 3 (регистрируются на NeoForge.EVENT_BUS):
  * <ol>
- *   <li><b>Гейт крафта</b> ({@link PlayerEvent.ItemCraftedEvent}) — если игрок
- *       крафтит «закрытую» машину (эл. печь) до нужного «Открытия», ингредиенты
- *       всё равно тратятся, но вместо результата он получает бесполезный
- *       {@code botched_mechanism} и сообщение в чат. Задел под механику стресса.</li>
+ *   <li><b>Гейт крафта</b> ({@link PlayerEvent.ItemCraftedEvent} +
+ *       {@code CraftingMenuMixin}) — если игрок крафтит «закрытую» машину до нужного
+ *       «Открытия», ингредиенты тратятся, но вместо результата он получает
+ *       бесполезный {@code botched_mechanism} и сообщение в чат. Все пути взятия
+ *       результата идут через {@code ResultSlot.onTake} с живым стакком (обычный
+ *       клик / SWAP / Q / PICKUP с тем же предметом на курсоре) — обрабатываются
+ *       здесь. Исключение: Shift-клик (quick-craft) — ваниль переносит РЕАЛЬНЫЙ
+ *       стак в инвентарь, событие даёт копию, а сетку не расходует; этот путь
+ *       перехватывается {@code CraftingMenuMixin}. Задел под механику стресса.</li>
  *   <li><b>Свинец в ванильных печах</b> ({@link PlayerEvent.ItemSmeltedEvent}) —
  *       при заборе результата плавки железа из ванильной печи/плавильни/коптильни:
  *       5% свинца за предмет. (Взрыв цезия в ванильных печах делает миксин
@@ -130,6 +135,18 @@ public final class Phase3Events {
         return craftGate;
     }
 
+    /**
+     * Требуемый номер «Открытия» для «закрытого» предмета (null — не гейтится):
+     * 1 — гейт тира 1 (карта ниже), 2 — гейт тира 2 ({@link com.gonzotech.machines.crafting.TierTwoCrafting}).
+     * Общее для обработчиков {@link #onItemCrafted} и миксина
+     * {@link com.gonzotech.mixin.CraftingMenuMixin} (Shift-крафт).
+     */
+    public static Integer requiredTierFor(net.minecraft.world.item.Item item) {
+        Integer tier1 = gate().get(item);
+        if (tier1 != null) return tier1;
+        return com.gonzotech.machines.crafting.TierTwoCrafting.isGatedOutput(item) ? 2 : null;
+    }
+
     // ─────────────────────── 1. Гейт крафта закрытых машин ───────────────────────
 
     @SubscribeEvent
@@ -148,6 +165,14 @@ public final class Phase3Events {
         // это часть «прикола»), результат заменяем на бесполезный механизм.
         int count = crafted.getCount();
         crafted.setCount(0);
+        // Ветка PICKUP «тот же предмет на курсоре»: ванила УВЕЛИЧИВАЕТ курсор ДО
+        // события (grow перед onTake), а в событии — выделенная копия, так что
+        // нуление курсор не спасает. Отменяем прирост (и заодно переполнение
+        // полного стака).
+        ItemStack carried = player.containerMenu.getCarried();
+        if (!carried.isEmpty() && carried.is(crafted.getItem())) {
+            carried.shrink(count);
+        }
         for (int i = 0; i < count; i++) {
             ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
             if (!player.getInventory().add(botched)) {
