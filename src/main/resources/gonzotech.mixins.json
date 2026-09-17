@@ -7,7 +7,8 @@
   "mixins": [
     "AbstractFurnaceBlockEntityMixin",
     "BucketItemMixin",
-    "CraftingMenuMixin"
+    "CraftingMenuMixin",
+    "CrafterBlockMixin"
   ],
   "client": [
     "client.ClientLevelSkyDarkenMixin"
