@@ -20,6 +20,13 @@ public final class ScholarNoteFlags {
     /** Игрок впервые оказался свидетелем угасания Солнца (SunState → GONE). */
     public static final String SUN_FADE = "sun_fade";
 
+    /**
+     * В инвентаре впервые оказался аттачмент «Открытие 3» (предмет
+     * {@code gonzotech:discovery_3}, выдаётся за активацию третьего
+     * открытия меловой доски). Открывает раздел «Глубокая металлургия».
+     */
+    public static final String DISCOVERY_3 = "discovery_3";
+
     private ScholarNoteFlags() {
     }
 }

@@ -29,7 +29,9 @@ public enum ScholarUnlock {
     /** Открывается, когда игрок впервые получает вольфрамовый блок в инвентарь. */
     FLAG_WOLFRAM,
     /** Открывается, когда игрок впервые видит угасание Солнца. */
-    FLAG_SUN_FADE;
+    FLAG_SUN_FADE,
+    /** Открывается, когда в инвентаре впервые появился аттачмент «Открытие 3» (предмет discovery_3). */
+    FLAG_DISCOVERY_3;
 
     /** Порог наигранного времени в тиках для {@link #PLAYTIME_5MIN}. */
     public static final long PLAYTIME_THRESHOLD_TICKS = 5L * 60L * 20L; // 5 мин
@@ -44,6 +46,7 @@ public enum ScholarUnlock {
             case FLAG_CESIUM -> state.hasFlag(ScholarNoteFlags.CESIUM);
             case FLAG_WOLFRAM -> state.hasFlag(ScholarNoteFlags.WOLFRAM);
             case FLAG_SUN_FADE -> state.hasFlag(ScholarNoteFlags.SUN_FADE);
+            case FLAG_DISCOVERY_3 -> state.hasFlag(ScholarNoteFlags.DISCOVERY_3);
         };
     }
 }

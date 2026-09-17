@@ -208,7 +208,8 @@ public final class SpaceCommand {
     private static final List<String> ALL_NOTE_FLAGS = List.of(
         com.gonzotech.chalkboard.notes.ScholarNoteFlags.CESIUM,
         com.gonzotech.chalkboard.notes.ScholarNoteFlags.WOLFRAM,
-        com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_FADE);
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_FADE,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.DISCOVERY_3);
 
     private static final SuggestionProvider<CommandSourceStack> NOTE_FLAG_SUGGESTIONS =
         (ctx, builder) -> SharedSuggestionProvider.suggest(
@@ -221,8 +222,8 @@ public final class SpaceCommand {
      * /gonzotech debug notes &lt;flag&gt; unlock|forget — админский debug-гейт по
      * страницам «Заметок учёного» (выполняет игрок — на себя):
      * <ul>
-     *   <li>{@code cesium} / {@code wolfram} / {@code sun_fade} — флаги
-     *       «Познания мира» (стр. 32-33 / 34 / 35);</li>
+     *   <li>{@code cesium} / {@code wolfram} / {@code sun_fade} / {@code discovery_3} —
+     *       флаги «Познания мира» (стр. 32-33 / 34 / 35 / 36-40 «Глубокая металлургия»);</li>
      *   <li>{@code discovery_1} / {@code discovery_2} — тир-рецепты 1/2
      *       (все страницы DISCOVERY_1/2, т.ч. редстоун-страница стр. 17);</li>
      *   <li>{@code all} — всё разом: все флаги + оба тира.</li>
@@ -246,7 +247,7 @@ public final class SpaceCommand {
         String what;
 
         switch (raw) {
-            case "cesium", "wolfram", "sun_fade" -> {
+            case "cesium", "wolfram", "sun_fade", "discovery_3" -> {
                 what = raw;
                 if (unlock) progress.unlockNoteFlag(raw);
                 else progress.forgetNoteFlag(raw);
@@ -278,7 +279,7 @@ public final class SpaceCommand {
             default -> {
                 source.sendFailure(Component.literal(
                     "§c[GonzoTech] Неизвестный флаг заметок: " + raw
-                    + " (доступно: cesium, wolfram, sun_fade, discovery_1, discovery_2, all)"));
+                    + " (доступно: cesium, wolfram, sun_fade, discovery_3, discovery_1, discovery_2, all)"));
                 return 0;
             }
         }

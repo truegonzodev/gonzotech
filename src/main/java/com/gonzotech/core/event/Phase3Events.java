@@ -338,7 +338,11 @@ public final class Phase3Events {
      *       цезия (см. {@link #isWaterReactiveCesium}) → открывается страница
      *       «Цезий, обещание взрыва»;</li>
      *   <li><b>вольфрам</b> — в инвентаре впервые появился вольфрамовый блок
-     *       (абсорбер) → открывается страница «Вольфрам, большой абсорбер».</li>
+     *       (абсорбер) → открывается страница «Вольфрам, большой абсорбер»;</li>
+     *   <li><b>открытие 3</b> — в инвентаре впервые появился аттачмент
+     *       {@code gonzotech:discovery_3} (выдаётся за активацию третьего
+     *       открытия меловой доски) → открывается раздел «Глубокая
+     *       металлургия» (завод сплавов и «несмешиваемые» сплавы).</li>
      * </ul>
      * Флаг пишется в прогресс игрока; при НОВОМ флаге пересылаем состояние
      * заметок, чтобы открытая буклет-GUI обновилась на лету.
@@ -347,16 +351,27 @@ public final class Phase3Events {
         Inventory inv = serverPlayer.getInventory();
         boolean cesium = hasWaterReactiveCesium(inv);
         boolean wolfram = hasTungstenBlock(inv);
-        if (!cesium && !wolfram) return;
+        boolean discovery3 = hasItem(inv, ModItems.getDiscoveryItem(3).get());
+        if (!cesium && !wolfram && !discovery3) return;
 
         PlayerChalkboardProgress progress = serverPlayer.getData(ModAttachments.CHALKBOARD_PROGRESS);
         boolean changed = false;
         if (cesium && progress.unlockNoteFlag(ScholarNoteFlags.CESIUM)) changed = true;
         if (wolfram && progress.unlockNoteFlag(ScholarNoteFlags.WOLFRAM)) changed = true;
+        if (discovery3 && progress.unlockNoteFlag(ScholarNoteFlags.DISCOVERY_3)) changed = true;
         if (!changed) return;
 
         serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
         NotesNetwork.sendToPlayer(serverPlayer);
+    }
+
+    /** Есть ли в инвентаре конкретный предмет (аттачменты Открытий и т.п.). */
+    private static boolean hasItem(Inventory inventory, net.minecraft.world.item.Item item) {
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack st = inventory.getItem(slot);
+            if (!st.isEmpty() && st.getItem() == item) return true;
+        }
+        return false;
     }
 
     /** Есть ли в инвентаре вольфрамовый блок (абсорбер тепла). */
