@@ -100,16 +100,12 @@ public class ScholarNotesScreen extends Screen {
 
     private int bodyViewTop, bodyViewBottom, bodyContentHeight;
 
-    // ── Структуры (подстраницы: изо + слои) ──
-    /** Текущая подстраница структуры страницы (0 = изо-вид, 1..sizeY = слой). */
+    // ── Структуры (подстраницы: «Сборка» или слои «вид сверху») ──
+    /** Текущая подстраница структуры (0 = нижний слой/«Сборка», вверх). */
     private int structureSubpage;
-    /** Скрытые блоки текущей структуры (общее состояние на все подстраницы). */
-    private final Set<Long> hiddenStructureBlocks = new HashSet<>();
     /** Прямоугольники навигации подстраниц (экран, пересобираются каждый кадр). */
     private int[] structPrevRect;
     private int[] structNextRect;
-    /** Кликабельные блоки (экран: x, y, w, h, blockKey) в порядке отрисовки. */
-    private final List<long[]> structHitRects = new ArrayList<>();
     /** Найденная рамка панели структуры (page coords, лениво из PNG-шаблона). */
     private int[] structPanel;
 
@@ -124,7 +120,6 @@ public class ScholarNotesScreen extends Screen {
         this.pageIndex = ScholarNotesContent.firstUnlockedIndex(state());
         this.scroll = 0;
         this.structureSubpage = 0;
-        this.hiddenStructureBlocks.clear();
         this.structPanel = null;
         // Сбрасываем кэш размеров: если автор перерисовал PNG в другом разрешении
         // и сделал перезагрузку ресурсов (F3+T), подхватим новый размер.
@@ -183,7 +178,6 @@ public class ScholarNotesScreen extends Screen {
         this.pageIndex = idx;
         this.scroll = 0;
         this.structureSubpage = 0;
-        this.hiddenStructureBlocks.clear();
         playPageSound();
     }
 
@@ -447,6 +441,12 @@ public class ScholarNotesScreen extends Screen {
     private static final int[] STRUCT_PANEL_DEFAULT = {136, 40, 248, 148};
     /** Нижняя граница контента (не лезть в витрину, y 156). */
     private static final int STRUCT_CONTENT_MAX_Y = 152;
+    /**
+     * Калибровка под авторский арт (автор, скриншот): сдвинуть подпись и сетку
+     * влево (5/9 монит. px при GUI-масштабе 2 ≈ 2/4 page px).
+     */
+    private static final int STRUCT_CAPTION_X_SHIFT = -2;
+    private static final int STRUCT_GRID_X_SHIFT = -4;
 
     /** Шаблоны, которых нет в ресурсах (не рисуем и не ищем повторно). */
     private static final Set<ResourceLocation> MISSING_TEMPLATE_TEX = new HashSet<>();
@@ -457,7 +457,6 @@ public class ScholarNotesScreen extends Screen {
         NoteIllustrationKind kind = il.kind();
         structPrevRect = null;
         structNextRect = null;
-        structHitRects.clear();
 
         // 1) Прозрачный PNG-шаблон (сетки/панели) поверх бумаги главы.
         //    Файл 256×200 → 1:1, 512×400 → в то же окно (выше плотность).
@@ -472,6 +471,10 @@ public class ScholarNotesScreen extends Screen {
             MISSING_TEMPLATE_TEX.add(tex);
         }
 
+        // Рамка панели структуры (из PNG-шаблона) — подпись и контент
+        // центрируются в ней (код следует за авторским артом).
+        int[] panel = il.structure() != null ? structPanelRect(tex) : null;
+
         // 2) Локализуемые подписи над сетками/панелями.
         switch (kind) {
             case CRAFTING_RIGHT ->
@@ -483,14 +486,14 @@ public class ScholarNotesScreen extends Screen {
             case CRAFTING_STRUCTURE -> {
                 drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
                 if (il.structure() != null) {
-                    drawStructureNav(g, il.structure());
+                    drawStructureNav(g, il.structure(), panel);
                 } else {
                     drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
                 }
             }
             case STRUCTURE_RIGHT -> {
                 if (il.structure() != null) {
-                    drawStructureNav(g, il.structure());
+                    drawStructureNav(g, il.structure(), panel);
                 } else {
                     drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
                 }
@@ -519,10 +522,10 @@ public class ScholarNotesScreen extends Screen {
             }
         }
 
-        // 4) Панель структуры: подстраницы (изо-вид + слои «вид сверху»),
-        //    клик-тоггл блоков, тултипы. Рамка берётся из PNG-шаблона.
+        // 4) Панель структуры: подстраницы («Сборка» / слои «вид сверху»),
+        //    тултипы. Рамка — из PNG-шаблона.
         if (il.structure() != null) {
-            drawStructureContent(g, il.structure(), mouseX, mouseY, structPanelRect(tex));
+            drawStructureContent(g, il.structure(), mouseX, mouseY, panel);
         }
     }
 
@@ -532,36 +535,56 @@ public class ScholarNotesScreen extends Screen {
         g.drawString(this.font, text, leftPos + centerX - tw / 2, topPos + CAPTION_Y, INK_FAINT, false);
     }
 
-    // ─────────────── структуры: подстраницы (изо + слои) ───────────────
+    // ─────────────── структуры: подстраницы (сборка / слои) ───────────────
 
     /**
-     * Подпись панели структуры + навигация подстраниц «Структура  n/m  ‹ ›».
+     * Подпись панели структуры + навигация подстраниц
+     * «‹  Нижний слой (1)  ›» (котёл-топка — «Сборка (1)» без стрелок).
      * Прямоугольники ‹ › запоминаются для mouseClicked.
      */
-    private void drawStructureNav(GuiGraphics g, StructureModel model) {
-        String caption = Component.translatable("gui.gonzotech.notes.illustration.structure").getString();
-        String counter = (structureSubpage + 1) + " / " + model.subpageCount();
-        int cw = this.font.width(caption);
-        int nw = this.font.width(counter);
-        int groupW = cw + 5 + nw;
-        int startX = CAPTION_STRUCTURE_X - groupW / 2;
+    private void drawStructureNav(GuiGraphics g, StructureModel model, int[] panel) {
+        String title = structureTitle(model, structureSubpage);
+        int total = model.subpageCount();
+        int cw = this.font.width(title);
+        int side = 14;
+        int groupW = cw + (total > 1 ? 2 * side : 0);
+        int centerX = (panel[0] + panel[2]) / 2 + STRUCT_CAPTION_X_SHIFT;
+        int startX = centerX - groupW / 2;
 
-        g.drawString(this.font, caption, leftPos + startX, topPos + CAPTION_Y, INK_FAINT, false);
-        g.drawString(this.font, counter, leftPos + startX + cw + 5, topPos + CAPTION_Y, INK_FAINT, false);
+        g.drawString(this.font, title, leftPos + startX, topPos + CAPTION_Y, INK_FAINT, false);
 
-        int prevX = startX - 14;
-        int nextX = startX + groupW + 4;
-        int prevCol = structureSubpage > 0 ? INK : 0xFFB9A778;
-        int nextCol = structureSubpage < model.subpageCount() - 1 ? INK : 0xFFB9A778;
-        g.drawString(this.font, "\u2039", leftPos + prevX, topPos + CAPTION_Y, prevCol, false);
-        g.drawString(this.font, "\u203A", leftPos + nextX, topPos + CAPTION_Y, nextCol, false);
-        structPrevRect = new int[]{leftPos + prevX - 3, topPos + CAPTION_Y - 3, 12, 12};
-        structNextRect = new int[]{leftPos + nextX - 3, topPos + CAPTION_Y - 3, 12, 12};
+        if (total > 1) {
+            int prevX = startX - side;
+            int nextX = startX + cw + side - this.font.width("\u203A");
+            int prevCol = structureSubpage > 0 ? INK : 0xFFB9A778;
+            int nextCol = structureSubpage < total - 1 ? INK : 0xFFB9A778;
+            g.drawString(this.font, "\u2039", leftPos + prevX, topPos + CAPTION_Y, prevCol, false);
+            g.drawString(this.font, "\u203A", leftPos + nextX, topPos + CAPTION_Y, nextCol, false);
+            structPrevRect = new int[]{leftPos + prevX - 3, topPos + CAPTION_Y - 3, 12, 12};
+            structNextRect = new int[]{leftPos + nextX - 3, topPos + CAPTION_Y - 3, 12, 12};
+        }
+    }
+
+    /** Подпись подстраницы: «Сборка (1)» или «Нижний/Средний/Верхний слой (N)»
+     *  (1 = нижний слой, подстраницы идут снизу вверх). */
+    private static String structureTitle(StructureModel m, int sub) {
+        if (m.assembly()) return "Сборка (1)";
+        int total = m.sizeY();
+        if (total == 3) {
+            if (sub == 0) return "Нижний слой (1)";
+            if (sub == 1) return "Средний слой (2)";
+            return "Верхний слой (3)";
+        }
+        if (total == 2) {
+            return sub == 0 ? "Нижний слой (1)" : "Верхний слой (2)";
+        }
+        return "Слой (" + (sub + 1) + "/" + total + ")";
     }
 
     /**
      * Рамка панели структуры в page coords: правая половина PNG-шаблона
-     * (bbox непрозрачных пикселей) — код следует за авторским артом;
+     * (bbox непрозрачных пикселей в доверенной зоне x 128..252, y 28..162 —
+     * вне её шум/декор сдвигал bbox). Код следует за авторским артом;
      * файл нет/читается плохо — дефолтная рамка.
      */
     private int[] structPanelRect(ResourceLocation tex) {
@@ -576,10 +599,13 @@ public class ScholarNotesScreen extends Screen {
                 }
                 if (img != null) {
                     int w = img.getWidth(), h = img.getHeight();
+                    int xMax = Math.min(w, 252 * w / FRAME_W);
+                    int yMin = 28 * h / FRAME_H;
+                    int yMax = Math.min(h, 162 * h / FRAME_H);
                     int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
                     int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
-                    for (int x = w / 2; x < w; x++) {
-                        for (int y = 0; y < h; y++) {
+                    for (int x = w / 2; x < xMax; x++) {
+                        for (int y = yMin; y < yMax; y++) {
                             if ((img.getRGB(x, y) >>> 24) > 0) {
                                 if (x < minX) minX = x;
                                 if (x > maxX) maxX = x;
@@ -605,103 +631,83 @@ public class ScholarNotesScreen extends Screen {
         return out;
     }
 
-    /** Активная подстраница: 0 — вид спереди, 1..sizeY — слой y «вид сверху». */
-    private void drawStructureContent(GuiGraphics g, StructureModel model, int mouseX, int mouseY, int[] panel) {
-        if (structureSubpage <= 0) {
-            drawStructureFront(g, model, mouseX, mouseY, panel);
-        } else {
-            drawStructureLayer(g, model, structureSubpage - 1, mouseX, mouseY, panel);
-        }
-    }
-
     /**
-     * Вид спереди (подстраница 0, анфас): передний (минимальный z) блок каждой
-     * колонки (x, y) — плоская сетка 16px, ВПРИТИРКУ (без гэпов), «просто как
-     * оно выглядит собранное». Пустая колонка / скрытый блок — бледный слот
-     * (по скрытому кликают, чтобы вернуть).
+     * Подстраница структуры — сетка иконок предметов С ГЭПОМ (гэп подчёркивает
+     * структурность): «Сборка» — вид спереди модели (передний блок колонки);
+     * иначе — слой {@code y = structureSubpage} «вид сверху» (1 = нижний).
+     * Размер иконки = GUI-масштаб + 1 (автор: «интерфейс 2 → иконки 3»).
      */
-    private void drawStructureFront(GuiGraphics g, StructureModel m, int mouseX, int mouseY, int[] panel) {
-        int contentX0 = panel[0] + 2, contentX1 = panel[2] - 2;
-        int contentY0 = panel[1] + 2;
-        int contentY1 = Math.min(panel[3], STRUCT_CONTENT_MAX_Y) - 2;
-        int gridW = m.sizeX() * 16;
-        int gridH = m.sizeY() * 16;
-        int gx0 = (contentX0 + contentX1) / 2 - gridW / 2;
-        int gyBottom = (contentY0 + contentY1) / 2 + gridH / 2;
-        for (int x = 0; x < m.sizeX(); x++) {
-            for (int y = 0; y < m.sizeY(); y++) {
-                int sx = leftPos + gx0 + x * 16;
-                int sy = topPos + gyBottom - 16 - y * 16;
-                StructureBlock front = null;
-                for (int z = 0; z < m.sizeZ(); z++) {
-                    front = m.at(x, y, z);
-                    if (front != null) break;
-                }
-                if (front == null) {
-                    g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
-                    drawSlotOutline(g, sx, sy, 16, 16, 0x2E000000);
+    private void drawStructureContent(GuiGraphics g, StructureModel model, int mouseX, int mouseY, int[] panel) {
+        boolean asm = model.assembly();
+        int cols = model.sizeX();
+        int rows = asm ? model.sizeY() : model.sizeZ();
+
+        int icon = structIconSize();
+        int gap = structGap();
+        int cell = icon + gap;
+        int gridW = cols * cell - gap;
+        int gridH = rows * cell - gap;
+        int cx0 = panel[0] + 2, cx1 = panel[2] - 2;
+        int cy0 = panel[1] + 2, cy1 = Math.min(panel[3], STRUCT_CONTENT_MAX_Y) - 2;
+        if (gridW > cx1 - cx0 || gridH > cy1 - cy0) {
+            icon = 16; gap = 2; cell = 18;
+            gridW = cols * cell - gap;
+            gridH = rows * cell - gap;
+        }
+        int gx0 = (cx0 + cx1) / 2 - gridW / 2 + STRUCT_GRID_X_SHIFT;
+        int gy0 = (cy0 + cy1) / 2 - gridH / 2;
+        float kf = icon / 16f;
+        for (int gx = 0; gx < cols; gx++) {
+            for (int gy = 0; gy < rows; gy++) {
+                // gy считается от ДНА: ряд 0 — в нижней части сетки.
+                int sx = leftPos + gx0 + gx * cell;
+                int sy = topPos + gy0 + (rows - 1 - gy) * cell;
+                StructureBlock b = asm ? model.front(gx, gy) : model.at(gx, structureSubpage, gy);
+                if (b == null) {
+                    g.fill(sx, sy, sx + icon, sy + icon, 0x0F000000);
+                    drawSlotOutline(g, sx, sy, icon, icon, 0x2E000000);
                     continue;
                 }
-                long key = StructureModel.key(front.x(), front.y(), front.z());
-                if (hiddenStructureBlocks.contains(key)) {
-                    g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
-                    drawSlotOutline(g, sx, sy, 16, 16, 0x2E000000);
-                    structHitRects.add(new long[]{sx, sy, 16, 16, key});
-                    continue;
-                }
-                ItemStack st = stackOf(front.itemId());
+                ItemStack st = stackOf(b.itemId());
                 if (!st.isEmpty()) {
-                    g.renderItem(st, sx, sy);
-                    if (inRect(mouseX, mouseY, sx, sy, 16, 16)) {
+                    renderScaledItem(g, st, sx, sy, kf);
+                    if (inRect(mouseX, mouseY, sx, sy, icon, icon)) {
                         tooltipStack = st;
                         tooltipComponent = null;
                         tooltipX = mouseX;
                         tooltipY = mouseY;
                     }
                 }
-                structHitRects.add(new long[]{sx, sy, 16, 16, key});
             }
         }
     }
 
-    /**
-     * Подстраница-слой: горизонтальный срез y «вид сверху» — плоская сетка
-     * sizeX×sizeZ (иконки 16×16, гэп 2px, как крафт-сетка). Воздух и скрытые
-     * блоки — бледные слоты (по скрытому кликают, чтобы вернуть).
-     */
-    private void drawStructureLayer(GuiGraphics g, StructureModel m, int layerY, int mouseX, int mouseY, int[] panel) {
-        int cell = 18;
-        int gridW = m.sizeX() * cell - 2;
-        int gridH = m.sizeZ() * cell - 2;
-        int contentX0 = panel[0] + 2, contentX1 = panel[2] - 2;
-        int contentY0 = panel[1] + 2;
-        int contentY1 = Math.min(panel[3], STRUCT_CONTENT_MAX_Y) - 2;
-        int gx0 = (contentX0 + contentX1) / 2 - gridW / 2;
-        int gy0 = (contentY0 + contentY1) / 2 - gridH / 2;
-        for (int x = 0; x < m.sizeX(); x++) {
-            for (int z = 0; z < m.sizeZ(); z++) {
-                int sx = leftPos + gx0 + x * cell;
-                int sy = topPos + gy0 + z * cell;
-                StructureBlock b = m.at(x, layerY, z);
-                long key = StructureModel.key(x, layerY, z);
-                boolean empty = b == null || hiddenStructureBlocks.contains(key);
-                g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
-                drawSlotOutline(g, sx, sy, 16, 16, 0x2E000000);
-                if (!empty) {
-                    ItemStack st = stackOf(b.itemId());
-                    if (!st.isEmpty()) {
-                        g.renderItem(st, sx, sy);
-                        if (inRect(mouseX, mouseY, sx, sy, 16, 16)) {
-                            tooltipStack = st;
-                            tooltipComponent = null;
-                            tooltipX = mouseX;
-                            tooltipY = mouseY;
-                        }
-                    }
-                }
-                structHitRects.add(new long[]{sx, sy, 16, 16, key});
-            }
+    /** Размер иконки (page px): GUI-масштаб + 1 (автор: «увеличить на +1 от
+     *  размера интерфейса»): интерфейс 2 → иконки 3 (1 тесель = 3 монит. px). */
+    private static int structIconSize() {
+        double s = Minecraft.getInstance().getWindow().getGuiScale();
+        if (s < 1) s = 1;
+        return Math.max(16, (int) Math.round(16 * (s + 1) / s));
+    }
+
+    /** Гэп между иконками (page px), пропорционально иконке (база 2px при 16px). */
+    private static int structGap() {
+        double s = Minecraft.getInstance().getWindow().getGuiScale();
+        if (s < 1) s = 1;
+        return Math.max(2, (int) Math.round(2 * (s + 1) / s));
+    }
+
+    /** Иконка предмета с масштабированием (pose-матрица, как в blitScaled). */
+    private void renderScaledItem(GuiGraphics g, ItemStack stack, int x, int y, float k) {
+        if (k <= 1f) {
+            g.renderItem(stack, x, y);
+            return;
         }
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0f);
+        g.pose().scale(k, k, 1f);
+        g.renderItem(stack, 0, 0);
+        g.pose().popPose();
     }
 
     /** Обводка прямоугольника через fill (у GuiGraphics 1.21.4 нет drawOutline). */
@@ -840,7 +846,7 @@ public class ScholarNotesScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Панель структуры (навигация/блоки) — до вкладок и стрелок буклета.
+        // Панель структуры (навигация подстраниц) — до вкладок и стрелок буклета.
         NoteIllustration il = ScholarNotesContent.PAGES.get(pageIndex).illustration();
         if (il != null && il.structure() != null) {
             if (structPrevRect != null && inRect((int) mouseX, (int) mouseY, structPrevRect)) {
@@ -856,32 +862,6 @@ public class ScholarNotesScreen extends Screen {
                     playPageSound();
                 }
                 return true;
-            }
-            if (button == 1) {
-                // ПКМ по панели структуры — показать все блоки.
-                int[] panel = structPanel != null ? structPanel : STRUCT_PANEL_DEFAULT;
-                int px0 = leftPos + panel[0], py0 = topPos + panel[1];
-                int pw = panel[2] - panel[0], ph = panel[3] - panel[1];
-                if (!hiddenStructureBlocks.isEmpty() && inRect((int) mouseX, (int) mouseY, px0, py0, pw, ph)) {
-                    hiddenStructureBlocks.clear();
-                    return true;
-                }
-            }
-            if (button == 0) {
-                // Блок под курсором (передний — первым, порядок отрисовки обратный): toggle видимости.
-                for (int i = structHitRects.size() - 1; i >= 0; i--) {
-                    long[] r = structHitRects.get(i);
-                    if (inRect((int) mouseX, (int) mouseY, (int) r[0], (int) r[1], (int) r[2], (int) r[3])) {
-                        long key = r[4];
-                        if (hiddenStructureBlocks.contains(key)) {
-                            hiddenStructureBlocks.remove(key);
-                        } else {
-                            hiddenStructureBlocks.add(key);
-                        }
-                        playPageSound();
-                        return true;
-                    }
-                }
             }
         }
 
