@@ -30,7 +30,11 @@ public enum NoteIllustrationKind {
     STRUCTURE_RIGHT("page_structure_right.png"),
 
     /** Брожение: 4 пары «вход → выход» со стрелками (стр. «Брожение»). */
-    FERMENTATION("page_fermentation.png");
+    FERMENTATION("page_fermentation.png"),
+
+    /** Гибрид: крафт 3×3 + результат СЛЕВА, справа — пары брожения
+     *  (стр. «Брожение»: фруктовый сусло + ферментация). */
+    CRAFTING_FERMENTATION("page_crafting_fermentation.png");
 
     private final String textureName;
 

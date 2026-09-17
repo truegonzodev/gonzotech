@@ -33,7 +33,8 @@ import java.util.Set;
 /**
  * GUI-буклет «Заметки учёного» (вариант 2): контейнер (фон панели и вкладки) —
  * рисованные PNG; весь текст рисуется шрифтом ради локализации; иллюстрации
- * страниц — рисованный PNG на страницу ({@code page_N.png}).
+ * страниц — ШАБЛОНЫ ({@link com.gonzotech.chalkboard.notes.NoteIllustrationKind}),
+ * а не личные PNG на страницу.
  *
  * <p>Две книги: <b>линейная</b> — главы-эпохи (I/III/IV/V) делят одну историю
  * страниц 1..X, стрелки листают насквозь все открытые главы; <b>отдельная</b> —
@@ -301,10 +302,6 @@ public class ScholarNotesScreen extends Screen {
             g.drawString(this.font, title, contentX, contentY, INK, false);
         }
 
-        // Иллюстрация (правая половина при TEXT_LEFT) рисуется автором прямо в
-        // page_N.png — фон страницы. Плейсхолдер-рамка «иллюстрация» больше не
-        // рисуется, чтобы не перекрывать нарисованный арт.
-
         // Тело (если есть).
         if (page.hasBody()) {
             int textW = page.layout() == ScholarPage.Layout.TEXT_LEFT
@@ -457,13 +454,16 @@ public class ScholarNotesScreen extends Screen {
             }
             case STRUCTURE_RIGHT ->
                     drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
+            case CRAFTING_FERMENTATION ->
+                    drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
             case FERMENTATION -> {
                 // Подписи — в самом шаблоне (уникальная иллюстрация).
             }
         }
 
         // 3) Предметы в слотах — как на витрине: renderItem + hover-тултип.
-        for (NoteSlot slot : slotsOf(il)) {
+        int cycle = cycleIndex(il);
+        for (NoteSlot slot : slotsOf(il, cycle)) {
             if (!slot.hasItem()) continue;
             ItemStack st = stackOf(slot.itemId());
             if (st.isEmpty()) continue;
@@ -482,11 +482,30 @@ public class ScholarNotesScreen extends Screen {
     private void drawCaption(GuiGraphics g, String key, int centerX) {
         String text = Component.translatable(key).getString();
         int tw = this.font.width(text);
-        g.drawString(this.font, text, leftPos + centerX - tw / 2, CAPTION_Y, INK_FAINT, false);
+        g.drawString(this.font, text, leftPos + centerX - tw / 2, topPos + CAPTION_Y, INK_FAINT, false);
+    }
+
+    /** Точка отсчёта цикла кадров (System.currentTimeMillis, 0 = ещё не шла). */
+    private long cycleBaseMs;
+    private long lastCycleBaseMs;
+
+    /** Номер кадра цикла в реальном времени (1 тик = 50 мс; оба окна на одном
+     *  таймере). Не зависит от FPS: рендер вызывается каждый кадр, а номер
+     *  кадра считается по истечённым тикам с момента открытия экрана. */
+    private int cycleIndex(NoteIllustration il) {
+        boolean cycling = (il.leftSequence() != null && !il.leftSequence().isEmpty())
+                || (il.rightSequence() != null && !il.rightSequence().isEmpty());
+        if (!cycling || il.cycleTicks() <= 0) return 0;
+        long now = System.currentTimeMillis();
+        if (now != lastCycleBaseMs) {
+            lastCycleBaseMs = now;
+            if (cycleBaseMs == 0) cycleBaseMs = now;
+        }
+        return (int) ((now - cycleBaseMs) / (il.cycleTicks() * 50L));
     }
 
     /** Слоты иллюстрации с предметами (шаблон → координаты страницы). */
-    private List<NoteSlot> slotsOf(NoteIllustration il) {
+    private List<NoteSlot> slotsOf(NoteIllustration il, int cycle) {
         List<NoteSlot> out = new ArrayList<>();
         switch (il.kind()) {
             case CRAFTING_RIGHT -> {
@@ -494,10 +513,14 @@ public class ScholarNotesScreen extends Screen {
                 addResultSlot(out, 176, il.leftResult());
             }
             case CRAFTING_FULL -> {
-                gridSlots(out, GRID_LEFT_X, il.leftGrid());
-                addResultSlot(out, 68, il.leftResult());
-                gridSlots(out, GRID_RIGHT_X, il.rightGrid());
-                addResultSlot(out, 176, il.rightResult());
+                NoteIllustration.Craft left =
+                        pickCraft(il.leftSequence(), il.leftGrid(), il.leftResult(), cycle);
+                NoteIllustration.Craft right =
+                        pickCraft(il.rightSequence(), il.rightGrid(), il.rightResult(), cycle);
+                gridSlots(out, GRID_LEFT_X, left.grid());
+                addResultSlot(out, 68, left.result());
+                gridSlots(out, GRID_RIGHT_X, right.grid());
+                addResultSlot(out, 176, right.result());
             }
             case CRAFTING_STRUCTURE -> {
                 // Справа — панель структуры; раскладка ЕЁ слотов — по каждой структуре (позже).
@@ -507,20 +530,36 @@ public class ScholarNotesScreen extends Screen {
             case STRUCTURE_RIGHT -> {
                 // Раскладка слотов структуры — по каждой структуре (позже).
             }
-            case FERMENTATION -> {
-                List<String> inputs = il.fermInputs();
-                List<String> outputs = il.fermOutputs();
-                for (int i = 0; i < FERMENT_Y.length; i++) {
-                    if (inputs != null && i < inputs.size()) {
-                        out.add(new NoteSlot(FERMENT_IN_X, FERMENT_Y[i], inputs.get(i)));
-                    }
-                    if (outputs != null && i < outputs.size()) {
-                        out.add(new NoteSlot(FERMENT_OUT_X, FERMENT_Y[i], outputs.get(i)));
-                    }
-                }
+            case FERMENTATION -> addFermentation(out, il);
+            case CRAFTING_FERMENTATION -> {
+                gridSlots(out, GRID_LEFT_X, il.leftGrid());
+                addResultSlot(out, 68, il.leftResult());
+                addFermentation(out, il);
             }
         }
         return out;
+    }
+
+    /** Кадр окна: кадр последовательности (цикл) или статичная сетка. */
+    private static NoteIllustration.Craft pickCraft(List<NoteIllustration.Craft> sequence,
+                                                    List<String> grid, String result, int cycle) {
+        if (sequence != null && !sequence.isEmpty()) {
+            return sequence.get(cycle % sequence.size());
+        }
+        return new NoteIllustration.Craft(grid, result);
+    }
+
+    private void addFermentation(List<NoteSlot> out, NoteIllustration il) {
+        List<String> inputs = il.fermInputs();
+        List<String> outputs = il.fermOutputs();
+        for (int i = 0; i < FERMENT_Y.length; i++) {
+            if (inputs != null && i < inputs.size()) {
+                out.add(new NoteSlot(FERMENT_IN_X, FERMENT_Y[i], inputs.get(i)));
+            }
+            if (outputs != null && i < outputs.size()) {
+                out.add(new NoteSlot(FERMENT_OUT_X, FERMENT_Y[i], outputs.get(i)));
+            }
+        }
     }
 
     private void gridSlots(List<NoteSlot> out, int[] xs, List<String> grid) {
