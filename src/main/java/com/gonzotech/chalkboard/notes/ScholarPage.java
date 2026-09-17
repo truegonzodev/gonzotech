@@ -16,7 +16,8 @@ import java.util.List;
  * @param number       порядковый номер страницы (1-based) — задаёт {@code page_N.png}.
  * @param chapter      глава-владелец (вкладка слева).
  * @param unlock       условие разблокировки страницы.
- * @param titleKey     lang-ключ заголовка страницы (рисуется жирным).
+ * @param titleKey     lang-ключ заголовка страницы (рисуется жирным);
+ *                     {@code null} — пустая страница-иллюстрация (текста нет вообще).
  * @param bodyKey      lang-ключ тела страницы; {@code null} для страниц-иллюстраций.
  * @param showcaseItems id предметов/блоков (namespace c префиксом) для нижней витрины.
  * @param layout       раскладка страницы (текст во всю ширину / слева / только картинка).

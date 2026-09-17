@@ -226,15 +226,18 @@ public final class Phase3Events {
         }
     }
 
-    // ──────────────── 3. Источник лавы + красная пыль → багровый обсидиан ────────────────
+    // ──────────────── 3. Источник лавы + блок редстоуна → багровый обсидиан ────────────────
 
     /**
-     * Covers the inverse placement order: redstone dust can be placed beside an
-     * existing source-lava block. The bucket mixin handles placing the source
-     * onto/next to dust; this event handles placing dust next to a source.
+     * Covers the inverse placement order: a redstone block can be placed beside
+     * an existing source-lava block. The bucket mixin handles placing the lava
+     * source onto/next to the redstone block; this event handles placing the
+     * block next to a source.
      * <p>
-     * The upper face of lava is explicitly excluded: dust directly above a
-     * source lava block is allowed and must not trigger the reaction.
+     * The reaction is with the REDSTONE BLOCK only (never dust/wire): a block
+     * is not replaceable, so the only placement conflict is order. The upper
+     * face of lava is explicitly excluded: a block directly above a source
+     * lava block is allowed and must not trigger the reaction.
      */
     @SubscribeEvent
     public static void onRedstoneOrLavaNeighbourChanged(BlockEvent.NeighborNotifyEvent event) {
@@ -246,13 +249,13 @@ public final class Phase3Events {
             return;
         }
 
-        if (!level.getBlockState(changedPos).is(Blocks.REDSTONE_WIRE)) return;
-        for (Direction fromDustToLava : Direction.values()) {
-            // If the lava is below this dust, the dust lies above the lava.
+        if (!level.getBlockState(changedPos).is(Blocks.REDSTONE_BLOCK)) return;
+        for (Direction fromBlockToLava : Direction.values()) {
+            // If the lava is below this block, the block lies above the lava.
             // That single (upper) side is deliberately non-reactive.
-            if (fromDustToLava == Direction.DOWN) continue;
+            if (fromBlockToLava == Direction.DOWN) continue;
 
-            BlockPos lavaPos = changedPos.relative(fromDustToLava);
+            BlockPos lavaPos = changedPos.relative(fromBlockToLava);
             if (isLavaSource(level, lavaPos)) {
                 transformLavaToCrimsonObsidian(level, lavaPos);
             }
@@ -264,11 +267,11 @@ public final class Phase3Events {
         return level.getFluidState(pos).isSourceOfType(Fluids.LAVA);
     }
 
-    /** Check the five allowed sides of a source lava block for redstone dust. */
+    /** Check the five allowed sides of a source lava block for a redstone block. */
     private static void transformLavaIfTouchingRedstone(ServerLevel level, BlockPos lavaPos) {
         for (Direction direction : Direction.values()) {
             if (direction == Direction.UP) continue;
-            if (level.getBlockState(lavaPos.relative(direction)).is(Blocks.REDSTONE_WIRE)) {
+            if (level.getBlockState(lavaPos.relative(direction)).is(Blocks.REDSTONE_BLOCK)) {
                 transformLavaToCrimsonObsidian(level, lavaPos);
                 return;
             }

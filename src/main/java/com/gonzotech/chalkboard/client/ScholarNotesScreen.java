@@ -294,9 +294,11 @@ public class ScholarNotesScreen extends Screen {
             return;
         }
 
-        // Заголовок — жирный.
-        Component title = Component.translatable(page.titleKey()).withStyle(ChatFormatting.BOLD);
-        g.drawString(this.font, title, contentX, contentY, INK, false);
+        // Заголовок — жирный (пустые страницы-иллюстрации заголовка не имеют).
+        if (page.titleKey() != null) {
+            Component title = Component.translatable(page.titleKey()).withStyle(ChatFormatting.BOLD);
+            g.drawString(this.font, title, contentX, contentY, INK, false);
+        }
 
         // Иллюстрация (правая половина при TEXT_LEFT) рисуется автором прямо в
         // page_N.png — фон страницы. Плейсхолдер-рамка «иллюстрация» больше не
