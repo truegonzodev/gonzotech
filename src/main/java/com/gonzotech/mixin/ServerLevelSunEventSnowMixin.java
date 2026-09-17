@@ -2,9 +2,9 @@ package com.gonzotech.mixin;
 
 import com.gonzotech.sunevent.SunEventServer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,9 +26,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * (снег «идёт» только в холодных биомах). В окне мы:
  * <ol>
  *   <li>открываем гейт — снег во ВСЕХ биомах (redirect shouldSnow);</li>
- *   <li>ПРАВИЛО АВТОРА: снег ложится только на землю из {@code #minecraft:solid}
- *       и только в ПУСТУЮ ячейку — ванильный setBlockAndUpdate бездумно «съел»
- *       бы факелы/цветки и положил снег поверх воды (HEAD-cancel таких точек);</li>
+ *   <li>ПРАВИЛО АВТОРА: снег ложится только на твёрдую землю и только в ПУСТУЮ
+ *       ячейку — ванильный setBlockAndUpdate бездумно «съел» бы факелы/цветки
+ *       и положил снег поверх воды (HEAD-cancel таких точек). Земля проверяется
+ *       по {@code #minecraft:snow_layer_can_survive_on} — ванильный список
+ *       «на чём выживает снежный слой» (в 1.21.4 тега {@code #solid} в
+ *       BlockTags нет; snow_layer_can_survive_on точнее: он же исключает песок/
+ *       гравий, на которых слой бы выпал).</li>
  *   <li>плотность укладки ×8 (1/48 → 1/6 на бросок);</li>
  *   <li>гроза ×10 (автор: старт ×10, только день E): молнии в 10 раз чаще,
  *       а «пауза до грома» в 10 раз короче.</li>
@@ -67,7 +71,7 @@ public abstract class ServerLevelSunEventSnowMixin {
             return; // на слое — обычное наращивание (ванил сделает)
         }
         boolean emptySpot = surfaceState.isAir();
-        boolean solidGround = level.getBlockState(surface.below()).is(BlockTags.SOLID);
+        boolean solidGround = level.getBlockState(surface.below()).is(BlockTags.SNOW_LAYER_CAN_SURVIVE_ON);
         if (!emptySpot || !solidGround) {
             // Факел/цветок/вода и т.п. — не трогаем, точка пропускается.
             ci.cancel();

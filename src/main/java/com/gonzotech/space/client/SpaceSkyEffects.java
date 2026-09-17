@@ -2,6 +2,7 @@ package com.gonzotech.space.client;
 
 import com.gonzotech.space.SunState;
 import com.gonzotech.sunevent.client.SunEventClient;
+import com.gonzotech.sunevent.client.SunEventSnowRenderer;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;

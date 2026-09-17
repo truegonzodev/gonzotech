@@ -8,7 +8,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.core.Vec3;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
@@ -76,7 +76,7 @@ public final class SunEventSnowRenderer {
         }
 
         // Биллборд-базис из направления взгляда камеры.
-        Vec3 look = mc.gameRenderer.getMainCamera().getLook(1.0F);
+        Vec3 look = mc.gameRenderer.getMainCamera().getLook(1.0);
         Vec3 right = look.crossproduct(new Vec3(0.0, 1.0, 0.0));
         if (right.lengthSquared() < 1.0E-6) {
             right = new Vec3(1.0, 0.0, 0.0); // взгляд ровно вверх/вниз — дегенерация
@@ -89,7 +89,7 @@ public final class SunEventSnowRenderer {
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.enableDepthTest();
-        Matrix4f m = RenderSystem.getModelViewStack().peek();
+        Matrix4f m = RenderSystem.getModelViewStack().top();
 
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
