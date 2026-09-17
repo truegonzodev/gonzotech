@@ -162,13 +162,16 @@ public final class ScholarNotesContent {
                     NoteIllustration.craftingRight(List.of("", "minecraft:copper_ingot", "", "minecraft:copper_ingot", "minecraft:chest", "minecraft:copper_ingot", "", "minecraft:hopper", ""), "gonzotech:item_filter")),
 
             // 13 — «Логистика предметов» (после «Открытия 1») — слева крафт отсеивателя,
-            // справа структура (пока пустая); на витрине отсеиватель
+            // справа плоская структура «Вид сверху»: отсеиватель + предметные трубы
+            // + фильтр (статичный); на витрине отсеиватель
             new ScholarPage(13, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p13.title",
                     null,
                     List.of("gonzotech:item_scavenger"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.craftingStructure(List.of("", "minecraft:copper_ingot", "minecraft:stick", "minecraft:cobblestone", "minecraft:dropper", "minecraft:cobblestone", "", "minecraft:copper_ingot", ""), "gonzotech:item_scavenger")),
+                    NoteIllustration.craftingStructure(List.of("", "minecraft:copper_ingot", "minecraft:stick", "minecraft:cobblestone", "minecraft:dropper", "minecraft:cobblestone", "", "minecraft:copper_ingot", ""), "gonzotech:item_scavenger",
+                            List.of(List.of("", "gonzotech:item_scavenger", "gonzotech:first_item_pipe", "gonzotech:first_item_pipe", "gonzotech:item_filter", "", "", "gonzotech:first_item_pipe", "")),
+                            NoteIllustration.CAPTION_VIEW_TOP)),
 
             // 14 — «Универсальный узел» (после «Открытия 1») — справа крафт узла
             new ScholarPage(14, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
@@ -199,14 +202,17 @@ public final class ScholarNotesContent {
                     NoteIllustration.craftingStructure(List.of("minecraft:iron_nugget", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "gonzotech:pseudo_coil", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "minecraft:iron_nugget"), "gonzotech:turbine_rotor",
                             StructureModel.turbineMinimum())),
 
-            // 17 — «Механизмы и редстоун» (после «Открытия 1») — справа структура (пока пустая)
+            // 17 — «Механизмы и редстоун» (после «Открытия 1») — справа плоская
+            // структура «Вид сверху»: [энергохранилище][компаратор][редстоун-пыль]
             new ScholarPage(17, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p17.title",
                     "gui.gonzotech.notes.p17.body",
                     List.of("minecraft:comparator", "gonzotech:firebox",
                             "gonzotech:accumulator", "gonzotech:nuclear_firebox"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.structureRight()),
+                    NoteIllustration.structureRightFlat(
+                            List.of("gonzotech:accumulator", "minecraft:comparator", "minecraft:redstone"),
+                            NoteIllustration.CAPTION_VIEW_TOP)),
 
             // 18 — «Дробилка руды» (первая запись после «Открытия 2») — справа дробилка
             new ScholarPage(18, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
@@ -346,22 +352,37 @@ public final class ScholarNotesContent {
             // ─────────── глава II «Познание мира» (по действиям) ───────────
 
             // 31 — «Редстоун и лава» (по «Открытию 1» — базовое знание о мире);
-            // реакция — с БЛОКОМ редстоуна (не с пылью/проводом)
+            // реакция — с БЛОКОМ редстоуна (не с пылью/проводом); справа «Вид сверху»
+            // (тикает, 2 кадра): лава+блок редстоуна+поршень → багряный обсидиан
+            // + головка поршня
             new ScholarPage(31, ScholarChapter.ERA_2, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p31.title",
                     "gui.gonzotech.notes.p31.body",
                     List.of("gonzotech:crimson_obsidian", "minecraft:redstone_block",
                             "minecraft:lava_bucket"),
                     Layout.TEXT_LEFT,
-                    null),
+                    NoteIllustration.structureRightFlat(60,
+                            List.of(
+                                    List.of("minecraft:lava", "", "minecraft:lava", "", "minecraft:redstone_block", "", "", "minecraft:piston", ""),
+                                    List.of("minecraft:crimson_obsidian", "minecraft:redstone_block", "minecraft:crimson_obsidian", "", "minecraft:piston_head", "", "", "minecraft:piston", "")),
+                            NoteIllustration.CAPTION_VIEW_TOP)),
 
-            // 32 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок)
+            // 32 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок);
+            // справа «Вид сбоку» (тикает, 4 кадра): теплотруба 1 → узел 1 →
+            // теплотруба 2 → узел 2; вольфрам посередине; сверхплотный лёд
+            // появляется/исчезает
             new ScholarPage(32, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
                     "gui.gonzotech.notes.p32.title",
                     "gui.gonzotech.notes.p32.body",
                     List.of("gonzotech:tungsten_block", "gonzotech:superdense_ice"),
                     Layout.TEXT_LEFT,
-                    null),
+                    NoteIllustration.structureRightFlat(60,
+                            List.of(
+                                    List.of("gonzotech:first_heat_pipe", "gonzotech:tungsten_block", "gonzotech:superdense_ice"),
+                                    List.of("gonzotech:first_heat_node", "gonzotech:tungsten_block", ""),
+                                    List.of("gonzotech:second_heat_pipe", "gonzotech:tungsten_block", "gonzotech:superdense_ice"),
+                                    List.of("gonzotech:second_heat_node", "gonzotech:tungsten_block", "")),
+                            NoteIllustration.CAPTION_VIEW_SIDE)),
 
             // 33 — пустая страница под иллюстрацию вольфрамового абсорбера
             // (работа + крафты; вольфрам — ДВЕ страницы)

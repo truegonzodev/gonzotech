@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 /**
  * GUI-буклет «Заметки учёного» (вариант 2): контейнер (фон панели и вкладки) —
@@ -472,18 +473,10 @@ public class ScholarNotesScreen extends Screen {
             }
             case CRAFTING_STRUCTURE -> {
                 drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
-                if (il.structure() != null) {
-                    drawStructureNav(g, il.structure());
-                } else {
-                    drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
-                }
+                drawStructureCaption(g, il);
             }
             case STRUCTURE_RIGHT -> {
-                if (il.structure() != null) {
-                    drawStructureNav(g, il.structure());
-                } else {
-                    drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
-                }
+                drawStructureCaption(g, il);
             }
             case CRAFTING_FERMENTATION ->
                     drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
@@ -509,10 +502,13 @@ public class ScholarNotesScreen extends Screen {
             }
         }
 
-        // 4) Панель структуры: подстраницы («Сборка» / слои «вид сверху»),
-        //    тултипы. Точки привязки — абсолютные page coords (автор).
+        // 4) Панель структуры: подстраницы («Сборка» / слои «вид сверху») или
+        //    плоский вид («Вид сверху»/«Вид сбоку», возможно «тикает»), тултипы.
+        //    Точки привязки — абсолютные page coords (автор).
         if (il.structure() != null) {
             drawStructureContent(g, il.structure(), mouseX, mouseY);
+        } else if (il.flatView() != null) {
+            drawFlatStructure(g, il.flatView(), cycle, mouseX, mouseY);
         }
     }
 
@@ -554,6 +550,22 @@ public class ScholarNotesScreen extends Screen {
         }
     }
 
+    /**
+     * Подпись панели структуры: модель — навигация «‹  Заголовок  ›»;
+     * плоский вид — «Вид сверху»/«Вид сбоку» (левый верхний угол — 133,34);
+     * ничего нет — заглушка «Структура».
+     */
+    private void drawStructureCaption(GuiGraphics g, NoteIllustration il) {
+        if (il.structure() != null) {
+            drawStructureNav(g, il.structure());
+        } else if (il.flatView() != null) {
+            String text = Component.translatable(il.flatView().captionKey()).getString();
+            g.drawString(this.font, text, leftPos + STRUCT_CAPTION_LEFT_X, topPos + CAPTION_Y, INK_FAINT, false);
+        } else {
+            drawCaption(g, "gui.gonzotech.notes.illustration.structure", CAPTION_STRUCTURE_X);
+        }
+    }
+
     /** Подпись подстраницы: «Сборка (1)» или «Нижний/Средний/Верхний слой (N)»
      *  (1 = нижний слой, подстраницы идут снизу вверх). */
     private static String structureTitle(StructureModel m, int sub) {
@@ -581,27 +593,55 @@ public class ScholarNotesScreen extends Screen {
         boolean asm = model.assembly();
         int cols = model.sizeX();
         int rows = asm ? model.sizeY() : model.sizeZ();
+        int layerY = structureSubpage;
+        // Слои «вид сверху»: z=0 (перед) — ВЕРХНИЙ ряд. Сборка: y=0 — НИЖНИЙ ряд.
+        BiFunction<Integer, Integer, String> cell = asm
+                ? (gx, gy) -> itemId(model.front(gx, rows - 1 - gy))
+                : (gx, gy) -> itemId(model.at(gx, layerY, gy));
+        drawItemGrid(g, cols, rows, cell, mouseX, mouseY);
+    }
 
+    /** Плоский вид («Вид сверху»/«Вид сбоку»): кадр {@code frameIdx} (цикл),
+     *  строка 0 кадра — верхний ряд сетки. */
+    private void drawFlatStructure(GuiGraphics g, NoteIllustration.FlatView view, int frameIdx,
+                                   int mouseX, int mouseY) {
+        List<List<String>> frames = view.frames();
+        List<String> frame = frames.get(frameIdx % frames.size());
+        int rows = frame.size();
+        int cols = frame.get(0).size();
+        drawItemGrid(g, cols, rows, (gx, gy) -> frame.get(gy * cols + gx), mouseX, mouseY);
+    }
+
+    private static String itemId(StructureBlock b) {
+        return b == null ? null : b.itemId();
+    }
+
+    /**
+     * Общий рендер сетки иконок предметов С ГЭПОМ: центр описывающего
+     * прямоугольника — (183, 89) page coords (автор); иконки = GUI-масштаб + 1,
+     * гэп пропорциональный; пустая клетка — бледный слот; ховер — тултип.
+     */
+    private void drawItemGrid(GuiGraphics g, int cols, int rows,
+                              BiFunction<Integer, Integer, String> cell, int mouseX, int mouseY) {
         int icon = structIconSize();
         int gap = structGap();
-        int cell = icon + gap;
-        int gridW = cols * cell - gap;
-        int gridH = rows * cell - gap;
+        int cellSize = icon + gap;
+        int gridW = cols * cellSize - gap;
+        int gridH = rows * cellSize - gap;
         int gx0 = STRUCT_GRID_CENTER_X - gridW / 2;
         int gy0 = STRUCT_GRID_CENTER_Y - gridH / 2;
         float kf = icon / 16f;
         for (int gx = 0; gx < cols; gx++) {
             for (int gy = 0; gy < rows; gy++) {
-                // gy считается от ДНА: ряд 0 — в нижней части сетки.
-                int sx = leftPos + gx0 + gx * cell;
-                int sy = topPos + gy0 + (rows - 1 - gy) * cell;
-                StructureBlock b = asm ? model.front(gx, gy) : model.at(gx, structureSubpage, gy);
-                if (b == null) {
+                int sx = leftPos + gx0 + gx * cellSize;
+                int sy = topPos + gy0 + gy * cellSize;
+                String id = cell.apply(gx, gy);
+                if (id == null || id.isEmpty()) {
                     g.fill(sx, sy, sx + icon, sy + icon, 0x0F000000);
                     drawSlotOutline(g, sx, sy, icon, icon, 0x2E000000);
                     continue;
                 }
-                ItemStack st = stackOf(b.itemId());
+                ItemStack st = stackOf(id);
                 if (!st.isEmpty()) {
                     renderScaledItem(g, st, sx, sy, kf);
                     if (inRect(mouseX, mouseY, sx, sy, icon, icon)) {
@@ -660,7 +700,8 @@ public class ScholarNotesScreen extends Screen {
      *  кадра считается по истечённым тикам с момента открытия экрана. */
     private int cycleIndex(NoteIllustration il) {
         boolean cycling = (il.leftSequence() != null && !il.leftSequence().isEmpty())
-                || (il.rightSequence() != null && !il.rightSequence().isEmpty());
+                || (il.rightSequence() != null && !il.rightSequence().isEmpty())
+                || (il.flatView() != null && il.flatView().frames().size() > 1);
         if (!cycling || il.cycleTicks() <= 0) return 0;
         long now = System.currentTimeMillis();
         if (now != lastCycleBaseMs) {

@@ -677,5 +677,7 @@
   "gui.gonzotech.notes.p28.title": "Item Logistics 2",
   "gui.gonzotech.notes.p28.body": "The second-generation item logistics learned what I taught the Arteries: to hold their ground under load.\n\nThe pipe now drives ten items per tick, the node keeps a junction of several lines, the filter passes only what I chose, and the scavenger diverts the rest around the line — to reprocessing, or to the chest of forgetting.\n\nThe same diagram as in the first logistics — only twice as sure. I assembled the second shift and now I watch the harvest sort itself: what is needed goes to the machines, the excess goes to reprocessing.",
   "gui.gonzotech.notes.illustration.crafting": "Creation",
-  "gui.gonzotech.notes.illustration.structure": "Structure"
+  "gui.gonzotech.notes.illustration.structure": "Structure",
+  "gui.gonzotech.notes.illustration.view_top": "Top view",
+  "gui.gonzotech.notes.illustration.view_side": "Side view"
 }
