@@ -12,7 +12,11 @@ import java.util.List;
  *
  * <p>ЦИКЛ: если заданы {@code leftSequence}/{@code rightSequence} (кадр —
  * сетка+результат) и {@code cycleTicks} > 0, GUI листает кадры по времени
- * мира (оба окна на одном таймере) — «тикает, меняется».
+ * (оба окна на одном таймере) — «тикает, меняется».
+ *
+ * <p>СТРУКТУРА: {@code structure} (nullable) — модель многоблока для панели
+ * структуры: подстраницы (изо-вид + слои «вид сверху»), клик-тоггл видимости
+ * блоков, тултипы (см. {@link StructureModel} и ScholarNotesScreen).
  *
  * @param kind          шаблон (определяет PNG и раскладку слотов).
  * @param leftGrid      статичная сетка 3×3 (9, слева направо, сверху вниз):
@@ -26,6 +30,7 @@ import java.util.List;
  * @param cycleTicks    период смены кадра в тиках (0 — без цикла).
  * @param leftSequence  кадры левого окна (non-null → цикл; 1 кадр = статично).
  * @param rightSequence кадры правого окна (non-null → цикл; 1 кадр = статично).
+ * @param structure     модель структуры для панели (CRAFTING_STRUCTURE / STRUCTURE_RIGHT).
  */
 public record NoteIllustration(
         NoteIllustrationKind kind,
@@ -37,7 +42,8 @@ public record NoteIllustration(
         List<String> fermOutputs,
         int cycleTicks,
         List<Craft> leftSequence,
-        List<Craft> rightSequence
+        List<Craft> rightSequence,
+        StructureModel structure
 ) {
 
     /** Кадр крафта: сетка 3×3 + результат. */
@@ -47,14 +53,14 @@ public record NoteIllustration(
     /** Один крафт справа (страница «текст слева»). */
     public static NoteIllustration craftingRight(List<String> grid, String result) {
         return new NoteIllustration(NoteIllustrationKind.CRAFTING_RIGHT,
-                grid, result, null, null, null, null, 0, null, null);
+                grid, result, null, null, null, null, 0, null, null, null);
     }
 
     /** Два статичных крафта: левый + правый (страница на всю ширину). */
     public static NoteIllustration craftingFull(List<String> gridLeft, String resultLeft,
                                                 List<String> gridRight, String resultRight) {
         return new NoteIllustration(NoteIllustrationKind.CRAFTING_FULL,
-                gridLeft, resultLeft, gridRight, resultRight, null, null, 0, null, null);
+                gridLeft, resultLeft, gridRight, resultRight, null, null, 0, null, null, null);
     }
 
     /** Два ЦИКЛИЧЕСКИХ окна (оба на одном таймере {@code cycleTicks} тиков). */
@@ -62,31 +68,42 @@ public record NoteIllustration(
                                                        List<Craft> leftSequence,
                                                        List<Craft> rightSequence) {
         return new NoteIllustration(NoteIllustrationKind.CRAFTING_FULL,
-                null, null, null, null, null, null, cycleTicks, leftSequence, rightSequence);
+                null, null, null, null, null, null, cycleTicks, leftSequence, rightSequence, null);
     }
 
-    /** Крафт слева + панель структуры справа (структурные слоты — позже). */
+    /** Крафт слева + панель структуры справа (модель — null, пока пустая). */
     public static NoteIllustration craftingStructure(List<String> grid, String result) {
-        return new NoteIllustration(NoteIllustrationKind.CRAFTING_STRUCTURE,
-                grid, result, null, null, null, null, 0, null, null);
+        return craftingStructure(grid, result, null);
     }
 
-    /** Только панель структуры справа (раскладка слотов — по каждой структуре). */
+    /** Крафт слева + панель структуры справа с моделью (подстраницы). */
+    public static NoteIllustration craftingStructure(List<String> grid, String result,
+                                                     StructureModel structure) {
+        return new NoteIllustration(NoteIllustrationKind.CRAFTING_STRUCTURE,
+                grid, result, null, null, null, null, 0, null, null, structure);
+    }
+
+    /** Только панель структуры справа (модель — null, пока пустая). */
     public static NoteIllustration structureRight() {
+        return structureRight(null);
+    }
+
+    /** Только панель структуры справа с моделью (подстраницы). */
+    public static NoteIllustration structureRight(StructureModel structure) {
         return new NoteIllustration(NoteIllustrationKind.STRUCTURE_RIGHT,
-                null, null, null, null, null, null, 0, null, null);
+                null, null, null, null, null, null, 0, null, null, structure);
     }
 
     /** Брожение: 4 пары «вход → выход». */
     public static NoteIllustration fermentation(List<String> inputs, List<String> outputs) {
         return new NoteIllustration(NoteIllustrationKind.FERMENTATION,
-                null, null, null, null, inputs, outputs, 0, null, null);
+                null, null, null, null, inputs, outputs, 0, null, null, null);
     }
 
     /** Крафт фруктового сусла слева + пары брожения справа. */
     public static NoteIllustration craftingFermentation(List<String> grid, String result,
                                                         List<String> inputs, List<String> outputs) {
         return new NoteIllustration(NoteIllustrationKind.CRAFTING_FERMENTATION,
-                grid, result, null, null, inputs, outputs, 0, null, null);
+                grid, result, null, null, inputs, outputs, 0, null, null, null);
     }
 }

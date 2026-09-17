@@ -89,12 +89,14 @@ public final class ScholarNotesContent {
                     NoteIllustration.craftingRight(List.of("minecraft:iron_ingot", "minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:furnace", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot"), "gonzotech:firebox")),
 
             // 5 — «Топка и котёл» (после «Открытия 1») — шаблон: крафт слева + структура
+            // (подстраницы: изо + 2 слоя: топка внизу, котёл на ней)
             new ScholarPage(5, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p5.title",
                     null,
                     List.of("gonzotech:firebox", "gonzotech:boiler"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.craftingStructure(List.of("gonzotech:cast_iron_ingot", "minecraft:iron_trapdoor", "gonzotech:cast_iron_ingot", "minecraft:copper_ingot", "minecraft:bucket", "minecraft:copper_ingot", "gonzotech:cast_iron_ingot", "minecraft:piston", "gonzotech:cast_iron_ingot"), "gonzotech:boiler")),
+                    NoteIllustration.craftingStructure(List.of("gonzotech:cast_iron_ingot", "minecraft:iron_trapdoor", "gonzotech:cast_iron_ingot", "minecraft:copper_ingot", "minecraft:bucket", "minecraft:copper_ingot", "gonzotech:cast_iron_ingot", "minecraft:piston", "gonzotech:cast_iron_ingot"), "gonzotech:boiler",
+                            StructureModel.fireboxBoiler())),
 
             // 6 — «Генератор Стирлинга» (после «Открытия 1») — справа крафт Стирлинга
             new ScholarPage(6, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
@@ -187,12 +189,14 @@ public final class ScholarNotesContent {
                     NoteIllustration.craftingRight(List.of("minecraft:iron_bars", "gonzotech:cast_iron_ingot", "gonzotech:calcium_ingot", "minecraft:iron_bars", "minecraft:iron_ingot", "minecraft:iron_bars", "gonzotech:calcium_ingot", "gonzotech:cast_iron_ingot", "minecraft:iron_bars"), "gonzotech:turbine_casing")),
 
             // 16 — пустая страница после турбины — слева крафт ротора,
-            // справа структура (пока пустая); на витрине ротор
+            // справа структура: МИНИМАЛЬНАЯ турбина 3×3×3 (24 корпуса, ротор
+            // в центре, паровой узел сверху, узел провода справа) — 4 подстраницы
             new ScholarPage(16, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     null, null,
                     List.of("gonzotech:turbine_rotor"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.craftingStructure(List.of("minecraft:iron_nugget", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "gonzotech:pseudo_coil", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "minecraft:iron_nugget"), "gonzotech:turbine_rotor")),
+                    NoteIllustration.craftingStructure(List.of("minecraft:iron_nugget", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "gonzotech:pseudo_coil", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "minecraft:iron_nugget"), "gonzotech:turbine_rotor",
+                            StructureModel.turbineMinimum())),
 
             // 17 — «Механизмы и редстоун» (после «Открытия 1») — справа структура (пока пустая)
             new ScholarPage(17, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
