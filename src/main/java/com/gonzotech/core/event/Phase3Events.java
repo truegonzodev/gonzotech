@@ -147,6 +147,19 @@ public final class Phase3Events {
         return com.gonzotech.machines.crafting.TierTwoCrafting.isGatedOutput(item) ? 2 : null;
     }
 
+    /**
+     * true, если предмет «закрыт» гейтом по «Открытию» (тир 1 или 2).
+     * <p>
+     * Для НЕИГРОВЫХ крафтеров (будущий «сборщик»): такой вывод НЕЛЬЗЯ давать —
+     * гейт живёт в per-player аттачменте, а машина не игрок, и привязать крафт
+     * машины к прогрессу какого-то игрока нельзя. Правило: все рецепты с
+     * загейченным выводом из пула сборщика убираются целиком (тир 1 и всё,
+     * что позже). См. TEMP_NOTES §3.5.
+     */
+    public static boolean isAttachmentGated(net.minecraft.world.item.Item item) {
+        return requiredTierFor(item) != null;
+    }
+
     // ─────────────────────── 1. Гейт крафта закрытых машин ───────────────────────
 
     @SubscribeEvent
