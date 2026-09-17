@@ -622,7 +622,7 @@ public class ScholarNotesScreen extends Screen {
             int sy = topPos + offY + py[i];
             if (hiddenStructureBlocks.contains(key)) {
                 // Скрытый блок — призрачная рамка (клик по ней покажет обратно).
-                g.drawOutline(sx, sy, S, S, 0x55000000);
+                drawSlotOutline(g, sx, sy, S, S, 0x55000000);
             } else {
                 ItemStack st = stackOf(b.itemId());
                 if (!st.isEmpty()) {
@@ -657,12 +657,9 @@ public class ScholarNotesScreen extends Screen {
                 StructureBlock b = m.at(x, layerY, z);
                 long key = StructureModel.key(x, layerY, z);
                 boolean empty = b == null || hiddenStructureBlocks.contains(key);
-                if (empty) {
-                    g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
-                    g.drawOutline(sx, sy, 16, 16, 0x2E000000);
-                } else {
-                    g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
-                    g.drawOutline(sx, sy, 16, 16, 0x2E000000);
+                g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
+                drawSlotOutline(g, sx, sy, 16, 16, 0x2E000000);
+                if (!empty) {
                     ItemStack st = stackOf(b.itemId());
                     if (!st.isEmpty()) {
                         g.renderItem(st, sx, sy);
@@ -677,6 +674,14 @@ public class ScholarNotesScreen extends Screen {
                 structHitRects.add(new long[]{sx, sy, 16, 16, key});
             }
         }
+    }
+
+    /** Обводка прямоугольника через fill (у GuiGraphics 1.21.4 нет drawOutline). */
+    private void drawSlotOutline(GuiGraphics g, int x, int y, int w, int h, int color) {
+        g.fill(x, y, x + w, y + 1, color);
+        g.fill(x, y + h - 1, x + w, y + h, color);
+        g.fill(x, y, x + 1, y + h, color);
+        g.fill(x + w - 1, y, x + w, y + h, color);
     }
 
     /**
