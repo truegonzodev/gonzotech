@@ -63,11 +63,13 @@ public record NoteIllustration(
 
     /**
      * Плоский вид структуры («Вид сверху» / «Вид сбоку»): кадры 2D-сетки.
-     * Кадр — список строк, строка — слева направо, строки — сверху вниз;
-     * пустая строка = пустая клетка. 1 кадр — статично; 2+ кадра и
-     * {@code cycleTicks} > 0 — «тикает» (листы по времени, общий таймер).
+     * Кадр — РОВНЯЯ строка id предметов (row-major: строки сверху вниз,
+     * в строке — слева направо), пустая строка = пустая клетка;
+     * {@code cols} — ширина сетки (длина строки), число строк = id / cols.
+     * 1 кадр — статично; 2+ кадра и {@code cycleTicks} > 0 — «тикает»
+     * (общий таймер, как цикл крафта).
      */
-    public record FlatView(List<List<String>> frames, String captionKey) {
+    public record FlatView(int cols, List<List<String>> frames, String captionKey) {
     }
 
     /** Один крафт справа (страница «текст слева»). */
@@ -104,11 +106,11 @@ public record NoteIllustration(
     }
 
     /** Крафт слева + ПЛОСКАЯ структура справа («Вид сверху», 1+ кадр). */
-    public static NoteIllustration craftingStructure(List<String> grid, String result,
+    public static NoteIllustration craftingStructure(List<String> grid, String result, int cols,
                                                      List<List<String>> frames, String captionKey) {
         return new NoteIllustration(NoteIllustrationKind.CRAFTING_STRUCTURE,
                 grid, result, null, null, null, null, 0, null, null, null,
-                new FlatView(frames, captionKey));
+                new FlatView(cols, frames, captionKey));
     }
 
     /** Только панель структуры справа (наполнение — null, пока пустая). */
@@ -123,17 +125,17 @@ public record NoteIllustration(
     }
 
     /** Только панель структуры справа: плоский вид, один статичный кадр. */
-    public static NoteIllustration structureRightFlat(List<String> frame, String captionKey) {
-        return structureRightFlat(0, List.of(frame), captionKey);
+    public static NoteIllustration structureRightFlat(int cols, List<String> frame, String captionKey) {
+        return structureRightFlat(0, cols, List.of(frame), captionKey);
     }
 
     /** Только панель структуры справа: плоский вид, 2+ кадра — «тикает»
      *  ({@code cycleTicks} тиков на кадр). */
-    public static NoteIllustration structureRightFlat(int cycleTicks, List<List<String>> frames,
+    public static NoteIllustration structureRightFlat(int cycleTicks, int cols, List<List<String>> frames,
                                                       String captionKey) {
         return new NoteIllustration(NoteIllustrationKind.STRUCTURE_RIGHT,
                 null, null, null, null, null, null, cycleTicks, null, null, null,
-                new FlatView(frames, captionKey));
+                new FlatView(cols, frames, captionKey));
     }
 
     /** Брожение: 4 пары «вход → выход». */

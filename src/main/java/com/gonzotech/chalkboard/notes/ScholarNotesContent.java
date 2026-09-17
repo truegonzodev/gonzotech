@@ -169,7 +169,7 @@ public final class ScholarNotesContent {
                     null,
                     List.of("gonzotech:item_scavenger"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.craftingStructure(List.of("", "minecraft:copper_ingot", "minecraft:stick", "minecraft:cobblestone", "minecraft:dropper", "minecraft:cobblestone", "", "minecraft:copper_ingot", ""), "gonzotech:item_scavenger",
+                    NoteIllustration.craftingStructure(List.of("", "minecraft:copper_ingot", "minecraft:stick", "minecraft:cobblestone", "minecraft:dropper", "minecraft:cobblestone", "", "minecraft:copper_ingot", ""), "gonzotech:item_scavenger", 3,
                             List.of(List.of("", "gonzotech:item_scavenger", "gonzotech:first_item_pipe", "gonzotech:first_item_pipe", "gonzotech:item_filter", "", "", "gonzotech:first_item_pipe", "")),
                             NoteIllustration.CAPTION_VIEW_TOP)),
 
@@ -210,7 +210,7 @@ public final class ScholarNotesContent {
                     List.of("minecraft:comparator", "gonzotech:firebox",
                             "gonzotech:accumulator", "gonzotech:nuclear_firebox"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.structureRightFlat(
+                    NoteIllustration.structureRightFlat(3,
                             List.of("gonzotech:accumulator", "minecraft:comparator", "minecraft:redstone"),
                             NoteIllustration.CAPTION_VIEW_TOP)),
 
@@ -361,7 +361,7 @@ public final class ScholarNotesContent {
                     List.of("gonzotech:crimson_obsidian", "minecraft:redstone_block",
                             "minecraft:lava_bucket"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.structureRightFlat(60,
+                    NoteIllustration.structureRightFlat(60, 3,
                             List.of(
                                     List.of("minecraft:lava", "", "minecraft:lava", "", "minecraft:redstone_block", "", "", "minecraft:piston", ""),
                                     List.of("minecraft:crimson_obsidian", "minecraft:redstone_block", "minecraft:crimson_obsidian", "", "minecraft:piston_head", "", "", "minecraft:piston", "")),
@@ -376,7 +376,7 @@ public final class ScholarNotesContent {
                     "gui.gonzotech.notes.p32.body",
                     List.of("gonzotech:tungsten_block", "gonzotech:superdense_ice"),
                     Layout.TEXT_LEFT,
-                    NoteIllustration.structureRightFlat(60,
+                    NoteIllustration.structureRightFlat(60, 3,
                             List.of(
                                     List.of("gonzotech:first_heat_pipe", "gonzotech:tungsten_block", "gonzotech:superdense_ice"),
                                     List.of("gonzotech:first_heat_node", "gonzotech:tungsten_block", ""),

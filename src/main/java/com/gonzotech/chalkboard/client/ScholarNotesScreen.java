@@ -607,8 +607,8 @@ public class ScholarNotesScreen extends Screen {
                                    int mouseX, int mouseY) {
         List<List<String>> frames = view.frames();
         List<String> frame = frames.get(frameIdx % frames.size());
-        int rows = frame.size();
-        int cols = frame.get(0).size();
+        int cols = view.cols();
+        int rows = frame.size() / cols;
         drawItemGrid(g, cols, rows, (gx, gy) -> frame.get(gy * cols + gx), mouseX, mouseY);
     }
 
