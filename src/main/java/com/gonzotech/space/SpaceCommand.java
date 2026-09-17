@@ -319,7 +319,7 @@ public final class SpaceCommand {
         if (server == null) return 0;
         com.gonzotech.sunevent.SunEventData data =
             com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
-        long today = server.overworld().getDayCount();
+        long today = server.overworld().getDayTime() / 24000L;
         String phase = today == data.nextEventDay ? "§cБАГРОВЫЙ ДЕНЬ"
             : (data.snowWindowVanillaDay(today) ? "§bснеговое окно (дождь=снег)" : "обычный");
         source.sendSuccess(() -> Component.literal(

@@ -34,7 +34,8 @@ public final class SunEventServer {
             || serverLevel.dimension() != Level.OVERWORLD) {
             return;
         }
-        long day = serverLevel.getDayCount();
+        long time = serverLevel.getDayTime();
+        long day = time / 24000L;
         SunEventData data = SunEventNetwork.getData(serverLevel);
         if (day == data.lastVanillaDay) return;
 
