@@ -1090,11 +1090,31 @@ public class ScholarNotesScreen extends Screen {
         return c;
     }
 
+    /**
+     * Клетка иллюстрации/витрины: {@code "namespace:item"} (стака 1) либо
+     * {@code "namespace:item:кол-во"} (стака с количеством — цифра рисуется
+     * самим renderItem, как на витринах труб). Без суффикса — как раньше.
+     */
     private ItemStack stackOf(String id) {
+        if (id == null || id.isEmpty()) return ItemStack.EMPTY;
+        int count = 1;
+        int last = id.lastIndexOf(':');
+        if (last > 0 && last < id.length() - 1) {
+            String tail = id.substring(last + 1);
+            boolean digits = true;
+            for (int i = 0; i < tail.length(); i++) {
+                char c = tail.charAt(i);
+                if (c < '0' || c > '9') { digits = false; break; }
+            }
+            if (digits) {
+                count = Integer.parseInt(tail);
+                id = id.substring(0, last);
+            }
+        }
         ResourceLocation rl = ResourceLocation.parse(id);
         Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(rl);
         if (item == null || item == Items.AIR) return ItemStack.EMPTY;
-        return new ItemStack(item);
+        return new ItemStack(item, Math.max(1, Math.min(count, 99)));
     }
 
     private boolean inRect(int mx, int my, int x, int y, int w, int h) {

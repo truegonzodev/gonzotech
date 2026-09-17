@@ -447,10 +447,10 @@ public final class ScholarNotesContent {
                             "gonzotech:nickel_ingot"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(
-                            List.of("minecraft:iron_ingot", "minecraft:copper_ingot",
-                                    "gonzotech:chromium_ingot", "gonzotech:nickel_ingot",
+                            List.of("minecraft:iron_ingot:19", "gonzotech:chromium_ingot:1",
+                                    "gonzotech:nickel_ingot:2", "minecraft:copper_ingot:3",
                                     "", "", "", "", ""),
-                            "gonzotech:corten_steel_ingot",
+                            "gonzotech:corten_steel_ingot:25",
                             NoteIllustration.CAPTION_FOUNDRY)),
             new ScholarPage(38, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p38.title",
@@ -460,10 +460,10 @@ public final class ScholarNotesContent {
                             "gonzotech:neodymium_ingot"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(
-                            List.of("gonzotech:cobalt_ingot", "gonzotech:chromium_ingot",
-                                    "gonzotech:tungsten_ingot", "minecraft:coal",
-                                    "gonzotech:neodymium_ingot", "", "", "", ""),
-                            "gonzotech:stellite_ingot",
+                            List.of("gonzotech:cobalt_ingot:6", "gonzotech:chromium_ingot:3",
+                                    "gonzotech:tungsten_ingot:1", "minecraft:coal:1",
+                                    "gonzotech:neodymium_ingot:1", "", "", "", ""),
+                            "gonzotech:stellite_ingot:11",
                             NoteIllustration.CAPTION_FOUNDRY)),
             new ScholarPage(39, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p39.title",
@@ -473,10 +473,10 @@ public final class ScholarNotesContent {
                             "gonzotech:nickel_ingot"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(
-                            List.of("minecraft:diamond", "gonzotech:nickel_ingot",
-                                    "gonzotech:ferromagnetic_ingot", "gonzotech:zirconium_ingot",
+                            List.of("minecraft:diamond:2", "gonzotech:nickel_ingot:2",
+                                    "gonzotech:ferromagnetic_ingot:2", "gonzotech:zirconium_ingot:3",
                                     "", "", "", "", ""),
-                            "gonzotech:vitreloy_ingot",
+                            "gonzotech:vitreloy_ingot:9",
                             NoteIllustration.CAPTION_FOUNDRY)),
             new ScholarPage(40, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p40.title",
@@ -486,11 +486,12 @@ public final class ScholarNotesContent {
                             "minecraft:copper_ingot"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(
-                            List.of("gonzotech:neodymium_ingot", "gonzotech:radium_ingot",
-                                    "gonzotech:silicon", "minecraft:gold_ingot",
-                                    "minecraft:copper_ingot", "minecraft:clay",
+                            // Радий — 0,1 порции = 1 юнит = самородок (стака 1).
+                            List.of("gonzotech:neodymium_ingot:1", "gonzotech:radium_nugget:1",
+                                    "gonzotech:silicon:3", "minecraft:gold_ingot:2",
+                                    "minecraft:copper_ingot:1", "minecraft:clay:3",
                                     "", "", ""),
-                            "gonzotech:semiconductor_ingot",
+                            "gonzotech:semiconductor_ingot:4",
                             NoteIllustration.CAPTION_FOUNDRY))
     );
 
