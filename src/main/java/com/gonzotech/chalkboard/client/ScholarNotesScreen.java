@@ -444,9 +444,15 @@ public class ScholarNotesScreen extends Screen {
     /**
      * Калибровка под авторский арт (автор, скриншот): сдвинуть подпись и сетку
      * влево (5/9 монит. px при GUI-масштабе 2 ≈ 2/4 page px).
+     * ТОЧКИ ПРИВЯЗКИ: подпись — видимая строка «‹ Заголовок ›» целиком;
+     * сетка — центр прямоугольника сетки. X-якорь обоих = центр авто-рамки
+     * панели (L+R)/2 из PNG-шаблона (нет файла → дефолт {136,40,248,148});
+     * Y-якорь подписи = page y 34, Y-якорь сетки = центр (T..min(B,152)).
      */
     private static final int STRUCT_CAPTION_X_SHIFT = -2;
+    private static final int STRUCT_CAPTION_Y_SHIFT = 0;
     private static final int STRUCT_GRID_X_SHIFT = -4;
+    private static final int STRUCT_GRID_Y_SHIFT = 0;
 
     /** Шаблоны, которых нет в ресурсах (не рисуем и не ищем повторно). */
     private static final Set<ResourceLocation> MISSING_TEMPLATE_TEX = new HashSet<>();
@@ -547,21 +553,23 @@ public class ScholarNotesScreen extends Screen {
         int total = model.subpageCount();
         int cw = this.font.width(title);
         int side = 14;
-        int groupW = cw + (total > 1 ? 2 * side : 0);
         int centerX = (panel[0] + panel[2]) / 2 + STRUCT_CAPTION_X_SHIFT;
-        int startX = centerX - groupW / 2;
+        // Видимая строка «‹  Заголовок  ›» центрируется ЦЕЛИКОМ на centerX:
+        // текст — по centerX, стрелки — точно ±side от краёв текста.
+        int startX = centerX - cw / 2;
 
-        g.drawString(this.font, title, leftPos + startX, topPos + CAPTION_Y, INK_FAINT, false);
+        int capY = topPos + CAPTION_Y + STRUCT_CAPTION_Y_SHIFT;
+        g.drawString(this.font, title, leftPos + startX, capY, INK_FAINT, false);
 
         if (total > 1) {
             int prevX = startX - side;
             int nextX = startX + cw + side - this.font.width("\u203A");
             int prevCol = structureSubpage > 0 ? INK : 0xFFB9A778;
             int nextCol = structureSubpage < total - 1 ? INK : 0xFFB9A778;
-            g.drawString(this.font, "\u2039", leftPos + prevX, topPos + CAPTION_Y, prevCol, false);
-            g.drawString(this.font, "\u203A", leftPos + nextX, topPos + CAPTION_Y, nextCol, false);
-            structPrevRect = new int[]{leftPos + prevX - 3, topPos + CAPTION_Y - 3, 12, 12};
-            structNextRect = new int[]{leftPos + nextX - 3, topPos + CAPTION_Y - 3, 12, 12};
+            g.drawString(this.font, "\u2039", leftPos + prevX, capY, prevCol, false);
+            g.drawString(this.font, "\u203A", leftPos + nextX, capY, nextCol, false);
+            structPrevRect = new int[]{leftPos + prevX - 3, capY - 3, 12, 12};
+            structNextRect = new int[]{leftPos + nextX - 3, capY - 3, 12, 12};
         }
     }
 
@@ -655,7 +663,7 @@ public class ScholarNotesScreen extends Screen {
             gridH = rows * cell - gap;
         }
         int gx0 = (cx0 + cx1) / 2 - gridW / 2 + STRUCT_GRID_X_SHIFT;
-        int gy0 = (cy0 + cy1) / 2 - gridH / 2;
+        int gy0 = (cy0 + cy1) / 2 - gridH / 2 + STRUCT_GRID_Y_SHIFT;
         float kf = icon / 16f;
         for (int gx = 0; gx < cols; gx++) {
             for (int gy = 0; gy < rows; gy++) {
