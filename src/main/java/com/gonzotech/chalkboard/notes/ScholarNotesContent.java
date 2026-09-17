@@ -2,6 +2,7 @@ package com.gonzotech.chalkboard.notes;
 
 import com.gonzotech.chalkboard.notes.ScholarPage.Layout;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -341,23 +342,38 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:cast_iron_ingot", "minecraft:iron_trapdoor", "minecraft:iron_bars", "gonzotech:steel_plate", "gonzotech:boiler", "gonzotech:steel_plate", "gonzotech:condenser", "minecraft:iron_trapdoor", "gonzotech:cast_iron_ingot"), "gonzotech:steamgen_core")),
 
-            // 30 — «Ядерная топка» (после «Открытия 2») — справа ядерная топка
+            // 30 — «Сердце парогенератора» (после «Продвинутого парогенератора»,
+            // перед «Ядерной топкой») — текст слева; справа «колода»: 5 слоёв
+            // 5×5×5 (снизу вверх): низ/верх — чистые корпуса; три средних
+            // «тикают» (случайно: ядро/драгоценный блок/пустота); в самом
+            // среднем три порта вместо корпусов: пар (спереди), вода (слева),
+            // GTH (справа)
             new ScholarPage(30, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p30.title",
                     "gui.gonzotech.notes.p30.body",
+                    List.of("gonzotech:steamgen_casing", "gonzotech:steamgen_core",
+                            "gonzotech:first_steam_node", "gonzotech:first_water_node",
+                            "gonzotech:first_heat_node", "gonzotech:platinum_block"),
+                    Layout.TEXT_LEFT,
+                    structureSteamGen()),
+
+            // 31 — «Ядерная топка» (после «Открытия 2») — справа ядерная топка
+            new ScholarPage(31, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+                    "gui.gonzotech.notes.p31.title",
+                    "gui.gonzotech.notes.p31.body",
                     List.of("gonzotech:nuclear_firebox", "gonzotech:uranium_ingot"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:lead_ingot", "gonzotech:steel_plate", "gonzotech:lead_ingot", "gonzotech:lead_block", "gonzotech:firebox", "gonzotech:tungsten_ingot", "gonzotech:lead_ingot", "gonzotech:steel_plate", "gonzotech:lead_ingot"), "gonzotech:nuclear_firebox")),
 
             // ─────────── глава II «Познание мира» (по действиям) ───────────
 
-            // 31 — «Редстоун и лава» (по «Открытию 1» — базовое знание о мире);
+            // 32 — «Редстоун и лава» (по «Открытию 1» — базовое знание о мире);
             // реакция — с БЛОКОМ редстоуна (не с пылью/проводом); справа «Вид сверху»
             // (тикает, 2 кадра): ведро лавы+блок редстоуна+поршень → багряный
             // обсидиан (гонзotech — ванильный без предметной формы)+головка поршня
-            new ScholarPage(31, ScholarChapter.ERA_2, ScholarUnlock.DISCOVERY_1,
-                    "gui.gonzotech.notes.p31.title",
-                    "gui.gonzotech.notes.p31.body",
+            new ScholarPage(32, ScholarChapter.ERA_2, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p32.title",
+                    "gui.gonzotech.notes.p32.body",
                     List.of("gonzotech:crimson_obsidian", "minecraft:redstone_block",
                             "minecraft:lava_bucket"),
                     Layout.TEXT_LEFT,
@@ -367,13 +383,13 @@ public final class ScholarNotesContent {
                                     List.of("gonzotech:crimson_obsidian", "minecraft:redstone_block", "gonzotech:crimson_obsidian", "", "minecraft:piston_head", "", "", "minecraft:piston", "")),
                             NoteIllustration.CAPTION_VIEW_TOP)),
 
-            // 32 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок);
+            // 33 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок);
             // справа «Вид сбоку» (тикает, 4 кадра): теплотруба 1 → узел 1 →
             // теплотруба 2 → узел 2; вольфрам посередине; сверхплотный лёд
             // появляется/исчезает
-            new ScholarPage(32, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
-                    "gui.gonzotech.notes.p32.title",
-                    "gui.gonzotech.notes.p32.body",
+            new ScholarPage(33, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
+                    "gui.gonzotech.notes.p33.title",
+                    "gui.gonzotech.notes.p33.body",
                     List.of("gonzotech:tungsten_block", "gonzotech:superdense_ice"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.structureRightFlat(60, 3,
@@ -384,16 +400,16 @@ public final class ScholarNotesContent {
                                     List.of("gonzotech:second_heat_node", "gonzotech:tungsten_block", "")),
                             NoteIllustration.CAPTION_VIEW_SIDE)),
 
-            // 33 — пустая страница под иллюстрацию вольфрамового абсорбера
+            // 34 — пустая страница под иллюстрацию вольфрамового абсорбера
             // (работа + крафты; вольфрам — ДВЕ страницы)
-            new ScholarPage(33, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
+            new ScholarPage(34, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
                     null, null, List.of(), Layout.TEXT_LEFT, null),
 
-            // 34 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
+            // 35 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
             // текст на ВСЮ страницу, в витрине — все формы цезия
-            new ScholarPage(34, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
-                    "gui.gonzotech.notes.p34.title",
-                    "gui.gonzotech.notes.p34.body",
+            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
+                    "gui.gonzotech.notes.p35.title",
+                    "gui.gonzotech.notes.p35.body",
                     List.of("gonzotech:raw_cesium", "gonzotech:cesium_nugget",
                             "gonzotech:cesium_dust", "gonzotech:cesium_ingot",
                             "gonzotech:cesium_block", "gonzotech:cesium_ore",
@@ -401,14 +417,56 @@ public final class ScholarNotesContent {
                     Layout.TEXT_FULL,
                     null),
 
-            // 35 — «Угасание солнца» (впервые увиден угасший свет)
-            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_FADE,
-                    "gui.gonzotech.notes.p35.title",
-                    "gui.gonzotech.notes.p35.body",
+            // 36 — «Угасание солнца» (впервые увиден угасший свет)
+            new ScholarPage(36, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_FADE,
+                    "gui.gonzotech.notes.p36.title",
+                    "gui.gonzotech.notes.p36.body",
                     List.of(),
                     Layout.TEXT_FULL,
                     null)
     );
+
+    /**
+     * Слой «колонды» 5×5: 16 клеток внешнего кольца (по часовой, начиная с
+     * (0,0)) + середина 3×3 — зафиксирована ({@code innerFixed}) либо не
+     * фиксирована (случайно из {@code pool}).
+     */
+    private static NoteIllustration.DeckLayer deckLayer5(List<String> ring, String innerFixed, List<String> pool) {
+        List<String> out = new ArrayList<>();
+        String in = innerFixed == null ? "" : innerFixed;
+        out.add(ring.get(0)); out.add(ring.get(1)); out.add(ring.get(2)); out.add(ring.get(3)); out.add(ring.get(4));
+        out.add(ring.get(15)); out.add(in); out.add(in); out.add(in); out.add(ring.get(5));
+        out.add(ring.get(14)); out.add(in); out.add(in); out.add(in); out.add(ring.get(6));
+        out.add(ring.get(13)); out.add(in); out.add(in); out.add(in); out.add(ring.get(7));
+        out.add(ring.get(12)); out.add(ring.get(11)); out.add(ring.get(10)); out.add(ring.get(9)); out.add(ring.get(8));
+        return new NoteIllustration.DeckLayer(out, pool);
+    }
+
+    /**
+     * «Колода» продвинутого парогенератора 5×5×5 (стр. 30): 5 слоёв снизу
+     * вверх. Низ и верх — чистые корпуса; три средних — «сердце»: середина
+     * 3×3 тикает (случайно: ядро / драгоценный блок-теплообменник / пустота),
+     * кольцо — корпус; в самом среднем кольце три порта вместо корпусов:
+     * паровой (2,0 — спереди), GTH-тепловой (4,2 — справа), водяной (0,2 — слева).
+     */
+    private static NoteIllustration structureSteamGen() {
+        String casing = "gonzotech:steamgen_casing";
+        List<String> plain = new ArrayList<>();
+        for (int i = 0; i < 16; i++) plain.add(casing);
+        List<String> nodes = new ArrayList<>(plain);
+        nodes.set(2, "gonzotech:first_steam_node");
+        nodes.set(6, "gonzotech:first_heat_node");
+        nodes.set(14, "gonzotech:first_water_node");
+        List<String> pool = List.of("gonzotech:steamgen_core", "gonzotech:platinum_block",
+                "gonzotech:plutonium_block", "");
+        return NoteIllustration.structureRightDeck(60, 5, List.of(
+                deckLayer5(plain, casing, null),
+                deckLayer5(plain, null, pool),
+                deckLayer5(nodes, null, pool),
+                deckLayer5(plain, null, pool),
+                deckLayer5(plain, casing, null)),
+                NoteIllustration.CAPTION_VIEW_TOP);
+    }
 
     /** Доступна ли страница при данном состоянии игрока. */
     public static boolean isUnlocked(ScholarPage page, NotesState state) {

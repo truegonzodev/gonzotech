@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -507,6 +508,8 @@ public class ScholarNotesScreen extends Screen {
         //    Точки привязки — абсолютные page coords (автор).
         if (il.structure() != null) {
             drawStructureContent(g, il.structure(), mouseX, mouseY);
+        } else if (il.deckView() != null) {
+            drawDeckContent(g, il.deckView(), cycle, mouseX, mouseY);
         } else if (il.flatView() != null) {
             drawFlatStructure(g, il.flatView(), cycle, mouseX, mouseY);
         }
@@ -528,8 +531,15 @@ public class ScholarNotesScreen extends Screen {
      * Прямоугольники ‹ › запоминаются для mouseClicked.
      */
     private void drawStructureNav(GuiGraphics g, StructureModel model) {
-        String title = structureTitle(model, structureSubpage);
-        int total = model.subpageCount();
+        drawSubpageNav(g, structureTitle(model, structureSubpage), model.subpageCount());
+    }
+
+    /**
+     * Навигация подстраниц «‹  Заголовок  ›» (или просто заголовок, если
+     * подстраница одна). Привязка — ЛЕВЫЙ ВЕРХНИЙ угол описывающего
+     * прямоугольника видимой строки: (133, 34) page coords (автор).
+     */
+    private void drawSubpageNav(GuiGraphics g, String title, int total) {
         int cw = this.font.width(title);
         int side = 14;
         // Левый край строки: без стрелок — сам текст; со стрелками — левая стрелка.
@@ -558,6 +568,9 @@ public class ScholarNotesScreen extends Screen {
     private void drawStructureCaption(GuiGraphics g, NoteIllustration il) {
         if (il.structure() != null) {
             drawStructureNav(g, il.structure());
+        } else if (il.deckView() != null) {
+            drawSubpageNav(g, "Слой (" + (structureSubpage + 1) + "/" + il.deckView().subpageCount() + ")",
+                    il.deckView().subpageCount());
         } else if (il.flatView() != null) {
             String text = Component.translatable(il.flatView().captionKey()).getString();
             g.drawString(this.font, text, leftPos + STRUCT_CAPTION_LEFT_X, topPos + CAPTION_Y, INK_FAINT, false);
@@ -598,7 +611,7 @@ public class ScholarNotesScreen extends Screen {
         BiFunction<Integer, Integer, String> cell = asm
                 ? (gx, gy) -> itemId(model.front(gx, rows - 1 - gy))
                 : (gx, gy) -> itemId(model.at(gx, layerY, gy));
-        drawItemGrid(g, cols, rows, cell, mouseX, mouseY);
+        drawItemGrid(g, cols, rows, cell, mouseX, mouseY, 1);
     }
 
     /** Плоский вид («Вид сверху»/«Вид сбоку»): кадр {@code frameIdx} (цикл),
@@ -609,7 +622,37 @@ public class ScholarNotesScreen extends Screen {
         List<String> frame = frames.get(frameIdx % frames.size());
         int cols = view.cols();
         int rows = frame.size() / cols;
-        drawItemGrid(g, cols, rows, (gx, gy) -> frame.get(gy * cols + gx), mouseX, mouseY);
+        drawItemGrid(g, cols, rows, (gx, gy) -> frame.get(gy * cols + gx), mouseX, mouseY, 1);
+    }
+
+    /**
+     * Плоская «колода»: активный слой (подстраница) сеткой cols×rows.
+     * Нефиксированные клетки — случайно из пула; перемешивание детерминировано
+     * номером кадра (рендер вызывают каждый кадр — раскладка не может
+     * дрожать), новый расклад — каждый cycleTicks.
+     */
+    private void drawDeckContent(GuiGraphics g, NoteIllustration.DeckView view, int cycle,
+                                 int mouseX, int mouseY) {
+        NoteIllustration.DeckLayer layer = view.layers().get(structureSubpage);
+        int cols = view.cols();
+        int rows = layer.fixed().size() / cols;
+        Random rnd = new Random(((long) cycle + 1) * 1000003L + structureSubpage * 131L);
+        BiFunction<Integer, Integer, String> cell = (gx, gy) -> {
+            String id = layer.fixed().get(gy * cols + gx);
+            if (!id.isEmpty()) return id;
+            List<String> pool = layer.pool();
+            if (pool == null || pool.isEmpty()) return "";
+            return pool.get(rnd.nextInt(pool.size()));
+        };
+        drawItemGrid(g, cols, rows, cell, mouseX, mouseY, 0);
+    }
+
+    /** Есть ли в колоде хотя бы один слой со случайным пулом (нужен ли таймер). */
+    private static boolean deckHasRandom(NoteIllustration.DeckView view) {
+        for (NoteIllustration.DeckLayer layer : view.layers()) {
+            if (layer.pool() != null && !layer.pool().isEmpty()) return true;
+        }
+        return false;
     }
 
     private static String itemId(StructureBlock b) {
@@ -618,13 +661,18 @@ public class ScholarNotesScreen extends Screen {
 
     /**
      * Общий рендер сетки иконок предметов С ГЭПОМ: центр описывающего
-     * прямоугольника — (183, 89) page coords (автор); иконки = GUI-масштаб + 1,
-     * гэп пропорциональный; пустая клетка — бледный слот; ховер — тултип.
+     * прямоугольника — (183, 89) page coords (автор); гэп пропорциональный;
+     * пустая клетка — бледный слот; ховер — тултип.
+     *
+     * @param sizeExtra прирост размера иконки к GUI-масштабу: 1 — «N+1»
+     *                  (обычные структуры), 0 — «N+0» (широкие сетки, которые
+     *                  при «N+1» вылазят за окно искусства, — колода 5×5).
      */
     private void drawItemGrid(GuiGraphics g, int cols, int rows,
-                              BiFunction<Integer, Integer, String> cell, int mouseX, int mouseY) {
-        int icon = structIconSize();
-        int gap = structGap();
+                              BiFunction<Integer, Integer, String> cell, int mouseX, int mouseY,
+                              int sizeExtra) {
+        int icon = structIconSize(sizeExtra);
+        int gap = structGap(sizeExtra);
         int cellSize = icon + gap;
         int gridW = cols * cellSize - gap;
         int gridH = rows * cellSize - gap;
@@ -655,19 +703,20 @@ public class ScholarNotesScreen extends Screen {
         }
     }
 
-    /** Размер иконки (page px): GUI-масштаб + 1 (автор: «увеличить на +1 от
-     *  размера интерфейса»): интерфейс 2 → иконки 3 (1 тесель = 3 монит. px). */
-    private static int structIconSize() {
+    /** Размер иконки (page px): 16 × (N + extra) / N, где N = GUI-масштаб.
+     *  extra = 1 (автор: «увеличить на +1 от размера интерфейса»):
+     *  интерфейс 2 → иконки 24px; extra = 0 — базовые 16px (широкие сетки). */
+    private static int structIconSize(int extra) {
         double s = Minecraft.getInstance().getWindow().getGuiScale();
         if (s < 1) s = 1;
-        return Math.max(16, (int) Math.round(16 * (s + 1) / s));
+        return Math.max(16, (int) Math.round(16 * (s + extra) / s));
     }
 
     /** Гэп между иконками (page px), пропорционально иконке (база 2px при 16px). */
-    private static int structGap() {
+    private static int structGap(int extra) {
         double s = Minecraft.getInstance().getWindow().getGuiScale();
         if (s < 1) s = 1;
-        return Math.max(2, (int) Math.round(2 * (s + 1) / s));
+        return Math.max(2, (int) Math.round(2 * (s + extra) / s));
     }
 
     /** Иконка предмета с масштабированием (pose-матрица, как в blitScaled). */
@@ -701,7 +750,8 @@ public class ScholarNotesScreen extends Screen {
     private int cycleIndex(NoteIllustration il) {
         boolean cycling = (il.leftSequence() != null && !il.leftSequence().isEmpty())
                 || (il.rightSequence() != null && !il.rightSequence().isEmpty())
-                || (il.flatView() != null && il.flatView().frames().size() > 1);
+                || (il.flatView() != null && il.flatView().frames().size() > 1)
+                || (il.deckView() != null && deckHasRandom(il.deckView()));
         if (!cycling || il.cycleTicks() <= 0) return 0;
         long now = System.currentTimeMillis();
         if (now != lastCycleBaseMs) {
@@ -822,7 +872,8 @@ public class ScholarNotesScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         // Панель структуры (навигация подстраниц) — до вкладок и стрелок буклета.
         NoteIllustration il = ScholarNotesContent.PAGES.get(pageIndex).illustration();
-        if (il != null && il.structure() != null) {
+        if (il != null && (il.structure() != null || il.deckView() != null)) {
+            int subpages = il.structure() != null ? il.structure().subpageCount() : il.deckView().subpageCount();
             if (structPrevRect != null && inRect((int) mouseX, (int) mouseY, structPrevRect)) {
                 if (structureSubpage > 0) {
                     structureSubpage--;
@@ -831,7 +882,7 @@ public class ScholarNotesScreen extends Screen {
                 return true;
             }
             if (structNextRect != null && inRect((int) mouseX, (int) mouseY, structNextRect)) {
-                if (structureSubpage < il.structure().subpageCount() - 1) {
+                if (structureSubpage < subpages - 1) {
                     structureSubpage++;
                     playPageSound();
                 }
