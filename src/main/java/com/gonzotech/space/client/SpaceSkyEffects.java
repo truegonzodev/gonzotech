@@ -1,6 +1,7 @@
 package com.gonzotech.space.client;
 
 import com.gonzotech.space.SunState;
+import com.gonzotech.sunevent.client.SunEventClient;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -120,6 +121,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * no-precipitation biomes; the Overworld explicitly leaves it disabled.
      */
     private final boolean suppressesPrecipitation;
+
+    // Суневент (автор: «скaйбокс тинтится багровым оранжевым»): купол поверх дневного цикла.
+    private static final int CRIMSON_ZENITH_ARGB = 0xFF4A1410;
+    private static final int CRIMSON_HORIZON_ARGB = 0xFFC24A16;
+    // Истощённое солнце светит слабо: daylight-фактор дня E ≈ 0.125 (авторская формула).
+    private static final float CRIMSON_DAYLIGHT_FACTOR = 0.125F;
 
     public SpaceSkyEffects(float cloudHeight,
                            boolean hasGround,
@@ -308,6 +315,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
 
+        // Суневент: багровый купол (I(t) из SunEventClient). GONE не трогаем — там свой режим.
+        if (SpaceSkyState.sunState != SunState.GONE) {
+            double crimson = SunEventClient.crimsonIntensity(level);
+            if (crimson > 0.001F) {
+                zenith = overlayArgb(zenith, CRIMSON_ZENITH_ARGB, (float) (crimson * 0.8F));
+                horizon = overlayArgb(horizon, CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F));
+            }
+        }
+
         if (!logged) {
             logged = true;
             LOGGER.info("[Gonzo Tech] SpaceSkyEffects.renderSky ВЫЗВАН (тела={}, day={}), небо подменяется",
@@ -372,7 +388,11 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         if (SpaceSkyState.sunState == SunState.GONE) {
             return true;
         }
-        return daylightScale < 0.999F || fixedDaylight >= 0.0F;
+        if (daylightScale < 0.999F || fixedDaylight >= 0.0F) {
+            return true;
+        }
+        // Суневент: день E светит слабее стандартного цикла (см. computeSkyDarken).
+        return SunEventClient.crimsonIntensity(Minecraft.getInstance().level) > 0.001F;
     }
 
     public float computeSkyDarken(ClientLevel level, float partialTick) {
@@ -383,7 +403,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             return Mth.clamp(0.2F + 0.8F * fixedDaylight, 0.0F, 1.0F);
         }
         float dayFrac = daylightFactor(level, partialTick);
-        return 0.2F + 0.8F * dayFrac * daylightScale;
+        float base = 0.2F + 0.8F * dayFrac * daylightScale;
+        // Суневент: истощённое солнце (daylight ≈ 0.125). Затемняем дневную долю —
+        // к вечеру/ночи стандартный цикл и так тёмный, дублировать не нужно.
+        double crimson = SunEventClient.crimsonIntensity(level);
+        if (crimson > 0.001F) {
+            float eventLight = 0.2F + 0.8F * CRIMSON_DAYLIGHT_FACTOR * daylightScale;
+            return Mth.lerp((float) (crimson * dayFrac), base, eventLight);
+        }
+        return base;
     }
 
     private float[] computeBodyTint(float dayFrac) {
@@ -745,6 +773,11 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                     return resolveVariant(base, "_blackhole_dyson");
                 }
                 case DEFAULT -> {
+                    // Суневент: красное солнце (автор: «встаёт сразу красным»).
+                    // GONE/DYSON/ЧД выше по switch уже имеют свои текстуры.
+                    if (SunEventClient.crimsonIntensity(Minecraft.getInstance().level) > 0.001F) {
+                        return resolveVariant(base, "_red");
+                    }
                     return base;
                 }
             }

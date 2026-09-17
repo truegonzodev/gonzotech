@@ -1,6 +1,8 @@
 package com.gonzotech.space.client;
 
 import com.gonzotech.space.SunState;
+import com.gonzotech.sunevent.client.SunEventClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -40,6 +42,9 @@ public final class SpaceSkyState {
     // Ресурсы солнца для Оверворлда
     public static final ResourceLocation TEX_OVERWORLD_SUN =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun.png");
+    /** Суневент: истощённое (красное) солнце — временный вариант над DEFAULT, не SunState. */
+    public static final ResourceLocation TEX_OVERWORLD_SUN_RED =
+        ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_red.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_DYSON =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_dyson.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_GONE =
@@ -58,7 +63,11 @@ public final class SpaceSkyState {
      */
     public static ResourceLocation getOverworldSunTexture(ResourceLocation vanillaSun) {
         return switch (sunState) {
-            case DEFAULT -> TEX_OVERWORLD_SUN;
+            // Суневент: красное солнце (автор: «встаёт сразу красным»).
+            // Временное состояние по I(t) — GONE/DYSON/ЧД ниже имеют приоритет.
+            case DEFAULT -> SunEventClient.crimsonIntensity(Minecraft.getInstance().level) > 0.001F
+                ? TEX_OVERWORLD_SUN_RED
+                : TEX_OVERWORLD_SUN;
             case DYSON -> TEX_OVERWORLD_SUN_DYSON;
             case GONE -> TEX_OVERWORLD_SUN_GONE;
             case BLACKHOLE -> TEX_OVERWORLD_SUN_BLACKHOLE;
