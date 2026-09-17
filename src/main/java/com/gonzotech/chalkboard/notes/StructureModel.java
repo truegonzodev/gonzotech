@@ -5,28 +5,33 @@ import java.util.List;
 
 /**
  * Статическая модель структуры для иллюстраций «Заметок учёного»
- * (вариант 3 — подстраницы: изо-вид с торца + горизонтальные слои «вид сверху»).
+ * (вариант 3 — подстраницы; изометрия ОТМЕНЕНА).
  *
- * <p>Модель — это список заполненных клеток параллелепипепа {@code sizeX×sizeY×sizeZ}
- * (воздух = отсутствующая клетка). Иконки — предметы; {@link #iconScale()} —
- * ЦЕЛОЧИСЛЕННЫЙ масштаб иконки в изо-виде (16, 32, 48 px — без «мыла»: GUI-сэмплинг
- * нейр-нейр, только целые кратные). Шаг сетки при этом GUI выбирает сам, чтобы
- * вся конструкция влезла в панель структуры.
+ * <p>Модель — список заполненных клеток параллелепипепа {@code sizeX×sizeY×sizeZ}
+ * (воздух = отсутствующая клетка). Оси как в MC: x → вправо (восток), y → вверх,
+ * z → «на зрителя» (юг).
  *
- * <p>Подстраницы: 0 — изо-вид с торца (северо-запад), 1..sizeY — слои снизу вверх
- * (порядок сборки). Клик по блоку — скрыть/показать (общее состояние на все
- * подстраницы); ПКМ по панели — показать всё.
+ * <p>Подстраницы:
+ * <ul>
+ *   <li>0 — <b>ВИД СПЕРЕДИ</b> (анфас, z=0-плоскость): передний блок каждой
+ *       колонки (x, y) — плоская сетка 16px, ВПРИТИРКУ (без гэпов),
+ *       «просто как оно выглядит собранное»;</li>
+ *   <li>1..sizeY — <b>слои «вид сверху»</b> (только если {@link #layers()}) —
+ *       снизу вверх, сетка 16px с гэпом 2px (гэпы подчёркивают структурность).</li>
+ * </ul>
+ * Клик по блоку — скрыть/показать (общее состояние на все подстраницы);
+ * ПКМ по панели — показать всё.
  */
-public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, List<StructureBlock> blocks) {
+public record StructureModel(int sizeX, int sizeY, int sizeZ, boolean layers, List<StructureBlock> blocks) {
 
     /** Ключ ячейки: x*4096 + y*64 + z (размеры до 16 блоков). */
     public static long key(int x, int y, int z) {
         return (long) x * 4096L + (long) y * 64L + z;
     }
 
-    /** Число подстраниц: 1 (изо) + по одной на горизонтальный слой. */
+    /** Число подстраниц: 1 (вид спереди) + слои, если {@link #layers()}. */
     public int subpageCount() {
-        return 1 + sizeY;
+        return 1 + (layers ? sizeY : 0);
     }
 
     /** Клетка (x, y, z) модели, или null — воздух. (record не может иметь
@@ -38,9 +43,10 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, Lis
         return null;
     }
 
-    /** Топка внизу + котёл на ней (стр. «Топка и котёл»). 3 подстраницы: изо + 2 слоя. */
+    /** Топка внизу + котёл на ней (стр. «Топка и котёл»).
+     *  ОДНА подстраница (без слоёв): вид спереди — [котёл] над [топкой]. */
     public static StructureModel fireboxBoiler() {
-        return new StructureModel(1, 2, 1, 3, List.of(
+        return new StructureModel(1, 2, 1, false, List.of(
                 new StructureBlock(0, 0, 0, "gonzotech:firebox"),
                 new StructureBlock(0, 1, 0, "gonzotech:boiler")));
     }
@@ -48,12 +54,12 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, Lis
     /**
      * Минимальная турбина 3×3×3 (стр. после турбины) — ровно по валидации
      * {@code TurbineStructure} (внутри — только ротор, оболочка — корпус/порты,
-     * порт каждого типа ≥1) и схеме автора: слои снизу вверх —
-     *   слой 1: чисто корпуса;
-     *   слой 2: [корпус][корпус][узел пара] / [корпус][ротор][корпус] /
-     *           [корпус][корпус][узел провода];
-     *   слой 3: чисто корпуса.
-     * 4 подстраницы: изо + 3 слоя.
+     * порт каждого типа ≥1) и схеме автора. Вид спереди (z=0-плоскость):
+     *   [К][К][К]
+     *   [УЗ1][К][УЗ2]   (УЗ1 = паровой узел, УЗ2 = узел провода — на передней
+     *   [К][К][К]        грани, средний ряд; оба порта — внешние клетки)
+     * Слои: 1 и 3 — чисто корпуса; 2 — [УЗ1][К][УЗ2] / [К][ротор][К] / [К][К][К].
+     * 4 подстраницы: спереди + 3 слоя.
      */
     public static StructureModel turbineMinimum() {
         List<StructureBlock> out = new ArrayList<>();
@@ -64,9 +70,9 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, Lis
                     String id;
                     if (!outer) {
                         id = "gonzotech:turbine_rotor";
-                    } else if (y == 1 && x == 2 && z == 0) {
+                    } else if (z == 0 && y == 1 && x == 0) {
                         id = "gonzotech:first_steam_node";
-                    } else if (y == 1 && x == 2 && z == 2) {
+                    } else if (z == 0 && y == 1 && x == 2) {
                         id = "gonzotech:first_wire_node";
                     } else {
                         id = "gonzotech:turbine_casing";
@@ -75,6 +81,6 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, int iconScale, Lis
                 }
             }
         }
-        return new StructureModel(3, 3, 3, 2, List.copyOf(out));
+        return new StructureModel(3, 3, 3, true, List.copyOf(out));
     }
 }

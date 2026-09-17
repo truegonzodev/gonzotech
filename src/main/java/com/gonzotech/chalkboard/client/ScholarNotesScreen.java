@@ -26,7 +26,6 @@ import net.minecraft.server.packs.resources.Resource;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -606,93 +605,62 @@ public class ScholarNotesScreen extends Screen {
         return out;
     }
 
-    /** Активная подстраница: 0 — изо-вид с торца, 1..sizeY — слой y «вид сверху». */
+    /** Активная подстраница: 0 — вид спереди, 1..sizeY — слой y «вид сверху». */
     private void drawStructureContent(GuiGraphics g, StructureModel model, int mouseX, int mouseY, int[] panel) {
         if (structureSubpage <= 0) {
-            drawStructureIso(g, model, mouseX, mouseY, panel);
+            drawStructureFront(g, model, mouseX, mouseY, panel);
         } else {
             drawStructureLayer(g, model, structureSubpage - 1, mouseX, mouseY, panel);
         }
     }
 
     /**
-     * Изо-вид с торца (северо-запад): X = (x−z)·S/2, Y = (x+z)·S/4 − y·V,
-     * painter-порядок (x+z, потом y). Иконки — ЦЕЛОЧИСЛЕННЫЙ масштаб
-     * {@code 16·k} (без мыла); вертикальный шаг V GUI уменьшает при
-     * необходимости, чтобы колонны влезли в панель (иконки при этом
-     * накладываются, как при более высоком ракурсе).
+     * Вид спереди (подстраница 0, анфас): передний (минимальный z) блок каждой
+     * колонки (x, y) — плоская сетка 16px, ВПРИТИРКУ (без гэпов), «просто как
+     * оно выглядит собранное». Пустая колонка / скрытый блок — бледный слот
+     * (по скрытому кликают, чтобы вернуть).
      */
-    private void drawStructureIso(GuiGraphics g, StructureModel m, int mouseX, int mouseY, int[] panel) {
-        int k = m.iconScale();
-        int S = 16 * k;
-        int AX = S / 2, AY = S / 4;
+    private void drawStructureFront(GuiGraphics g, StructureModel m, int mouseX, int mouseY, int[] panel) {
         int contentX0 = panel[0] + 2, contentX1 = panel[2] - 2;
         int contentY0 = panel[1] + 2;
         int contentY1 = Math.min(panel[3], STRUCT_CONTENT_MAX_Y) - 2;
-        int contentW = contentX1 - contentX0;
-        int contentH = contentY1 - contentY0;
-        // Ширина: (sizeX+sizeZ−2)·S/2 + S — при переполнении уменьшаем k.
-        while (k > 1 && (m.sizeX() + m.sizeZ() - 2) * (8 * k) + 16 * k > contentW) {
-            k--;
-            S = 16 * k;
-            AX = S / 2;
-            AY = S / 4;
-        }
-        // Вертикальный шаг: укладывается в панель и НЕ больше 5/6 высоты иконки —
-        // колонна «наезжает» на себя (верхний блок рисуется поверх, painter).
-        int spanNoV = (m.sizeX() + m.sizeZ() - 2) * AY + S;
-        int V = S;
-        if (m.sizeY() > 1) {
-            V = Math.max(1, Math.min(Math.min(S, S - S / 6), (contentH - spanNoV) / (m.sizeY() - 1)));
-        }
-
-        int n = m.blocks().size();
-        int[] px = new int[n];
-        int[] py = new int[n];
-        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
-        int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
-        for (int i = 0; i < n; i++) {
-            StructureBlock b = m.blocks().get(i);
-            px[i] = (b.x() - b.z()) * AX;
-            py[i] = (b.x() + b.z()) * AY - b.y() * V;
-            minX = Math.min(minX, px[i]);
-            maxX = Math.max(maxX, px[i] + S);
-            minY = Math.min(minY, py[i]);
-            maxY = Math.max(maxY, py[i] + S);
-        }
-        int offX = (contentX0 + contentX1) / 2 - (maxX - minX) / 2 - minX;
-        int offY = (contentY0 + contentY1) / 2 - (maxY - minY) / 2 - minY;
-
-        Integer[] order = new Integer[n];
-        for (int i = 0; i < n; i++) order[i] = i;
-        Arrays.sort(order, (a, b) -> {
-            StructureBlock ba = m.blocks().get(a);
-            StructureBlock bb = m.blocks().get(b);
-            int d = (ba.x() + ba.z()) - (bb.x() + bb.z());
-            return d != 0 ? d : ba.y() - bb.y();
-        });
-
-        for (int i : order) {
-            StructureBlock b = m.blocks().get(i);
-            long key = StructureModel.key(b.x(), b.y(), b.z());
-            int sx = leftPos + offX + px[i];
-            int sy = topPos + offY + py[i];
-            if (hiddenStructureBlocks.contains(key)) {
-                // Скрытый блок — призрачная рамка (клик по ней покажет обратно).
-                drawSlotOutline(g, sx, sy, S, S, 0x55000000);
-            } else {
-                ItemStack st = stackOf(b.itemId());
+        int gridW = m.sizeX() * 16;
+        int gridH = m.sizeY() * 16;
+        int gx0 = (contentX0 + contentX1) / 2 - gridW / 2;
+        int gyBottom = (contentY0 + contentY1) / 2 + gridH / 2;
+        for (int x = 0; x < m.sizeX(); x++) {
+            for (int y = 0; y < m.sizeY(); y++) {
+                int sx = leftPos + gx0 + x * 16;
+                int sy = topPos + gyBottom - 16 - y * 16;
+                StructureBlock front = null;
+                for (int z = 0; z < m.sizeZ(); z++) {
+                    front = m.at(x, y, z);
+                    if (front != null) break;
+                }
+                if (front == null) {
+                    g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
+                    drawSlotOutline(g, sx, sy, 16, 16, 0x2E000000);
+                    continue;
+                }
+                long key = StructureModel.key(front.x(), front.y(), front.z());
+                if (hiddenStructureBlocks.contains(key)) {
+                    g.fill(sx, sy, sx + 16, sy + 16, 0x0F000000);
+                    drawSlotOutline(g, sx, sy, 16, 16, 0x2E000000);
+                    structHitRects.add(new long[]{sx, sy, 16, 16, key});
+                    continue;
+                }
+                ItemStack st = stackOf(front.itemId());
                 if (!st.isEmpty()) {
-                    renderFlatItem(g, st, sx, sy, k);
-                    if (inRect(mouseX, mouseY, sx, sy, S, S)) {
+                    g.renderItem(st, sx, sy);
+                    if (inRect(mouseX, mouseY, sx, sy, 16, 16)) {
                         tooltipStack = st;
                         tooltipComponent = null;
                         tooltipX = mouseX;
                         tooltipY = mouseY;
                     }
                 }
+                structHitRects.add(new long[]{sx, sy, 16, 16, key});
             }
-            structHitRects.add(new long[]{sx, sy, S, S, key});
         }
     }
 
@@ -722,7 +690,7 @@ public class ScholarNotesScreen extends Screen {
                 if (!empty) {
                     ItemStack st = stackOf(b.itemId());
                     if (!st.isEmpty()) {
-                        renderFlatItem(g, st, sx, sy, 1);
+                        g.renderItem(st, sx, sy);
                         if (inRect(mouseX, mouseY, sx, sy, 16, 16)) {
                             tooltipStack = st;
                             tooltipComponent = null;
@@ -742,24 +710,6 @@ public class ScholarNotesScreen extends Screen {
         g.fill(x, y + h - 1, x + w, y + h, color);
         g.fill(x, y, x + 1, y + h, color);
         g.fill(x + w - 1, y, x + w, y + h, color);
-    }
-
-    /**
-     * ПЛОСКИЙ 2D-икон предмета (спрайт, как в книге рецептов) целочисленным
-     * масштабом k: равномерно яркий, без 3D-затемнения граней и тени —
-     * увеличенный 3D-рендер (renderItem) читается тусклым. NEAREST-сэмплинг
-     * guiTextured — без мыла при целых k.
-     */
-    private void renderFlatItem(GuiGraphics g, ItemStack stack, int x, int y, int k) {
-        if (k <= 1) {
-            g.blitSprite(RenderType::guiTextured, this.minecraft.getItemRenderer().getItemIcon(stack), x, y, 16, 16);
-            return;
-        }
-        g.pose().pushPose();
-        g.pose().translate(x, y, 0f);
-        g.pose().scale(k, k, 1f);
-        g.blitSprite(RenderType::guiTextured, this.minecraft.getItemRenderer().getItemIcon(stack), 0, 0, 16, 16);
-        g.pose().popPose();
     }
 
     /** Точка отсчёта цикла кадров (System.currentTimeMillis, 0 = ещё не шла). */

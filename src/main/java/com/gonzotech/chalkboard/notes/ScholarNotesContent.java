@@ -89,7 +89,7 @@ public final class ScholarNotesContent {
                     NoteIllustration.craftingRight(List.of("minecraft:iron_ingot", "minecraft:copper_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:furnace", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot"), "gonzotech:firebox")),
 
             // 5 — «Топка и котёл» (после «Открытия 1») — шаблон: крафт слева + структура
-            // (подстраницы: изо + 2 слоя: топка внизу, котёл на ней)
+            // (одна подстраница: вид спереди — котёл над топкой)
             new ScholarPage(5, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p5.title",
                     null,
@@ -190,7 +190,8 @@ public final class ScholarNotesContent {
 
             // 16 — пустая страница после турбины — слева крафт ротора,
             // справа структура: МИНИМАЛЬНАЯ турбина 3×3×3 (24 корпуса, ротор
-            // в центре, паровой узел сверху, узел провода справа) — 4 подстраницы
+            // в центре, паровой узел слева и узел провода справа в среднем ряду
+            // передней грани) — 4 подстраницы: спереди + 3 слоя
             new ScholarPage(16, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     null, null,
                     List.of("gonzotech:turbine_rotor"),
