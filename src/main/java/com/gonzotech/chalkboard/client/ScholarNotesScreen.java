@@ -636,20 +636,20 @@ public class ScholarNotesScreen extends Screen {
                 int sx = leftPos + gx0 + gx * cellSize;
                 int sy = topPos + gy0 + gy * cellSize;
                 String id = cell.apply(gx, gy);
-                if (id == null || id.isEmpty()) {
+                ItemStack st = (id == null || id.isEmpty()) ? ItemStack.EMPTY : stackOf(id);
+                if (st.isEmpty()) {
+                    // Пустая клетка ИЛИ id без предметной формы (например
+                    // ванильный блок лавы) — бледный слот, не дырка.
                     g.fill(sx, sy, sx + icon, sy + icon, 0x0F000000);
                     drawSlotOutline(g, sx, sy, icon, icon, 0x2E000000);
                     continue;
                 }
-                ItemStack st = stackOf(id);
-                if (!st.isEmpty()) {
-                    renderScaledItem(g, st, sx, sy, kf);
-                    if (inRect(mouseX, mouseY, sx, sy, icon, icon)) {
-                        tooltipStack = st;
-                        tooltipComponent = null;
-                        tooltipX = mouseX;
-                        tooltipY = mouseY;
-                    }
+                renderScaledItem(g, st, sx, sy, kf);
+                if (inRect(mouseX, mouseY, sx, sy, icon, icon)) {
+                    tooltipStack = st;
+                    tooltipComponent = null;
+                    tooltipX = mouseX;
+                    tooltipY = mouseY;
                 }
             }
         }

@@ -353,8 +353,8 @@ public final class ScholarNotesContent {
 
             // 31 — «Редстоун и лава» (по «Открытию 1» — базовое знание о мире);
             // реакция — с БЛОКОМ редстоуна (не с пылью/проводом); справа «Вид сверху»
-            // (тикает, 2 кадра): лава+блок редстоуна+поршень → багряный обсидиан
-            // + головка поршня
+            // (тикает, 2 кадра): ведро лавы+блок редстоуна+поршень → багряный
+            // обсидиан (гонзotech — ванильный без предметной формы)+головка поршня
             new ScholarPage(31, ScholarChapter.ERA_2, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p31.title",
                     "gui.gonzotech.notes.p31.body",
@@ -363,8 +363,8 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.structureRightFlat(60, 3,
                             List.of(
-                                    List.of("minecraft:lava", "", "minecraft:lava", "", "minecraft:redstone_block", "", "", "minecraft:piston", ""),
-                                    List.of("minecraft:crimson_obsidian", "minecraft:redstone_block", "minecraft:crimson_obsidian", "", "minecraft:piston_head", "", "", "minecraft:piston", "")),
+                                    List.of("minecraft:lava_bucket", "", "minecraft:lava_bucket", "", "minecraft:redstone_block", "", "", "minecraft:piston", ""),
+                                    List.of("gonzotech:crimson_obsidian", "minecraft:redstone_block", "gonzotech:crimson_obsidian", "", "minecraft:piston_head", "", "", "minecraft:piston", "")),
                             NoteIllustration.CAPTION_VIEW_TOP)),
 
             // 32 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок);
