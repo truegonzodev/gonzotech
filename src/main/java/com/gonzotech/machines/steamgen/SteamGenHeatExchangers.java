@@ -37,18 +37,20 @@ public final class SteamGenHeatExchangers {
 
     /**
      * Ванильные блоки-теплообменники — явный список по утверждённой таблице
-     * (автор 2026-09-18: «У ванильных же тоже есть статы»): значения —
-     * в {@link AlloyMaterialCatalog} (namespace minecraft). Значение карты =
-     * id хост-материала в каталоге; статы (C, H) берутся из каталога, а не
-     * хардкодятся (единственный источник правды).
+     * (автор 2026-09-18). Значения — «стат, который берётся именно для
+     * парогена», а НЕ фактические свойства материалов из
+     * {@link AlloyMaterialCatalog} (к ним не привязаны). В формулу множителя
+     * попадает только сумма C+H; разбивка C/H: H как в каталоге, C пересчитан
+     * под утверждённую сумму.
      */
-    private static final Map<Block, String> VANILLA_EXCHANGERS = Map.of(
-        Blocks.IRON_BLOCK, "iron",
-        Blocks.COPPER_BLOCK, "copper",
-        Blocks.GOLD_BLOCK, "gold",
-        Blocks.DIAMOND_BLOCK, "diamond",
-        Blocks.REDSTONE_BLOCK, "redstone"
-    );
+    private static final Map<Block, Stats> VANILLA_EXCHANGERS = new LinkedHashMap<>();
+    static {
+        VANILLA_EXCHANGERS.put(Blocks.IRON_BLOCK, new Stats(25, 60));     // C+H = 85
+        VANILLA_EXCHANGERS.put(Blocks.COPPER_BLOCK, new Stats(75, 35));   // C+H = 110
+        VANILLA_EXCHANGERS.put(Blocks.GOLD_BLOCK, new Stats(95, 30));     // C+H = 125
+        VANILLA_EXCHANGERS.put(Blocks.DIAMOND_BLOCK, new Stats(8, 92));   // C+H = 100
+        VANILLA_EXCHANGERS.put(Blocks.REDSTONE_BLOCK, new Stats(55, 40)); // C+H = 95
+    }
 
     private static final Map<Block, Stats> MAP = buildMap();
 
@@ -66,14 +68,8 @@ public final class SteamGenHeatExchangers {
             if (material == null) continue;
             map.put(entry.getValue().get(), new Stats(material.conductivity(), material.heatResistance()));
         }
-        // Ванильные блоки — явный список, статы у хост-материала из каталога
-        // (железо C25+H60, медь 95+35, золото 100+30, алмаз 8+92, редстоун 100+40).
-        for (Map.Entry<Block, String> entry : VANILLA_EXCHANGERS.entrySet()) {
-            Material material = AlloyMaterialCatalog.material(
-                ResourceLocation.fromNamespaceAndPath("minecraft", entry.getValue()));
-            if (material == null) continue;
-            map.put(entry.getKey(), new Stats(material.conductivity(), material.heatResistance()));
-        }
+        // Ванильные блоки — явный список (статы парогена, см. VANILLA_EXCHANGERS).
+        VANILLA_EXCHANGERS.forEach(map::putIfAbsent);
         return Collections.unmodifiableMap(map);
     }
 
