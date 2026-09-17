@@ -75,8 +75,9 @@ public final class SunEventSnowRenderer {
             }
         }
 
-        // Биллборд-базис из направления взгляда камеры.
-        Vec3 look = mc.gameRenderer.getMainCamera().getViewDirection();
+        // Биллборд-базис из направления взгляда (в 1.21.4 у Camera его нет —
+        // берём у игрока; для снежинки разница с орбитой 3-го лица не заметна).
+        Vec3 look = mc.player != null ? mc.player.getViewDirection() : new Vec3(0.0, 0.0, 1.0);
         Vec3 right = look.cross(new Vec3(0.0, 1.0, 0.0));
         if (right.length() < 1.0E-3) {
             right = new Vec3(1.0, 0.0, 0.0); // взгляд ровно вверх/вниз — дегенерация
