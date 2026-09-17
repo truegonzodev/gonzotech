@@ -13,6 +13,7 @@ import net.minecraft.stats.Stats;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -57,7 +58,7 @@ public final class NotesNetwork {
                         ByteBufCodecs.VAR_LONG, NotesDataPayload::playtimeTicks,
                         ByteBufCodecs.BOOL, NotesDataPayload::tier1Unlocked,
                         ByteBufCodecs.BOOL, NotesDataPayload::tier2Unlocked,
-                        ByteBufCodecs.STRING_UTF8.list(32), NotesDataPayload::noteFlags,
+                        STRING_LIST, NotesDataPayload::noteFlags,
                         NotesDataPayload::new
                 );
 
@@ -66,6 +67,25 @@ public final class NotesNetwork {
             return TYPE;
         }
     }
+
+    /**
+     * Список строк: varint-длина + UTF-8 элементы. В 1.21.4 у {@link StreamCodec}
+     * нет готового list-кодека, поэтому кодим вручную (сервер доверенный,
+     * длина списка ограничена количеством флагов ScholarNoteFlags).
+     */
+    private static final StreamCodec<RegistryFriendlyByteBuf, List<String>> STRING_LIST =
+            StreamCodec.of(
+                    (buf, list) -> {
+                        buf.writeVarInt(list.size());
+                        for (String s : list) buf.writeUtf(s);
+                    },
+                    buf -> {
+                        int n = buf.readVarInt();
+                        List<String> out = new ArrayList<>(n);
+                        for (int i = 0; i < n; i++) out.add(buf.readUtf());
+                        return out;
+                    }
+            );
 
     /** Клиентский кэш последнего полученного состояния. */
     public static volatile NotesDataPayload CLIENT_DATA = null;
