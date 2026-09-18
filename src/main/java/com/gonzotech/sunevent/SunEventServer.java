@@ -82,6 +82,27 @@ public final class SunEventServer {
         return level.getDayTime() / 24000L == data.nextEventDay;
     }
 
+    /**
+     * Монстровое «ночное» окно (автор, фаза 4): снизойдём ночные настройки
+     * спавна на весь багровый период — <b>E−1 22000 → E 14500</b> (ровно
+     * график I(t): заход 22000–24000 → полдень → тлеет 12500–14500).
+     * Размерность проверяется снаружи. Внутри окна монстры спавнятся как
+     * ночью; ночь за окном — ваниль.
+     */
+    public static boolean monsterNightNow(ServerLevel level) {
+        SunEventData data = SunEventNetwork.getData(level);
+        long dayTime = level.getDayTime();
+        long day = dayTime / 24000L;
+        long timeOfDay = dayTime % 24000L;
+        if (day == data.nextEventDay - 1L) {
+            return timeOfDay >= 22000L; // заход E−1 — начало багровой ночи
+        }
+        if (day == data.nextEventDay) {
+            return timeOfDay < 14500L;  // багровый день до конца тления
+        }
+        return false;
+    }
+
     /** Стр. 35 «Ослабевшее солнце»: флаг всем свидетелям наступившего дня. */
     private static void unlockSunEventFlag(ServerLevel overworld) {
         MinecraftServer server = overworld.getServer();
