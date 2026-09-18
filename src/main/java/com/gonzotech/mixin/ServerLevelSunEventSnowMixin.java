@@ -62,7 +62,7 @@ public abstract class ServerLevelSunEventSnowMixin {
      * Правило автора: снег только на {@code #minecraft:solid} и только в пустую
      * ячейку. Вне окна ванильное поведение не трогаем.
      */
-    @Inject(method = "tickPrecipitation", at = @At("HEAD"))
+    @Inject(method = "tickPrecipitation", at = @At("HEAD"), cancellable = true)
     private void gonzotech$sunEventProtectGround(BlockPos pos, CallbackInfo ci) {
         ServerLevel level = (ServerLevel) (Object) this;
         if (!SunEventServer.snowWindowDay(level) || !level.isRaining()) {
