@@ -287,9 +287,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     public boolean renderSnowAndRain(ClientLevel level, int ticks, float partialTick,
                                      double camX, double camY, double camZ) {
         // Суневеты: дождь = снег (окно E−1..E+1, Оверворлд, идёт дождь).
-        // Снежинки рисуем сами и отменяем ванильный дождь.
+        // Ванильный кокон-панели (клон WeatherEffectRenderer/SNOW), только гейт наш.
         if (sunEventSnowNow(level)) {
-            SunEventSnowRenderer.render(partialTick, camX, camY, camZ);
+            SunEventSnowRenderer.render(level, ticks, partialTick, camX, camY, camZ);
             return true;
         }
         // true cancels vanilla particles; false lets the Overworld render its

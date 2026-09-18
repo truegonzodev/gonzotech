@@ -1,169 +1,132 @@
 package com.gonzotech.sunevent.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.logging.LogUtils;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.CoreShaders;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.Vec3;
-import org.slf4j.Logger;
 
 /**
  * Суневеты фаза 3 — клиентский снег вместо дождя (только Оверворлд).
  *
- * <p>В окне E−1..E+1 при дожде {@code SpaceSkyEffects.renderSnowAndRain}
- * рисует эти снежинки и возвращает true — ванильный дождь не рисуется,
- * {@code tickRain} тоже true (ванильные частицы дождя не тикают).
+ * <p><b>Честный клон ванильного {@code WeatherEffectRenderer} (ветка SNOW,
+ * 1.21.4)</b> — автор 2026-09-18: не делать «свой снег», скопировать ваниль
+ * (2D-панели): там и FPS/TPS норм, и плотное равномерное заполнение
+ * (отдельные частицы не «мешают» — это панели, не мировые объекты), и
+ * правильный тинт (серые ночью, белые днём — через lightmap), и горизонтальная
+ * дымка от ванильного тумана. Свои версии (билборд-снежинки) удалены: были
+ * слишком белые («светятся»), микрофризы, «пласт» над игроком.
  *
- * <p><b>Модель (ТЗ автора, 2026-09-18):</b> снежинки живут в КООРДИНАТАХ
- * ОТНОСИТЕЛЬНО ИГРОКА — «купол» ДВИЖЕТСЯ ВМЕСТЕ с игроком по горизонтали
- * (а не дублируется заново при перемещении — было: мировые координаты,
- * микрофризы и «повторный посев» купола при ходьбе). Спавн — по ВСЕЙ
- * высоте коридора (от земли до верха полосы, а не только на высоте 16–32):
- * частицы есть и у земли, и над головой. Умершая у земли снежинка
- * переспавнивается на случайной высоте коридора.
+ * <p>Единственное отличие от ванили: гейт биома ({@code getPrecipitationAt})
+ * заменён на наше окно E−1..E+1 + идёт дождь — снег во ВСЕХ биомах. Геометрия,
+ * формулы uOffset/vOffset/postrait/seed/light/alpha, вертикальная привязка
+ * текстуры к миру (v = bottomY*0.25 + vOffset — поэтому вертикальное движение
+ * игрока не таскает «пласт»; кокон следует за игроком только по XZ) —
+ * ванильные, один в один. Количество verticles/heightmap-лук-apов = ванильное.
  *
- * <p><b>Смерть снежинки:</b> дно коридора = {@code Heightmap.MOTION_BLOCKING}
- * (верхний блок, куда падает небесный свет — тот же, что у ванильной
- * погоды и у серверной укладки слоёв). Кулл одной int-выборкой хэджмапа
- * на кадр на снежинку (БЕЗ getBlockState/getCollisionShape на кадр —
- * причина микрофризов прошлой версии).
- *
- * <p><b>Геометрия (1.21.4):</b> вершины — камерно-относительные (для
- * купола, движущегося с игроком, это РОВНО сохранённые rel-координаты);
- * вращение применяет шейдер ({@code u_position_matrix} = R_view в
- * weather-pass; CPU-матрица = identity, иначе двойное вращение — V²).
- *
- * <p><b>Вид:</b> крестик 3×3 из ванильной {@code textures/environment/snow.png}
- * (та же текстура, что у ванильных колонн снега; тайл колонка 2 ряд 8).
+ * <p>Гейт рисует в тот же {@code RenderBuffers.bufferSource} через
+ * {@code RenderType.weather} — ванильный endBatch weather-pass'а его
+ * flush'ит (как ванильные колонны).
  */
 public final class SunEventSnowRenderer {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
-
-    private static final ResourceLocation SNOW_TEXTURE =
+    private static final ResourceLocation SNOW_LOCATION =
         ResourceLocation.withDefaultNamespace("textures/environment/snow.png");
 
-    /** 220 × 6 (автор: снежинок мало — «в раз 5–8 больше»). */
-    private static final int FLAKES = 1320;
-    private static final float AREA = 26.0F;   // горизонтальный радиус купола
-    private static final float TOP = 32.0F;    // верх коридора над игроком
-    private static final float FALL = 0.03F;   // падение, блоков/кадр (автор: /3 от ванильной 0.09)
-    private static final float SWAY = 0.02F;   // боковой дрейф
-    private static final float SIZE = 0.28F;   // базовая полуширина квада (автор: ×3–4 от 0.08)
+    // Ванильные: радиус кокона (fancy=10 / fast=5), таблица ориентации панели 32×32.
+    private static final float[] COLUMN_SIZE_X = new float[1024];
+    private static final float[] COLUMN_SIZE_Z = new float[1024];
 
-    // UV чистого крестика в snow.png: колонка 2 из 4, ряд 8 из 16 (тайлы 16×16).
-    private static final float U0 = 2.0F / 4.0F, U1 = 3.0F / 4.0F;
-    private static final float V0 = 8.0F / 16.0F, V1 = 9.0F / 16.0F;
-
-    // Купол живёт в ОТНОСИТЕЛЬНЫХ к камере координатах (купол едет с игроком).
-    private static final double[] RX = new double[FLAKES];
-    private static final double[] RY = new double[FLAKES];
-    private static final double[] RZ = new double[FLAKES];
-    private static final float[] PHASE = new float[FLAKES];
-    private static final float[] SPEED = new float[FLAKES];
-
-    private static boolean seeded = false;
-    private static long frame;
-    private static boolean loggedMatrix = false;
-
-    private static final Vec3 UP = new Vec3(0.0, 1.0, 0.0);
+    static {
+        for (int i = 0; i < 32; i++) {
+            for (int j = 0; j < 32; j++) {
+                float f = j - 16;
+                float f1 = i - 16;
+                float len = Mth.length(f, f1);
+                COLUMN_SIZE_X[i * 32 + j] = -f1 / len;
+                COLUMN_SIZE_Z[i * 32 + j] = f / len;
+            }
+        }
+    }
 
     private SunEventSnowRenderer() {
     }
 
-    /** Дно коридора для данной rel-позиции (heightmap), rel-к камере. */
-    private static double groundRel(ClientLevel level, double camX, double camY, double camZ, double rx, double rz) {
-        int wx = (int) Math.floor(camX + rx);
-        int wz = (int) Math.floor(camZ + rz);
-        if (level.hasChunk(wx, wz)) {
-            return level.getHeight(Heightmap.Types.MOTION_BLOCKING, wx, wz) - camY;
-        }
-        return 0.0;
-    }
-
-    private static void reseed(ClientLevel level, int i, double camX, double camY, double camZ) {
-        RX[i] = (Math.random() * 2.0 - 1.0) * AREA;
-        RZ[i] = (Math.random() * 2.0 - 1.0) * AREA;
-        double ground = groundRel(level, camX, camY, camZ, RX[i], RZ[i]);
-        // Спавн по ВСЕЙ высоте коридора (автор: и у земли, и над головой),
-        // под крышей — выше её (над навесом).
-        double min = ground + 0.1;
-        double max = Math.max(TOP, min + 0.5);
-        RY[i] = min + Math.random() * (max - min);
-        PHASE[i] = (float) Math.random();
-        SPEED[i] = (float) Math.random() * 0.017F;
-    }
-
-    /** Кадр снега: обновить купол и нарисовать его. */
-    public static void render(float partialTick, double camX, double camY, double camZ) {
-        Minecraft mc = Minecraft.getInstance();
-        ClientLevel level = mc.level;
-        if (level == null) {
+    /** Кадр снега: ванильный кокон из колонных панелей, гейт = наше окно. */
+    public static void render(ClientLevel level, int ticks, float partialTick,
+                              double camX, double camY, double camZ) {
+        float rainLevel = level.getRainLevel(partialTick);
+        if (rainLevel <= 0.0F) {
             return;
         }
-        if (!seeded) {
-            for (int i = 0; i < FLAKES; i++) {
-                reseed(level, i, camX, camY, camZ);
+        Minecraft mc = Minecraft.getInstance();
+        int radius = Minecraft.useFancyGraphics() ? 10 : 5;
+
+        int ix = Mth.floor(camX);
+        int iy = Mth.floor(camY);
+        int iz = Mth.floor(camZ);
+
+        // Тот же буфер, в который ваниль рисует свою погоду; flush — у ванильного
+        // weather-pass'а после world border (мы внутри того же pass'а).
+        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+        VertexConsumer consumer =
+            buffers.getBuffer(RenderType.weather(SNOW_LOCATION, Minecraft.useShaderTransparency()));
+
+        RandomSource random = RandomSource.create();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        float t = ticks + partialTick;
+        float vScroll = -((ticks & 511) + partialTick) / 512.0F;
+
+        for (int z = iz - radius; z <= iz + radius; z++) {
+            for (int x = ix - radius; x <= ix + radius; x++) {
+                if (!level.hasChunk(x, z)) {
+                    continue; // ваниль: getPrecipitationAt = NONE для незагруженных
+                }
+                int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+                int bottom = Math.max(iy - radius, ground);
+                int top = Math.max(iy + radius, ground);
+                if (top - bottom == 0) {
+                    continue;
+                }
+                // createSnowColumnInstance (ваниль, verbatim)
+                int seed = x * x * 3121 + x * 45238971 ^ z * z * 418711 + z * 13761;
+                random.setSeed(seed);
+                float uOffset = (float) (random.nextDouble() + t * 0.01F * (float) random.nextGaussian());
+                float vOffset = vScroll + (float) (random.nextDouble() + t * (float) random.nextGaussian() * 0.001F);
+                int lightAt = LevelRenderer.getLightColor(level, pos.set(x, Math.max(iy, ground), z));
+                int light = LightTexture.pack(
+                    (LightTexture.block(lightAt) * 3 + 15) / 4,
+                    (LightTexture.sky(lightAt) * 3 + 15) / 4);
+
+                // renderInstances (ваниль, verbatim; снежная альфа-база 0.8F)
+                float fx = (float) (x + 0.5 - camX);
+                float fz = (float) (z + 0.5 - camZ);
+                float alpha = Mth.lerp((float) Mth.lengthSquared(fx, fz) / (radius * radius), 0.8F, 0.5F)
+                    * rainLevel;
+                int color = ARGB.white(alpha);
+                int idx = (z - iz + 16) * 32 + (x - ix + 16);
+                float ox = COLUMN_SIZE_X[idx] / 2.0F;
+                float oz = COLUMN_SIZE_Z[idx] / 2.0F;
+                float x0 = fx - ox, x1 = fx + ox;
+                float yTop = (float) (top - camY);
+                float yBottom = (float) (bottom - camY);
+                float z0 = fz - oz, z1 = fz + oz;
+                float u1 = uOffset + 1.0F;
+                float vt = top * 0.25F + vOffset;
+                float vb = bottom * 0.25F + vOffset;
+                consumer.addVertex(x0, yTop, z0).setUv(uOffset, vb).setColor(color).setLight(light);
+                consumer.addVertex(x1, yTop, z1).setUv(u1, vb).setColor(color).setLight(light);
+                consumer.addVertex(x1, yBottom, z1).setUv(u1, vt).setColor(color).setLight(light);
+                consumer.addVertex(x0, yBottom, z0).setUv(uOffset, vt).setColor(color).setLight(light);
             }
-            seeded = true;
         }
-        frame++;
-
-        for (int i = 0; i < FLAKES; i++) {
-            double t = frame * 0.01 + PHASE[i] * 12.566;
-            RX[i] += Math.sin(t) * SWAY;
-            RZ[i] += Math.cos(t * 1.13) * SWAY;
-            RY[i] -= FALL + SPEED[i];
-            if (RY[i] < groundRel(level, camX, camY, camZ, RX[i], RZ[i]) + 0.05) {
-                reseed(level, i, camX, camY, camZ);
-            }
-        }
-
-        // Разовая диагностика пайплайна.
-        if (!loggedMatrix) {
-            loggedMatrix = true;
-            LOGGER.info("[Gonzo Tech] SnowRenderer: modelView в weather-pass = {}",
-                RenderSystem.getModelViewMatrix());
-        }
-
-        // Биллборд-базис из направления взгляда игрока (1.21.4: Vec3.directionFromRotation).
-        Vec3 look = mc.player != null
-            ? Vec3.directionFromRotation(mc.player.getXRot(), mc.player.getYRot())
-            : new Vec3(0.0, 0.0, 1.0);
-        Vec3 right = look.cross(UP);
-        if (right.length() < 1.0E-3) {
-            right = new Vec3(1.0, 0.0, 0.0);
-        } else {
-            right = right.normalize();
-        }
-        Vec3 up = right.cross(look).normalize();
-
-        RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR);
-        RenderSystem.setShaderTexture(0, SNOW_TEXTURE);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.enableDepthTest();
-
-        BufferBuilder buf = Tesselator.getInstance()
-            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        for (int i = 0; i < FLAKES; i++) {
-            double s = SIZE * (0.7 + PHASE[i] * 0.6); // разброс размеров
-            double rx = right.x * s, ry = right.y * s, rz = right.z * s;
-            double ux = up.x * s, uy = up.y * s, uz = up.z * s;
-            double x = RX[i], y = RY[i], z = RZ[i]; // уже камерно-относительные
-            buf.addVertex((float) (x - rx - ux), (float) (y - ry - uy), (float) (z - rz - uz)).setColor(255, 255, 255, 255).setUv(U0, V1);
-            buf.addVertex((float) (x + rx - ux), (float) (y + ry - uy), (float) (z + rz - uz)).setColor(255, 255, 255, 255).setUv(U1, V1);
-            buf.addVertex((float) (x + rx + ux), (float) (y + ry + uy), (float) (z + rz + uz)).setColor(255, 255, 255, 255).setUv(U1, V0);
-            buf.addVertex((float) (x - rx + ux), (float) (y - ry + uy), (float) (z - rz + uz)).setColor(255, 255, 255, 255).setUv(U0, V0);
-        }
-        BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 }

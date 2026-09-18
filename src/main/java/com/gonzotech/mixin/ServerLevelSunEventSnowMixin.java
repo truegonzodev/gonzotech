@@ -29,12 +29,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <ol>
  *   <li>открываем гейт — снег во ВСЕХ биомах (redirect shouldSnow);</li>
  *   <li>ПРАВИЛО АВТОРА: снег ложится в ПУСТУЮ ячейку — ванильный
- *       setBlockAndUpdate бездумно «съел» бы факелы/цветки и положил снег
- *       поверх воды (HEAD-cancel таких точек). «Твёрдость земли» отдельной
- *       проверкой не проверяется: под heightmap-позицией по построению всегда
- *       топ-блок с коллизией, а {@code #minecraft:snow_layer_can_survive_on}
- *       в 1.21.4 — лишь override-список (honey_block/soul_sand/mud),
- *       grass_block в нём нет (использовать его для гейта нельзя).</li>
+ *       setBlockAndUpdate бездумно «съел» бы факелы/цветки (HEAD-cancel).
+ *       Плюс отдельный cancel, если под ячейкой ЖИДКОСТЬ: MOTION_BLOCKING
+ *       включает жидкости, поэтому ваниль кладёт «плавающие» слои на воду —
+ *       автору так не надо (скрин 2026-09-18). «Твёрдость земли» иначе не
+ *       проверяется: под heightmap-позицией по построению топ-блок с
+ *       коллизией, а {@code #minecraft:snow_layer_can_survive_on} в 1.21.4 —
+ *       лишь override-список (honey_block/soul_sand/mud), grass_block в нём
+ *       нет (использовать его для гейта нельзя).</li>
  *   <li>плотность укладки — ВАНИЛЬНАЯ (1/48 на бросок): автор прогнал ×8 →
  *       ×2 → ×1, вернули ванильные снежные шапки («ниче нового»).</li>
  *   <li>гроза ×5 (автор: старт ×10 → смягчено до ×5, только день E): молнии
@@ -56,7 +58,9 @@ public abstract class ServerLevelSunEventSnowMixin {
     private static final int THUNDER_DELAY_DIVISOR = 5;
 
     /**
-     * Правило автора: снег только в ПУСТУЮ ячейку (не «съедать» факелы/цветки/воду).
+     * Правило автора: снег только в ПУСТУЮ ячейку (не «съедать» факелы/цветки)
+     * и НЕ на воду (MOTION_BLOCKING включает жидкости — ваниль плавит
+     * «плавающие» слои, автор отклонил скрином 2026-09-18).
      * «Твёрдость земли» дополнительно проверять НЕЧЕМ и НЕНУЖНО:
      * {@code #minecraft:snow_layer_can_survive_on} в 1.21.4 — это override-список
      * из honey_block/soul_sand/mud (grass_block там НЕТ — сверено по vanilla-тегу),
@@ -76,6 +80,12 @@ public abstract class ServerLevelSunEventSnowMixin {
         }
         if (!surfaceState.isAir()) {
             // Факел/цветок/вода и т.п. занимают heightmap-позицию — не трогаем.
+            ci.cancel();
+            return;
+        }
+        if (!level.getBlockState(surface.below()).getFluidState().isEmpty()) {
+            // Под ячейкой жидкость (MOTION_BLOCKING считает и жидкости) —
+            // снег на воду НЕ ложится (автор, скрин 2026-09-18).
             ci.cancel();
         }
     }
