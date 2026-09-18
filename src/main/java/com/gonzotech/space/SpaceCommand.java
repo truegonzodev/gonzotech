@@ -118,6 +118,7 @@ public final class SpaceCommand {
         LiteralArgumentBuilder<CommandSourceStack> suneventDebug = Commands.literal("sunevent")
             .then(Commands.literal("status").executes(SpaceCommand::suneventStatus))
             .then(Commands.literal("reset").executes(SpaceCommand::suneventReset))
+            .then(Commands.literal("spawntest").executes(SpaceCommand::suneventSpawnTest))
             .then(Commands.literal("window")
                 .then(Commands.argument("day", IntegerArgumentType.integer())
                     .executes(SpaceCommand::suneventWindow)));
@@ -356,6 +357,34 @@ public final class SpaceCommand {
      * ванильном дне (снежное окно = day−1..day). Не трогает расписание: на следующем
      * смене дня драйвер пересчитает nextEventDay по счётчику.
      */
+    /**
+     * Суневеты фаза 4 — мгновенная проверка цепочки спавна монстров:
+     * запрашивает пак MONSTER через {@code NaturalSpawner.spawnCategoryForPosition}
+     * (~30 блоков от игрока; ваниль не даст ближе 24). Команда обходит КАП монстров
+     * (SpawnState.canSpawn*), натуральный цикл — нет: появились → правила в порядке
+     * (блок = кап, забитый окном-выжившими), нет → смотри лог и миксин.
+     */
+    private static int suneventSpawnTest(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        ServerPlayer player;
+        try {
+            player = source.getPlayerOrException();
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§c[GonzoTech] spawntest может выполнить только игрок."));
+            return 0;
+        }
+        ServerLevel level = source.getServer().overworld();
+        BlockPos target = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+            player.blockPosition().offset(30, 0, 0));
+        net.minecraft.world.level.NaturalSpawner.spawnCategoryForPosition(
+            net.minecraft.world.entity.MobCategory.MONSTER, level, target);
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Спавн-тест: пак MONSTER у " + target.toShortString()
+            + " (~30 блоков). Появились → цепочка ОК (блок = кап монстров);"
+            + " нет → правила блокируют (смотри лог)."), true);
+        return 1;
+    }
+
     private static int suneventWindow(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
         var server = source.getServer();
