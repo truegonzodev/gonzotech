@@ -91,8 +91,16 @@ public final class SunEventSnowRenderer {
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.enableDepthTest();
-        // joml: Matrix4fStack НАСЛЕДУЕТ Matrix4f — сам стек и есть текущая (верхняя) матрица.
-        Matrix4f m = RenderSystem.getModelViewStack();
+        // View-матрицу строим САМИ из позиции/углов камеры: стек
+        // RenderSystem.getModelViewStack() на момент renderSnowAndRain не гарантирует
+        // камеру (первые кадры снег рисовался «в мировых координатах» — далеко и в секторе).
+        Matrix4f m = new Matrix4f();
+        m.identity();
+        float pitchDeg = mc.player != null ? mc.player.getXRot() : 0.0F;
+        float yawDeg = mc.player != null ? mc.player.getYRot() : 0.0F;
+        m.rotateAngleX((float) Math.toRadians(pitchDeg) * -1.0F);
+        m.rotateAngleY((float) Math.toRadians(yawDeg) * -1.0F);
+        m.translate((float) -camX, (float) -camY, (float) -camZ);
 
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
