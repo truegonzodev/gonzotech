@@ -33,6 +33,10 @@ public final class SunEventSpawnDebug {
     private static int permitsSky;
     /** Пропущено гейтом на закрытых позициях (пещеры/тень). */
     private static int permitsCave;
+    /** Прошло isValidSpawnPostitionForType ЦЕЛИКОМ (= после AABB-nocollision), небо. */
+    private static int validSky;
+    /** То же, тень. */
+    private static int validCave;
     /** Реально созданных, видят небо. */
     private static final Map<String, Integer> spawnedSky = new LinkedHashMap<>();
     /** Реально созданных, под землёй / в тени навеса. */
@@ -69,6 +73,15 @@ public final class SunEventSpawnDebug {
         }
     }
 
+    /** isValidSpawnPostitionForType вернул true (позиция валидна: плейсмент + правила + AABB). */
+    public static void recordValid(boolean sky) {
+        if (sky) {
+            validSky++;
+        } else {
+            validCave++;
+        }
+    }
+
     /** В мир реально добавлен монстр (любой NATURAL-спавн окна; конверсии тоже попадут). */
     public static void recordSpawn(EntityType<?> type, boolean canSeeSky) {
         (canSeeSky ? spawnedSky : spawnedCave).merge(typeId(type), 1, Integer::sum);
@@ -91,13 +104,15 @@ public final class SunEventSpawnDebug {
         }
         LOGGER.info(
             "[Gonzo Tech] Суневет: окно активно (время {}): проверок за минуту {},"
-                + " пропущено небо {} / тень {},"
+                + " пропущено небо {} / тень {}, валидных небо {} / тень {},"
                 + " создано — на поверхности {} {}, под землёй {} {}",
-            level.getDayTime() % 24000L, attempts, permitsSky, permitsCave,
+            level.getDayTime() % 24000L, attempts, permitsSky, permitsCave, validSky, validCave,
             spawnedSkyTotal, spawnedSky, spawnedCaveTotal, spawnedCave);
         attempts = 0;
         permitsSky = 0;
         permitsCave = 0;
+        validSky = 0;
+        validCave = 0;
         spawnedSky.clear();
         spawnedCave.clear();
         spawnedSkyTotal = 0;
