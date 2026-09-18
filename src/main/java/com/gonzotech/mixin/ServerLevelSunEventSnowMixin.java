@@ -34,8 +34,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *       BlockTags нет; snow_layer_can_survive_on точнее: он же исключает песок/
  *       гравий, на которых слой бы выпал).</li>
  *   <li>плотность укладки ×8 (1/48 → 1/6 на бросок);</li>
- *   <li>гроза ×10 (автор: старт ×10, только день E): молнии в 10 раз чаще,
- *       а «пауза до грома» в 10 раз короче.</li>
+ *   <li>гроза ×5 (автор: старт ×10 → смягчено до ×5, только день E): молнии
+ *       в 5 раз чаще, а «пауза до грома» в 5 раз короче.</li>
  * </ol>
  *
  * <p>Таяние не трогаем — ванильные снежные слои тают сами от света (факелы
@@ -50,10 +50,10 @@ public abstract class ServerLevelSunEventSnowMixin {
     private static final int SNOW_DENSITY_EVENT = 6;
     /** Ванил: молния при грозе 1/100000 (чанк × тик). */
     private static final int BOLT_CHANCE_VANILLA = 100000;
-    /** День E: 1/10000 — гроза ощутимо. */
-    private static final int BOLT_CHANCE_EVENT = 10000;
-    /** День E: «пауза до грома» /10 → гром стартует ×10 чаще. */
-    private static final int THUNDER_DELAY_DIVISOR = 10;
+    /** День E: 1/20000 — гроза ощутимо (автор: ×5). */
+    private static final int BOLT_CHANCE_EVENT = 20000;
+    /** День E: «пауза до грома» /5 → гром стартует ×5 чаще (автор: ×5). */
+    private static final int THUNDER_DELAY_DIVISOR = 5;
 
     /**
      * Правило автора: снег только на {@code #minecraft:solid} и только в пустую
@@ -92,14 +92,14 @@ public abstract class ServerLevelSunEventSnowMixin {
         return SunEventServer.snowWindowDay((Level) (Object) this) ? SNOW_DENSITY_EVENT : original;
     }
 
-    /** День E: молнии ×10 чаще (автор: гроза ×K, старт ×10). */
+    /** День E: молнии ×5 чаще (автор: гроза ×K — смягчено до ×5). */
     @ModifyConstant(method = "tickChunk", constant = @Constant(intValue = BOLT_CHANCE_VANILLA))
     private int gonzotech$sunEventBolts(int original) {
         return SunEventServer.eventDayNow((ServerLevel) (Object) this) ? BOLT_CHANCE_EVENT : original;
     }
 
     /**
-     * День E: «пауза до грома» в 10 раз короче (THUNDER_DELAY — 2-й вызов
+     * День E: «пауза до грома» в 5 раз короче (THUNDER_DELAY — 2-й вызов
      * IntProvider.sample в advanceWeatherCycle после THUNDER_DURATION).
      */
     @Redirect(method = "advanceWeatherCycle",

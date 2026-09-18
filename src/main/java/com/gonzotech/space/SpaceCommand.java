@@ -368,7 +368,7 @@ public final class SpaceCommand {
         com.gonzotech.sunevent.SunEventNetwork.sendToAll(server.overworld());
         source.sendSuccess(() -> Component.literal(
             "§a[GonzoTech] Суневет-тест: ванильный день §e" + day
-            + "§a = багровый день E (снег в окне day−1..day, гроза ×10 в день E). "
+            + "§a = багровый день E (снег в окне day−1..day, гроза ×5 в день E). "
             + "Расписание на следующем смене дня восстановится."), true);
         return 1;
     }

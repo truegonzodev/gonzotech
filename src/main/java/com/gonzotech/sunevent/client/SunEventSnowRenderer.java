@@ -98,8 +98,8 @@ public final class SunEventSnowRenderer {
         m.identity();
         float pitchDeg = mc.player != null ? mc.player.getXRot() : 0.0F;
         float yawDeg = mc.player != null ? mc.player.getYRot() : 0.0F;
-        m.rotateAngleX((float) Math.toRadians(pitchDeg) * -1.0F);
-        m.rotateAngleY((float) Math.toRadians(yawDeg) * -1.0F);
+        m.rotate((float) Math.toRadians(pitchDeg) * -1.0F, 1.0F, 0.0F, 0.0F);
+        m.rotate((float) Math.toRadians(yawDeg) * -1.0F, 0.0F, 1.0F, 0.0F);
         m.translate((float) -camX, (float) -camY, (float) -camZ);
 
         BufferBuilder buf = Tesselator.getInstance()
