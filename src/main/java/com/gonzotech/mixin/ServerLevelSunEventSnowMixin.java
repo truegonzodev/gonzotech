@@ -7,6 +7,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -83,9 +84,9 @@ public abstract class ServerLevelSunEventSnowMixin {
     /** В окне снег идёт во всех биомах (ванил: только холодные). */
     @Redirect(method = "tickPrecipitation",
         at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/level/biome/Biome;shouldSnow(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z"))
-    private boolean gonzotech$sunEventSnowAllBiomes(Biome biome, Level level, BlockPos pos) {
-        return biome.shouldSnow(level, pos) || SunEventServer.snowWindowDay(level);
+            target = "Lnet/minecraft/world/level/biome/Biome;shouldSnow(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z"))
+    private boolean gonzotech$sunEventSnowAllBiomes(Biome biome, LevelReader level, BlockPos pos) {
+        return biome.shouldSnow(level, pos) || SunEventServer.snowWindowDay((Level) level);
     }
 
     /** В окне снег кладётся ×8 плотнее. */
