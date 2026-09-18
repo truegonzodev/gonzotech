@@ -35,8 +35,10 @@ public final class SunEventSpawnDebug {
     private static int permitsCave;
     /** Пропущено гейтом, по типам. */
     private static final Map<String, Integer> permitsByType = new LinkedHashMap<>();
-    /** isValidSpawnPostitionForType=true (после AABB), по типам [небо,тень]. */
-    private static final Map<String, int[]> validByType = new LinkedHashMap<>();
+    /** isValidSpawnPostitionForType=true (после AABB): небо/тень (без типов —
+     * имя record-аксессора SpawnerData под Parchment переименовано — не тащим). */
+    private static int validSky;
+    private static int validCave;
     /** PositionCheck (NeoForge) вернул true/false, по типам [небо,тень]. */
     private static final Map<String, int[]> posCheckOkByType = new LinkedHashMap<>();
     private static final Map<String, int[]> posCheckFailByType = new LinkedHashMap<>();
@@ -79,8 +81,12 @@ public final class SunEventSpawnDebug {
     }
 
     /** isValidSpawnPostitionForType вернул true (позиция валидна: плейсмент + гейт + AABB). */
-    public static void recordValid(EntityType<?> type, boolean sky) {
-        increment(validByType, type, sky);
+    public static void recordValid(boolean sky) {
+        if (sky) {
+            validSky++;
+        } else {
+            validCave++;
+        }
     }
 
     /** NeoForge PositionCheck вернулся с результатом ok. */
@@ -120,13 +126,13 @@ public final class SunEventSpawnDebug {
         LOGGER.info(
             "[Gonzo Tech] Суневет: окно активно (время {}), попыток {}, пропущено небо {} / тень {}"
                 + "\n  пропущено по типам: {}"
-                + "\n  валидно [небо+тень]: {}"
+                + "\n  валидно: небо {} / тень {}"
                 + "\n  PositionCheck ок [небо+тень]: {} / отказ [небо+тень]: {}"
                 + "\n  финализация [небо+тень]: {}"
                 + "\n  создано: небо {} {}, тень {} {}",
             level.getDayTime() % 24000L, attempts, permitsSky, permitsCave,
             joinSingles(permitsByType),
-            joinPairs(validByType),
+            validSky, validCave,
             joinPairs(posCheckOkByType), joinPairs(posCheckFailByType),
             joinPairs(finalizeByType),
             spawnedSkyTotal, joinSingles(spawnedSky), spawnedCaveTotal, joinSingles(spawnedCave));
@@ -134,7 +140,8 @@ public final class SunEventSpawnDebug {
         permitsSky = 0;
         permitsCave = 0;
         permitsByType.clear();
-        validByType.clear();
+        validSky = 0;
+        validCave = 0;
         posCheckOkByType.clear();
         posCheckFailByType.clear();
         finalizeByType.clear();
