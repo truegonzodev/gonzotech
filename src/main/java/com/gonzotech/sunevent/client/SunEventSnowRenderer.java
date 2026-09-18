@@ -26,9 +26,10 @@ import org.slf4j.Logger;
  * <p><b>Поведение (ТЗ автора, 2026-09-18):</b> невидимая горизонтальная зона
  * вокруг игрока; внутри зоны ищется верхний блок, куда падает небесный свет
  * ({@code Heightmap.MOTION_BLOCKING} — тот же, что у ванильной погоды и у
- * серверной укладки слоёв); снежинки появляются на случайной высоте чуть
- * выше уровня глаз (или над крышей, если игрок под навесом) и падают
- * вертикально; исчезают, коснувшись верхнего блока или жидкости.
+ * серверной укладки слоёв); снежинки спавнятся в 16–32 блоках НАД игроком
+ * (падение с неба, не «аура над головой» — автор), падают вертикально
+ * (шлифовка: скорость /3) и исчезают, коснувшись верхнего блока или жидкости.
+ * Размер крестика — ×3–4 от исходного (автор).
  *
  * <p><b>Вид:</b> не белый квад, а настоящая снежинка 3×3-крестиком —
  * UV-тайл из ванильной {@code textures/environment/snow.png} (та же
@@ -54,10 +55,11 @@ public final class SunEventSnowRenderer {
 
     private static final int FLAKES = 220;
     private static final float AREA = 26.0F;        // горизонтальная зона вокруг камеры
-    private static final float SPAWN_ABOVE = 2.5F;  // спавн чуть выше глаз/крыши
-    private static final float FALL = 0.09F;        // падение, блоков/кадр
+    private static final float SPAWN_MIN = 16.0F;   // спавн над игроком: от...
+    private static final float SPAWN_SPAN = 16.0F;  // ...до 32 блоков
+    private static final float FALL = 0.03F;        // падение, блоков/кадр (было 0.09 — автор: /3)
     private static final float SWAY = 0.02F;        // боковой дрейф
-    private static final float SIZE = 0.08F;        // базовая полуширина квада
+    private static final float SIZE = 0.28F;        // базовая полуширина квада (было 0.08 — автор: ×3–4)
 
     // UV чистого крестика в snow.png: колонка 2 из 4, ряд 8 из 16 (тайлы 16×16).
     private static final float U0 = 2.0F / 4.0F, U1 = 3.0F / 4.0F;
@@ -88,10 +90,11 @@ public final class SunEventSnowRenderer {
             top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         }
         DIEY[i] = top + 0.05;
-        // Спавним чуть выше уровня глаз либо над крышей — что выше.
-        Y[i] = Math.max(camY, DIEY[i]) + Math.random() * SPAWN_ABOVE;
+        // Спавн в 16–32 блоках над игроком (автор: не «аура над головой»,
+        // а падение с неба); над крышей — не ниже, чем над ней.
+        Y[i] = Math.max(camY + SPAWN_MIN + Math.random() * SPAWN_SPAN, DIEY[i]);
         PHASE[i] = (float) Math.random();
-        SPEED[i] = (float) Math.random() * 0.05F;
+        SPEED[i] = (float) Math.random() * 0.017F;
     }
 
     /** Кадр снега: обновить облако и нарисовать его. */
