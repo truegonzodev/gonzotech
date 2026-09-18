@@ -358,11 +358,19 @@ public final class SpaceCommand {
      * смене дня драйвер пересчитает nextEventDay по счётчику.
      */
     /**
-     * Суневеты фаза 4 — мгновенная проверка цепочки спавна монстров:
-     * запрашивает пак MONSTER через {@code NaturalSpawner.spawnCategoryForPosition}
-     * (~30 блоков от игрока; ваниль не даст ближе 24). Команда обходит КАП монстров
-     * (SpawnState.canSpawn*), натуральный цикл — нет: появились → правила в порядке
-     * (блок = кап, забитый окном-выжившими), нет → смотри лог и миксин.
+     * Суневеты фаза 4 — мгновенная проверка цепочки спавна монстров + перепись:
+     * (1) осмотр загруженных монстров в радиусе 96 от игрока с раскладкой
+     * «видит небо / в тени» и по типам (небо+пещера count'ы '{тип=небо+пещера}');
+     * (2) суммарный MONSTER-счёт из последнего SpawnState (сравнивать с капом
+     * ~70 × чанки/289); (3) тестовый пак MONSTER через
+     * {@code NaturalSpawner.spawnCategoryForPosition} (~30 блоков от игрока;
+     * ваниль не даст ближе 24). Команда обходит КАП, натуральный цикл — нет:
+     * появились → правила в порядке (блок = кап/дистанция/спектатор),
+     * нет → правила блокируют (смотри лог и миксин).
+     *
+     * <p>ВАЖНО: в режиме наблюдателя натуральный спавн вокруг игрока не идёт
+     * (ванильный чек дистанции исключает спектаторов) — осмотр делать в
+     * креативе/выживании, стоя на месте.
      */
     private static int suneventSpawnTest(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
@@ -374,14 +382,57 @@ public final class SpaceCommand {
             return 0;
         }
         ServerLevel level = source.getServer().overworld();
+
+        // Перепись: загруженные монстры вокруг игрока (радиус 96), небо/тень.
+        java.util.List<net.minecraft.world.entity.monster.Monster> monsters =
+            level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,
+                player.getBoundingBox().inflate(96.0D));
+        java.util.Map<String, int[]> byType = new java.util.TreeMap<>();
+        int skyCount = 0;
+        int caveCount = 0;
+        for (net.minecraft.world.entity.monster.Monster m : monsters) {
+            boolean onSurface = level.canSeeSky(m.blockPosition());
+            int[] counts = byType.computeIfAbsent(
+                net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(m.getType()).toString(),
+                k -> new int[2]);
+            counts[onSurface ? 0 : 1]++;
+            if (onSurface) {
+                skyCount++;
+            } else {
+                caveCount++;
+            }
+        }
+        StringBuilder types = new StringBuilder();
+        byType.forEach((id, c) -> {
+            if (types.length() > 0) {
+                types.append(", ");
+            }
+            types.append(id.replace("minecraft:", "")).append('=').append(c[0]).append('+').append(c[1]);
+        });
+        if (types.length() == 0) {
+            types.append("пусто");
+        }
+
+        net.minecraft.world.level.NaturalSpawner.SpawnState spawnState =
+            level.getChunkSource().getLastSpawnState();
+        int monsterLoaded = spawnState == null ? -1
+            : spawnState.getMobCategoryCounts().getInt(net.minecraft.world.entity.MobCategory.MONSTER);
+        boolean window = com.gonzotech.sunevent.SunEventServer.monsterNightNow(level);
+
         BlockPos target = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
             player.blockPosition().offset(30, 0, 0));
         net.minecraft.world.level.NaturalSpawner.spawnCategoryForPosition(
             net.minecraft.world.entity.MobCategory.MONSTER, level, target);
+        final String typeSummary = types.toString();
+        final int sky = skyCount;
+        final int cave = caveCount;
         source.sendSuccess(() -> Component.literal(
-            "§a[GonzoTech] Спавн-тест: пак MONSTER у " + target.toShortString()
-            + " (~30 блоков). Появились → цепочка ОК (блок = кап монстров);"
-            + " нет → правила блокируют (смотри лог)."), true);
+            "§a[GonzoTech] Суневет-осмотр: окно §e" + (window ? "АКТИВНО" : "закрыто")
+            + "§a; рядом монстров §e" + monsters.size() + "§a (небо §e" + sky + "§a / тень §e" + cave
+            + "§a) {" + typeSummary + "§a}; всего загружено MONSTER §e" + monsterLoaded
+            + "§a. Тестовый пак MONSTER брошен у " + target.toShortString()
+            + " (~30 блоков): появились → цепочка ОК; нет → блок ниже по цепочке (смотри лог)."),
+            true);
         return 1;
     }
 

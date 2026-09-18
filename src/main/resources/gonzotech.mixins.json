@@ -11,6 +11,7 @@
     "CrafterBlockMixin",
     "MobSunEventBurnMixin",
     "MonsterSunEventSpawnMixin",
+    "ServerLevelMonsterSpawnCensusMixin",
     "ServerLevelSunEventSnowMixin"
   ],
   "client": [
