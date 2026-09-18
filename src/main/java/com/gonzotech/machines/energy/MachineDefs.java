@@ -223,6 +223,35 @@ public final class MachineDefs {
     /** Макс. отдача GTU соседям за тик (mGTU: 40 GTU/t). */
     public static final int STIRLING_GTU_OUTPUT = 40 * MILLI;
 
+    // ═══════════════════════════ СОЛНЕЧНАЯ ПАНЕЛЬ (тир 1, открытие 4) ═══════════════════════════
+    // Пассивный генератор без топлива/контуров: только небо и умирающее Солнце.
+    // Выработка за тик = PEAK × light× crimson× weather× age, где:
+    //   light   — кривая неба по возвышению солнца e=cos(2π·(t/24000−0.25)):
+    //             день 0.6+0.4·e (горизонт ~0.6 → зенит 1.0, плавно),
+    //             сумерки/ночь: плавный откат до 0.02 (автор 2026-09-18);
+    //   crimson — ×0.75 в багровый день E (автор);
+    //   weather — ×0.8 при любых осадках (автор);
+    //   age     — SunEventData.solarMultiplier(): −1%/день мира, пол 10%,
+    //             сбрасывает «Икар» (уже задано SunEventData).
+    // «Выше только небо» обязательно: блок над панелью полностью глушит выработку.
+
+    /** Пиковая выработка за тик (mGTU: 15 GTU/t, зенит, ясно, день 0). */
+    public static final int SOLAR_PANEL_GTU_PEAK_PER_TICK = 15 * MILLI;
+    /** Максимум GTU в буфере панели (mGTU: 126 GTU). */
+    public static final int SOLAR_PANEL_GTU_CAPACITY = 126 * MILLI;
+    /** Макс. отдача GTU соседям/проводам за тик (mGTU: 64 GTU/t). */
+    public static final int SOLAR_PANEL_GTU_OUTPUT = 64 * MILLI;
+    /** Багровый день E: множитель выработки (автор). */
+    public static final double SOLAR_PANEL_CRIMSON_FACTOR = 0.75D;
+    /** Осадки: множитель выработки (автор). */
+    public static final double SOLAR_PANEL_WEATHER_FACTOR = 0.8D;
+    /** У горизонта (рассвет/закат) — доля от пика (автор: ~60%). */
+    public static final double SOLAR_PANEL_HORIZON_FACTOR = 0.6D;
+    /** Глубокой ночью (искусственная подсветка неба) — доля от пика (автор: ~2%). */
+    public static final double SOLAR_PANEL_NIGHT_FACTOR = 0.02D;
+    /** Возвышение солнца, ниже которого ночной фактор уже дна (≈12540 тиков). */
+    public static final double SOLAR_PANEL_NIGHT_ELEVATION = -0.13D;
+
     // ═══════════════════════════ ПАРОВАЯ ТУРБИНА (многоблок) ═══════════════════════════
     // Полный прямоугольный параллелепипед: внутренняя полость заполнена роторами.
     // Характеристики равны BASE × M(N), где M=N·(1-(N/100)^1.778).

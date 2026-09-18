@@ -228,6 +228,7 @@
   "item.gonzotech.lithium_ingot": "Литиевый слиток",
   "block.gonzotech.firebox": "Топка",
   "block.gonzotech.nuclear_firebox": "Ядерная топка",
+  "block.gonzotech.solar_panel": "Солнечная панель",
   "gui.gonzotech.nuclear_firebox.burning": "Горение: осталось %s%%",
   "block.gonzotech.boiler": "Паровой котёл",
   "block.gonzotech.stirling_generator": "Генератор Стирлинга",

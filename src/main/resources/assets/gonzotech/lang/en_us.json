@@ -228,6 +228,7 @@
   "item.gonzotech.lithium_ingot": "Lithium Ingot",
   "block.gonzotech.firebox": "Firebox",
   "block.gonzotech.nuclear_firebox": "Nuclear Firebox",
+  "block.gonzotech.solar_panel": "Solar Panel",
   "gui.gonzotech.nuclear_firebox.burning": "Burning: %s%% left",
   "block.gonzotech.boiler": "Steam Boiler",
   "block.gonzotech.stirling_generator": "Stirling Generator",

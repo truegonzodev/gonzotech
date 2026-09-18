@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "gonzotech:block/second/solar_panel_top",
+    "bottom": "gonzotech:block/second/solar_panel",
+    "side": "gonzotech:block/second/solar_panel"
+  }
+}

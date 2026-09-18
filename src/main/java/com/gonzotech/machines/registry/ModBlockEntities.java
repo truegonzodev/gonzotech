@@ -15,6 +15,7 @@ import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
 import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
 import com.gonzotech.machines.block.entity.SingularHeatSourceBlockEntity;
+import com.gonzotech.machines.block.entity.SolarPanelBlockEntity;
 import com.gonzotech.machines.block.entity.SecondAccumulatorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondCobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondElectricFurnaceBlockEntity;
@@ -58,6 +59,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<StirlingBlockEntity>> STIRLING =
         BLOCK_ENTITIES.register("stirling", () -> new BlockEntityType<>(
             StirlingBlockEntity::new, false, ModMachines.STIRLING.get()));
+
+    public static final Supplier<BlockEntityType<SolarPanelBlockEntity>> SOLAR_PANEL =
+        BLOCK_ENTITIES.register("solar_panel", () -> new BlockEntityType<>(
+            SolarPanelBlockEntity::new, false, ModMachines.SOLAR_PANEL.get()));
 
     public static final Supplier<BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
         BLOCK_ENTITIES.register("electric_furnace", () -> new BlockEntityType<>(

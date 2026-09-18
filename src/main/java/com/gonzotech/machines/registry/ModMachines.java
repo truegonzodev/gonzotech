@@ -15,6 +15,7 @@ import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
 import com.gonzotech.machines.block.SecondElectricFurnaceBlock;
+import com.gonzotech.machines.block.SolarPanelBlock;
 import com.gonzotech.machines.block.SecondGrinderBlock;
 import com.gonzotech.machines.block.SecondPressBlock;
 import com.gonzotech.machines.block.SecondPumpBlock;
@@ -332,6 +333,10 @@ public final class ModMachines {
     public static final DeferredBlock<SecondCobbleGeneratorBlock> SECOND_COBBLE_GENERATOR =
         BLOCKS.registerBlock("second_cobble_generator", SecondCobbleGeneratorBlock::new, machineCopper());
 
+    /** Открытие 4: пассивная солнечная панель (тир 1) — небо обязательно сверху. */
+    public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL =
+        BLOCKS.registerBlock("solar_panel", SolarPanelBlock::new, machineCopper());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -500,6 +505,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_COBBLE_GENERATOR_ITEM =
         ITEMS.registerSimpleBlockItem("second_cobble_generator", SECOND_COBBLE_GENERATOR);
+
+    public static final DeferredItem<BlockItem> SOLAR_PANEL_ITEM =
+        ITEMS.registerSimpleBlockItem("solar_panel", SOLAR_PANEL);
 
     // ─────────────────────────── инструменты ───────────────────────────
 
