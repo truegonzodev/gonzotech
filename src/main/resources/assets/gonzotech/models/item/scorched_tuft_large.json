@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/corium_bukket"
+    "layer0": "gonzotech:block/desolation/scorched_tuft_large"
   }
 }

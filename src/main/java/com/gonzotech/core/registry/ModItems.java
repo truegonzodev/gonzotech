@@ -300,6 +300,14 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("dead_stone", ModBlocks.DEAD_STONE);
     public static final DeferredItem<BlockItem> DEAD_LOG_ITEM =
         ITEMS.registerSimpleBlockItem("dead_log", ModBlocks.DEAD_LOG);
+    public static final DeferredItem<BlockItem> CHARRED_SAPLING_ITEM =
+        ITEMS.registerSimpleBlockItem("charred_sapling", ModBlocks.CHARRED_SAPLING);
+    public static final DeferredItem<BlockItem> SCORCHED_TUFT_ITEM =
+        ITEMS.registerSimpleBlockItem("scorched_tuft", ModBlocks.SCORCHED_TUFT);
+    public static final DeferredItem<BlockItem> SCORCHED_TUFT_MEDIUM_ITEM =
+        ITEMS.registerSimpleBlockItem("scorched_tuft_medium", ModBlocks.SCORCHED_TUFT_MEDIUM);
+    public static final DeferredItem<BlockItem> SCORCHED_TUFT_LARGE_ITEM =
+        ITEMS.registerSimpleBlockItem("scorched_tuft_large", ModBlocks.SCORCHED_TUFT_LARGE);
     public static final DeferredItem<BlockItem> CORIUM_ITEM =
         ITEMS.registerSimpleBlockItem("corium", ModBlocks.CORIUM);
     public static final DeferredItem<BlockItem> WASTE_BARREL_ITEM =

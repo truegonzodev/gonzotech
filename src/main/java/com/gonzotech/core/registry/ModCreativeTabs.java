@@ -171,6 +171,11 @@ public class ModCreativeTabs {
                 output.accept(ModItems.DEAD_SAND_ITEM.get());
                 output.accept(ModItems.DEAD_STONE_ITEM.get());
                 output.accept(ModItems.DEAD_LOG_ITEM.get());
+                // Опалённая растительность пустошей (срез ножницами).
+                output.accept(ModItems.CHARRED_SAPLING_ITEM.get());
+                output.accept(ModItems.SCORCHED_TUFT_ITEM.get());
+                output.accept(ModItems.SCORCHED_TUFT_MEDIUM_ITEM.get());
+                output.accept(ModItems.SCORCHED_TUFT_LARGE_ITEM.get());
                 output.accept(ModItems.CORIUM_ITEM.get());
                 output.accept(ModFluids.CORIUM_BUCKET.get());
                 output.accept(ModItems.WASTE_BARREL_ITEM.get());

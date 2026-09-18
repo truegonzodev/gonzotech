@@ -140,6 +140,23 @@ public class ModBlocks {
     /** Ванильный pillar-state нужен: копируемые свойства OAK_LOG считывают AXIS. */
     public static final DeferredBlock<RotatedPillarBlock> DEAD_LOG = BLOCKS.registerBlock(
         "dead_log", RotatedPillarBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG));
+    /** Опалённая растительность (cross-модель, без age): саженец и три размера пучка. */
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> CHARRED_SAPLING = BLOCKS.registerBlock(
+        "charred_sapling", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> SCORCHED_TUFT = BLOCKS.registerBlock(
+        "scorched_tuft", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> SCORCHED_TUFT_MEDIUM = BLOCKS.registerBlock(
+        "scorched_tuft_medium", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> SCORCHED_TUFT_LARGE = BLOCKS.registerBlock(
+        "scorched_tuft_large", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
     /** Застывший кориум — результат реакции расплавленного кориума с водой (аналог обсидиана). */
     public static final DeferredBlock<Block> CORIUM = BLOCKS.registerSimpleBlock(
         "corium", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
