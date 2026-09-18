@@ -131,15 +131,6 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     // (автор 2026-09-18: ещё на 15–20% тусклее исходных ~4.5, т.е. 0.125).
     private static final float CRIMSON_DAYLIGHT_FACTOR = 0.05F;
 
-    /**
-     * Матрица вида текущего кадра: {@code renderSky} получает её из
-     * {@code LevelRenderer} (там же, до всех frame-pass'ов, она и на стеке
-     * модельных матриц). Кэшируем, чтобы weather-pass (renderSnowAndRain)
-     * использовал ТО ЖЕ преобразование, которым рисуются купол и звёзды —
-     * снежинки тогда ложатся в том же пространстве, что и ванильный дождь.
-     */
-    private static volatile Matrix4f lastViewMatrix;
-
     public SpaceSkyEffects(float cloudHeight,
                            boolean hasGround,
                            float fogFactor,
@@ -296,10 +287,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     public boolean renderSnowAndRain(ClientLevel level, int ticks, float partialTick,
                                      double camX, double camY, double camZ) {
         // Суневеты: дождь = снег (окно E−1..E+1, Оверворлд, идёт дождь).
-        // Снежинки рисуем сами и отменяем ванильный дождь. Матрица вида —
-        // та же, что в этом кадре ушла в renderSky (см. lastViewMatrix).
+        // Снежинки рисуем сами и отменяем ванильный дождь.
         if (sunEventSnowNow(level)) {
-            SunEventSnowRenderer.render(partialTick, camX, camY, camZ, lastViewMatrix);
+            SunEventSnowRenderer.render(partialTick, camX, camY, camZ);
             return true;
         }
         // true cancels vanilla particles; false lets the Overworld render its
@@ -327,9 +317,6 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     public boolean renderSky(ClientLevel level, int ticks, float partialTick,
                              Matrix4f modelViewMatrix, Camera camera,
                              Matrix4f projectionMatrix, Runnable setupFog) {
-        // Кэш матрицы вида кадра для renderSnowAndRain (weather-pass идёт ПОСЛЕ
-        // sky-pass и матрицу не получает — снежинки рисуют тем же преобразованием).
-        lastViewMatrix = modelViewMatrix;
         FogType fog = camera.getFluidInCamera();
         if (fog != FogType.NONE) {
             return true;

@@ -35,7 +35,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *       топ-блок с коллизией, а {@code #minecraft:snow_layer_can_survive_on}
  *       в 1.21.4 — лишь override-список (honey_block/soul_sand/mud),
  *       grass_block в нём нет (использовать его для гейта нельзя).</li>
- *   <li>плотность укладки ×8 (1/48 → 1/6 на бросок);</li>
+ *   <li>плотность укладки ×2 (1/48 → 1/24 на бросок; автор: после ×8 мир
+ *       покрывался слоем за минуту — снижено на 75%).</li>
  *   <li>гроза ×5 (автор: старт ×10 → смягчено до ×5, только день E): молнии
  *       в 5 раз чаще, а «пауза до грома» в 5 раз короче.</li>
  * </ol>
@@ -48,8 +49,8 @@ public abstract class ServerLevelSunEventSnowMixin {
 
     /** Ванил: 1/48 на бросок (игрок × чанк × тик) — редкий снег. */
     private static final int SNOW_DENSITY_VANILLA = 48;
-    /** В окне: 1/6 — заметное снежное одеяло. */
-    private static final int SNOW_DENSITY_EVENT = 6;
+    /** В окне: 1/24 = ×2 от ванили (автор 2026-09-18: ×8 покрывало мир за минуту, −75%). */
+    private static final int SNOW_DENSITY_EVENT = 24;
     /** Ванил: молния при грозе 1/100000 (чанк × тик). */
     private static final int BOLT_CHANCE_VANILLA = 100000;
     /** День E: 1/20000 — гроза ощутимо (автор: ×5). */
@@ -90,7 +91,7 @@ public abstract class ServerLevelSunEventSnowMixin {
         return biome.shouldSnow(level, pos) || SunEventServer.snowWindowDay((Level) level);
     }
 
-    /** В окне снег кладётся ×8 плотнее. */
+    /** В окне снег кладётся ×2 от ванили. */
     @ModifyConstant(method = "tickChunk", constant = @Constant(intValue = SNOW_DENSITY_VANILLA))
     private int gonzotech$sunEventSnowDensity(int original) {
         return SunEventServer.snowWindowDay((Level) (Object) this) ? SNOW_DENSITY_EVENT : original;
