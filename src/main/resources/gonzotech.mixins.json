@@ -13,7 +13,7 @@
     "MobSunEventBurnMixin",
     "MonsterSunEventSpawnMixin",
     "NaturalSpawnerPositionValidMixin",
-    "NeoforgePositionCheckCensusMixin",
+    "PathfinderMobSunEventRulesMixin",
     "ServerLevelMonsterSpawnCensusMixin",
     "ServerLevelSunEventSnowMixin"
   ],
