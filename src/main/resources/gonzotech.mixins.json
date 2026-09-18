@@ -9,12 +9,9 @@
     "BucketItemMixin",
     "CraftingMenuMixin",
     "CrafterBlockMixin",
-    "MobFinalizeSpawnCensusMixin",
     "MobSunEventBurnMixin",
     "MonsterSunEventSpawnMixin",
-    "NaturalSpawnerPositionValidMixin",
     "PathfinderMobSunEventRulesMixin",
-    "ServerLevelMonsterSpawnCensusMixin",
     "ServerLevelSunEventSnowMixin"
   ],
   "client": [

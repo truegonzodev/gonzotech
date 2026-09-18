@@ -431,7 +431,7 @@ public final class SpaceCommand {
             + "§a; рядом монстров §e" + monsters.size() + "§a (небо §e" + sky + "§a / тень §e" + cave
             + "§a) {" + typeSummary + "§a}; всего загружено MONSTER §e" + monsterLoaded
             + "§a. Тестовый пак MONSTER брошен у " + target.toShortString()
-            + " (~30 блоков): появились → цепочка ОК; нет → блок ниже по цепочке (смотри лог)."),
+            + " (~30 блоков): окно активно → там должны появиться монстры."),
             true);
         return 1;
     }

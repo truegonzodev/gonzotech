@@ -1,7 +1,6 @@
 package com.gonzotech.mixin;
 
 import com.gonzotech.sunevent.SunEventServer;
-import com.gonzotech.sunevent.SunEventSpawnDebug;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -34,10 +33,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * отвечаем true для MONSTER типов — безусловно, как ночью. Кап, дистанция 24,
  * структуры, heightmap-плейсмент, noCollision, finalizeSpawn — ванильные.
  *
- * <p>Горение — отдельно: {@code MobSunEventBurnMixin} (E, только 4500–7500).
- * Диагностика — {@code SunEventSpawnDebug}: пропуски здесь, реальное создание
- * монстров (небо/пещера) — {@code ServerLevelMonsterSpawnCensusMixin};
- * мгновенный осмотр — {@code /gonzotech debug sunevent spawntest}.
+ * <p>Второй, последний слой ванили — инстанс-чек {@code PathfinderMob.checkSpawnRules}
+ * (walk-target = минус световая цена позиции) — закрыт {@code PathfinderMobSunEventRulesMixin}.
+ * Горение — отдельно: {@code MobSunEventBurnMixin} (E, только 4500–7500).
+ * Мгновенный осмотр по месту — {@code /gonzotech debug sunevent spawntest}.
  */
 @Mixin(SpawnPlacements.class)
 public abstract class MonsterSunEventSpawnMixin {
@@ -56,14 +55,11 @@ public abstract class MonsterSunEventSpawnMixin {
             return;
         }
         if (!SunEventServer.monsterNightNow(serverLevel)) {
-            SunEventSpawnDebug.onWindowClosed();
             return;
         }
-        SunEventSpawnDebug.recordAttempt(serverLevel);
         if (type == EntityType.SLIME) {
             return; // автор: слизней НЕ трогаем — ванильные болота/слайм-чанки
         }
-        SunEventSpawnDebug.recordPermit(type, serverLevel.canSeeSky(pos));
         cir.setReturnValue(true);
     }
 }
