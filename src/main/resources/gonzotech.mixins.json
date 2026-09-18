@@ -9,9 +9,11 @@
     "BucketItemMixin",
     "CraftingMenuMixin",
     "CrafterBlockMixin",
+    "MobFinalizeSpawnCensusMixin",
     "MobSunEventBurnMixin",
     "MonsterSunEventSpawnMixin",
     "NaturalSpawnerPositionValidMixin",
+    "NeoforgePositionCheckCensusMixin",
     "ServerLevelMonsterSpawnCensusMixin",
     "ServerLevelSunEventSnowMixin"
   ],

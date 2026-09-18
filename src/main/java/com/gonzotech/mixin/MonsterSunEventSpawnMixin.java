@@ -63,7 +63,7 @@ public abstract class MonsterSunEventSpawnMixin {
         if (type == EntityType.SLIME) {
             return; // автор: слизней НЕ трогаем — ванильные болота/слайм-чанки
         }
-        SunEventSpawnDebug.recordPermit(serverLevel.canSeeSky(pos));
+        SunEventSpawnDebug.recordPermit(type, serverLevel.canSeeSky(pos));
         cir.setReturnValue(true);
     }
 }

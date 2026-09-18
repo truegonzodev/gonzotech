@@ -49,6 +49,6 @@ public abstract class NaturalSpawnerPositionValidMixin {
         if (level.dimension() != Level.OVERWORLD || !SunEventServer.monsterNightNow(level)) {
             return;
         }
-        SunEventSpawnDebug.recordValid(level.canSeeSky(pos));
+        SunEventSpawnDebug.recordValid(spawnerData.type(), level.canSeeSky(pos));
     }
 }
