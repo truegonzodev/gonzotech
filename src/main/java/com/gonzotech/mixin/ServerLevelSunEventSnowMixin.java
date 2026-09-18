@@ -3,7 +3,6 @@ package com.gonzotech.mixin;
 import com.gonzotech.sunevent.SunEventServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.Level;
@@ -29,13 +28,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * (снег «идёт» только в холодных биомах). В окне мы:
  * <ol>
  *   <li>открываем гейт — снег во ВСЕХ биомах (redirect shouldSnow);</li>
- *   <li>ПРАВИЛО АВТОРА: снег ложится только на твёрдую землю и только в ПУСТУЮ
- *       ячейку — ванильный setBlockAndUpdate бездумно «съел» бы факелы/цветки
- *       и положил снег поверх воды (HEAD-cancel таких точек). Земля проверяется
- *       по {@code #minecraft:snow_layer_can_survive_on} — ванильный список
- *       «на чём выживает снежный слой» (в 1.21.4 тега {@code #solid} в
- *       BlockTags нет; snow_layer_can_survive_on точнее: он же исключает песок/
- *       гравий, на которых слой бы выпал).</li>
+ *   <li>ПРАВИЛО АВТОРА: снег ложится в ПУСТУЮ ячейку — ванильный
+ *       setBlockAndUpdate бездумно «съел» бы факелы/цветки и положил снег
+ *       поверх воды (HEAD-cancel таких точек). «Твёрдость земли» отдельной
+ *       проверкой не проверяется: под heightmap-позицией по построению всегда
+ *       топ-блок с коллизией, а {@code #minecraft:snow_layer_can_survive_on}
+ *       в 1.21.4 — лишь override-список (honey_block/soul_sand/mud),
+ *       grass_block в нём нет (использовать его для гейта нельзя).</li>
  *   <li>плотность укладки ×8 (1/48 → 1/6 на бросок);</li>
  *   <li>гроза ×5 (автор: старт ×10 → смягчено до ×5, только день E): молнии
  *       в 5 раз чаще, а «пауза до грома» в 5 раз короче.</li>
@@ -59,8 +58,12 @@ public abstract class ServerLevelSunEventSnowMixin {
     private static final int THUNDER_DELAY_DIVISOR = 5;
 
     /**
-     * Правило автора: снег только на {@code #minecraft:solid} и только в пустую
-     * ячейку. Вне окна ванильное поведение не трогаем.
+     * Правило автора: снег только в ПУСТУЮ ячейку (не «съедать» факелы/цветки/воду).
+     * «Твёрдость земли» дополнительно проверять НЕЧЕМ и НЕНУЖНО:
+     * {@code #minecraft:snow_layer_can_survive_on} в 1.21.4 — это override-список
+     * из honey_block/soul_sand/mud (grass_block там НЕТ — сверено по vanilla-тегу),
+     * а под heightmap-позицией по построению всегда топ-блок с коллизией.
+     * Вне окна ванильное поведение не трогаем.
      */
     @Inject(method = "tickPrecipitation", at = @At("HEAD"), cancellable = true)
     private void gonzotech$sunEventProtectGround(BlockPos pos, CallbackInfo ci) {
@@ -73,10 +76,8 @@ public abstract class ServerLevelSunEventSnowMixin {
         if (surfaceState.is(Blocks.SNOW)) {
             return; // на слое — обычное наращивание (ванил сделает)
         }
-        boolean emptySpot = surfaceState.isAir();
-        boolean solidGround = level.getBlockState(surface.below()).is(BlockTags.SNOW_LAYER_CAN_SURVIVE_ON);
-        if (!emptySpot || !solidGround) {
-            // Факел/цветок/вода и т.п. — не трогаем, точка пропускается.
+        if (!surfaceState.isAir()) {
+            // Факел/цветок/вода и т.п. занимают heightmap-позицию — не трогаем.
             ci.cancel();
         }
     }

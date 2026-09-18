@@ -6,10 +6,12 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.slf4j.Logger;
 
 /**
  * Суневеты фаза 3 — клиентский снег вместо дождя (только Оверворлд).
@@ -21,8 +23,22 @@ import org.joml.Matrix4f;
  * <p>Снежинки = мелкие биллборд-квады, всегда повёрнутые к камере; та же
  * безсветовая POSITION_COLOR-техника, что у звёзд скайбокса. Облако живёт
  * вокруг камеры (26×26×24 блоков), улетевшие/выпавшие снежинки пересеиваются.
+ *
+ * <p><b>Геометрия (1.21.4, frame-graph пайплайн):</b> шейдер строит
+ * {@code gl_Position = ProjMat * ModelViewMat * pos}. Мир рисуется с
+ * камерно-относительными координатами: ванильный дождь
+ * ({@code WeatherEffectRenderer.renderInstances}) передаёт {@code column − camPos}
+ * без своей матрицы, world border — {@code border − cam} через GPU-transform.
+ * Мы делаем то же самое: вершины = {@code flake − cam}, а view-матрицей служит
+ * <b>матрица вида, которую игра сама передаёт в {@code renderSky}</b>
+ * (та, которой рисуются купол и звёзды — их правильность подтверждена).
+ * Свою view-матрицу из углов игрока строить НЕЛЬЗЯ: ручная матрица
+ * складывается с матрицей пайплайна и даёт «стену», крутящуюся вокруг
+ * прицела (автор, 2026-09-18, скрин).
  */
 public final class SunEventSnowRenderer {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private static final int FLAKES = 220;
     private static final float AREA = 26.0F;   // квадрат вокруг камеры (блоки)
@@ -39,6 +55,7 @@ public final class SunEventSnowRenderer {
 
     private static boolean seeded = false;
     private static long frame;
+    private static boolean loggedMatrix = false;
 
     private SunEventSnowRenderer() {
     }
@@ -51,8 +68,16 @@ public final class SunEventSnowRenderer {
         SPEED[i] = (float) Math.random() * 0.05F; // разброс скоростей падения
     }
 
-    /** Кадр снега: обновить облако и нарисовать его в мировых координатах. */
-    public static void render(float partialTick, double camX, double camY, double camZ) {
+    /**
+     * Кадр снега: обновить облако и нарисовать его.
+     *
+     * @param viewMatrix матрица вида текущего кадра (параметр
+     *                   {@code DimensionSpecialEffects.renderSky}, та же, что
+     *                   рисует купол/звёзды); null — только что стартовал кадр,
+     *                   рисуем без матрицы (вершины уже камерно-относительные).
+     */
+    public static void render(float partialTick, double camX, double camY, double camZ,
+                              Matrix4f viewMatrix) {
         Minecraft mc = Minecraft.getInstance();
         if (!seeded) {
             for (int i = 0; i < FLAKES; i++) {
@@ -75,6 +100,14 @@ public final class SunEventSnowRenderer {
             }
         }
 
+        // Разовая диагностика пайплайна: что именно игра считает «view» в этот момент.
+        if (!loggedMatrix) {
+            loggedMatrix = true;
+            LOGGER.info("[Gonzo Tech] SnowRenderer: viewMatrix из renderSky = {}", viewMatrix);
+            LOGGER.info("[Gonzo Tech] SnowRenderer: RenderSystem.getModelViewMatrix() = {}",
+                RenderSystem.getModelViewMatrix());
+        }
+
         // Биллборд-базис из направления взгляда игрока (1.21.4: Vec3.directionFromRotation).
         Vec3 look = mc.player != null
             ? Vec3.directionFromRotation(mc.player.getXRot(), mc.player.getYRot())
@@ -91,21 +124,15 @@ public final class SunEventSnowRenderer {
 
         RenderSystem.setShader(CoreShaders.POSITION_COLOR);
         RenderSystem.enableDepthTest();
-        // View-матрицу строим САМИ из позиции/углов камеры: стек
-        // RenderSystem.getModelViewStack() на момент renderSnowAndRain не гарантирует
-        // камеру (первые кадры снег рисовался «в мировых координатах» — далеко и в секторе).
-        Matrix4f m = new Matrix4f();
-        m.identity();
-        float pitchDeg = mc.player != null ? mc.player.getXRot() : 0.0F;
-        float yawDeg = mc.player != null ? mc.player.getYRot() : 0.0F;
-        m.rotate((float) Math.toRadians(pitchDeg) * -1.0F, 1.0F, 0.0F, 0.0F);
-        m.rotate((float) Math.toRadians(yawDeg) * -1.0F, 0.0F, 1.0F, 0.0F);
-        m.translate((float) -camX, (float) -camY, (float) -camZ);
+
+        // Матрица — только та, что предоставила игра (как для купола/звёзд).
+        // Вершины камерно-относительные (flake − cam) — ровно как ванильный дождь.
+        Matrix4f m = viewMatrix != null ? viewMatrix : new Matrix4f().identity();
 
         BufferBuilder buf = Tesselator.getInstance()
             .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         for (int i = 0; i < FLAKES; i++) {
-            double x = X[i], y = Y[i], z = Z[i];
+            double x = X[i] - camX, y = Y[i] - camY, z = Z[i] - camZ;
             buf.addVertex(m, (float) (x - rx - ux), (float) (y - ry - uy), (float) (z - rz - uz)).setColor(255, 255, 255, 255);
             buf.addVertex(m, (float) (x + rx - ux), (float) (y + ry - uy), (float) (z + rz - uz)).setColor(255, 255, 255, 255);
             buf.addVertex(m, (float) (x + rx + ux), (float) (y + ry + uy), (float) (z + rz + uz)).setColor(255, 255, 255, 255);
