@@ -9,6 +9,8 @@
     "BucketItemMixin",
     "CraftingMenuMixin",
     "CrafterBlockMixin",
+    "MobSunEventBurnMixin",
+    "MonsterSunEventSpawnMixin",
     "ServerLevelSunEventSnowMixin"
   ],
   "client": [
