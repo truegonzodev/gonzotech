@@ -4,6 +4,8 @@ import com.gonzotech.sunevent.SunEventServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
@@ -101,11 +103,13 @@ public abstract class ServerLevelSunEventSnowMixin {
     /**
      * День E: «пауза до грома» в 5 раз короче (THUNDER_DELAY — 2-й вызов
      * IntProvider.sample в advanceWeatherCycle после THUNDER_DURATION).
+     * Сигнатура @Redirect на INVOKE = (receiver, аргументы) — без «original».
      */
     @Redirect(method = "advanceWeatherCycle",
         at = @At(value = "INVOKE", ordinal = 1,
             target = "Lnet/minecraft/util/valueproviders/IntProvider;sample(Lnet/minecraft/util/RandomSource;)I"))
-    private int gonzotech$sunEventThunderDelay(int original) {
+    private int gonzotech$sunEventThunderDelay(IntProvider provider, RandomSource random) {
+        int original = provider.sample(random);
         if (!SunEventServer.eventDayNow((ServerLevel) (Object) this)) {
             return original;
         }
