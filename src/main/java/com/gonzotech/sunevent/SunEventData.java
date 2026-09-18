@@ -89,6 +89,15 @@ public final class SunEventData extends SavedData {
      * пол 10%. В начале первого дня = 100%.
      */
     public double solarMultiplier() {
+        return solarMultiplierAt(suneventDays);
+    }
+
+    /**
+     * Та же деградация от произвольного счётчика дней — нужна клиенту
+     * («Солнечные часы» считают Z% локально от синкнутого suneventDays).
+     * ЕДИНАЯ формула ветки: сервер и клиент не расходятся.
+     */
+    public static double solarMultiplierAt(long suneventDays) {
         return Math.max(0.10, 1.0 - 0.01 * (double) suneventDays);
     }
 

@@ -208,6 +208,16 @@ public class ModItems {
     public static final DeferredItem<Item> SPEEDOMETER =
         ITEMS.registerSimpleItem("speedometer");
 
+    /**
+     * Солнечные часы — финальный прибор ветки суневетов (автор, 2026-09-18):
+     * пока в руке/оффхенде, над хотбаром строка «День: X, следующий Солнечный
+     * кризис — Y. Эффективность солнечных панелей: Z%» ({@code SolarWatchHud}).
+     * Крафт доступен и виден в книге рецептов после Открытия 1
+     * ({@code RecipeUnlocks}, тир 1).
+     */
+    public static final DeferredItem<Item> SOLAR_WATCH =
+        ITEMS.registerSimpleItem("solar_watch");
+
 
     // ─── «Приколы»: два сусла (еда с тошнотой) ───
 

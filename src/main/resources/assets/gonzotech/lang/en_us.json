@@ -659,6 +659,8 @@
   "block.gonzotech.plastic_waste": "Plastic Waste",
   "item.gonzotech.speedometer": "Speedometer",
   "hud.gonzotech.speedometer": "Speed - %s blocks/sec",
+  "item.gonzotech.solar_watch": "Solar Watch",
+  "hud.gonzotech.solar_watch": "Day: %s, next Solar Crisis - %s. Solar panel efficiency: %s%%",
   "item.gonzotech.copper_plate": "Copper Plate",
   "item.gonzotech.copper_wire": "Copper Wire",
   "item.gonzotech.aluminum_plate": "Aluminum Plate",

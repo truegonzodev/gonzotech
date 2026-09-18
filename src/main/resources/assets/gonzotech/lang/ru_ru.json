@@ -659,6 +659,8 @@
   "block.gonzotech.plastic_waste": "Пластиковый мусор",
   "item.gonzotech.speedometer": "Спидометр",
   "hud.gonzotech.speedometer": "Скорость - %s блоков/сек",
+  "item.gonzotech.solar_watch": "Солнечные часы",
+  "hud.gonzotech.solar_watch": "День: %s, следующий Солнечный кризис - %s. Эффективность солнечных панелей: %s%%",
   "item.gonzotech.copper_plate": "Медная пластина",
   "item.gonzotech.copper_wire": "Медный провод",
   "item.gonzotech.aluminum_plate": "Алюминиевая пластина",

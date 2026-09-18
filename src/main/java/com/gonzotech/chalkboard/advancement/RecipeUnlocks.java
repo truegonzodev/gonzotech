@@ -43,6 +43,8 @@ public final class RecipeUnlocks {
             "gonzotech:turbine_rotor",
             // Логистика: инструмент
             "gonzotech:wrench",
+            // Суневеты: солнечные часы (крафт и книга — после Открытия 1, автор)
+            "gonzotech:solar_watch",
             // Логистика: трубы
             "gonzotech:first_wire",
             "gonzotech:first_heat_pipe",
