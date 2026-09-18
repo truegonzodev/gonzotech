@@ -29,8 +29,10 @@ public final class SunEventSpawnDebug {
     private static long lastFlushGameTime = Long.MIN_VALUE;
     /** Вызовов checkSpawnRules (NATURAL+MONSTER) в окне за период. */
     private static int attempts;
-    /** Пропущено гейтом (правила форсированы в true) по типам. */
-    private static final Map<String, Integer> permits = new LinkedHashMap<>();
+    /** Пропущено гейтом на позициях, видящих небо (поверхность). */
+    private static int permitsSky;
+    /** Пропущено гейтом на закрытых позициях (пещеры/тень). */
+    private static int permitsCave;
     /** Реально созданных, видят небо. */
     private static final Map<String, Integer> spawnedSky = new LinkedHashMap<>();
     /** Реально созданных, под землёй / в тени навеса. */
@@ -58,9 +60,13 @@ public final class SunEventSpawnDebug {
         }
     }
 
-    /** Гейт пропустил проверку правил для типа. */
-    public static void recordPermit(EntityType<?> type) {
-        permits.merge(typeId(type), 1, Integer::sum);
+    /** Гейт пропустил проверку правил; sky = позиция попытки видит небо. */
+    public static void recordPermit(boolean sky) {
+        if (sky) {
+            permitsSky++;
+        } else {
+            permitsCave++;
+        }
     }
 
     /** В мир реально добавлен монстр (любой NATURAL-спавн окна; конверсии тоже попадут). */
@@ -84,12 +90,14 @@ public final class SunEventSpawnDebug {
             return;
         }
         LOGGER.info(
-            "[Gonzo Tech] Суневет: окно активно (время {}): проверок за минуту {}, пропущено {},"
+            "[Gonzo Tech] Суневет: окно активно (время {}): проверок за минуту {},"
+                + " пропущено небо {} / тень {},"
                 + " создано — на поверхности {} {}, под землёй {} {}",
-            level.getDayTime() % 24000L, attempts, permits,
+            level.getDayTime() % 24000L, attempts, permitsSky, permitsCave,
             spawnedSkyTotal, spawnedSky, spawnedCaveTotal, spawnedCave);
         attempts = 0;
-        permits.clear();
+        permitsSky = 0;
+        permitsCave = 0;
         spawnedSky.clear();
         spawnedCave.clear();
         spawnedSkyTotal = 0;
