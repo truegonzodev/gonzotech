@@ -5,6 +5,7 @@ import com.gonzotech.core.registry.ModBlocks;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -85,23 +86,21 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel level = context.level();
-        BlockPos origin = context.origin();
         RandomSource random = context.random();
-
-        int chunkMinX = (origin.getX() >> 4) << 4;
-        int chunkMinZ = (origin.getZ() >> 4) << 4;
+        ChunkPos chunkPos = new ChunkPos(context.origin());
+        int minY = level.getMinY();
+        int maxY = level.getMaxY();
         Map<Block, Block> remap = oreRemap();
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         boolean changed = false;
 
-        for (int dx = 0; dx < 16; dx++) {
-            for (int dz = 0; dz < 16; dz++) {
-                int x = chunkMinX + dx;
-                int z = chunkMinZ + dz;
-                int top = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
-                int minY = level.getMinY() + 1;
-                for (int y = top; y >= minY; y--) {
-                    pos.set(x, y, z);
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int worldX = chunkPos.getMinBlockX() + x;
+                int worldZ = chunkPos.getMinBlockZ() + z;
+                // По рабочему паттерну MineralReplacementFeature: WORLD_SURFACE (не _WG).
+                int topY = Math.min(maxY, level.getHeight(Heightmap.Types.WORLD_SURFACE, worldX, worldZ) + 1);
+                for (int y = topY; y >= minY; y--) {
+                    BlockPos pos = new BlockPos(worldX, y, worldZ);
                     BlockState state = level.getBlockState(pos);
                     if (state.isAir()) {
                         continue;
@@ -117,27 +116,27 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                     // Руды: есть deepslate-вариант → он; нет (алюминий и пр.) → dead_stone.
                     Block oreTarget = remap.get(block);
                     if (oreTarget != null) {
-                        level.setBlock(pos, oreTarget.defaultBlockState(), 3);
+                        level.setBlock(pos, oreTarget.defaultBlockState(), 2);
                         changed = true;
                         continue;
                     }
 
                     if (state.getFluidState().getType() == Fluids.WATER
                         || state.getFluidState().getType() == Fluids.FLOWING_WATER) {
-                        level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 3);
+                        level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 2);
                         changed = true;
                     } else if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT
                         || block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
-                        level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 3);
+                        level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 2);
                         changed = true;
                     } else if (block == Blocks.SAND) {
-                        level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 3);
+                        level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 2);
                         changed = true;
                     } else if (block == Blocks.STONE || block == Blocks.ANDESITE
                         || block == Blocks.GRANITE) {
                         if (y >= 60 || y >= 50 && random.nextInt(11) < y - 49) {
                             // 60+: всегда; 50–59: (y−49)/11 (0.09 … 0.91) — градиент спада.
-                            level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 3);
+                            level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 2);
                             changed = true;
                         }
                     }
