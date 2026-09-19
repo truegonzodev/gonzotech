@@ -36,6 +36,11 @@ import java.util.Optional;
  *   <li>набирается пустым ведром, как рыхлый снег ({@link BucketPickup}) →
  *       {@code dead_slime_bucket}; обратно ставится тем же ведром
  *       ({@code SolidBucketItem}).</li>
+ *   <li>автор 2026-09-19: перенос — ТОЛЬКО ведром; разбойный дроп отсутствует,
+ *       сам блок выпадает лишь при «шёлковом касании» (loot-таблица);
+ *       вода жижу НЕ смывает — в регистрации ModBlocks нет {@code noCollission()},
+ *       поэтому {@code blocksMotion()}=true и {@code FlowingFluid.canHoldFluid}
+ *       не пускает воду в клетку (раньше вода ломала блок с дропом).</li>
  * </ul>
  */
 public class DeadSlimeBlock extends SlimeBlock implements BucketPickup {

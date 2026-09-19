@@ -11,7 +11,24 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "gonzotech:weathered_mechanisms"
+          "name": "gonzotech:weathered_mechanisms",
+          "conditions": [
+            {
+              "condition": "minecraft:match_tool",
+              "predicate": {
+                "predicates": {
+                  "minecraft:enchantments": [
+                    {
+                      "enchantments": "minecraft:silk_touch",
+                      "levels": {
+                        "min": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
         }
       ]
     }

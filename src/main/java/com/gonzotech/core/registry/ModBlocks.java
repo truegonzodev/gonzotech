@@ -171,7 +171,11 @@ public class ModBlocks {
     /** Мёртвая жижа: зыбкость рыхлого снега + пружинность слизи (см. DeadSlimeBlock). */
     public static final DeferredBlock<com.gonzotech.core.block.DeadSlimeBlock> DEAD_SLIME_BLOCK = BLOCKS.registerBlock(
         "dead_slime_block", com.gonzotech.core.block.DeadSlimeBlock::new,
-        BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK).noCollission());
+        // noCollission() в свойствах НЕ ставим: он обнуляет blocksMotion(), а вода
+        // через FlowingFluid.canHoldFluid смотрит именно его — входила в клетку и
+        // ломала жижу с дропом (автор 2026-09-19: «вода не должна её смывать»).
+        // Проходимость сущностей даёт сам класс — getCollisionShape() = empty().
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
     public static final DeferredBlock<SlimeBlock> RADIOACTIVE_SLIME_BLOCK = BLOCKS.registerBlock(
         "radioactive_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
 
