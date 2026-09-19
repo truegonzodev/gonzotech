@@ -1,6 +1,7 @@
 package com.gonzotech.mixin.client;
 
 import com.gonzotech.swag.FatnessState;
+import com.gonzotech.swag.client.FatPartScaler;
 import net.minecraft.client.model.WolfModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.entity.state.WolfRenderState;

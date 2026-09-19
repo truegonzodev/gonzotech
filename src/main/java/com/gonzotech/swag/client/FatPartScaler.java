@@ -1,4 +1,4 @@
-package com.gonzotech.mixin.client;
+package com.gonzotech.swag.client;
 
 import net.minecraft.client.model.geom.ModelPart;
 
@@ -16,8 +16,11 @@ import net.minecraft.client.model.geom.ModelPart;
  * центр куба не в ней, торс «уезжает» (у кота — вниз, «тело съехало»).
  * Сдвиг пивота на (f−1)·center·baseScale держит ЦЕНТР куба на месте:
  * жир растёт симметрично вверх (спина) и вниз (пузо).</p>
+ *
+ * <p>NB: класс живёт ВНЕ пакета {@code com.gonzotech.mixin.*} — классы из
+ * mixin-пакета нельзя дёргать из миксинов (IllegalClassLoadError).</p>
  */
-final class FatPartScaler {
+public final class FatPartScaler {
 
     private FatPartScaler() {
     }
@@ -29,7 +32,7 @@ final class FatPartScaler {
      * @param xCenterLocal X центра куба в локальных координатах части
      * @param zCenterLocal Z центра куба в локальных координатах части
      */
-    static void fatten(ModelPart part, float fatness, float xCenterLocal, float zCenterLocal) {
+    public static void fatten(ModelPart part, float fatness, float xCenterLocal, float zCenterLocal) {
         if (fatness == 1.0F) {
             return;
         }
