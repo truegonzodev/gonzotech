@@ -334,6 +334,9 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("weathered_mechanisms", ModBlocks.WEATHERED_MECHANISMS);
     public static final DeferredItem<BlockItem> SILICON_CACHE_ITEM =
         ITEMS.registerSimpleBlockItem("silicon_cache", ModBlocks.SILICON_CACHE);
+    /** Миска для питомцев (автор 2026-09-19, жирные коты). */
+    public static final DeferredItem<BlockItem> PET_BOWL_ITEM =
+        ITEMS.registerSimpleBlockItem("pet_bowl", ModBlocks.PET_BOWL);
     public static final DeferredItem<BlockItem> PLASTIC_WASTE_ITEM =
         ITEMS.registerSimpleBlockItem("plastic_waste", ModBlocks.PLASTIC_WASTE);
 

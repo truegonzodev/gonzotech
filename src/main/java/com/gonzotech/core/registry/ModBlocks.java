@@ -178,6 +178,10 @@ public class ModBlocks {
         BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
     public static final DeferredBlock<SlimeBlock> RADIOACTIVE_SLIME_BLOCK = BLOCKS.registerBlock(
         "radioactive_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
+    /** Миска для питомцев (автор 2026-09-19, «ЖИРНЫЕ КОТЫ»): см. swag/PetBowlBlock. */
+    public static final DeferredBlock<com.gonzotech.swag.PetBowlBlock> PET_BOWL = BLOCKS.registerBlock(
+        "pet_bowl", com.gonzotech.swag.PetBowlBlock::new,
+        BlockBehaviour.Properties.of().strength(0.6F).sound(SoundType.METAL).noOcclusion());
 
     // ─────────────────── Декорации метеоров и старых механизмов ───────────────────
     public static final DeferredBlock<Block> WEATHERED_PLATING = BLOCKS.registerSimpleBlock(

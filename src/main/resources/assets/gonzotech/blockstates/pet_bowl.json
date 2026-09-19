@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "has_food=false": { "model": "gonzotech:block/pet_bowl" },
+    "has_food=true": { "model": "gonzotech:block/pet_bowl_food" }
+  }
+}

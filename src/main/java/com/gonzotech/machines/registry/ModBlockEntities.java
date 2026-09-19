@@ -52,6 +52,11 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("tungsten_absorber", () -> new BlockEntityType<>(
             TungstenAbsorberBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.TUNGSTEN_ABSORBER.get()));
 
+    /** Миска для питомцев (автор 2026-09-19, жирные коты). */
+    public static final Supplier<BlockEntityType<com.gonzotech.swag.PetBowlBlockEntity>> PET_BOWL =
+        BLOCK_ENTITIES.register("pet_bowl", () -> new BlockEntityType<>(
+            com.gonzotech.swag.PetBowlBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.PET_BOWL.get()));
+
     public static final Supplier<BlockEntityType<BoilerBlockEntity>> BOILER =
         BLOCK_ENTITIES.register("boiler", () -> new BlockEntityType<>(
             BoilerBlockEntity::new, false, ModMachines.BOILER.get()));

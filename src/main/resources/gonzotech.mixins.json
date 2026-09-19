@@ -7,15 +7,23 @@
   "mixins": [
     "AbstractFurnaceBlockEntityMixin",
     "BucketItemMixin",
+    "CatFatnessMixin",
     "CraftingMenuMixin",
     "CrafterBlockMixin",
     "MobSunEventBurnMixin",
     "MonsterSunEventSpawnMixin",
     "PathfinderMobSunEventRulesMixin",
-    "ServerLevelSunEventSnowMixin"
+    "ServerLevelSunEventSnowMixin",
+    "WolfFatnessMixin"
   ],
   "client": [
-    "client.ClientLevelSkyDarkenMixin"
+    "client.CatRenderStateMixin",
+    "client.CatRendererMixin",
+    "client.ClientLevelSkyDarkenMixin",
+    "client.FelineModelFatMixin",
+    "client.WolfModelFatMixin",
+    "client.WolfRenderStateMixin",
+    "client.WolfRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
