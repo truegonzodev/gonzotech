@@ -9,11 +9,8 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.animal.Cat;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -36,11 +33,6 @@ public abstract class CatFatnessMixin implements PetFatness {
     @Unique private long gonzo$lastEmptyVisitAt;
     @Unique private int gonzo$deflateCounter;
 
-    @Shadow @Final @SuppressWarnings("unused")
-    protected GoalSelector goalSelector;
-
-    // ─────────────────── данные ───────────────────
-
     @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void gonzo$registerFatness(SynchedEntityData.Builder builder, CallbackInfo ci) {
         builder.define(GONZO$FATNESS, 1.0F);
@@ -48,7 +40,10 @@ public abstract class CatFatnessMixin implements PetFatness {
 
     @Inject(method = "registerGoals", at = @At("TAIL"))
     private void gonzo$bowlGoal(CallbackInfo ci) {
-        this.goalSelector.addGoal(7, new PetBowlGoal((Cat) (Object) this, 0.8D));
+        // goalSelector живёт в Mob — берём через MobGoalAccessorMixin
+        // (@Shadow поля родителя из миксина подкласса не работает).
+        ((MobGoalAccessorMixin) (Object) this).gonzotech$getGoalSelector()
+            .addGoal(7, new PetBowlGoal((Cat) (Object) this, 0.8D));
     }
 
     // ─────────────────── тик: сдувание ───────────────────

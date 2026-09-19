@@ -8,11 +8,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.animal.Wolf;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -34,9 +31,6 @@ public abstract class WolfFatnessMixin implements PetFatness {
     @Unique private long gonzo$lastEmptyVisitAt;
     @Unique private int gonzo$deflateCounter;
 
-    @Shadow @Final @SuppressWarnings("unused")
-    protected GoalSelector goalSelector;
-
     @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void gonzo$registerFatness(SynchedEntityData.Builder builder, CallbackInfo ci) {
         builder.define(GONZO$FATNESS, 1.0F);
@@ -44,7 +38,9 @@ public abstract class WolfFatnessMixin implements PetFatness {
 
     @Inject(method = "registerGoals", at = @At("TAIL"))
     private void gonzo$bowlGoal(CallbackInfo ci) {
-        this.goalSelector.addGoal(9, new PetBowlGoal((Wolf) (Object) this, 0.9D));
+        // goalSelector живёт в Mob — через MobGoalAccessorMixin (см. CatFatnessMixin).
+        ((MobGoalAccessorMixin) (Object) this).gonzotech$getGoalSelector()
+            .addGoal(9, new PetBowlGoal((Wolf) (Object) this, 0.9D));
     }
 
     @Inject(method = "aiStep", at = @At("TAIL"))

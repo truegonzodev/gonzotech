@@ -9,6 +9,7 @@
     "BucketItemMixin",
     "CatFatnessMixin",
     "CraftingMenuMixin",
+    "MobGoalAccessorMixin",
     "CrafterBlockMixin",
     "MobSunEventBurnMixin",
     "MonsterSunEventSpawnMixin",
