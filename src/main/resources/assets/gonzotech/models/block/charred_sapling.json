@@ -2,5 +2,6 @@
   "parent": "minecraft:block/cross",
   "textures": {
     "cross": "gonzotech:block/desolation/charred_sapling"
-  }
+  },
+  "render_type": "minecraft:cutout"
 }

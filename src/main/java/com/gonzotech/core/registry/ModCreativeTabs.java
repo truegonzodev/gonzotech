@@ -178,6 +178,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SCORCHED_TUFT_LARGE_ITEM.get());
                 output.accept(ModItems.CORIUM_ITEM.get());
                 output.accept(ModFluids.CORIUM_BUCKET.get());
+                output.accept(ModItems.DEAD_SLIME_BUCKET.get());
                 output.accept(ModItems.WASTE_BARREL_ITEM.get());
                 output.accept(ModItems.DEAD_SLIME_BLOCK_ITEM.get());
                 output.accept(ModItems.RADIOACTIVE_SLIME_BLOCK_ITEM.get());

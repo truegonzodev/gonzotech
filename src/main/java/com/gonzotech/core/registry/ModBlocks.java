@@ -168,8 +168,10 @@ public class ModBlocks {
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
         "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
             .sound(SoundType.METAL).strength(2.0f, 6.0f));
-    public static final DeferredBlock<SlimeBlock> DEAD_SLIME_BLOCK = BLOCKS.registerBlock(
-        "dead_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
+    /** Мёртвая жижа: зыбкость рыхлого снега + пружинность слизи (см. DeadSlimeBlock). */
+    public static final DeferredBlock<com.gonzotech.core.block.DeadSlimeBlock> DEAD_SLIME_BLOCK = BLOCKS.registerBlock(
+        "dead_slime_block", com.gonzotech.core.block.DeadSlimeBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK).noCollission());
     public static final DeferredBlock<SlimeBlock> RADIOACTIVE_SLIME_BLOCK = BLOCKS.registerBlock(
         "radioactive_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
 

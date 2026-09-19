@@ -192,21 +192,21 @@ public class ModItems {
      * «Облучение» (см. {@code PsycheHud}).
      */
     public static final DeferredItem<Item> DOSIMETER =
-        ITEMS.registerSimpleItem("dosimeter");
+        ITEMS.registerSimpleItem("dosimeter", new Item.Properties().stacksTo(1));
 
     /**
      * Фаза 3 — измерительный прибор «УФ-радиометр». Пока плейсхолдер без рецепта:
      * пока игрок держит его в руке, на HUD видна шкала «УФ излучение».
      */
     public static final DeferredItem<Item> UV_METER =
-        ITEMS.registerSimpleItem("uv_meter");
+        ITEMS.registerSimpleItem("uv_meter", new Item.Properties().stacksTo(1));
 
     /**
      * Клиентский спидометр: пока он в главной или дополнительной руке, над
      * хотбаром каждую игровую тик-итерацию видна скорость в блоках за секунду.
      */
     public static final DeferredItem<Item> SPEEDOMETER =
-        ITEMS.registerSimpleItem("speedometer");
+        ITEMS.registerSimpleItem("speedometer", new Item.Properties().stacksTo(1));
 
     /**
      * Солнечные часы — финальный прибор ветки суневетов (автор, 2026-09-18):
@@ -216,7 +216,7 @@ public class ModItems {
      * ({@code RecipeUnlocks}, тир 1).
      */
     public static final DeferredItem<Item> SOLAR_WATCH =
-        ITEMS.registerSimpleItem("solar_watch");
+        ITEMS.registerSimpleItem("solar_watch", new Item.Properties().stacksTo(1));
 
 
     // ─── «Приколы»: два сусла (еда с тошнотой) ───
@@ -314,6 +314,11 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("waste_barrel", ModBlocks.WASTE_BARREL);
     public static final DeferredItem<BlockItem> DEAD_SLIME_BLOCK_ITEM =
         ITEMS.registerSimpleBlockItem("dead_slime_block", ModBlocks.DEAD_SLIME_BLOCK);
+    /** Ведро мёртвой жижи — твёрдый «бакет», как ванильное ведро рыхлого снега. */
+    public static final DeferredItem<net.minecraft.world.item.SolidBucketItem> DEAD_SLIME_BUCKET =
+        ITEMS.registerItem("dead_slime_bucket", props -> new net.minecraft.world.item.SolidBucketItem(
+            ModBlocks.DEAD_SLIME_BLOCK.get(), net.minecraft.sounds.SoundEvents.BUCKET_EMPTY_POWDER_SNOW,
+            props.stacksTo(1)));
     public static final DeferredItem<BlockItem> RADIOACTIVE_SLIME_BLOCK_ITEM =
         ITEMS.registerSimpleBlockItem("radioactive_slime_block", ModBlocks.RADIOACTIVE_SLIME_BLOCK);
 
