@@ -1,15 +1,21 @@
 package com.gonzotech.core.worldgen;
 
+import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.registry.ModBlocks;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -89,10 +95,19 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
     /** Чанки, где конверсия уже прошла (идемпотентный триггер из стволов/плейсмодифаера). */
     private static final java.util.Set<Long> doneChunks = new java.util.HashSet<>();
 
+    /** Наш биом — конверсия идёт только в колонках, где биом — он сам. */
+    private static final ResourceKey<Biome> DESOLATION = ResourceKey.create(
+        Registries.BIOME,
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "desolation"));
+
     /**
      * Материальная конверсия чанка биома. Вызывается и из placed-фичи, и из
      * DeadTrunkFeature (гарантированная точка исполнения, count=4 подряд) —
      * дедупликация по ChunkPos: повтор в чанке — мгновенный no-op.
+     *
+     * <p>ВНИМАНИЕ: конвертируются ТОЛЬКО колонки, чей биом = desolation
+     * (проверка по WG-хайтмапу поверхности). Граница получает органическую
+     * шумовую форму биома (кварт-ячейка ~4 блока), а не квадрат чанка 16×16.
      */
     public static void convertChunk(WorldGenLevel level, ChunkPos chunkPos) {
         if (!doneChunks.add(chunkPos.toLong())) {
@@ -108,8 +123,12 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
             for (int z = 0; z < 16; z++) {
                 int worldX = chunkPos.getMinBlockX() + x;
                 int worldZ = chunkPos.getMinBlockZ() + z;
-                // Сканируем всю колонку сверху вниз — heightmap не доверяем:
-                // в фазе FEATURES WG-варианты могут быть не праймлены (мьются молча).
+                // Органические границы: конвертируем колонку, только если её биом — наш.
+                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, worldX, worldZ) - 1;
+                if (!level.getBiome(new BlockPos(worldX, surfaceY, worldZ)).is(DESOLATION)) {
+                    continue;
+                }
+                // Сканируем всю колонку сверху вниз.
                 for (int y = maxY - 1; y >= minY; y--) {
                     BlockPos pos = new BlockPos(worldX, y, worldZ);
                     BlockState state = level.getBlockState(pos);
