@@ -14,6 +14,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(Mob.class)
 public abstract class MobGoalAccessorMixin {
 
+    // public обязателен: с protected вызов из Cat по ссылке типа Mob режется
+    // верификатором («Bad access to protected data in invokevirtual» — protected
+    // член суперкласса доступен подклассу только через ссылку типа подкласса).
     @Accessor("goalSelector")
-    protected abstract GoalSelector gonzotech$getGoalSelector();
+    public abstract GoalSelector gonzotech$getGoalSelector();
 }
