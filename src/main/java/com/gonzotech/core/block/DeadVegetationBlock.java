@@ -1,6 +1,7 @@
 package com.gonzotech.core.block;
 
 import com.gonzotech.core.registry.ModBlocks;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -19,12 +20,19 @@ import java.util.Set;
  */
 public class DeadVegetationBlock extends BushBlock {
 
+    public static final MapCodec<DeadVegetationBlock> CODEC = simpleCodec(DeadVegetationBlock::new);
+
     /** Допустимые грунты: ванильные растительные + наши мёртвые почвы. Lazy-сет,
      * чтобы регистрация ModBlocks успела отработать до первого вопроса. */
     private static Set<Block> allowedSoil;
 
     public DeadVegetationBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    protected MapCodec<? extends BushBlock> codec() {
+        return CODEC;
     }
 
     @Override
