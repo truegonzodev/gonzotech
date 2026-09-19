@@ -98,10 +98,12 @@ public abstract class ServerLevelSunEventSnowMixin {
         return biome.shouldSnow(level, pos) || SunEventServer.snowWindowDay((Level) level);
     }
 
-    /** День E: молнии ×5 чаще (автор: гроза ×K — смягчено до ×5). */
+    /** День E: молнии ×5 чаще (автор: гроза ×K — смягчено до ×5). Только Оверворлд. */
     @ModifyConstant(method = "tickChunk", constant = @Constant(intValue = BOLT_CHANCE_VANILLA))
     private int gonzotech$sunEventBolts(int original) {
-        return SunEventServer.eventDayNow((ServerLevel) (Object) this) ? BOLT_CHANCE_EVENT : original;
+        ServerLevel level = (ServerLevel) (Object) this;
+        return level.dimension() == Level.OVERWORLD
+            && SunEventServer.eventDayNow(level) ? BOLT_CHANCE_EVENT : original;
     }
 
     /**
@@ -114,7 +116,8 @@ public abstract class ServerLevelSunEventSnowMixin {
             target = "Lnet/minecraft/util/valueproviders/IntProvider;sample(Lnet/minecraft/util/RandomSource;)I"))
     private int gonzotech$sunEventThunderDelay(IntProvider provider, RandomSource random) {
         int original = provider.sample(random);
-        if (!SunEventServer.eventDayNow((ServerLevel) (Object) this)) {
+        ServerLevel level = (ServerLevel) (Object) this;
+        if (level.dimension() != Level.OVERWORLD || !SunEventServer.eventDayNow(level)) {
             return original;
         }
         return Math.max(100, original / THUNDER_DELAY_DIVISOR);

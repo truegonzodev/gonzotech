@@ -47,6 +47,9 @@ public final class SpaceSkyState {
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_red.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_DYSON =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_dyson.png");
+    /** Суневент × сфера Дайсона (автор 2026-09-19: багровый + дайсон). */
+    public static final ResourceLocation TEX_OVERWORLD_SUN_RED_DYSON =
+        ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_red_dyson.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_GONE =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_gone.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_BLACKHOLE =
@@ -63,12 +66,15 @@ public final class SpaceSkyState {
      */
     public static ResourceLocation getOverworldSunTexture(ResourceLocation vanillaSun) {
         return switch (sunState) {
-            // Суневент: красное солнце (автор: «встаёт сразу красным»).
-            // Временное состояние по I(t) — GONE/DYSON/ЧД ниже имеют приоритет.
-            case DEFAULT -> SunEventClient.crimsonIntensity(Minecraft.getInstance().level) > 0.001F
+            // Суневент: красное солнце в бинарном окне E−1 22000 → E0 15000
+            // («встаёт сразу красным»). GONE/ЧД ниже имеют свои текстуры,
+            // DYSON в окне идёт отдельной связкой sun_red_dyson (автор 2026-09-19).
+            case DEFAULT -> SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)
                 ? TEX_OVERWORLD_SUN_RED
                 : TEX_OVERWORLD_SUN;
-            case DYSON -> TEX_OVERWORLD_SUN_DYSON;
+            case DYSON -> SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)
+                ? TEX_OVERWORLD_SUN_RED_DYSON
+                : TEX_OVERWORLD_SUN_DYSON;
             case GONE -> TEX_OVERWORLD_SUN_GONE;
             case BLACKHOLE -> TEX_OVERWORLD_SUN_BLACKHOLE;
             case BLACKHOLE_DYSON -> TEX_OVERWORLD_SUN_BLACKHOLE_DYSON;

@@ -332,8 +332,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
 
-        // Суневент: багровый купол (I(t) из SunEventClient). GONE не трогаем — там свой режим.
-        if (SpaceSkyState.sunState != SunState.GONE) {
+        // Суневент: багровый купол (I(t) из SunEventClient) — ТОЛЬКО Оверворлд
+        // (автор 2026-09-19: красное небо в остальных гонзо-измерениях убрать;
+        // там лишь плоское солнце меняет текстуру на красную).
+        // GONE не трогаем — там свой режим.
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+            && SpaceSkyState.sunState != SunState.GONE) {
             double crimson = SunEventClient.crimsonIntensity(level);
             if (crimson > 0.001F) {
                 zenith = overlayArgb(zenith, CRIMSON_ZENITH_ARGB, (float) (crimson * 0.8F));
@@ -778,6 +782,11 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
             switch (state) {
                 case DYSON -> {
+                    // Суневент: дайсон-солнце в багровом окне — _red_dyson
+                    // (автор 2026-09-19: 4 слоя sun/sun_red/sun_dyson/sun_red_dyson).
+                    if (SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)) {
+                        return resolveVariant(base, "_red_dyson");
+                    }
                     return resolveVariant(base, "_dyson");
                 }
                 case GONE -> {
@@ -790,9 +799,11 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                     return resolveVariant(base, "_blackhole_dyson");
                 }
                 case DEFAULT -> {
-                    // Суневент: красное солнце (автор: «встаёт сразу красным»).
-                    // GONE/DYSON/ЧД выше по switch уже имеют свои текстуры.
-                    if (SunEventClient.crimsonIntensity(Minecraft.getInstance().level) > 0.001F) {
+                    // Суневент: красное солнце в бинарном окне E−1 22000 → E0 15000
+                    // (окно по оверворлду; «встаёт сразу красным»). Во всех
+                    // гонзо-измерениях лишь текстура плоского солнца — на месте,
+                    // без купола/снега/монстров (автор 2026-09-19).
+                    if (SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)) {
                         return resolveVariant(base, "_red");
                     }
                     return base;

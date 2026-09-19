@@ -70,6 +70,23 @@ public final class SunEventClient {
     }
 
     /**
+     * Бинарное окно КРАСНОГО СОЛНЦА по оверворлдским суткам (автор 2026-09-19):
+     * {день E-1, ≥22000} ∪ {день E0, <15000}. Для ТЕКСТУРЫ плоского солнца во
+     * ВСЕХ гонзо-измерениях (длина суток измерений разная, но оверворлдский
+     * день и тик в сутках — общая ось времени): красное солнце без какого-либо
+     * функционала (снега/монстров нет; штраф панелей — отдельно, глобальный).
+     * Домен окна КУЛОН: в оверворлде купол/интенсивность управляются по-прежнему
+     * {@link #crimsonIntensity} (E0 14500-фейд); у текстуры окно — свое.
+     */
+    public static boolean crimsonSunWindow(ClientLevel level) {
+        if (level == null || nextEventDay <= 0) return false;
+        long day = dayOf(level);
+        long time = timeOfDay(level);
+        return day == nextEventDay - 1 && time >= FADE_START
+            || day == nextEventDay && time < 15000L;
+    }
+
+    /**
      * День мира: 1.21.4 не имеет {@code getDayCount} — {@code getDayTime()}
      * это ПОЛНОЕ время в тиках, день = 24000 тиков (те же 24000, что в
      * {@code setDayTime(18000L)} в SpaceCommand).
