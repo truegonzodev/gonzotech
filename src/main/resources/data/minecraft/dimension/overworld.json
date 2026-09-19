@@ -5,6 +5,126 @@
     "biome_source": {
       "biomes": [
         {
+          "biome": "gonzotech:desolation",
+          "parameters": {
+            "temperature": [
+              0.2,
+              0.45
+            ],
+            "humidity": [
+              -0.3,
+              -0.1
+            ],
+            "continentalness": [
+              0.25,
+              0.45
+            ],
+            "erosion": [
+              0.2,
+              0.4
+            ],
+            "depth": [
+              0.0,
+              0.0
+            ],
+            "weirdness": [
+              -0.05,
+              0.15
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "gonzotech:desolation",
+          "parameters": {
+            "temperature": [
+              0.2,
+              0.45
+            ],
+            "humidity": [
+              0.0,
+              0.2
+            ],
+            "continentalness": [
+              0.45,
+              0.65
+            ],
+            "erosion": [
+              0.4,
+              0.6
+            ],
+            "depth": [
+              0.0,
+              0.0
+            ],
+            "weirdness": [
+              -0.4,
+              -0.2
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "gonzotech:desolation",
+          "parameters": {
+            "temperature": [
+              0.2,
+              0.45
+            ],
+            "humidity": [
+              -0.3,
+              -0.1
+            ],
+            "continentalness": [
+              -0.19,
+              -0.11
+            ],
+            "erosion": [
+              0.2,
+              0.4
+            ],
+            "depth": [
+              0.0,
+              0.0
+            ],
+            "weirdness": [
+              -0.05,
+              0.15
+            ],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "gonzotech:desolation",
+          "parameters": {
+            "temperature": [
+              0.2,
+              0.45
+            ],
+            "humidity": [
+              0.0,
+              0.2
+            ],
+            "continentalness": [
+              -0.19,
+              -0.11
+            ],
+            "erosion": [
+              0.4,
+              0.6
+            ],
+            "depth": [
+              0.0,
+              0.0
+            ],
+            "weirdness": [
+              -0.4,
+              -0.2
+            ],
+            "offset": 0.0
+          }
+        },
+        {
           "biome": "minecraft:mushroom_fields",
           "parameters": {
             "continentalness": [
@@ -205019,60 +205139,6 @@
               -1.0,
               1.0
             ]
-          }
-        },
-        {
-          "biome": "gonzotech:desolation",
-          "parameters": {
-            "temperature": 0.325,
-            "humidity": -0.2,
-            "continentalness": 0.35,
-            "erosion": 0.3,
-            "depth": 0.0,
-            "weirdness": 0.05,
-            "offset": 0.0
-          }
-        },
-        {
-          "biome": "gonzotech:desolation",
-          "parameters": {
-            "temperature": 0.325,
-            "humidity": 0.1,
-            "continentalness": 0.55,
-            "erosion": 0.5,
-            "depth": 0.0,
-            "weirdness": -0.3,
-            "offset": 0.0
-          }
-        },
-        {
-          "biome": "gonzotech:desolation",
-          "parameters": {
-            "temperature": 0.325,
-            "humidity": -0.2,
-            "continentalness": [
-              -0.19,
-              -0.11
-            ],
-            "erosion": 0.3,
-            "depth": 0.0,
-            "weirdness": 0.05,
-            "offset": 0.0
-          }
-        },
-        {
-          "biome": "gonzotech:desolation",
-          "parameters": {
-            "temperature": 0.325,
-            "humidity": 0.1,
-            "continentalness": [
-              -0.19,
-              -0.11
-            ],
-            "erosion": 0.5,
-            "depth": 0.0,
-            "weirdness": -0.1,
-            "offset": 0.0
           }
         }
       ],
