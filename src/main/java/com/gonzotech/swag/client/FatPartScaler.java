@@ -22,6 +22,9 @@ import net.minecraft.client.model.geom.ModelPart;
  */
 public final class FatPartScaler {
 
+    /** Рост по высоте на 30% слабее роста по ширине (автор 20.09: ширину не трогаем). */
+    private static final float HEIGHT_GROWTH = 0.7F;
+
     private FatPartScaler() {
     }
 
@@ -36,12 +39,13 @@ public final class FatPartScaler {
         if (fatness == 1.0F) {
             return;
         }
+        float heightF = 1.0F + (fatness - 1.0F) * HEIGHT_GROWTH;
         float baseX = part.xScale;
         float baseZ = part.zScale;
         part.xScale *= fatness;
-        part.zScale *= fatness;
+        part.zScale *= heightF;
         // компенсация уезда центра куба (только для частей с xRot ≈ 90°)
         part.x -= (fatness - 1.0F) * xCenterLocal * baseX;
-        part.y += (fatness - 1.0F) * zCenterLocal * baseZ;
+        part.y += (heightF - 1.0F) * zCenterLocal * baseZ;
     }
 }
