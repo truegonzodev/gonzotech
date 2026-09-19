@@ -83,10 +83,9 @@ public class DeadSlimeBlock extends SlimeBlock implements BucketPickup {
     @Override
     public ItemStack pickupBlock(net.minecraft.world.entity.player.Player player,
                                  LevelAccessor level, BlockPos pos, BlockState state) {
+        // Как ванильный рыхлый снег: стереть блок и кинуть частицы разрушения.
         level.setBlock(pos, Blocks.AIR.defaultBlockState(), 11);
-        if (!level.canPlace(pos)) {
-            level.destroyBlock(pos, true);
-        }
+        level.levelEvent(player, 2001, pos, Block.getId(state)); // 2001 = частицы разрушения блока
         return new ItemStack(com.gonzotech.core.registry.ModItems.DEAD_SLIME_BUCKET.get());
     }
 

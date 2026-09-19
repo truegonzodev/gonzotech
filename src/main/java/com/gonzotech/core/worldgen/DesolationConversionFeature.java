@@ -34,10 +34,11 @@ import java.util.Map;
  *       y≥60 всегда, в полосе [50;60) — вероятность (y−49)/11, глубже 50 —
  *       никогда. Диорит и глубинный сланец НЕ задеты (диорит — сознательно,
  *       автор: «включения диорита оставить» + наши кальцитовые жилы);</li>
- *   <li>Руды Gonzo: если у металла есть DEEPSLATE-хост — ЛЮБОЙ блок этой
- *       руды (host STONE/CALCITE) на всей глубине → его deepslate-вариант;
- *       если DEEPSLATE-хоста нет — блок руды → {@code dead_stone}
- *       (в этом биоме такой руды нет). Ванильные руды не трогаем.</li>
+ *   <li>Руды (y≥50, ЛЮБЫЕ каменные — и ванильные, и Gonzo) — автор, второе
+ *       задание: «на высоте 50+ любая каменная руда заменяется на»:
+ *       если есть deepslate-вариант → на него (deepslate_iron, copper…);
+ *       если сланцевого варианта НЕТ (напр., алюминий) → {@code dead_stone}.
+ *       Ниже y=50 руды не трогаем совсем.</li>
  * </ul>
  *
  * <p>Запись только в свой чанк (правило позиционное, соседи не нужны —
@@ -55,6 +56,15 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
     private static Map<Block, Block> oreRemap() {
         if (oreRemap == null) {
             Map<Block, Block> map = new HashMap<>();
+            // Ванильные каменные руды — у всех есть deepslate-вариант.
+            map.put(Blocks.COAL_ORE, Blocks.DEEPSLATE_COAL_ORE);
+            map.put(Blocks.IRON_ORE, Blocks.DEEPSLATE_IRON_ORE);
+            map.put(Blocks.COPPER_ORE, Blocks.DEEPSLATE_COPPER_ORE);
+            map.put(Blocks.GOLD_ORE, Blocks.DEEPSLATE_GOLD_ORE);
+            map.put(Blocks.LAPIS_ORE, Blocks.DEEPSLATE_LAPIS_ORE);
+            map.put(Blocks.REDSTONE_ORE, Blocks.DEEPSLATE_REDSTONE_ORE);
+            map.put(Blocks.DIAMOND_ORE, Blocks.DEEPSLATE_DIAMOND_ORE);
+            map.put(Blocks.EMERALD_ORE, Blocks.DEEPSLATE_EMERALD_ORE);
             for (OreDefinition ore : OreDefinition.ALL) {
                 Block deepslateVariant = ore.hosts().contains(OreDefinition.Host.DEEPSLATE)
                     ? ModBlocks.ORE_BLOCKS.get(ore.id()).get(OreDefinition.Host.DEEPSLATE).get()
@@ -89,7 +99,7 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                 int x = chunkMinX + dx;
                 int z = chunkMinZ + dz;
                 int top = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
-                int minY = level.getMinBuildHeight() + 1;
+                int minY = level.getMinY() + 1;
                 for (int y = top; y >= minY; y--) {
                     pos.set(x, y, z);
                     BlockState state = level.getBlockState(pos);
@@ -98,7 +108,13 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                     }
                     Block block = state.getBlock();
 
-                    // Руды — на ЛЮБОЙ глубине.
+                    // Материальная выжженность — только поверхностная полоса y≥50
+                    // (руды — там же: автор, второй заход).
+                    if (y < 50) {
+                        continue;
+                    }
+
+                    // Руды: есть deepslate-вариант → он; нет (алюминий и пр.) → dead_stone.
                     Block oreTarget = remap.get(block);
                     if (oreTarget != null) {
                         level.setBlock(pos, oreTarget.defaultBlockState(), 3);
@@ -106,10 +122,6 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                         continue;
                     }
 
-                    // Материальная выжженность — только поверхностная полоса y≥50.
-                    if (y < 50) {
-                        continue;
-                    }
                     if (state.getFluidState().getType() == Fluids.WATER
                         || state.getFluidState().getType() == Fluids.FLOWING_WATER) {
                         level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 3);

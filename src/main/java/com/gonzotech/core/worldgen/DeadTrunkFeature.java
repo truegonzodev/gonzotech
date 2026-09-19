@@ -48,7 +48,7 @@ public class DeadTrunkFeature extends Feature<NoneFeatureConfiguration> {
         BlockPos.MutableBlockPos trunk = ground.mutable();
         for (int dy = 1; dy <= height; dy++) {
             trunk.setY(groundY + dy);
-            if (trunk.getY() >= level.getMaxBuildHeight()) {
+            if (trunk.getY() >= level.getMaxY()) {
                 break;
             }
             if (!level.getBlockState(trunk).isAir()) {
