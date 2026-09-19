@@ -47,6 +47,18 @@ public class ModFeatures {
             () -> new com.gonzotech.space.worldgen.MarsPillarFeature(
                 net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
 
+    /** Дезоляция — материальная конверсия чанка (dead_* породы/почвы/жижа, руды→deepslate). */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.core.worldgen.DesolationConversionFeature> DESOLATION_CONVERSION =
+        FEATURES.register("desolation_conversion",
+            () -> new com.gonzotech.core.worldgen.DesolationConversionFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
+    /** Дезоляция — голые мёртвые стволы без кроны. */
+    public static final DeferredHolder<Feature<?>, com.gonzotech.core.worldgen.DeadTrunkFeature> DEAD_TRUNK =
+        FEATURES.register("dead_trunk",
+            () -> new com.gonzotech.core.worldgen.DeadTrunkFeature(
+                net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
+
     /** Гора Олимп — гигантский конус в 4 фиксированных точках любого мира. */
     public static final DeferredHolder<Feature<?>, com.gonzotech.space.worldgen.OlympusFeature> OLYMPUS =
         FEATURES.register("olympus",

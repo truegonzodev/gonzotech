@@ -12,7 +12,8 @@
     "MobSunEventBurnMixin",
     "MonsterSunEventSpawnMixin",
     "PathfinderMobSunEventRulesMixin",
-    "ServerLevelSunEventSnowMixin"
+    "ServerLevelSunEventSnowMixin",
+    "worldgen.OverworldBiomeBuilderDesolationMixin"
   ],
   "client": [
     "client.ClientLevelSkyDarkenMixin"
