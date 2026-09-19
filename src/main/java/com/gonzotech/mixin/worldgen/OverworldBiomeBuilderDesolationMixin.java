@@ -45,11 +45,11 @@ public abstract class OverworldBiomeBuilderDesolationMixin {
         // остаются, поэтому «не всегда у воды» — тоже сохраняется.
         consumer.accept(Pair.of(Climate.parameters(
             Climate.Parameter.point(0.325F), Climate.Parameter.point(-0.2F),
-            Climate.Parameter.range(-0.19F, -0.11F), Climate.Parameter.point(0.3F),
+            Climate.Parameter.span(-0.19F, -0.11F), Climate.Parameter.point(0.3F),
             Climate.Parameter.point(0.0F), Climate.Parameter.point(0.05F), 0.0F), DESOLATION));
         consumer.accept(Pair.of(Climate.parameters(
             Climate.Parameter.point(0.325F), Climate.Parameter.point(0.1F),
-            Climate.Parameter.range(-0.19F, -0.11F), Climate.Parameter.point(0.5F),
+            Climate.Parameter.span(-0.19F, -0.11F), Climate.Parameter.point(0.5F),
             Climate.Parameter.point(0.0F), Climate.Parameter.point(-0.1F), 0.0F), DESOLATION));
     }
 }
