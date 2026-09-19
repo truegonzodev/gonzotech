@@ -3,18 +3,26 @@ package com.gonzotech.mixin;
 import com.gonzotech.swag.FatPetLogic;
 import com.gonzotech.swag.PetBowlGoal;
 import com.gonzotech.swag.PetFatness;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.animal.Cat;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Жирные коты (автор, 2026-09-19): к коту добавляется синхронизированная
@@ -44,6 +52,34 @@ public abstract class CatFatnessMixin implements PetFatness {
         // (@Shadow поля родителя из миксина подкласса не работает).
         ((MobGoalAccessorMixin) (Object) this).gonzotech$getGoalSelector()
             .addGoal(7, new PetBowlGoal((Cat) (Object) this, 0.8D));
+    }
+
+    // ─────────────────── кормёжка из рук ───────────────────
+    // Автор 19.09: «нельзя кормить с рук больше 1 раза — оно считает это не как
+    // кормёжку, а как разведение». Ваниль: здоровому приручённому коту еда
+    // уходит в love_mode. Захватываем еду ДО ванили: пока торс ниже ×2.3 —
+    // еда = кормление (+10% торса, лечение сохранено). На потолке остаётся
+    // ванильное разведение. Котят не трогаем: их еда ускоряет рост (ваниль).
+
+    @Inject(method = "mobInteract", at = @At("HEAD"), cancellable = true)
+    private void gonzo$handFeed(Player player, InteractionHand hand,
+        CallbackInfoReturnable<InteractionResult> ci) {
+        Cat self = (Cat) (Object) this;
+        ItemStack stack = player.getItemInHand(hand);
+        if (!self.isTame() || self.isBaby() || !self.isFood(stack)
+            || this.gonzotech$fatness() >= FatPetLogic.MAX_FATNESS) {
+            return;
+        }
+        if (!self.level().isClientSide()) {
+            stack.consume(1, player); // как ванильный usePlayerItem (в креативе не тратит)
+            if (self.getHealth() < self.getMaxHealth()) {
+                FoodProperties food = stack.get(DataComponents.FOOD);
+                self.heal(food != null ? (float) food.nutrition() : 1.0F);
+            }
+            self.playSound(SoundEvents.CAT_EAT, 1.0F, 1.0F);
+            FatPetLogic.onEat(this, self.level().getGameTime());
+        }
+        ci.setReturnValue(InteractionResult.SUCCESS);
     }
 
     // ─────────────────── тик: сдувание ───────────────────

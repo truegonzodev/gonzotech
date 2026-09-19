@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Растёт торс у волка: {@code body} и {@code upperBody} (грудной мех) —
- * лапы/голова/хвост нормальные (двойник {@link FelineModelFatMixin}).
+ * по ширине и высоте, без длины (двойник {@link FelineModelFatMixin}).
  */
 @Mixin(WolfModel.class)
 public abstract class WolfModelFatMixin {
@@ -27,11 +27,9 @@ public abstract class WolfModelFatMixin {
         at = @At("TAIL"))
     private void gonzo$fatBody(WolfRenderState state, CallbackInfo ci) {
         float fatness = state instanceof FatnessState fatState ? fatState.gonzotech$fatness() : 1.0F;
-        this.body.xScale = fatness;
-        this.body.yScale = fatness;
-        this.body.zScale = fatness;
-        this.upperBody.xScale = fatness;
-        this.upperBody.yScale = fatness;
-        this.upperBody.zScale = fatness;
+        // body: addBox(-3, -2, -3; 6, 9, 6) → центр (0, 2.5, 0) — центр на пивоте, сдвига нет.
+        FatPartScaler.fatten(this.body, fatness, 0.0F, 0.0F);
+        // upper_body: addBox(-3, -3, -3; 8, 6, 7) → центр (1, 0, 0.5) — компенсация сдвига.
+        FatPartScaler.fatten(this.upperBody, fatness, 1.0F, 0.5F);
     }
 }

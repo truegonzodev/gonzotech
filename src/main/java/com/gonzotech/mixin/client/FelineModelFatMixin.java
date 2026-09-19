@@ -12,9 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Растёт торс у котов: в {@code setupAnim} (каждый кадр) масштабируем
- * {@code body} на фактор жирности из render state. Голова/лапы/хвост остаются
- * нормальными — «жирный корпус» (автор: «их корпус становился больше»).
- * Миксин на базовую {@link FelineModel} → покрывает и домашнего кота, и оцелота.
+ * {@code body} по ширине и высоте на фактор жирности из render state.
+ * Длина (самая длинная ось) не трогается — см. {@link FatPartScaler}.
+ * Миксин на базовую {@link FelineModel} → покрывает и домашнего кота, и оцелота
+ * (у оцелота fatness всегда 1.0 → ранний выход без эффекта).
  */
 @Mixin(FelineModel.class)
 public abstract class FelineModelFatMixin {
@@ -26,8 +27,7 @@ public abstract class FelineModelFatMixin {
         at = @At("TAIL"))
     private void gonzo$fatBody(FelineRenderState state, CallbackInfo ci) {
         float fatness = state instanceof FatnessState fatState ? fatState.gonzotech$fatness() : 1.0F;
-        this.body.xScale = fatness;
-        this.body.yScale = fatness;
-        this.body.zScale = fatness;
+        // Куб тела кота: addBox(-2, 3, -8; 4, 16, 6) → центр куба (0, 11, -5).
+        FatPartScaler.fatten(this.body, fatness, 0.0F, -5.0F);
     }
 }
