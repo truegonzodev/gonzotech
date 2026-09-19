@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
@@ -83,6 +82,10 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
         return oreRemap;
     }
 
+    // ─── временная диагностика: одна строка за сессию, потом уберём ───
+    private static final org.slf4j.Logger DEBUG_LOG = com.mojang.logging.LogUtils.getLogger();
+    private static boolean debugLoggedOnce = false;
+
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel level = context.level();
@@ -92,14 +95,15 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
         int maxY = level.getMaxY();
         Map<Block, Block> remap = oreRemap();
         boolean changed = false;
+        int nWater = 0, nDirt = 0, nSand = 0, nStone = 0, nOre = 0;
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int worldX = chunkPos.getMinBlockX() + x;
                 int worldZ = chunkPos.getMinBlockZ() + z;
-                // По рабочему паттерну MineralReplacementFeature: WORLD_SURFACE (не _WG).
-                int topY = Math.min(maxY, level.getHeight(Heightmap.Types.WORLD_SURFACE, worldX, worldZ) + 1);
-                for (int y = topY; y >= minY; y--) {
+                // Сканируем всю колонку сверху вниз — heightmap не доверяем:
+                // в фазе FEATURES WG-варианты могут быть не праймлены (мьются молча).
+                for (int y = maxY - 1; y >= minY; y--) {
                     BlockPos pos = new BlockPos(worldX, y, worldZ);
                     BlockState state = level.getBlockState(pos);
                     if (state.isAir()) {
@@ -110,7 +114,7 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                     // Материальная выжженность — только поверхностная полоса y≥50
                     // (руды — там же: автор, второй заход).
                     if (y < 50) {
-                        continue;
+                        break; // дальше по оси y столбцы только глубже — выходим из колонки
                     }
 
                     // Руды: есть deepslate-вариант → он; нет (алюминий и пр.) → dead_stone.
@@ -118,6 +122,7 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                     if (oreTarget != null) {
                         level.setBlock(pos, oreTarget.defaultBlockState(), 2);
                         changed = true;
+                        nOre++;
                         continue;
                     }
 
@@ -125,23 +130,32 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                         || state.getFluidState().getType() == Fluids.FLOWING_WATER) {
                         level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 2);
                         changed = true;
+                        nWater++;
                     } else if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT
                         || block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
                         level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 2);
                         changed = true;
+                        nDirt++;
                     } else if (block == Blocks.SAND) {
                         level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 2);
                         changed = true;
+                        nSand++;
                     } else if (block == Blocks.STONE || block == Blocks.ANDESITE
                         || block == Blocks.GRANITE) {
                         if (y >= 60 || y >= 50 && random.nextInt(11) < y - 49) {
                             // 60+: всегда; 50–59: (y−49)/11 (0.09 … 0.91) — градиент спада.
                             level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 2);
                             changed = true;
+                            nStone++;
                         }
                     }
                 }
             }
+        }
+        if (!debugLoggedOnce) {
+            debugLoggedOnce = true;
+            DEBUG_LOG.info("[GonzoTech][DesolationConversion] первый прогон чанка ({},{}): вода={} дёрн={} песок={} камень={} руды={}",
+                chunkPos.getMinBlockX(), chunkPos.getMinBlockZ(), nWater, nDirt, nSand, nStone, nOre);
         }
         return changed;
     }
