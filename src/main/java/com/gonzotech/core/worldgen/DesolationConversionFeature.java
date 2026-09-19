@@ -86,15 +86,22 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
     private static final org.slf4j.Logger DEBUG_LOG = com.mojang.logging.LogUtils.getLogger();
     private static boolean debugLoggedOnce = false;
 
-    @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
-        WorldGenLevel level = context.level();
-        RandomSource random = context.random();
-        ChunkPos chunkPos = new ChunkPos(context.origin());
+    /** Чанки, где конверсия уже прошла (идемпотентный триггер из стволов/плейсмодифаера). */
+    private static final java.util.Set<Long> doneChunks = new java.util.HashSet<>();
+
+    /**
+     * Материальная конверсия чанка биома. Вызывается и из placed-фичи, и из
+     * DeadTrunkFeature (гарантированная точка исполнения, count=4 подряд) —
+     * дедупликация по ChunkPos: повтор в чанке — мгновенный no-op.
+     */
+    public static void convertChunk(WorldGenLevel level, ChunkPos chunkPos) {
+        if (!doneChunks.add(chunkPos.toLong())) {
+            return; // чанк уже обработан (стволы x4 + возможный placed-вызов)
+        }
+        RandomSource random = level.getRandom();
         int minY = level.getMinY();
         int maxY = level.getMaxY();
         Map<Block, Block> remap = oreRemap();
-        boolean changed = false;
         int nWater = 0, nDirt = 0, nSand = 0, nStone = 0, nOre = 0;
 
         for (int x = 0; x < 16; x++) {
@@ -121,7 +128,6 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                     Block oreTarget = remap.get(block);
                     if (oreTarget != null) {
                         level.setBlock(pos, oreTarget.defaultBlockState(), 2);
-                        changed = true;
                         nOre++;
                         continue;
                     }
@@ -129,23 +135,19 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                     if (state.getFluidState().getType() == Fluids.WATER
                         || state.getFluidState().getType() == Fluids.FLOWING_WATER) {
                         level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 2);
-                        changed = true;
                         nWater++;
                     } else if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT
                         || block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
                         level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 2);
-                        changed = true;
                         nDirt++;
                     } else if (block == Blocks.SAND) {
                         level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 2);
-                        changed = true;
                         nSand++;
                     } else if (block == Blocks.STONE || block == Blocks.ANDESITE
                         || block == Blocks.GRANITE) {
                         if (y >= 60 || y >= 50 && random.nextInt(11) < y - 49) {
                             // 60+: всегда; 50–59: (y−49)/11 (0.09 … 0.91) — градиент спада.
                             level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 2);
-                            changed = true;
                             nStone++;
                         }
                     }
@@ -157,6 +159,11 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
             DEBUG_LOG.info("[GonzoTech][DesolationConversion] первый прогон чанка ({},{}): вода={} дёрн={} песок={} камень={} руды={}",
                 chunkPos.getMinBlockX(), chunkPos.getMinBlockZ(), nWater, nDirt, nSand, nStone, nOre);
         }
-        return changed;
+    }
+
+    @Override
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        convertChunk(context.level(), new ChunkPos(context.origin()));
+        return true;
     }
 }

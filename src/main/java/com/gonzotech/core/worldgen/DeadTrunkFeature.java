@@ -31,6 +31,10 @@ public class DeadTrunkFeature extends Feature<NoneFeatureConfiguration> {
         RandomSource random = context.random();
         BlockPos origin = context.origin();
 
+        // Гарантированный триггер материальной конверсии чанка биома
+        // (placed-фича конверсии недетерминированно молчит; стволы — точно исполняются).
+        DesolationConversionFeature.convertChunk(level, new net.minecraft.world.level.ChunkPos(origin));
+
         int groundX = origin.getX();
         int groundZ = origin.getZ();
         int groundY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, groundX, groundZ) - 1;
