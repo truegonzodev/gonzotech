@@ -167,7 +167,7 @@ public class PetBowlGoal extends Goal {
             this.biteTimer = BITE_PAUSE_TICKS;
             ServerLevel level = (ServerLevel) this.pet.level();
             FatPetLogic.onEat(this.fat, level.getGameTime());
-            level.playSound(null, this.bowlPos, SoundEvents.GENERIC_EAT, SoundSource.NEUTRAL,
+            level.playSound(null, this.bowlPos, SoundEvents.GENERIC_EAT.value(), SoundSource.NEUTRAL,
                 0.7F, 1.0F + level.getRandom().nextFloat() * 0.2F);
             level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, mouthful),
                 this.bowlPos.getX() + 0.5D, this.bowlPos.getY() + 0.45D, this.bowlPos.getZ() + 0.5D,
