@@ -79,6 +79,9 @@ public class GonzoTechMod {
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
+        // Радиация (спека 2026-09-20): доза шкалы, наведённый фон предметов,
+        // динамический фон чанков, учёт поставленных радио-блоков.
+        NeoForge.EVENT_BUS.register(com.gonzotech.radiation.RadiationSystem.class);
         // Суневеты (багровые дни): драйвер + синк при заходе.
         NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 
@@ -98,6 +101,8 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
             // Спидометр измеряет клиентскую скорость и выводит её над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
+            // Радиация: lore-строка «☢ Радиоактивность» в самом низу тултипов.
+            NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.RadTooltip.class);
             // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).

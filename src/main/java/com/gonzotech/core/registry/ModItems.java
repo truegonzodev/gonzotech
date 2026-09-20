@@ -187,12 +187,13 @@ public class ModItems {
         ITEMS.registerSimpleItem("botched_mechanism");
 
     /**
-     * Фаза 3 — измерительный прибор «дозиметр». Пока предмет-плейсхолдер без
-     * рецепта: когда игрок держит его в руке, на HUD показывается шкала
-     * «Облучение» (см. {@code PsycheHud}).
+     * Фаза 3 — измерительный прибор «дозиметр». На HUD под ним шкала
+     * «Облучение» (см. {@code PsycheHud}); ПКМ — отчёт в чат: доза по шкале
+     * с расшифровкой + фон текущего чанка (радиация, спека 2026-09-20).
      */
     public static final DeferredItem<Item> DOSIMETER =
-        ITEMS.registerSimpleItem("dosimeter", new Item.Properties().stacksTo(1));
+        ITEMS.register("dosimeter", () -> new com.gonzotech.radiation.DosimeterItem(
+            new Item.Properties().stacksTo(1)));
 
     /**
      * Фаза 3 — измерительный прибор «УФ-радиометр». Пока плейсхолдер без рецепта:
