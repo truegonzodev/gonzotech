@@ -192,8 +192,8 @@ public class ModItems {
      * с расшифровкой + фон текущего чанка (радиация, спека 2026-09-20).
      */
     public static final DeferredItem<Item> DOSIMETER =
-        ITEMS.register("dosimeter", () -> new com.gonzotech.radiation.DosimeterItem(
-            new Item.Properties().stacksTo(1)));
+        ITEMS.registerItem("dosimeter", props -> new com.gonzotech.radiation.DosimeterItem(
+            props.stacksTo(1)));
 
     /**
      * Фаза 3 — измерительный прибор «УФ-радиометр». Пока плейсхолдер без рецепта:
