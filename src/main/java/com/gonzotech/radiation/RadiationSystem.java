@@ -85,7 +85,7 @@ public final class RadiationSystem {
         if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % PLAYER_PERIOD_TICKS != 0) {
             return;
         }
-        ServerLevel level = player.level();
+        ServerLevel level = (ServerLevel) player.level();
         ChunkRadiationData data = ChunkRadiationData.get(level);
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
 
