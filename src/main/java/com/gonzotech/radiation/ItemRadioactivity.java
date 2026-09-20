@@ -79,14 +79,22 @@ public final class ItemRadioactivity {
      * Один серверный шаг (раз в секунду) роста/затухания стака.
      *
      * @param hasSource рядом есть пресетный источник (инвентарь) или фонящий чанк
+     * @param capNzt    потолок наведённого фона при ЭТОМ тике — привязан к силе
+     *                  локального источника (50% от него): предметы не могут стать
+     *                  горячее своего излучателя (анти-дюп, аудит 20.09)
      */
-    public static void tickInduced(ItemStack stack, boolean hasSource) {
+    public static void tickInduced(ItemStack stack, boolean hasSource, double capNzt) {
         double current = getInduced(stack);
         if (hasSource) {
             if (isLeadImmune(stack)) {
                 return;
             }
-            double next = Math.min(Math.max(current, 1.0) * GROWTH, INDUCED_CAP);
+            double cap = Math.min(capNzt, INDUCED_CAP);
+            if (current > cap) { // контекст ослаб — стравливаем лишнее той же скоростью
+                setInduced(stack, current / GROWTH);
+                return;
+            }
+            double next = Math.min(Math.max(current, 1.0) * GROWTH, cap);
             if (next != current) {
                 setInduced(stack, next);
             }

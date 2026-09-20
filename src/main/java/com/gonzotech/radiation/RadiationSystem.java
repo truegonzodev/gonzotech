@@ -55,16 +55,25 @@ public final class RadiationSystem {
     // ── чанк ↔ предметы/игрок ──
     /** Предметы фонят от чанка только если он ОЧЕНЬ горячий (п.4: >30mZt). */
     private static final double ITEM_FROM_CHUNK_MIN = 30.0 * RadUnits.MILLI;
-    /** Доля эмиссии инвентаря, уходящая в чанк каждую секунду («игрок с ураном заражает чанк»). */
+    /** Доля эмиссии ПРЕСЕТНОГО источника в инвентаре, уходящая в чанк ежесекундно.
+     *  Анти-дюп: мягкий потолок помпы 25mZt (ниже порога облучения предметов чанком) —
+     *  карманный источник математически НЕ МОЖЕТ сделать чанк «очень горячим»,
+     *  >30mZt бывает только от поставленных блоков/богатых сундуков. */
     private static final double INVENTORY_TO_CHUNK_RATE = 0.01;
-    /** Вклад содержимого сундуков в чанк за секунду сканирования (игрок стоит в чанке). */
+    private static final double INVENTORY_CEILING = 25.0 * RadUnits.MILLI;
+    /** Вклад содержимого контейнеров в чанк за секунду сканирования; потолок 60mZt. */
     private static final double CHEST_TO_CHUNK_RATE = 0.0005;
+    private static final double CHEST_CEILING = 60.0 * RadUnits.MILLI;
+    /** Наведённый фон предметов НЕ греет чанк по своему весу (помпа только
+     *  пресетных источников) — иначе петля «предметы→чанк→предметы» дюпала фон. */
 
     // ── естественное восстановление шкалы ──
     /** Доля шкалы, спадающая в секунду (≈0.2%/с, период полуспада ~5.8 мин). */
     private static final double RECOVERY_RATE = 0.002;
-    /** Спадающая доза сбрасывается в чанк (п.4, «облучённый игрок заражает чанк»): 20%. */
+    /** Спадающая доза сбрасывается в чанк (п.4): 20%, с мягким потолком 100mZt —
+     *  иначе петля «чанк→шкала→спад→чанк» саморазгонялась. */
     private static final double SHED_TO_CHUNK = 0.2;
+    private static final double SHED_CEILING = 100.0 * RadUnits.MILLI;
 
     /** Обслуживание чанков — каждые 20 секунд (п.4). */
     private static final int CHUNK_MAINT_PERIOD_TICKS = 20 * 20;
@@ -89,19 +98,28 @@ public final class RadiationSystem {
         ChunkRadiationData data = ChunkRadiationData.get(level);
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
 
-        // Скан инвентаря: пресетная эмиссия + обработка наведённого фона.
+        // Скан инвентаря: пресетная эмиссия + самый горячий стак (для капа фона).
         List<List<ItemStack>> compartments = List.of(
                 player.getInventory().items, player.getInventory().armor, player.getInventory().offhand);
         double intrinsic = 0.0;
+        double maxStackEmission = 0.0;
         for (List<ItemStack> part : compartments) {
             for (ItemStack stack : part) {
-                intrinsic += RadSources.emissionOfStack(stack);
+                double e = RadSources.emissionOfStack(stack);
+                intrinsic += e;
+                if (e > maxStackEmission) {
+                    maxStackEmission = e;
+                }
             }
         }
 
         double chunkNzt = data.value(level, chunkKey);
         // Источники наведённого фона: собственные радио-предметы или очень горячий чанк (п.4).
         boolean hasSourceContext = intrinsic > 0.0 || chunkNzt > ITEM_FROM_CHUNK_MIN;
+        // Кап фона предметов = 50% сильнейшего локального источника:
+        // предмет никогда не становится горячее своего излучателя (анти-дюп).
+        double induceCap = 0.5 * Math.max(maxStackEmission,
+                chunkNzt > ITEM_FROM_CHUNK_MIN ? chunkNzt : 0.0);
 
         double induced = 0.0;
         for (List<ItemStack> part : compartments) {
@@ -109,7 +127,7 @@ public final class RadiationSystem {
                 if (stack.isEmpty() || ItemRadioactivity.isLeadImmune(stack)) {
                     continue;
                 }
-                ItemRadioactivity.tickInduced(stack, hasSourceContext);
+                ItemRadioactivity.tickInduced(stack, hasSourceContext, induceCap);
                 induced += ItemRadioactivity.getInduced(stack);
             }
         }
@@ -117,9 +135,8 @@ public final class RadiationSystem {
         double totalNzt = intrinsic + induced;
 
         // Доза шкалы: инвентарь полным весом + фон чанка с весом 1/10.
-        double totalNzt0 = totalNzt;
         double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0)
-                + totalNzt0 + chunkNzt * CHUNK_DOSE_WEIGHT;
+                + totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
         acc -= gainPermille * NZT_PER_PERMILLE;
         DOSE_ACC.put(player.getUUID(), acc);
@@ -138,17 +155,23 @@ public final class RadiationSystem {
             PsycheNetwork.sendToPlayer(player);
         }
 
-        // Игрок → чанк: инвентарь греет местность, спадающая доза — тоже.
-        double toChunk = totalNzt * INVENTORY_TO_CHUNK_RATE + shedPermille * NZT_PER_PERMILLE * SHED_TO_CHUNK;
-        if (toChunk > 0.0) {
-            data.addContamination(chunkKey, toChunk);
+        // Игрок → чанк: ТОЛЬКО пресетная эмиссия (наведённый фон не греет местность),
+        // с мягким потолком помпы; спад шкалы — со своим потолком.
+        double contam = data.contaminationOf(chunkKey);
+        if (intrinsic > 0.0 && contam < INVENTORY_CEILING) {
+            data.addContamination(chunkKey,
+                    intrinsic * INVENTORY_TO_CHUNK_RATE * (1.0 - contam / INVENTORY_CEILING));
+        }
+        if (shedPermille > 0 && contam < SHED_CEILING) {
+            data.addContamination(chunkKey,
+                    shedPermille * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING));
         }
 
         // Скан содержимого контейнеров своего чанка (сундуки/бочки с ураном греют чанк).
         scanContainersInto(level, chunkKey, data);
     }
 
-    /** Контейнеры активного чанка: сумма пресетной эмиссии → малый вклад в чанк. */
+    /** Контейнеры активного чанка: сумма пресетной эмиссии → малый вклад (с потолком 60mZt). */
     private static void scanContainersInto(ServerLevel level, long chunkKey, ChunkRadiationData data) {
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
         double found = 0.0;
@@ -160,7 +183,10 @@ public final class RadiationSystem {
             }
         }
         if (found > 0.0) {
-            data.addContamination(chunkKey, found * CHEST_TO_CHUNK_RATE);
+            double contam = data.contaminationOf(chunkKey);
+            if (contam < CHEST_CEILING) {
+                data.addContamination(chunkKey, found * CHEST_TO_CHUNK_RATE * (1.0 - contam / CHEST_CEILING));
+            }
         }
     }
 

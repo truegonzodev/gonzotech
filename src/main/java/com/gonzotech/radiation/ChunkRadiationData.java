@@ -68,6 +68,11 @@ public class ChunkRadiationData extends SavedData {
         return baselineOf(level, chunkKey) + contamination.get(chunkKey);
     }
 
+    /** Только динамическое заражение (без baseline) — для мягких потолков помп. */
+    public double contaminationOf(long chunkKey) {
+        return contamination.get(chunkKey);
+    }
+
     /** Прибавить заражение (дельта может быть отрицательной; клэмп снизу в 0). */
     public void addContamination(long chunkKey, double deltaNzt) {
         double next = Math.max(0.0, contamination.get(chunkKey) + deltaNzt);
