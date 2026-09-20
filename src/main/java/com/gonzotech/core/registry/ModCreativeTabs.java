@@ -182,8 +182,6 @@ public class ModCreativeTabs {
                 output.accept(ModItems.WASTE_BARREL_ITEM.get());
                 output.accept(ModItems.DEAD_SLIME_BLOCK_ITEM.get());
                 output.accept(ModItems.RADIOACTIVE_SLIME_BLOCK_ITEM.get());
-                // Фан-контент: миска для питомцев (жирные коты, автор 2026-09-19).
-                output.accept(ModItems.PET_BOWL_ITEM.get());
                 // Метеоры и старые механизмы: строительные элементы руин.
                 output.accept(ModItems.WEATHERED_PLATING_ITEM.get());
                 output.accept(ModItems.DEBRIS_ITEM.get());
@@ -258,6 +256,9 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.OBSIDIAN_BUCKET.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.OBSIDIAN_BUCKET.get());
+                // Миска для питомцев (жирные коты, автор 2026-09-19; перенос в
+                // «Приколы» 2026-09-20 — фан-предмет, не техно-блок).
+                output.accept(ModItems.PET_BOWL_ITEM.get());
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());
