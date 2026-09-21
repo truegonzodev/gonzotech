@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/ingots/uranium_ingot"
+    "layer0": "gonzotech:item/components/uranium_233"
   }
 }

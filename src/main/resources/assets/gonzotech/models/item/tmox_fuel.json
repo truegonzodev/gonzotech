@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/dust/thorium_dust"
+    "layer0": "gonzotech:item/components/tmox_fuel"
   }
 }
