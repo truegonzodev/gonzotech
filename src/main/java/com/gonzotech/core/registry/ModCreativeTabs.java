@@ -49,8 +49,8 @@ public class ModCreativeTabs {
                 // Инструменты: ключ сразу за заметками, затем измерительные приборы.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.DOSIMETER.get());
-                // Антирадин — сразу за дозиметром (автор 22.09: расходник к шкале облучения).
-                output.accept(ModItems.ANTIRADIN.get());
+                // Антирадиновый абсорбент — сразу за дозиметром (автор 22.09: расходник к шкале облучения).
+                output.accept(ModItems.RAD_ABSORBENT.get());
                 // Солнечные часы — рядом с дозиметром (автор, 2026-09-18).
                 output.accept(ModItems.SOLAR_WATCH.get());
                 output.accept(ModItems.UV_METER.get());
@@ -139,6 +139,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ALLOY_HELMET.get());
                 output.accept(ModItems.ALLOY_LEGGINGS.get());
                 output.accept(ModItems.ALLOY_BOOTS.get());
+                // Хазмат I — рабочий костюм (автор 22.09: вкладка «Снаряжение»).
+                ModItems.HAZMAT_PIECES.forEach(item -> output.accept(item.get()));
             })
             .build()
     );
@@ -216,6 +218,7 @@ public class ModCreativeTabs {
             .title(Component.translatable("itemGroup.gonzotech.components"))
             .icon(() -> new ItemStack(ModItems.PSEUDO_COIL.get()))
             .displayItems((params, output) -> {
+                output.accept(ModItems.PAPER_FABRIC.get());
                 output.accept(ModItems.PSEUDO_COIL.get());
                 output.accept(ModItems.COPPER_PLATE.get());
                 output.accept(ModItems.COPPER_WIRE.get());

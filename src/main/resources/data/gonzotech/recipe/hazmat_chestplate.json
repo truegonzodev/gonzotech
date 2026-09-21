@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "FLF",
+    "LCL",
+    "FLF"
+  ],
+  "key": {
+    "F": "gonzotech:paper_fabric",
+    "L": "gonzotech:lead_ingot",
+    "C": "minecraft:iron_chestplate"
+  },
+  "result": {
+    "id": "gonzotech:hazmat_chestplate",
+    "count": 1
+  }
+}

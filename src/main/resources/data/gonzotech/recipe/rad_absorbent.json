@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:lapis_lazuli",
+    "minecraft:sugar",
+    "minecraft:sugar",
+    "minecraft:brown_mushroom",
+    "minecraft:red_mushroom",
+    "gonzotech:raw_iodine",
+    "minecraft:honeycomb",
+    "minecraft:gold_nugget",
+    "minecraft:coal"
+  ],
+  "result": {
+    "id": "gonzotech:rad_absorbent",
+    "count": 1
+  }
+}

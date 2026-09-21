@@ -47,6 +47,8 @@ public class GonzoTechMod {
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
         ModDataComponents.register(modEventBus);
+        // Эффекты радиации (некроз/очищение) — заход 2 в шкалы, автор 22.09.
+        com.gonzotech.radiation.ModEffects.register(modEventBus);
         ModRecipeSerializers.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);

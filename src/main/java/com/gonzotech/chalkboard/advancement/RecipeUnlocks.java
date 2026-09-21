@@ -98,8 +98,14 @@ public final class RecipeUnlocks {
             "gonzotech:vr20_dust_from_metal_dusts",
             "gonzotech:alnico_dust_from_metal_dusts",
             "gonzotech:telluride_dust_from_metal_dusts",
-            // Расходник к шкале облучения (автор 22.09): йод — из центрифуги.
-            "gonzotech:antiradin"
+            // Расходник к шкале облучения + хазмат I (автор 22.09): крафт доступен
+            // всегда, но в книге появляется после Открытия 2.
+            "gonzotech:rad_absorbent",
+            "gonzotech:paper_fabric",
+            "gonzotech:hazmat_helmet",
+            "gonzotech:hazmat_chestplate",
+            "gonzotech:hazmat_leggings",
+            "gonzotech:hazmat_boots"
         ),
         6, List.of(
             // Физически крафтится всегда, в книге появляется с Открытием 6.

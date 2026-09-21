@@ -49,8 +49,10 @@ import java.util.UUID;
  * шкала сбрасывается в ноль (PlayerEvent.Clone).</p>
  *
  * <p><b>Последствия шкалы (автор 22.09.2026, «заняться шкалами»):</b> категории
- * {@link RadDose} бьют по игроку эффектами и уроном ({@link RadSickness}), а
- * вывести дозу досрочно можно {@link AntiradinItem}.</p>
+ * {@link RadDose} бьют по игроку эффектами, вспышками и смертью на 100 %
+ * ({@link RadSickness}); при высокой дозе случаен вечный {@link ModEffects#NECROSIS}
+ * ({@link Necrosis} — спринт жжёт воздух, моб-агр растёт); дозу режет
+ * {@link Hazmat} и выводит {@link RadAbsorbentItem} через {@link RadCleanse}.</p>
  *
  * <p>Все ставки — в nZt/с (п.7: «всё считаем /в сек»).</p>
  */
@@ -152,8 +154,11 @@ public final class RadiationSystem {
         double totalNzt = intrinsic + induced;
 
         // Доза шкалы: инвентарь полным весом + фон чанка с весом 1/10.
-        double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0)
-                + totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        // Хазмат I (автор 22.09) режет входящую дозу, но пробивается горячим
+        // источником: множитель считается от дозы/сек (см. Hazmat.factor).
+        double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        double suitFactor = Hazmat.factor(player, rawDose);
+        double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
         acc -= gainPermille * NZT_PER_PERMILLE;
         DOSE_ACC.put(player.getUUID(), acc);
@@ -164,7 +169,7 @@ public final class RadiationSystem {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         int scale = psyche.getRadiation();
         int shedPermille = 0;
-        double doseThisTick = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        double doseThisTick = rawDose * suitFactor;
         if (scale > 0 && doseThisTick < DOSE_CLEAR_FLOOR) {
             double shedAcc = SHED_ACC.getOrDefault(player.getUUID(), 0.0) + scale * RECOVERY_RATE;
             shedPermille = (int) shedAcc;
@@ -178,7 +183,15 @@ public final class RadiationSystem {
             PsycheNetwork.sendToPlayer(player);
         }
 
-        // Последствия дозы (автор 22.09): эффекты/урон по категориям RadDose.
+        // Антирадиновый абсорбент (автор 22.09): «Очищение» плавно выводит долю
+        // дозы; выведенное уходит в чанк так же, как обычный спад.
+        int cleansed = RadCleanse.tick(player);
+
+        // Некроз (автор 22.09): спринт жжёт воздух, моб-агр растёт (вечный эффект
+        // выдаёт RadSickness случайно при высокой дозе).
+        Necrosis.tick(player);
+
+        // Последствия дозы: эффекты/вспышки/смерть по категориям RadDose.
         // Считаются здесь же, чтобы не заводить второй тик на игрока.
         RadSickness.tick(player, level, psyche.getRadiation());
 
@@ -193,6 +206,10 @@ public final class RadiationSystem {
         if (shedPermille > 0 && contam < SHED_CEILING) {
             data.addContamination(chunkKey,
                     shedPermille * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING));
+        }
+        if (cleansed > 0 && contam < SHED_CEILING) {
+            data.addContamination(chunkKey,
+                    cleansed * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING));
         }
 
         // Скан содержимого контейнеров своего чанка (сундуки/бочки с ураном греют чанк).
@@ -234,6 +251,8 @@ public final class RadiationSystem {
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
             RadSickness.forget(player.getUUID());
+            RadCleanse.forget(player.getUUID());
+            Necrosis.forget(player.getUUID());
         }
     }
 
@@ -254,6 +273,8 @@ public final class RadiationSystem {
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
             RadSickness.forget(player.getUUID());
+            RadCleanse.forget(player.getUUID());
+            Necrosis.forget(player.getUUID());
             PsycheNetwork.sendToPlayer(player);
         }
     }

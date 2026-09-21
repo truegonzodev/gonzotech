@@ -252,12 +252,40 @@ public class ModItems {
             props.stacksTo(1)));
 
     /**
-     * Расходник «Антирадин» (автор 22.09): ПКМ выводит 25% набранной дозы,
-     * побочка — тошнота 12 с. Крафт — йод из центрифуги (Открытие 2),
-     * см. {@code TierTwoCrafting} / {@code RecipeUnlocks} тир 2.
+     * Расходник «Антирадиновый абсорбент» (автор 22.09): ПКМ накладывает
+     * «Очищение» — эффект плавно выводит 20% текущей дозы за 30 с, после курса
+     * голод I на 10 с и синие крапинки лазурита (абсорбент, а не лекарство).
+     * Рецепт виден после Открытия 2 ({@code RecipeUnlocks} тир 2), во вкладке
+     * «Снаряжение»; физически рецепт доступен всегда.
      */
-    public static final DeferredItem<Item> ANTIRADIN =
-        ITEMS.registerItem("antiradin", props -> new com.gonzotech.radiation.AntiradinItem(props));
+    public static final DeferredItem<Item> RAD_ABSORBENT =
+        ITEMS.registerItem("rad_absorbent", props -> new com.gonzotech.radiation.RadAbsorbentItem(props));
+
+    /** Бумажная ткань — основа хазмат-костюма (крафт 3×3 из бумаги). */
+    public static final DeferredItem<Item> PAPER_FABRIC =
+        ITEMS.registerSimpleItem("paper_fabric");
+
+    // ── Хазмат I: маска, фартук, трико, шуфли (автор 22.09) ──
+    public static final DeferredItem<Item> HAZMAT_HELMET =
+        ITEMS.registerItem("hazmat_helmet", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.HELMET, props));
+    public static final DeferredItem<Item> HAZMAT_CHESTPLATE =
+        ITEMS.registerItem("hazmat_chestplate", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.CHESTPLATE, props));
+    public static final DeferredItem<Item> HAZMAT_LEGGINGS =
+        ITEMS.registerItem("hazmat_leggings", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.LEGGINGS, props));
+    public static final DeferredItem<Item> HAZMAT_BOOTS =
+        ITEMS.registerItem("hazmat_boots", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.BOOTS, props));
+
+    /** Части хазмата в порядке слотов HEAD, CHEST, LEGS, FEET — для подсчёта сета. */
+    public static final List<DeferredItem<Item>> HAZMAT_PIECES =
+        List.of(HAZMAT_HELMET, HAZMAT_CHESTPLATE, HAZMAT_LEGGINGS, HAZMAT_BOOTS);
 
     /**
      * Измерительный прибор «УФ-радиометр»: пока в руке — на HUD видна шкала

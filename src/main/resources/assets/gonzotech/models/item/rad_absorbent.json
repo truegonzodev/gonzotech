@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/antiradin"
+    "layer0": "gonzotech:item/rad_absorbent"
   }
 }
