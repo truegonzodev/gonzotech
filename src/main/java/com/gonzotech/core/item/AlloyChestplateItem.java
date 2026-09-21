@@ -4,7 +4,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.equipment.ArmorMaterials;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.item.enchantment.Enchantment;
 
@@ -15,7 +14,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 public final class AlloyChestplateItem extends ArmorItem {
 
     public AlloyChestplateItem(Item.Properties properties) {
-        super(ArmorMaterials.LEATHER, ArmorType.CHESTPLATE, properties.setNoCombineRepair());
+        super(AlloyArmorMaterials.CUSTOM_ALLOY, ArmorType.CHESTPLATE, properties.setNoCombineRepair());
     }
 
     @Override

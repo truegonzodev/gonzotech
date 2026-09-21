@@ -31,8 +31,8 @@ public class PumpScreen extends MachineScreen<PumpMenu> {
         int barW = 16;
         int barH = 52;
 
-        int gtuX = x + 100;
-        int watX = x + 126;
+        int gtuX = x + 8;
+        int watX = x + 152;
 
         float gtu = (float) menu.gtu() / MachineDefs.toUnits(MachineDefs.PUMP_GTU_CAPACITY);
         float water = (float) menu.water() / MachineDefs.PUMP_WATER_CAPACITY;

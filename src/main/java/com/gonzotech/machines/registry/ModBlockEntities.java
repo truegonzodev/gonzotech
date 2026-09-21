@@ -15,6 +15,7 @@ import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
 import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
 import com.gonzotech.machines.block.entity.SingularHeatSourceBlockEntity;
+import com.gonzotech.machines.block.entity.SolarPanelBlockEntity;
 import com.gonzotech.machines.block.entity.SecondAccumulatorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondCobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondElectricFurnaceBlockEntity;
@@ -51,6 +52,11 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("tungsten_absorber", () -> new BlockEntityType<>(
             TungstenAbsorberBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.TUNGSTEN_ABSORBER.get()));
 
+    /** Миска для питомцев (автор 2026-09-19, жирные коты). */
+    public static final Supplier<BlockEntityType<com.gonzotech.swag.PetBowlBlockEntity>> PET_BOWL =
+        BLOCK_ENTITIES.register("pet_bowl", () -> new BlockEntityType<>(
+            com.gonzotech.swag.PetBowlBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.PET_BOWL.get()));
+
     public static final Supplier<BlockEntityType<BoilerBlockEntity>> BOILER =
         BLOCK_ENTITIES.register("boiler", () -> new BlockEntityType<>(
             BoilerBlockEntity::new, false, ModMachines.BOILER.get()));
@@ -58,6 +64,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<StirlingBlockEntity>> STIRLING =
         BLOCK_ENTITIES.register("stirling", () -> new BlockEntityType<>(
             StirlingBlockEntity::new, false, ModMachines.STIRLING.get()));
+
+    public static final Supplier<BlockEntityType<SolarPanelBlockEntity>> SOLAR_PANEL =
+        BLOCK_ENTITIES.register("solar_panel", () -> new BlockEntityType<>(
+            SolarPanelBlockEntity::new, false, ModMachines.SOLAR_PANEL.get()));
 
     public static final Supplier<BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
         BLOCK_ENTITIES.register("electric_furnace", () -> new BlockEntityType<>(
@@ -127,6 +137,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<TurbineRotorBlockEntity>> TURBINE_ROTOR =
         BLOCK_ENTITIES.register("turbine_rotor", () -> new BlockEntityType<>(
             TurbineRotorBlockEntity::new, false, ModMachines.TURBINE_ROTOR.get()));
+
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity>> STEAMGEN_CORE =
+        BLOCK_ENTITIES.register("steamgen_core", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity::new, false, ModMachines.STEAMGEN_CORE.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> ITEM_FILTER =
         BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(

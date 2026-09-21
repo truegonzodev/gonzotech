@@ -223,6 +223,35 @@ public final class MachineDefs {
     /** Макс. отдача GTU соседям за тик (mGTU: 40 GTU/t). */
     public static final int STIRLING_GTU_OUTPUT = 40 * MILLI;
 
+    // ═══════════════════════════ СОЛНЕЧНАЯ ПАНЕЛЬ (тир 1, открытие 4) ═══════════════════════════
+    // Пассивный генератор без топлива/контуров: только небо и умирающее Солнце.
+    // Выработка за тик = PEAK × light× crimson× weather× age, где:
+    //   light   — кривая неба по возвышению солнца e=cos(2π·(t/24000−0.25)):
+    //             день 0.6+0.4·e (горизонт ~0.6 → зенит 1.0, плавно),
+    //             сумерки/ночь: плавный откат до 0.02 (автор 2026-09-18);
+    //   crimson — ×0.75 в багровый день E (автор);
+    //   weather — ×0.8 при любых осадках (автор);
+    //   age     — SunEventData.solarMultiplier(): −1%/день мира, пол 10%,
+    //             сбрасывает «Икар» (уже задано SunEventData).
+    // «Выше только небо» обязательно: блок над панелью полностью глушит выработку.
+
+    /** Пиковая выработка за тик (mGTU: 15 GTU/t, зенит, ясно, день 0). */
+    public static final int SOLAR_PANEL_GTU_PEAK_PER_TICK = 15 * MILLI;
+    /** Максимум GTU в буфере панели (mGTU: 126 GTU). */
+    public static final int SOLAR_PANEL_GTU_CAPACITY = 126 * MILLI;
+    /** Макс. отдача GTU соседям/проводам за тик (mGTU: 64 GTU/t). */
+    public static final int SOLAR_PANEL_GTU_OUTPUT = 64 * MILLI;
+    /** Багровый день E: множитель выработки (автор). */
+    public static final double SOLAR_PANEL_CRIMSON_FACTOR = 0.75D;
+    /** Осадки: множитель выработки (автор). */
+    public static final double SOLAR_PANEL_WEATHER_FACTOR = 0.8D;
+    /** У горизонта (рассвет/закат) — доля от пика (автор: ~60%). */
+    public static final double SOLAR_PANEL_HORIZON_FACTOR = 0.6D;
+    /** Глубокой ночью (искусственная подсветка неба) — доля от пика (автор: ~2%). */
+    public static final double SOLAR_PANEL_NIGHT_FACTOR = 0.02D;
+    /** Возвышение солнца, ниже которого ночной фактор уже дна (≈12540 тиков). */
+    public static final double SOLAR_PANEL_NIGHT_ELEVATION = -0.13D;
+
     // ═══════════════════════════ ПАРОВАЯ ТУРБИНА (многоблок) ═══════════════════════════
     // Полный прямоугольный параллелепипед: внутренняя полость заполнена роторами.
     // Характеристики равны BASE × M(N), где M=N·(1-(N/100)^1.778).
@@ -250,6 +279,55 @@ public final class MachineDefs {
 
     /** Предохранитель: одна турбина запускает максимум столько маршрутов выдачи GTU за тик. */
     public static final int TURBINE_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
+
+    // ═══════════════ ПРОДВИНУТЫЙ ПАРОГЕНЕРАТОР (многоблок 5×5×5) ═══════════════
+    // Внешний слой — корпус (steamgen_casing), внутренность 3×3×3 — ядра
+    // (steamgen_core) и/или драгоценные блоки-теплообменники. Управление — у
+    // ядра-контроллера в углу (min+1, min+1, min+1).
+    //
+    // Конверсия одного «цикла варки»: 15 mB воды + 11 GTH → 12 mB пара,
+    // умноженного на множитель теплообменников M = 1 + E_avg·(1 + 0.1·(n−1)),
+    // где E_avg — средняя (C+H)/200 по всем n теплообменникам (реально 0..0.75:
+    // максимум C+H = 150 у платины; потолок M = 3.625 при 26 обменниках платины).
+    // Ядра задают throughput (34 mB пара/т базово на ядро, ДО множителя),
+    // теплообменники — только эффективность преобразования.
+
+    /** Размер стороны корпуса продвинутого парогенератора (фиксированный 5×5×5). */
+    public static final int STEAMGEN_SIZE = 5;
+
+    /** Максимум теплообменников внутри: 27 внутренних слотов − хотя бы одно ядро. */
+    public static final int STEAMGEN_MAX_EXCHANGERS = 26;
+
+    /** Вода: буфер на одно ядро, mB. */
+    public static final int STEAMGEN_WATER_CAPACITY_PER_CORE = 488;
+    /** Пар: буфер на одно ядро, mB. */
+    public static final int STEAMGEN_STEAM_CAPACITY_PER_CORE = 1_526;
+    /** Базовый потолок выработки пара на ядро, mB/т (ДО множителя теплообменников). */
+    public static final int STEAMGEN_STEAM_PER_TICK_PER_CORE = 34;
+    /** Пропускная способность входов/выходов жидкости на ядро, mB/т. */
+    public static final int STEAMGEN_FLUID_IO_PER_CORE = 128;
+    /** GTH: буфер на одно ядро, целых GTH (хранится в milli). */
+    public static final int STEAMGEN_GTH_CAPACITY_PER_CORE = 4_096;
+
+    /** Цикл варки: mB воды на 12 mB базового пара. */
+    public static final int STEAMGEN_WATER_PER_UNIT = 15;
+    /** Цикл варки: GTH на 12 mB базового пара (в milli). */
+    public static final int STEAMGEN_GTH_PER_UNIT_MILLI = 11 * MILLI;
+    /** Цикл варки: mB базового пара (до множителя теплообменников). */
+    public static final int STEAMGEN_STEAM_PER_UNIT = 12;
+
+    /** Делитель (C+H) одного теплообменника: E = (C+H)/200. */
+    public static final int STEAMGEN_EXCHANGER_DIVISOR = 200;
+    /** Прирост бонуса за каждый следующий теплообменник: +0.1 к множителю (1/10). */
+    public static final int STEAMGEN_EXCHANGER_STEP = 10;
+
+    /** Предохранитель: максимум маршрутов выдачи пара за тик (как у турбины). */
+    public static final int STEAMGEN_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
+
+    /** Паразитное «остывание»: потеря GTH за тик, независимо от чего-либо. */
+    public static final int STEAMGEN_GTH_LOSS = 2 * MILLI;
+    /** Паразитная потеря пара: мB пара за тик, независимо от чего-либо. */
+    public static final int STEAMGEN_STEAM_LOSS = 1;
 
     // ═══════════════════════════ ЭЛЕКТРОПЕЧЬ (Electric Furnace) ═══════════════════════════
     // GTU → переплавка (160% ванили). Работает при примыкающем стирлинге.
@@ -373,7 +451,7 @@ public final class MachineDefs {
 
     // Шансы подмены РЕЗУЛЬТАТА при выдаче (в промилле-долях: доля 0..1 * 100000).
     // Проверяются по порядку; первый сработавший заменяет булыжник.
-    public static final double COBBLE_CHANCE_COAL_ORE = 0.05;      // 5% угольная руда
+    public static final double COBBLE_CHANCE_COAL_ORE = 0.02;      // 2% угольная руда
     public static final double COBBLE_CHANCE_IRON_ORE = 0.01;      // 1% железная руда
     public static final double COBBLE_CHANCE_OBSIDIAN = 0.001;     // 0.1% обсидиан
     public static final double COBBLE_CHANCE_GONZO_STONE_ORE = 0.0003; // 0.03% каменная руда gonzotech

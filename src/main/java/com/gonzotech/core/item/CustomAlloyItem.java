@@ -70,12 +70,12 @@ public final class CustomAlloyItem extends Item {
     }
 
     /** Builds a standard label with only the changing numerical value coloured. */
-    private static Component stat(String translationKey, int value, int color) {
+    public static Component stat(String translationKey, int value, int color) {
         return Component.translatable(translationKey, Component.literal(Integer.toString(value)).withColor(color));
     }
 
     /** More is better: red at 0, yellow at 50, and green at 100. */
-    private static int beneficialColor(int value) {
+    public static int beneficialColor(int value) {
         int clamped = clamp(value);
         return clamped <= 50
             ? lerpColor(SOFT_RED, SOFT_YELLOW, clamped / 50.0D)
@@ -83,7 +83,7 @@ public final class CustomAlloyItem extends Item {
     }
 
     /** Effective brittleness is best at 30: yellow → green → red. */
-    private static int brittlenessColor(int value) {
+    public static int brittlenessColor(int value) {
         int clamped = clamp(value);
         return clamped <= 30
             ? lerpColor(SOFT_YELLOW, SOFT_GREEN, clamped / 30.0D)
@@ -91,19 +91,19 @@ public final class CustomAlloyItem extends Item {
     }
 
     /** Conductivity improves from soft red to soft aqua. */
-    private static int conductivityColor(int value) {
+    public static int conductivityColor(int value) {
         return lerpColor(SOFT_RED, SOFT_AQUA, clamp(value) / 100.0D);
     }
 
     /** Weight is best at 20: yellow → green → red. */
-    private static int weightColor(int value) {
+    public static int weightColor(int value) {
         int clamped = clamp(value);
         return clamped <= 20
             ? lerpColor(SOFT_YELLOW, SOFT_GREEN, clamped / 20.0D)
             : lerpColor(SOFT_GREEN, SOFT_RED, (clamped - 20) / 80.0D);
     }
 
-    private static int tierColor(AlloyMaterialCatalog.ToolTier tier) {
+    public static int tierColor(AlloyMaterialCatalog.ToolTier tier) {
         return switch (tier) {
             case STONE -> 0x787878;
             case IRON -> 0xDBD3D3;

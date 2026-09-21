@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "QNG",
+    "CWI",
+    "XXX"
+  ],
+  "key": {
+    "Q": "minecraft:quartz",
+    "N": "gonzotech:nickel_ingot",
+    "G": "minecraft:gold_nugget",
+    "C": "minecraft:compass",
+    "W": "minecraft:clock",
+    "I": "gonzotech:inductive_module",
+    "X": "minecraft:calcite"
+  },
+  "result": {
+    "id": "gonzotech:solar_watch",
+    "count": 1
+  }
+}

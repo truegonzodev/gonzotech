@@ -29,10 +29,10 @@ public final class SecondPressMenu extends BaseMachineMenu {
     public SecondPressMenu(int id, Inventory inventory, SecondPressBlockEntity be, ContainerData data) {
         super(ModMenus.SECOND_PRESS.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
-        addSlot(new FilteredSlot(be, SecondPressBlockEntity.SLOT_INPUT, 50, 35));
-        addSlot(new OutputOnlySlot(be, SecondPressBlockEntity.SLOT_OUTPUT, 128, 35));
-        addSlot(new FilteredSlot(be, SecondPressBlockEntity.SLOT_PUNCH, 76, 53));
-        addSlot(new FilteredSlot(be, SecondPressBlockEntity.SLOT_FORM, 76, 17));
+        addSlot(new FilteredSlot(be, SecondPressBlockEntity.SLOT_INPUT, 44, 35));
+        addSlot(new OutputOnlySlot(be, SecondPressBlockEntity.SLOT_OUTPUT, 116, 35));
+        addSlot(new FilteredSlot(be, SecondPressBlockEntity.SLOT_PUNCH, 80, 17));
+        addSlot(new FilteredSlot(be, SecondPressBlockEntity.SLOT_FORM, 80, 53));
         addPlayerInventory(inventory, 8, 84);
     }
 

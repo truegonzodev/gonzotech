@@ -31,6 +31,14 @@ public final class NuclearDefs {
 
     /** One second equals twenty Minecraft ticks. */
     public static final int TICKS_PER_SECOND = 20;
+    /**
+     * Grace period after the GTH crosses {@link #NUCLEAR_FIREBOX_CORIUM_THRESHOLD}.
+     * While the buffer stays above the threshold for this whole span without
+     * resetting (any drop below 64,000 GTH restarts the timer), the firebox
+     * block itself is melt-protected; afterwards it becomes a melt candidate.
+     */
+    public static final int NUCLEAR_FIREBOX_SELF_MELT_GRACE_TICKS = 20 * TICKS_PER_SECOND;
+
     public static final int URANIUM_INGOT_BURN_TICKS = 900 * TICKS_PER_SECOND;
     public static final int URANIUM_NUGGET_BURN_TICKS = 100 * TICKS_PER_SECOND;
     public static final int URANIUM_BLOCK_BURN_TICKS = 8_100 * TICKS_PER_SECOND;
@@ -52,4 +60,6 @@ public final class NuclearDefs {
     public static final int TUNGSTEN_ABSORBER_IGNITION_THRESHOLD = 50_000 * MachineDefs.MILLI;
     /** Strictly above this stored GTH, the tungsten block melts its 3×3 footprint into lava. */
     public static final int TUNGSTEN_ABSORBER_LAVA_THRESHOLD = 94_000 * MachineDefs.MILLI;
+    /** Extra tungsten-absorber heat dissipation per adjacent superdense ice block, in mGTH/t. */
+    public static final int SUPERDENSE_ICE_COOLING_PER_BLOCK = 32 * MachineDefs.MILLI;
 }

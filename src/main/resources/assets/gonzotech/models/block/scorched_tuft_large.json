@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "gonzotech:block/desolation/scorched_tuft_large"
+  },
+  "render_type": "minecraft:cutout"
+}

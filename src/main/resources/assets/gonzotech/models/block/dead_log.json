@@ -1,6 +1,7 @@
 {
-  "parent": "minecraft:block/cube_all",
+  "parent": "minecraft:block/cube_column",
   "textures": {
-    "all": "gonzotech:block/desolation/dead_log"
+    "side": "gonzotech:block/desolation/dead_log",
+    "end": "gonzotech:block/desolation/dead_log_top"
   }
 }

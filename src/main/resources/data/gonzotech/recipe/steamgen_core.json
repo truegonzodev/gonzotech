@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [ "PTB", "SLS", "DTP" ],
+  "key": {
+    "P": "gonzotech:cast_iron_ingot",
+    "T": "minecraft:iron_trapdoor",
+    "B": "minecraft:iron_bars",
+    "S": "gonzotech:steel_plate",
+    "L": "gonzotech:boiler",
+    "D": "gonzotech:condenser"
+  },
+  "result": { "id": "gonzotech:steamgen_core", "count": 1 }
+}

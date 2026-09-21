@@ -21,7 +21,7 @@ public final class NuclearFireboxMenu extends BaseMachineMenu {
         super(ModMenus.NUCLEAR_FIREBOX.get(), id, firebox, data, 1);
         this.firebox = firebox;
         // Kept at the original Firebox fuel coordinate until the dedicated sheet is painted.
-        addSlot(new NuclearFuelSlot(firebox, NuclearFireboxBlockEntity.SLOT_FUEL, 44, 53));
+        addSlot(new NuclearFuelSlot(firebox, NuclearFireboxBlockEntity.SLOT_FUEL, 80, 53));
         addPlayerInventory(inventory, 8, 84);
     }
 

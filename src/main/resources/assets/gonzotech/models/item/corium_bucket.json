@@ -1,3 +1,6 @@
 {
-  "parent": "minecraft:item/lava_bucket"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "gonzotech:item/corium_bukket"
+  }
 }

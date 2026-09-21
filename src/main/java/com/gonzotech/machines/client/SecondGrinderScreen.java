@@ -30,19 +30,19 @@ public final class SecondGrinderScreen extends MachineScreen<SecondGrinderMenu> 
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         int capacity = MachineDefs.toUnits(SecondTierDefs.GRINDER_GTU_CAPACITY);
-        int gtuX = x + 20;
+        int gtuX = x + 8;
         int barY = y + 17;
-        int progressX = x + 80;
-        int progressY = y + 35;
+        int progressX = x + 63;
+        int progressY = y + 36;
         float gtu = capacity == 0 ? 0f : (float) menu.gtu() / capacity;
         float progress = menu.grindTotal() == 0 ? 0f : (float) menu.grindProgress() / menu.grindTotal();
         drawVBarTex(g, gtuX, barY, 16, 52, gtu, BAR_GTU);
-        drawHBarTex(g, progressX, progressY, 24, 16, progress, BAR_SMELTING);
+        drawHBarTex(g, progressX, progressY, 50, 14, progress, BAR_SMELTING);
 
         if (inRect(mouseX, mouseY, gtuX, barY, 16, 52)) {
             g.renderComponentTooltip(font, List.of(
                 Component.translatable("gui.gonzotech.gtu", menu.gtu(), capacity)), mouseX, mouseY);
-        } else if (inRect(mouseX, mouseY, progressX, progressY, 24, 16)) {
+        } else if (inRect(mouseX, mouseY, progressX, progressY, 50, 14)) {
             g.renderComponentTooltip(font, List.of(
                 Component.translatable("gui.gonzotech.grinder.grinding_progress", menu.grindProgressPercent())), mouseX, mouseY);
         }

@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#minecraft:cat_food",
+      "required": false
+    },
+    {
+      "id": "#minecraft:wolf_food",
+      "required": false
+    }
+  ]
+}

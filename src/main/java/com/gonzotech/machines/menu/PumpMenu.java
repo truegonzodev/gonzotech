@@ -25,8 +25,8 @@ public class PumpMenu extends BaseMachineMenu {
         super(ModMenus.PUMP.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
-        addSlot(new PumpInputSlot(be, PumpBlockEntity.SLOT_CONTAINER_IN, 44, 35));
-        addSlot(new OutputOnlySlot(be, PumpBlockEntity.SLOT_FILLED_OUT, 44, 57));
+        addSlot(new PumpInputSlot(be, PumpBlockEntity.SLOT_CONTAINER_IN, 80, 17));
+        addSlot(new OutputOnlySlot(be, PumpBlockEntity.SLOT_FILLED_OUT, 80, 53));
 
         addPlayerInventory(inv, 8, 84);
     }

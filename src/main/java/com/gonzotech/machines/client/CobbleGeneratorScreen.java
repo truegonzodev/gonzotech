@@ -32,32 +32,32 @@ public class CobbleGeneratorScreen extends MachineScreen<CobbleGeneratorMenu> {
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         int barY = y + 17;
-        int barW = 16;
         int barH = 52;
 
-        int watX = x + 62;
-        int gtuX = x + 88;
+        // Шкала воды — 17 px шириной (по текстуре), GTU — стандартные 16.
+        int watX = x + 26;
+        int gtuX = x + 44;
 
         float water = (float) menu.water() / MachineDefs.COBBLE_WATER_CAPACITY;
         float gtu = (float) menu.gtu() / MachineDefs.toUnits(MachineDefs.COBBLE_GTU_CAPACITY);
 
-        drawVBarTex(g, watX, barY, barW, barH, water, BAR_WATER);
-        drawVBarTex(g, gtuX, barY, barW, barH, gtu, BAR_GTU);
+        drawVBarTex(g, watX, barY, 17, barH, water, BAR_WATER);
+        drawVBarTex(g, gtuX, barY, 16, barH, gtu, BAR_GTU);
 
-        // Горизонтальный прогресс-бар «вскапывания» между шкалой GTU и слотом выдачи
-        // (0 → digTotal тиков; для незеритовой кирки digTotal = 50).
-        int digX = x + 108;
+        // Горизонтальный прогресс-бар «вскапывания» (0 → digTotal тиков;
+        // для незеритовой кирки digTotal = 50): единая 68×16 текстура, НЕ тайлится.
+        int digX = x + 63;
         int digY = y + 35;
-        int digW = 24;
+        int digW = 68;
         int digH = 16;
         float dig = menu.digTotal() > 0 ? (float) menu.digProgress() / menu.digTotal() : 0f;
-        drawHBarTex(g, digX, digY, digW, digH, dig, BAR_SMELTING);
+        drawHBarTexFull(g, digX, digY, digW, digH, dig, BAR_COBBLESTONE);
 
-        if (inRect(mouseX, mouseY, watX, barY, barW, barH)) {
+        if (inRect(mouseX, mouseY, watX, barY, 17, barH)) {
             g.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.water", menu.water(), MachineDefs.COBBLE_WATER_CAPACITY)),
                 mouseX, mouseY);
-        } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
+        } else if (inRect(mouseX, mouseY, gtuX, barY, 16, barH)) {
             g.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.COBBLE_GTU_CAPACITY))),
                 mouseX, mouseY);

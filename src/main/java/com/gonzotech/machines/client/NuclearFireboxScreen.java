@@ -27,10 +27,15 @@ public final class NuclearFireboxScreen extends MachineScreen<NuclearFireboxMenu
 
     @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
+        // Горение топлива: вертикальная шкала + тултип «осталось X%».
+        int burnX = x + 80;
+        int burnY = y + 35;
+        int burnW = 16;
+        int burnH = 16;
         float lit = menu.litDuration() > 0 ? (float) menu.litTime() / menu.litDuration() : 0.0F;
-        drawVBarTex(graphics, x + 46, y + 37, 14, 14, lit, BAR_BURNUP);
+        drawVBarTex(graphics, burnX, burnY, burnW, burnH, lit, BAR_BURNUP);
 
-        int barX = x + 150;
+        int barX = x + 8;
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
@@ -39,6 +44,11 @@ public final class NuclearFireboxScreen extends MachineScreen<NuclearFireboxMenu
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(Component.translatable(
                 "gui.gonzotech.gth", menu.gth(), NuclearDefs.NUCLEAR_FIREBOX_GTH_CAPACITY / 1_000)), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, burnX, burnY, burnW, burnH)) {
+            int percent = menu.litDuration() <= 0 ? 0
+                : Math.min(100, (int) ((long) menu.litTime() * 100L / menu.litDuration()));
+            graphics.renderComponentTooltip(this.font, List.of(
+                Component.translatable("gui.gonzotech.nuclear_firebox.burning", percent)), mouseX, mouseY);
         }
     }
 }

@@ -49,13 +49,14 @@ public class ModCreativeTabs {
                 // Инструменты: ключ сразу за заметками, затем измерительные приборы.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.DOSIMETER.get());
+                // Солнечные часы — рядом с дозиметром (автор, 2026-09-18).
+                output.accept(ModItems.SOLAR_WATCH.get());
                 output.accept(ModItems.UV_METER.get());
                 output.accept(ModItems.SPEEDOMETER.get());
                 ModItems.DISCOVERY_ITEMS.forEach(item -> output.accept(item.get()));
 
                 // Фаза 2 — паровая ветка энергетики.
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.NUCLEAR_FIREBOX_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get());
@@ -110,6 +111,13 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_SCAVENGER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get());
+                // Продвинутый парогенератор — в витрине второго открытия.
+                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CORE_ITEM.get());
+                // Ядерная топка замыкает вкладку: самая опасная и поздняя машина.
+                output.accept(com.gonzotech.machines.registry.ModMachines.NUCLEAR_FIREBOX_ITEM.get());
+                // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
+                output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })
             .build()
     );
@@ -126,6 +134,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ALLOY_PICKAXE.get());
                 output.accept(ModItems.ALLOY_SWORD.get());
                 output.accept(ModItems.ALLOY_CHESTPLATE.get());
+                output.accept(ModItems.ALLOY_HELMET.get());
+                output.accept(ModItems.ALLOY_LEGGINGS.get());
+                output.accept(ModItems.ALLOY_BOOTS.get());
             })
             .build()
     );
@@ -160,8 +171,14 @@ public class ModCreativeTabs {
                 output.accept(ModItems.DEAD_SAND_ITEM.get());
                 output.accept(ModItems.DEAD_STONE_ITEM.get());
                 output.accept(ModItems.DEAD_LOG_ITEM.get());
+                // Опалённая растительность пустошей (срез ножницами).
+                output.accept(ModItems.CHARRED_SAPLING_ITEM.get());
+                output.accept(ModItems.SCORCHED_TUFT_ITEM.get());
+                output.accept(ModItems.SCORCHED_TUFT_MEDIUM_ITEM.get());
+                output.accept(ModItems.SCORCHED_TUFT_LARGE_ITEM.get());
                 output.accept(ModItems.CORIUM_ITEM.get());
                 output.accept(ModFluids.CORIUM_BUCKET.get());
+                output.accept(ModItems.DEAD_SLIME_BUCKET.get());
                 output.accept(ModItems.WASTE_BARREL_ITEM.get());
                 output.accept(ModItems.DEAD_SLIME_BLOCK_ITEM.get());
                 output.accept(ModItems.RADIOACTIVE_SLIME_BLOCK_ITEM.get());
@@ -227,6 +244,18 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ANDESITE_SILICATE_CLINKER.get());
                 output.accept(ModItems.WHITE_PORCELAIN_BATCH.get());
                 output.accept(ModItems.REBAR.get());
+                // Ядерный ряд — изотопы и топливные смеси (автор 21.09).
+                output.accept(ModItems.URANIUM_238.get());
+                output.accept(ModItems.URANIUM_235.get());
+                output.accept(ModItems.URANIUM_233.get());
+                output.accept(ModItems.WEAPONS_PLUTONIUM.get());
+                output.accept(ModItems.PLUTONIUM_238.get());
+                output.accept(ModItems.PLUTONIUM_242.get());
+                output.accept(ModItems.THORIUM_229.get());
+                output.accept(ModItems.URANIUM_FUEL.get());
+                output.accept(ModItems.MOX_FUEL.get());
+                output.accept(ModItems.TMOX_FUEL.get());
+                output.accept(ModItems.SNUP_FUEL.get());
             })
             .build()
     );
@@ -239,6 +268,9 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.OBSIDIAN_BUCKET.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.OBSIDIAN_BUCKET.get());
+                // Миска для питомцев (жирные коты, автор 2026-09-19; перенос в
+                // «Приколы» 2026-09-20 — фан-предмет, не техно-блок).
+                output.accept(ModItems.PET_BOWL_ITEM.get());
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());

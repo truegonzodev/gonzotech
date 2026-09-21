@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "III",
+    "ISI",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:blue_ice",
+    "S": "gonzotech:stellite_block"
+  },
+  "result": {
+    "id": "gonzotech:superdense_ice",
+    "count": 1
+  }
+}

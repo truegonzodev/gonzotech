@@ -71,7 +71,9 @@ public final class TierTwoCrafting {
         "gonzotech:second_wire_node",
         "gonzotech:second_universal_node",
         "gonzotech:second_pump",
-        "gonzotech:nuclear_firebox"
+        "gonzotech:nuclear_firebox",
+        "gonzotech:steamgen_casing",
+        "gonzotech:steamgen_core"
     );
 
     /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
@@ -116,6 +118,14 @@ public final class TierTwoCrafting {
 
         int count = crafted.getCount();
         crafted.setCount(0);
+        // Ветка PICKUP «тот же предмет на курсоре»: ванила УВЕЛИЧИВАЕТ курсор ДО
+        // события (grow перед onTake), а в событии — выделенная копия, так что
+        // нуление курсор не спасает. Отменяем прирост (и заодно переполнение
+        // полного стака).
+        ItemStack carried = player.containerMenu.getCarried();
+        if (!carried.isEmpty() && carried.is(crafted.getItem())) {
+            carried.shrink(count);
+        }
         for (int i = 0; i < count; i++) {
             ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
             if (!player.getInventory().add(botched)) {
@@ -128,7 +138,8 @@ public final class TierTwoCrafting {
         );
     }
 
-    private static boolean isGatedOutput(Item item) {
+    /** true, если предмет — «закрытый» вывод Discovery-2 (гейт тира 2). */
+    public static boolean isGatedOutput(Item item) {
         return item == ModItems.COIL.get()
             || item == ModItems.INDUCTIVE_MODULE.get()
             || item == ModItems.WEDGE_PUNCH.get()
@@ -161,6 +172,8 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_WIRE_NODE_ITEM.get()
             || item == ModMachines.SECOND_UNIVERSAL_NODE_ITEM.get()
             || item == ModMachines.SECOND_PUMP_ITEM.get()
-            || item == ModMachines.NUCLEAR_FIREBOX_ITEM.get();
+            || item == ModMachines.NUCLEAR_FIREBOX_ITEM.get()
+            || item == ModMachines.STEAMGEN_CASING_ITEM.get()
+            || item == ModMachines.STEAMGEN_CORE_ITEM.get();
     }
 }

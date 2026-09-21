@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/template_fluid",
+  "textures": {
+    "particle": "gonzotech:block/fluid/molten_corium_still",
+    "still": "gonzotech:block/fluid/molten_corium_still",
+    "flow": "gonzotech:block/fluid/molten_corium_flow"
+  }
+}

@@ -98,7 +98,7 @@ public final class SecondTierDefs {
     public static final int PUMP_WATER_CAPACITY = 24_000;
     public static final int PUMP_GTU_INTAKE = 96 * MachineDefs.MILLI;
     public static final int PUMP_GTU_MILLI_PER_TICK = 3_000;
-    public static final int PUMP_WATER_OUTPUT = 844;
+    public static final int PUMP_WATER_OUTPUT = 612;
     public static final int PUMP_SUCK_INTERVAL = 4;
 
     // ─────────────────────── генератор булыжника II ───────────────────────
@@ -110,4 +110,6 @@ public final class SecondTierDefs {
     public static final int COBBLE_WATER_PER_ROCK = 1_000;
     public static final int COBBLE_GTU_MILLI_PER_TICK = 1_400;
     public static final int COBBLE_TICKS = 60;
+    /** Шанс угольной руды у генератора булыжника II (тир-1 — 2%, см. MachineDefs). */
+    public static final double COBBLE_CHANCE_COAL_ORE = 0.03;
 }

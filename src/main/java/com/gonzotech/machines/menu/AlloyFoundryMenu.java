@@ -35,10 +35,10 @@ public final class AlloyFoundryMenu extends BaseMachineMenu {
         for (int row = 0; row < AlloyFoundryBlockEntity.GRID_HEIGHT; row++) {
             for (int col = 0; col < AlloyFoundryBlockEntity.GRID_WIDTH; col++) {
                 int slot = row * AlloyFoundryBlockEntity.GRID_WIDTH + col;
-                addSlot(new InputSlot(be, slot, 18 + col * 18, 18 + row * 18));
+                addSlot(new InputSlot(be, slot, 8 + col * 18, 15 + row * 18));
             }
         }
-        addSlot(new OutputOnlySlot(be, AlloyFoundryBlockEntity.SLOT_OUTPUT, 132, 54));
+        addSlot(new OutputOnlySlot(be, AlloyFoundryBlockEntity.SLOT_OUTPUT, 116, 51));
         addPlayerInventory(inventory, 8, 140);
     }
 

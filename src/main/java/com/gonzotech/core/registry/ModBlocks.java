@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.ChalkboardBlock;
 import com.gonzotech.core.block.TungstenAbsorberBlock;
 import com.gonzotech.core.fluid.ModFluids;
+import com.gonzotech.core.fluid.MoltenCoriumBlock;
 import com.gonzotech.core.ore.CesiumOreBlock;
 import com.gonzotech.core.ore.IodineOreBlock;
 import com.gonzotech.core.ore.OreDefinition;
@@ -139,18 +140,48 @@ public class ModBlocks {
     /** Ванильный pillar-state нужен: копируемые свойства OAK_LOG считывают AXIS. */
     public static final DeferredBlock<RotatedPillarBlock> DEAD_LOG = BLOCKS.registerBlock(
         "dead_log", RotatedPillarBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_LOG));
+    /** Опалённая растительность (cross-модель, без age): саженец и три размера пучка. */
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> CHARRED_SAPLING = BLOCKS.registerBlock(
+        "charred_sapling", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> SCORCHED_TUFT = BLOCKS.registerBlock(
+        "scorched_tuft", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> SCORCHED_TUFT_MEDIUM = BLOCKS.registerBlock(
+        "scorched_tuft_medium", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
+    public static final DeferredBlock<com.gonzotech.core.block.DeadVegetationBlock> SCORCHED_TUFT_LARGE = BLOCKS.registerBlock(
+        "scorched_tuft_large", com.gonzotech.core.block.DeadVegetationBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SHORT_GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ));
+    /** Застывший кориум — результат реакции расплавленного кориума с водой (аналог обсидиана). */
+    public static final DeferredBlock<Block> CORIUM = BLOCKS.registerSimpleBlock(
+        "corium", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     /** Gray lava-like fluid block produced by Nuclear Firebox meltdown. */
-    public static final DeferredBlock<LiquidBlock> CORIUM = BLOCKS.registerBlock(
-        "corium", properties -> new LiquidBlock(ModFluids.CORIUM_SOURCE, properties),
+    public static final DeferredBlock<LiquidBlock> MOLTEN_CORIUM = BLOCKS.registerBlock(
+        "molten_corium", properties -> new MoltenCoriumBlock(ModFluids.MOLTEN_CORIUM.get(), properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.LAVA));
     /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
         "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
             .sound(SoundType.METAL).strength(2.0f, 6.0f));
-    public static final DeferredBlock<SlimeBlock> DEAD_SLIME_BLOCK = BLOCKS.registerBlock(
-        "dead_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
+    /** Мёртвая жижа: зыбкость рыхлого снега + пружинность слизи (см. DeadSlimeBlock). */
+    public static final DeferredBlock<com.gonzotech.core.block.DeadSlimeBlock> DEAD_SLIME_BLOCK = BLOCKS.registerBlock(
+        "dead_slime_block", com.gonzotech.core.block.DeadSlimeBlock::new,
+        // noCollission() в свойствах НЕ ставим: он обнуляет blocksMotion(), а вода
+        // через FlowingFluid.canHoldFluid смотрит именно его — входила в клетку и
+        // ломала жижу с дропом (автор 2026-09-19: «вода не должна её смывать»).
+        // Проходимость сущностей даёт сам класс — getCollisionShape() = empty().
+        BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
     public static final DeferredBlock<SlimeBlock> RADIOACTIVE_SLIME_BLOCK = BLOCKS.registerBlock(
         "radioactive_slime_block", SlimeBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.SLIME_BLOCK));
+    /** Миска для питомцев (автор 2026-09-19, «ЖИРНЫЕ КОТЫ»): см. swag/PetBowlBlock. */
+    public static final DeferredBlock<com.gonzotech.swag.PetBowlBlock> PET_BOWL = BLOCKS.registerBlock(
+        "pet_bowl", com.gonzotech.swag.PetBowlBlock::new,
+        BlockBehaviour.Properties.of().strength(0.6F).sound(SoundType.METAL).noOcclusion());
 
     // ─────────────────── Декорации метеоров и старых механизмов ───────────────────
     public static final DeferredBlock<Block> WEATHERED_PLATING = BLOCKS.registerSimpleBlock(

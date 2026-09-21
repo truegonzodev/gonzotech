@@ -30,23 +30,39 @@ public final class SecondCobbleGeneratorScreen extends MachineScreen<SecondCobbl
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         int barY = y + 17;
-        int barW = 16;
         int barH = 52;
-        int waterX = x + 62;
-        int gtuX = x + 88;
+
+        // Раскладка 1:1 с генератором булыжника I (без слота кирки).
+        // Шкала воды — 17 px шириной (по текстуре), GTU — стандартные 16.
+        int watX = x + 26;
+        int gtuX = x + 44;
         int gtuCapacity = MachineDefs.toUnits(SecondTierDefs.COBBLE_GTU_CAPACITY);
-        drawVBarTex(g, waterX, barY, barW, barH,
-            (float) menu.water() / SecondTierDefs.COBBLE_WATER_CAPACITY, BAR_WATER);
-        drawVBarTex(g, gtuX, barY, barW, barH, (float) menu.gtu() / gtuCapacity, BAR_GTU);
+        float water = (float) menu.water() / SecondTierDefs.COBBLE_WATER_CAPACITY;
+        float gtu = (float) menu.gtu() / gtuCapacity;
+        drawVBarTex(g, watX, barY, 17, barH, water, BAR_WATER);
+        drawVBarTex(g, gtuX, barY, 16, barH, gtu, BAR_GTU);
+
+        // Прогресс «вскапывания»: единая 68×16 текстура, НЕ тайлится;
+        // tier 2 — с тултипом «Генерация: N%».
+        int digX = x + 63;
+        int digY = y + 35;
+        int digW = 68;
+        int digH = 16;
         float dig = menu.digTotal() > 0 ? (float) menu.digProgress() / menu.digTotal() : 0f;
-        drawHBarTex(g, x + 108, y + 35, 24, 16, dig, BAR_SMELTING);
-        if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
+        drawHBarTexFull(g, digX, digY, digW, digH, dig, BAR_COBBLESTONE);
+
+        if (inRect(mouseX, mouseY, watX, barY, 17, barH)) {
             g.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.water", menu.water(), SecondTierDefs.COBBLE_WATER_CAPACITY)),
                 mouseX, mouseY);
-        } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
+        } else if (inRect(mouseX, mouseY, gtuX, barY, 16, barH)) {
             g.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.gtu", menu.gtu(), gtuCapacity)), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, digX, digY, digW, digH)) {
+            g.renderComponentTooltip(this.font, List.of(
+                Component.translatable("gui.gonzotech.second_cobble_generator.generation_progress",
+                    menu.digProgressPercent())),
+                mouseX, mouseY);
         }
     }
 }

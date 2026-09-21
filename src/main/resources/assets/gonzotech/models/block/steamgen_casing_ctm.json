@@ -1,0 +1,11 @@
+{
+  "loader": "gonzotech:smart_ctm",
+  "ambientocclusion": false,
+  "textures": {
+    "base": "gonzotech:block/steamgen/steamgen_formed",
+    "line": "gonzotech:block/steamgen/steamgen_ctm_line",
+    "outer_corner": "gonzotech:block/steamgen/steamgen_ctm_outer_corner",
+    "inner_corner": "gonzotech:block/steamgen/steamgen_ctm_inner_corner",
+    "particle": "gonzotech:block/steamgen/steamgen_formed"
+  }
+}

@@ -1,5 +1,7 @@
 package com.gonzotech.machines.client.ctm;
 
+import com.gonzotech.machines.block.SteamGenCasingBlock;
+import com.gonzotech.machines.block.SteamGenPartBlock;
 import com.gonzotech.machines.block.TurbineCasingBlock;
 import com.gonzotech.machines.block.TurbinePartBlock;
 import net.minecraft.client.renderer.RenderType;
@@ -89,7 +91,7 @@ public final class TurbineSmartCtmBakedModel implements IDynamicBakedModel {
 
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData modelData) {
-        if (!(state.getBlock() instanceof TurbineCasingBlock) || !state.getValue(TurbinePartBlock.FORMED)) {
+        if (!isFormedCasing(state)) {
             return modelData;
         }
         return modelData.derive().with(FACE_MASKS, FaceMasks.at(level, pos)).build();
@@ -101,7 +103,7 @@ public final class TurbineSmartCtmBakedModel implements IDynamicBakedModel {
                                      @Nullable RenderType renderType) {
         // This model deliberately contains only cullable cube faces. A null side
         // asks for unculled geometry, of which the casing has none.
-        if (side == null || state == null || !state.getValue(TurbinePartBlock.FORMED)) {
+        if (side == null || state == null || !isFormedCasing(state)) {
             return List.of();
         }
         FaceMasks masks = modelData.get(FACE_MASKS);
@@ -225,10 +227,23 @@ public final class TurbineSmartCtmBakedModel implements IDynamicBakedModel {
             .setNormal(face.getStepX(), face.getStepY(), face.getStepZ());
     }
 
+    /**
+     * Сформированный ли корпус в {@code state} — для ЛЮБОЙ семьи Smart CTM
+     * (турбина/парогенератор). У каждой семьи СВОЙ экземпляр BooleanProperty
+     * «formed», поэтому чтение property строго по типу блока.
+     */
+    private static boolean isFormedCasing(BlockState state) {
+        if (state.getBlock() instanceof TurbineCasingBlock) {
+            return state.getValue(TurbinePartBlock.FORMED);
+        }
+        if (state.getBlock() instanceof SteamGenCasingBlock) {
+            return state.getValue(SteamGenPartBlock.FORMED);
+        }
+        return false;
+    }
+
     private static boolean connected(BlockAndTintGetter level, BlockPos pos) {
-        BlockState neighbour = level.getBlockState(pos);
-        return neighbour.getBlock() instanceof TurbineCasingBlock
-            && neighbour.getValue(TurbinePartBlock.FORMED);
+        return isFormedCasing(level.getBlockState(pos));
     }
 
     /**

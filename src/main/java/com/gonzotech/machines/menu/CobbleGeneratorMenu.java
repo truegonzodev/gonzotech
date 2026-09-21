@@ -31,12 +31,11 @@ public class CobbleGeneratorMenu extends BaseMachineMenu {
         this.be = be;
 
         // Ведро лавы: только ведро лавы.
-        addSlot(new FilteredSlot(be, CobbleGeneratorBlockEntity.SLOT_LAVA, 26, 24));
+        addSlot(new FilteredSlot(be, CobbleGeneratorBlockEntity.SLOT_LAVA, 8, 17));
         // Кирка: только кирки.
-        addSlot(new FilteredSlot(be, CobbleGeneratorBlockEntity.SLOT_PICKAXE, 26, 48));
-        // Выдача: только забор. Сдвинут правее на 16px — между шкалой GTU и слотом
-        // помещается горизонтальный прогресс-бар «вскапывания».
-        addSlot(new OutputOnlySlot(be, CobbleGeneratorBlockEntity.SLOT_OUTPUT, 132, 35));
+        addSlot(new FilteredSlot(be, CobbleGeneratorBlockEntity.SLOT_PICKAXE, 134, 17));
+        // Выдача: только забор. Под слотом кирки, справа от прогресс-бара.
+        addSlot(new OutputOnlySlot(be, CobbleGeneratorBlockEntity.SLOT_OUTPUT, 134, 35));
 
         addPlayerInventory(inv, 8, 84);
     }

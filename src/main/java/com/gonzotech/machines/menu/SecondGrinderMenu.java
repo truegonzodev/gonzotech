@@ -25,7 +25,7 @@ public final class SecondGrinderMenu extends BaseMachineMenu {
     public SecondGrinderMenu(int id, Inventory inventory, SecondGrinderBlockEntity be, ContainerData data) {
         super(ModMenus.SECOND_GRINDER.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
-        addSlot(new InputSlot(be, SecondGrinderBlockEntity.SLOT_INPUT, 56, 35));
+        addSlot(new InputSlot(be, SecondGrinderBlockEntity.SLOT_INPUT, 44, 35));
         addSlot(new OutputOnlySlot(be, SecondGrinderBlockEntity.SLOT_OUTPUT, 116, 35));
         addPlayerInventory(inventory, 8, 84);
     }

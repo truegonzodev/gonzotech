@@ -118,4 +118,40 @@ public abstract class AlloyEquipmentRecipe extends CustomRecipe {
             return ModRecipeSerializers.ALLOY_CHESTPLATE.get();
         }
     }
+
+    /** Standard helmet shape: 5 matching alloy ingots. */
+    public static final class Helmet extends AlloyEquipmentRecipe {
+        public Helmet(CraftingBookCategory category) {
+            super(category, AlloyEquipmentStats.Kind.HELMET);
+        }
+
+        @Override
+        public RecipeSerializer<Helmet> getSerializer() {
+            return ModRecipeSerializers.ALLOY_HELMET.get();
+        }
+    }
+
+    /** Standard leggings shape: 6 matching alloy ingots. */
+    public static final class Leggings extends AlloyEquipmentRecipe {
+        public Leggings(CraftingBookCategory category) {
+            super(category, AlloyEquipmentStats.Kind.LEGGINGS);
+        }
+
+        @Override
+        public RecipeSerializer<Leggings> getSerializer() {
+            return ModRecipeSerializers.ALLOY_LEGGINGS.get();
+        }
+    }
+
+    /** Standard boots shape: 4 matching alloy ingots. */
+    public static final class Boots extends AlloyEquipmentRecipe {
+        public Boots(CraftingBookCategory category) {
+            super(category, AlloyEquipmentStats.Kind.BOOTS);
+        }
+
+        @Override
+        public RecipeSerializer<Boots> getSerializer() {
+            return ModRecipeSerializers.ALLOY_BOOTS.get();
+        }
+    }
 }

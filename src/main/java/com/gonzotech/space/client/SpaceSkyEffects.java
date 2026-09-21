@@ -1,6 +1,8 @@
 package com.gonzotech.space.client;
 
 import com.gonzotech.space.SunState;
+import com.gonzotech.sunevent.client.SunEventClient;
+import com.gonzotech.sunevent.client.SunEventSnowRenderer;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -20,6 +22,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -120,6 +123,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * no-precipitation biomes; the Overworld explicitly leaves it disabled.
      */
     private final boolean suppressesPrecipitation;
+
+    // Суневент (автор: «скaйбокс тинтится багровым оранжевым»): купол поверх дневного цикла.
+    private static final int CRIMSON_ZENITH_ARGB = 0xFF4A1410;
+    private static final int CRIMSON_HORIZON_ARGB = 0xFFC24A16;
+    // Истощённое солнце: daylight-коэффициент дня E ≈ 0.05 → полдень ≈ свет 3.6
+    // (автор 2026-09-18: ещё на 15–20% тусклее исходных ~4.5, т.е. 0.125).
+    private static final float CRIMSON_DAYLIGHT_FACTOR = 0.05F;
 
     public SpaceSkyEffects(float cloudHeight,
                            boolean hasGround,
@@ -276,6 +286,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     @Override
     public boolean renderSnowAndRain(ClientLevel level, int ticks, float partialTick,
                                      double camX, double camY, double camZ) {
+        // Суневеты: дождь = снег (окно E−1..E+1, Оверворлд, идёт дождь).
+        // Ванильный кокон-панели (клон WeatherEffectRenderer/SNOW), только гейт наш.
+        if (sunEventSnowNow(level)) {
+            SunEventSnowRenderer.render(level, ticks, partialTick, camX, camY, camZ);
+            return true;
+        }
         // true cancels vanilla particles; false lets the Overworld render its
         // normal rain and snow after this custom sky has been drawn.
         return suppressesPrecipitation;
@@ -286,7 +302,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         // Keep the client rain/drip particle tick in lockstep with the render
         // decision. Server-side snow placement is independently governed by
         // each biome's has_precipitation flag.
-        return suppressesPrecipitation;
+        return suppressesPrecipitation || sunEventSnowNow(level);
+    }
+
+    /** Снежное окно суневетов прямо сейчас (клиент): дождь в Оверворлде + день окна. */
+    private static boolean sunEventSnowNow(ClientLevel level) {
+        return level != null
+            && level.dimension() == Level.OVERWORLD
+            && level.isRaining()
+            && SunEventClient.isSnowWindowDay(level);
     }
 
     @Override
@@ -307,6 +331,19 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         int zenith = lerpArgb(zenithNightArgb, zenithDayArgb, dayFrac);
         int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
+
+        // Суневент: багровый купол (I(t) из SunEventClient) — ТОЛЬКО Оверворлд
+        // (автор 2026-09-19: красное небо в остальных гонзо-измерениях убрать;
+        // там лишь плоское солнце меняет текстуру на красную).
+        // GONE не трогаем — там свой режим.
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+            && SpaceSkyState.sunState != SunState.GONE) {
+            double crimson = SunEventClient.crimsonIntensity(level);
+            if (crimson > 0.001F) {
+                zenith = overlayArgb(zenith, CRIMSON_ZENITH_ARGB, (float) (crimson * 0.8F));
+                horizon = overlayArgb(horizon, CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F));
+            }
+        }
 
         if (!logged) {
             logged = true;
@@ -372,7 +409,11 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         if (SpaceSkyState.sunState == SunState.GONE) {
             return true;
         }
-        return daylightScale < 0.999F || fixedDaylight >= 0.0F;
+        if (daylightScale < 0.999F || fixedDaylight >= 0.0F) {
+            return true;
+        }
+        // Суневент: день E светит слабее стандартного цикла (см. computeSkyDarken).
+        return SunEventClient.crimsonIntensity(Minecraft.getInstance().level) > 0.001F;
     }
 
     public float computeSkyDarken(ClientLevel level, float partialTick) {
@@ -383,7 +424,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             return Mth.clamp(0.2F + 0.8F * fixedDaylight, 0.0F, 1.0F);
         }
         float dayFrac = daylightFactor(level, partialTick);
-        return 0.2F + 0.8F * dayFrac * daylightScale;
+        // Суневент: истощённое солнце. Дневную компоненту МУЛЬТИПЛИЦИРУЕМ по I(t) —
+        // лерп к константе с фактором I·dayFrac ИНВЕРТИРОВАЛ кривую (полдень становился
+        // темнее утра, автор 2026-09-18). Ночная база 0.2 не трогаем.
+        float daylight = 0.8F * dayFrac * daylightScale;
+        double crimson = SunEventClient.crimsonIntensity(level);
+        if (crimson > 0.001F) {
+            daylight *= (float) (1.0 - crimson * (1.0 - CRIMSON_DAYLIGHT_FACTOR));
+        }
+        return 0.2F + daylight;
     }
 
     private float[] computeBodyTint(float dayFrac) {
@@ -733,6 +782,11 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
             switch (state) {
                 case DYSON -> {
+                    // Суневент: дайсон-солнце в багровом окне — _red_dyson
+                    // (автор 2026-09-19: 4 слоя sun/sun_red/sun_dyson/sun_red_dyson).
+                    if (SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)) {
+                        return resolveVariant(base, "_red_dyson");
+                    }
                     return resolveVariant(base, "_dyson");
                 }
                 case GONE -> {
@@ -745,6 +799,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                     return resolveVariant(base, "_blackhole_dyson");
                 }
                 case DEFAULT -> {
+                    // Суневент: красное солнце в бинарном окне E−1 22000 → E0 15000
+                    // (окно по оверворлду; «встаёт сразу красным»). Во всех
+                    // гонзо-измерениях лишь текстура плоского солнца — на месте,
+                    // без купола/снега/монстров (автор 2026-09-19).
+                    if (SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)) {
+                        return resolveVariant(base, "_red");
+                    }
                     return base;
                 }
             }

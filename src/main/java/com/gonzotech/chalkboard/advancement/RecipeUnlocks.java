@@ -43,6 +43,8 @@ public final class RecipeUnlocks {
             "gonzotech:turbine_rotor",
             // Логистика: инструмент
             "gonzotech:wrench",
+            // Суневеты: солнечные часы (крафт и книга — после Открытия 1, автор)
+            "gonzotech:solar_watch",
             // Логистика: трубы
             "gonzotech:first_wire",
             "gonzotech:first_heat_pipe",
@@ -89,6 +91,10 @@ public final class RecipeUnlocks {
             "gonzotech:vr20_dust_from_metal_dusts",
             "gonzotech:alnico_dust_from_metal_dusts",
             "gonzotech:telluride_dust_from_metal_dusts"
+        ),
+        6, List.of(
+            // Физически крафтится всегда, в книге появляется с Открытием 6.
+            "gonzotech:superdense_ice"
         )
     );
 

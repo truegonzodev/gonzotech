@@ -1,6 +1,8 @@
 package com.gonzotech.space.client;
 
 import com.gonzotech.space.SunState;
+import com.gonzotech.sunevent.client.SunEventClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -40,8 +42,14 @@ public final class SpaceSkyState {
     // Ресурсы солнца для Оверворлда
     public static final ResourceLocation TEX_OVERWORLD_SUN =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun.png");
+    /** Суневент: истощённое (красное) солнце — временный вариант над DEFAULT, не SunState. */
+    public static final ResourceLocation TEX_OVERWORLD_SUN_RED =
+        ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_red.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_DYSON =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_dyson.png");
+    /** Суневент × сфера Дайсона (автор 2026-09-19: багровый + дайсон). */
+    public static final ResourceLocation TEX_OVERWORLD_SUN_RED_DYSON =
+        ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_red_dyson.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_GONE =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/overworld/sun_gone.png");
     public static final ResourceLocation TEX_OVERWORLD_SUN_BLACKHOLE =
@@ -58,8 +66,15 @@ public final class SpaceSkyState {
      */
     public static ResourceLocation getOverworldSunTexture(ResourceLocation vanillaSun) {
         return switch (sunState) {
-            case DEFAULT -> TEX_OVERWORLD_SUN;
-            case DYSON -> TEX_OVERWORLD_SUN_DYSON;
+            // Суневент: красное солнце в бинарном окне E−1 22000 → E0 15000
+            // («встаёт сразу красным»). GONE/ЧД ниже имеют свои текстуры,
+            // DYSON в окне идёт отдельной связкой sun_red_dyson (автор 2026-09-19).
+            case DEFAULT -> SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)
+                ? TEX_OVERWORLD_SUN_RED
+                : TEX_OVERWORLD_SUN;
+            case DYSON -> SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)
+                ? TEX_OVERWORLD_SUN_RED_DYSON
+                : TEX_OVERWORLD_SUN_DYSON;
             case GONE -> TEX_OVERWORLD_SUN_GONE;
             case BLACKHOLE -> TEX_OVERWORLD_SUN_BLACKHOLE;
             case BLACKHOLE_DYSON -> TEX_OVERWORLD_SUN_BLACKHOLE_DYSON;

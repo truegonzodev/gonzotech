@@ -21,10 +21,10 @@ public final class SecondElectricFurnaceMenu extends BaseMachineMenu {
     public SecondElectricFurnaceMenu(int id, Inventory inv, SecondElectricFurnaceBlockEntity be, ContainerData data) {
         super(ModMenus.SECOND_ELECTRIC_FURNACE.get(), id, be, data, 4);
         this.be = be;
-        addSlot(new Slot(be, SecondElectricFurnaceBlockEntity.SLOT_INPUT_A, 47, 25));
-        addSlot(new Slot(be, SecondElectricFurnaceBlockEntity.SLOT_INPUT_B, 47, 49));
-        addSlot(new SmeltResultSlot(be, be, SecondElectricFurnaceBlockEntity.SLOT_OUTPUT_A, 116, 25));
-        addSlot(new SmeltResultSlot(be, be, SecondElectricFurnaceBlockEntity.SLOT_OUTPUT_B, 116, 49));
+        addSlot(new Slot(be, SecondElectricFurnaceBlockEntity.SLOT_INPUT_A, 44, 17));
+        addSlot(new Slot(be, SecondElectricFurnaceBlockEntity.SLOT_INPUT_B, 44, 53));
+        addSlot(new SmeltResultSlot(be, be, SecondElectricFurnaceBlockEntity.SLOT_OUTPUT_A, 116, 17));
+        addSlot(new SmeltResultSlot(be, be, SecondElectricFurnaceBlockEntity.SLOT_OUTPUT_B, 116, 53));
         addPlayerInventory(inv, 8, 84);
     }
 
@@ -38,5 +38,10 @@ public final class SecondElectricFurnaceMenu extends BaseMachineMenu {
 
     public int cookTotal(int lane) {
         return data.get(lane == 0 ? 2 : 4);
+    }
+
+    public int cookProgressPercent(int lane) {
+        int total = cookTotal(lane);
+        return total <= 0 ? 0 : Math.min(100, (int) ((long) cookProgress(lane) * 100L / total));
     }
 }

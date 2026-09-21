@@ -32,42 +32,54 @@ public final class GuiMask {
     /** Пиксель считается «дыркой» (открытым для шкалы), если альфа ниже порога. */
     private static final int ALPHA_THRESHOLD = 8; // ~ alpha <= 8/255
 
-    private static final int WIN_W = 176;
-    private static final int WIN_H = 166;
+    private static final int DEFAULT_WIN_W = 176;
+    private static final int DEFAULT_WIN_H = 166;
 
     private static final Map<ResourceLocation, GuiMask> CACHE = new HashMap<>();
-    private static final GuiMask ALL_OPEN = new GuiMask(null);
+    private static final GuiMask ALL_OPEN = new GuiMask(null, 0, 0);
 
-    /** {@code open[y*WIN_W + x]} = можно ли рисовать шкалу в этом пикселе окна. */
+    /** {@code open[y*winW + x]} = можно ли рисовать шкалу в этом пикселе окна. */
     private final boolean[] open;
+    private final int winW;
+    private final int winH;
 
-    private GuiMask(boolean[] open) {
+    private GuiMask(boolean[] open, int winW, int winH) {
         this.open = open;
+        this.winW = winW;
+        this.winH = winH;
+    }
+
+    /** Маска для стандартного окна 176×166. */
+    public static GuiMask forTexture(ResourceLocation fgTexture, int offX, int offY) {
+        return forTexture(fgTexture, offX, offY, DEFAULT_WIN_W, DEFAULT_WIN_H);
     }
 
     /**
-     * Маска для переднего PNG. {@code offX/offY} — смещение блита листа
-     * относительно угла окна (для 512-листа обычно −128).
+     * Маска для переднего PNG размера окна {@code winW×winH}. {@code offX/offY} —
+     * смещение блита листа относительно угла окна (для 512-листа обычно −128).
+     * Окна нестандартной высоты (завод сплавов 222, фильтр предметов 184) должны
+     * передавать свой размер: ниже стандартных 166 px рисунок fg тогда тоже
+     * клипует шкалы.
      */
-    public static GuiMask forTexture(ResourceLocation fgTexture, int offX, int offY) {
+    public static GuiMask forTexture(ResourceLocation fgTexture, int offX, int offY, int winW, int winH) {
         if (fgTexture == null) return ALL_OPEN;
         GuiMask cached = CACHE.get(fgTexture);
         if (cached != null) return cached;
-        GuiMask built = build(fgTexture, offX, offY);
+        GuiMask built = build(fgTexture, offX, offY, winW, winH);
         CACHE.put(fgTexture, built);
         return built;
     }
 
-    private static GuiMask build(ResourceLocation tex, int offX, int offY) {
+    private static GuiMask build(ResourceLocation tex, int offX, int offY, int winW, int winH) {
         Minecraft mc = Minecraft.getInstance();
         Optional<Resource> res = mc.getResourceManager().getResource(tex);
         if (res.isEmpty()) return ALL_OPEN;
         try (InputStream in = res.get().open(); NativeImage img = NativeImage.read(in)) {
-            boolean[] open = new boolean[WIN_W * WIN_H];
+            boolean[] open = new boolean[winW * winH];
             int w = img.getWidth();
             int h = img.getHeight();
-            for (int wy = 0; wy < WIN_H; wy++) {
-                for (int wx = 0; wx < WIN_W; wx++) {
+            for (int wy = 0; wy < winH; wy++) {
+                for (int wx = 0; wx < winW; wx++) {
                     // пиксель окна (wx,wy) → пиксель листа (wx-offX, wy-offY)
                     int sx = wx - offX;
                     int sy = wy - offY;
@@ -79,10 +91,10 @@ public final class GuiMask {
                         int alpha = (argb >> 24) & 0xFF;
                         free = alpha <= ALPHA_THRESHOLD;
                     }
-                    open[wy * WIN_W + wx] = free;
+                    open[wy * winW + wx] = free;
                 }
             }
-            return new GuiMask(open);
+            return new GuiMask(open, winW, winH);
         } catch (Exception e) {
             return ALL_OPEN;
         }
@@ -91,8 +103,8 @@ public final class GuiMask {
     /** Можно ли рисовать шкалу в пикселе окна (wx,wy)? Вне окна/без маски — да. */
     public boolean isOpenAt(int wx, int wy) {
         if (open == null) return true;
-        if (wx < 0 || wy < 0 || wx >= WIN_W || wy >= WIN_H) return true;
-        return open[wy * WIN_W + wx];
+        if (wx < 0 || wy < 0 || wx >= winW || wy >= winH) return true;
+        return open[wy * winW + wx];
     }
 
     /**

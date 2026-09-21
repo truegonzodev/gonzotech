@@ -39,7 +39,11 @@ public final class SpeedometerHud {
         // В транспорте скорость самого Player обычно нулевая, поэтому измеряем
         // root vehicle. Вне транспорта это тот же игрок.
         Entity movingEntity = player.isPassenger() ? player.getRootVehicle() : player;
-        speedBlocksPerSecond = movingEntity.getDeltaMovement().length() * 20.0D;
+        // Только ГОРИЗОНТАЛЬ: вертикальная компонента — осадочный нос гравитации
+        // (~0.078 б/тик постоянно при стоянии на земле), из-за неё «спидометр»
+        // показывал ~1.6 б/с абсолютно неподвижному игроку.
+        var dm = movingEntity.getDeltaMovement();
+        speedBlocksPerSecond = Math.hypot(dm.x, dm.z) * 20.0D;
     }
 
     /** Рисует строку непосредственно над хотбаром, не занимая action bar. */

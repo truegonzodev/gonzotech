@@ -1,6 +1,8 @@
 package com.gonzotech.core.event;
 
 import com.gonzotech.chalkboard.advancement.RecipeUnlocks;
+import com.gonzotech.chalkboard.network.NotesNetwork;
+import com.gonzotech.chalkboard.notes.ScholarNoteFlags;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.registry.ModBlocks;
@@ -42,10 +44,15 @@ import java.util.UUID;
 /**
  * Обработчики «мелких фишек» Фазы 3 (регистрируются на NeoForge.EVENT_BUS):
  * <ol>
- *   <li><b>Гейт крафта</b> ({@link PlayerEvent.ItemCraftedEvent}) — если игрок
- *       крафтит «закрытую» машину (эл. печь) до нужного «Открытия», ингредиенты
- *       всё равно тратятся, но вместо результата он получает бесполезный
- *       {@code botched_mechanism} и сообщение в чат. Задел под механику стресса.</li>
+ *   <li><b>Гейт крафта</b> ({@link PlayerEvent.ItemCraftedEvent} +
+ *       {@code CraftingMenuMixin}) — если игрок крафтит «закрытую» машину до нужного
+ *       «Открытия», ингредиенты тратятся, но вместо результата он получает
+ *       бесполезный {@code botched_mechanism} и сообщение в чат. Все пути взятия
+ *       результата идут через {@code ResultSlot.onTake} с живым стакком (обычный
+ *       клик / SWAP / Q / PICKUP с тем же предметом на курсоре) — обрабатываются
+ *       здесь. Исключение: Shift-клик (quick-craft) — ваниль переносит РЕАЛЬНЫЙ
+ *       стак в инвентарь, событие даёт копию, а сетку не расходует; этот путь
+ *       перехватывается {@code CraftingMenuMixin}. Задел под механику стресса.</li>
  *   <li><b>Свинец в ванильных печах</b> ({@link PlayerEvent.ItemSmeltedEvent}) —
  *       при заборе результата плавки железа из ванильной печи/плавильни/коптильни:
  *       5% свинца за предмет. (Взрыв цезия в ванильных печах делает миксин
@@ -65,6 +72,9 @@ import java.util.UUID;
  *       15 минут, тихо превращаются в фруктовое сусло 1:1. Без NBT: состояние
  *       (базис количеств + очередь отложенных конверсий) держится в памяти сервера
  *       и чистится на выходе ({@link PlayerEvent.PlayerLoggedOutEvent}).</li>
+ *   <li><b>«Познание мира»</b> ({@link PlayerTickEvent.Post}) — флаги действий для
+ *       «Заметок учёного»: впервые добыта форма цезия → флаг {@code cesium};
+ *       впервые добыт вольфрамовый блок → флаг {@code wolfram}. Скан каждые 40 тиков.</li>
  * </ol>
  */
 public final class Phase3Events {
@@ -125,6 +135,31 @@ public final class Phase3Events {
         return craftGate;
     }
 
+    /**
+     * Требуемый номер «Открытия» для «закрытого» предмета (null — не гейтится):
+     * 1 — гейт тира 1 (карта ниже), 2 — гейт тира 2 ({@link com.gonzotech.machines.crafting.TierTwoCrafting}).
+     * Общее для обработчиков {@link #onItemCrafted} и миксина
+     * {@link com.gonzotech.mixin.CraftingMenuMixin} (Shift-крафт).
+     */
+    public static Integer requiredTierFor(net.minecraft.world.item.Item item) {
+        Integer tier1 = gate().get(item);
+        if (tier1 != null) return tier1;
+        return com.gonzotech.machines.crafting.TierTwoCrafting.isGatedOutput(item) ? 2 : null;
+    }
+
+    /**
+     * true, если предмет «закрыт» гейтом по «Открытию» (тир 1 или 2).
+     * <p>
+     * Для НЕИГРОВЫХ крафтеров (будущий «сборщик»): такой вывод НЕЛЬЗЯ давать —
+     * гейт живёт в per-player аттачменте, а машина не игрок, и привязать крафт
+     * машины к прогрессу какого-то игрока нельзя. Правило: все рецепты с
+     * загейченным выводом из пула сборщика убираются целиком (тир 1 и всё,
+     * что позже). См. TEMP_NOTES §3.5.
+     */
+    public static boolean isAttachmentGated(net.minecraft.world.item.Item item) {
+        return requiredTierFor(item) != null;
+    }
+
     // ─────────────────────── 1. Гейт крафта закрытых машин ───────────────────────
 
     @SubscribeEvent
@@ -143,6 +178,14 @@ public final class Phase3Events {
         // это часть «прикола»), результат заменяем на бесполезный механизм.
         int count = crafted.getCount();
         crafted.setCount(0);
+        // Ветка PICKUP «тот же предмет на курсоре»: ванила УВЕЛИЧИВАЕТ курсор ДО
+        // события (grow перед onTake), а в событии — выделенная копия, так что
+        // нуление курсор не спасает. Отменяем прирост (и заодно переполнение
+        // полного стака).
+        ItemStack carried = player.containerMenu.getCarried();
+        if (!carried.isEmpty() && carried.is(crafted.getItem())) {
+            carried.shrink(count);
+        }
         for (int i = 0; i < count; i++) {
             ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
             if (!player.getInventory().add(botched)) {
@@ -183,15 +226,18 @@ public final class Phase3Events {
         }
     }
 
-    // ──────────────── 3. Источник лавы + красная пыль → багровый обсидиан ────────────────
+    // ──────────────── 3. Источник лавы + блок редстоуна → багровый обсидиан ────────────────
 
     /**
-     * Covers the inverse placement order: redstone dust can be placed beside an
-     * existing source-lava block. The bucket mixin handles placing the source
-     * onto/next to dust; this event handles placing dust next to a source.
+     * Covers the inverse placement order: a redstone block can be placed beside
+     * an existing source-lava block. The bucket mixin handles placing the lava
+     * source onto/next to the redstone block; this event handles placing the
+     * block next to a source.
      * <p>
-     * The upper face of lava is explicitly excluded: dust directly above a
-     * source lava block is allowed and must not trigger the reaction.
+     * The reaction is with the REDSTONE BLOCK only (never dust/wire): a block
+     * is not replaceable, so the only placement conflict is order. The upper
+     * face of lava is explicitly excluded: a block directly above a source
+     * lava block is allowed and must not trigger the reaction.
      */
     @SubscribeEvent
     public static void onRedstoneOrLavaNeighbourChanged(BlockEvent.NeighborNotifyEvent event) {
@@ -203,13 +249,13 @@ public final class Phase3Events {
             return;
         }
 
-        if (!level.getBlockState(changedPos).is(Blocks.REDSTONE_WIRE)) return;
-        for (Direction fromDustToLava : Direction.values()) {
-            // If the lava is below this dust, the dust lies above the lava.
+        if (!level.getBlockState(changedPos).is(Blocks.REDSTONE_BLOCK)) return;
+        for (Direction fromBlockToLava : Direction.values()) {
+            // If the lava is below this block, the block lies above the lava.
             // That single (upper) side is deliberately non-reactive.
-            if (fromDustToLava == Direction.DOWN) continue;
+            if (fromBlockToLava == Direction.DOWN) continue;
 
-            BlockPos lavaPos = changedPos.relative(fromDustToLava);
+            BlockPos lavaPos = changedPos.relative(fromBlockToLava);
             if (isLavaSource(level, lavaPos)) {
                 transformLavaToCrimsonObsidian(level, lavaPos);
             }
@@ -221,11 +267,11 @@ public final class Phase3Events {
         return level.getFluidState(pos).isSourceOfType(Fluids.LAVA);
     }
 
-    /** Check the five allowed sides of a source lava block for redstone dust. */
+    /** Check the five allowed sides of a source lava block for a redstone block. */
     private static void transformLavaIfTouchingRedstone(ServerLevel level, BlockPos lavaPos) {
         for (Direction direction : Direction.values()) {
             if (direction == Direction.UP) continue;
-            if (level.getBlockState(lavaPos.relative(direction)).is(Blocks.REDSTONE_WIRE)) {
+            if (level.getBlockState(lavaPos.relative(direction)).is(Blocks.REDSTONE_BLOCK)) {
                 transformLavaToCrimsonObsidian(level, lavaPos);
                 return;
             }
@@ -247,6 +293,12 @@ public final class Phase3Events {
         // These recipes are unlocked by each player's persistent PLAY_TIME, not
         // by a global clock. It has to run before the water-only early return.
         RecipeUnlocks.grantAfterTwentyMinutesPlayed(serverPlayer);
+
+        // 8. «Познание мира»: флаги действий для «Заметок учёного». Сканируем
+        // инвентарь редковатый (каждые 2 с) — достаточно для «первая добыча».
+        if (level.getGameTime() % WORLD_KNOWLEDGE_SCAN_INTERVAL == 0) {
+            updateWorldKnowledgeFlags(serverPlayer);
+        }
 
         if (!player.isInWater()) return;
         Inventory inv = player.getInventory();
@@ -272,6 +324,64 @@ public final class Phase3Events {
                 player.getX(), player.getY(), player.getZ(),
                 CESIUM_WATER_EXPLOSION, Level.ExplosionInteraction.NONE);
         }
+    }
+
+    // ─────────────── 8. «Познание мира»: флаги «Заметок учёного» ───────────────
+
+    /** Как часто сканировать инвентарь ради флагов (тиков). 2 с — достаточно. */
+    private static final int WORLD_KNOWLEDGE_SCAN_INTERVAL = 40;
+
+    /**
+     * Одноразовые флаги действий главы «Познание мира»:
+     * <ul>
+     *   <li><b>цезий</b> — в инвентаре впервые появилась любая реактивная форма
+     *       цезия (см. {@link #isWaterReactiveCesium}) → открывается страница
+     *       «Цезий, обещание взрыва»;</li>
+     *   <li><b>вольфрам</b> — в инвентаре впервые появился вольфрамовый блок
+     *       (абсорбер) → открывается страница «Вольфрам, большой абсорбер»;</li>
+     *   <li><b>открытие 3</b> — в инвентаре впервые появился аттачмент
+     *       {@code gonzotech:discovery_3} (выдаётся за активацию третьего
+     *       открытия меловой доски) → открывается раздел «Глубокая
+     *       металлургия» (завод сплавов и «несмешиваемые» сплавы).</li>
+     * </ul>
+     * Флаг пишется в прогресс игрока; при НОВОМ флаге пересылаем состояние
+     * заметок, чтобы открытая буклет-GUI обновилась на лету.
+     */
+    private static void updateWorldKnowledgeFlags(ServerPlayer serverPlayer) {
+        Inventory inv = serverPlayer.getInventory();
+        boolean cesium = hasWaterReactiveCesium(inv);
+        boolean wolfram = hasTungstenBlock(inv);
+        boolean discovery3 = hasItem(inv, ModItems.getDiscoveryItem(3).get());
+        if (!cesium && !wolfram && !discovery3) return;
+
+        PlayerChalkboardProgress progress = serverPlayer.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        boolean changed = false;
+        if (cesium && progress.unlockNoteFlag(ScholarNoteFlags.CESIUM)) changed = true;
+        if (wolfram && progress.unlockNoteFlag(ScholarNoteFlags.WOLFRAM)) changed = true;
+        if (discovery3 && progress.unlockNoteFlag(ScholarNoteFlags.DISCOVERY_3)) changed = true;
+        if (!changed) return;
+
+        serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
+        NotesNetwork.sendToPlayer(serverPlayer);
+    }
+
+    /** Есть ли в инвентаре конкретный предмет (аттачменты Открытий и т.п.). */
+    private static boolean hasItem(Inventory inventory, net.minecraft.world.item.Item item) {
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack st = inventory.getItem(slot);
+            if (!st.isEmpty() && st.getItem() == item) return true;
+        }
+        return false;
+    }
+
+    /** Есть ли в инвентаре вольфрамовый блок (абсорбер тепла). */
+    private static boolean hasTungstenBlock(Inventory inventory) {
+        net.minecraft.world.item.Item block = ModItems.METAL_BLOCK_ITEMS.get("tungsten_block").get();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack st = inventory.getItem(slot);
+            if (!st.isEmpty() && st.is(block)) return true;
+        }
+        return false;
     }
 
     // ─────────────── 4b. Выброшенные предметы в воде ───────────────────────

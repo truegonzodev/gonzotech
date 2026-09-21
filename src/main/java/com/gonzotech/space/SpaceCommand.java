@@ -1,6 +1,7 @@
 package com.gonzotech.space;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -28,9 +29,14 @@ import java.util.Set;
  * <ul>
  *   <li>{@code /gonzotech tp <dimension>} — телепорт между измерениями.</li>
  *   <li>{@code /gonzotech debug sun default|dyson|gone|blackhole|blackhole_dyson} — смена состояния Солнца.</li>
+ *   <li>{@code /gonzotech debug sunevent status|reset|window &lt;day&gt;} — суневеты:
+ *       состояние / «Икар»-сброс / тестовое окно (багровый день на указанном дне).</li>
  *   <li>{@code /gonzotech debug alpha_centauri default|dyson} — сфера Дайсона для Альфы Центавра.</li>
  *   <li>{@code /gonzotech debug yx989 default|dyson} (алиасы y989, yx989_k2) — кольцо Дайсона Yx989-k2.</li>
  *   <li>{@code /gonzotech debug zangler default|dyson} (алиас zangler_11) — кольцо Дайсона Zangler-11.</li>
+ *   <li>{@code /gonzotech debug notes <flag> unlock|forget} — debug-гейт по страницам
+ *       «Заметок учёного»: cesium / wolfram / sun_fade (флаги «Познания мира»),
+ *       discovery_1 / discovery_2 (тиры-рецепты), all (всё разом).</li>
  * </ul>
  */
 public final class SpaceCommand {
@@ -108,6 +114,22 @@ public final class SpaceCommand {
             .then(Commands.literal("default").executes(c -> setStar(c, "zangler", false, "Чёрная Дыра Zangler-11")))
             .then(Commands.literal("dyson").executes(c -> setStar(c, "zangler", true, "Чёрная Дыра Zangler-11")));
 
+        // /gonzotech debug sunevent status|reset|window <day> — состояние/«Икар»/тестовое окно
+        LiteralArgumentBuilder<CommandSourceStack> suneventDebug = Commands.literal("sunevent")
+            .then(Commands.literal("status").executes(SpaceCommand::suneventStatus))
+            .then(Commands.literal("reset").executes(SpaceCommand::suneventReset))
+            .then(Commands.literal("spawntest").executes(SpaceCommand::suneventSpawnTest))
+            .then(Commands.literal("window")
+                .then(Commands.argument("day", IntegerArgumentType.integer())
+                    .executes(SpaceCommand::suneventWindow)));
+
+        // /gonzotech debug notes <flag> unlock|forget — debug-гейт по страницам заметок
+        LiteralArgumentBuilder<CommandSourceStack> notesDebug = Commands.literal("notes")
+            .then(Commands.argument("flag", StringArgumentType.word())
+                .suggests(NOTE_FLAG_SUGGESTIONS)
+                .then(Commands.literal("unlock").executes(c -> notesDebug(c, true)))
+                .then(Commands.literal("forget").executes(c -> notesDebug(c, false))));
+
         LiteralArgumentBuilder<CommandSourceStack> debug = Commands.literal("debug")
             .then(sunDebug)
             .then(alphaDebug)
@@ -116,7 +138,9 @@ public final class SpaceCommand {
             .then(yx989Debug)
             .then(yx989K2Debug)
             .then(zanglerDebug)
-            .then(zangler11Debug);
+            .then(zangler11Debug)
+            .then(notesDebug)
+            .then(suneventDebug);
 
         dispatcher.register(
             Commands.literal("gonzotech")
@@ -135,7 +159,25 @@ public final class SpaceCommand {
 
         SpaceSkyNetwork.sendSunStateToAll(server, state);
 
+        // Бонус (2026-09-18): состояние Солнца персистентно — переживает
+        // рестарт сервера (SunEventData), а не только переподключение.
+        com.gonzotech.sunevent.SunEventData sunData =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        sunData.sunState = state;
+        sunData.setDirty();
+
         if (state == SunState.GONE) {
+            // «Познание мира»: каждый онлайн-игрок, ставший свидетелем угасания
+            // Солнца, получает флаг для страницы «Угасание солнца» (одноразовый).
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                com.gonzotech.chalkboard.progress.PlayerChalkboardProgress progress =
+                    p.getData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS);
+                if (progress.unlockNoteFlag(com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_FADE)) {
+                    p.setData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS, progress);
+                    com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(p);
+                }
+            }
+
             // При исчезновении солнца — вечная тьма: time set 18000 + doDaylightCycle false
             for (ResourceKey<Level> dimKey : SOLAR_DIMENSIONS) {
                 ServerLevel lvl = server.getLevel(dimKey);
@@ -177,6 +219,237 @@ public final class SpaceCommand {
         String stateName = dyson ? "Кольцо/Сфера Дайсона (АКТИВНО)" : "Обычное состояние (ОТКЛЮЧЕНО)";
         source.sendSuccess(() -> Component.literal(
             "§a[GonzoTech] " + displayName + ": §e" + stateName), true);
+        return 1;
+    }
+
+    // ─────────────────────── debug: заметки учёного ───────────────────────
+
+    /** Все флаги «Познания мира» разом — для {@code all}. */
+    private static final List<String> ALL_NOTE_FLAGS = List.of(
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.CESIUM,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.WOLFRAM,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_FADE,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.DISCOVERY_3,
+        com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_EVENT);
+
+    private static final SuggestionProvider<CommandSourceStack> NOTE_FLAG_SUGGESTIONS =
+        (ctx, builder) -> SharedSuggestionProvider.suggest(
+            java.util.stream.Stream.concat(
+                ALL_NOTE_FLAGS.stream(),
+                java.util.stream.Stream.of("discovery_1", "discovery_2", "all")),
+            builder);
+
+    /**
+     * /gonzotech debug notes &lt;flag&gt; unlock|forget — админский debug-гейт по
+     * страницам «Заметок учёного» (выполняет игрок — на себя):
+     * <ul>
+     *   <li>{@code cesium} / {@code wolfram} / {@code sun_fade} / {@code sun_event} /
+     *       {@code discovery_3} — флаги «Познания мира» (стр. 32-33 / 34 / 35 /
+     *       36-40 «Глубокая металлургия»);</li>
+     *   <li>{@code discovery_1} / {@code discovery_2} — тир-рецепты 1/2
+     *       (все страницы DISCOVERY_1/2, т.ч. редстоун-страница стр. 17);</li>
+     *   <li>{@code all} — всё разом: все флаги + оба тира.</li>
+     * </ul>
+     * {@code forget} — обратная операция. После правки состояние заметок и
+     * доски пересылаются игроку, чтобы открытая GUI/книга рецептов обновились.
+     */
+    private static int notesDebug(CommandContext<CommandSourceStack> ctx, boolean unlock) {
+        CommandSourceStack source = ctx.getSource();
+        ServerPlayer player;
+        try {
+            player = source.getPlayerOrException();
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§c[GonzoTech] Эту команду может выполнить только игрок."));
+            return 0;
+        }
+
+        String raw = StringArgumentType.getString(ctx, "flag").toLowerCase(java.util.Locale.ROOT).replace('-', '_');
+        com.gonzotech.chalkboard.progress.PlayerChalkboardProgress progress =
+            player.getData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS);
+        String what;
+
+        switch (raw) {
+            case "cesium", "wolfram", "sun_fade", "sun_event", "discovery_3" -> {
+                what = raw;
+                if (unlock) progress.unlockNoteFlag(raw);
+                else progress.forgetNoteFlag(raw);
+            }
+            case "discovery_1" -> {
+                what = "discovery_1";
+                if (unlock) progress.unlockRecipeTier(1);
+                else progress.forgetRecipeTier(1);
+            }
+            case "discovery_2" -> {
+                what = "discovery_2";
+                if (unlock) progress.unlockRecipeTier(2);
+                else progress.forgetRecipeTier(2);
+            }
+            case "all" -> {
+                what = "all";
+                for (String f : ALL_NOTE_FLAGS) {
+                    if (unlock) progress.unlockNoteFlag(f);
+                    else progress.forgetNoteFlag(f);
+                }
+                if (unlock) {
+                    progress.unlockRecipeTier(1);
+                    progress.unlockRecipeTier(2);
+                } else {
+                    progress.forgetRecipeTier(1);
+                    progress.forgetRecipeTier(2);
+                }
+            }
+            default -> {
+                source.sendFailure(Component.literal(
+                    "§c[GonzoTech] Неизвестный флаг заметок: " + raw
+                    + " (доступно: cesium, wolfram, sun_fade, sun_event, discovery_3, discovery_1, discovery_2, all)"));
+                return 0;
+            }
+        }
+
+        player.setData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS, progress);
+        com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(player);
+        com.gonzotech.chalkboard.network.ChalkboardNetwork.sendSyncToPlayer(player);
+
+        final String fwhat = what;
+        final String fname = player.getGameProfile().getName();
+        String action = unlock ? "§2открыто" : "§cзабыто";
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Заметки " + fname + ": §e" + fwhat + "§a — " + action), true);
+        return 1;
+    }
+
+    /** /gonzotech debug sunevent status — счётчик, ближайший/последний багровые дни. */
+    private static int suneventStatus(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        var server = source.getServer();
+        if (server == null) return 0;
+        com.gonzotech.sunevent.SunEventData data =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        long today = server.overworld().getDayTime() / 24000L;
+        String phase = today == data.nextEventDay ? "§cБАГРОВЫЙ ДЕНЬ"
+            : (data.snowWindowVanillaDay(today) ? "§bснеговое окно (дождь=снег)" : "обычный");
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Суневеты: §e" + data.suneventDays + "§a полных дней, сегодня ванильный день §e"
+            + today + "§a (" + phase + "). Следующий багровый день: §e" + data.nextEventDay
+            + (data.lastEventDay > 0 ? "§a, последний: §e" + data.lastEventDay : "")
+            + "§a. Эффективность солнечных батарей: §e"
+            + (int) Math.round(data.solarMultiplier() * 100) + "%"), true);
+        return 1;
+    }
+
+    /** /gonzotech debug sunevent reset — «Икар»: сброс счётчика и эффективности. */
+    private static int suneventReset(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        var server = source.getServer();
+        if (server == null) return 0;
+        com.gonzotech.sunevent.SunEventData data =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        data.reset();
+        com.gonzotech.sunevent.SunEventNetwork.sendToAll(server.overworld());
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] «Икар»: счётчик суневетов сброшен (батарейки 100%), следующий багровый день: §e"
+            + data.nextEventDay), true);
+        return 1;
+    }
+
+    /**
+     * /gonzotech debug sunevent window &lt;day&gt; — тест: багровый день E на указанном
+     * ванильном дне (снежное окно = day−1..day). Не трогает расписание: на следующем
+     * смене дня драйвер пересчитает nextEventDay по счётчику.
+     */
+    /**
+     * Суневеты фаза 4 — мгновенная проверка цепочки спавна монстров + перепись:
+     * (1) осмотр загруженных монстров в радиусе 96 от игрока с раскладкой
+     * «видит небо / в тени» и по типам (небо+пещера count'ы '{тип=небо+пещера}');
+     * (2) суммарный MONSTER-счёт из последнего SpawnState (сравнивать с капом
+     * ~70 × чанки/289); (3) тестовый пак MONSTER через
+     * {@code NaturalSpawner.spawnCategoryForPosition} (~30 блоков от игрока;
+     * ваниль не даст ближе 24). Команда обходит КАП, натуральный цикл — нет:
+     * появились → правила в порядке (блок = кап/дистанция/спектатор),
+     * нет → правила блокируют (смотри лог и миксин).
+     *
+     * <p>ВАЖНО: в режиме наблюдателя натуральный спавн вокруг игрока не идёт
+     * (ванильный чек дистанции исключает спектаторов) — осмотр делать в
+     * креативе/выживании, стоя на месте.
+     */
+    private static int suneventSpawnTest(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        ServerPlayer player;
+        try {
+            player = source.getPlayerOrException();
+        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§c[GonzoTech] spawntest может выполнить только игрок."));
+            return 0;
+        }
+        ServerLevel level = source.getServer().overworld();
+
+        // Перепись: загруженные монстры вокруг игрока (радиус 96), небо/тень.
+        java.util.List<net.minecraft.world.entity.monster.Monster> monsters =
+            level.getEntitiesOfClass(net.minecraft.world.entity.monster.Monster.class,
+                player.getBoundingBox().inflate(96.0D));
+        java.util.Map<String, int[]> byType = new java.util.TreeMap<>();
+        int skyCount = 0;
+        int caveCount = 0;
+        for (net.minecraft.world.entity.monster.Monster m : monsters) {
+            boolean onSurface = level.canSeeSky(m.blockPosition());
+            int[] counts = byType.computeIfAbsent(
+                net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(m.getType()).toString(),
+                k -> new int[2]);
+            counts[onSurface ? 0 : 1]++;
+            if (onSurface) {
+                skyCount++;
+            } else {
+                caveCount++;
+            }
+        }
+        StringBuilder types = new StringBuilder();
+        byType.forEach((id, c) -> {
+            if (types.length() > 0) {
+                types.append(", ");
+            }
+            types.append(id.replace("minecraft:", "")).append('=').append(c[0]).append('+').append(c[1]);
+        });
+        if (types.length() == 0) {
+            types.append("пусто");
+        }
+
+        net.minecraft.world.level.NaturalSpawner.SpawnState spawnState =
+            level.getChunkSource().getLastSpawnState();
+        int monsterLoaded = spawnState == null ? -1
+            : spawnState.getMobCategoryCounts().getInt(net.minecraft.world.entity.MobCategory.MONSTER);
+        boolean window = com.gonzotech.sunevent.SunEventServer.monsterNightNow(level);
+
+        BlockPos target = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+            player.blockPosition().offset(30, 0, 0));
+        net.minecraft.world.level.NaturalSpawner.spawnCategoryForPosition(
+            net.minecraft.world.entity.MobCategory.MONSTER, level, target);
+        final String typeSummary = types.toString();
+        final int sky = skyCount;
+        final int cave = caveCount;
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Суневет-осмотр: окно §e" + (window ? "АКТИВНО" : "закрыто")
+            + "§a; рядом монстров §e" + monsters.size() + "§a (небо §e" + sky + "§a / тень §e" + cave
+            + "§a) {" + typeSummary + "§a}; всего загружено MONSTER §e" + monsterLoaded
+            + "§a. Тестовый пак MONSTER брошен у " + target.toShortString()
+            + " (~30 блоков): окно активно → там должны появиться монстры."),
+            true);
+        return 1;
+    }
+
+    private static int suneventWindow(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        var server = source.getServer();
+        if (server == null) return 0;
+        long day = IntegerArgumentType.getInteger(ctx, "day");
+        com.gonzotech.sunevent.SunEventData data =
+            com.gonzotech.sunevent.SunEventNetwork.getData(server.overworld());
+        data.nextEventDay = day;
+        data.setDirty();
+        com.gonzotech.sunevent.SunEventNetwork.sendToAll(server.overworld());
+        source.sendSuccess(() -> Component.literal(
+            "§a[GonzoTech] Суневет-тест: ванильный день §e" + day
+            + "§a = багровый день E (снег в окне day−1..day, гроза ×5 в день E). "
+            + "Расписание на следующем смене дня восстановится."), true);
         return 1;
     }
 

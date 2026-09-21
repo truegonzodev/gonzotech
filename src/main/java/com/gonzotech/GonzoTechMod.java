@@ -41,8 +41,10 @@ public class GonzoTechMod {
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::registerPayloads);
 
-        ModBlocks.register(modEventBus);
+        // Жидкости регистрируются ДО блоков: LiquidBlock расплавленного кориума
+        // берёт источник жидкости из уже заполненного регистра при своём событии.
         ModFluids.register(modEventBus);
+        ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
         ModDataComponents.register(modEventBus);
         ModRecipeSerializers.register(modEventBus);
@@ -61,8 +63,9 @@ public class GonzoTechMod {
             com.gonzotech.machines.network.FlowTracker.clearAll();
             com.gonzotech.machines.network.ItemFlowTracker.clearAll();
             com.gonzotech.machines.network.UniversalNodeComparator.clearAll();
-            com.gonzotech.machines.network.FluidBudgetLedger.clearAll();
+            com.gonzotech.machines.network.PipeFlowLedger.clearAll();
             com.gonzotech.machines.turbine.TurbineStructure.clearAll();
+            com.gonzotech.machines.steamgen.SteamGenStructure.clearAll();
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
@@ -76,11 +79,20 @@ public class GonzoTechMod {
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
+        // Радиация (спека 2026-09-20): доза шкалы, наведённый фон предметов,
+        // динамический фон чанков, учёт поставленных радио-блоков.
+        NeoForge.EVENT_BUS.register(com.gonzotech.radiation.RadiationSystem.class);
+        // Суневеты (багровые дни): драйвер + синк при заходе.
+        NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
+            // Клиентские текстуры/тинт расплавленного кориума.
+            modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);
+            // Развёртка и тинт надетой брони custom_alloy.
+            modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
             // Texture-only Smart CTM корпусной оболочки турбины.
             modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
@@ -89,6 +101,10 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
             // Спидометр измеряет клиентскую скорость и выводит её над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
+            // Радиация: lore-строка «☢ Радиоактивность» в самом низу тултипов.
+            NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.RadTooltip.class);
+            // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
             modEventBus.addListener(com.gonzotech.space.client.SpaceClient::onRegisterDimensionEffects);
             // Фаза 4 — рендерер горизонта событий Чёрных Дыр.
@@ -133,6 +149,9 @@ public class GonzoTechMod {
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
 
         com.gonzotech.space.SpaceSkyNetwork.register(registrar);
+
+        // Суневеты: nextEventDay/lastEventDay/suneventDays на клиент.
+        com.gonzotech.sunevent.SunEventNetwork.register(registrar);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

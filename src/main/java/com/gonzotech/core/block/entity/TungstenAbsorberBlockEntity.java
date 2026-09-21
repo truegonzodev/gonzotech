@@ -1,5 +1,6 @@
 package com.gonzotech.core.block.entity;
 
+import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.NuclearDefs;
 import com.gonzotech.machines.energy.Sinks.GthSink;
@@ -20,8 +21,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public final class TungstenAbsorberBlockEntity extends BlockEntity implements GthSink {
 
     private final GtBuffer gth = new GtBuffer((long) NuclearDefs.TUNGSTEN_ABSORBER_GTH_CAPACITY);
-    /** Prevents repeatedly rewriting the same protected tungsten-centered 3×3 footprint every tick. */
-    private boolean moltenReleaseTriggered;
 
     public TungstenAbsorberBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TUNGSTEN_ABSORBER.get(), pos, state);
@@ -58,19 +57,14 @@ public final class TungstenAbsorberBlockEntity extends BlockEntity implements Gt
         if (!(level instanceof ServerLevel server)) return;
         boolean changed = false;
         if (!absorber.gth.isEmpty()) {
-            absorber.gth.extract(NuclearDefs.TUNGSTEN_ABSORBER_GTH_LOSS, false);
+            absorber.gth.extract(coolingPerTick(level, pos), false);
             changed = true;
         }
 
+        // Above the thresholds the absorber rolls once per second for a 5%
+        // ignition and a 3% melt of one random block in the 3×3×3 around it.
         if (absorber.gth.amountAsLong() > NuclearDefs.TUNGSTEN_ABSORBER_LAVA_THRESHOLD) {
-            if (!absorber.moltenReleaseTriggered) {
-                ThermalHazards.meltToLava(server, pos);
-                absorber.moltenReleaseTriggered = true;
-                changed = true;
-            }
-        } else {
-            // A later independently caused overheat is allowed to make one new release.
-            absorber.moltenReleaseTriggered = false;
+            ThermalHazards.maybeMeltToLava(server, pos);
         }
         if (absorber.gth.amountAsLong() > NuclearDefs.TUNGSTEN_ABSORBER_IGNITION_THRESHOLD) {
             ThermalHazards.maybeIgniteAround(server, pos);
@@ -78,17 +72,29 @@ public final class TungstenAbsorberBlockEntity extends BlockEntity implements Gt
         if (changed) absorber.setChanged();
     }
 
+    /**
+     * Base dissipation plus 32 GTH/t for every superdense ice block touching the
+     * tungsten absorber from one of the six face directions.
+     */
+    private static long coolingPerTick(Level level, BlockPos pos) {
+        long loss = (long) NuclearDefs.TUNGSTEN_ABSORBER_GTH_LOSS;
+        for (Direction direction : Direction.values()) {
+            if (level.getBlockState(pos.relative(direction)).is(ModBlocks.SUPERDENSE_ICE.get())) {
+                loss += NuclearDefs.SUPERDENSE_ICE_COOLING_PER_BLOCK;
+            }
+        }
+        return loss;
+    }
+
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         gth.save(tag, "Gth");
-        tag.putBoolean("MoltenReleaseTriggered", moltenReleaseTriggered);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         gth.load(tag, "Gth");
-        moltenReleaseTriggered = tag.getBoolean("MoltenReleaseTriggered");
     }
 }

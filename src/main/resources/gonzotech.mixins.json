@@ -6,10 +6,26 @@
   "refmap": "gonzotech.refmap.json",
   "mixins": [
     "AbstractFurnaceBlockEntityMixin",
-    "BucketItemMixin"
+    "BucketItemMixin",
+    "CatFatnessMixin",
+    "CraftingMenuMixin",
+    "MobGoalAccessorMixin",
+    "CrafterBlockMixin",
+    "MobSunEventBurnMixin",
+    "MonsterSunEventSpawnMixin",
+    "PathfinderMobSunEventRulesMixin",
+    "ServerLevelSunEventSnowMixin",
+    "WolfFatnessMixin"
   ],
   "client": [
-    "client.ClientLevelSkyDarkenMixin"
+    "client.CatRenderStateMixin",
+    "client.CatRendererMixin",
+    "client.ClientLevelSkyDarkenMixin",
+    "client.FelineModelFatMixin",
+    "client.ItemInHandRendererMixin",
+    "client.WolfModelFatMixin",
+    "client.WolfRenderStateMixin",
+    "client.WolfRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

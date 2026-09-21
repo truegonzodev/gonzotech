@@ -40,7 +40,7 @@ public record AlloyTintSource(int defaultColor) implements ItemTintSource {
      * <p>The stored {@link AlloyTint} remains the exact weighted material
      * palette shown in lore; this conversion is render-only.</p>
      */
-    private static int colorFilter(int argb) {
+    public static int colorFilter(int argb) {
         int red = (argb >>> 16) & 0xFF;
         int green = (argb >>> 8) & 0xFF;
         int blue = argb & 0xFF;

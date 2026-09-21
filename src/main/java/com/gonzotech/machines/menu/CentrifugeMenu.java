@@ -28,11 +28,11 @@ public class CentrifugeMenu extends BaseMachineMenu {
         super(ModMenus.CENTRIFUGE.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
-        addSlot(new Slot(be, CentrifugeBlockEntity.SLOT_INPUT, 56, 35));
-        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_PRIMARY_OUTPUT, 110, 17));
-        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_BYPRODUCT_1, 132, 17));
-        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_BYPRODUCT_2, 110, 53));
-        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_BYPRODUCT_3, 132, 53));
+        addSlot(new Slot(be, CentrifugeBlockEntity.SLOT_INPUT, 62, 35));
+        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_PRIMARY_OUTPUT, 116, 17));
+        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_BYPRODUCT_1, 152, 17));
+        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_BYPRODUCT_2, 116, 53));
+        addSlot(new OutputOnlySlot(be, CentrifugeBlockEntity.SLOT_BYPRODUCT_3, 152, 53));
 
         addPlayerInventory(inventory, 8, 84);
     }

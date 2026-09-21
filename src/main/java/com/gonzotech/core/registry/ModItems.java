@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.item.DiscoveryItem;
+import com.gonzotech.core.item.AlloyArmorItem;
 import com.gonzotech.core.item.AlloyChestplateItem;
 import com.gonzotech.core.item.AlloyPickaxeItem;
 import com.gonzotech.core.item.AlloySwordItem;
@@ -10,6 +11,7 @@ import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.equipment.ArmorType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -81,6 +83,12 @@ public class ModItems {
         ITEMS.registerItem("alloy_sword", AlloySwordItem::new);
     public static final DeferredItem<AlloyChestplateItem> ALLOY_CHESTPLATE =
         ITEMS.registerItem("alloy_chestplate", AlloyChestplateItem::new);
+    public static final DeferredItem<AlloyArmorItem> ALLOY_HELMET =
+        ITEMS.registerItem("alloy_helmet", props -> new AlloyArmorItem(ArmorType.HELMET, props));
+    public static final DeferredItem<AlloyArmorItem> ALLOY_LEGGINGS =
+        ITEMS.registerItem("alloy_leggings", props -> new AlloyArmorItem(ArmorType.LEGGINGS, props));
+    public static final DeferredItem<AlloyArmorItem> ALLOY_BOOTS =
+        ITEMS.registerItem("alloy_boots", props -> new AlloyArmorItem(ArmorType.BOOTS, props));
 
     /** Фаза 3 — компонент для крафтов (псевдо-катушка). Вкладка «Компоненты». */
     public static final DeferredItem<Item> PSEUDO_COIL =
@@ -146,6 +154,38 @@ public class ModItems {
         ITEMS.registerSimpleItem("rebar");
 
     /**
+     * Ядерный ряд «Компонентов» (автор 21.09): изотопы и топливные смеси.
+     * Радиоактивность — пресетами в {@code RadSources.DIRECT_EMISSION}
+     * (природный уран/реакторный плутоний остаются формами в Metals);
+     * текстуры временные — повторно использованы существующие слитки/пыли,
+     * финальную графику рисует автор (помечено «под замену»).
+     */
+    public static final DeferredItem<Item> URANIUM_238 =
+        ITEMS.registerSimpleItem("uranium_238");
+    public static final DeferredItem<Item> URANIUM_235 =
+        ITEMS.registerSimpleItem("uranium_235");
+    public static final DeferredItem<Item> URANIUM_233 =
+        ITEMS.registerSimpleItem("uranium_233");
+    public static final DeferredItem<Item> WEAPONS_PLUTONIUM =
+        ITEMS.registerSimpleItem("weapons_plutonium");
+    public static final DeferredItem<Item> PLUTONIUM_238 =
+        ITEMS.registerSimpleItem("plutonium_238");
+    public static final DeferredItem<Item> PLUTONIUM_242 =
+        ITEMS.registerSimpleItem("plutonium_242");
+    public static final DeferredItem<Item> THORIUM_229 =
+        ITEMS.registerSimpleItem("thorium_229");
+    public static final DeferredItem<Item> URANIUM_FUEL =
+        ITEMS.registerSimpleItem("uranium_fuel");
+    /** СО — смесь оксидов (MOX). */
+    public static final DeferredItem<Item> MOX_FUEL =
+        ITEMS.registerSimpleItem("mox_fuel");
+    /** ТСО — ториевая смесь оксидов. */
+    public static final DeferredItem<Item> TMOX_FUEL =
+        ITEMS.registerSimpleItem("tmox_fuel");
+    public static final DeferredItem<Item> SNUP_FUEL =
+        ITEMS.registerSimpleItem("snup_fuel");
+
+    /**
      * Пыли ванильных металлов для побочных выходов ЦФ1УР. Они намеренно не добавлены
      * в Metals.INGOT_IDS: сами слитки принадлежат vanilla, а у мода нет их блоков или
      * самородков. В DUST_ITEMS они добавляются после всех существующих GT-пылей.
@@ -179,26 +219,37 @@ public class ModItems {
         ITEMS.registerSimpleItem("botched_mechanism");
 
     /**
-     * Фаза 3 — измерительный прибор «дозиметр». Пока предмет-плейсхолдер без
-     * рецепта: когда игрок держит его в руке, на HUD показывается шкала
-     * «Облучение» (см. {@code PsycheHud}).
+     * Фаза 3 — измерительный прибор «дозиметр». На HUD под ним шкала
+     * «Облучение» (см. {@code PsycheHud}); ПКМ — отчёт в чат: доза по шкале
+     * с расшифровкой + фон текущего чанка (радиация, спека 2026-09-20).
      */
     public static final DeferredItem<Item> DOSIMETER =
-        ITEMS.registerSimpleItem("dosimeter");
+        ITEMS.registerItem("dosimeter", props -> new com.gonzotech.radiation.DosimeterItem(
+            props.stacksTo(1)));
 
     /**
      * Фаза 3 — измерительный прибор «УФ-радиометр». Пока плейсхолдер без рецепта:
      * пока игрок держит его в руке, на HUD видна шкала «УФ излучение».
      */
     public static final DeferredItem<Item> UV_METER =
-        ITEMS.registerSimpleItem("uv_meter");
+        ITEMS.registerSimpleItem("uv_meter", new Item.Properties().stacksTo(1));
 
     /**
      * Клиентский спидометр: пока он в главной или дополнительной руке, над
      * хотбаром каждую игровую тик-итерацию видна скорость в блоках за секунду.
      */
     public static final DeferredItem<Item> SPEEDOMETER =
-        ITEMS.registerSimpleItem("speedometer");
+        ITEMS.registerSimpleItem("speedometer", new Item.Properties().stacksTo(1));
+
+    /**
+     * Солнечные часы — финальный прибор ветки суневетов (автор, 2026-09-18):
+     * пока в руке/оффхенде, над хотбаром строка «День: X, следующий Солнечный
+     * кризис — Y. Эффективность солнечных панелей: Z%» ({@code SolarWatchHud}).
+     * Крафт доступен и виден в книге рецептов после Открытия 1
+     * ({@code RecipeUnlocks}, тир 1).
+     */
+    public static final DeferredItem<Item> SOLAR_WATCH =
+        ITEMS.registerSimpleItem("solar_watch", new Item.Properties().stacksTo(1));
 
 
     // ─── «Приколы»: два сусла (еда с тошнотой) ───
@@ -282,12 +333,25 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("dead_stone", ModBlocks.DEAD_STONE);
     public static final DeferredItem<BlockItem> DEAD_LOG_ITEM =
         ITEMS.registerSimpleBlockItem("dead_log", ModBlocks.DEAD_LOG);
+    public static final DeferredItem<BlockItem> CHARRED_SAPLING_ITEM =
+        ITEMS.registerSimpleBlockItem("charred_sapling", ModBlocks.CHARRED_SAPLING);
+    public static final DeferredItem<BlockItem> SCORCHED_TUFT_ITEM =
+        ITEMS.registerSimpleBlockItem("scorched_tuft", ModBlocks.SCORCHED_TUFT);
+    public static final DeferredItem<BlockItem> SCORCHED_TUFT_MEDIUM_ITEM =
+        ITEMS.registerSimpleBlockItem("scorched_tuft_medium", ModBlocks.SCORCHED_TUFT_MEDIUM);
+    public static final DeferredItem<BlockItem> SCORCHED_TUFT_LARGE_ITEM =
+        ITEMS.registerSimpleBlockItem("scorched_tuft_large", ModBlocks.SCORCHED_TUFT_LARGE);
     public static final DeferredItem<BlockItem> CORIUM_ITEM =
         ITEMS.registerSimpleBlockItem("corium", ModBlocks.CORIUM);
     public static final DeferredItem<BlockItem> WASTE_BARREL_ITEM =
         ITEMS.registerSimpleBlockItem("waste_barrel", ModBlocks.WASTE_BARREL);
     public static final DeferredItem<BlockItem> DEAD_SLIME_BLOCK_ITEM =
         ITEMS.registerSimpleBlockItem("dead_slime_block", ModBlocks.DEAD_SLIME_BLOCK);
+    /** Ведро мёртвой жижи — твёрдый «бакет», как ванильное ведро рыхлого снега. */
+    public static final DeferredItem<net.minecraft.world.item.SolidBucketItem> DEAD_SLIME_BUCKET =
+        ITEMS.registerItem("dead_slime_bucket", props -> new net.minecraft.world.item.SolidBucketItem(
+            ModBlocks.DEAD_SLIME_BLOCK.get(), net.minecraft.sounds.SoundEvents.BUCKET_EMPTY_POWDER_SNOW,
+            props.stacksTo(1)));
     public static final DeferredItem<BlockItem> RADIOACTIVE_SLIME_BLOCK_ITEM =
         ITEMS.registerSimpleBlockItem("radioactive_slime_block", ModBlocks.RADIOACTIVE_SLIME_BLOCK);
 
@@ -303,6 +367,9 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("weathered_mechanisms", ModBlocks.WEATHERED_MECHANISMS);
     public static final DeferredItem<BlockItem> SILICON_CACHE_ITEM =
         ITEMS.registerSimpleBlockItem("silicon_cache", ModBlocks.SILICON_CACHE);
+    /** Миска для питомцев (автор 2026-09-19, жирные коты). */
+    public static final DeferredItem<BlockItem> PET_BOWL_ITEM =
+        ITEMS.registerSimpleBlockItem("pet_bowl", ModBlocks.PET_BOWL);
     public static final DeferredItem<BlockItem> PLASTIC_WASTE_ITEM =
         ITEMS.registerSimpleBlockItem("plastic_waste", ModBlocks.PLASTIC_WASTE);
 

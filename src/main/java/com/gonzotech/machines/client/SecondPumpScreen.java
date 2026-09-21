@@ -31,8 +31,8 @@ public final class SecondPumpScreen extends MachineScreen<SecondPumpMenu> {
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
-        int gtuX = x + 100;
-        int waterX = x + 126;
+        int gtuX = x + 62;
+        int waterX = x + 98;
         int gtuCapacity = MachineDefs.toUnits(SecondTierDefs.PUMP_GTU_CAPACITY);
         drawVBarTex(g, gtuX, barY, barW, barH, (float) menu.gtu() / gtuCapacity, BAR_GTU);
         drawVBarTex(g, waterX, barY, barW, barH,

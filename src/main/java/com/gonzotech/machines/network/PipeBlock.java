@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.item.WrenchItem;
+import com.gonzotech.machines.steamgen.SteamGenStructure;
 import com.gonzotech.machines.turbine.TurbineStructure;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
@@ -130,12 +131,18 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
-        if (!state.is(oldState.getBlock())) TurbineStructure.portPlaced(level, pos);
+        if (!state.is(oldState.getBlock())) {
+            TurbineStructure.portPlaced(level, pos);
+            SteamGenStructure.portPlaced(level, pos);
+        }
     }
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock())) TurbineStructure.portRemoved(level, pos);
+        if (!state.is(newState.getBlock())) {
+            TurbineStructure.portRemoved(level, pos);
+            SteamGenStructure.portRemoved(level, pos);
+        }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 

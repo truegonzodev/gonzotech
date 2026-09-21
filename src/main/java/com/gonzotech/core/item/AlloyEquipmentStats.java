@@ -54,11 +54,14 @@ public final class AlloyEquipmentStats {
     private AlloyEquipmentStats() {
     }
 
-    /** The three initial alloy equipment forms and their ordinary crafting patterns. */
+    /** The initial alloy equipment forms and their ordinary crafting patterns. */
     public enum Kind {
         PICKAXE(new String[] { "AAA", " S ", " S " }),
         SWORD(new String[] { "A", "A", "S" }),
-        CHESTPLATE(new String[] { "A A", "AAA", "AAA" });
+        CHESTPLATE(new String[] { "A A", "AAA", "AAA" }),
+        HELMET(new String[] { "AAA", "A A" }),
+        LEGGINGS(new String[] { "AAA", "A A", "A A" }),
+        BOOTS(new String[] { "A A", "A A" });
 
         private final String[] pattern;
 
@@ -70,11 +73,45 @@ public final class AlloyEquipmentStats {
             return pattern;
         }
 
+        /** True for the four armor pieces stamped from one alloy composition. */
+        public boolean isArmor() {
+            return this == CHESTPLATE || this == HELMET || this == LEGGINGS || this == BOOTS;
+        }
+
+        /**
+         * Multiplier of every armor stat (armor, toughness, knockback
+         * resistance, movement speed) and of durability, relative to the
+         * chestplate: chest 1.0, leggings 0.7, helmet 0.5, boots 0.4.
+         */
+        public double armorStatMultiplier() {
+            return switch (this) {
+                case CHESTPLATE -> 1.0D;
+                case LEGGINGS -> 0.7D;
+                case HELMET -> 0.5D;
+                case BOOTS -> 0.4D;
+                default -> 1.0D;
+            };
+        }
+
+        /** The equipment slot group the piece's modifiers apply to while worn. */
+        public EquipmentSlotGroup armorSlotGroup() {
+            return switch (this) {
+                case CHESTPLATE -> EquipmentSlotGroup.CHEST;
+                case LEGGINGS -> EquipmentSlotGroup.LEGS;
+                case HELMET -> EquipmentSlotGroup.HEAD;
+                case BOOTS -> EquipmentSlotGroup.FEET;
+                default -> throw new IllegalArgumentException(this + " is not armor");
+            };
+        }
+
         public Item outputItem() {
             return switch (this) {
                 case PICKAXE -> ModItems.ALLOY_PICKAXE.get();
                 case SWORD -> ModItems.ALLOY_SWORD.get();
                 case CHESTPLATE -> ModItems.ALLOY_CHESTPLATE.get();
+                case HELMET -> ModItems.ALLOY_HELMET.get();
+                case LEGGINGS -> ModItems.ALLOY_LEGGINGS.get();
+                case BOOTS -> ModItems.ALLOY_BOOTS.get();
             };
         }
     }
@@ -105,15 +142,20 @@ public final class AlloyEquipmentStats {
 
         result.set(ModDataComponents.ALLOY_COMPOSITION.get(), composition);
         result.set(ModDataComponents.ALLOY_TINT.get(), new AlloyTint(properties.argbTint()));
-        result.set(DataComponents.MAX_DAMAGE, durability(properties));
+        int baseDurability = durability(properties);
+        // Armor pieces scale durability by the same slot multiplier as their
+        // protective stats; tools keep the exact strength-based value.
+        result.set(DataComponents.MAX_DAMAGE, kind.isArmor()
+            ? Math.max(1, (int) Math.round(baseDurability * kind.armorStatMultiplier()))
+            : baseDurability);
         result.set(DataComponents.DAMAGE, 0);
         // These items are created from a stack-specific alloy. Static vanilla repair
         // tags would allow unrelated host materials to repair them, so leave future
         // alloy-aware repair mechanics as a separate feature.
         result.remove(DataComponents.REPAIRABLE);
 
-        if (kind == Kind.CHESTPLATE) {
-            configureChestplate(result, properties);
+        if (kind.isArmor()) {
+            configureArmor(result, kind, properties);
         } else {
             configureTool(result, kind, properties);
         }
@@ -208,36 +250,45 @@ public final class AlloyEquipmentStats {
         }
     }
 
-    private static void configureChestplate(ItemStack result, AlloyProperties properties) {
+    /**
+     * Stamps the slot-specific protective stats of one armor piece: the same
+     * alloy formulas as the chestplate, multiplied by the slot factor
+     * ({@link Kind#armorStatMultiplier()}) and bound to the piece's equipment
+     * slot.
+     */
+    private static void configureArmor(ItemStack result, Kind kind, AlloyProperties properties) {
+        EquipmentSlotGroup slot = kind.armorSlotGroup();
+        double multiplier = kind.armorStatMultiplier();
+        String prefix = "alloy_" + kind.name().toLowerCase() + "_";
         ItemAttributeModifiers.Builder attributes = ItemAttributeModifiers.builder()
             .add(Attributes.ARMOR,
-                modifier("alloy_chestplate_armor", chestplateArmor(properties), AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.CHEST)
+                modifier(prefix + "armor", chestplateArmor(properties) * multiplier, AttributeModifier.Operation.ADD_VALUE),
+                slot)
             .add(Attributes.KNOCKBACK_RESISTANCE,
-                modifier("alloy_chestplate_knockback_resistance", armorKnockbackResistance(properties),
+                modifier(prefix + "knockback_resistance", armorKnockbackResistance(properties) * multiplier,
                     AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.CHEST);
-        double armorToughness = chestplateArmorToughness(properties);
+                slot);
+        double armorToughness = chestplateArmorToughness(properties) * multiplier;
         if (armorToughness > 0.0D) {
             attributes.add(Attributes.ARMOR_TOUGHNESS,
-                modifier("alloy_chestplate_armor_toughness", armorToughness, AttributeModifier.Operation.ADD_VALUE),
-                EquipmentSlotGroup.CHEST);
+                modifier(prefix + "armor_toughness", armorToughness, AttributeModifier.Operation.ADD_VALUE),
+                slot);
         }
-        double movementModifier = armorMovementSpeedModifier(properties);
+        double movementModifier = armorMovementSpeedModifier(properties) * multiplier;
         if (movementModifier != 0.0D) {
             attributes.add(Attributes.MOVEMENT_SPEED,
-                modifier("alloy_chestplate_movement_speed", movementModifier,
+                modifier(prefix + "movement_speed", movementModifier,
                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
-                EquipmentSlotGroup.CHEST);
+                slot);
         }
         result.set(DataComponents.ATTRIBUTE_MODIFIERS, attributes.build());
-        // Leather's vanilla equipment layer is dyeable. It is used as the temporary
-        // neutral worn model until the dedicated alloy armor texture arrives; its
-        // color is taken directly from the same exact alloy tint component.
+        // Надетая броня рендерится по equipment-ассету (AlloyArmorMaterials):
+        // листы в textures/entity/equipment/humanoid{,_leggings}/custom_alloy.png.
+        // DYED_COLOR хранится как запасной источник цвета — тот же тинт сплава.
         AlloyTint tint = result.get(ModDataComponents.ALLOY_TINT.get());
         result.set(DataComponents.DYED_COLOR, new DyedItemColor(tint.argb() & 0x00FFFFFF, false));
         if (properties.inertness() < INERTNESS_ENCHANTMENT_LOCK) {
-            Enchantable leatherEnchantability = new ItemStack(Items.LEATHER_CHESTPLATE).get(DataComponents.ENCHANTABLE);
+            Enchantable leatherEnchantability = new ItemStack(armorHostItem(kind)).get(DataComponents.ENCHANTABLE);
             if (leatherEnchantability != null) result.set(DataComponents.ENCHANTABLE, leatherEnchantability);
         }
     }
@@ -324,7 +375,19 @@ public final class AlloyEquipmentStats {
                 case DIAMOND -> Items.DIAMOND_SWORD;
                 case NETHERITE_PLUS -> Items.NETHERITE_SWORD;
             };
-            case CHESTPLATE -> throw new IllegalArgumentException("Chestplates have no mining host");
+            case CHESTPLATE, HELMET, LEGGINGS, BOOTS ->
+                throw new IllegalArgumentException("Armor pieces have no mining host");
+        };
+    }
+
+    /** Vanilla leather armor host providing the slot's enchantability rules. */
+    private static Item armorHostItem(Kind kind) {
+        return switch (kind) {
+            case CHESTPLATE -> Items.LEATHER_CHESTPLATE;
+            case HELMET -> Items.LEATHER_HELMET;
+            case LEGGINGS -> Items.LEATHER_LEGGINGS;
+            case BOOTS -> Items.LEATHER_BOOTS;
+            default -> throw new IllegalArgumentException(kind + " is not armor");
         };
     }
 

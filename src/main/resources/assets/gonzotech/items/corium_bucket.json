@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "minecraft:item/lava_bucket"
+    "model": "gonzotech:item/corium_bucket"
   }
 }

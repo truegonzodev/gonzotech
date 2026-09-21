@@ -3,14 +3,15 @@
   "category": "redstone",
   "pattern": [
     "LPL",
-    "UFU",
+    "BFW",
     "LPL"
   ],
   "key": {
     "L": "gonzotech:lead_ingot",
     "P": "gonzotech:steel_plate",
-    "U": "gonzotech:uranium_ingot",
-    "F": "gonzotech:firebox"
+    "B": "gonzotech:lead_block",
+    "F": "gonzotech:firebox",
+    "W": "gonzotech:tungsten_ingot"
   },
   "result": {
     "id": "gonzotech:nuclear_firebox",
