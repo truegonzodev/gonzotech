@@ -112,7 +112,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     };
 
     public SteamGenCoreBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.STEAMGEN_CORE.get(), pos, state, 0);
+        super(ModBlockEntities.SECOND_STEAMGEN_CORE.get(), pos, state, 0);
     }
 
     public boolean isFormedController() {
@@ -426,7 +426,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.steamgen_core");
+        return Component.translatable("block.gonzotech.second_steamgen_core");
     }
 
     @Override

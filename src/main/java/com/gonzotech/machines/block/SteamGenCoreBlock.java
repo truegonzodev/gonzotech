@@ -53,7 +53,7 @@ public final class SteamGenCoreBlock extends SteamGenPartBlock implements Entity
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> type) {
         if (level.isClientSide() || !state.getValue(CONTROLLER)) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.STEAMGEN_CORE.get(),
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.SECOND_STEAMGEN_CORE.get(),
             SteamGenCoreBlockEntity::serverTick);
     }
 }

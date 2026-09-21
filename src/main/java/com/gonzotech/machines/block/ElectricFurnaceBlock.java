@@ -32,6 +32,6 @@ public class ElectricFurnaceBlock extends MachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.ELECTRIC_FURNACE.get(), ElectricFurnaceBlockEntity::serverTick);
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.FIRST_ELECTRIC_FURNACE.get(), ElectricFurnaceBlockEntity::serverTick);
     }
 }

@@ -30,7 +30,7 @@ public class ItemFilterMenu extends AbstractContainerMenu {
 
     /** Серверный/общий конструктор. */
     public ItemFilterMenu(int id, Inventory inv, ItemFilterBlockEntity be) {
-        super(ModMenus.ITEM_FILTER.get(), id);
+        super(ModMenus.FIRST_ITEM_FILTER.get(), id);
         this.be = be;
         this.filterSlots = be.filterSize();
 

@@ -59,7 +59,7 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, washX, washY, washW, washH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.centrifuge.washing_progress", menu.washProgressPercent())),
+                Component.translatable("gui.gonzotech.second_centrifuge.washing_progress", menu.washProgressPercent())),
                 mouseX, mouseY);
         }
     }

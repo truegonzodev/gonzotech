@@ -27,7 +27,7 @@ public class CobbleGeneratorMenu extends BaseMachineMenu {
     }
 
     public CobbleGeneratorMenu(int id, Inventory inv, CobbleGeneratorBlockEntity be, ContainerData data) {
-        super(ModMenus.COBBLE_GENERATOR.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.FIRST_COBBLE_GENERATOR.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
         // Ведро лавы: только ведро лавы.

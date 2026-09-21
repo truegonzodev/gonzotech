@@ -6,8 +6,8 @@
 
 Следующие прежние замечания больше не входят в список открытых:
 
-- `crusher` теперь принадлежит Discovery 2 и одновременно скрыт из vanilla recipe book и физически заменяется на `botched_mechanism` до открытия;
-- `turbine_casing` и `turbine_rotor` теперь принадлежат Discovery 1 с теми же двумя gate-механиками;
+- `second_crusher` теперь принадлежит Discovery 2 и одновременно скрыт из vanilla recipe book и физически заменяется на `botched_mechanism` до открытия;
+- `first_turbine_casing` и `first_turbine_rotor` теперь принадлежат Discovery 1 с теми же двумя gate-механиками;
 - dust-alloy смеси по-прежнему намеренно только скрыты из книги до Discovery 2 и всегда физически крафтятся;
 - все девять legacy `models/item/<ore>_ore.json` теперь указывают на существующую `block/deepslate_<ore>_ore` model; это устраняет stale parents, но не является доказанным текущим visual-regression, поскольку базовые stone-host BlockItem этих руд не зарегистрированы;
 - `SecondMachineStubBlock` удалён после поиска регистраций, импортов, инстанцирований и строковых ссылок: их не было;

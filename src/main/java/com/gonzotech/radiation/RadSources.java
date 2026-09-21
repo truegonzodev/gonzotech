@@ -56,11 +56,11 @@ public final class RadSources {
             Map.entry("tmox_fuel", 0.35 * RadUnits.MILLI),  // ТСО — ториевая смесь оксидов
             Map.entry("snup_fuel", 0.85 * RadUnits.MILLI),
             Map.entry("ut_fuel", 0.20 * RadUnits.MILLI),      // УТ — уран-ториевое топливо
-            // Кориум (автор 21.09): и ведро, и поставленный блок «фонят жёстко» — 3 mZt.
-            // Ведро — предмет-форма (id corium_bucket), блок — corium; molten_corium
-            // (сам флюидный блок) остаётся без пресета — см. аудит §9.11.
+            // Кориум (автор 21.09): фонят все три формы — ведро (корм для топки),
+            // поставленный блок и сам флюидный блок (лужа), все по 3 mZt.
             Map.entry("corium_bucket", 3.0 * RadUnits.MILLI),
-            Map.entry("corium", 3.0 * RadUnits.MILLI)
+            Map.entry("corium", 3.0 * RadUnits.MILLI),
+            Map.entry("molten_corium", 3.0 * RadUnits.MILLI)
     );
 
     private RadSources() {

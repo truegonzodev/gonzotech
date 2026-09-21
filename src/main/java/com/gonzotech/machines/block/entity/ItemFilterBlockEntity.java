@@ -62,7 +62,7 @@ public class ItemFilterBlockEntity extends BlockEntity implements MenuProvider, 
     }
 
     public ItemFilterBlockEntity(BlockPos pos, BlockState state) {
-        this(ModBlockEntities.ITEM_FILTER.get(), pos, state, FILTER_SLOTS);
+        this(ModBlockEntities.FIRST_ITEM_FILTER.get(), pos, state, FILTER_SLOTS);
     }
 
     /** Создаёт фильтр с самостоятельным типом BE и заданным числом ghost-слотов. */

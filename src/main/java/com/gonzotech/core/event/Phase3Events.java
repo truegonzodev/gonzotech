@@ -105,10 +105,10 @@ public final class Phase3Events {
         if (craftGate == null) {
             craftGate = Map.ofEntries(
                 // Станки Открытия 1 (гаечный КЛЮЧ НЕ гейтим — он крафтится всегда).
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ACCUMULATOR_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.COBBLE_GENERATOR_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ELECTRIC_FURNACE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_PUMP_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ACCUMULATOR_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_COBBLE_GENERATOR_ITEM.get(), 1),
                 // Трубы
                 Map.entry(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get(), 1),
                 Map.entry(com.gonzotech.machines.registry.ModMachines.HEAT_PIPE_ITEM.get(), 1),
@@ -125,11 +125,11 @@ public final class Phase3Events {
                 Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_FLUID_NODE_ITEM.get(), 1),
                 Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get(), 1),
                 // Сортировка предметов
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_FILTER_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_SCAVENGER_ITEM.get(), 1),
                 // Части многоблочной паровой турбины.
-                Map.entry(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get(), 1)
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_CASING_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_ROTOR_ITEM.get(), 1)
             );
         }
         return craftGate;

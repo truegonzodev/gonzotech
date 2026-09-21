@@ -86,7 +86,7 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
     };
 
     public ElectricFurnaceBlockEntity(BlockPos pos, BlockState state) {
-        this(ModBlockEntities.ELECTRIC_FURNACE.get(), pos, state);
+        this(ModBlockEntities.FIRST_ELECTRIC_FURNACE.get(), pos, state);
     }
 
     /**

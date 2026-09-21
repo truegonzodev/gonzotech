@@ -35,6 +35,6 @@ public class PumpBlock extends MachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.PUMP.get(), PumpBlockEntity::serverTick);
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.FIRST_PUMP.get(), PumpBlockEntity::serverTick);
     }
 }

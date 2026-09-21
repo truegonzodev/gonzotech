@@ -9,7 +9,7 @@
   "key": {
     "S": "gonzotech:steel_plate",
     "M": "gonzotech:inductive_module",
-    "E": "gonzotech:electric_furnace",
+    "E": "gonzotech:first_electric_furnace",
     "I": "gonzotech:iron_plate",
     "W": "gonzotech:first_wire_node"
   },

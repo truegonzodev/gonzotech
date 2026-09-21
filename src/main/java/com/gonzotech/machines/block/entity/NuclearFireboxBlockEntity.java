@@ -91,7 +91,7 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
     };
 
     public NuclearFireboxBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.NUCLEAR_FIREBOX.get(), pos, state, 1);
+        super(ModBlockEntities.SECOND_NUCLEAR_FIREBOX.get(), pos, state, 1);
     }
 
     public ContainerData data() {
@@ -285,7 +285,7 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.nuclear_firebox");
+        return Component.translatable("block.gonzotech.second_nuclear_firebox");
     }
 
     @Override

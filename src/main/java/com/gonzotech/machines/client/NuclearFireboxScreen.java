@@ -48,7 +48,7 @@ public final class NuclearFireboxScreen extends MachineScreen<NuclearFireboxMenu
             int percent = menu.litDuration() <= 0 ? 0
                 : Math.min(100, (int) ((long) menu.litTime() * 100L / menu.litDuration()));
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.nuclear_firebox.burning", percent)), mouseX, mouseY);
+                Component.translatable("gui.gonzotech.second_nuclear_firebox.burning", percent)), mouseX, mouseY);
         }
     }
 }

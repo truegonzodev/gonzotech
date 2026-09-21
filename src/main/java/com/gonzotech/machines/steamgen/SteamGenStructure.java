@@ -309,7 +309,7 @@ public final class SteamGenStructure {
                         if (isHeatPort(state)) heat.add(pos.immutable());
                     } else {
                         Block block = state.getBlock();
-                        if (block == ModMachines.STEAMGEN_CORE.get()) {
+                        if (block == ModMachines.SECOND_STEAMGEN_CORE.get()) {
                             cores++;
                         } else if (SteamGenHeatExchangers.isHeatExchanger(block)) {
                             precious++;
@@ -324,13 +324,13 @@ public final class SteamGenStructure {
         }
         if (cores < 1 || steam.isEmpty() || water.isEmpty() || heat.isEmpty()) return null;
         BlockPos root = new BlockPos(min.getX() + 1, min.getY() + 1, min.getZ() + 1);
-        if (!level.getBlockState(root).is(ModMachines.STEAMGEN_CORE.get())) return null;
+        if (!level.getBlockState(root).is(ModMachines.SECOND_STEAMGEN_CORE.get())) return null;
         return new Build(min.immutable(), max.immutable(), root, cores, sumCH, precious,
             all, steam, water, heat);
     }
 
     private static boolean isShellBlock(BlockState state) {
-        return state.is(ModMachines.STEAMGEN_CASING.get())
+        return state.is(ModMachines.SECOND_STEAMGEN_CASING.get())
             || isSteamPort(state) || isWaterPort(state) || isHeatPort(state);
     }
 
@@ -339,8 +339,8 @@ public final class SteamGenStructure {
     }
 
     public static boolean isCandidateBlock(Block block) {
-        return block == ModMachines.STEAMGEN_CASING.get()
-            || block == ModMachines.STEAMGEN_CORE.get()
+        return block == ModMachines.SECOND_STEAMGEN_CASING.get()
+            || block == ModMachines.SECOND_STEAMGEN_CORE.get()
             || isSteamPortBlock(block)
             || isWaterPortBlock(block)
             || isHeatPortBlock(block);

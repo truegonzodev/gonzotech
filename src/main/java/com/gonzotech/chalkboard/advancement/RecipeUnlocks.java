@@ -34,13 +34,13 @@ public final class RecipeUnlocks {
             "gonzotech:boiler",
             "gonzotech:stirling_generator",
             "gonzotech:condenser",
-            "gonzotech:electric_furnace",
-            "gonzotech:pump",
-            "gonzotech:accumulator",
-            "gonzotech:cobble_generator",
+            "gonzotech:first_electric_furnace",
+            "gonzotech:first_pump",
+            "gonzotech:first_accumulator",
+            "gonzotech:first_cobble_generator",
             // Части паровой турбины
-            "gonzotech:turbine_casing",
-            "gonzotech:turbine_rotor",
+            "gonzotech:first_turbine_casing",
+            "gonzotech:first_turbine_rotor",
             // Логистика: инструмент
             "gonzotech:wrench",
             // Суневеты: солнечные часы (крафт и книга — после Открытия 1, автор)
@@ -61,8 +61,8 @@ public final class RecipeUnlocks {
             "gonzotech:first_universal_fluid_node",
             "gonzotech:first_universal_node",
             // Логистика: сортировка предметов
-            "gonzotech:item_filter",
-            "gonzotech:item_scavenger",
+            "gonzotech:first_item_filter",
+            "gonzotech:first_item_scavenger",
             // Строительные материалы II. Рецепты физически доступны всегда,
             // но в книге появляются вместе с Открытием 1.
             "gonzotech:trio_grit",

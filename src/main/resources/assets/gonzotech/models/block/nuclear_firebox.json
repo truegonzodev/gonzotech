@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/cube_bottom_top",
-  "textures": {
-    "top": "gonzotech:block/second/nuclear_firebox_top",
-    "bottom": "gonzotech:block/second/nuclear_firebox_top",
-    "side": "gonzotech:block/second/nuclear_firebox"
-  }
-}

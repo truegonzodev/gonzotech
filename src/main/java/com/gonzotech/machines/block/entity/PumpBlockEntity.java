@@ -104,7 +104,7 @@ public class PumpBlockEntity extends BaseMachineBlockEntity implements GtuSink, 
     };
 
     public PumpBlockEntity(BlockPos pos, BlockState state) {
-        this(ModBlockEntities.PUMP.get(), pos, state);
+        this(ModBlockEntities.FIRST_PUMP.get(), pos, state);
     }
 
     /**

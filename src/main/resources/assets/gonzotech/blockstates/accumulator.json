@@ -1,8 +1,0 @@
-{
-  "variants": {
-    "facing=north": { "model": "gonzotech:block/accumulator" },
-    "facing=east":  { "model": "gonzotech:block/accumulator", "y": 90 },
-    "facing=south": { "model": "gonzotech:block/accumulator", "y": 180 },
-    "facing=west":  { "model": "gonzotech:block/accumulator", "y": 270 }
-  }
-}

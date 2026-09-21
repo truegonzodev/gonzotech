@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [ "BPC", "BIB", "CPB" ],
+  "key": {
+    "B": "minecraft:iron_bars",
+    "P": "gonzotech:cast_iron_ingot",
+    "C": "gonzotech:calcium_ingot",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": { "id": "gonzotech:first_turbine_casing", "count": 1 }
+}

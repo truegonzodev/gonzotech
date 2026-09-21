@@ -25,7 +25,7 @@ public class CentrifugeMenu extends BaseMachineMenu {
     }
 
     public CentrifugeMenu(int id, Inventory inventory, CentrifugeBlockEntity be, ContainerData data) {
-        super(ModMenus.CENTRIFUGE.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.SECOND_CENTRIFUGE.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
         addSlot(new Slot(be, CentrifugeBlockEntity.SLOT_INPUT, 62, 35));

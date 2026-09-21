@@ -50,7 +50,7 @@ public class CrusherScreen extends MachineScreen<CrusherMenu> {
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, crushX, crushY, crushW, crushH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.crusher.crushing_progress", menu.crushProgressPercent())),
+                Component.translatable("gui.gonzotech.second_crusher.crushing_progress", menu.crushProgressPercent())),
                 mouseX, mouseY);
         }
     }

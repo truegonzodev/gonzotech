@@ -19,7 +19,7 @@ public class CrusherMenu extends BaseMachineMenu {
     }
 
     public CrusherMenu(int id, Inventory inventory, CrusherBlockEntity be, ContainerData data) {
-        super(ModMenus.CRUSHER.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.SECOND_CRUSHER.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
         addSlot(new Slot(be, CrusherBlockEntity.SLOT_INPUT, 62, 35));

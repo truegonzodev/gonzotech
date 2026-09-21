@@ -36,7 +36,7 @@ public class CobbleGeneratorBlock extends MachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.COBBLE_GENERATOR.get(),
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.FIRST_COBBLE_GENERATOR.get(),
             CobbleGeneratorBlockEntity::serverTick);
     }
 }

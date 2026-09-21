@@ -59,13 +59,13 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_ROTOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.CONDENSER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ACCUMULATOR_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.COBBLE_GENERATOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_PUMP_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ACCUMULATOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_COBBLE_GENERATOR_ITEM.get());
 
                 // Логистика — трубы энергосети + гаечный ключ.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get());
@@ -81,11 +81,11 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_FLUID_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_FILTER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_SCAVENGER_ITEM.get());
                 // Технологическая цепочка обработки руды завершает список машин.
-                output.accept(com.gonzotech.machines.registry.ModMachines.CRUSHER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CRUSHER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CENTRIFUGE_ITEM.get());
 
 
                 // Порядок фиксирует progression-витрину второго открытия.
@@ -112,10 +112,10 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get());
                 // Продвинутый парогенератор — в витрине второго открытия.
-                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CASING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CORE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CORE_ITEM.get());
                 // Ядерная топка замыкает вкладку: самая опасная и поздняя машина.
-                output.accept(com.gonzotech.machines.registry.ModMachines.NUCLEAR_FIREBOX_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })

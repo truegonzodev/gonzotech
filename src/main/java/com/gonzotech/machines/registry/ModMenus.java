@@ -40,8 +40,8 @@ public final class ModMenus {
     public static final Supplier<MenuType<FireboxMenu>> FIREBOX =
         MENUS.register("firebox", () -> IMenuTypeExtension.create(FireboxMenu::new));
 
-    public static final Supplier<MenuType<NuclearFireboxMenu>> NUCLEAR_FIREBOX =
-        MENUS.register("nuclear_firebox", () -> IMenuTypeExtension.create(NuclearFireboxMenu::new));
+    public static final Supplier<MenuType<NuclearFireboxMenu>> SECOND_NUCLEAR_FIREBOX =
+        MENUS.register("second_nuclear_firebox", () -> IMenuTypeExtension.create(NuclearFireboxMenu::new));
 
     public static final Supplier<MenuType<BoilerMenu>> BOILER =
         MENUS.register("boiler", () -> IMenuTypeExtension.create(BoilerMenu::new));
@@ -55,26 +55,26 @@ public final class ModMenus {
     public static final Supplier<MenuType<SteamGenMenu>> STEAMGEN =
         MENUS.register("steamgen", () -> IMenuTypeExtension.create(SteamGenMenu::new));
 
-    public static final Supplier<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE =
-        MENUS.register("electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));
+    public static final Supplier<MenuType<ElectricFurnaceMenu>> FIRST_ELECTRIC_FURNACE =
+        MENUS.register("first_electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));
 
     public static final Supplier<MenuType<SecondElectricFurnaceMenu>> SECOND_ELECTRIC_FURNACE =
         MENUS.register("second_electric_furnace", () -> IMenuTypeExtension.create(SecondElectricFurnaceMenu::new));
 
-    public static final Supplier<MenuType<PumpMenu>> PUMP =
-        MENUS.register("pump", () -> IMenuTypeExtension.create(PumpMenu::new));
+    public static final Supplier<MenuType<PumpMenu>> FIRST_PUMP =
+        MENUS.register("first_pump", () -> IMenuTypeExtension.create(PumpMenu::new));
 
     public static final Supplier<MenuType<SecondPumpMenu>> SECOND_PUMP =
         MENUS.register("second_pump", () -> IMenuTypeExtension.create(SecondPumpMenu::new));
 
-    public static final Supplier<MenuType<AccumulatorMenu>> ACCUMULATOR =
-        MENUS.register("accumulator", () -> IMenuTypeExtension.create(AccumulatorMenu::new));
+    public static final Supplier<MenuType<AccumulatorMenu>> FIRST_ACCUMULATOR =
+        MENUS.register("first_accumulator", () -> IMenuTypeExtension.create(AccumulatorMenu::new));
 
     public static final Supplier<MenuType<SecondAccumulatorMenu>> SECOND_ACCUMULATOR =
         MENUS.register("second_accumulator", () -> IMenuTypeExtension.create(SecondAccumulatorMenu::new));
 
-    public static final Supplier<MenuType<CobbleGeneratorMenu>> COBBLE_GENERATOR =
-        MENUS.register("cobble_generator", () -> IMenuTypeExtension.create(CobbleGeneratorMenu::new));
+    public static final Supplier<MenuType<CobbleGeneratorMenu>> FIRST_COBBLE_GENERATOR =
+        MENUS.register("first_cobble_generator", () -> IMenuTypeExtension.create(CobbleGeneratorMenu::new));
 
     public static final Supplier<MenuType<SecondCobbleGeneratorMenu>> SECOND_COBBLE_GENERATOR =
         MENUS.register("second_cobble_generator", () -> IMenuTypeExtension.create(SecondCobbleGeneratorMenu::new));
@@ -88,14 +88,14 @@ public final class ModMenus {
     public static final Supplier<MenuType<SecondPressMenu>> SECOND_PRESS =
         MENUS.register("second_press", () -> IMenuTypeExtension.create(SecondPressMenu::new));
 
-    public static final Supplier<MenuType<CrusherMenu>> CRUSHER =
-        MENUS.register("crusher", () -> IMenuTypeExtension.create(CrusherMenu::new));
+    public static final Supplier<MenuType<CrusherMenu>> SECOND_CRUSHER =
+        MENUS.register("second_crusher", () -> IMenuTypeExtension.create(CrusherMenu::new));
 
-    public static final Supplier<MenuType<CentrifugeMenu>> CENTRIFUGE =
-        MENUS.register("centrifuge", () -> IMenuTypeExtension.create(CentrifugeMenu::new));
+    public static final Supplier<MenuType<CentrifugeMenu>> SECOND_CENTRIFUGE =
+        MENUS.register("second_centrifuge", () -> IMenuTypeExtension.create(CentrifugeMenu::new));
 
-    public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> ITEM_FILTER =
-        MENUS.register("item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> FIRST_ITEM_FILTER =
+        MENUS.register("first_item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));
 
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);

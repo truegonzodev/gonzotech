@@ -111,7 +111,7 @@ public class CentrifugeBlockEntity extends BaseMachineBlockEntity
     };
 
     public CentrifugeBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.CENTRIFUGE.get(), pos, state, 5);
+        super(ModBlockEntities.SECOND_CENTRIFUGE.get(), pos, state, 5);
     }
 
     public GtBuffer gtuBuffer() {
@@ -412,7 +412,7 @@ public class CentrifugeBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.centrifuge");
+        return Component.translatable("block.gonzotech.second_centrifuge");
     }
 
     @Override

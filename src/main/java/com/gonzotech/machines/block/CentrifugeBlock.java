@@ -32,7 +32,7 @@ public class CentrifugeBlock extends MachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.CENTRIFUGE.get(), CentrifugeBlockEntity::serverTick);
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.SECOND_CENTRIFUGE.get(), CentrifugeBlockEntity::serverTick);
     }
 
     @Override

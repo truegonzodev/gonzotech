@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "gonzotech:block/first/item_filter_top",
+    "bottom": "gonzotech:block/first/first_item_filter",
+    "side": "gonzotech:block/first/first_item_filter"
+  }
+}

@@ -48,8 +48,8 @@ public final class TierTwoCrafting {
         "gonzotech:second_press",
         "gonzotech:second_cobble_generator",
         "gonzotech:second_alloy_foundry",
-        "gonzotech:crusher",
-        "gonzotech:centrifuge",
+        "gonzotech:second_crusher",
+        "gonzotech:second_centrifuge",
         "gonzotech:second_electric_furnace",
         "gonzotech:second_accumulator",
         "gonzotech:second_wire_aluminum",
@@ -71,9 +71,9 @@ public final class TierTwoCrafting {
         "gonzotech:second_wire_node",
         "gonzotech:second_universal_node",
         "gonzotech:second_pump",
-        "gonzotech:nuclear_firebox",
-        "gonzotech:steamgen_casing",
-        "gonzotech:steamgen_core"
+        "gonzotech:second_nuclear_firebox",
+        "gonzotech:second_steamgen_casing",
+        "gonzotech:second_steamgen_core"
     );
 
     /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
@@ -151,9 +151,9 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_PRESS_ITEM.get()
             || item == ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get()
             || item == ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get()
-            || item == ModMachines.CRUSHER_ITEM.get()
+            || item == ModMachines.SECOND_CRUSHER_ITEM.get()
             // This confirmed recipe intentionally crafts the existing centrifuge.
-            || item == ModMachines.CENTRIFUGE_ITEM.get()
+            || item == ModMachines.SECOND_CENTRIFUGE_ITEM.get()
             || item == ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get()
             || item == ModMachines.SECOND_ACCUMULATOR_ITEM.get()
             || item == ModMachines.SECOND_WIRE_ITEM.get()
@@ -172,8 +172,8 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_WIRE_NODE_ITEM.get()
             || item == ModMachines.SECOND_UNIVERSAL_NODE_ITEM.get()
             || item == ModMachines.SECOND_PUMP_ITEM.get()
-            || item == ModMachines.NUCLEAR_FIREBOX_ITEM.get()
-            || item == ModMachines.STEAMGEN_CASING_ITEM.get()
-            || item == ModMachines.STEAMGEN_CORE_ITEM.get();
+            || item == ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get()
+            || item == ModMachines.SECOND_STEAMGEN_CASING_ITEM.get()
+            || item == ModMachines.SECOND_STEAMGEN_CORE_ITEM.get();
     }
 }
