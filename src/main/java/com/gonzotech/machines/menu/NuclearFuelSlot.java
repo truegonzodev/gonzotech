@@ -5,7 +5,13 @@ import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-/** Single fuel slot that accepts only the eight specified uranium/thorium forms. */
+/**
+ * Единственный топливный слот. Принимает только природные формы урана/тория
+ * (руда, слиток, самородок, блок, пыль) — список задаёт
+ * {@link NuclearFireboxBlockEntity#burnTicks}; изотопы и готовые топливные
+ * смеси пойдут в будущие продвинутые реакторы.
+ */
+
 public final class NuclearFuelSlot extends Slot {
 
     public NuclearFuelSlot(Container container, int slot, int x, int y) {
