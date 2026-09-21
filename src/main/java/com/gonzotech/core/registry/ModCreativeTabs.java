@@ -49,8 +49,6 @@ public class ModCreativeTabs {
                 // Инструменты: ключ сразу за заметками, затем измерительные приборы.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.DOSIMETER.get());
-                // Антирадиновый абсорбент — сразу за дозиметром (автор 22.09: расходник к шкале облучения).
-                output.accept(ModItems.RAD_ABSORBENT.get());
                 // Солнечные часы — рядом с дозиметром (автор, 2026-09-18).
                 output.accept(ModItems.SOLAR_WATCH.get());
                 output.accept(ModItems.UV_METER.get());
@@ -133,6 +131,8 @@ public class ModCreativeTabs {
             .title(Component.translatable("itemGroup.gonzotech.equipment"))
             .icon(() -> new ItemStack(ModItems.ALLOY_PICKAXE.get()))
             .displayItems((params, output) -> {
+                // Расходник к шкале облучения — во вкладке снаряжения (автор 22.09).
+                output.accept(ModItems.RAD_ABSORBENT.get());
                 output.accept(ModItems.ALLOY_PICKAXE.get());
                 output.accept(ModItems.ALLOY_SWORD.get());
                 output.accept(ModItems.ALLOY_CHESTPLATE.get());

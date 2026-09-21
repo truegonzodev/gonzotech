@@ -37,7 +37,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TierTwoCrafting {
 
     private static final List<String> RECIPE_IDS = List.of(
-        "gonzotech:rad_absorbent",
+        // Хазмат I (автор 22.09): гейт на крафт — Открытие 2. Абсорбента здесь
+        // СОЗНАТЕЛЬНО нет: его крафт доступен всегда, гейтится только
+        // видимость рецепта (RecipeUnlocks) — прямая просьба автора.
+        "gonzotech:hazmat_helmet",
+        "gonzotech:hazmat_chestplate",
+        "gonzotech:hazmat_leggings",
+        "gonzotech:hazmat_boots",
         "gonzotech:coil",
         "gonzotech:inductive_module",
         "gonzotech:wedge_punch",
