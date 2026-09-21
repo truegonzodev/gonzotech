@@ -154,6 +154,38 @@ public class ModItems {
         ITEMS.registerSimpleItem("rebar");
 
     /**
+     * Ядерный ряд «Компонентов» (автор 21.09): изотопы и топливные смеси.
+     * Радиоактивность — пресетами в {@code RadSources.DIRECT_EMISSION}
+     * (природный уран/реакторный плутоний остаются формами в Metals);
+     * текстуры временные — повторно использованы существующие слитки/пыли,
+     * финальную графику рисует автор (помечено «под замену»).
+     */
+    public static final DeferredItem<Item> URANIUM_238 =
+        ITEMS.registerSimpleItem("uranium_238");
+    public static final DeferredItem<Item> URANIUM_235 =
+        ITEMS.registerSimpleItem("uranium_235");
+    public static final DeferredItem<Item> URANIUM_233 =
+        ITEMS.registerSimpleItem("uranium_233");
+    public static final DeferredItem<Item> WEAPONS_PLUTONIUM =
+        ITEMS.registerSimpleItem("weapons_plutonium");
+    public static final DeferredItem<Item> PLUTONIUM_238 =
+        ITEMS.registerSimpleItem("plutonium_238");
+    public static final DeferredItem<Item> PLUTONIUM_242 =
+        ITEMS.registerSimpleItem("plutonium_242");
+    public static final DeferredItem<Item> THORIUM_229 =
+        ITEMS.registerSimpleItem("thorium_229");
+    public static final DeferredItem<Item> URANIUM_FUEL =
+        ITEMS.registerSimpleItem("uranium_fuel");
+    /** СО — смесь оксидов (MOX). */
+    public static final DeferredItem<Item> MOX_FUEL =
+        ITEMS.registerSimpleItem("mox_fuel");
+    /** ТСО — ториевая смесь оксидов. */
+    public static final DeferredItem<Item> TMOX_FUEL =
+        ITEMS.registerSimpleItem("tmox_fuel");
+    public static final DeferredItem<Item> SNUP_FUEL =
+        ITEMS.registerSimpleItem("snup_fuel");
+
+    /**
      * Пыли ванильных металлов для побочных выходов ЦФ1УР. Они намеренно не добавлены
      * в Metals.INGOT_IDS: сами слитки принадлежат vanilla, а у мода нет их блоков или
      * самородков. В DUST_ITEMS они добавляются после всех существующих GT-пылей.

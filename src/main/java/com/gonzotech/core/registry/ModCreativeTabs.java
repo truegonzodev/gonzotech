@@ -244,6 +244,18 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ANDESITE_SILICATE_CLINKER.get());
                 output.accept(ModItems.WHITE_PORCELAIN_BATCH.get());
                 output.accept(ModItems.REBAR.get());
+                // Ядерный ряд — изотопы и топливные смеси (автор 21.09).
+                output.accept(ModItems.URANIUM_238.get());
+                output.accept(ModItems.URANIUM_235.get());
+                output.accept(ModItems.URANIUM_233.get());
+                output.accept(ModItems.WEAPONS_PLUTONIUM.get());
+                output.accept(ModItems.PLUTONIUM_238.get());
+                output.accept(ModItems.PLUTONIUM_242.get());
+                output.accept(ModItems.THORIUM_229.get());
+                output.accept(ModItems.URANIUM_FUEL.get());
+                output.accept(ModItems.MOX_FUEL.get());
+                output.accept(ModItems.TMOX_FUEL.get());
+                output.accept(ModItems.SNUP_FUEL.get());
             })
             .build()
     );
