@@ -37,7 +37,7 @@ public class DosimeterItem extends Item {
         }
 
         PlayerPsyche psyche = serverPlayer.getData(ModPsycheAttachments.PSYCHE);
-        double percent = psyche.getRadiation() / 10.0; // permille → %
+        double percent = RadDose.percent(psyche.getRadiation()); // permille → %
 
         ChunkPos cp = new ChunkPos(serverPlayer.blockPosition());
         double chunkNzt = ChunkRadiationData.get(serverLevel).value(serverLevel, cp.toLong());
@@ -60,20 +60,22 @@ public class DosimeterItem extends Item {
         return InteractionResult.SUCCESS;
     }
 
-    /** Ключ категории дозы (п.5): тексты живут в lang (автор 21.09 — без значка радиации). */
+    /**
+     * Ключ категории дозы (п.5): тексты живут в lang (автор 21.09 — без значка
+     * радиации). Сами пороги — в {@link RadDose}: по ним же работают эффекты
+     * лучевой болезни, поэтому «отчёт» и «последствия» всегда совпадают.
+     */
     private static String categoryKey(double percent) {
-        if (percent < 5.0) return "message.gonzotech.dosimeter.cat.fine";
-        if (percent < 20.0) return "message.gonzotech.dosimeter.cat.elevated";
-        if (percent < 50.0) return "message.gonzotech.dosimeter.cat.dangerous";
-        if (percent < 80.0) return "message.gonzotech.dosimeter.cat.critical";
-        return "message.gonzotech.dosimeter.cat.lethal";
+        return RadDose.category((int) Math.round(percent * 10.0)).langKey();
     }
 
     private static ChatFormatting colorFor(double percent) {
-        if (percent < 5.0) return ChatFormatting.GREEN;
-        if (percent < 20.0) return ChatFormatting.YELLOW;
-        if (percent < 50.0) return ChatFormatting.GOLD;
-        if (percent < 80.0) return ChatFormatting.RED;
-        return ChatFormatting.DARK_RED;
+        return switch (RadDose.category((int) Math.round(percent * 10.0))) {
+            case FINE -> ChatFormatting.GREEN;
+            case ELEVATED -> ChatFormatting.YELLOW;
+            case DANGEROUS -> ChatFormatting.GOLD;
+            case CRITICAL -> ChatFormatting.RED;
+            case LETHAL -> ChatFormatting.DARK_RED;
+        };
     }
 }

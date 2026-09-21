@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TierTwoCrafting {
 
     private static final List<String> RECIPE_IDS = List.of(
+        "gonzotech:antiradin",
         "gonzotech:coil",
         "gonzotech:inductive_module",
         "gonzotech:wedge_punch",

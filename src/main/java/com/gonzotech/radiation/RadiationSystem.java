@@ -48,6 +48,10 @@ import java.util.UUID;
  * 0.2% от текущего значения в секунду, спадающее стекает в чанк. После смерти
  * шкала сбрасывается в ноль (PlayerEvent.Clone).</p>
  *
+ * <p><b>Последствия шкалы (автор 22.09.2026, «заняться шкалами»):</b> категории
+ * {@link RadDose} бьют по игроку эффектами и уроном ({@link RadSickness}), а
+ * вывести дозу досрочно можно {@link AntiradinItem}.</p>
+ *
  * <p>Все ставки — в nZt/с (п.7: «всё считаем /в сек»).</p>
  */
 public final class RadiationSystem {
@@ -174,6 +178,10 @@ public final class RadiationSystem {
             PsycheNetwork.sendToPlayer(player);
         }
 
+        // Последствия дозы (автор 22.09): эффекты/урон по категориям RadDose.
+        // Считаются здесь же, чтобы не заводить второй тик на игрока.
+        RadSickness.tick(player, level, psyche.getRadiation());
+
         // Игрок → чанк: ТОЛЬКО пресетная эмиссия (наведённый фон не греет местность),
         // логистика к ПОЛНОЙ сумме инвентаря: ближе к уровню источника — медленнее,
         // выше — никогда («источник не может заразить больше, чем имеет сам»).
@@ -218,6 +226,17 @@ public final class RadiationSystem {
         }
     }
 
+    // ═══════════════════════ выход из игры: чистим карты ═══════════════════════
+
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DOSE_ACC.remove(player.getUUID());
+            SHED_ACC.remove(player.getUUID());
+            RadSickness.forget(player.getUUID());
+        }
+    }
+
     // ═══════════════════════ смерть: шкала в ноль ═══════════════════════
 
     @SubscribeEvent
@@ -234,6 +253,7 @@ public final class RadiationSystem {
             }
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
+            RadSickness.forget(player.getUUID());
             PsycheNetwork.sendToPlayer(player);
         }
     }

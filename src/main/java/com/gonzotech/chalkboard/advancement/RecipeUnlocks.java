@@ -97,7 +97,9 @@ public final class RecipeUnlocks {
             "gonzotech:cantor_dust_from_metal_dusts",
             "gonzotech:vr20_dust_from_metal_dusts",
             "gonzotech:alnico_dust_from_metal_dusts",
-            "gonzotech:telluride_dust_from_metal_dusts"
+            "gonzotech:telluride_dust_from_metal_dusts",
+            // Расходник к шкале облучения (автор 22.09): йод — из центрифуги.
+            "gonzotech:antiradin"
         ),
         6, List.of(
             // Физически крафтится всегда, в книге появляется с Открытием 6.

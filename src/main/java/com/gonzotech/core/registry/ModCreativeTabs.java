@@ -49,6 +49,8 @@ public class ModCreativeTabs {
                 // Инструменты: ключ сразу за заметками, затем измерительные приборы.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.DOSIMETER.get());
+                // Антирадин — сразу за дозиметром (автор 22.09: расходник к шкале облучения).
+                output.accept(ModItems.ANTIRADIN.get());
                 // Солнечные часы — рядом с дозиметром (автор, 2026-09-18).
                 output.accept(ModItems.SOLAR_WATCH.get());
                 output.accept(ModItems.UV_METER.get());

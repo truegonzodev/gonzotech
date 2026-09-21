@@ -252,6 +252,14 @@ public class ModItems {
             props.stacksTo(1)));
 
     /**
+     * Расходник «Антирадин» (автор 22.09): ПКМ выводит 25% набранной дозы,
+     * побочка — тошнота 12 с. Крафт — йод из центрифуги (Открытие 2),
+     * см. {@code TierTwoCrafting} / {@code RecipeUnlocks} тир 2.
+     */
+    public static final DeferredItem<Item> ANTIRADIN =
+        ITEMS.registerItem("antiradin", props -> new com.gonzotech.radiation.AntiradinItem(props));
+
+    /**
      * Измерительный прибор «УФ-радиометр»: пока в руке — на HUD видна шкала
      * «УФ излучение». Предмет и HUD рабочие; рецепта пока нет (шкалу
      * {@code PlayerPsyche.uv} ещё никто не наполняет — задел под УФ-механику).
