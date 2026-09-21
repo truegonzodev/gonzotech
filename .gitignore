@@ -4,7 +4,6 @@ build/
 info/
 out/
 run/
-src/generated/
 
 # IDE
 .idea/
