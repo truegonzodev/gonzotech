@@ -17,10 +17,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 /**
- * Дозиметр: ПКМ в руке → приватный отчёт в чат (автор 20.09, п.5):
- * текущая доза облучения (числом шкалы + расшифровка категории) и фон
- * текущего сектора (координаты чанка + эмиссия «X/t»). Сама HUD-шкала под
- * дозиметром уже существует ({@code PsycheHud}), здесь — только отчёт.
+ * Дозиметр: ПКМ в руке → приватный отчёт в чат (автор 20.09, п.5; формат
+ * уточнён 21.09): две строки — «Доза: X % (категория)» и «Чанк [x, z]: Y/t».
+ * Тексты — через lang-ключи ({@code message.gonzotech.dosimeter.*}); значок радиации
+ * убран. Сама HUD-шкала под дозиметром уже существует ({@code PsycheHud}),
+ * здесь — только отчёт.
  */
 public class DosimeterItem extends Item {
 
@@ -41,27 +42,31 @@ public class DosimeterItem extends Item {
         ChunkPos cp = new ChunkPos(serverPlayer.blockPosition());
         double chunkNzt = ChunkRadiationData.get(serverLevel).value(serverLevel, cp.toLong());
 
-        serverPlayer.sendSystemMessage(
-                Component.literal("☢ ").withStyle(ChatFormatting.YELLOW)
-                        .append(Component.literal("Доза: ").withStyle(ChatFormatting.GRAY))
-                        .append(Component.literal(String.format(java.util.Locale.ROOT, "%.1f%%", percent))
-                                .withStyle(colorFor(percent)))
-                        .append(Component.literal(" (" + category(percent) + ")").withStyle(ChatFormatting.GRAY))
-                        .append(Component.literal(" · Сектор [" + cp.x + ", " + cp.z + "]: ")
-                                .withStyle(ChatFormatting.GRAY))
-                        .append(Component.literal(RadUnits.format(chunkNzt)).withStyle(ChatFormatting.YELLOW)));
+        // Автор (21.09): вывод в две строки — сначала доза, затем чанк; значок радиации убран.
+        serverPlayer.sendSystemMessage(Component.translatable(
+                        "message.gonzotech.dosimeter.dose",
+                        Component.literal(String.format(java.util.Locale.ROOT, "%.1f%%", percent))
+                                .withStyle(colorFor(percent)),
+                        Component.translatable(categoryKey(percent)))
+                .withStyle(ChatFormatting.GRAY));
+        serverPlayer.sendSystemMessage(Component.translatable(
+                        "message.gonzotech.dosimeter.chunk",
+                        cp.x, cp.z,
+                        Component.literal(RadUnits.format(chunkNzt)).withStyle(ChatFormatting.YELLOW))
+                .withStyle(ChatFormatting.GRAY));
+
         serverLevel.playSound(null, serverPlayer.blockPosition(),
                 SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 0.4F, 1.4F);
         return InteractionResult.SUCCESS;
     }
 
-    /** Расшифровка шкалы (п.5): категория дозы по процентам. */
-    private static String category(double percent) {
-        if (percent < 5.0) return "фон в норме";
-        if (percent < 20.0) return "повышенное облучение";
-        if (percent < 50.0) return "опасная доза";
-        if (percent < 80.0) return "критическая доза";
-        return "смертельная доза";
+    /** Ключ категории дозы (п.5): тексты живут в lang (автор 21.09 — без значка радиации). */
+    private static String categoryKey(double percent) {
+        if (percent < 5.0) return "message.gonzotech.dosimeter.cat.fine";
+        if (percent < 20.0) return "message.gonzotech.dosimeter.cat.elevated";
+        if (percent < 50.0) return "message.gonzotech.dosimeter.cat.dangerous";
+        if (percent < 80.0) return "message.gonzotech.dosimeter.cat.critical";
+        return "message.gonzotech.dosimeter.cat.lethal";
     }
 
     private static ChatFormatting colorFor(double percent) {

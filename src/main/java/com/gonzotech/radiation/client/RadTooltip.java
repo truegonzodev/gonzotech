@@ -24,13 +24,10 @@ public final class RadTooltip {
         if (total < 1.0) {
             return;
         }
-        // пустая строка-отступ, затем «Радиоактивность: X» последней строкой
+        // пустая строка-отступ, затем «Радиоактивность: X» последней строкой (без значка)
         event.getToolTip().add(Component.empty());
-        event.getToolTip().add(Component.literal("☢ ")
-                .withStyle(ChatFormatting.RED)
-                .append(Component.literal("Радиоактивность: ")
-                        .withStyle(ChatFormatting.GRAY))
-                .append(Component.literal(RadUnits.format(total))
-                        .withStyle(ChatFormatting.YELLOW)));
+        event.getToolTip().add(Component.translatable("tooltip.gonzotech.radioactivity",
+                        Component.literal(RadUnits.format(total)).withStyle(ChatFormatting.YELLOW))
+                .withStyle(ChatFormatting.GRAY));
     }
 }

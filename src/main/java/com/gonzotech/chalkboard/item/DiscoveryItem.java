@@ -61,15 +61,13 @@ public class DiscoveryItem extends Item {
                         SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.2F);
 
                 player.displayClientMessage(
-                        Component.literal("§aОткрытие " + discoveryNumber + " активировано! Разблокированы новые рецепты.")
-                                .withStyle(ChatFormatting.GREEN),
+                        Component.translatable("message.gonzotech.discovery.activated", discoveryNumber),
                         true
                 );
                 return InteractionResult.CONSUME;
             } else {
                 player.displayClientMessage(
-                        Component.literal("§eРецепты Открытия " + discoveryNumber + " уже разблокированы!")
-                                .withStyle(ChatFormatting.YELLOW),
+                        Component.translatable("message.gonzotech.discovery.already", discoveryNumber),
                         true
                 );
                 return InteractionResult.PASS;
@@ -81,7 +79,8 @@ public class DiscoveryItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("§7Используйте (ПКМ), чтобы навсегда разблокировать рецепты Tier " + discoveryNumber + "."));
+        tooltip.add(Component.translatable("tooltip.gonzotech.discovery_item", discoveryNumber)
+                .withStyle(ChatFormatting.GRAY));
         super.appendHoverText(stack, context, tooltip, flag);
     }
 }
