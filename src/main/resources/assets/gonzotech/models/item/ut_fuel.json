@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/components/UT_fuel"
+    "layer0": "gonzotech:item/components/ut_fuel"
   }
 }

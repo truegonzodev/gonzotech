@@ -228,7 +228,7 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("minecraft:iron_ingot", "minecraft:flint", "minecraft:iron_ingot", "minecraft:piston", "minecraft:hopper", "minecraft:piston", "minecraft:iron_ingot", "minecraft:redstone", "minecraft:iron_ingot"), "gonzotech:crusher")),
 
-            // 19 — «Измельчитель II» (после «Открытия 2») — справа измельчитель
+            // 19 — «Измельчитель» (после «Открытия 2») — справа измельчитель
             new ScholarPage(19, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p19.title",
                     "gui.gonzotech.notes.p19.body",
@@ -258,7 +258,7 @@ public final class ScholarNotesContent {
                     NoteIllustration.craftingFull(List.of("gonzotech:iron_dust", "gonzotech:iron_dust", "gonzotech:iron_dust", "gonzotech:cobalt_dust", "gonzotech:nickel_dust", "", "", "", ""), "gonzotech:ferromagnetic_dust",
                             List.of("gonzotech:steel_dust", "gonzotech:steel_dust", "gonzotech:steel_dust", "gonzotech:steel_dust", "gonzotech:chromium_dust", "gonzotech:chromium_dust", "gonzotech:nickel_dust", "", ""), "gonzotech:stainless_steel_dust")),
 
-            // 22 — «Пресс II» (после «Открытия 2») — справа пресс
+            // 22 — «Пресс» (после «Открытия 2») — справа пресс
             new ScholarPage(22, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p22.title",
                     "gui.gonzotech.notes.p22.body",

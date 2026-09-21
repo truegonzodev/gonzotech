@@ -309,15 +309,15 @@ public final class ModMachines {
     public static final DeferredBlock<SecondElectricFurnaceBlock> SECOND_ELECTRIC_FURNACE =
         BLOCKS.registerBlock("second_electric_furnace", SecondElectricFurnaceBlock::new, machineMetal());
 
-    /** Завод сплавов II: 5×5 сетка и первые беспитательные именные плавки. */
+    /** Завод сплавов (тир-2): 5×5 сетка и первые беспитательные именные плавки. */
     public static final DeferredBlock<AlloyFoundryBlock> SECOND_ALLOY_FOUNDRY =
         BLOCKS.registerBlock("second_alloy_foundry", AlloyFoundryBlock::new, machineMetal());
 
-    /** Измельчитель II: два слота, 35 оплачиваемых тиков, слитки/кварц/raw Mn. */
+    /** Измельчитель (тир-2): два слота, 35 оплачиваемых тиков, слитки/кварц/raw Mn. */
     public static final DeferredBlock<SecondGrinderBlock> SECOND_GRINDER =
         BLOCKS.registerBlock("second_grinder", SecondGrinderBlock::new, machineMetal());
 
-    /** Пресс II: мгновенный ход, затем 60 тиков возврата пуансона. */
+    /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
 
