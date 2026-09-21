@@ -57,7 +57,19 @@ lang = json.load(open(LANG, encoding="utf-8"))
 name = lambda i: lang.get(f"block.gonzotech.{i}") or lang.get(f"item.gonzotech.{i}") or "(нет ключа)"
 
 NUMERAL = re.compile(r"\b(II|III)\b")
-base = lambda i: re.sub(r"^(first|second)_", "", i)
+base = lambda i: re.sub(r"^(first|second|third)_", "", i)
+
+
+def generation(i):
+    """Порядок поколений внутри семейства: голый id (стартовое/тир-1) < first_ < second_ < third_."""
+    if not i.startswith(("first_", "second_", "third_")):
+        return 0
+    for rank, pre in enumerate(("first_", "second_", "third_"), start=1):
+        if i.startswith(pre):
+            return rank
+    return 9
+
+
 pair_of = {}
 for i in ids:
     pair_of.setdefault(base(i), []).append(i)
@@ -67,9 +79,12 @@ print(f"{'id':32} {'гейт':9} {'имя':33} {'цифра':6} {'версия-�
 for i in sorted(ids):
     b, nm, t = base(i), name(i), tier.get(i)
     others = [x for x in pair_of[b] if x != i]
-    has_num, has_v1 = bool(NUMERAL.search(nm)), bool(others)
+    has_num = bool(NUMERAL.search(nm))
+    # «цифра = версия»: цифра нужна НЕ всем в семействе, а только тем, у кого есть
+    # более ранняя версия. Порядок поколений: голый id (стартовое/тир-1) < first_ < second_.
+    is_later = i != min([i] + others, key=generation)
     gate = f"Открытие {t}" if t else ("—" if i in WORLD_FORMED else "не гейтится")
-    print(f"{i:32} {gate:9} {nm[:32]:33} {'да' if has_num else '—':6} {'да' if has_v1 else '—':9}")
+    print(f"{i:32} {gate:9} {nm[:32]:33} {'да' if has_num else '—':6} {'да' if is_later else '—':9}")
 
     # правило 1: префикс ↔ гейт
     if t == 1 and not i.startswith("first_"):
@@ -81,9 +96,9 @@ for i in sorted(ids):
     if i.startswith("second_") and t != 2 and i not in WORLD_FORMED:
         problems.append(f"ID: {i} с префиксом second_, но гейт = {t or 'нет'}")
     # правило 2: цифра ↔ наличие первой версии
-    if has_num and not has_v1:
-        problems.append(f"ИМЯ: {i} («{nm}») с цифрой версии, но первой версии нет")
-    if has_v1 and not has_num and not i.startswith("first_"):
+    if has_num and not is_later:
+        problems.append(f"ИМЯ: {i} («{nm}») с цифрой версии, но это первая версия механизма")
+    if is_later and not has_num:
         problems.append(f"ИМЯ: {i} («{nm}») вторая версия, но в имени нет цифры")
 
 print("\n── расхождения ──")
