@@ -1,6 +1,8 @@
 package com.gonzotech.radiation;
 
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,34 +14,51 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Динамическая радиоактивность чанков — SavedData <b>по измерению</b>
- * (п.4 спеки автора 20.09). Три слоя значений (nZt/с):
+ * (п.4 спеки автора 20.09, правки 21.09). Три слоя значений (nZt/с):
  * <ul>
  *   <li><b>baseline</b> — природный фон чанка, вычисляется ЛЕНИВО один раз и
- *       кэшируется: обычный чанк 1–10nZt; с урановой рудой 10–80nZt
- *       (по числу рудных блоков); биом {@code gonzotech:desolation} 1–5mZt;</li>
- *   <li><b>contamination</b> — динамическое заражение поверх baseline
- *       (занесено игроком/сундуками/поставленными блоками);</li>
- *   <li><b>placed</b> — учёт поставленных радио-блоков (uranium_block и т.п.),
- *       чтобы уметь вычитать при их разрушении.</li>
+ *       кэшируется: обычный чанк 1–10nZt; биом {@code gonzotech:desolation}
+ *       1–5mZt (природный фон биома, не «заражение» — не вымывается);</li>
+ *   <li><b>contamination</b> — динамическое заражение поверх baseline.
+ *       <b>Урановая руда больше НЕ является baseline</b> (автор 21.09): при
+ *       первом обращении к чанку (≈генерация для игрока) руда ОДИН РАЗ сыплет
+ *       10–80nZt в contamination — дальше только обычное затухание, чанк может
+ *       полностью отмыться за долгую AFK-сессию;</li>
+ *   <li><b>placed(+positions)</b> — поставленные радио-блоки (uranium_block и
+ *       т.п.): эмиссия по чанку + координаты (для проверки свинцового/вольфрамового
+ *       контура через {@link Containment}).</li>
  * </ul>
- * Храним ТОЛЬКО «интересные» чанки (baseline-кэш + заражённые).
+ * Храним ТОЛЬКО «интересные» чанки (baseline-кэш + заражённые + учёты блоков).
  *
- * <p>Первое железное правило спеки: «в сундуке — ОК, в руки — ай-ай-ай» —
- * сундуки заражают чанк лишь чуть-чуть через периодический скан содержимого,
- * а инвентарь игрока бьёт по шкале напрямую (см. {@code RadiationSystem}).</p>
+ * <p>Обслуживание (20 с): поставленные блоки ЛОГИСТИЧЕСКИ подтягивают заражение
+ * к своей эмиссии × экран контура (ближе к уровню источника — медленнее), затем
+ * ЛЮБОЙ чанк теряет 1% фона (даже питаемый — стационар чуть ниже источника),
+ * затем диффузия к равновесию с соседями.</p>
  */
 public class ChunkRadiationData extends SavedData {
 
     private static final String DATA_NAME = "gonzotech_chunk_radiation";
 
-    /** Под этим значением заражения чанк «чистый»: запись вычитается затуханием и удаляется. */
+    /** Под этим значением заражения чанк «чистый»: запись вычитается затуханием и удаляется (если нет placed-блоков). */
     private static final double MUST_MAINTAIN = 50.0; // nZt/с
+
+    /** Скорость логистического сближения с уровнем поставленных блоков за проход обслуживания. */
+    private static final double PLACED_CONVERGE = 0.05;
+
+    /** Затухание заражения за обслуживание (применяется ВСЕГДА, автор 21.09). */
+    private static final double DECAY = 0.99;
 
     /** Ключ биома «Пустошь» (data/gonzotech/worldgen/biome/desolation.json). */
     private static final ResourceLocation DESOLATION =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "desolation");
+
+    /** Максимум позиций радио-блоков, реально проверяемых контуром за проход (остальные считаются открытыми). */
+    private static final int MAX_PROBES_PER_CHUNK = 16;
 
     /** baseline-кэш: chunkKey → природный фон (nZt/с). -1 = ещё не вычисляли. */
     private final Long2DoubleOpenHashMap baseline = new Long2DoubleOpenHashMap();
@@ -47,6 +66,8 @@ public class ChunkRadiationData extends SavedData {
     private final Long2DoubleOpenHashMap contamination = new Long2DoubleOpenHashMap();
     /** Эмиссия поставленных радио-блоков по чанкам (для вычитания при сломе). */
     private final Long2DoubleOpenHashMap placed = new Long2DoubleOpenHashMap();
+    /** Позиции поставленных радио-блоков по чанкам (для экрана контура). */
+    private final Long2ObjectOpenHashMap<LongOpenHashSet> placedPos = new Long2ObjectOpenHashMap<>();
 
     public ChunkRadiationData() {
         baseline.defaultReturnValue(-1.0);
@@ -92,32 +113,58 @@ public class ChunkRadiationData extends SavedData {
 
     // ───────────────────────── поставленные блоки ─────────────────────────
 
-    /** Поставлен радио-блок (BlockEvent.EntityPlaceEvent): учитываем вклад в чанк. */
+    /** Поставлен радио-блок (BlockEvent.EntityPlaceEvent): учитываем позицию и вклад в чанк. Живой помпы НЕТ — питание тянет чанк в {@link #maintain}. */
     public void onBlockPlaced(BlockPos pos, double emissionNzt) {
         long key = new ChunkPos(pos).toLong();
         placed.put(key, placed.get(key) + emissionNzt);
+        placedPos.computeIfAbsent(key, k -> new LongOpenHashSet()).add(pos.asLong());
+        Containment.invalidate(pos);
         setDirty();
     }
 
-    /** Сломан радио-блок (BlockEvent.BreakEvent): вычитаем вклад (взрывы/поршни — апроксимация, см. README-примечание). */
+    /** Сломан радио-блок (BlockEvent.BreakEvent): вычитаем вклад; затухание догонит остаток (взрывы/поршни — апроксимация). */
     public void onBlockRemoved(BlockPos pos, double emissionNzt) {
         long key = new ChunkPos(pos).toLong();
         placed.put(key, Math.max(0.0, placed.get(key) - emissionNzt));
+        LongOpenHashSet set = placedPos.get(key);
+        if (set != null) {
+            set.remove(pos.asLong());
+        }
+        Containment.invalidate(pos);
         setDirty();
     }
 
     // ───────────────────────── обслуживание (раз в 20 с) ─────────────────────────
 
     /**
-     * Один проход обслуживания: затухание 1%, диффузия к равновесию с 8 соседями
-     * (попарно и консервативно — суммарная радиация сохраняется). Работает
-     * только по «горячим» записям (п.4: «надо подумать над оптимизацией»).
+     * Один проход обслуживания:
+     * <ol>
+     *   <li>поставленные блоки тянут заражение к своей эмиссии × экран контура
+     *       (логистика «чем ближе к источнику, тем медленнее», автор 21.09);</li>
+     *   <li>ЛЮБОЙ чанк теряет 1% заражения (если в чанке чисто — на самом деле
+     *       примерно то же; с подпиткой — стационар чуть ниже источника);</li>
+     *   <li>диффузия: попарный обмен с 8 соседями (консервативно, сумма не меняется).</li>
+     * </ol>
      */
     public void maintain(ServerLevel level) {
-        // 1) Затухание: «если в чанке чисто — снижает фон на 1% каждые 20 сек».
+        // 1) Питание от поставленных блоков.
+        for (var pe : placed.long2DoubleEntrySet()) {
+            double emitted = pe.getDoubleValue();
+            if (emitted <= 0.0) {
+                continue;
+            }
+            long key = pe.getLongKey();
+            double target = emitted * screenFactor(level, key);
+            double c = contamination.get(key);
+            c = Math.max(0.0, c + (target - c) * PLACED_CONVERGE);
+            contamination.put(key, c);
+        }
+
+        // 2) Затухание: ВСЕГДА (автор 21.09: «за долгую AFK сессию чанк может
+        //    полностью очиститься») — запись вычищается, когда питания нет и фон стёрся.
         for (var it = contamination.long2DoubleEntrySet().iterator(); it.hasNext(); ) {
             var e = it.next();
-            double v = e.getDoubleValue() * 0.99;
+            double v = e.getDoubleValue() * DECAY;
             if (v < 0.1 * MUST_MAINTAIN && placed.get(e.getLongKey()) <= 0.0) {
                 it.remove();
             } else {
@@ -125,9 +172,8 @@ public class ChunkRadiationData extends SavedData {
             }
         }
 
-        // 2) Диффузия: нельзя «в одном чанке чисто, в соседнем миллиард» —
-        //    попарный обмен с каждым из 8 соседей (×2.5% разницы за проход):
-        //    горячий чанк отдаёт, холодный принимает, сумма не меняется.
+        // 3) Диффузия: нельзя «в одном чанке чисто, в соседнем миллиард» —
+        //    попарный обмен с каждым из 8 соседей (×2.5% разницы за проход).
         Long2DoubleOpenHashMap snapshot = new Long2DoubleOpenHashMap(contamination);
         snapshot.defaultReturnValue(0.0);
         Long2DoubleOpenHashMap delta = new Long2DoubleOpenHashMap();
@@ -164,14 +210,52 @@ public class ChunkRadiationData extends SavedData {
         setDirty();
     }
 
+    /**
+     * Средний (взвешенный по эмиссии блоков) фактор экранирования чанка:
+     * у каждого поставленного радио-блока своя полость ({@link Containment}).
+     * Без позиций (старые миры-снапшоты) — 1.0 (контур не учитываем, вреда нет).
+     */
+    private double screenFactor(ServerLevel level, long chunkKey) {
+        LongOpenHashSet set = placedPos.get(chunkKey);
+        if (set == null || set.isEmpty()) {
+            return 1.0;
+        }
+        double weighted = 0.0, weight = 0.0;
+        int probed = 0;
+        List<Long> stale = null;
+        for (long packed : set) {
+            BlockPos pos = BlockPos.of(packed);
+            double e = RadSources.blockEmission(
+                    BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+            if (e <= 0.0) {
+                // Блок исчез в обход событий (взрыв/поршень/setblock) — забываем позицию.
+                (stale == null ? stale = new ArrayList<>() : stale).add(packed);
+                continue;
+            }
+            double f = probed < MAX_PROBES_PER_CHUNK ? Containment.factor(level, pos) : 1.0;
+            probed++;
+            weighted += e * f;
+            weight += e;
+        }
+        if (stale != null) {
+            stale.forEach(set::remove);
+            setDirty();
+        }
+        return weight <= 0.0 ? 1.0 : weighted / weight;
+    }
+
     // ───────────────────────── baseline ─────────────────────────
 
-    /** Природный фон чанка: дефолт / урановая руда / «Пустошь». */
-    private static double computeBaseline(ServerLevel level, long chunkKey) {
+    /**
+     * Природный фон чанка: «Пустошь» 1–5mZt (перекрывает всё) или обычный 1–10nZt.
+     * УРАНОВАЯ РУДА отдельно (автор 21.09): «не подпитывает чанк постоянно, а
+     * ОДИН РАЗ даёт при генерации» — находим её в этом же скане и сыплем
+     * 10–80nZt в contamination; выполняется только при первом обращении.
+     */
+    private double computeBaseline(ServerLevel level, long chunkKey) {
         ChunkPos cp = new ChunkPos(chunkKey);
         RandomSource rnd = RandomSource.create(level.getSeed() ^ chunkKey * 0x9E3779B97F4A7C15L);
 
-        // Биом «Пустошь»: 1–5 mZt (перекрывает руду/дефолт — автор п.6).
         BlockPos center = cp.getMiddleBlockPosition(64);
         boolean desolation = level.getBiome(center).unwrapKey()
                 .map(k -> k.location().equals(DESOLATION)).orElse(false);
@@ -179,8 +263,7 @@ public class ChunkRadiationData extends SavedData {
             return (1.0 + rnd.nextDouble() * 4.0) * RadUnits.MILLI;
         }
 
-        // Подсчёт урановой руды: разовый скан при ПЕРВОМ обращении к чанку
-        // (инициализация случается только когда в чанке есть игрок, кэшируется навсегда).
+        // Разовый скан руды (ишем заодно с первой инициализацией baseline).
         int ores = 0;
         ChunkAccess chunk = level.getChunk(cp.x, cp.z);
         int minY = level.getMinY(), maxY = level.getMaxY();
@@ -197,24 +280,25 @@ public class ChunkRadiationData extends SavedData {
                 }
             }
         }
-
         if (ores > 0) {
-            return Math.min(80.0, 10.0 + ores * 5.0);   // 10–80 nZt (автор п.6)
+            contamination.addTo(chunkKey, Math.min(80.0, 10.0 + ores * 5.0)); // 10–80 nZt один раз
         }
-        return 1.0 + rnd.nextDouble() * 9.0;           // 1–10 nZt (автор п.6)
+        return 1.0 + rnd.nextDouble() * 9.0; // природный фон обычного чанка
     }
 
     // ───────────────────────── персист ─────────────────────────
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
-        CompoundTag b = new CompoundTag(), c = new CompoundTag(), p = new CompoundTag();
+        CompoundTag b = new CompoundTag(), c = new CompoundTag(), p = new CompoundTag(), q = new CompoundTag();
         baseline.long2DoubleEntrySet().forEach(e -> b.putDouble(Long.toString(e.getLongKey()), e.getDoubleValue()));
         contamination.long2DoubleEntrySet().forEach(e -> c.putDouble(Long.toString(e.getLongKey()), e.getDoubleValue()));
         placed.long2DoubleEntrySet().forEach(e -> p.putDouble(Long.toString(e.getLongKey()), e.getDoubleValue()));
+        placedPos.long2ObjectEntrySet().forEach(e -> q.putLongArray(Long.toString(e.getLongKey()), e.getValue().toLongArray()));
         tag.put("b", b);
         tag.put("c", c);
         tag.put("p", p);
+        tag.put("q", q);
         return tag;
     }
 
@@ -223,6 +307,24 @@ public class ChunkRadiationData extends SavedData {
         fill(d.baseline, tag.getCompound("b"));
         fill(d.contamination, tag.getCompound("c"));
         fill(d.placed, tag.getCompound("p"));
+        CompoundTag q = tag.getCompound("q");
+        for (String k : q.getAllKeys()) {
+            try {
+                d.placedPos.put(Long.parseLong(k), new LongOpenHashSet(q.getLongArray(k)));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        // Миграция v1 (автор 21.09): руда раньше жила в baseline (10–80, «вечная
+        // подпитка»). Теперь baseline — только природа (обычные ≤10, «Пустошь»
+        // пересчитается по биому сама). Старые записи >10nZt просто забываем:
+        // при следующем обращении чанк получит природный фон + РАЗОВЫЙ посев
+        // руды в contamination (если руда жива), дальше — обычное затухание.
+        var bit = d.baseline.long2DoubleEntrySet().iterator();
+        while (bit.hasNext()) {
+            if (bit.next().getDoubleValue() > 10.0) {
+                bit.remove();
+            }
+        }
         return d;
     }
 
