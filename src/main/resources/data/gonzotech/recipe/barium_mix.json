@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:barium_dust",
+    "gonzotech:barium_dust",
+    "gonzotech:barium_dust",
+    "gonzotech:clinker_grit",
+    "gonzotech:clinker_grit",
+    "gonzotech:andesite_grit"
+  ],
+  "result": {
+    "id": "gonzotech:barium_mix",
+    "count": 4
+  }
+}

@@ -22,11 +22,15 @@ import java.util.Map;
  * <pre>
  *   вольфрам 0.003 · ВР-20 0.01 · осмий/иридий 0.05
  *   свинец 0.02 · барий 0.02 · бор 0.13
+ *   бариевый бетон: предмет 0.03 · стена контура 0.01
+ *   борное стекло:  предмет 0.08 · стена контура 0.05
  *   лёгкие металлы (литий, магний, цинк) 0.2
  *   средние металлы 0.5 · остальные металлы и сплавы 0.3 · неметаллы 1.0
  * </pre>
  * Матчинг по id-пути: «всё что связано с X» = префикс {@code "X"} или
  * {@code "X_..."} (lead_ingot, lead_block, lead_glass, boron_concrete и т.п.).
+ * Готовые конструкционные экраны (бетон/стекло) задаются точечно: у блока и у
+ * его предмета-блокитима разные значения (автор 21.09).
  */
 public final class RadMaterials {
 
@@ -55,6 +59,25 @@ public final class RadMaterials {
     /** Префиксы в порядке убывания длины, чтобы «vr_20» не съедался чужими префиксами. */
     private static final List<String> PREFIXES = FACTORS.keySet().stream()
             .sorted((a, b) -> b.length() - a.length()).toList();
+
+    /**
+     * Точечные факторы ПРЕДМЕТА (наведённый фон стака) для готовых
+     * конструкционных экранов: id-путь → доля прохождения. Проверяются раньше
+     * префиксной таблицы, иначе «barium_concrete» поймал бы общий префикс «barium».
+     */
+    private static final Map<String, Double> ITEM_EXACT = Map.of(
+            "barium_concrete", 0.03,
+            "bore_stained_glass", 0.08
+    );
+
+    /**
+     * Точечные факторы БЛОКА-стены (экранирование контура в чанке): те же
+     * материалы как строительные блоки гасят дозу сильнее, чем в инвентаре.
+     */
+    private static final Map<String, Double> BLOCK_EXACT = Map.of(
+            "barium_concrete", 0.01,
+            "bore_stained_glass", 0.05
+    );
 
     /** Узнаваемые «прочие металлы и сплавы» (×0.3) — fallback для форм без точной строки. */
     private static final List<String> GENERIC_METALS = List.of(
@@ -89,6 +112,10 @@ public final class RadMaterials {
     }
 
     private static double factorForPath(String path, boolean item) {
+        Double exact = (item ? ITEM_EXACT : BLOCK_EXACT).get(path);
+        if (exact != null) {
+            return exact;
+        }
         for (String p : PREFIXES) {
             if (path.equals(p) || path.startsWith(p + "_")) {
                 return FACTORS.get(p);

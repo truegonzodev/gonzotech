@@ -77,7 +77,14 @@ public final class RecipeUnlocks {
             "gonzotech:industrial_concrete",
             "gonzotech:reinforced_armor_concrete",
             "gonzotech:reinforced_industrial_concrete",
-            "gonzotech:slag_concrete"
+            "gonzotech:slag_concrete",
+            // Радиационный экран (автор 21.09): экранирующий замес → бариевый
+            // бетон и боросиликатный замес → борное стекло.
+            "gonzotech:barium_mix",
+            "gonzotech:barium_concrete",
+            "gonzotech:bore_silicate_mix",
+            "gonzotech:bore_stained_glass_smelting",
+            "gonzotech:bore_stained_glass_blasting"
         ),
         2, List.of(
             // Пылевые сплавы верстака. Они физически крафтятся по обычным

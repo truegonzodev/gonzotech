@@ -157,6 +157,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SLAG_CONCRETE_ITEM.get());
                 output.accept(ModItems.INDUSTRIAL_CONCRETE_ITEM.get());
                 output.accept(ModItems.REINFORCED_INDUSTRIAL_CONCRETE_ITEM.get());
+                // Радиационный экран: бариевый бетон и борное стекло (автор 21.09).
+                output.accept(ModItems.BARIUM_CONCRETE_ITEM.get());
+                output.accept(ModItems.BORE_STAINED_GLASS_ITEM.get());
                 // Саспенс: скалковые руины/данжи.
                 output.accept(ModItems.LEAD_STAINED_GLASS_ITEM.get());
                 output.accept(ModItems.CRIMSON_OBSIDIAN_ITEM.get());
@@ -226,6 +229,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.REDSTONE_PLATE.get());
                 output.accept(ModItems.REDSTONE_CORE.get());
                 output.accept(ModItems.TITANIUM_PLATE.get());
+                output.accept(ModItems.ZIRCONIUM_PLATE.get());
                 output.accept(ModItems.SEMICONDUCTOR_PLATE.get());
                 output.accept(ModItems.SEMICONDUCTOR_CORE.get());
                 output.accept(ModItems.FLAT_PUNCH.get());
@@ -241,6 +245,10 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TRIO_GRIT.get());
                 output.accept(ModItems.CLINKER_GRIT.get());
                 output.accept(ModItems.ARMOR_MIX.get());
+                // Радиационные замесы (автор 21.09) — сразу за бронезамесом:
+                // экранирующий (бариевый бетон) и боросиликатный (борное стекло).
+                output.accept(ModItems.BARIUM_MIX.get());
+                output.accept(ModItems.BORE_SILICATE_MIX.get());
                 output.accept(ModItems.ANDESITE_SILICATE_CLINKER.get());
                 output.accept(ModItems.WHITE_PORCELAIN_BATCH.get());
                 output.accept(ModItems.REBAR.get());
@@ -256,6 +264,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.MOX_FUEL.get());
                 output.accept(ModItems.TMOX_FUEL.get());
                 output.accept(ModItems.SNUP_FUEL.get());
+                output.accept(ModItems.UT_FUEL.get());
             })
             .build()
     );

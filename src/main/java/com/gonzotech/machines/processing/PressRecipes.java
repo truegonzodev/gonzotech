@@ -27,6 +27,7 @@ public final class PressRecipes {
         recipe(Items.GOLD_INGOT, ModItems.GOLD_PLATE.get(), 1),
         recipe(Items.REDSTONE, ModItems.REDSTONE_PLATE.get(), 1),
         recipe(ingot("titanium_ingot"), ModItems.TITANIUM_PLATE.get(), 1),
+        recipe(ingot("zirconium_ingot"), ModItems.ZIRCONIUM_PLATE.get(), 1),
         recipe(ingot("semiconductor_ingot"), ModItems.SEMICONDUCTOR_PLATE.get(), 1)
     );
 

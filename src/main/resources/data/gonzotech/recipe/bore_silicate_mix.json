@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:boron_dust",
+    "gonzotech:boron_dust",
+    "gonzotech:boron_dust",
+    "gonzotech:boron_dust",
+    [
+      "minecraft:flint",
+      "gonzotech:silicon"
+    ],
+    [
+      "minecraft:flint",
+      "gonzotech:silicon"
+    ],
+    "minecraft:sand"
+  ],
+  "result": {
+    "id": "gonzotech:bore_silicate_mix",
+    "count": 1
+  }
+}

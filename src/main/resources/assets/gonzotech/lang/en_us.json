@@ -636,5 +636,11 @@
   "item.gonzotech.coil": "Coil",
   "item.gonzotech.inductive_module": "Inductive Module",
   "gui.gonzotech.grinder.grinding_progress": "Grinding: %s%%",
-  "gui.gonzotech.press.fatigue": "Fatigue: %s%%"
+  "gui.gonzotech.press.fatigue": "Fatigue: %s%%",
+  "block.gonzotech.barium_concrete": "Barium Concrete",
+  "block.gonzotech.bore_stained_glass": "Boron Glass",
+  "item.gonzotech.barium_mix": "Shielding Mix",
+  "item.gonzotech.bore_silicate_mix": "Borosilicate Mix",
+  "item.gonzotech.zirconium_plate": "Zirconium Plate",
+  "item.gonzotech.ut_fuel": "UT Fuel (Uranium-Thorium)"
 }

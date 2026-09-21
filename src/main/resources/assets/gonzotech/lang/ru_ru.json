@@ -636,5 +636,11 @@
   "item.gonzotech.coil": "Катушка",
   "item.gonzotech.inductive_module": "Индуктивный модуль",
   "gui.gonzotech.grinder.grinding_progress": "Измельчение: %s%%",
-  "gui.gonzotech.press.fatigue": "Усталость: %s%%"
+  "gui.gonzotech.press.fatigue": "Усталость: %s%%",
+  "block.gonzotech.barium_concrete": "Бариевый бетон",
+  "block.gonzotech.bore_stained_glass": "Борное стекло",
+  "item.gonzotech.barium_mix": "Экранирующий замес",
+  "item.gonzotech.bore_silicate_mix": "Боросиликатный замес",
+  "item.gonzotech.zirconium_plate": "Циркониевая пластина",
+  "item.gonzotech.ut_fuel": "УТ-топливо (уран-ториевое)"
 }

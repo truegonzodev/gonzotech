@@ -116,6 +116,7 @@ public class ModItems {
     public static final DeferredItem<Item> REDSTONE_PLATE = ITEMS.registerSimpleItem("redstone_plate");
     public static final DeferredItem<Item> REDSTONE_CORE = ITEMS.registerSimpleItem("redstone_core");
     public static final DeferredItem<Item> TITANIUM_PLATE = ITEMS.registerSimpleItem("titanium_plate");
+    public static final DeferredItem<Item> ZIRCONIUM_PLATE = ITEMS.registerSimpleItem("zirconium_plate");
     public static final DeferredItem<Item> SEMICONDUCTOR_PLATE = ITEMS.registerSimpleItem("semiconductor_plate");
     public static final DeferredItem<Item> SEMICONDUCTOR_CORE = ITEMS.registerSimpleItem("semiconductor_core");
 
@@ -148,6 +149,18 @@ public class ModItems {
         ITEMS.registerSimpleItem("armor_mix");
     public static final DeferredItem<Item> ANDESITE_SILICATE_CLINKER =
         ITEMS.registerSimpleItem("andesite_silicate_clinker");
+    /**
+     * Экранирующий замес (бариевый): связка «барий + клинкер + андезитовая
+     * крошка» для бариевого бетона — основы радиационного экрана.
+     */
+    public static final DeferredItem<Item> BARIUM_MIX =
+        ITEMS.registerSimpleItem("barium_mix");
+    /**
+     * Боросиликатный замес: бор + кремень(кремний) + песок. При переплавке в
+     * любой печи даёт борное стекло — прозрачную защиту контура.
+     */
+    public static final DeferredItem<Item> BORE_SILICATE_MIX =
+        ITEMS.registerSimpleItem("bore_silicate_mix");
     public static final DeferredItem<Item> WHITE_PORCELAIN_BATCH =
         ITEMS.registerSimpleItem("white_porcelain_batch");
     public static final DeferredItem<Item> REBAR =
@@ -159,6 +172,11 @@ public class ModItems {
      * (природный уран/реакторный плутоний остаются формами в Metals);
      * текстуры временные — повторно использованы существующие слитки/пыли,
      * финальную графику рисует автор (помечено «под замену»).
+     * <p>
+     * <b>Назначение:</b> это НЕ топливо ядерной топки Discovery-2 — та работает
+     * только на природных формах урана/тория (см.
+     * {@code NuclearFireboxBlockEntity#burnTicks}). Изотопы и смеси —
+     * заготовки под будущие продвинутые реакторы (обогащение, СО/ТСО/СНУП/УТ).
      */
     public static final DeferredItem<Item> URANIUM_238 =
         ITEMS.registerSimpleItem("uranium_238");
@@ -184,6 +202,9 @@ public class ModItems {
         ITEMS.registerSimpleItem("tmox_fuel");
     public static final DeferredItem<Item> SNUP_FUEL =
         ITEMS.registerSimpleItem("snup_fuel");
+    /** УТ — уран-ториевое топливо (автор 21.09: забыли в первом списке). */
+    public static final DeferredItem<Item> UT_FUEL =
+        ITEMS.registerSimpleItem("ut_fuel");
 
     /**
      * Пыли ванильных металлов для побочных выходов ЦФ1УР. Они намеренно не добавлены
@@ -306,10 +327,16 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("industrial_concrete", ModBlocks.INDUSTRIAL_CONCRETE);
     public static final DeferredItem<BlockItem> REINFORCED_INDUSTRIAL_CONCRETE_ITEM =
         ITEMS.registerSimpleBlockItem("reinforced_industrial_concrete", ModBlocks.REINFORCED_INDUSTRIAL_CONCRETE);
+    /** Бариевый бетон — тяжёлый радиационный экран (см. {@code RadMaterials}). */
+    public static final DeferredItem<BlockItem> BARIUM_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("barium_concrete", ModBlocks.BARIUM_CONCRETE);
 
     // ──────────────── Декоративные блоки данжей: саспенс / радиация / метеоры ────────────────
     public static final DeferredItem<BlockItem> LEAD_STAINED_GLASS_ITEM =
         ITEMS.registerSimpleBlockItem("lead_stained_glass", ModBlocks.LEAD_STAINED_GLASS);
+    /** Борное стекло — прозрачный экран контура (см. {@code RadMaterials}). */
+    public static final DeferredItem<BlockItem> BORE_STAINED_GLASS_ITEM =
+        ITEMS.registerSimpleBlockItem("bore_stained_glass", ModBlocks.BORE_STAINED_GLASS);
     public static final DeferredItem<BlockItem> CRIMSON_OBSIDIAN_ITEM =
         ITEMS.registerSimpleBlockItem("crimson_obsidian", ModBlocks.CRIMSON_OBSIDIAN);
     public static final DeferredItem<BlockItem> SCULK_BRICKS_ITEM =

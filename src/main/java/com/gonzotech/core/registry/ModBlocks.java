@@ -94,6 +94,13 @@ public class ModBlocks {
         "industrial_concrete", constructionMaterialProperties(SoundType.STONE, 5.0f, 6.0f, 0.60f));
     public static final DeferredBlock<Block> REINFORCED_INDUSTRIAL_CONCRETE = BLOCKS.registerSimpleBlock(
         "reinforced_industrial_concrete", constructionMaterialProperties(SoundType.STONE, 10.0f, 8.0f, 0.60f));
+    /**
+     * Бариевый бетон (автор 21.09) — радиационный экран из экранирующего замеса:
+     * тяжёлый бетон, самый плотный из строительных. Экранирование задаётся
+     * пресетом в {@code RadMaterials} (предмет ×0.03, стена контура ×0.01).
+     */
+    public static final DeferredBlock<Block> BARIUM_CONCRETE = BLOCKS.registerSimpleBlock(
+        "barium_concrete", constructionMaterialProperties(SoundType.STONE, 8.0f, 12.0f, 0.60f));
 
     private static BlockBehaviour.Properties constructionMaterialProperties(
         SoundType sound, float hardness, float explosionResistance, float friction
@@ -110,6 +117,14 @@ public class ModBlocks {
     // Обычные кубы и ванильные формы кирпичей: специальные модели/BE не нужны.
     public static final DeferredBlock<TransparentBlock> LEAD_STAINED_GLASS = BLOCKS.registerBlock(
         "lead_stained_glass", TransparentBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
+    /**
+     * Борное стекло (автор 21.09) — прозрачный экран контура из боросиликатного
+     * замеса. Как и свинцовое стекло, ломается любым инструментом и дропается
+     * только с шёлковым касанием. Экранирование — {@code RadMaterials}
+     * (предмет ×0.08, стена контура ×0.05).
+     */
+    public static final DeferredBlock<TransparentBlock> BORE_STAINED_GLASS = BLOCKS.registerBlock(
+        "bore_stained_glass", TransparentBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
     public static final DeferredBlock<Block> CRIMSON_OBSIDIAN = BLOCKS.registerSimpleBlock(
         "crimson_obsidian", BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN));
     public static final DeferredBlock<Block> SCULK_BRICKS = BLOCKS.registerSimpleBlock(
