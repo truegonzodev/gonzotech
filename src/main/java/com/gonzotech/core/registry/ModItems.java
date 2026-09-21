@@ -133,8 +133,9 @@ public class ModItems {
         ITEMS.registerItem("core_form", props -> new Item(props.stacksTo(1)));
 
     // ─────────────────────── Материалы переработки: компоненты ───────────────────────
-    // Пока это только зарегистрированные ингредиенты с placeholder-ресурсами: рецепты
-    // и машинная переработка будут добавлены отдельной, согласованной задачей.
+    // Ингредиенты строительных замесов и машинной переработки: грит-цепочка
+    // (granite/andesite/diorite → trio → clinker), замесы (armor/barium/bore-silicate)
+    // и арматура. Рецепты у всех есть; машинная переработка — ЦФ1УР/дробилка.
     public static final DeferredItem<Item> GRANITE_GRIT =
         ITEMS.registerSimpleItem("granite_grit");
     public static final DeferredItem<Item> ANDESITE_GRIT =

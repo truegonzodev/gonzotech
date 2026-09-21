@@ -53,9 +53,9 @@ public record OreDefinition(
         DEEPSLATE("deepslate_"),
         NETHER("nether_"),
         // Не размещается через configured_feature/placed_feature: это не жила, а шанс
-        // 10%, что уже сгенерированный кальцитовый блок геоды станет рудой (только кальций).
-        // Блок/лут/тег регистрируются, но автоворлдгена для него пока нет — нужен
-        // отдельный Feature/mixin поверх геод.
+        // 10% (CALCITE_CHANCE в MineralReplacementFeature), что уже
+        // сгенерированный кальцитовый блок геоды станет рудой (только кальций).
+        // Реализовано пост-обработкой чанка на шаге top_layer_modification.
         CALCITE("calcite_");
 
         public final String prefix;

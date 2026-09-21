@@ -1,8 +1,6 @@
 package com.gonzotech.space.client;
 
 import com.gonzotech.space.SunState;
-import com.gonzotech.sunevent.client.SunEventClient;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -61,23 +59,11 @@ public final class SpaceSkyState {
     public static final ResourceLocation TEX_DYSON_RING =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/environment/dyson_ring.png");
 
-    /**
-     * Получить актуальную текстуру солнца для Оверворлда в зависимости от sunState.
-     */
-    public static ResourceLocation getOverworldSunTexture(ResourceLocation vanillaSun) {
-        return switch (sunState) {
-            // Суневент: красное солнце в бинарном окне E−1 22000 → E0 15000
-            // («встаёт сразу красным»). GONE/ЧД ниже имеют свои текстуры,
-            // DYSON в окне идёт отдельной связкой sun_red_dyson (автор 2026-09-19).
-            case DEFAULT -> SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)
-                ? TEX_OVERWORLD_SUN_RED
-                : TEX_OVERWORLD_SUN;
-            case DYSON -> SunEventClient.crimsonSunWindow(Minecraft.getInstance().level)
-                ? TEX_OVERWORLD_SUN_RED_DYSON
-                : TEX_OVERWORLD_SUN_DYSON;
-            case GONE -> TEX_OVERWORLD_SUN_GONE;
-            case BLACKHOLE -> TEX_OVERWORLD_SUN_BLACKHOLE;
-            case BLACKHOLE_DYSON -> TEX_OVERWORLD_SUN_BLACKHOLE_DYSON;
-        };
-    }
+    // ВАЖНО: метод подмены ТЕКСТУРЫ ванильного солнца здесь больше не живёт.
+    // Оверворлд использует кастомный скайбокс (SpaceSkyEffects, регистрируется в
+    // SpaceClient на Level.OVERWORLD): его renderSky возвращает true (ванильное
+    // небо не рисуется) и сам разводит слои sun / sun_red / sun_dyson /
+    // sun_red_dyson / sun_gone / sun_blackhole* по текущему sunState
+    // (см. SpaceSkyEffects.resolveVariant). Константы TEX_OVERWORLD_SUN* ниже
+    // оставлены как канонический список этих слоёв.
 }
