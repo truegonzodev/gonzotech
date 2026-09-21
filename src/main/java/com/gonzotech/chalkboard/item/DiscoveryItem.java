@@ -50,6 +50,8 @@ public class DiscoveryItem extends Item {
                 ModAdvancements.checkAndAwardAdvancements(serverPlayer);
                 // Фаза 3: показать в книге рецептов машины этого «Открытия».
                 com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantForTier(serverPlayer, discoveryNumber);
+                // Психика (автор 22.09): проюз открытия снимает 10000 стресса и даёт 3000 кризиса.
+                com.gonzotech.core.psyche.PsycheStress.onDiscoveryUsed(serverPlayer);
                 stack.shrink(1);
 
                 // Стильный визуал: анимация «выброса» на экран (как тотем бессмертия) —

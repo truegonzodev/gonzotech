@@ -270,6 +270,13 @@ public class ResonanceScreen extends Screen {
         if (ChalkboardNetwork.CLIENT_DATA != null) {
             updateFromNetwork();
         }
+        // Сердечко для шкалы стресса: пока интерфейс доски открыт — раз в секунду
+        // сообщаем серверу (+30 очков стресса/с, автор 22.09.2026).
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null && mc.level.getGameTime() % 20L == 0L) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                    new ChalkboardNetwork.BoardPresencePayload());
+        }
     }
 
     private void updateFromNetwork() {

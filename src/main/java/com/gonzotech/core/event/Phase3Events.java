@@ -31,6 +31,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
+import com.gonzotech.core.psyche.PsycheStress;
 import com.gonzotech.core.psyche.PsycheNetwork;
 
 import java.util.ArrayList;
@@ -196,7 +197,9 @@ public final class Phase3Events {
             Component.translatable("message.gonzotech.botched_craft").withStyle(ChatFormatting.RED),
             false
         );
-        // TODO(Фаза X): здесь начислять «стресс» игроку за преждевременный крафт.
+        // СТРЕСС: автор 22.09.2026 дал шкалу стресса, но число за преждевременный
+        // крафт пока не названо. Когда назовёт — здесь одна строка:
+        // PsycheStress.gain(player, N). Пока не начисляем, чтобы не выдумывать.
     }
 
     // ─────────────────── 2. Ванильные печи: свинец + взрыв цезия ───────────────────
@@ -458,6 +461,10 @@ public final class Phase3Events {
         psyche.addAddiction(MASH_ADDICTION_PER_EAT);
         player.setData(ModPsycheAttachments.PSYCHE, psyche);
         PsycheNetwork.sendToPlayer(player);
+
+        // Автор 22.09: сусло ещё и снимает стресс (−1000 очков) и сбрасывает
+        // «коридор зависимости» — таймер последнего сусла живёт в PsycheStress.
+        PsycheStress.onMashDrunk(player);
     }
 
     // ─────────────────── 7. Брожение фруктов в инвентаре ───────────────────

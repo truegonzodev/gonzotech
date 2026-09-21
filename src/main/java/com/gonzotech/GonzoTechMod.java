@@ -84,6 +84,8 @@ public class GonzoTechMod {
         // Радиация (спека 2026-09-20): доза шкалы, наведённый фон предметов,
         // динамический фон чанков, учёт поставленных радио-блоков.
         NeoForge.EVENT_BUS.register(com.gonzotech.radiation.RadiationSystem.class);
+        // Психика (спека 2026-09-22): стресс и экзистенциальный кризис в очках.
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStress.class);
         // Суневеты (багровые дни): драйвер + синк при заходе.
         NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 
