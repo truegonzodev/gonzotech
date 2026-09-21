@@ -88,10 +88,6 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
         return oreRemap;
     }
 
-    // ─── временная диагностика: одна строка за сессию, потом уберём ───
-    private static final org.slf4j.Logger DEBUG_LOG = com.mojang.logging.LogUtils.getLogger();
-    private static boolean debugLoggedOnce = false;
-
     /** Чанки, где конверсия уже прошла (идемпотентный триггер из стволов/плейсмодифаера). */
     private static final java.util.Set<Long> doneChunks = new java.util.HashSet<>();
 
@@ -117,7 +113,6 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
         int minY = level.getMinY();
         int maxY = level.getMaxY();
         Map<Block, Block> remap = oreRemap();
-        int nWater = 0, nDirt = 0, nSand = 0, nStone = 0, nOre = 0;
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
@@ -147,36 +142,26 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                     Block oreTarget = remap.get(block);
                     if (oreTarget != null) {
                         level.setBlock(pos, oreTarget.defaultBlockState(), 2);
-                        nOre++;
                         continue;
                     }
 
                     if (state.getFluidState().getType() == Fluids.WATER
                         || state.getFluidState().getType() == Fluids.FLOWING_WATER) {
                         level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 2);
-                        nWater++;
                     } else if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT
                         || block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
                         level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 2);
-                        nDirt++;
                     } else if (block == Blocks.SAND) {
                         level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 2);
-                        nSand++;
                     } else if (block == Blocks.STONE || block == Blocks.ANDESITE
                         || block == Blocks.GRANITE) {
                         if (y >= 60 || y >= 50 && random.nextInt(11) < y - 49) {
                             // 60+: всегда; 50–59: (y−49)/11 (0.09 … 0.91) — градиент спада.
                             level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 2);
-                            nStone++;
                         }
                     }
                 }
             }
-        }
-        if (!debugLoggedOnce) {
-            debugLoggedOnce = true;
-            DEBUG_LOG.info("[GonzoTech][DesolationConversion] первый прогон чанка ({},{}): вода={} дёрн={} песок={} камень={} руды={}",
-                chunkPos.getMinBlockX(), chunkPos.getMinBlockZ(), nWater, nDirt, nSand, nStone, nOre);
         }
     }
 

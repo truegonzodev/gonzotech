@@ -154,7 +154,7 @@ public final class Phase3Events {
      * гейт живёт в per-player аттачменте, а машина не игрок, и привязать крафт
      * машины к прогрессу какого-то игрока нельзя. Правило: все рецепты с
      * загейченным выводом из пула сборщика убираются целиком (тир 1 и всё,
-     * что позже). См. TEMP_NOTES §3.5.
+     * что позже). См. docs/UPDATED_TEMP_NOTES.md §3.5.
      */
     public static boolean isAttachmentGated(net.minecraft.world.item.Item item) {
         return requiredTierFor(item) != null;

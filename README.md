@@ -53,7 +53,7 @@
 Id механизмов приведены к правилу «префикс = Открытие» (`electric_furnace` → `first_electric_furnace`,
 `crusher` → `second_crusher` и т. д. — полная таблица в `docs/AUDIT-2026-09-21.md`, §9.12).
 Из-за смены id **миры и схемы, созданные раньше, несовместимы** (старые постройки станут
-«неизвестными блоками»). Правило и сверка — `docs/TEMP_NOTES.md` §0, `audit/naming_scan.py`.
+«неизвестными блоками»). Правило и сверка — `docs/UPDATED_TEMP_NOTES.md` §0, `audit/naming_scan.py`.
 
 ---
 

@@ -26,7 +26,7 @@ public final class CentrifugeRecipes {
     /** 1000 = 100%; таблицы используют точность до 0.1%, поэтому 13.0% = 130. */
     private static final int CHANCE_SCALE = 1_000;
 
-    /** 22 базовые строки ЦФ1УР из §6.4 MATERIAL_PROCESSING_CONCEPT. */
+    /** 22 базовые строки ЦФ1УР из §6.4 docs/archive/MATERIAL_PROCESSING_CONCEPT.md. */
     private static final List<Recipe> RECIPES = List.of(
         ore("calcium", main(dust("calcium_dust")), b(vanilla(Items.IRON_NUGGET), 130), b(dust("magnesium_dust"), 85), b(vanilla(Items.FLINT), 175)),
         ore("aluminum", main(dust("aluminum_dust")), b(vanilla(Items.IRON_NUGGET), 265), b(vanilla(Items.FLINT), 175), b(dust("titanium_dust"), 67)),
