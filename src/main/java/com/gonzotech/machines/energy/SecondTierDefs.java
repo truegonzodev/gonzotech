@@ -47,9 +47,9 @@ public final class SecondTierDefs {
     public static final int ELECTRIC_GTU_MILLI_PER_TICK_REMAINDER =
         ELECTRIC_GTU_PER_ITEM % ELECTRIC_COOK_TIME;
 
-    // ─────────────────────────── завод сплавов II ───────────────────────────
+    // ─────────────────────────── завод сплавов ───────────────────────────
 
-    /** Максимум GTU в заводе сплавов II (mGTU: 1640 GTU). */
+    /** Максимум GTU в заводе сплавов (mGTU: 1640 GTU). */
     public static final int ALLOY_FOUNDRY_GTU_CAPACITY = 1_640 * MachineDefs.MILLI;
     /** Совокупный максимум приёма GTU от всех сетей за тик (mGTU: 220 GTU/t). */
     public static final int ALLOY_FOUNDRY_GTU_INTAKE = 220 * MachineDefs.MILLI;
@@ -66,9 +66,9 @@ public final class SecondTierDefs {
             Math.multiplyExact(Math.max(0, ingredientItems), ALLOY_FOUNDRY_TICKS_PER_INGREDIENT));
     }
 
-    // ─────────────────────────── измельчитель II ───────────────────────────
+    // ─────────────────────────── измельчитель ───────────────────────────
 
-    /** Буфер измельчителя II (mGTU: 96 GTU). */
+    /** Буфер измельчителя (mGTU: 96 GTU). */
     public static final int GRINDER_GTU_CAPACITY = 96 * MachineDefs.MILLI;
     /** Совокупный максимум приёма GTU за тик (mGTU: 96 GTU/t). */
     public static final int GRINDER_GTU_INTAKE = 96 * MachineDefs.MILLI;
@@ -77,9 +77,9 @@ public final class SecondTierDefs {
     /** Одна операция измельчения занимает ровно 35 оплачиваемых тиков. */
     public static final int GRINDER_TICKS = 35;
 
-    // ─────────────────────────── пресс II ───────────────────────────
+    // ─────────────────────────── пресс ───────────────────────────
 
-    /** Буфер пресса II (mGTU: 2482 GTU). */
+    /** Буфер пресса (mGTU: 2482 GTU). */
     public static final int PRESS_GTU_CAPACITY = 2_482 * MachineDefs.MILLI;
     /** Совокупный максимум приёма GTU за тик (mGTU: 128 GTU/t). */
     public static final int PRESS_GTU_INTAKE = 128 * MachineDefs.MILLI;

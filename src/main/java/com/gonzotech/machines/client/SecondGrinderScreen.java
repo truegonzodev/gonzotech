@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Grinder II UI using the standard paired PNG background/foreground sheet convention. */
+/** Grinder UI using the standard paired PNG background/foreground sheet convention. */
 public final class SecondGrinderScreen extends MachineScreen<SecondGrinderMenu> {
 
     public SecondGrinderScreen(SecondGrinderMenu menu, Inventory inventory, Component title) {

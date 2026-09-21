@@ -29,7 +29,7 @@
 | Item Filter II | 5 вместо 3 шаблонов; 10 вместо 5 предметов/t total; 2 вместо 1/t per exact item | Однозначное расширение возможностей и throughput. Buffer остаётся 5, что не отменяет маршрутного увеличения. |
 | Item Scavenger II | собственный block class; reject cap 10 вместо 5 item/t и 2 вместо 1/t одного вида | Всё ещё работает только как ветка соседнего Filter. Без redstone маршрутизирует reject-поток дальше; с redstone становится мусоркой и удаляет reject-предметы даже при подключённых трубах. |
 | Tier-2 pipes/nodes | Wire 96/38, Heat 696/388, Water/Steam 1900/1000, Item 10/5 total и 2/1 exact-item, Universal Fluid 1500/800 | Все лимиты выше (примерно 1.79×–2.53×; fluid 1.875×; item 2×). |
-| Grinder II, Press II, Alloy Foundry II, Crusher, Centrifuge | В первом tier нет одноимённой машины с эквивалентным recipe/BE contract | Сравнение «лучше Tier 1» неприменимо: это новые специализированные машины, а не II-версия существующего станка. |
+| Grinder, Press, Alloy Foundry, Crusher, Centrifuge | В первом tier нет одноимённой машины с эквивалентным recipe/BE contract | Сравнение «лучше Tier 1» неприменимо: это новые специализированные машины, а не II-версия существующего станка. |
 
 ## Открытые / спорные продуктовые решения
 
@@ -45,9 +45,9 @@
 | Экран | Кодовой ресурс |
 |---|---|
 | Electric Furnace II | `second_electric_furnace_gui.png`, `second_electric_furnace_gui_bg.png` |
-| Alloy Foundry II | foreground `alloy_foundry_gui.png`, background `alloy_foundry_gui_bg.png` |
+| Alloy Foundry (в id — `second_alloy_foundry`, Открытие 2) | foreground `alloy_foundry_gui.png`, background `alloy_foundry_gui_bg.png` |
 | Item Filter II | `second_item_filter_gui.png` (single sheet; Tier I динамически остаётся на `item_filter_gui.png`) |
 | Pump II | `second_pump_gui.png`, `second_pump_gui_bg.png` |
 | Cobble Generator II | `second_cobble_generator_gui.png`, `second_cobble_generator_gui_bg.png` |
 
-Accumulator II продолжает использовать Tier-1 art по принятому решению. Grinder II, Press II, Centrifuge и Crusher в этой задаче не менялись.
+Accumulator II продолжает использовать Tier-1 art по принятому решению. Grinder, Press, Centrifuge и Crusher в этой задаче не менялись.

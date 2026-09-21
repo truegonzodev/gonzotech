@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Press II UI using the standard paired PNG background/foreground sheet convention. */
+/** Press UI using the standard paired PNG background/foreground sheet convention. */
 public final class SecondPressScreen extends MachineScreen<SecondPressMenu> {
 
     public SecondPressScreen(SecondPressMenu menu, Inventory inventory, Component title) {

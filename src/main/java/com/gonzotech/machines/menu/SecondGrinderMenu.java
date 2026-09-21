@@ -10,7 +10,7 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-/** Two-slot menu for Grinder II: validated material input and protected output. */
+/** Two-slot menu for the Grinder: validated material input and protected output. */
 public final class SecondGrinderMenu extends BaseMachineMenu {
 
     private static final int MACHINE_SLOTS = 2;

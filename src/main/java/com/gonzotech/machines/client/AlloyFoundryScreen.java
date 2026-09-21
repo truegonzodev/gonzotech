@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** 5×5 Alloy Foundry II UI with its GTU buffer and alloying-progress indicators. */
+/** 5×5 Alloy Foundry UI with its GTU buffer and alloying-progress indicators. */
 public final class AlloyFoundryScreen extends MachineScreen<AlloyFoundryMenu> {
 
     public AlloyFoundryScreen(AlloyFoundryMenu menu, Inventory inventory, Component title) {

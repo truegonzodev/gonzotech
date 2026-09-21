@@ -89,6 +89,10 @@ ID-РЕНЕЙМ ТРУБ/УЗЛОВ (уровни проводимости):
     (first_wire, first_heat_pipe, first_water_pipe, first_steam_pipe,
      first_wire_node, first_heat_node, first_water_node, first_steam_node).
   * Это «первый уровень» — дальше будут second_, third_ и т.д. (выше лимиты).
+  * **УТОЧНЕНО автором 21.09.2026:** префикс обозначает не «номер поколения» сам по себе, а
+    то, к какому «Открытию» относится механизм (`first_` = Открытие 1, `second_` = Открытие 2),
+    тогда как цифра в ИМЕНИ — версия механизма. Полное правило — `docs/TEMP_NOTES.md` §0,
+    сверка — §9.12 аудита (`audit/naming_scan.py`).
   * Правит: регистрацию блоков/предметов, blockstates/models/lang/recipe/loot,
     PipeType.id(), ModCompositeAccess, креатив-вкладку, заметки (стр.10 хотбар).
 
