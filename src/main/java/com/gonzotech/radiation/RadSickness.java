@@ -2,7 +2,6 @@ package com.gonzotech.radiation;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 
@@ -30,17 +29,15 @@ import java.util.UUID;
  *       Эффект НЕ снимается падением дозы: лечится отдельно (механика — {@link Necrosis}).</li>
  * </ol>
  *
- * <p>Смерть на 100 % — уроном {@code gonzotech:radiation}. Периодического урона
- * у категорий больше нет (в таблице автора его не было). Творческий/наблюдательный
- * режим и мёртвые игроки последствий не получают.</p>
+ * <p>Урона у шкалы нет вообще: на 100 % игрок не умирает (автор 22.09: «убрать
+ * моментальную смерть от 100 %») — его держат эффекты смертельной категории,
+ * а урон и лечение придут с препаратами (Цистамин/Пентацин/ДТПА). Творческий/
+ * наблюдательный режим и мёртвые игроки последствий не получают.</p>
  */
 public final class RadSickness {
 
     /** Длительность постоянных эффектов: 3 с (обновляются каждую секунду). */
     private static final int EFFECT_TICKS = 60;
-
-    /** Смертельный удар на 100 % дозы (заведомо больше любого запаса здоровья). */
-    private static final float LETHAL_BLOW = 1000.0f;
 
     /** Последняя категория по игроку — чтобы сообщать только о ПЕРЕХОДАХ. */
     private static final Map<UUID, RadDose.Category> LAST_STAGE = new HashMap<>();
@@ -51,7 +48,7 @@ public final class RadSickness {
     }
 
     /** Применить последствия текущей дозы (раз в секунду, после пересчёта шкалы). */
-    public static void tick(ServerPlayer player, ServerLevel level, int permille) {
+    public static void tick(ServerPlayer player, int permille) {
         if (player.isCreative() || player.isSpectator() || player.isDeadOrDying()) {
             LAST_STAGE.remove(player.getUUID());
             return;
@@ -72,11 +69,6 @@ public final class RadSickness {
         if (permille > RadDose.NECROSIS_AT && RNG.nextDouble() < RadDose.NECROSIS_CHANCE_PER_SECOND) {
             int wanted = permille > RadDose.NECROSIS_LEVEL2_AT ? 1 : 0;
             Necrosis.grant(player, wanted);
-        }
-
-        if (permille >= RadDose.MAX) {
-            player.hurt(RadDose.damageSource(level), LETHAL_BLOW);
-            LAST_STAGE.remove(player.getUUID());
         }
     }
 

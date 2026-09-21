@@ -24,9 +24,9 @@ import java.util.EnumMap;
  * дальше защита падает линейно на 1 % за каждый лишний mZt/с — горячий источник
  * пробивает костюм (при 80 mZt/с и выше он бесполезен).</p>
  *
- * <p>Неполный сет режет пропорционально частям (по {@value #SHIELDING_PER_PIECE} %
- * за часть — 4 части = 60 %). Это моя интерпретация: в спеке было только «фулл сет
- * режет 60 %». Меняется одной константой.</p>
+ * <p>Неполный сет (автор 22.09): каждая надетая часть даёт {@value #SHIELDING_PER_PIECE} %
+ * (1 часть — 5 %, 2 — 10 %, 3 — 15 %), а ПОЛНЫЙ сет — сразу {@value #FULL_SHIELDING} %
+ * (60 %): костюм работает как единая система, а не как сумма тряпок.</p>
  *
  * <p>Материал брони — копия кожаного (как у сплава): защита тела 1/3/2/1, чинится
  * кожей; текстуры — плейсхолдер (копия слоя сплава), арт за автором.</p>
@@ -56,8 +56,8 @@ public final class Hazmat {
 
     /** Сколько режет полный сет (доля дозы). */
     private static final double FULL_SHIELDING = 0.60;
-    /** Прибавка за каждую надетую часть (4 × 0.15 = 0.60). */
-    private static final double SHIELDING_PER_PIECE = 0.15;
+    /** Что даёт каждая отдельная часть, пока сет не собран целиком (автор 22.09). */
+    private static final double SHIELDING_PER_PIECE = 0.05;
     /** До этой дозы/сек (mZt) защита полная. */
     private static final double SOFT_DOSE_MILLI = 20.0;
     /** Падение защиты: 1 % на каждый mZt/с сверх мягкой дозы. */
@@ -93,7 +93,9 @@ public final class Hazmat {
         if (worn == 0) {
             return 1.0;
         }
-        double shielding = Math.min(FULL_SHIELDING, SHIELDING_PER_PIECE * worn);
+        // Полный сет — 60 %; иначе каждая часть по 5 % (автор 22.09: «части по
+        // отдельности дают 5 % каждая, фуллсет сразу наши 60 %»).
+        double shielding = worn >= PIECES.length ? FULL_SHIELDING : SHIELDING_PER_PIECE * worn;
         double milli = dosePerSecond / RadUnits.MILLI;
         if (milli > SOFT_DOSE_MILLI) {
             shielding -= FALLOFF_PER_MILLI * (milli - SOFT_DOSE_MILLI);

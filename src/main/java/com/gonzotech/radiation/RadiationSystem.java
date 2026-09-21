@@ -193,7 +193,7 @@ public final class RadiationSystem {
 
         // Последствия дозы: эффекты/вспышки/смерть по категориям RadDose.
         // Считаются здесь же, чтобы не заводить второй тик на игрока.
-        RadSickness.tick(player, level, psyche.getRadiation());
+        RadSickness.tick(player, psyche.getRadiation());
 
         // Игрок → чанк: ТОЛЬКО пресетная эмиссия (наведённый фон не греет местность),
         // логистика к ПОЛНОЙ сумме инвентаря: ближе к уровню источника — медленнее,

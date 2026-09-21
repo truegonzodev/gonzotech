@@ -329,7 +329,7 @@
   "item.gonzotech.scholar_notes": "Заметки учёного",
   "tooltip.gonzotech.scholar_notes": "ПКМ — открыть. Руководство по Gonzo Tech.",
   "tooltip.gonzotech.rad_absorbent": "Накладывает «Очищение I» на 30 секунд: плавно выводит 20% текущей дозы. После курса — голод на 10 секунд.",
-  "tooltip.gonzotech.hazmat_helmet": "Полный сет хазмата режет 60% облучения, пока доза/сек ниже 20 мЗт. Горячее — пробивает.",
+  "tooltip.gonzotech.hazmat_helmet": "Каждая надетая часть режет 5% облучения, полный сет — 60%, пока доза/сек ниже 20 мЗт. Горячее — пробивает.",
   "tooltip.gonzotech.paper_fabric": "Основа защитного костюма.",
   "block.gonzotech.calcium_block": "Блок кальция",
   "item.gonzotech.calcium_dust": "Пыль кальция",

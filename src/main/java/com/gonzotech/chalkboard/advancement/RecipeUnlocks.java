@@ -101,7 +101,6 @@ public final class RecipeUnlocks {
             // Расходник к шкале облучения + хазмат I (автор 22.09): крафт доступен
             // всегда, но в книге появляется после Открытия 2.
             "gonzotech:rad_absorbent",
-            "gonzotech:paper_fabric",
             "gonzotech:hazmat_helmet",
             "gonzotech:hazmat_chestplate",
             "gonzotech:hazmat_leggings",

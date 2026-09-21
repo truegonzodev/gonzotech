@@ -329,7 +329,7 @@
   "item.gonzotech.scholar_notes": "Scholar's Notes",
   "tooltip.gonzotech.scholar_notes": "Right-click to open. A field guide to Gonzo Tech.",
   "tooltip.gonzotech.rad_absorbent": "Applies Cleansing I for 30 seconds: smoothly clears 20%% of the current dose. Afterwards — hunger for 10 seconds.",
-  "tooltip.gonzotech.hazmat_helmet": "A full hazmat set blocks 60%% of exposure while the dose per second stays under 20 mZt. Hotter sources punch through.",
+  "tooltip.gonzotech.hazmat_helmet": "Each worn piece blocks 5% of exposure; a full set blocks 60% while the dose per second stays under 20 mZt. Hotter sources punch through.",
   "tooltip.gonzotech.paper_fabric": "The base layer of the protective suit.",
   "block.gonzotech.calcium_block": "Calcium Block",
   "item.gonzotech.calcium_dust": "Calcium Dust",
