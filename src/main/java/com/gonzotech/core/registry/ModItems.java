@@ -59,10 +59,12 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("chalkboard", ModBlocks.CHALKBOARD);
 
     /**
-     * Фаза 3 — «Заметки учёного»: будущее руководство по моду (аналог таумономикона /
-     * лексикона Botania). Пока только предмет-заглушка без функционала: выдаётся
-     * игроку один раз при первом входе в мир, крафтится бесформенно (книга + верстак).
-     * ПКМ открывает GUI-буклет ({@link com.gonzotech.chalkboard.item.ScholarNotesItem}).
+     * «Заметки учёного» — руководство по моду (аналог таумономикона / лексикона Botania).
+     * Выдаётся один раз при первом входе в мир, крафтится бесформенно (книга + верстак).
+     * ПКМ открывает GUI-буклет ({@link com.gonzotech.chalkboard.item.ScholarNotesItem}):
+     * 40 страниц по 5 главам-эрам, вкладки, иллюстрации и витрины
+     * ({@code chalkboard/notes/ScholarNotesContent}). Наполнены главы I–II,
+     * главы III–V — пустые вкладки (задел).
      */
     public static final DeferredItem<com.gonzotech.chalkboard.item.ScholarNotesItem> SCHOLAR_NOTES =
         ITEMS.registerItem("scholar_notes",
@@ -250,8 +252,9 @@ public class ModItems {
             props.stacksTo(1)));
 
     /**
-     * Фаза 3 — измерительный прибор «УФ-радиометр». Пока плейсхолдер без рецепта:
-     * пока игрок держит его в руке, на HUD видна шкала «УФ излучение».
+     * Измерительный прибор «УФ-радиометр»: пока в руке — на HUD видна шкала
+     * «УФ излучение». Предмет и HUD рабочие; рецепта пока нет (шкалу
+     * {@code PlayerPsyche.uv} ещё никто не наполняет — задел под УФ-механику).
      */
     public static final DeferredItem<Item> UV_METER =
         ITEMS.registerSimpleItem("uv_meter", new Item.Properties().stacksTo(1));
@@ -313,7 +316,8 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("lunar_dirt", ModBlocks.LUNAR_DIRT);
 
     // ─────────────────────── Материалы переработки: строительные блоки ───────────────────────
-    // Декоративные блоки-заготовки без рецептов и специальной механики.
+    // Бетоны и фарфор из грит-цепочки: собственные рецепты + прочностные статы,
+    // часть блоков экранирует радиацию (см. RadMaterials: бариевый бетон, борное стекло).
     public static final DeferredItem<BlockItem> ARMOR_CONCRETE_ITEM =
         ITEMS.registerSimpleBlockItem("armor_concrete", ModBlocks.ARMOR_CONCRETE);
     public static final DeferredItem<BlockItem> REINFORCED_ARMOR_CONCRETE_ITEM =

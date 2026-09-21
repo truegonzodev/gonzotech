@@ -51,10 +51,9 @@ public class ModBlocks {
         "tungsten_block", TungstenAbsorberBlock::new, metalBlockProperties("tungsten"));
 
     /**
-     * Доска резонанса (com.gonzotech.chalkboard) — Фаза 1: просто ставится,
-     * ПКМ открывает экран конструктора формул. См.
-     * info/gonzo_tech_chalkboard_design.md. Дерево/мел — не руда, не
-     * требует инструмента, ломается быстро.
+     * Доска резонанса (com.gonzotech.chalkboard): ставится, ПКМ открывает экран
+     * конструктора формул. Дерево/мел — не руда, не требует инструмента, ломается
+     * быстро. Дизайн-док автора лежит вне репозитория ({@code info/} в .gitignore).
      */
     public static final DeferredBlock<ChalkboardBlock> CHALKBOARD = BLOCKS.registerBlock(
         "chalkboard",

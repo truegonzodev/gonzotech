@@ -63,8 +63,8 @@ import net.minecraft.world.level.material.Fluids;
  * {@link MachineDefs#PUMP_WATER_PER_SOURCE} mB.
  * <p>
  * Слив: воду из шкалы помпа отдаёт напрямую соседям-{@link WaterSink} (котлу) —
- * до {@link MachineDefs#PUMP_WATER_OUTPUT} mB/т, равномерно (жидкостных труб пока
- * нет; когда появятся — слив пойдёт по ним через отдельный маршрутизатор).
+ * до {@link MachineDefs#PUMP_WATER_OUTPUT} mB/т, равномерно; с логистикой тот же
+ * объём можно гнать по жидкостным трубам (слив в сеть — {@code network.PipeRouting}).
  */
 public class PumpBlockEntity extends BaseMachineBlockEntity implements GtuSink, WaterSink, WorldlyContainer {
 
