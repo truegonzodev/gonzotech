@@ -373,6 +373,14 @@ public class ModItems {
         ITEMS.registerItem("the_fruit_mash",
             props -> new Item(props.food(MASH_FOOD, MASH_CONSUMABLE)));
 
+    /** Кружка пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (128 mB сусла + бутылёк). */
+    public static final DeferredItem<Item> BEER_MUG =
+        ITEMS.registerItem("beer_mug", props -> new Item(props.stacksTo(16)));
+
+    /** Ведро пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (1000 mB сусла + ведро). */
+    public static final DeferredItem<Item> BEER_BUCKET =
+        ITEMS.registerItem("beer_bucket", props -> new Item(props.stacksTo(1)));
+
 
     /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */
     public static final DeferredItem<BlockItem> LUNAR_DIRT_ITEM =

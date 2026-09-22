@@ -301,6 +301,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());
+                // Пиво (автор 22.09) — создаётся в сусловарочном котле.
+                output.accept(ModItems.BEER_MUG.get());
+                output.accept(ModItems.BEER_BUCKET.get());
                 // Админские сингулярности — специально не имеют crafting recipes.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_HEAT_SOURCE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_ENERGY_SOURCE_ITEM.get());

@@ -52,6 +52,11 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     protected static final ResourceLocation BAR_STEAM = gui("bar_steam.png");
     protected static final ResourceLocation BAR_GTU = gui("bar_gtu.png");
     protected static final ResourceLocation BAR_COBBLESTONE = gui("bar_cobblestone.png");
+    protected static final ResourceLocation BAR_MASH = gui("bar_mash.png");
+    protected static final ResourceLocation BAR_WORT = gui("bar_wort.png");
+    protected static final ResourceLocation BAR_DISTILLATE = gui("bar_distillate.png");
+    protected static final ResourceLocation BAR_RECTIFICATE = gui("bar_rectificate.png");
+    protected static final ResourceLocation BAR_POISON = gui("bar_poison.png");
 
     private GuiMask mask = GuiMask.forTexture(null, 0, 0);
 
