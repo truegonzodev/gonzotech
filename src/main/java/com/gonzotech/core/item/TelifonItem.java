@@ -7,6 +7,7 @@ import com.gonzotech.radiation.RadDose;
 import com.gonzotech.radiation.RadUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -98,8 +99,14 @@ public class TelifonItem extends Item {
         return points / (double) PlayerPsyche.POINTS_PER_PERCENT;
     }
 
-    /** Значение с одним знаком после точки (как в HUD). */
-    private static Component percent(double value) {
+    /**
+     * Значение с одним знаком после точки (как в HUD).
+     *
+     * <p>Возвращаем {@link MutableComponent}, а не {@link Component}: только у изменяемого
+     * компонента есть {@code withStyle(ChatFormatting)} — именно на этом падала сборка автора
+     * (22.09.2026), потому что {@code percent(dose).withStyle(...)} вызывался на интерфейсе.
+     */
+    private static MutableComponent percent(double value) {
         return Component.literal(String.format(Locale.ROOT, "%.1f %%", value))
                 .withStyle(ChatFormatting.YELLOW);
     }

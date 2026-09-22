@@ -583,6 +583,16 @@ HUD показывает и облучение (как дозиметр), и У�
 
 ---
 
+**Хотфикс сборки (23.09, по логу автора) — `TelifonItem.java:60`:** `cannot find symbol: method
+withStyle(ChatFormatting), location: interface Component`. Причина: хелпер `percent(double)` был объявлен
+возвращающим `Component`, а у **интерфейса** `Component` нет `withStyle(ChatFormatting)` — он есть у
+`MutableComponent` (поэтому `Component.literal(...).withStyle(...)` и `Component.translatable(...)
+.withStyle(...)` компилируются, а вызов на объявленном `Component` — нет). **Пофикшено:** тип возврата
+`percent` → `MutableComponent` (+ импорт `net.minecraft.network.chat.MutableComponent`), остальной файл
+сверен с работающим `DosimeterItem` — API те же (`RadDose.percent/category/langKey`, `RadUnits.format`,
+`ChunkRadiationData.get(...).value(...)`, `SoundEvents.UI_BUTTON_CLICK.value()`), switch по `Category`
+покрывает все 5 констант, плейсхолдеры `message.gonzotech.telifon.*` совпадают с числом аргументов.
+
 ## 9. «Заметки учёного»: гейтинг страниц и «Познание мира»
 
 - `chalkboard/notes/`: `ScholarNotesContent` (линейный массив 40 страниц, иллюстрации — ШАБЛОНЫ, см. ниже), `ScholarChapter` (5 корешков-эпох, у каждой свой bg-панель `notes_bg_eraN.png` + иконка-предмет; `side()` — отдельная книга), `ScholarPage` (number/chapter/unlock/title/body/showcase/layout: `TEXT_FULL`/`TEXT_LEFT`/`IMAGE_FULL`), `ScholarUnlock`, `ScholarNoteFlags`, `NotesState`.
