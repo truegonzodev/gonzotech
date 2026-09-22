@@ -136,6 +136,12 @@ public final class PsycheStress {
     public static final int ABSORBENT_STRESS_BURST = 100;
     /** Скример эндермена (взгляд в глаза). */
     public static final int ENDERMAN_STARE_BURST = 400;
+    /**
+     * Преждевременный крафт («botched gate»): ингредиенты потрачены, на выходе
+     * бесполезный «заплетённый механизм». Автор 22.09.2026 назвал число: +1500
+     * очков СРАЗУ (0.15 % шкалы) — один раз на крафт, а не на каждый предмет.
+     */
+    public static final int BOTCHED_CRAFT_STRESS = 1500;
     /** Убийство жителя. */
     public static final int VILLAGER_KILL_STRESS = 1000;
     public static final int VILLAGER_KILL_CRISIS = 50;

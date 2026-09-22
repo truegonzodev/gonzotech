@@ -5,9 +5,7 @@ import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.registry.ModMachines;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -133,16 +131,8 @@ public final class TierTwoCrafting {
         if (!carried.isEmpty() && carried.is(crafted.getItem())) {
             carried.shrink(count);
         }
-        for (int i = 0; i < count; i++) {
-            ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
-            if (!player.getInventory().add(botched)) {
-                player.drop(botched, false);
-            }
-        }
-        player.displayClientMessage(
-            Component.translatable("message.gonzotech.botched_craft").withStyle(ChatFormatting.RED),
-            false
-        );
+        // Тот же гейт, что и у первого тира: механизм + сообщение + стресс.
+        com.gonzotech.core.event.Phase3Events.grantBotchedMechanism(player, count);
     }
 
     /** true, если предмет — «закрытый» вывод Discovery-2 (гейт тира 2). */

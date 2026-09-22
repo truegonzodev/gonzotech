@@ -278,8 +278,11 @@ public final class PsycheStressEffects {
         player.addEffect(new MobEffectInstance(ModEffects.HEART_ATTACK,
                 HEART_ATTACK_SECONDS * 20, 0, false, true));
         HEART_ATTACK.put(player.getUUID(), Boolean.TRUE);
+        // Автор 22.09.2026: одноразовые подсказки — в ЧАТ, красным, одной строкой
+        // (хотбар не засоряем).
         player.displayClientMessage(
-                Component.translatable("message.gonzotech.heart_attack.warning"), true);
+                Component.translatable("message.gonzotech.heart_attack.warning")
+                        .withStyle(net.minecraft.ChatFormatting.RED), false);
         player.serverLevel().playSound(null, player.blockPosition(),
                 SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1.0F, 1.0F);
     }

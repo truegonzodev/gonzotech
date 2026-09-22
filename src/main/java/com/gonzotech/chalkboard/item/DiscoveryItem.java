@@ -62,15 +62,16 @@ public class DiscoveryItem extends Item {
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.2F);
 
+                // Автор 22.09.2026: одноразовая подсказка — в чат, а не в хотбар.
                 player.displayClientMessage(
                         Component.translatable("message.gonzotech.discovery.activated", discoveryNumber),
-                        true
+                        false
                 );
                 return InteractionResult.CONSUME;
             } else {
                 player.displayClientMessage(
                         Component.translatable("message.gonzotech.discovery.already", discoveryNumber),
-                        true
+                        false
                 );
                 return InteractionResult.PASS;
             }

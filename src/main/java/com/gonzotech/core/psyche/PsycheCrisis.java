@@ -368,8 +368,10 @@ public final class PsycheCrisis {
             return;
         }
         event.setCanceled(true);
+        // Автор 22.09.2026: одноразовая подсказка — в чат, красным, одной строкой.
         player.displayClientMessage(
-                Component.translatable("message.gonzotech.crisis.sleep_tnt"), true);
+                Component.translatable("message.gonzotech.crisis.sleep_tnt")
+                        .withStyle(net.minecraft.ChatFormatting.RED), false);
     }
 
     /** Динамит должен лежать под кроватью (под любой из её половин). */

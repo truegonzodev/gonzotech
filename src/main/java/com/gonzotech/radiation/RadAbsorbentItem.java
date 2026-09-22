@@ -54,8 +54,9 @@ public class RadAbsorbentItem extends Item {
         // Психика (автор 22.09): проюз абсорбента добавляет +100 очков стресса.
         com.gonzotech.core.psyche.PsycheStress.gain(serverPlayer,
                 com.gonzotech.core.psyche.PsycheStress.ABSORBENT_STRESS_BURST);
+        // Автор 22.09.2026: одноразовые отклики — в чат одной строкой, не в хотбар.
         serverPlayer.displayClientMessage(Component.translatable("message.gonzotech.absorbent.applied")
-                .withStyle(ChatFormatting.AQUA), true);
+                .withStyle(ChatFormatting.AQUA), false);
         serverLevel.playSound(null, serverPlayer.blockPosition(),
                 SoundEvents.HONEY_DRINK.value(), SoundSource.PLAYERS, 0.8F, 1.1F);
         return InteractionResult.SUCCESS;

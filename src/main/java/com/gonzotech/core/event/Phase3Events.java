@@ -187,6 +187,19 @@ public final class Phase3Events {
         if (!carried.isEmpty() && carried.is(crafted.getItem())) {
             carried.shrink(count);
         }
+        grantBotchedMechanism(player, count);
+    }
+
+    /**
+     * «Botched gate»: выдать «заплетённый механизм» вместо преждевременно
+     * скрафченного предмета, сообщить в чат и начислить стресс.
+     *
+     * <p>Единая точка для всех путей крафта — обычный клик ({@code onItemCrafted}),
+     * быстрый крафт ({@code CraftingMenuMixin}) и гейт второго тира
+     * ({@code TierTwoCrafting}). Стресс ({@value PsycheStress#BOTCHED_CRAFT_STRESS}
+     * очков) начисляется ОДИН раз на крафт — автор 22.09.2026.</p>
+     */
+    public static void grantBotchedMechanism(ServerPlayer player, int count) {
         for (int i = 0; i < count; i++) {
             ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
             if (!player.getInventory().add(botched)) {
@@ -197,9 +210,7 @@ public final class Phase3Events {
             Component.translatable("message.gonzotech.botched_craft").withStyle(ChatFormatting.RED),
             false
         );
-        // СТРЕСС: автор 22.09.2026 дал шкалу стресса, но число за преждевременный
-        // крафт пока не названо. Когда назовёт — здесь одна строка:
-        // PsycheStress.gain(player, N). Пока не начисляем, чтобы не выдумывать.
+        com.gonzotech.core.psyche.PsycheStress.gain(player, com.gonzotech.core.psyche.PsycheStress.BOTCHED_CRAFT_STRESS);
     }
 
     // ─────────────────── 2. Ванильные печи: свинец + взрыв цезия ───────────────────

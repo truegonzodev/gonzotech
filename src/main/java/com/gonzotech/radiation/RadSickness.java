@@ -120,7 +120,9 @@ public final class RadSickness {
             case CRITICAL -> ChatFormatting.RED;
             case LETHAL -> ChatFormatting.DARK_RED;
         };
+        // Автор 22.09.2026: одноразовая подсказка — в ЧАТ одной строкой (не в хотбар).
+        // Цвет — категория дозы (тот же, что у дозиметра и у эффектов лучевой болезни).
         player.displayClientMessage(
-                Component.translatable("message.gonzotech.rad.stage", now.label()).withStyle(color), true);
+                Component.translatable("message.gonzotech.rad.stage", now.label()).withStyle(color), false);
     }
 }

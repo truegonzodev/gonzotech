@@ -235,6 +235,21 @@ public class ChalkboardNetwork {
                 (payload, context) -> context.enqueueWork(() ->
                         com.gonzotech.chalkboard.client.DiscoveryActivationClient.play(payload.discoveryNumber()))
         );
+
+        // S2C: подсказка по доске резонанса (блок из решения) — клиент подсветит
+        // его в лотке толстой белой рамкой.
+        registrar.playToClient(
+                CluePayload.TYPE,
+                CluePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() ->
+                        com.gonzotech.chalkboard.client.ChalkboardClueClient.accept(payload.quantityId()))
+        );
+    }
+
+    /** Отправить игроку подсказку: идентификатор блока из решения текущей задачи. */
+    public static void sendClue(ServerPlayer player, String quantityId) {
+        if (quantityId == null || quantityId.isEmpty()) return;
+        PacketDistributor.sendToPlayer(player, new CluePayload(quantityId));
     }
 
     public static void sendSyncToPlayer(ServerPlayer player) {
@@ -359,7 +374,7 @@ public class ChalkboardNetwork {
                             .append(" ")
                             .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
                             .withStyle(ChatFormatting.GREEN),
-                    true
+                    false
             );
         } else if (!isInfiniteMode) {
             // Completed Discovery 1..15
@@ -377,7 +392,7 @@ public class ChalkboardNetwork {
                             .append(" ")
                             .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
                             .withStyle(ChatFormatting.GREEN),
-                    true
+                    false
             );
         } else {
             // Infinite Mode completion (Stage 17+)!
@@ -393,7 +408,7 @@ public class ChalkboardNetwork {
             player.displayClientMessage(
                     Component.translatable("gui.gonzotech.chalkboard.infinite_xp_award", currentStage, xpReward)
                             .withStyle(ChatFormatting.GOLD),
-                    true
+                    false
             );
         }
 
