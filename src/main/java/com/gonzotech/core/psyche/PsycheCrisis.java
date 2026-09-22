@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -248,8 +249,10 @@ public final class PsycheCrisis {
     private static void apply(ServerPlayer player, Snapshot snapshot) {
         ServerLevel level = player.server.getLevel(snapshot.dimension());
         if (level != null) {
+            // 1.21.4: у ServerPlayer только teleportTo(x,y,z) и полная форма с Set<Relative>
+            // и флагом resetCamera (последний ещё и снимает «камеру-наблюдателя»).
             player.teleportTo(level, snapshot.x(), snapshot.y(), snapshot.z(),
-                    snapshot.yaw(), snapshot.pitch());
+                    Set.<Relative>of(), snapshot.yaw(), snapshot.pitch(), true);
         }
         player.setHealth(Math.max(1.0F, Math.min(snapshot.health(), player.getMaxHealth())));
         player.getFoodData().setFoodLevel(snapshot.food());
@@ -398,7 +401,8 @@ public final class PsycheCrisis {
     private static void stareAtPlayer(ServerPlayer player) {
         AABB box = player.getBoundingBox().inflate(MOB_STARE_RADIUS);
         for (Mob mob : player.level().getEntitiesOfClass(Mob.class, box)) {
-            if (mob != player && mob.isAlive()) {
+            // ServerPlayer не наследует Mob, поэтому сравнение по UUID (иначе — incomparable types)
+            if (mob.isAlive() && !mob.getUUID().equals(player.getUUID())) {
                 mob.getLookControl().setLookAt(player, 30.0F, 30.0F);
             }
         }

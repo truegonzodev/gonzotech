@@ -527,13 +527,17 @@ public final class PsycheStress {
                 && player.getItemBySlot(EquipmentSlot.FEET).isEmpty();
     }
 
-    /** Играет ли пластинка в проигрывателе поблизости. */
+    /**
+     * Играет ли пластинка в проигрывателе поблизости. В 1.21.4 у {@link JukeboxBlockEntity} нет
+     * {@code getRecord()} — «играет сейчас» спрашиваем у {@code JukeboxSongPlayer} (если автору
+     * нужно «пластинка просто вставлена и доиграла», заменить на {@code jukebox.getTheItem()}).
+     */
     private static boolean isJukeboxPlaying(ServerLevel level, BlockPos center) {
         BlockPos min = center.offset(-JUKEBOX_RADIUS, -4, -JUKEBOX_RADIUS);
         BlockPos max = center.offset(JUKEBOX_RADIUS, 4, JUKEBOX_RADIUS);
         for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
             if (level.getBlockEntity(pos) instanceof JukeboxBlockEntity jukebox
-                    && !jukebox.getRecord().isEmpty()) {
+                    && jukebox.getSongPlayer().isPlaying()) {
                 return true;
             }
         }

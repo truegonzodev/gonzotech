@@ -219,7 +219,8 @@ public final class PsycheStressEvents {
     /** Сон в кровати: −500 стресса (автор 22.09). */
     @SubscribeEvent
     public static void onWakeUp(PlayerWakeUpEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && !event.wakeUpImmediately()) {
+        // NeoForge: метод называется wakeImmediately(); false = сон «доспал до утра» (не разбудили)
+        if (event.getEntity() instanceof ServerPlayer player && !event.wakeImmediately()) {
             PsycheStress.relieve(player, PsycheStress.SLEEP_RELIEF);
         }
     }
