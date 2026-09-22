@@ -1,3 +1,6 @@
 {
-  "values": []
+  "values": [
+    "gonzotech:heavy_door_lead",
+    "minecraft:iron_door"
+  ]
 }

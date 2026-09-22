@@ -157,8 +157,17 @@ public final class Containment {
             if (!cur.equals(source)) { // сам источник — не стена себе (солидный радио-блок тоже заливаем изнутри)
                 BlockState state = level.getBlockState(cur);
                 if (isSeal(state)) {
-                    seals++;
-                    continue;      // заслонка: контур замыкает, в расчёте не участвует (автор 22.09, п.3)
+                    double shield = RadMaterials.blockFactor(state);
+                    if (shield >= 1.0) {
+                        seals++;   // чистый гермозатвор: контур замыкает и в среднем не участвует (автор 22.09)
+                        continue;
+                    }
+                    // Заслонка ИЗ ЭКРАНИРУЮЩЕГО МАТЕРИАЛА (ванильная железная дверь 0.5, свинцовая 0.02):
+                    // контур замыкает, но входит в среднее своим фактором — автор 22.09: «гадит контур».
+                    int[] sealDir = INT_OFFSETS[cameFrom.get(cur.asLong()) & 0xFF];
+                    sum += depth(level, cur, sealDir[0], sealDir[1], sealDir[2]);
+                    counted++;
+                    continue;
                 }
                 if (isWall(state)) {
                     int[] d = INT_OFFSETS[cameFrom.get(cur.asLong()) & 0xFF];

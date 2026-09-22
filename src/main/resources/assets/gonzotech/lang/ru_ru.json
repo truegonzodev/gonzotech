@@ -653,6 +653,7 @@
   "gui.gonzotech.press.fatigue": "Усталость: %s%%",
   "block.gonzotech.barium_concrete": "Бариевый бетон",
   "block.gonzotech.bore_stained_glass": "Борное стекло",
+  "block.gonzotech.heavy_door_lead": "Тяжёлая свинцовая дверь",
   "item.gonzotech.barium_mix": "Экранирующий замес",
   "item.gonzotech.bore_silicate_mix": "Боросиликатный замес",
   "item.gonzotech.zirconium_plate": "Циркониевая пластина",

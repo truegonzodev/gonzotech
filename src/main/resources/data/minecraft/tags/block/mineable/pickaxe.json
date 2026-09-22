@@ -183,6 +183,7 @@
     "gonzotech:mechanisms",
     "gonzotech:weathered_mechanisms",
     "gonzotech:silicon_cache",
-    "gonzotech:plastic_waste"
+    "gonzotech:plastic_waste",
+    "gonzotech:heavy_door_lead"
   ]
 }

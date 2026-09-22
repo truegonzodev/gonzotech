@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.ChalkboardBlock;
+import com.gonzotech.core.block.HeavyDoorBlock;
 import com.gonzotech.core.block.TungstenAbsorberBlock;
 import com.gonzotech.core.fluid.ModFluids;
 import com.gonzotech.core.fluid.MoltenCoriumBlock;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -124,6 +126,24 @@ public class ModBlocks {
      */
     public static final DeferredBlock<TransparentBlock> BORE_STAINED_GLASS = BLOCKS.registerBlock(
         "bore_stained_glass", TransparentBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
+
+    /**
+     * Тяжёлая свинцовая дверь (автор 22.09.2026) — Эпоха III, первый элемент чистой комнаты.
+     * Два блока в высоту (1×2), раздвижная: закрытая — стенка, ПКМ/редстоун открывают проём.
+     * Числа автора: hardness 25, взрывостойкость 8. Хитбокс — габарит модели (6×16×16).
+     * В теге {@code gonzotech:contour_seal}: закрытая дверь замыкает контур радиации,
+     * открытая — дырка. См. {@link com.gonzotech.core.block.HeavyDoorBlock}.
+     */
+    public static final DeferredBlock<HeavyDoorBlock> HEAVY_DOOR_LEAD = BLOCKS.registerBlock(
+        "heavy_door_lead", HeavyDoorBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(25.0f, 8.0f)
+            .noOcclusion()
+            .dynamicShape()
+            .pushReaction(PushReaction.BLOCK)
+            .requiresCorrectToolForDrops());
     public static final DeferredBlock<Block> CRIMSON_OBSIDIAN = BLOCKS.registerSimpleBlock(
         "crimson_obsidian", BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN));
     public static final DeferredBlock<Block> SCULK_BRICKS = BLOCKS.registerSimpleBlock(
