@@ -48,7 +48,8 @@ import java.util.UUID;
  *   <tr><td>стресс &gt; {@value #DROP_MIN_PERCENT} %</td><td>{@value #DROP_CHANCE} шанс выронить предмет из руки</td></tr>
  *   <tr><td>стресс &gt; {@value #HEART_ATTACK_MIN_PERCENT} %</td>
  *       <td>{@value #HEART_ATTACK_CHANCE} шанс «Сердечного приступа» на {@value #HEART_ATTACK_SECONDS} с;
- *       по истечении — {@value #HEART_ATTACK_DAMAGE} «чистого» урона, который не блокируется ничем</td></tr>
+ *       по истечении — урон, который не блокируется ничем и ВСЕГДА оставляет ровно
+ *       {@value #HEART_ATTACK_LEAVE_HP} HP (убить приступом нельзя — добивают последствия)</td></tr>
  *   <tr><td>стресс &gt; {@value #REACTION_MIN_PERCENT} %</td>
  *       <td>каждое получение урона — замедление I на {@value #SLOWNESS_SECONDS} с;
  *       +{@value #BLINDNESS_CHANCE} шанс слепоты I на {@value #BLINDNESS_SECONDS_MIN}–{@value #BLINDNESS_SECONDS_MAX} с</td></tr>
@@ -57,8 +58,8 @@ import java.util.UUID;
  * <p><b>«Чистый» урон</b> — свой тип {@code gonzotech:heart_attack} в тегах
  * {@code bypasses_armor}, {@code bypasses_effects}, {@code bypasses_enchantments},
  * {@code bypasses_resistance}, {@code bypasses_shield}. Ванильного тега «сквозь абсорбцию» нет, поэтому
- * абсорбция перед ударом снимается вручную, а кадры неуязвимости обнуляются — иначе урон урезался бы.
- * Урон масштабируется «never», то есть всегда ровно 19.</p>
+ * абсорбция перед ударом снимается вручную, а кадры неуязвимости обнуляются — иначе урон урезался бы
+ * и игрок не доехал бы ровно до 1 HP.</p>
  *
  * <p><b>Отступления от буквы спеки</b> (помечены в доках): продление тремора ограничено
  * {@value #TREMOR_MAX_SECONDS} с, чтобы серия проков не сделала тряску вечной; сердечный приступ
@@ -87,14 +88,18 @@ public final class PsycheStressEffects {
 
     // ── Выронить предмет ──
     public static final int DROP_MIN_PERCENT = 91;
-    public static final double DROP_CHANCE = 0.09;
+    public static final double DROP_CHANCE = 0.04;
 
     // ── Сердечный приступ ──
     public static final int HEART_ATTACK_MIN_PERCENT = 99;
-    public static final double HEART_ATTACK_CHANCE = 0.001;
+    public static final double HEART_ATTACK_CHANCE = 0.005;
     public static final int HEART_ATTACK_SECONDS = 40;
-    /** «19 урона чистым» — при 20 HP это почти всегда смерть, спастись можно только полным лечением. */
-    public static final float HEART_ATTACK_DAMAGE = 19.0F;
+    /**
+     * Исход приступа (автор 22.09, после нерфа): урон не фиксированный — игрок ВСЕГДА
+     * остаётся с 1 единицей здоровья (пол-хёрта). То есть урона ровно «текущее − 1»,
+     * и убить приступ не может: добивают уже последствия.
+     */
+    public static final float HEART_ATTACK_LEAVE_HP = 1.0F;
 
     // ── Реакция на урон ──
     public static final int REACTION_MIN_PERCENT = 74;
@@ -279,11 +284,16 @@ public final class PsycheStressEffects {
     }
 
     /**
-     * Исход приступа: 19 «чистого» урона. Тип урона в тегах, которые обходят броню, эффекты,
+     * Исход приступа: урон «до 1 HP». Тип урона в тегах, которые обходят броню, эффекты,
      * зачарования, сопротивление и щит; абсорбция снимается вручную (ванильного тега нет),
-     * кадры неуязвимости обнуляются, иначе урон мог бы урезаться.
+     * кадры неуязвимости обнуляются — так игрок гарантированно остаётся ровно с 1 HP.
+     * Если здоровья и так 1 или меньше — приступ не бьёт вовсе.
      */
     private static void heartAttackDamage(ServerPlayer player) {
+        float damage = player.getHealth() - HEART_ATTACK_LEAVE_HP;
+        if (damage <= 0.0F) {
+            return;
+        }
         ServerLevel level = player.serverLevel();
         Holder<DamageType> type = level.registryAccess()
                 .lookupOrThrow(Registries.DAMAGE_TYPE)
@@ -291,7 +301,7 @@ public final class PsycheStressEffects {
         DamageSource source = new DamageSource(type);
         player.setAbsorptionAmount(0.0F);
         player.invulnerableTime = 0;
-        player.hurt(source, HEART_ATTACK_DAMAGE);
+        player.hurt(source, damage);
     }
 
     private static int rollSeconds(int min, int max) {

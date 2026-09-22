@@ -23,8 +23,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  *       или зависимости; камеру дёргает клиент, см. {@code psyche.PsycheStressEffects}
  *       и {@code psyche.client.PsycheTremorClient};</li>
  *   <li><b>{@code heart_attack} «Сердечный приступ»</b> (психика) — выше 99 % стресса;
- *       по истечении 40 секунд — 19 «чистого» урона, который ничем не блокируется
- *       (см. теги урона {@code gonzotech:heart_attack}).</li>
+ *       по истечении 40 секунд — «чистый» урон, который ничем не блокируется и всегда
+ *       оставляет ровно 1 HP (см. теги урона {@code gonzotech:heart_attack}).</li>
  * </ul>
  */
 public final class ModEffects {
@@ -47,7 +47,7 @@ public final class ModEffects {
             MOB_EFFECTS.register("tremor", () ->
                     new PlainEffect(MobEffectCategory.HARMFUL, 0x8A8574));
 
-    /** Сердечный приступ — 40 секунд на спасение, затем 19 «чистого» урона. */
+    /** Сердечный приступ — 40 секунд на спасение, затем «чистый» урон до 1 HP. */
     public static final DeferredHolder<MobEffect, MobEffect> HEART_ATTACK =
             MOB_EFFECTS.register("heart_attack", () ->
                     new PlainEffect(MobEffectCategory.HARMFUL, 0x8B1A1A));
