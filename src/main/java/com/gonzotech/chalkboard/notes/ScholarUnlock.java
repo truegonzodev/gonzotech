@@ -12,7 +12,10 @@ package com.gonzotech.chalkboard.notes;
  *       (эпоха I: машины и логистика);</li>
  *   <li><b>по действию</b> — {@link #FLAG_CESIUM} / {@link #FLAG_WOLFRAM} /
  *       {@link #FLAG_SUN_FADE} (познание мира: страница открывается, когда игрок
- *       впервые совершает соответствующее событие в мире).</li>
+ *       впервые совершает соответствующее событие в мире);</li>
+ *   <li><b>составное (по «И»)</b> — {@link #SUN_EVENT_AND_DISCOVERY_2}: нужны ОБА
+ *       условия сразу (встреченный багровый день И активированное «Открытие 2»);
+ *       тот же гейт стоит на крафте солнечных часов (автор 22.09.2026).</li>
  * </ul>
  */
 public enum ScholarUnlock {
@@ -33,7 +36,13 @@ public enum ScholarUnlock {
     /** Открывается, когда в инвентаре впервые появился аттачмент «Открытие 3» (предмет discovery_3). */
     FLAG_DISCOVERY_3,
     /** Открывается при наступлении ПЕРВОГО суневента (багрового дня). */
-    FLAG_SUN_EVENT;
+    FLAG_SUN_EVENT,
+    /**
+     * Составное условие «И» (автор 22.09.2026): игрок УЖЕ видел багровый день
+     * И активировал «Открытие 2». Страница с солнечными часами открывается по нему
+     * же, что и физический крафт часов.
+     */
+    SUN_EVENT_AND_DISCOVERY_2;
 
     /** Порог наигранного времени в тиках для {@link #PLAYTIME_5MIN}. */
     public static final long PLAYTIME_THRESHOLD_TICKS = 5L * 60L * 20L; // 5 мин
@@ -50,6 +59,8 @@ public enum ScholarUnlock {
             case FLAG_SUN_FADE -> state.hasFlag(ScholarNoteFlags.SUN_FADE);
             case FLAG_DISCOVERY_3 -> state.hasFlag(ScholarNoteFlags.DISCOVERY_3);
             case FLAG_SUN_EVENT -> state.hasFlag(ScholarNoteFlags.SUN_EVENT);
+            case SUN_EVENT_AND_DISCOVERY_2 ->
+                    state.hasFlag(ScholarNoteFlags.SUN_EVENT) && state.tier2Unlocked();
         };
     }
 }

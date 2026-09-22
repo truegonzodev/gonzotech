@@ -44,7 +44,7 @@ public final class ScholarNotesContent {
     private ScholarNotesContent() {
     }
 
-    /** Полный список страниц в порядке буклета (35). Иллюстрации — шаблоны;
+    /** Полный список страниц в порядке буклета (41). Иллюстрации — шаблоны;
      *  сетки крафта — реальные рецепты из data/gonzotech/recipe (теги — конкретным
      *  предметом: плахи → дубовые доски; shapeless-рецепты — по порядку слотов). */
     public static final List<ScholarPage> PAGES = List.of(
@@ -428,22 +428,37 @@ public final class ScholarNotesContent {
                     Layout.TEXT_FULL,
                     null),
 
-            // 36–40 — раздел «Глубокая металлургия» (автор 2026-09-18):
-            // открывается аттачментом «Открытие 3» (предмет discovery_3).
-            // 36 — введение: что такое статы материалов, где их видно;
-            // 37–40 — «несмешиваемые» пресеты завода (есть только там,
-            // пыли/самородков у них нет в каталоге крафта): кортен, стеллит,
-            // витрелой, полупроводник. Иллюстраций нет — TEXT_FULL + витрина.
-            new ScholarPage(36, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            // 36 — «Угасание солнца» (вторая страница с тем же заголовком, автор
+            // 22.09.2026): уже не запись, а ПРИБОР. Гейт составной по «И» —
+            // багровый день + «Открытие 2» (SUN_EVENT_AND_DISCOVERY_2), ровно тот же,
+            // что стоит на крафте солнечных часов. Справа — их крафт.
+            new ScholarPage(36, ScholarChapter.ERA_2, ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2,
                     "gui.gonzotech.notes.p36.title",
                     "gui.gonzotech.notes.p36.body",
+                    List.of("gonzotech:solar_watch"),
+                    Layout.TEXT_LEFT,
+                    NoteIllustration.craftingRight(
+                            List.of("minecraft:quartz", "gonzotech:nickel_ingot", "minecraft:gold_nugget",
+                                    "minecraft:compass", "minecraft:clock", "gonzotech:inductive_module",
+                                    "minecraft:calcite", "minecraft:calcite", "minecraft:calcite"),
+                            "gonzotech:solar_watch")),
+
+            // 37–41 — раздел «Глубокая металлургия» (автор 2026-09-18):
+            // открывается аттачментом «Открытие 3» (предмет discovery_3).
+            // 37 — введение: что такое статы материалов, где их видно;
+            // 38–41 — «несмешиваемые» пресеты завода (есть только там,
+            // пыли/самородков у них нет в каталоге крафта): кортен, стеллит,
+            // витрелой, полупроводник. Иллюстраций нет — TEXT_FULL + витрина.
+            new ScholarPage(37, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+                    "gui.gonzotech.notes.p37.title",
+                    "gui.gonzotech.notes.p37.body",
                     List.of("gonzotech:second_alloy_foundry", "gonzotech:custom_alloy",
                             "gonzotech:steel_ingot", "gonzotech:corten_steel_ingot"),
                     Layout.TEXT_FULL,
                     null),
-            new ScholarPage(37, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
-                    "gui.gonzotech.notes.p37.title",
-                    "gui.gonzotech.notes.p37.body",
+            new ScholarPage(38, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+                    "gui.gonzotech.notes.p38.title",
+                    "gui.gonzotech.notes.p38.body",
                     List.of("gonzotech:corten_steel_ingot", "minecraft:iron_ingot",
                             "minecraft:copper_ingot", "gonzotech:chromium_ingot",
                             "gonzotech:nickel_ingot"),
@@ -454,9 +469,9 @@ public final class ScholarNotesContent {
                                     "", "", "", "", ""),
                             "gonzotech:corten_steel_ingot:25",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(38, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
-                    "gui.gonzotech.notes.p38.title",
-                    "gui.gonzotech.notes.p38.body",
+            new ScholarPage(39, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+                    "gui.gonzotech.notes.p39.title",
+                    "gui.gonzotech.notes.p39.body",
                     List.of("gonzotech:stellite_ingot", "gonzotech:cobalt_ingot",
                             "gonzotech:chromium_ingot", "gonzotech:tungsten_ingot",
                             "gonzotech:neodymium_ingot"),
@@ -467,9 +482,9 @@ public final class ScholarNotesContent {
                                     "gonzotech:neodymium_ingot:1", "", "", "", ""),
                             "gonzotech:stellite_ingot:11",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(39, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
-                    "gui.gonzotech.notes.p39.title",
-                    "gui.gonzotech.notes.p39.body",
+            new ScholarPage(40, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+                    "gui.gonzotech.notes.p40.title",
+                    "gui.gonzotech.notes.p40.body",
                     List.of("gonzotech:vitreloy_ingot", "minecraft:diamond",
                             "gonzotech:zirconium_ingot", "gonzotech:ferromagnetic_ingot",
                             "gonzotech:nickel_ingot"),
@@ -480,9 +495,9 @@ public final class ScholarNotesContent {
                                     "", "", "", "", ""),
                             "gonzotech:vitreloy_ingot:9",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(40, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
-                    "gui.gonzotech.notes.p40.title",
-                    "gui.gonzotech.notes.p40.body",
+            new ScholarPage(41, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+                    "gui.gonzotech.notes.p41.title",
+                    "gui.gonzotech.notes.p41.body",
                     List.of("gonzotech:semiconductor_ingot", "gonzotech:silicon",
                             "gonzotech:neodymium_ingot", "minecraft:gold_ingot",
                             "minecraft:copper_ingot"),

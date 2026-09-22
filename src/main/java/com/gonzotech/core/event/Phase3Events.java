@@ -149,6 +149,25 @@ public final class Phase3Events {
     }
 
     /**
+     * Дополнительное условие гейта СВЕРХ тира «Открытия» (автор 22.09.2026) —
+     * условие «И». Пока такое есть ровно у одного предмета: <b>солнечные часы</b>
+     * открываются только когда игрок УЖЕ видел багровый день
+     * ({@link ScholarNoteFlags#SUN_EVENT}) И активировал «Открытие 2». Тот же
+     * составной гейт стоит на странице заметок про часы
+     * ({@code ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2}).
+     *
+     * <p>Предметы без дополнительных условий всегда возвращают {@code true} —
+     * вызывающие добавляют эту проверку к проверке тира через «И».</p>
+     */
+    public static boolean extraGateMet(ServerPlayer player, net.minecraft.world.item.Item item) {
+        if (item != ModItems.SOLAR_WATCH.get()) {
+            return true;
+        }
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        return progress.hasNoteFlag(ScholarNoteFlags.SUN_EVENT);
+    }
+
+    /**
      * true, если предмет «закрыт» гейтом по «Открытию» (тир 1 или 2).
      * <p>
      * Для НЕИГРОВЫХ крафтеров (будущий «сборщик»): такой вывод НЕЛЬЗЯ давать —
@@ -173,7 +192,10 @@ public final class Phase3Events {
         if (requiredTier == null) return;
 
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
-        if (progress.isRecipeTierUnlocked(requiredTier)) return;
+        // Условия соединяются по «И»: тир «Открытия» + дополнительные условия предмета
+        // (солнечные часы требуют ещё и встреченный багровый день).
+        if (progress.isRecipeTierUnlocked(requiredTier)
+                && extraGateMet(player, crafted.getItem())) return;
 
         // Открытие ещё не активировано: ингредиенты уже потрачены (не откатываем —
         // это часть «прикола»), результат заменяем на бесполезный механизм.

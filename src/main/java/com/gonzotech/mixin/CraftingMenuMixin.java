@@ -53,7 +53,9 @@ public abstract class CraftingMenuMixin {
         if (requiredTier == null) return;
 
         PlayerChalkboardProgress progress = serverPlayer.getData(ModAttachments.CHALKBOARD_PROGRESS);
-        if (progress.isRecipeTierUnlocked(requiredTier)) return;
+        // «И»: тир «Открытия» + доп. условия предмета (часы — ещё и багровый день).
+        if (progress.isRecipeTierUnlocked(requiredTier)
+                && Phase3Events.extraGateMet(serverPlayer, result.getItem())) return;
 
         // «Выстреливаем» крафт ровно один раз: расходим сетку по одному на каждую
         // непустую ячейку (как ResultSlot.onTake) и очищаем результат.

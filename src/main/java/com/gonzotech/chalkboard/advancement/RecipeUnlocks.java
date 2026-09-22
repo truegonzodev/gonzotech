@@ -18,7 +18,9 @@ import java.util.Map;
  * Эти crafting-рецепты ФИЗИЧЕСКИ доступны всегда (файлы в data/.../recipe),
  * но их подсказки в КНИГЕ скрыты до соответствующего «Открытия»: здесь они
  * выдаются игроку через {@code awardRecipesByKey}. Исключение — отдельные
- * рецепты с физическим crafting-гейтом из {@code Phase3Events}.
+ * рецепты с физическим crafting-гейтом из {@code Phase3Events}; у некоторых
+ * гейт СОСТАВНОЙ по «И» (солнечные часы: «Открытие 2» + встреченный багровый
+ * день — см. {@link #grantSolarWatchIfReady}).
  * <p>
  * Доска резонанса открыта априори собственным reward-advancement и здесь не
  * фигурирует. Эл. печь до «Открытия 1» ещё и физически «закрыта» гейтом крафта
@@ -43,8 +45,6 @@ public final class RecipeUnlocks {
             "gonzotech:first_turbine_rotor",
             // Логистика: инструмент
             "gonzotech:wrench",
-            // Суневеты: солнечные часы (крафт и книга — после Открытия 1, автор)
-            "gonzotech:solar_watch",
             // Логистика: трубы
             "gonzotech:first_wire",
             "gonzotech:first_heat_pipe",
@@ -189,6 +189,27 @@ public final class RecipeUnlocks {
         if (progress.isRecipeTierUnlocked(1)) {
             grantForTier(player, 1);
         }
+        grantSolarWatchIfReady(player);
+    }
+
+    /**
+     * Солнечные часы: показ рецепта открывается по ДВУМ условиям, соединённым «И»
+     * (автор 22.09.2026) — «Открытие 2» активировано И игрок уже видел багровый день
+     * (флаг {@link com.gonzotech.chalkboard.notes.ScholarNoteFlags#SUN_EVENT}).
+     * Точно такой же гейт стоит на ФИЗИЧЕСКОМ крафте часов
+     * ({@code Phase3Events.extraGateMet}); страница заметок — на составном
+     * {@code ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2}.
+     *
+     * <p>Зовётся на всех входах, через которые условия могут стать истинными: вход
+     * в мир (условия уже были выполнены раньше), использование «Открытия»
+     * ({@code DiscoveryItem}) и наступление багрового дня
+     * ({@code SunEventServer}). {@code awardRecipesByKey} идемпотентен.</p>
+     */
+    public static void grantSolarWatchIfReady(ServerPlayer player) {
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        if (!progress.isRecipeTierUnlocked(2)) return;
+        if (!progress.hasNoteFlag(com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_EVENT)) return;
+        grant(player, List.of("gonzotech:solar_watch"));
     }
 
     private static void grant(ServerPlayer player, List<String> ids) {

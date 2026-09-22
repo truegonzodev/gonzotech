@@ -53,6 +53,9 @@ public class DiscoveryItem extends Item {
                 ModAdvancements.checkAndAwardAdvancements(serverPlayer);
                 // Фаза 3: показать в книге рецептов машины этого «Открытия».
                 com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantForTier(serverPlayer, discoveryNumber);
+                // Солнечные часы: если багровый день уже был — рецепт открывается
+                // этим же «Открытием 2» (два условия по «И», автор 22.09.2026).
+                com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantSolarWatchIfReady(serverPlayer);
                 // Психика (автор 22.09): проюз открытия снимает 10000 стресса и даёт 3000 кризиса.
                 com.gonzotech.core.psyche.PsycheStress.onDiscoveryUsed(serverPlayer);
                 stack.shrink(1);

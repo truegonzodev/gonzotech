@@ -100,7 +100,12 @@ public final class SunEventServer {
         return day == data.nextEventDay && timeOfDay < 14500L;
     }
 
-    /** Стр. 35 «Ослабевшее солнце»: флаг всем свидетелям наступившего дня. */
+    /**
+     * Стр. 35 «Угасание солнца» (просто запись) и стр. 36 (та же тема, но с крафтом
+     * солнечных часов): флаг {@link ScholarNoteFlags#SUN_EVENT} выдаётся всем
+     * свидетелям наступившего дня — автор 22.09.2026 подтвердил, что «увидеть
+     * своими глазами» и есть задумка. Тут же закрывается второе условие часов.
+     */
     private static void unlockSunEventFlag(ServerLevel overworld) {
         MinecraftServer server = overworld.getServer();
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -108,6 +113,9 @@ public final class SunEventServer {
             if (progress.unlockNoteFlag(ScholarNoteFlags.SUN_EVENT)) {
                 p.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
                 NotesNetwork.sendToPlayer(p);
+                // Второе условие солнечных часов: если «Открытие 2» уже активировано —
+                // рецепт часов открывается прямо в багровый день (автор 22.09.2026).
+                com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantSolarWatchIfReady(p);
             }
         }
     }

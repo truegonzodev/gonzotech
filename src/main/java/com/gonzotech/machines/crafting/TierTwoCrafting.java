@@ -119,7 +119,9 @@ public final class TierTwoCrafting {
         if (crafted.isEmpty() || !isGatedOutput(crafted.getItem())) return;
 
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
-        if (progress.isRecipeTierUnlocked(2)) return;
+        // «И»: тир 2 + доп. условия предмета (солнечные часы — ещё и багровый день).
+        if (progress.isRecipeTierUnlocked(2)
+                && com.gonzotech.core.event.Phase3Events.extraGateMet(player, crafted.getItem())) return;
 
         int count = crafted.getCount();
         crafted.setCount(0);
@@ -137,7 +139,10 @@ public final class TierTwoCrafting {
 
     /** true, если предмет — «закрытый» вывод Discovery-2 (гейт тира 2). */
     public static boolean isGatedOutput(Item item) {
-        return item == ModItems.COIL.get()
+        // Солнечные часы: тир 2 И встреченный багровый день (автор 22.09.2026) —
+        // дополнительное условие проверяет Phase3Events.extraGateMet на всех путях крафта.
+        return item == ModItems.SOLAR_WATCH.get()
+            || item == ModItems.COIL.get()
             || item == ModItems.INDUCTIVE_MODULE.get()
             || item == ModItems.WEDGE_PUNCH.get()
             || item == ModItems.FLAT_PUNCH.get()
