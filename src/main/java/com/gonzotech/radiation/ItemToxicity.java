@@ -142,7 +142,17 @@ public final class ItemToxicity {
                 data -> data.update(tag -> tag.putDouble(TAG_TOXICITY, nTxPerSecond)));
     }
 
-    /** Строка тултипа: «2mTx/t» — те же приставки, что у радиации, только единица Tx. */
+    /** Мантисса токсичности («2»): те же приставки, что у радиации. */
+    public static String value(double nTx) {
+        return RadUnits.value(nTx);
+    }
+
+    /** Обозначение токсичности («mTx»): приставка радиации с единицей Tx. */
+    public static String unit(double nTx) {
+        return RadUnits.unit(nTx).replace("Zt", "Tx");
+    }
+
+    /** Строка тултипа без цвета: «2 mTx/t» (в интерфейсе — {@code GtUnits#tx}). */
     public static String format(double nTx) {
         return RadUnits.format(nTx).replace("Zt", "Tx");
     }

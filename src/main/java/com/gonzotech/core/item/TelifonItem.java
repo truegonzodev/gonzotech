@@ -4,7 +4,7 @@ import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.radiation.ChunkRadiationData;
 import com.gonzotech.radiation.RadDose;
-import com.gonzotech.radiation.RadUnits;
+import com.gonzotech.core.text.GtUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -64,7 +64,7 @@ public class TelifonItem extends Item {
         serverPlayer.sendSystemMessage(Component.translatable(
                         "message.gonzotech.telifon.chunk",
                         cp.x, cp.z,
-                        Component.literal(RadUnits.format(chunkNzt)).withStyle(ChatFormatting.YELLOW))
+                        GtUnits.zt(chunkNzt))
                 .withStyle(ChatFormatting.GRAY));
 
         // ── Психика: кортизол (стресс), кризис, зависимость ──

@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.NuclearDefs;
 import com.gonzotech.machines.menu.NuclearFireboxMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -42,8 +43,8 @@ public final class NuclearFireboxScreen extends MachineScreen<NuclearFireboxMenu
         float gth = (float) menu.gth() / (float) (NuclearDefs.NUCLEAR_FIREBOX_GTH_CAPACITY / 1_000);
         drawVBarTex(graphics, barX, barY, barW, barH, gth, BAR_GTH);
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
-            graphics.renderComponentTooltip(this.font, List.of(Component.translatable(
-                "gui.gonzotech.gth", menu.gth(), NuclearDefs.NUCLEAR_FIREBOX_GTH_CAPACITY / 1_000)), mouseX, mouseY);
+            graphics.renderComponentTooltip(this.font, List.of(
+                GtUnits.gthPair(menu.gth(), NuclearDefs.NUCLEAR_FIREBOX_GTH_CAPACITY / 1_000)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, burnX, burnY, burnW, burnH)) {
             int percent = menu.litDuration() <= 0 ? 0
                 : Math.min(100, (int) ((long) menu.litTime() * 100L / menu.litDuration()));

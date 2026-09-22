@@ -2,6 +2,7 @@ package com.gonzotech.radiation;
 
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
+import com.gonzotech.core.text.GtUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -52,7 +53,7 @@ public class DosimeterItem extends Item {
         serverPlayer.sendSystemMessage(Component.translatable(
                         "message.gonzotech.dosimeter.chunk",
                         cp.x, cp.z,
-                        Component.literal(RadUnits.format(chunkNzt)).withStyle(ChatFormatting.YELLOW))
+                        GtUnits.zt(chunkNzt))
                 .withStyle(ChatFormatting.GRAY));
 
         serverLevel.playSound(null, serverPlayer.blockPosition(),

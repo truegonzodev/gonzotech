@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.CentrifugeMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -51,11 +52,11 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
 
         if (inRect(mouseX, mouseY, hotWaterX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.hot_water", menu.hotWater(), MachineDefs.CENTRIFUGE_HOT_WATER_CAPACITY)),
+                GtUnits.hotWaterPair(menu.hotWater(), MachineDefs.CENTRIFUGE_HOT_WATER_CAPACITY)),
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.CENTRIFUGE_GTU_CAPACITY))),
+                GtUnits.gtuPair(menu.gtu(), MachineDefs.toUnits(MachineDefs.CENTRIFUGE_GTU_CAPACITY))),
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, washX, washY, washW, washH)) {
             graphics.renderComponentTooltip(this.font, List.of(

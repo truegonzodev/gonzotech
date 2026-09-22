@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.menu.SteamGenMenu;
 import com.gonzotech.machines.steamgen.SteamGenMath;
 import net.minecraft.client.gui.GuiGraphics;
@@ -49,23 +50,23 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
             SteamGenMath.bonusFraction(menu.sumCH(), menu.precious()) * 100.0D);
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gth", menu.gth(), gthCapacity),
-                Component.translatable("gui.gonzotech.steamgen.gth_in", menu.gthIn()),
+                GtUnits.gthPair(menu.gth(), gthCapacity),
+                GtUnits.steamGenGthIn(menu.gthIn()),
                 Component.translatable("gui.gonzotech.steamgen.cores", menu.cores()),
                 Component.translatable("gui.gonzotech.steamgen.exchangers", menu.precious(), bonus)
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.water", menu.water(), waterCapacity),
-                Component.translatable("gui.gonzotech.steamgen.water_in", menu.waterIn())
+                GtUnits.waterPair(menu.water(), waterCapacity),
+                GtUnits.steamGenWaterIn(menu.waterIn())
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, steamX, barY, barW, barH)) {
             long ratedMilli = SteamGenMath.maxSteamPerTickMilli(menu.cores(), menu.sumCH(), menu.precious());
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.steam", menu.steam(), steamCapacity),
-                Component.translatable("gui.gonzotech.steamgen.steam_made", menu.steamMade()),
-                Component.translatable("gui.gonzotech.steamgen.steam_out", menu.steamOut()),
-                Component.translatable("gui.gonzotech.steamgen.rated",
+                GtUnits.steamPair(menu.steam(), steamCapacity),
+                GtUnits.steamGenSteamMade(menu.steamMade()),
+                GtUnits.steamGenSteamOut(menu.steamOut()),
+                GtUnits.steamGenRated(
                     String.format(Locale.ROOT, "%.1f", ratedMilli / 1000.0D))
             ), mouseX, mouseY);
         }

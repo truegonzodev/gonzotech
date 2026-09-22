@@ -1,5 +1,7 @@
 package com.gonzotech.machines.network;
 
+import com.gonzotech.core.text.GtUnits;
+
 /**
  * Тип трубы = какой ресурс она переносит. Трубы одного типа образуют связную цепь
  * для слива ({@link PipeRouting}); трубы разных типов друг друга игнорируют
@@ -20,19 +22,19 @@ public enum PipeType {
      * Провод: переносит GTU («электричество»), отдаёт в {@code GtuSink}. Угол WIRE.
      * Макс. проводимость 38 GTU/t (в milli: 38000 mGTU/t).
      */
-    WIRE("first_wire", false, 0xFFD84A, 38 * 1000),
+    WIRE("first_wire", false, GtUnits.GTU, 38 * 1000, GtUnits.U_GTU),
 
     /**
      * Теплотруба: переносит GTH (тепло), отдаёт в {@code GthSink}. Угол HEAT.
      * Макс. проводимость 388 GTH/t (в milli: 388000 mGTH/t).
      */
-    HEAT("first_heat_pipe", false, 0xFF6A4A, 388 * 1000),
+    HEAT("first_heat_pipe", false, GtUnits.GTH, 388 * 1000, GtUnits.U_GTH),
 
     /** Водная труба: переносит воду (mB), отдаёт в {@code WaterSink}. Угол FLUID. Макс. 1000 mB/t. */
-    WATER("first_water_pipe", true, 0x4AA3FF, 1000),
+    WATER("first_water_pipe", true, GtUnits.WATER, 1000, GtUnits.U_MB),
 
     /** Паровая труба: переносит пар (mB), отдаёт в {@code SteamSink}. Угол FLUID. Макс. 1000 mB/t. */
-    STEAM("first_steam_pipe", true, 0xD8D8D8, 1000),
+    STEAM("first_steam_pipe", true, GtUnits.STEAM, 1000, GtUnits.U_MB),
 
     /**
      * Предметная труба: переносит ПРЕДМЕТЫ (не mB/GTU), угол ITEM (низ-право).
@@ -43,18 +45,20 @@ public enum PipeType {
      * 1 шт/т на КАЖДЫЙ конкретный вид (см. {@code ItemRouting.PER_ITEM_TICK_CAP}),
      * поэтому одновременно едет максимум 5 разных видов.
      */
-    ITEM("first_item_pipe", false, 0xC08A4A, 5);
+    ITEM("first_item_pipe", false, GtUnits.ITEM, 5, GtUnits.U_ITEMS);
 
     private final String id;
     private final boolean fluid;
     private final int color;
     private final long maxThroughput;
+    private final String unitKey;
 
-    PipeType(String id, boolean fluid, int color, long maxThroughput) {
+    PipeType(String id, boolean fluid, int color, long maxThroughput, String unitKey) {
         this.id = id;
         this.fluid = fluid;
         this.color = color;
         this.maxThroughput = maxThroughput;
+        this.unitKey = unitKey;
     }
 
     /** Строковый id (совпадает с id блока/предмета трубы). */
@@ -70,9 +74,23 @@ public enum PipeType {
         return fluid;
     }
 
-    /** Цвет ресурса (RGB) для подсветки в HUD ключа. */
+    /**
+     * Цвет ресурса (RGB) для подсветки в HUD ключа. Константы живут в
+     * {@link GtUnits} — это ЕДИНЫЙ источник цвета единицы: тот же цвет обязан
+     * стоять на числе и обозначении в GUI станков, тултипах и отчётах приборов
+     * (ГОСТ единиц, автор 22.09.2026).
+     */
     public int color() {
         return color;
+    }
+
+    /**
+     * Lang-ключ обозначения единицы этого ресурса («GTU», «GTH», «mB», «items»).
+     * Хвост времени («/t») сюда НЕ входит: его подставляет {@code GtUnits} и он
+     * остаётся цветом основного текста строки.
+     */
+    public String unitKey() {
+        return unitKey;
     }
 
     /**

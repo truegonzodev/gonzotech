@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.menu.SecondElectricFurnaceMenu;
@@ -48,7 +49,7 @@ public final class SecondElectricFurnaceScreen extends MachineScreen<SecondElect
         drawVBarTex(g, barX, barY, barW, barH, gtu, BAR_GTU);
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), capacity)), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), capacity)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, progressX[0], progressY[0], 50, 14)) {
             g.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.smelting_progress", menu.cookProgressPercent(0))),

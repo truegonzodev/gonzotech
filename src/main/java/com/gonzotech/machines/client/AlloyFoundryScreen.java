@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.menu.AlloyFoundryMenu;
@@ -54,7 +55,7 @@ public final class AlloyFoundryScreen extends MachineScreen<AlloyFoundryMenu> {
 
         if (inRect(mouseX, mouseY, gtuX, gtuY, gtuW, gtuH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), capacity)), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), capacity)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, progressX, progressY, progressW, progressH)) {
             graphics.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.alloy_foundry.alloying_progress", menu.alloyProgressPercent())),

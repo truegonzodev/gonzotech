@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.menu.TurbineMenu;
 import com.gonzotech.machines.turbine.TurbineMath;
 import net.minecraft.client.gui.GuiGraphics;
@@ -42,15 +43,15 @@ public final class TurbineScreen extends MachineScreen<TurbineMenu> {
 
         if (inRect(mouseX, mouseY, steamX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.turbine.steam", menu.steam(), steamCapacity),
+                GtUnits.turbineSteamPair(menu.steam(), steamCapacity),
                 Component.translatable("gui.gonzotech.turbine.rotors", menu.rotors()),
-                Component.translatable("gui.gonzotech.turbine.steam_rate", menu.steamConsumed())
+                GtUnits.turbineSteamRate(menu.steamConsumed())
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             long ratedMilli = TurbineMath.maxGtuOutputMilli(menu.rotors());
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), gtuCapacity),
-                Component.translatable("gui.gonzotech.turbine.gtu_rate",
+                GtUnits.gtuPair(menu.gtu(), gtuCapacity),
+                GtUnits.turbineGtuRate(
                     String.format(java.util.Locale.ROOT, "%.1f", ratedMilli / 1000.0D))
             ), mouseX, mouseY);
         }

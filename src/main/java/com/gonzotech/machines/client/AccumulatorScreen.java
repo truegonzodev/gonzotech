@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.AccumulatorMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -37,7 +38,7 @@ public class AccumulatorScreen extends MachineScreen<AccumulatorMenu> {
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(),
+                GtUnits.gtuPair(menu.gtu(),
                     MachineDefs.toUnits(MachineDefs.ACCUMULATOR_GTU_CAPACITY))), mouseX, mouseY);
         }
     }

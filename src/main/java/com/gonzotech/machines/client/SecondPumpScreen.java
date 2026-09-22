@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.menu.SecondPumpMenu;
@@ -39,10 +40,10 @@ public final class SecondPumpScreen extends MachineScreen<SecondPumpMenu> {
             (float) menu.water() / SecondTierDefs.PUMP_WATER_CAPACITY, BAR_WATER);
         if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), gtuCapacity)), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), gtuCapacity)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.water", menu.water(), SecondTierDefs.PUMP_WATER_CAPACITY)),
+                GtUnits.waterPair(menu.water(), SecondTierDefs.PUMP_WATER_CAPACITY)),
                 mouseX, mouseY);
         }
     }

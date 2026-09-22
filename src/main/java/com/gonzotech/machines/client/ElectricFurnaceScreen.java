@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -41,7 +42,7 @@ public class ElectricFurnaceScreen extends MachineScreen<ElectricFurnaceMenu> {
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.ELECTRIC_GTU_CAPACITY))), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), MachineDefs.toUnits(MachineDefs.ELECTRIC_GTU_CAPACITY))), mouseX, mouseY);
         }
     }
 }

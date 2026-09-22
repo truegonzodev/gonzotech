@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.CobbleGeneratorMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -55,11 +56,11 @@ public class CobbleGeneratorScreen extends MachineScreen<CobbleGeneratorMenu> {
 
         if (inRect(mouseX, mouseY, watX, barY, 17, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.water", menu.water(), MachineDefs.COBBLE_WATER_CAPACITY)),
+                GtUnits.waterPair(menu.water(), MachineDefs.COBBLE_WATER_CAPACITY)),
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, 16, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.COBBLE_GTU_CAPACITY))),
+                GtUnits.gtuPair(menu.gtu(), MachineDefs.toUnits(MachineDefs.COBBLE_GTU_CAPACITY))),
                 mouseX, mouseY);
         }
     }

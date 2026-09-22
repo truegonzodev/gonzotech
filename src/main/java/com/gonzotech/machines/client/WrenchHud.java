@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.GtFormat;
 import com.gonzotech.machines.energy.NuclearDefs;
 import com.gonzotech.core.registry.ModBlocks;
@@ -108,10 +109,11 @@ public final class WrenchHud {
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(payload.items().get(i));
             Component name = item.getName(new net.minecraft.world.item.ItemStack(item));
             // «Булыжник — 16/т»: имя предмета + количество, цветом предметной трубы.
-            Component fl = Component.translatable(
-                "hud.gonzotech.item_flow_line", name,
-                Component.literal(Integer.toString(payload.counts().get(i))));
-            lines.add(fl.copy().setStyle(Style.EMPTY.withColor(PipeType.ITEM.color())));
+            // ГОСТ единиц: имя предмета и количество — цветом предметной трубы,
+            // «/t» остаётся основным цветом строки (на HUD это &f).
+            Component itemName = name.copy().setStyle(Style.EMPTY.withColor(PipeType.ITEM.color()));
+            Component count = GtUnits.ticked(payload.counts().get(i), PipeType.ITEM.color());
+            lines.add(Component.translatable("hud.gonzotech.item_flow_line", itemName, count));
         }
         itemFlowLinesCache = lines;
     }
@@ -247,13 +249,11 @@ public final class WrenchHud {
         graphics.drawString(font, title, (screenW - font.width(title)) / 2, y, 0xFFFFFF, true);
         y += font.lineHeight + 1;
 
-        Component state = tungstenAbsorberGth <= 0
-            ? Component.translatable("hud.gonzotech.tungsten_absorber.cold")
-            : tungstenAbsorberGth <= 12_000
-                ? Component.translatable("hud.gonzotech.tungsten_absorber.warm", tungstenAbsorberGth)
-                : tungstenAbsorberGth <= 60_000
-                    ? Component.translatable("hud.gonzotech.tungsten_absorber.hot", tungstenAbsorberGth)
-                    : Component.translatable("hud.gonzotech.tungsten_absorber.incandescent", tungstenAbsorberGth);
+        String stateKey = tungstenAbsorberGth <= 0 ? "hud.gonzotech.tungsten_absorber.cold"
+            : tungstenAbsorberGth <= 12_000 ? "hud.gonzotech.tungsten_absorber.warm"
+            : tungstenAbsorberGth <= 60_000 ? "hud.gonzotech.tungsten_absorber.hot"
+            : "hud.gonzotech.tungsten_absorber.incandescent";
+        Component state = GtUnits.amountLine(stateKey, tungstenAbsorberGth, GtUnits.U_GTH, GtUnits.GTH);
         int color = tungstenAbsorberGth > NuclearDefs.TUNGSTEN_ABSORBER_IGNITION_THRESHOLD ? 0xFF6A33 : 0xFFFFFF;
         graphics.drawString(font, state, (screenW - font.width(state)) / 2, y, color, true);
     }
@@ -446,14 +446,12 @@ public final class WrenchHud {
         Component name = Component.translatable("resource.gonzotech." + part.id())
             .setStyle(Style.EMPTY.withColor(color));
         Component sep = Component.literal(" | ").setStyle(Style.EMPTY.withColor(0xA0A0A0));
-        Component unit = Component.translatable("resource.gonzotech." + part.id() + ".unit");
         // GTU/GTH идут по проводам в МИЛЛИ (×1000) — показываем целые единицы с
         // суффиксом больших тиров и одной десятой (12.3M). Вода/пар в mB — как есть.
-        Component value = part.isFluid()
-            ? Component.literal(Long.toString(total))
-            : Component.literal(GtFormat.formatRate(total));
-        Component amount = Component.translatable("hud.gonzotech.flow_amount", value, unit)
-            .setStyle(Style.EMPTY.withColor(color));
+        // ГОСТ единиц: число и обозначение — цветом ресурса, «/t» — цветом строки.
+        String value = part.isFluid() ? Long.toString(total) : GtFormat.formatRate(total);
+        Component amount = Component.translatable("hud.gonzotech.flow_amount",
+            GtUnits.rate(value, GtUnits.key(part.unitKey(), color), color));
         return Component.empty().append(name).append(sep).append(amount);
     }
 }

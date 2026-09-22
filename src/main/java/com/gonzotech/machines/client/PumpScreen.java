@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.PumpMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -42,10 +43,10 @@ public class PumpScreen extends MachineScreen<PumpMenu> {
 
         if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.PUMP_GTU_CAPACITY))), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), MachineDefs.toUnits(MachineDefs.PUMP_GTU_CAPACITY))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, watX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.water", menu.water(), MachineDefs.PUMP_WATER_CAPACITY)), mouseX, mouseY);
+                GtUnits.waterPair(menu.water(), MachineDefs.PUMP_WATER_CAPACITY)), mouseX, mouseY);
         }
     }
 }

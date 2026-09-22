@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.CrusherMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -46,7 +47,7 @@ public class CrusherScreen extends MachineScreen<CrusherMenu> {
 
         if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), MachineDefs.toUnits(MachineDefs.CRUSHER_GTU_CAPACITY))),
+                GtUnits.gtuPair(menu.gtu(), MachineDefs.toUnits(MachineDefs.CRUSHER_GTU_CAPACITY))),
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, crushX, crushY, crushW, crushH)) {
             graphics.renderComponentTooltip(this.font, List.of(

@@ -2,7 +2,7 @@ package com.gonzotech.radiation.client;
 
 import com.gonzotech.radiation.ItemRadioactivity;
 import com.gonzotech.radiation.ItemToxicity;
-import com.gonzotech.radiation.RadUnits;
+import com.gonzotech.core.text.GtUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -35,13 +35,15 @@ public final class RadTooltip {
         // которые реально применены к предмету.
         event.getToolTip().add(Component.empty());
         if (total >= 1.0) {
+            // Радиация ВСЕГДА своим цветом #ceeb2d, «/t» — основным цветом строки (&7).
             event.getToolTip().add(Component.translatable("tooltip.gonzotech.radioactivity",
-                            Component.literal(RadUnits.format(total)).withStyle(ChatFormatting.YELLOW))
+                            GtUnits.zt(total))
                     .withStyle(ChatFormatting.GRAY));
         }
         if (toxicity > 0.0) {
+            // Токсичность ВСЕГДА своим цветом #d12176.
             event.getToolTip().add(Component.translatable("tooltip.gonzotech.toxicity",
-                            Component.literal(ItemToxicity.format(toxicity)).withStyle(ChatFormatting.GREEN))
+                            GtUnits.tx(toxicity))
                     .withStyle(ChatFormatting.GRAY));
         }
     }

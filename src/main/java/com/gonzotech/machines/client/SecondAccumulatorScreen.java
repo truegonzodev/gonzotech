@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.menu.SecondAccumulatorMenu;
@@ -37,7 +38,7 @@ public final class SecondAccumulatorScreen extends MachineScreen<SecondAccumulat
         drawVBarTex(g, barX, barY, barW, barH, gtu, BAR_GTU);
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), capacity)), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), capacity)), mouseX, mouseY);
         }
     }
 }
