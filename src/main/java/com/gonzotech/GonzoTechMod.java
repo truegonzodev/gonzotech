@@ -92,6 +92,13 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStressEvents.class);
         // Психика: эффекты экзистенциального кризиса (каскад-чекпойнт, подмена предмета, сон).
         NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheCrisis.class);
+
+        // «Вечные» эффекты не снимаются молоком (автор 22.09.2026).
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.event.UncurableEffects.class);
+
+        // УФ шкала (в тик) и химическое заражение (в секунду) — автор 22.09.2026.
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheUltraviolet.class);
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheChemical.class);
         // Суневеты (багровые дни): драйвер + синк при заходе.
         NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 

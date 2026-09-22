@@ -9,7 +9,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 /**
- * «Тремор» на клиенте: пока эффект активен, камеру дёргает раз в 1–10 тиков на
+ * «Тремор» на клиенте: пока эффект активен, камеру дёргает раз в 1–2 тика на
  * {@code 0.3–2.1 × уровень} градуса по yaw и pitch (спека автора 22.09.2026).
  *
  * <p>Дёргаем ровно на клиенте, потому что поворот игрока — клиентская прерогатива:
@@ -45,8 +45,9 @@ public final class PsycheTremorClient {
             nextJitter--;
             return;
         }
-        // Раз в 1–10 тиков — случайный рывок.
-        nextJitter = 1 + player.getRandom().nextInt(10);
+        // Раз в 1–2 тика — случайный рывок (автор 22.09.2026: «интервал толчков
+        // 1–2 тика, а не 1–10» — тряска стала плотной, почти непрерывной).
+        nextJitter = 1 + player.getRandom().nextInt(2);
 
         int level = tremor.getAmplifier() + 1;                       // «Тремор I» = 1
         float magnitude = (float) ((0.3 + player.getRandom().nextDouble() * 1.8) * level);

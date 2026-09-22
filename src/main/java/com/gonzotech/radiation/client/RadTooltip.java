@@ -1,6 +1,7 @@
 package com.gonzotech.radiation.client;
 
 import com.gonzotech.radiation.ItemRadioactivity;
+import com.gonzotech.radiation.ItemToxicity;
 import com.gonzotech.radiation.RadUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -29,5 +30,13 @@ public final class RadTooltip {
         event.getToolTip().add(Component.translatable("tooltip.gonzotech.radioactivity",
                         Component.literal(RadUnits.format(total)).withStyle(ChatFormatting.YELLOW))
                 .withStyle(ChatFormatting.GRAY));
+
+        // Токсичность (автор 22.09.2026): такой же параметр, но проще радиации и в Tx/с.
+        double toxicity = ItemToxicity.toxicityOfStack(event.getItemStack());
+        if (toxicity > 0.0) {
+            event.getToolTip().add(Component.translatable("tooltip.gonzotech.toxicity",
+                            Component.literal(ItemToxicity.format(toxicity)).withStyle(ChatFormatting.GREEN))
+                    .withStyle(ChatFormatting.GRAY));
+        }
     }
 }

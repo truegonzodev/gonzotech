@@ -2,6 +2,8 @@ package com.gonzotech.radiation;
 
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
+import com.gonzotech.core.psyche.PsycheChemical;
+import com.gonzotech.core.psyche.PsycheUltraviolet;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.core.BlockPos;
@@ -64,7 +66,7 @@ public final class RadiationSystem {
      *  под целевые темпы автора 21.09 (без учёта одновременного спада — спад
      *  идёт только БЕЗ облучения): уран-слиток (3mZt) ≈ 8%/час, торий (0.6mZt)
      *  ≈ 1.6%/час, плутоний (13mZt) ≈ 35%/час, радий (75mZt) ≈ 100%/30 мин. */
-    private static final double NZT_PER_PERMILLE = 1.35e8;
+    public static final double NZT_PER_PERMILLE = 1.35e8;
     /** Фон чанка действует на шкалу в 10 раз слабее, чем источник «в руках». */
     private static final double CHUNK_DOSE_WEIGHT = 0.1;
     /** Доза в тик, НИЖЕ которой игрок «не облучается» и шкала спадает
@@ -109,7 +111,13 @@ public final class RadiationSystem {
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % PLAYER_PERIOD_TICKS != 0) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        // Воздух некроза держим КАЖДЫЙ тик: ваниль восстанавливает 4 пузырька в тик,
+        // поэтому вычитать раз в секунду бесполезно (автор 22.09.2026 — полоска мигала).
+        Necrosis.tickAir(player);
+        if (player.tickCount % PLAYER_PERIOD_TICKS != 0) {
             return;
         }
         ServerLevel level = (ServerLevel) player.level();
@@ -158,6 +166,8 @@ public final class RadiationSystem {
         // Хазмат I (автор 22.09) режет входящую дозу, но пробивается горячим
         // источником: множитель считается от дозы/сек (см. Hazmat.factor).
         double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
+        rawDose *= PsycheChemical.doseMultiplier(player);
         double suitFactor = Hazmat.factor(player, rawDose);
         double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
@@ -182,6 +192,12 @@ public final class RadiationSystem {
         if (newScale != scale) {
             psyche.setRadiation(newScale);
             PsycheNetwork.sendToPlayer(player);
+        }
+
+        // Химическое заражение: 2 % дозы уходит в шестую шкалу (автор 22.09.2026):
+        // «шкалы радиации и заражения имеют одинаковую размерность».
+        if (doseThisTick > 0.0) {
+            PsycheChemical.addFromDose(player, doseThisTick / NZT_PER_PERMILLE);
         }
 
         // Антирадиновый абсорбент (автор 22.09): «Очищение» плавно выводит долю
@@ -254,6 +270,8 @@ public final class RadiationSystem {
             RadSickness.forget(player.getUUID());
             RadCleanse.forget(player.getUUID());
             Necrosis.forget(player.getUUID());
+            PsycheUltraviolet.forget(player.getUUID());
+            PsycheChemical.forget(player.getUUID());
         }
     }
 

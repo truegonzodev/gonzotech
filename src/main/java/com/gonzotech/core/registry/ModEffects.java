@@ -22,6 +22,9 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  *   <li><b>{@code tremor} «Тремор»</b> (психика) — приступы тряски выше 40 % стресса
  *       или зависимости; камеру дёргает клиент, см. {@code psyche.PsycheStressEffects}
  *       и {@code psyche.client.PsycheTremorClient};</li>
+ *   <li><b>{@code itch} «Зуд»</b> (химия) — три уровня при химическом заражении
+ *       &gt; 38 / 52 / 69 %, работает только если на игроке есть броня; урон, вытаптывание
+ *       земли и бонусы к стрессу/дозе — {@code psyche.PsycheChemical};</li>
  *   <li><b>{@code heart_attack} «Сердечный приступ»</b> (психика) — выше 99 % стресса;
  *       по истечении 40 секунд — «чистый» урон, который ничем не блокируется и всегда
  *       оставляет ровно 1 HP (см. теги урона {@code gonzotech:heart_attack}).</li>
@@ -46,6 +49,11 @@ public final class ModEffects {
     public static final DeferredHolder<MobEffect, MobEffect> TREMOR =
             MOB_EFFECTS.register("tremor", () ->
                     new PlainEffect(MobEffectCategory.HARMFUL, 0x8A8574));
+
+    /** Зуд — не снимается молоком (см. {@code core.event.UncurableEffects}). */
+    public static final DeferredHolder<MobEffect, MobEffect> ITCH =
+            MOB_EFFECTS.register("itch", () ->
+                    new PlainEffect(MobEffectCategory.HARMFUL, 0xB5893F));
 
     /** Сердечный приступ — 40 секунд на спасение, затем «чистый» урон до 1 HP. */
     public static final DeferredHolder<MobEffect, MobEffect> HEART_ATTACK =

@@ -270,7 +270,9 @@ public final class PsycheCrisis {
         // приступа»: иначе снятый откатом эффект засчитался бы как «приступ истёк» и игрок
         // получил бы урон до 1 HP не за провал приступа, а за восстановление состояния.
         PsycheStressEffects.forgetHeartAttack(player);
-        player.removeAllEffects();
+        // Некроз/тремор/приступ защищены от «общего» снятия (молоко) — откат слепка
+        // снимает их в обход, иначе каскад оставлял бы эффекты, которых в слепке не было.
+        com.gonzotech.core.event.UncurableEffects.runUncancelled(player::removeAllEffects);
         for (MobEffectInstance instance : snapshot.effects()) {
             player.addEffect(new MobEffectInstance(instance));
         }

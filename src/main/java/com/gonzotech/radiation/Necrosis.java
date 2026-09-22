@@ -1,5 +1,6 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.core.event.UncurableEffects;
 import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -40,6 +41,13 @@ public final class Necrosis {
 
     /** Накопитель расхода воздуха: «пузырьки в секунду» дробные. */
     private static final Map<UUID, Double> AIR_DEBT = new HashMap<>();
+    /**
+     * Воздух, который мы держим «своим»: ваниль каждый тик восстанавливает 4 пузырька
+     * ({@code LivingEntity.baseTick}), поэтому просто вычитать бесполезно — полоска
+     * мигала и сразу заполнялась, а спринт был бесплатным. Планку переставляем каждый тик
+     * (автор 22.09.2026: «шкала воздуха то появляется, то пропадает»).
+     */
+    private static final Map<UUID, Integer> HELD_AIR = new HashMap<>();
 
     private Necrosis() {
     }
@@ -57,10 +65,47 @@ public final class Necrosis {
                         level + 1).withStyle(net.minecraft.ChatFormatting.DARK_RED), false);
     }
 
-    /** Снять некроз (лечение — будущие препараты; сегодня вызывается вручную/командой). */
+    /**
+     * Снять некроз (лечение — будущие препараты; сегодня вызывается вручную/командой).
+     * Через {@link UncurableEffects#runUncancelled}: молоко и прочие «общие» снятия этот
+     * эффект не берут (автор 22.09.2026).
+     */
     public static void cure(ServerPlayer player) {
-        player.removeEffect(ModEffects.NECROSIS);
+        UncurableEffects.runUncancelled(() -> player.removeEffect(ModEffects.NECROSIS));
         AIR_DEBT.remove(player.getUUID());
+        HELD_AIR.remove(player.getUUID());
+    }
+
+    /**
+     * Тик-в-тик (вызывается КАЖДЫЙ тик, а не раз в секунду): спринт жжёт воздух.
+     *
+     * <p>Порядок важен: мы работаем ПОСЛЕ ванильного восстановления воздуха и возвращаем
+     * планку на своё место. Пока игрок не спринтует — не мешаем (ваниль сама восстанавливает
+     * 4 пузырька в тик), поэтому после спринта воздух честно возвращается.</p>
+     */
+    public static void tickAir(ServerPlayer player) {
+        MobEffectInstance necrosis = player.getEffect(ModEffects.NECROSIS);
+        UUID id = player.getUUID();
+        if (necrosis == null) {
+            AIR_DEBT.remove(id);
+            HELD_AIR.remove(id);
+            return;
+        }
+        if (player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        if (!player.isSprinting()) {
+            HELD_AIR.put(id, player.getAirSupply());
+            return;
+        }
+        int level = necrosis.getAmplifier();
+        double debt = AIR_DEBT.getOrDefault(id, 0.0) + bubblesPerSecond(level) / 20.0;
+        int spend = (int) debt;
+        AIR_DEBT.put(id, debt - spend);
+        int held = Math.min(HELD_AIR.getOrDefault(id, player.getAirSupply()), player.getAirSupply());
+        held = Math.max(0, held - spend);
+        HELD_AIR.put(id, held);
+        player.setAirSupply(Math.min(player.getAirSupply(), held));
     }
 
     /** Секундный тик: расход воздуха на спринте + «добор» агра. */
@@ -68,23 +113,16 @@ public final class Necrosis {
         MobEffectInstance necrosis = player.getEffect(ModEffects.NECROSIS);
         if (necrosis == null) {
             AIR_DEBT.remove(player.getUUID());
+            HELD_AIR.remove(player.getUUID());
             return;
         }
         if (player.isCreative() || player.isSpectator()) {
             return;
         }
-        if (player.isSprinting()) {
-            int level = necrosis.getAmplifier();
-            double debt = AIR_DEBT.getOrDefault(player.getUUID(), 0.0) + bubblesPerSecond(level);
-            int spend = (int) debt;
-            AIR_DEBT.put(player.getUUID(), debt - spend);
-            if (spend > 0) {
-                player.setAirSupply(Math.max(0, player.getAirSupply() - spend));
-            }
-            if (player.getAirSupply() <= 0) {
-                // Задохнулся на спринте — урон как под водой, но мягче ванильного.
-                player.hurt(player.damageSources().drown(), 1.0f);
-            }
+        // Расход воздуха — в tickAir() каждый тик; здесь только последствия «на нуле».
+        if (player.isSprinting() && player.getAirSupply() <= 0) {
+            // Задохнулся на спринте — урон как под водой, но мягче ванильного.
+            player.hurt(player.damageSources().drown(), 1.0f);
         }
         pullAggro(player, necrosis);
     }
@@ -129,6 +167,7 @@ public final class Necrosis {
     /** Забыть игрока (выход/смерть). */
     public static void forget(UUID playerId) {
         AIR_DEBT.remove(playerId);
+        HELD_AIR.remove(playerId);
     }
 
     /** Утилита для отладки: уровень некроза игрока (-1 — нет эффекта). */

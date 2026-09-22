@@ -250,7 +250,9 @@ public final class PsycheStress {
         applyBase(player, level, psyche, now, tally);
 
         int before = psyche.getStress();
-        int after = clamp(before + bonus(addiction, tally.gains) - tally.losses);
+        // «Зуд» (химия): +10 / +20 / +40 % к прибавкам стресса (автор 22.09.2026).
+        int gains = (int) Math.round(tally.gains * PsycheChemical.stressMultiplier(player));
+        int after = clamp(before + bonus(addiction, gains) - tally.losses);
         if (after != before) {
             psyche.setStress(after);
             save(player, psyche);
@@ -423,6 +425,9 @@ public final class PsycheStress {
         psyche.setStress(psyche.getStress() - psyche.getStress() * DEATH_CLEAR_PERCENT / 100);
         psyche.setCrisis(clamp(psyche.getCrisis() + DEATH_CRISIS_BURST));
         DECAY_ACC.remove(player.getUUID());
+        // Смерть чистит УФ полностью и заражение на 30 % от текущего (автор 22.09.2026).
+        PsycheUltraviolet.clear(player);
+        PsycheChemical.onDeath(player);
         save(player, psyche);
     }
 
@@ -437,6 +442,8 @@ public final class PsycheStress {
         psyche.setStress(psyche.getStress() - psyche.getStress() * DEATH_CLEAR_PERCENT / 100);
         psyche.setCrisis(clamp(psyche.getCrisis() + DEATH_CRISIS_BURST));
         DECAY_ACC.remove(player.getUUID());
+        PsycheUltraviolet.clear(player);
+        PsycheChemical.onDeath(player);
         save(player, psyche);
     }
 
@@ -482,7 +489,9 @@ public final class PsycheStress {
      */
     public static void gain(ServerPlayer player, int points) {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
-        psyche.setStress(clamp(psyche.getStress() + bonus(psyche.getAddiction(), points)));
+        // «Зуд» (химия): +10 / +20 / +40 % к прибавкам стресса (автор 22.09.2026).
+        int withItch = (int) Math.round(points * PsycheChemical.stressMultiplier(player));
+        psyche.setStress(clamp(psyche.getStress() + bonus(psyche.getAddiction(), withItch)));
         save(player, psyche);
     }
 

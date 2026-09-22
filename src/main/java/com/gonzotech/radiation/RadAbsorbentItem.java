@@ -47,6 +47,10 @@ public class RadAbsorbentItem extends Item {
             stack.shrink(1);
         }
 
+        // Химия (автор 22.09.2026): применение антирадина добавляет +1 % к заражению.
+        com.gonzotech.core.psyche.PsycheChemical.addPermille(serverPlayer,
+                com.gonzotech.core.psyche.PsycheChemical.ABSORBENT_ADD_PERMILLE);
+
         // Психика (автор 22.09): проюз абсорбента добавляет +100 очков стресса.
         com.gonzotech.core.psyche.PsycheStress.gain(serverPlayer,
                 com.gonzotech.core.psyche.PsycheStress.ABSORBENT_STRESS_BURST);
