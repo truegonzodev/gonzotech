@@ -277,6 +277,11 @@ public final class GtUnits {
         return rateLine("gui.gonzotech.steamgen.rated", value, U_MB, STEAM);
     }
 
+    /** «Охлаждение: §b[12 mB]§7/t» — змеевиковый конденсатор кипятка. */
+    public static MutableComponent condenserCoolingRate(Object value) {
+        return rateLine("gui.gonzotech.condenser.cooling_rate", value, U_MB, WATER);
+    }
+
     // ───────────────────── Радиация и токсичность (Zt / Tx) ─────────────────────
 
     /**

@@ -14,6 +14,7 @@ import com.gonzotech.machines.block.entity.FermentationVatBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.block.entity.NuclearFireboxBlockEntity;
 import com.gonzotech.machines.block.entity.RectifierBlockEntity;
+import com.gonzotech.machines.block.entity.SnaketypeCondenserBlockEntity;
 import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
 import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
@@ -171,6 +172,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<RectifierBlockEntity>> THIRD_RECTIFIER =
         BLOCK_ENTITIES.register("third_rectifier", () -> new BlockEntityType<>(
             RectifierBlockEntity::new, false, ModMachines.THIRD_RECTIFIER.get()));
+
+    public static final Supplier<BlockEntityType<SnaketypeCondenserBlockEntity>> THIRD_SNAKETYPE_CONDENSER =
+        BLOCK_ENTITIES.register("third_snaketype_condenser", () -> new BlockEntityType<>(
+            SnaketypeCondenserBlockEntity::new, false, ModMachines.THIRD_SNAKETYPE_CONDENSER.get()));
 
     /**
      * The BE factory is invoked only after DeferredRegister has assigned the

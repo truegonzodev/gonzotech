@@ -15,6 +15,7 @@ import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.NuclearFireboxBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.RectifierBlock;
+import com.gonzotech.machines.block.SnaketypeCondenserBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
 import com.gonzotech.machines.block.SecondElectricFurnaceBlock;
@@ -357,6 +358,10 @@ public final class ModMachines {
     public static final DeferredBlock<RectifierBlock> THIRD_RECTIFIER =
         BLOCKS.registerBlock("third_rectifier", RectifierBlock::new, machineMetal());
 
+    /** Эпоха III (Открытие 3): Змеевиковый конденсатор — охлаждение кипятка в воду с ледяными бонусами. */
+    public static final DeferredBlock<SnaketypeCondenserBlock> THIRD_SNAKETYPE_CONDENSER =
+        BLOCKS.registerBlock("third_snaketype_condenser", SnaketypeCondenserBlock::new, machineMetal());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -540,6 +545,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_RECTIFIER_ITEM =
         ITEMS.registerSimpleBlockItem("third_rectifier", THIRD_RECTIFIER);
+
+    public static final DeferredItem<BlockItem> THIRD_SNAKETYPE_CONDENSER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_snaketype_condenser", THIRD_SNAKETYPE_CONDENSER);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

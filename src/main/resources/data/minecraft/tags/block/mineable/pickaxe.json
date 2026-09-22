@@ -190,6 +190,7 @@
     "gonzotech:third_fermentation_vat",
     "gonzotech:third_wort_kettle",
     "gonzotech:third_distiller",
-    "gonzotech:third_rectifier"
+    "gonzotech:third_rectifier",
+    "gonzotech:third_snaketype_condenser"
   ]
 }

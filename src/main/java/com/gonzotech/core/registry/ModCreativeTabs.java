@@ -123,6 +123,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })

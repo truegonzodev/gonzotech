@@ -14,6 +14,7 @@ import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.menu.NuclearFireboxMenu;
 import com.gonzotech.machines.menu.PumpMenu;
 import com.gonzotech.machines.menu.RectifierMenu;
+import com.gonzotech.machines.menu.SnaketypeCondenserMenu;
 import com.gonzotech.machines.menu.SteamGenMenu;
 import com.gonzotech.machines.menu.StirlingMenu;
 import com.gonzotech.machines.menu.SecondAccumulatorMenu;
@@ -112,6 +113,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<RectifierMenu>> THIRD_RECTIFIER =
         MENUS.register("third_rectifier", () -> IMenuTypeExtension.create(RectifierMenu::new));
+
+    public static final Supplier<MenuType<SnaketypeCondenserMenu>> THIRD_SNAKETYPE_CONDENSER =
+        MENUS.register("third_snaketype_condenser", () -> IMenuTypeExtension.create(SnaketypeCondenserMenu::new));
 
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);

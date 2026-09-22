@@ -53,7 +53,8 @@ public final class TierThreeCrafting {
         "gonzotech:third_fermentation_vat",
         "gonzotech:third_wort_kettle",
         "gonzotech:third_distiller",
-        "gonzotech:third_rectifier"
+        "gonzotech:third_rectifier",
+        "gonzotech:third_snaketype_condenser"
     );
 
     /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
@@ -115,6 +116,7 @@ public final class TierThreeCrafting {
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get();
+            || item == com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get()
+            || item == com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get();
     }
 }
