@@ -399,7 +399,7 @@ public final class PsycheStressEffects {
             case "player_death" -> PsycheStress.onDebugDeath(player); // −5 %/−5 %, кризис +500
 
             // ── эффекты кризиса ──
-            case "cascade" -> PsycheCrisis.scheduleCascade(player, player.serverLevel().getGameTime());
+            case "cascade" -> PsycheCrisis.cascadeDebug(player);
             case "cascade_sound" -> PsycheCrisis.playCascadeSoundDebug(player);
             case "swap" -> PsycheCrisis.swapDebug(player);
             case "microstep" -> PsycheCrisis.microstepDebug(player);

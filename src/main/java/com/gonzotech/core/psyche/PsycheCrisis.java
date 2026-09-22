@@ -190,7 +190,11 @@ public final class PsycheCrisis {
         if (CASCADES.isEmpty()) {
             return;
         }
-        long now = event.getServer().getTickCount();
+        // ВАЖНО: таймер каскада поставлен в мировом времени (ServerLevel.getGameTime(),
+        // см. scheduleCascade). Сверять его с MinecraftServer#getTickCount нельзя: это ДРУГАЯ
+        // шкала (тики с запуска сервера), и в мире, который старше текущей сессии, jumpTick
+        // оказывается «в будущем» — каскад не срабатывал никогда (нашёл автор 22.09.2026).
+        long now = event.getServer().overworld().getGameTime();
         Iterator<Map.Entry<UUID, List<Cascade>>> players = CASCADES.entrySet().iterator();
         while (players.hasNext()) {
             Map.Entry<UUID, List<Cascade>> entry = players.next();
@@ -222,8 +226,10 @@ public final class PsycheCrisis {
     /**
      * «Втихоря» сохранить состояние игрока и поставить таймер переноса. Игрок ничего не видит:
      * ни сообщения, ни звука — только через 2–30 с знакомый звук и рывок в прошлое.
+     *
+     * @return сколько секунд ждать до переноса (2–30); звук играет за секунду до него
      */
-    public static void scheduleCascade(ServerPlayer player, long now) {
+    public static int scheduleCascade(ServerPlayer player, long now) {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         List<MobEffectInstance> effects = new ArrayList<>();
         for (MobEffectInstance instance : player.getActiveEffects()) {
@@ -235,7 +241,7 @@ public final class PsycheCrisis {
                 player.getX(), player.getY(), player.getZ(),
                 player.getYRot(), player.getXRot(),
                 player.getHealth(), food.getFoodLevel(), food.getSaturationLevel(),
-                player.serverLevel().getGameTime(),
+                player.serverLevel().getDayTime(),
                 effects,
                 new int[]{psyche.getAddiction(), psyche.getStress(), psyche.getCrisis(),
                         psyche.getRadiation(), psyche.getUv(), psyche.getChemical()});
@@ -244,6 +250,7 @@ public final class PsycheCrisis {
         long jumpTick = now + seconds * 20L;
         CASCADES.computeIfAbsent(player.getUUID(), key -> new ArrayList<>())
                 .add(new Cascade(snapshot, jumpTick - 20L, jumpTick));
+        return seconds;
     }
 
     /** Применить слепок: перенос, взгляд, здоровье, голод, эффекты, шкалы. Мир не трогаем. */
@@ -486,6 +493,17 @@ public final class PsycheCrisis {
      */
     public static void playCascadeSoundDebug(ServerPlayer player) {
         playCascadeSound(player);
+    }
+
+    /**
+     * Отладочный каскад целиком: снять слепок и сказать игроку, через сколько секунд его
+     * перенесёт. Нужен, чтобы механику можно было проверить руками (автор 22.09.2026: «не
+     * работает(?) только каскад» — на самом деле у каскада были перепутаны часы).
+     */
+    public static void cascadeDebug(ServerPlayer player) {
+        int seconds = scheduleCascade(player, player.serverLevel().getGameTime());
+        player.displayClientMessage(
+                Component.translatable("message.gonzotech.crisis.cascade_debug", seconds), false);
     }
 
     public static void swapDebug(ServerPlayer player) {
