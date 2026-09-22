@@ -58,6 +58,12 @@ public final class RadSources {
             Map.entry("ut_fuel", 0.20 * RadUnits.MILLI),      // УТ — уран-ториевое топливо
             // Кориум (автор 21.09): фонят все три формы — ведро (корм для топки),
             // поставленный блок и сам флюидный блок (лужа), все по 3 mZt.
+            // Радиоактивный слизневый блок и мёртвая жижа (автор 22.09.2026):
+            // слизень 5 mZt/с, жижа 0.2 mZt/с. Жижа — и блок, и ведро: id-путь один и
+            // тот же, так что и поставленный блок, и предмет в руке фонят одинаково.
+            Map.entry("radioactive_slime_block", 5.0 * RadUnits.MILLI),
+            Map.entry("dead_slime_block", 0.2 * RadUnits.MILLI),
+            Map.entry("dead_slime_bucket", 0.2 * RadUnits.MILLI),
             Map.entry("corium_bucket", 3.0 * RadUnits.MILLI),
             Map.entry("corium", 3.0 * RadUnits.MILLI),
             Map.entry("molten_corium", 3.0 * RadUnits.MILLI)

@@ -79,15 +79,19 @@ public final class PsycheUltraviolet {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        if (player.isCreative() || player.isSpectator() || player.isDeadOrDying()) {
+        if (player.isDeadOrDying()) {
             return;
         }
+        // Шкала движется в любом режиме (для тестов в креативе), а последствия триггера
+        // (урон, слабость/замедление, некроз) — только в выживании: так же гейтит
+        // RadSickness для эффектов дозы. Отладочный триггер есть отдельно.
+        boolean consequences = !player.isCreative() && !player.isSpectator();
         // Источник пока один: радиация выше порога. Прибавка — «в тик», поэтому и тик
         // здесь каждый (не раз в секунду, как у остальных шкал).
         if (player.getData(ModPsycheAttachments.PSYCHE).getRadiation() > RADIATION_SOURCE_PERMILLE) {
             charge(player, GAIN_PERMILLE_PER_TICK);
         } else {
-            decay(player);
+            decay(player, consequences);
         }
     }
 
@@ -118,7 +122,7 @@ public final class PsycheUltraviolet {
     }
 
     /** Таяние: 1 % от максимума в тик + триггеры за каждые снятые 5 %. */
-    private static void decay(ServerPlayer player) {
+    private static void decay(ServerPlayer player, boolean consequences) {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         int before = psyche.getUv();
         if (before <= 0) {
@@ -133,7 +137,9 @@ public final class PsycheUltraviolet {
         state.triggerAcc += removed;
         while (state.triggerAcc >= TRIGGER_STEP_PERMILLE) {
             state.triggerAcc -= TRIGGER_STEP_PERMILLE;
-            trigger(player);
+            if (consequences) {
+                trigger(player);
+            }
         }
     }
 
@@ -150,6 +156,11 @@ public final class PsycheUltraviolet {
         if (RNG.nextDouble() < NECROSIS_CHANCE) {
             Necrosis.grant(player, 0);   // «Некроз I» навсегда
         }
+    }
+
+    /** Отладочный триггер: провести один удар по правилам, независимо от режима игры. */
+    public static void triggerDebug(ServerPlayer player) {
+        trigger(player);
     }
 
     /** Смерть: шкала очищается полностью (автор). */

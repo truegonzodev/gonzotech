@@ -104,9 +104,15 @@ public final class PsycheChemical {
         if (player.tickCount % 20 != 0) {
             return;
         }
-        if (player.isCreative() || player.isSpectator() || player.isDeadOrDying()) {
+        if (player.isDeadOrDying()) {
             return;
         }
+        // Автор 22.09.2026: «металлы не заражают игрока» — в креативе шкала не двигалась
+        // вообще (ранний выход), а тестирует автор именно в креативе. Теперь шкала
+        // наполняется и тает в ЛЮБОМ режиме (как доза радиации: RadiationSystem её тоже
+        // не гейтит по креативу), а вот последствия — урон/вытаптывание — только в
+        // выживании, как эффекты дозы в RadSickness.
+        boolean consequences = !player.isCreative() && !player.isSpectator();
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         int before = psyche.getChemical();
         State state = STATES.computeIfAbsent(player.getUUID(), key -> new State());
@@ -130,8 +136,8 @@ public final class PsycheChemical {
             PsycheNetwork.sendToPlayer(player);
         }
 
-        // 3. Эффект «Зуд» и его последствия.
-        tickItch(player, value);
+        // 3. Эффект «Зуд» и его последствия (эффект виден всегда — для проверки глазами).
+        tickItch(player, value, consequences);
     }
 
     /**
@@ -216,7 +222,7 @@ public final class PsycheChemical {
         return level >= 3 ? 1.0 + ITCH3_DOSE_BONUS : 1.0;
     }
 
-    private static void tickItch(ServerPlayer player, int chemical) {
+    private static void tickItch(ServerPlayer player, int chemical, boolean consequences) {
         int level = itchLevel(player, chemical);
         State state = STATES.computeIfAbsent(player.getUUID(), key -> new State());
         if (level == 0) {
@@ -234,13 +240,14 @@ public final class PsycheChemical {
         if (state.itchCooldown > 0) {
             state.itchCooldown--;
         }
-        if (moved && state.itchCooldown <= 0 && player.getHealth() > 1.0F) {
+        if (consequences && moved && state.itchCooldown <= 0 && player.getHealth() > 1.0F) {
             player.hurt(player.damageSources().magic(), ITCH_DAMAGE);
             state.itchCooldown = ITCH_DAMAGE_COOLDOWN_SECONDS[level - 1];
         }
 
-        // 2. Блок под ногами «вытаптывается» (уровни 2 и 3 — по спеке).
-        if (level >= 2) {
+        // 2. Блок под ногами «вытаптывается» (уровни 2 и 3 — по спеке);
+        //    в креативе/наблюдателе мир не трогаем — там обычно строят.
+        if (consequences && level >= 2) {
             stompGround(player, level);
         }
     }
@@ -308,5 +315,19 @@ public final class PsycheChemical {
     /** Для отладки: текущий уровень зудa. */
     public static int debugLevel(ServerPlayer player) {
         return itchLevel(player, player.getData(ModPsycheAttachments.PSYCHE).getChemical());
+    }
+
+    /**
+     * Отладочный «удар зудом»: выдать эффект текущего уровня и провести один удар по
+     * правилам (движение игнорируем — админ хочет увидеть эффект сразу).
+     */
+    public static void itchDebug(ServerPlayer player) {
+        int chemical = player.getData(ModPsycheAttachments.PSYCHE).getChemical();
+        int level = Math.max(1, itchLevel(player, chemical));
+        player.addEffect(new MobEffectInstance(ModEffects.ITCH, ITCH_REFRESH_TICKS, level - 1, false, true));
+        if (player.getHealth() > 1.0F) {
+            player.hurt(player.damageSources().magic(), ITCH_DAMAGE);
+        }
+        stompGround(player, level);
     }
 }

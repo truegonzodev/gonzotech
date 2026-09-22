@@ -333,7 +333,7 @@ public final class PsycheStressEffects {
             "dragon_kill", "enderman_stare", "totem", "bed", "sweet", "pet_feed", "oneshot",
             "lever", "discovery", "mash", "absorbent", "player_death",
             // эффекты кризиса из PsycheCrisis
-            "cascade", "cascade_sound", "swap", "microstep", "fake_death", "stare");
+            "cascade", "cascade_sound", "swap", "microstep", "fake_death", "stare", "itch", "uv_trigger");
 
     /**
      * Ручной запуск «эффекта шкалы» — админ-команда
@@ -405,6 +405,8 @@ public final class PsycheStressEffects {
             case "microstep" -> PsycheCrisis.microstepDebug(player);
             case "fake_death" -> PsycheCrisisNetwork.sendFakeDeath(player);
             case "stare" -> PsycheCrisis.stareDebug(player);
+            case "itch" -> PsycheChemical.itchDebug(player);
+            case "uv_trigger" -> PsycheUltraviolet.triggerDebug(player);
             default -> {
                 return false;
             }

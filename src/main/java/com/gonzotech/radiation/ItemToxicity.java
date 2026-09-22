@@ -55,6 +55,16 @@ public final class ItemToxicity {
             Map.entry("copper", 0.001 * RadUnits.MILLI)        // 0.001 mTx/с
     );
 
+    /**
+     * Точечная токсичность по ПОЛНОМУ id-пути — для предметов, которых нет в таблице
+     * материалов (автор 22.09.2026): мёртвая жижа (блок и ведро) — 1 mTx/с.
+     * Проверяется ДО парсинга материала.
+     */
+    private static final Map<String, Double> DIRECT_TOXICITY = Map.ofEntries(
+            Map.entry("dead_slime_block", 1.0 * RadUnits.MILLI),
+            Map.entry("dead_slime_bucket", 1.0 * RadUnits.MILLI)
+    );
+
     private ItemToxicity() {
     }
 
@@ -83,8 +93,12 @@ public final class ItemToxicity {
         return per <= 0.0 ? 0.0 : per * stack.getCount();
     }
 
-    /** Пресет по id-пути предмета: находим материал, затем форму (см. таблицу форм). */
+    /** Пресет по id-пути предмета: точечная таблица, затем материал с формой. */
     static double toxicityByPath(String path) {
+        Double direct = DIRECT_TOXICITY.get(path);
+        if (direct != null) {
+            return direct;
+        }
         String[] parts = path.split("_");
         Double base = null;
         int materialIndex = -1;
