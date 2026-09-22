@@ -1,6 +1,6 @@
 package com.gonzotech.core.psyche;
 
-import com.gonzotech.radiation.ModEffects;
+import com.gonzotech.core.registry.ModEffects;
 import com.gonzotech.sunevent.SunEventServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

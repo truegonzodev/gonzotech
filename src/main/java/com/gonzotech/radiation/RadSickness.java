@@ -1,5 +1,6 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;

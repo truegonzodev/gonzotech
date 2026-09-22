@@ -47,8 +47,8 @@ public class GonzoTechMod {
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
         ModDataComponents.register(modEventBus);
-        // Эффекты радиации (некроз/очищение) — заход 2 в шкалы, автор 22.09.
-        com.gonzotech.radiation.ModEffects.register(modEventBus);
+        // Эффекты мода: радиация (некроз/очищение) + психика (тремор/сердечный приступ).
+        com.gonzotech.core.registry.ModEffects.register(modEventBus);
         ModRecipeSerializers.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
@@ -99,6 +99,8 @@ public class GonzoTechMod {
             modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);
             // Развёртка и тинт надетой брони custom_alloy.
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
+            // Тряска камеры от эффекта «Тремор» — только на клиенте.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheTremorClient.class);
             // Texture-only Smart CTM корпусной оболочки турбины.
             modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).

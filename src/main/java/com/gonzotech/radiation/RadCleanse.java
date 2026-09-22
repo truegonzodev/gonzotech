@@ -3,6 +3,7 @@ package com.gonzotech.radiation;
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.psyche.PsycheNetwork;
+import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 
