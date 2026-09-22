@@ -88,6 +88,8 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStress.class);
         // Психика: событийные источники (урон, взрывы, смерти зверей, тотем, рычаг, скример).
         NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStressEvents.class);
+        // Психика: эффекты экзистенциального кризиса (каскад-чекпойнт, подмена предмета, сон).
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheCrisis.class);
         // Суневеты (багровые дни): драйвер + синк при заходе.
         NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 
@@ -101,6 +103,8 @@ public class GonzoTechMod {
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
             // Тряска камеры от эффекта «Тремор» — только на клиенте.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheTremorClient.class);
+            // Эффекты кризиса на клиенте: экранный эффект, фиксация камеры, ложная смерть.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheCrisisClient.class);
             // Texture-only Smart CTM корпусной оболочки турбины.
             modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
@@ -152,6 +156,9 @@ public class GonzoTechMod {
 
         // Sync трёх HUD-шкал «психики» (зависимость/стресс/кризис).
         com.gonzotech.core.psyche.PsycheNetwork.register(registrar);
+
+        // Эффекты кризиса: фиксация камеры, ложный экран смерти, ЛКМ-«использование предмета».
+        com.gonzotech.core.psyche.PsycheCrisisNetwork.register(registrar);
 
         // HUD живого потока труб (ключ ↔ сервер).
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
