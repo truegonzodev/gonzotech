@@ -33,6 +33,9 @@ public final class SecondCompositePipeBlock extends CompositePipeBlock implement
                 ? SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT : SecondTierDefs.WATER_THROUGHPUT;
             case STEAM -> carriesUniversalFluid(state)
                 ? SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT : SecondTierDefs.STEAM_THROUGHPUT;
+            case MASH -> SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT / 2;
+            case WORT, DISTILLATE, RECTIFICATE, BOILING_WATER, POISON_POTION ->
+                SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT;
             case ITEM -> SecondTierDefs.ITEM_THROUGHPUT;
         };
     }

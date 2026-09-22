@@ -18,6 +18,9 @@ public final class SecondUniversalFluidPipeBlock extends UniversalFluidPipeBlock
 
     @Override
     public long throughputLimit(BlockState state, PipeType type) {
+        if (type == PipeType.MASH) {
+            return SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT / 2;
+        }
         return SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT;
     }
 

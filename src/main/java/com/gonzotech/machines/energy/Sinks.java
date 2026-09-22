@@ -46,6 +46,51 @@ public final class Sinks {
         long receiveWater(long amount, boolean simulate);
     }
 
+    // ────────────────────── Жидкостные приёмники Эпохи III ──────────────────────
+
+    /** Блок умеет принимать брагу (mB) от соседа или по трубе. */
+    public interface MashSink {
+        /**
+         * @param amount         объём в mB
+         * @param alcoholPercent процент спирта (0..13%)
+         * @param rotPercent     процент гнили (0..98%)
+         * @param simulate       проверка или реальный приём
+         * @return сколько mB реально принято
+         */
+        long receiveMash(long amount, double alcoholPercent, double rotPercent, boolean simulate);
+    }
+
+    /** Блок умеет принимать сусло (mB) от соседа или по трубе. */
+    public interface WortSink {
+        /**
+         * @param amount         объём в mB
+         * @param alcoholPercent процент спирта (0..30%)
+         * @param simulate       проверка или реальный приём
+         * @return сколько mB реально принято
+         */
+        long receiveWort(long amount, double alcoholPercent, boolean simulate);
+    }
+
+    /** Блок умеет принимать дистиллят (mB) от соседа или по трубе (константный 48% спирт). */
+    public interface DistillateSink {
+        long receiveDistillate(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать ретификат / чистый спирт (mB) от соседа или по трубе. */
+    public interface RectificateSink {
+        long receiveRectificate(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать кипяток / горячую воду (mB) от соседа или по трубе. */
+    public interface HotWaterSink {
+        long receiveHotWater(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать зелье отравления II (mB) от соседа или по трубе. */
+    public interface PoisonPotionSink {
+        long receivePoisonPotion(long amount, boolean simulate);
+    }
+
     /**
      * Есть ли среди 6 соседей блок-сущность заданного класса.
      * Используется для проверки «вижу ли я нужного соседа в цепочке».

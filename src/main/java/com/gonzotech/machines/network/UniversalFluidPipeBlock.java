@@ -43,7 +43,7 @@ public class UniversalFluidPipeBlock extends PipeBlock {
         return simpleCodec(UniversalFluidPipeBlock::new);
     }
 
-    /** Несёт всё жидкостное семейство (сейчас — вода и пар). */
+    /** Несёт всё жидкостное семейство (вода, пар, брага, сусло, дистиллят, ретификат...). */
     @Override
     public boolean carries(BlockState state, PipeType type) {
         return type.isFluid();
@@ -54,6 +54,14 @@ public class UniversalFluidPipeBlock extends PipeBlock {
         if (!type.isFluid()) return false;
         if (connectsAllSides()) return true;
         return dir.getAxis() == state.getValue(AXIS);
+    }
+
+    @Override
+    public long throughputLimit(BlockState state, PipeType type) {
+        if (type == PipeType.MASH) {
+            return com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT / 2;
+        }
+        return com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT;
     }
 
     // ─────────────────────────── гаечный ключ ───────────────────────────

@@ -24,6 +24,7 @@ public final class SecondPipeBlock extends PipeBlock implements SecondTierPipe {
             case WATER -> SecondTierDefs.WATER_THROUGHPUT;
             case STEAM -> SecondTierDefs.STEAM_THROUGHPUT;
             case ITEM -> SecondTierDefs.ITEM_THROUGHPUT;
+            default -> type.maxThroughput();
         };
     }
 }

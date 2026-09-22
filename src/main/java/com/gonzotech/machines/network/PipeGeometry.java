@@ -38,21 +38,16 @@ public final class PipeGeometry {
         return switch (type) {
             case WIRE -> new int[]{2, 10};
             case HEAT -> new int[]{2, 2};
-            // Жидкостное семейство (вода/пар/…) делит ОДИН угол сечения FLUID —
-            // потому в пучке одновременно возможна только одна жидкостная труба.
-            case WATER, STEAM -> new int[]{10, 10};
+            // Жидкостное семейство (вода/пар/брага/сусло/дистиллят/ретификат/кипяток/зелье)
+            // делит ОДИН угол сечения FLUID — потому в пучке одновременно возможна
+            // только одна жидкостная труба.
+            case WATER, STEAM, MASH, WORT, DISTILLATE, RECTIFICATE, BOILING_WATER, POISON_POTION -> new int[]{10, 10};
             case ITEM -> new int[]{10, 2};   // предметы — низ-право
         };
     }
 
     /**
      * Бокс трубы типа {@code type} вдоль оси {@code axis}, в его углу сечения.
-     * <p>
-     * Координаты выведены из того, КАК блокстейт крутит модель (авторская модель
-     * лежит вдоль Z; ось X → {@code y:90}, ось Y → {@code x:90}). MC вращает через
-     * {@code rotateYXZ(-y, -x, 0)} вокруг центра, поэтому для оси Y координата Z
-     * зеркалится в {@code [12-v, 16-v]} — только так хитбокс совпадает с моделью
-     * (без этого вертикальные трубы менялись местами с соседом).
      */
     public static VoxelShape cornerBox(Direction.Axis axis, PipeType type) {
         int[] c = corner(type);
@@ -67,11 +62,6 @@ public final class PipeGeometry {
 
     /**
      * Какая труба пучка ближе всего к точке наведения — версия с ОСЬЮ ПО ТИПУ.
-     * {@code axisOf} возвращает ось прогона для каждого типа (в пучке верхний слой
-     * WIRE+FLUID и нижний HEAT+ITEM могут смотреть по разным горизонтальным осям).
-     * Для каждого кандидата берём его реальный бокс ({@link #cornerBox} на оси его
-     * слоя) и меряем расстояние от точки до этого бокса (0 внутри бокса) — так
-     * выбор корректен для любой комбинации осей слоёв.
      */
     public static PipeType partAt(java.util.function.Function<PipeType, Direction.Axis> axisOf,
                                   BlockPos pos, Vec3 hitLocation, Iterable<PipeType> candidates) {
@@ -103,15 +93,9 @@ public final class PipeGeometry {
     }
 
     /**
-     * Какая труба пучка ближе всего к точке наведения. {@code hitLocation} —
-     * мировые координаты точки попадания луча; {@code candidates} — присутствующие
-     * типы. Возвращает ближайший по сечению тип или {@code null}.
-     * <p>
-     * Центр каждого кандидата берётся ПРЯМО из {@link #cornerBox} — так наведение
-     * и хитбокс/модель гарантированно согласованы для любой оси.
+     * Какая труба пучка ближе всего к точке наведения.
      */
     public static PipeType partAt(Direction.Axis axis, BlockPos pos, Vec3 hitLocation, Iterable<PipeType> candidates) {
         return partAt(t -> axis, pos, hitLocation, candidates);
     }
 }
-
