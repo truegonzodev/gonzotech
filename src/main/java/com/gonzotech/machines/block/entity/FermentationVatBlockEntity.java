@@ -131,7 +131,7 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
         if (ComposterBlock.COMPOSTABLES.containsKey(stack.getItem())) return true;
         if (stack.has(DataComponents.FOOD)) return true;
         return stack.is(ItemTags.SAPLINGS) || stack.is(ItemTags.LEAVES)
-            || stack.is(ItemTags.FLOWERS) || stack.is(ItemTags.CROPS);
+            || stack.is(ItemTags.SMALL_FLOWERS) || stack.is(ItemTags.VILLAGER_PLANTABLE_SEEDS);
     }
 
     // ─────────────────────────── GthSink ───────────────────────────
