@@ -32,8 +32,8 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
  * Облучение — только пока в руке дозиметр; УФ излучение — только пока в руке
  * УФ-радиометр ({@code isShown}). Значения 0..1000 = 0..100%.
  *
- * <p>Стресс и кризис приходят по сети в ОЧКАХ ({@code 0..1_000_000}) — перевод в
- * тысячные делает {@link PlayerPsyche#pointsToPermille(int)}.
+ * <p>Зависимость, стресс и кризис приходят по сети в ОЧКАХ ({@code 0..1_000_000}) —
+ * перевод в тысячные делает {@link PlayerPsyche#pointsToPermille(int)}.
  */
 public final class PsycheHud {
 
@@ -71,8 +71,9 @@ public final class PsycheHud {
         if (mc.options.hideGui) return;
 
         PsycheNetwork.PsycheDataPayload data = PsycheNetwork.CLIENT_DATA;
-        int addiction = data != null ? data.addiction() : 0;
-        // Стресс и кризис хранятся В ОЧКАХ (1 000 000 = 100 %) — бары рисуются в тысячных.
+        // Зависимость, стресс и кризис хранятся В ОЧКАХ (1 000 000 = 100 %) —
+        // бары рисуются в тысячных, перевод делает PlayerPsyche.pointsToPermille.
+        int addiction = data != null ? PlayerPsyche.pointsToPermille(data.addiction()) : 0;
         int stress = data != null ? PlayerPsyche.pointsToPermille(data.stress()) : 0;
         int crisis = data != null ? PlayerPsyche.pointsToPermille(data.crisis()) : 0;
         int radiation = data != null ? data.radiation() : 0;

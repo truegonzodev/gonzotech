@@ -6,15 +6,17 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 /**
  * Персональные шкалы состояния игрока. Две системы измерения — намеренно:
  * <ul>
- *   <li><b>проценты</b> ({@code 0..1000} тысячных, {@link #MAX} = 100 %) —
- *       Зависимость, Облучение, УФ, Химическое заражение;</li>
  *   <li><b>очки</b> ({@code 0..1_000_000}, {@link #POINT_MAX} = 100 %) —
- *       Стресс и Экзистенциальный кризис: автор 22.09.2026 задал их ставки
- *       в очках («0.001 % шкалы в сек = 10 очков»), поэтому и хранение в очках,
- *       чтобы 1 очко не терялось в округлении.</li>
+ *       Зависимость, Стресс и Экзистенциальный кризис: автор 22.09.2026 задал
+ *       ставки этих шкал в очках («0.001 % шкалы в сек = 10 очков», тотем
+ *       «+2000 = 0.2 % зависимости»), поэтому и хранение в очках, чтобы 1 очко
+ *       не терялось в округлении;</li>
+ *   <li><b>проценты</b> ({@code 0..1000} тысячных, {@link #MAX} = 100 %) —
+ *       Облучение, УФ и Химическое заражение (там числа заданы в mZt/процентах).</li>
  * </ul>
  *
- * <p>Перевод: 1 % шкалы в очках = 10 000 очков, 1 тысячная = 1 000 очков.</p>
+ * <p>Перевод: 1 % шкалы в очках = 10 000 очков, 1 тысячная = 1 000 очков.
+ * В HUD очки показываются в тысячных — {@link #pointsToPermille(int)}.</p>
  *
  * <p>Таймеры источников стресса живут здесь же (переживают выход и смерть):
  * {@link #getSleepTick()} — когда игрок последний раз спал, {@link #getMashTick()} —
@@ -22,8 +24,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * «никогда не спавшим».</p>
  *
  * <ul>
- *   <li><b>Зависимость</b> (addiction) — ЖИВАЯ: каждое съеденное сусло +0.1 %
- *       ({@code Phase3Events});</li>
+ *   <li><b>Зависимость</b> (addiction) — ЖИВАЯ, в очках: каждое съеденное сусло
+ *       +0.1 % = +1000 очков ({@code Phase3Events}); падением и смертью управляет
+ *       {@link PsycheStress};</li>
  *   <li><b>Облучение</b> (radiation) — ЖИВАЯ: дозу пишет {@code RadiationSystem},
  *       шкала видна в HUD только с дозиметром в руке;</li>
  *   <li><b>Стресс</b> (stress) — ЖИВАЯ: копится по спеке 22.09.2026,
@@ -39,8 +42,10 @@ public class PlayerPsyche {
 
     /** Максимум «процентных» шкал: 1000 тысячных = 100 %. */
     public static final int MAX = 1000;
-    /** Максимум шкал «в очках» (стресс, кризис): 1 000 000 очков = 100 % (автор 22.09). */
+    /** Максимум шкал «в очках» (зависимость, стресс, кризис): 1 000 000 = 100 % (автор 22.09). */
     public static final int POINT_MAX = 1_000_000;
+    /** Сколько очков в одном проценте любой «очковой» шкалы. */
+    public static final int POINTS_PER_PERCENT = POINT_MAX / 100;
 
     public static final Codec<PlayerPsyche> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
@@ -76,7 +81,7 @@ public class PlayerPsyche {
 
     public PlayerPsyche(int addiction, int stress, int crisis, int radiation, int uv, int chemical,
                         long sleepTick, long mashTick) {
-        this.addiction = clampPercent(addiction);
+        this.addiction = clampPoints(addiction);
         this.stress = clampPoints(stress);
         this.crisis = clampPoints(crisis);
         this.radiation = clampPercent(radiation);
@@ -126,8 +131,9 @@ public class PlayerPsyche {
         return mashTick;
     }
 
+    /** Зависимость — в очках ({@link #POINT_MAX} = 100 %). */
     public void setAddiction(int v) {
-        this.addiction = clampPercent(v);
+        this.addiction = clampPoints(v);
     }
 
     /** Стресс — в очках ({@link #POINT_MAX} = 100 %). */
@@ -160,9 +166,14 @@ public class PlayerPsyche {
         this.mashTick = v;
     }
 
-    /** Прибавить к зависимости {@code delta} тысячных (1 = 0.1%). */
+    /** Прибавить к зависимости {@code delta} очков (1000 очков = 0.1 %). */
     public void addAddiction(int delta) {
         setAddiction(this.addiction + delta);
+    }
+
+    /** Проценты «очковой» шкалы (1 000 000 = 100 %). */
+    public static int pointsPercent(int points) {
+        return points / POINTS_PER_PERCENT;
     }
 
     /** Очки → тысячные: для HUD, который рисует все шкалы в одной сетке 0..1000. */

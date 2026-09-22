@@ -23,9 +23,10 @@ import java.util.UUID;
 /**
  * Шкала стресса и экзистенциального кризиса (спека автора 22.09.2026, расширена в тот же день).
  *
- * <p><b>Единицы.</b> Полная шкала — {@link PlayerPsyche#POINT_MAX} = 1 000 000 очков (100 %);
- * «0.001 % в секунду» = 10 очков/с. Зависимость — по-прежнему в тысячных (1000 = 100 %).
- * Кризис — персистентный: смертью не чистится, наоборот даёт +{@value #DEATH_CRISIS_BURST}.</p>
+ * <p><b>Единицы.</b> Зависимость, стресс и кризис — в очках
+ * ({@link PlayerPsyche#POINT_MAX} = 1 000 000 = 100 %); «0.001 % в секунду» = 10 очков/с.
+ * Кризис персистентный: смертью не чистится, наоборот даёт +{@value #DEATH_CRISIS_BURST}.
+ * Пороги и проценты считаются через {@link PlayerPsyche#pointsPercent(int)}.</p>
  *
  * <h2>Постоянные источники (за секунду)</h2>
  * <table>
@@ -128,7 +129,7 @@ public final class PsycheStress {
     public static final int PET_FEED_RELIEF = 100;
     /** Кулдаун на «кормление», чтобы клик-спам не был фармом (тики). */
     public static final long PET_FEED_COOLDOWN = 20L;
-    /** Прок тотема бессмертия: зависимость в тысячных (см. примечание в классе событий). */
+    /** Прок тотема бессмертия: +0.2 % зависимости = 2000 очков (автор 22.09). */
     public static final int TOTEM_ADDICTION_BURST = 2000;
     public static final int TOTEM_STRESS_BURST = 1000;
     /** Проюз антирадинового абсорбента. */
@@ -168,10 +169,10 @@ public final class PsycheStress {
     // ── Зависимость ──
     /** Дней без сусла до начала падения зависимости. */
     public static final long ADDICTION_DECAY_AFTER_DAYS = 20L;
-    /** Очков (тысячных) зависимости в секунду за каждый день сверх 20. */
+    /** Очков зависимости в секунду за каждый день сверх 20 (автор 22.09). */
     public static final int ADDICTION_DECAY_PER_DAY = 10;
-    /** Потолок падения, чтобы очень старый мир не обнулял шкалу мгновенно (тысячные/с). */
-    public static final int ADDICTION_DECAY_CAP = 1000;
+    /** Потолок падения (1 %/с), чтобы очень старый мир не обнулял шкалу мгновенно. */
+    public static final int ADDICTION_DECAY_CAP = 10_000;
 
     // ── Коридоры и пороги ──
     /** «Не спишь больше 24000 тиков» — сутки без сна. */
@@ -266,7 +267,7 @@ public final class PsycheStress {
         long sinceSleep = now - psyche.getSleepTick();
         long sinceMash = now - psyche.getMashTick();
         boolean sleepDeprived = sinceSleep > SLEEP_WINDOW_TICKS;
-        boolean craving = addiction > CRAVING_ABOVE_PERCENT * 10
+        boolean craving = PlayerPsyche.pointsPercent(addiction) > CRAVING_ABOVE_PERCENT
                 && sinceMash > cravingCorridor(addiction);
 
         if (sleepDeprived) {
@@ -354,7 +355,7 @@ public final class PsycheStress {
         if (percent(psyche.getStress()) > STRESS_CRISIS_ABOVE_PERCENT) {
             crisisGain += CRISIS_PER_SECOND;
         }
-        int addictionPercent = psyche.getAddiction() / 10;
+        int addictionPercent = PlayerPsyche.pointsPercent(psyche.getAddiction());
         if (addictionPercent >= ADDICTION_CRISIS_MIN_PERCENT
                 && addictionPercent <= ADDICTION_CRISIS_MAX_PERCENT
                 && percent(psyche.getCrisis()) < ADDICTION_CRISIS_CAP_PERCENT) {
@@ -369,8 +370,8 @@ public final class PsycheStress {
      * Падение зависимости: если сусло не пилось больше 20 игровых дней —
      * {@code 10 × (дней − 20)} тысячных в секунду (автор 22.09).
      *
-     * <p>Примечание: «очки» зависимости — это тысячные её шкалы (0..1000), иначе
-     * на 21-й день шкала обнулялась бы за один тик. Дробная часть копится.</p>
+     * <p>Зависимость считается в очках (0..1 000 000), поэтому и падение — в очках:
+     * на 21-й день это 10 очков/с (0.001 %/с). Дробная часть копится.</p>
      */
     private static void decayAddiction(ServerPlayer player, PlayerPsyche psyche, long now) {
         int addiction = psyche.getAddiction();
@@ -485,10 +486,10 @@ public final class PsycheStress {
         save(player, psyche);
     }
 
-    /** Разовое начисление зависимости (в тысячных; +2000 на шкале 0..1000 упирается в 100 %). */
-    public static void addict(ServerPlayer player, int permille) {
+    /** Разовое начисление зависимости в очках (1000 очков = 0.1 %). */
+    public static void addict(ServerPlayer player, int points) {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
-        psyche.addAddiction(permille);
+        psyche.addAddiction(points);
         save(player, psyche);
     }
 
@@ -496,15 +497,15 @@ public final class PsycheStress {
 
     /**
      * Бонус зависимости к прибавкам: 1 % зависимости = +1 % к получаемым очкам
-     * (зависимость хранится в тысячных, поэтому делим на 1000).
+     * (зависимость и прибавки — обе шкалы «в очках», делим на {@link PlayerPsyche#POINT_MAX}).
      */
-    public static int bonus(int addictionPermille, int points) {
-        return (int) Math.round(points * (1.0 + addictionPermille / 1000.0));
+    public static int bonus(int addictionPoints, int points) {
+        return (int) Math.round(points * (1.0 + (double) addictionPoints / PlayerPsyche.POINT_MAX));
     }
 
     /** Сколько тиков без сусла терпит такая зависимость (при 50 % — 8000, при 100 % — 3000). */
-    public static long cravingCorridor(int addictionPermille) {
-        int percentAbove = Math.max(0, addictionPermille / 10 - CRAVING_ABOVE_PERCENT);
+    public static long cravingCorridor(int addictionPoints) {
+        int percentAbove = Math.max(0, PlayerPsyche.pointsPercent(addictionPoints) - CRAVING_ABOVE_PERCENT);
         return Math.max(0, CRAVING_CORRIDOR_TICKS - (long) percentAbove * CRAVING_CORRIDOR_STEP);
     }
 

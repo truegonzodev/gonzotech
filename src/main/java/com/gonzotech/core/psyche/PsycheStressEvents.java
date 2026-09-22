@@ -203,12 +203,9 @@ public final class PsycheStressEvents {
     // ─────────────── тотем, сон, еда ───────────────
 
     /**
-     * Прок тотема бессмертия: +{@value PsycheStress#TOTEM_ADDICTION_BURST} зависимости
-     * и +{@value PsycheStress#TOTEM_STRESS_BURST} стресса.
-     *
-     * <p>Примечание: зависимость хранится в тысячных (1000 = 100 %), поэтому 2000 —
-     * это сразу максимум шкалы: «отдал жизнь за жизнь». Если задумывалось 0.2 % (шкала
-     * в очках, как у стресса) — правится одной константой, скажи.</p>
+     * Прок тотема бессмертия: +{@value PsycheStress#TOTEM_ADDICTION_BURST} очков зависимости
+     * (0.2 % — шкала зависимости тоже «в очках», автор подтвердил 22.09) и
+     * +{@value PsycheStress#TOTEM_STRESS_BURST} стресса.
      */
     @SubscribeEvent
     public static void onTotemUsed(LivingUseTotemEvent event) {
