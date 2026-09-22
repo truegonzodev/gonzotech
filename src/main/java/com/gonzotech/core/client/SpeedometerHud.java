@@ -66,8 +66,11 @@ public final class SpeedometerHud {
         graphics.drawString(font, line, x, y, HUD_COLOR, true);
     }
 
+    /** Спидометр — или «Телифон», который совмещает все приборы (автор 22.09). */
     private static boolean isHoldingSpeedometer(Player player) {
         return player.getMainHandItem().is(ModItems.SPEEDOMETER.get())
-            || player.getOffhandItem().is(ModItems.SPEEDOMETER.get());
+            || player.getOffhandItem().is(ModItems.SPEEDOMETER.get())
+            || player.getMainHandItem().is(ModItems.TELIFON.get())
+            || player.getOffhandItem().is(ModItems.TELIFON.get());
     }
 }

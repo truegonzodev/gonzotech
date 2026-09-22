@@ -29,7 +29,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
  *   <li><b>Фиксация камеры</b> после переноса на чекпойнт: 0.3 с игрок не может шевелить камерой;</li>
  *   <li><b>Ложный экран смерти</b> (кризис &gt; 87 %): рисуется оверлеем, а не {@code Screen} —
  *       поэтому WASD продолжают работать, а кнопки просто убирают экран (клик по ним
- *       перехватывается до ванильной обработки);</li>
+ *       перехватывается до ванильной обработки). Курсор при этом <b>отпускается</b>
+ *       ({@code mouseHandler.releaseMouse()}), иначе он был бы приклеен к центру экрана,
+ *       камера продолжала бы крутиться, а кнопки нельзя было бы нажать (автор 22.09);</li>
  *   <li><b>ЛКМ как «использование предмета»</b>: нажатие (в том числе по воздуху) уходит на сервер
  *       пакетом {@code crisis_click} — сервер решает, подменить ли предмет слотами.</li>
  * </ul>
@@ -72,9 +74,20 @@ public final class PsycheCrisisClient {
         lockTicks = Math.max(0, ticks);
     }
 
-    /** Показать ложный экран смерти. */
+    /**
+     * Показать ложный экран смерти. Курсор отпускаем (автор 22.09: «курсор не появляется,
+     * камера всё ещё двигается, кнопки не нажать») — пока мышь не захвачена, камера стоит,
+     * а по нашим кнопкам можно кликать. WASD продолжают работать: экран остаётся оверлеем.
+     */
     public static void showFakeDeath() {
         fakeDeath = true;
+        Minecraft.getInstance().mouseHandler.releaseMouse();
+    }
+
+    /** Закрыть ложный экран смерти и вернуть захват мыши (как ванильный экран при закрытии). */
+    private static void closeFakeDeath() {
+        fakeDeath = false;
+        Minecraft.getInstance().mouseHandler.grabMouse();
     }
 
     // ─────────────────────────── тик ───────────────────────────
@@ -97,11 +110,18 @@ public final class PsycheCrisisClient {
         }
 
         // ЛКМ (в том числе по воздуху) — «использование предмета» для подмены слотами.
+        // Пока висит ложный экран смерти, клики принадлежат кнопкам, а не миру.
         boolean attackDown = mc.options.keyAttack.isDown();
-        if (attackDown && !attackWasDown) {
+        if (attackDown && !attackWasDown && !fakeDeath) {
             PacketDistributor.sendToServer(new PsycheCrisisNetwork.ClickPayload());
         }
         attackWasDown = attackDown;
+
+        // Держим курсор отпущенным: после alt-tab (возврат фокуса) ваниль может захватить
+        // мышь обратно — тогда курсор пропал бы, а камера снова начала бы крутиться.
+        if (fakeDeath) {
+            mc.mouseHandler.releaseMouse();
+        }
     }
 
     // ─────────────────────────── клики по кнопкам ложной смерти ───────────────────────────
@@ -128,7 +148,7 @@ public final class PsycheCrisisClient {
             int bx = rect[0];
             int by = rect[1] + i * (rect[3] + 4);
             if (mouseX >= bx && mouseX <= bx + rect[2] && mouseY >= by && mouseY <= by + rect[3]) {
-                fakeDeath = false;
+                closeFakeDeath();
                 event.setCanceled(true);
                 return;
             }
@@ -167,10 +187,16 @@ public final class PsycheCrisisClient {
         alpha = Mth.clamp(alpha, 0.0F, 1.0F);
 
         // Анимированный кадр (номер кадра считаем сами — см. шапку класса).
+        // Автор 22.09: оверлей «дробился на мелкие квадраты». Причина — блит брал источник
+        // размером со весь экран, и текстура повторялась мозаикой. Теперь берём ровно кадр
+        // 64×64, а на весь экран его растягивает масштаб позы: PNG любого размера ляжет так же.
         int v = (frame / FRAME_TICKS) * FRAME_SIZE;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+        g.pose().pushPose();
+        g.pose().scale(width / (float) FRAME_SIZE, height / (float) FRAME_SIZE, 1.0F);
         g.blit(RenderType::guiTextured, TEX_SCREEN_EFFECT, 0, 0, 0.0F, (float) v,
-                width, height, FRAME_SIZE, FRAME_SIZE * FRAME_COUNT);
+                FRAME_SIZE, FRAME_SIZE, FRAME_SIZE, FRAME_SIZE * FRAME_COUNT);
+        g.pose().popPose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         // Дымка поверх — та самая «непрозрачность 10 % (+2 % за процент)».
@@ -178,9 +204,12 @@ public final class PsycheCrisisClient {
         g.fill(0, 0, width, height, tint);
     }
 
-    /** Ложный экран смерти: красное затемнение и две безобидные кнопки. */
+    /**
+     * Ложный экран смерти: плотное красное затемнение (как у ванильного экрана — прицел и HUD
+     * под ним почти не видны) и две безобидные кнопки.
+     */
     private static void renderFakeDeath(GuiGraphics g, Minecraft mc, int width, int height) {
-        g.fill(0, 0, width, height, 0xB0100000);
+        g.fill(0, 0, width, height, 0xD8100000);
         Component title = Component.translatable("gui.gonzotech.crisis.death_title");
         int titleWidth = mc.font.width(title);
         g.drawString(mc.font, title, (width - titleWidth) / 2, height / 2 - 40, 0xFFFFFF, true);

@@ -24,6 +24,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -316,5 +317,98 @@ public final class PsycheStressEffects {
      */
     public static void forgetHeartAttack(ServerPlayer player) {
         HEART_ATTACK.remove(player.getUUID());
+    }
+
+    // ═══════════════════════ ручной триггер (админ-команда) ═══════════════════════
+
+    /**
+     * Все id событий эффектов шкал — для подсказок команды
+     * {@code /gonzotech debug psyche trigger <event>}. Порядок: стресс → зависимость → кризис.
+     */
+    public static final List<String> TRIGGER_IDS = List.of(
+            // из PsycheStressEffects (эффекты шкал стресса/зависимости)
+            "tremor", "tremor_strong", "hallucination", "drop", "heart_attack", "blindness",
+            // разовые события шкал из PsycheStressEvents
+            "damage", "explosion", "pet_death", "pet_baby_death", "animal_death", "villager_kill",
+            "dragon_kill", "enderman_stare", "totem", "bed", "sweet", "pet_feed", "oneshot",
+            "lever", "discovery", "mash", "absorbent", "player_death",
+            // эффекты кризиса из PsycheCrisis
+            "cascade", "cascade_sound", "swap", "microstep", "fake_death", "stare");
+
+    /**
+     * Ручной запуск «эффекта шкалы» — админ-команда
+     * {@code /gonzotech debug psyche trigger <event>} (автор 22.09: триггерим именно события
+     * шкал, а не эффекты зелий). Это ровно те же механики, что и в обычных бросках: числа
+     * берутся из констант, поэтому триггер не расходится с игрой.
+     *
+     * @return {@code true}, если id распознан
+     */
+    public static boolean trigger(ServerPlayer player, String id) {
+        switch (id) {
+            // ── эффекты стресса/зависимости ──
+            case "tremor" -> applyTremor(player, 0, rollSeconds(TREMOR_SECONDS_MIN, TREMOR_SECONDS_MAX));
+            case "tremor_strong" -> applyTremor(player, 2, rollSeconds(TREMOR_STRONG_SECONDS_MIN, TREMOR_STRONG_SECONDS_MAX));
+            case "hallucination" -> hallucinate(player);
+            case "drop" -> dropHeldItem(player);
+            case "heart_attack" -> startHeartAttack(player);
+            case "blindness" -> player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS,
+                    rollSeconds(BLINDNESS_SECONDS_MIN, BLINDNESS_SECONDS_MAX) * 20, 0, false, true));
+
+            // ── разовые события шкал (числа — константы PsycheStress) ──
+            case "damage" -> PsycheStress.gain(player, PsycheStress.DAMAGE_BURST);
+            case "explosion" -> {
+                PsycheStress.gain(player, PsycheStress.EXPLOSION_NEAR_BURST);
+                PsycheStress.gain(player, PsycheStress.EXPLOSION_DAMAGE_BURST);
+            }
+            case "pet_death" -> {
+                PsycheStress.gain(player, PsycheStress.PET_DEATH_BURST);
+                PsycheStress.crisis(player, PsycheStress.PET_DEATH_CRISIS);
+            }
+            case "pet_baby_death" -> {
+                PsycheStress.gain(player, PsycheStress.PET_BABY_DEATH_BURST);
+                PsycheStress.crisis(player, PsycheStress.PET_BABY_DEATH_CRISIS);
+            }
+            case "animal_death" -> PsycheStress.gain(player, PsycheStress.LIVESTOCK_DEATH_BURST);
+            case "villager_kill" -> {
+                PsycheStress.gain(player, PsycheStress.VILLAGER_KILL_STRESS);
+                PsycheStress.crisis(player, PsycheStress.VILLAGER_KILL_CRISIS);
+            }
+            case "dragon_kill" -> {
+                PsycheStress.relieve(player, PsycheStress.DRAGON_KILL_RELIEF);
+                PsycheStress.crisis(player, PsycheStress.DRAGON_KILL_CRISIS);
+            }
+            case "enderman_stare" -> PsycheStress.gain(player, PsycheStress.ENDERMAN_STARE_BURST);
+            case "totem" -> {
+                PsycheStress.addict(player, PsycheStress.TOTEM_ADDICTION_BURST);
+                PsycheStress.gain(player, PsycheStress.TOTEM_STRESS_BURST);
+            }
+            case "bed" -> PsycheStress.relieve(player, PsycheStress.SLEEP_RELIEF);
+            case "sweet" -> PsycheStress.relieve(player, PsycheStress.SWEET_RELIEF);
+            case "pet_feed" -> PsycheStress.relieve(player, PsycheStress.PET_FEED_RELIEF);
+            case "oneshot" -> {
+                PsycheStress.relieve(player, PsycheStress.ONESHOT_RELIEF);
+                PsycheStress.crisis(player, PsycheStress.ONESHOT_CRISIS);
+            }
+            case "lever" -> PsycheStress.relieve(player, PsycheStress.LEVER_RELIEF);
+            case "discovery" -> {
+                PsycheStress.relieve(player, PsycheStress.DISCOVERY_RELIEF);
+                PsycheStress.crisis(player, PsycheStress.DISCOVERY_CRISIS);
+            }
+            case "mash" -> PsycheStress.onMashDrunk(player); // −1000 стресса, сброс коридора
+            case "absorbent" -> PsycheStress.gain(player, PsycheStress.ABSORBENT_STRESS_BURST);
+            case "player_death" -> PsycheStress.onDebugDeath(player); // −5 %/−5 %, кризис +500
+
+            // ── эффекты кризиса ──
+            case "cascade" -> PsycheCrisis.scheduleCascade(player, player.serverLevel().getGameTime());
+            case "cascade_sound" -> PsycheCrisis.playCascadeSoundDebug(player);
+            case "swap" -> PsycheCrisis.swapDebug(player);
+            case "microstep" -> PsycheCrisis.microstepDebug(player);
+            case "fake_death" -> PsycheCrisisNetwork.sendFakeDeath(player);
+            case "stare" -> PsycheCrisis.stareDebug(player);
+            default -> {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -427,6 +427,20 @@ public final class PsycheStress {
     }
 
     /**
+     * Ручной триггер «смерти игрока» для админ-команды: −{@value #DEATH_CLEAR_PERCENT} % от
+     * ТЕКУЩИХ зависимости и стресса, +{@value #DEATH_CRISIS_BURST} кризиса (кризис смертью не
+     * чистится). Тело то же, что в {@link #onPlayerClone(PlayerEvent.Clone)}.
+     */
+    public static void onDebugDeath(ServerPlayer player) {
+        PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
+        psyche.setAddiction(psyche.getAddiction() - psyche.getAddiction() * DEATH_CLEAR_PERCENT / 100);
+        psyche.setStress(psyche.getStress() - psyche.getStress() * DEATH_CLEAR_PERCENT / 100);
+        psyche.setCrisis(clamp(psyche.getCrisis() + DEATH_CRISIS_BURST));
+        DECAY_ACC.remove(player.getUUID());
+        save(player, psyche);
+    }
+
+    /**
      * Выпитое сусло: снимает {@value #MASH_RELIEF} стресса и сбрасывает коридор
      * зависимости (таймер сусла). Зависимость за сусло начисляет {@code Phase3Events}.
      */

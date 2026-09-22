@@ -314,6 +314,11 @@ public final class PsycheCrisis {
         if (RNG.nextDouble() >= SWAP_CHANCE) {
             return;
         }
+        swapSlotWithRandom(player);
+    }
+
+    /** Сама подмена: предмет в руке меняется местами со случайным предметом инвентаря. */
+    private static void swapSlotWithRandom(ServerPlayer player) {
         List<ItemStack> items = player.getInventory().items;
         int from = player.getInventory().selected;
         if (from < 0 || from >= items.size()) {
@@ -471,6 +476,28 @@ public final class PsycheCrisis {
                 .getOrThrow(ResourceKey.create(Registries.SOUND_EVENT,
                         ResourceLocation.withDefaultNamespace(id)));
         return holder.value();
+    }
+
+    // ═══════════════════════ ручной триггер (админ-команда) ═══════════════════════
+
+    /**
+     * Обёртки для {@code /gonzotech debug psyche trigger <event>} (автор 22.09): запускают
+     * ровно ту же механику, что и обычные броски — без шансов, чтобы админ видел эффект сразу.
+     */
+    public static void playCascadeSoundDebug(ServerPlayer player) {
+        playCascadeSound(player);
+    }
+
+    public static void swapDebug(ServerPlayer player) {
+        swapSlotWithRandom(player);
+    }
+
+    public static void microstepDebug(ServerPlayer player) {
+        MICROSTEPS.put(player.getUUID(), 1 + RNG.nextInt(2));
+    }
+
+    public static void stareDebug(ServerPlayer player) {
+        stareAtPlayer(player);
     }
 
     /** Слепок состояния игрока. */

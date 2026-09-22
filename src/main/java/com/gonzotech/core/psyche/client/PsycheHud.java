@@ -80,9 +80,11 @@ public final class PsycheHud {
         int uv = data != null ? data.uv() : 0;
         int chemical = data != null ? data.chemical() : 0;
 
-        // isShown: измерительные шкалы видны только с прибором в руке.
-        boolean showRadiation = isHolding(player, ModItems.DOSIMETER.get());
-        boolean showUv = isHolding(player, ModItems.UV_METER.get());
+        // isShown: измерительные шкалы видны только с прибором в руке. Телифон (автор 22.09)
+        // совмещает приборы, поэтому с ним видно и облучение, и УФ.
+        boolean telifon = isHolding(player, ModItems.TELIFON.get());
+        boolean showRadiation = telifon || isHolding(player, ModItems.DOSIMETER.get());
+        boolean showUv = telifon || isHolding(player, ModItems.UV_METER.get());
 
         GuiGraphics g = event.getGuiGraphics();
         int screenW = g.guiWidth();
