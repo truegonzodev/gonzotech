@@ -124,6 +124,8 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
             // Радиация: lore-строка «Радиоактивность» в самом низу тултипов.
             NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.RadTooltip.class);
+            // Хазмат: лор «Полный комплект: 60% защиты…» у каждой из четырёх частей.
+            NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.HazmatTooltips.class);
             // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).

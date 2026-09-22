@@ -255,6 +255,15 @@ public final class GtUnits {
         return rate(RadUnits.value(nZt), text(RadUnits.unit(nZt), RADIATION), RADIATION);
     }
 
+    /**
+     * «#ceeb2d 20 mZt&lt;#7&gt;/s» — доза ЗА СЕКУНДУ (не за тик): так меряется мягкая
+     * доза хазмата ({@link com.gonzotech.radiation.Hazmat#SOFT_DOSE_MILLI}), автор 22.09.2026
+     * в лоре сета написал именно «mZt/s».
+     */
+    public static MutableComponent ztPerSecond(double nZt) {
+        return ratePerSecond(RadUnits.value(nZt), text(RadUnits.unit(nZt), RADIATION), RADIATION);
+    }
+
     /** «#d12176 2 mTx&lt;#7&gt;/t» — единица токсичности ВСЕГДА этим цветом. */
     public static MutableComponent tx(double nTx) {
         return rate(ItemToxicity.value(nTx), text(ItemToxicity.unit(nTx), TOXICITY), TOXICITY);

@@ -54,16 +54,21 @@ public final class Hazmat {
             ItemTags.REPAIRS_LEATHER_ARMOR,
             HAZMAT_ASSET);
 
-    /** Сколько режет полный сет (доля дозы). */
-    private static final double FULL_SHIELDING = 0.60;
+    /** Сколько режет полный сет (доля дозы). Видно снаружи: число попадает в лор сета. */
+    public static final double FULL_SHIELDING = 0.60;
     /** Что даёт каждая отдельная часть, пока сет не собран целиком (автор 22.09). */
     private static final double SHIELDING_PER_PIECE = 0.05;
-    /** До этой дозы/сек (mZt) защита полная. */
-    private static final double SOFT_DOSE_MILLI = 20.0;
+    /** До этой дозы/сек (mZt) защита полная. Видно снаружи: число попадает в лор сета. */
+    public static final double SOFT_DOSE_MILLI = 20.0;
     /** Падение защиты: 1 % на каждый mZt/с сверх мягкой дозы. */
     private static final double FALLOFF_PER_MILLI = 0.01;
 
     private Hazmat() {
+    }
+
+    /** «60» — защита полного сета в процентах, для лора частей (единый источник с {@link #FULL_SHIELDING}). */
+    public static int fullShieldingPercent() {
+        return (int) Math.round(FULL_SHIELDING * 100.0);
     }
 
     /** Части комплекта (в порядке слотов), которые считает костюм. */
