@@ -69,7 +69,7 @@ public class SnaketypeCondenserBlockEntity extends BaseMachineBlockEntity
     };
 
     public SnaketypeCondenserBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.THIRD_SNAKETYPE_CONDENSER.get(), pos, state);
+        super(ModBlockEntities.THIRD_SNAKETYPE_CONDENSER.get(), pos, state, 0);
     }
 
     public int getBoilingWater() {
