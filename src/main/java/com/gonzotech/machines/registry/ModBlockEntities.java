@@ -9,6 +9,7 @@ import com.gonzotech.machines.block.entity.CrusherBlockEntity;
 import com.gonzotech.machines.block.entity.CobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.CondenserBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
+import com.gonzotech.machines.block.entity.FermentationVatBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.block.entity.NuclearFireboxBlockEntity;
 import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
@@ -24,6 +25,7 @@ import com.gonzotech.machines.block.entity.SecondPressBlockEntity;
 import com.gonzotech.machines.block.entity.SecondPumpBlockEntity;
 import com.gonzotech.machines.block.entity.StirlingBlockEntity;
 import com.gonzotech.machines.block.entity.TurbineRotorBlockEntity;
+import com.gonzotech.machines.block.entity.WortKettleBlockEntity;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -151,6 +153,14 @@ public final class ModBlockEntities {
             (pos, state) -> new com.gonzotech.machines.block.entity.ItemFilterBlockEntity(
                 secondItemFilterType(), pos, state, SecondTierDefs.ITEM_FILTER_SLOTS),
             false, ModMachines.SECOND_ITEM_FILTER.get()));
+
+    public static final Supplier<BlockEntityType<FermentationVatBlockEntity>> THIRD_FERMENTATION_VAT =
+        BLOCK_ENTITIES.register("third_fermentation_vat", () -> new BlockEntityType<>(
+            FermentationVatBlockEntity::new, false, ModMachines.THIRD_FERMENTATION_VAT.get()));
+
+    public static final Supplier<BlockEntityType<WortKettleBlockEntity>> THIRD_WORT_KETTLE =
+        BLOCK_ENTITIES.register("third_wort_kettle", () -> new BlockEntityType<>(
+            WortKettleBlockEntity::new, false, ModMachines.THIRD_WORT_KETTLE.get()));
 
     /**
      * The BE factory is invoked only after DeferredRegister has assigned the

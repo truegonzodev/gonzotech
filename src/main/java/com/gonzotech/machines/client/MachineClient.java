@@ -33,5 +33,7 @@ public final class MachineClient {
         event.register(ModMenus.SECOND_CRUSHER.get(), CrusherScreen::new);
         event.register(ModMenus.SECOND_CENTRIFUGE.get(), CentrifugeScreen::new);
         event.register(ModMenus.FIRST_ITEM_FILTER.get(), ItemFilterScreen::new);
+        event.register(ModMenus.THIRD_FERMENTATION_VAT.get(), FermentationVatScreen::new);
+        event.register(ModMenus.THIRD_WORT_KETTLE.get(), WortKettleScreen::new);
     }
 }

@@ -118,6 +118,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CORE_ITEM.get());
                 // Ядерная топка замыкает вкладку: самая опасная и поздняя машина.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get());
+                // Эпоха III (Открытие 3): линейка брожения
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })

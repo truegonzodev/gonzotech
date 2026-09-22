@@ -186,6 +186,8 @@
     "gonzotech:plastic_waste",
     "gonzotech:third_heavy_door_lead",
     "gonzotech:third_heavy_door_tungsten",
-    "gonzotech:third_hermetic_door"
+    "gonzotech:third_hermetic_door",
+    "gonzotech:third_fermentation_vat",
+    "gonzotech:third_wort_kettle"
   ]
 }

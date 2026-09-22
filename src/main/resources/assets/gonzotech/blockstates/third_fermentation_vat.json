@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/third_fermentation_vat" },
+    "facing=east":  { "model": "gonzotech:block/third_fermentation_vat", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/third_fermentation_vat", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/third_fermentation_vat", "y": 270 }
+  }
+}

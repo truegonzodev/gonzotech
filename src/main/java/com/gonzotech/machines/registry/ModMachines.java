@@ -9,6 +9,7 @@ import com.gonzotech.machines.block.CrusherBlock;
 import com.gonzotech.machines.block.CobbleGeneratorBlock;
 import com.gonzotech.machines.block.CondenserBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
+import com.gonzotech.machines.block.FermentationVatBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.NuclearFireboxBlock;
 import com.gonzotech.machines.block.PumpBlock;
@@ -26,6 +27,7 @@ import com.gonzotech.machines.block.SteamGenCasingBlock;
 import com.gonzotech.machines.block.SteamGenCoreBlock;
 import com.gonzotech.machines.block.TurbineCasingBlock;
 import com.gonzotech.machines.block.TurbineRotorBlock;
+import com.gonzotech.machines.block.WortKettleBlock;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.ItemFilterBlock;
@@ -337,6 +339,14 @@ public final class ModMachines {
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL =
         BLOCKS.registerBlock("solar_panel", SolarPanelBlock::new, machineCopper());
 
+    /** Эпоха III (Открытие 3): Бродильный чан — поглощает органику, сбраживает брагу. */
+    public static final DeferredBlock<FermentationVatBlock> THIRD_FERMENTATION_VAT =
+        BLOCKS.registerBlock("third_fermentation_vat", FermentationVatBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Сусловарочный котёл — варит брагу в сусло, выпаривает, разливает пиво. */
+    public static final DeferredBlock<WortKettleBlock> THIRD_WORT_KETTLE =
+        BLOCKS.registerBlock("third_wort_kettle", WortKettleBlock::new, machineMetal());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -508,6 +518,12 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SOLAR_PANEL_ITEM =
         ITEMS.registerSimpleBlockItem("solar_panel", SOLAR_PANEL);
+
+    public static final DeferredItem<BlockItem> THIRD_FERMENTATION_VAT_ITEM =
+        ITEMS.registerSimpleBlockItem("third_fermentation_vat", THIRD_FERMENTATION_VAT);
+
+    public static final DeferredItem<BlockItem> THIRD_WORT_KETTLE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_wort_kettle", THIRD_WORT_KETTLE);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

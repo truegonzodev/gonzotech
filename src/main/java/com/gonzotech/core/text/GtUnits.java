@@ -165,6 +165,20 @@ public final class GtUnits {
                 num(percent, WATER), num(value, WATER), num(capacity, WATER), mb(WATER));
     }
 
+    /** «§bБрага§7: §b12§7 / §b100 mB (§c12.3%§7 спирта, §a0.0%§7 гнили)». */
+    public static MutableComponent mashPair(Object value, Object capacity, Object alcPercent, Object rotPercent) {
+        return Component.translatable("gui.gonzotech.mash",
+                num(value, WATER), num(capacity, WATER), mb(WATER),
+                num(alcPercent, GTH), num(rotPercent, 0x8A9A5B));
+    }
+
+    /** «§bСусло§7: §b12§7 / §b100 mB (§c12.3%§7 спирта)». */
+    public static MutableComponent wortPair(Object value, Object capacity, Object alcPercent) {
+        return Component.translatable("gui.gonzotech.wort",
+                num(value, WATER), num(capacity, WATER), mb(WATER),
+                num(alcPercent, GTH));
+    }
+
     /** Обозначение единицы объёма (mB) цветом ресурса. */
     private static MutableComponent mb(int color) {
         return key(U_MB, color);

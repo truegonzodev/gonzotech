@@ -49,7 +49,9 @@ public final class TierThreeCrafting {
     private static final List<String> RECIPE_IDS = List.of(
         "gonzotech:third_heavy_door_lead",
         "gonzotech:third_heavy_door_tungsten",
-        "gonzotech:third_hermetic_door"
+        "gonzotech:third_hermetic_door",
+        "gonzotech:third_fermentation_vat",
+        "gonzotech:third_wort_kettle"
     );
 
     /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
@@ -107,6 +109,8 @@ public final class TierThreeCrafting {
     public static boolean isGatedOutput(Item item) {
         return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get()
             || item == ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get()
-            || item == ModItems.THIRD_HERMETIC_DOOR_ITEM.get();
+            || item == ModItems.THIRD_HERMETIC_DOOR_ITEM.get()
+            || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
+            || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get();
     }
 }

@@ -8,6 +8,7 @@ import com.gonzotech.machines.menu.CentrifugeMenu;
 import com.gonzotech.machines.menu.CrusherMenu;
 import com.gonzotech.machines.menu.CobbleGeneratorMenu;
 import com.gonzotech.machines.menu.ElectricFurnaceMenu;
+import com.gonzotech.machines.menu.FermentationVatMenu;
 import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.menu.NuclearFireboxMenu;
 import com.gonzotech.machines.menu.PumpMenu;
@@ -20,6 +21,7 @@ import com.gonzotech.machines.menu.SecondGrinderMenu;
 import com.gonzotech.machines.menu.SecondPressMenu;
 import com.gonzotech.machines.menu.SecondPumpMenu;
 import com.gonzotech.machines.menu.TurbineMenu;
+import com.gonzotech.machines.menu.WortKettleMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
@@ -96,6 +98,12 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> FIRST_ITEM_FILTER =
         MENUS.register("first_item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));
+
+    public static final Supplier<MenuType<FermentationVatMenu>> THIRD_FERMENTATION_VAT =
+        MENUS.register("third_fermentation_vat", () -> IMenuTypeExtension.create(FermentationVatMenu::new));
+
+    public static final Supplier<MenuType<WortKettleMenu>> THIRD_WORT_KETTLE =
+        MENUS.register("third_wort_kettle", () -> IMenuTypeExtension.create(WortKettleMenu::new));
 
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);
