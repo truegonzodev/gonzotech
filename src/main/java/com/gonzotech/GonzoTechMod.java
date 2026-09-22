@@ -86,6 +86,8 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.register(com.gonzotech.radiation.RadiationSystem.class);
         // Психика (спека 2026-09-22): стресс и экзистенциальный кризис в очках.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStress.class);
+        // Психика: событийные источники (урон, взрывы, смерти зверей, тотем, рычаг, скример).
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStressEvents.class);
         // Суневеты (багровые дни): драйвер + синк при заходе.
         NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 
