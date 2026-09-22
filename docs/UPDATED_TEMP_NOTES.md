@@ -632,6 +632,41 @@ withStyle(ChatFormatting), location: interface Component`. Причина: хе�
 не удаляем. Порядок отрисовки ванильный: фон → текст → кнопки; курсор по-прежнему отпускается, WASD
 работают, кнопки просто убирают экран (см. §8.5).
 
+**Вопрос автора: «может, каскад не работал из-за `/gamerule doDaylightCycle false`?» — нет.**
+Сверено по исходнику `ServerLevel.tickTime()` (1.21): `gameTime` растёт **всегда**, геймрулом закрыто
+только `dayTime` —
+
+```java
+protected void tickTime() {
+    if (this.tickTime) {
+        long i = this.levelData.getGameTime() + 1L;   // ← растёт независимо от геймрулов
+        this.serverLevelData.setGameTime(i);
+        this.serverLevelData.getScheduledEvents().tick(this.server, i);
+        if (this.levelData.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
+            this.setDayTime(this.levelData.getDayTime() + 1L);   // ← только небо/сон
+        }
+    }
+}
+```
+
+То есть `doDaylightCycle false` морозит только небо и сон, а таймеры на `getGameTime()` (каскад,
+ферментация, счётчики) продолжают идти. Более того, у не-оверworld измерений `DerivedLevelData`
+делегирует `getGameTime()/getDayTime()` в оверworld — часы у всех измерений одни, поэтому
+`overworld().getGameTime()` и `player.serverLevel().getGameTime()` — одна и та же шкала.
+
+**Почему симптом выглядел «двумя способами».** `MinecraftServer#getTickCount()` — тики с запуска
+сервера (int, с нуля), `ServerLevel#getGameTime()` — тики с создания мира (long): разные начала отсчёта.
+Отсюда два разных симптома одной ошибки:
+
+* **старый мир** (у автора; `gameTime` ≫ `tickCount`) → `jumpTick` уезжает в далёкое «будущее» →
+  каскад **не срабатывает никогда**;
+* **свежий тестовый мир** (`gameTime` ≈ `tickCount` или чуть меньше) → `jumpTick` уже «в прошлом» →
+  каскад **срабатывает мгновенно** (то самое «сразу откат, без чекпойнта и кулдауна»).
+
+После фикса обе стороны закрыты: планирование и проверка идут по одной шкале. Если включён
+`/tick freeze` — `gameTime` встаёт вместе с миром, и таймер каскада «замерзает» вместе с ним (это
+нормально: замороженный мир вообще не тикает).
+
 ## 9. «Заметки учёного»: гейтинг страниц и «Познание мира»
 
 - `chalkboard/notes/`: `ScholarNotesContent` (линейный массив 40 страниц, иллюстрации — ШАБЛОНЫ, см. ниже), `ScholarChapter` (5 корешков-эпох, у каждой свой bg-панель `notes_bg_eraN.png` + иконка-предмет; `side()` — отдельная книга), `ScholarPage` (number/chapter/unlock/title/body/showcase/layout: `TEXT_FULL`/`TEXT_LEFT`/`IMAGE_FULL`), `ScholarUnlock`, `ScholarNoteFlags`, `NotesState`.
