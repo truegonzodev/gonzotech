@@ -1,7 +1,7 @@
 # Gradle
 .gradle/
 build/
-info/
+!info/
 out/
 run/
 
