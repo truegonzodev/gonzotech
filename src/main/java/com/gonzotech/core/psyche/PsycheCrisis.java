@@ -255,7 +255,10 @@ public final class PsycheCrisis {
         player.getFoodData().setFoodLevel(snapshot.food());
         player.getFoodData().setSaturation(snapshot.saturation());
 
-        // Эффекты ровно как были в момент слепка.
+        // Эффекты ровно как были в момент слепка. Перед этим снимаем пометку «сердечного
+        // приступа»: иначе снятый откатом эффект засчитался бы как «приступ истёк» и игрок
+        // получил бы урон до 1 HP не за провал приступа, а за восстановление состояния.
+        PsycheStressEffects.forgetHeartAttack(player);
         player.removeAllEffects();
         for (MobEffectInstance instance : snapshot.effects()) {
             player.addEffect(new MobEffectInstance(instance));

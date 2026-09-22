@@ -307,4 +307,14 @@ public final class PsycheStressEffects {
     private static int rollSeconds(int min, int max) {
         return min + RNG.nextInt(max - min + 1);
     }
+
+    /**
+     * Забыть состояние «сердечного приступа» без удара. Нужно каскаду кризиса
+     * ({@code PsycheCrisis}): он восстанавливает набор эффектов из слепка, и без этой
+     * отметки снятый приступ засчитался бы как «истёк» — игрок получил бы урон «до 1 HP»
+     * не за провал приступа, а за откат состояния.
+     */
+    public static void forgetHeartAttack(ServerPlayer player) {
+        HEART_ATTACK.remove(player.getUUID());
+    }
 }
