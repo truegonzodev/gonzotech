@@ -8,7 +8,9 @@
     (в MC ResourceLocation с заглавными буквами невалиден → «missing model»);
   * у зарегистрированных предметов/блоков есть lang-ключ в en_us и ru_ru, состав ключей совпадает;
   * ссылки моделей/рецептов/тегов на gonzotech-id не битые;
-  * у каждого блока есть лут-таблица (кроме известных исключений).
+  * у каждого блока есть лут-таблица (кроме известных исключений);
+  * у каждого зарегистрированного эффекта мода есть иконка textures/mob_effect/<id>.png
+    (эффект без иконки видно в игре пустой рамкой — так проскочил «Зуд», 22.09.2026).
 """
 import json, glob, os, re, sys
 
@@ -157,6 +159,16 @@ LOOT_EXCEPTIONS = {"molten_corium"}   # флюидный блок, лут не �
 loot = {os.path.basename(p)[:-5] for p in glob.glob(f"{DATA}/loot_table/blocks/*.json")}
 for b in sorted(blockstates - loot - LOOT_EXCEPTIONS):
     errors.append(f"у блока {b} нет лут-таблицы")
+
+# ── 7. иконки эффектов: у каждого id из ModEffects есть textures/mob_effect/<id>.png ──
+mod_effects_src = os.path.join(ROOT, "src/main/java/com/gonzotech/core/registry/ModEffects.java")
+if os.path.exists(mod_effects_src):
+    effect_ids = re.findall(r'MOB_EFFECTS\.register\(\s*"([a-z0-9_]+)"',
+                            open(mod_effects_src, encoding="utf-8").read())
+    for effect_id in effect_ids:
+        if not os.path.exists(f"{ASSETS}/textures/mob_effect/{effect_id}.png"):
+            errors.append(
+                f"у эффекта {effect_id} нет иконки: assets/gonzotech/textures/mob_effect/{effect_id}.png")
 
 # ── отчёт ──────────────────────────────────────────────────────────────────
 print(f"JSON: {len(jsons)} | items-дефиниций: {len(item_defs)} | models/item: {len(models_item)} | "
