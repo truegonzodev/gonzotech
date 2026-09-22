@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -12,8 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Mirror;
@@ -22,12 +23,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -47,17 +48,25 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Хитбокс: автор разрешил «округлить до параллелепипеда, охватывающего модель» — закрытая
  * дверь ровно габарит модели (16×16×6), открытая — только рама (порог, притолока и две стойки),
- * иначе открытая дверь оставалась бы преградой. Открытая дверь = дырка в контуре радиации
+ * иначе открытая дверь оставалась бы преградой. Автор 22.09: проём 12 px игрока устраивает
+ * («сам игрок же имеет ширину 0.6 блока»). Открытая дверь = дырка в контуре радиации
  * (см. {@code radiation/Containment}: заслонкой считается только {@code open=false}).</p>
+ *
+ * <p>Звук (автор 22.09): ванильный металлический набор (железная дверь), но питч
+ * {@link #SOUND_PITCH_MIN}–{@link #SOUND_PITCH_MAX} — «тяжелее» обычной железной.</p>
  */
 public class HeavyDoorBlock extends Block {
 
     public static final MapCodec<HeavyDoorBlock> CODEC = simpleCodec(HeavyDoorBlock::new);
 
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
+
+    /** Питч открывания/закрывания (автор 22.09): «сделай 0.3–0.5». */
+    private static final float SOUND_PITCH_MIN = 0.3F;
+    private static final float SOUND_PITCH_RANGE = 0.2F;
 
     /** Закрытая дверь: сплошная стенка 6 пикселей — габарит модели (автор: «6×16×16»). */
     private static final VoxelShape CLOSED_Z = Block.box(0.0, 0.0, 5.0, 16.0, 16.0, 11.0);
@@ -135,7 +144,7 @@ public class HeavyDoorBlock extends Block {
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockPos pos = context.getClickedPos();
         Level level = context.getLevel();
-        if (pos.getY() >= level.getMaxBuildHeight() - 1
+        if (pos.getY() >= level.getMaxY() - 1
                 || !level.getBlockState(pos.above()).canBeReplaced(context)) {
             return null; // двери нужны две клетки по высоте
         }
@@ -163,13 +172,14 @@ public class HeavyDoorBlock extends Block {
     }
 
     @Override
-    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
-                                     LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+    protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess tickAccess,
+                                     BlockPos pos, Direction direction, BlockPos neighborPos,
+                                     BlockState neighborState, RandomSource random) {
         DoubleBlockHalf half = state.getValue(HALF);
         if (direction.getAxis() != Direction.Axis.Y || half == DoubleBlockHalf.LOWER != (direction == Direction.UP)) {
             return half == DoubleBlockHalf.LOWER && direction == Direction.DOWN && !state.canSurvive(level, pos)
                     ? Blocks.AIR.defaultBlockState()
-                    : super.updateShape(state, direction, neighborState, level, pos, neighborPos);
+                    : super.updateShape(state, level, tickAccess, pos, direction, neighborPos, neighborState, random);
         }
         // Сосед по вертикали — вторая половина: состояние зеркалится (как у ванильной двери).
         return neighborState.is(this) && neighborState.getValue(HALF) != half
@@ -186,16 +196,16 @@ public class HeavyDoorBlock extends Block {
         level.setBlock(pos, state, 10);
         playSound(player, level, pos, state.getValue(OPEN));
         level.gameEvent(player, state.getValue(OPEN) ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
-        return InteractionResult.sidedSuccess(level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock,
-                                   BlockPos neighborPos, boolean movedByPiston) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block,
+                                   @Nullable Orientation orientation, boolean isMoving) {
         boolean powered = level.hasNeighborSignal(pos)
                 || level.hasNeighborSignal(pos.relative(
                         state.getValue(HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN));
-        if (!this.defaultBlockState().is(neighborBlock) && powered != state.getValue(POWERED)) {
+        if (!this.defaultBlockState().is(block) && powered != state.getValue(POWERED)) {
             if (powered != state.getValue(OPEN)) {
                 playSound(null, level, pos, powered);
             }
@@ -203,9 +213,10 @@ public class HeavyDoorBlock extends Block {
         }
     }
 
-    private void playSound(@Nullable Player player, Level level, BlockPos pos, boolean opening) {
+    private static void playSound(@Nullable Player player, Level level, BlockPos pos, boolean opening) {
         level.playSound(player, pos, opening ? SoundEvents.IRON_DOOR_OPEN : SoundEvents.IRON_DOOR_CLOSE,
-                SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.1F + 0.9F);
+                SoundSource.BLOCKS, 1.0F,
+                SOUND_PITCH_MIN + level.getRandom().nextFloat() * SOUND_PITCH_RANGE);
     }
 
     // ─────────────────────────── ломание ───────────────────────────

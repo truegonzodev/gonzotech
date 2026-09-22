@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/heavy_door_lead"
+    "layer0": "gonzotech:item/third_heavy_door_lead"
   }
 }

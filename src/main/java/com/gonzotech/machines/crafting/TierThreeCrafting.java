@@ -1,0 +1,108 @@
+package com.gonzotech.machines.crafting;
+
+import com.gonzotech.GonzoTechMod;
+import com.gonzotech.chalkboard.progress.ModAttachments;
+import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
+import com.gonzotech.core.registry.ModItems;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Рецепты «Открытия 3» (Эпоха III) и их прогрессия — по образцу {@link TierTwoCrafting}.
+ *
+ * <p>Файлы рецептов — обычные ванильные shaped-рецепты; здесь только два per-player правила,
+ * которых рецепт-данные не умеют:</p>
+ * <ul>
+ *   <li>показ рецепта в книге — после активации «Открытия 3»
+ *       ({@code PlayerChalkboardProgress.isRecipeTierUnlocked(3)});</li>
+ *   <li>крафт до открытия тратит ингредиенты и подменяет результат на
+ *       {@code botched_mechanism} — общий гейт {@code Phase3Events.grantBotchedMechanism}
+ *       (тот же механизм, сообщение и стресс, что у тиров 1 и 2).</li>
+ * </ul>
+ *
+ * <p>Быстрый крафт (Shift-клик) закрыт отдельно — {@code CraftingMenuMixin} берёт тир из
+ * {@code Phase3Events.requiredTierFor}, который теперь знает и про третий тир.</p>
+ *
+ * <p>Первый (и пока единственный) предмет тира — <b>тяжёлая свинцовая дверь</b>
+ * ({@code gonzotech:third_heavy_door_lead}): и показ рецепта, и крафт гейтятся «Открытием 3»
+ * (автор 22.09.2026).</p>
+ */
+@EventBusSubscriber(modid = GonzoTechMod.MOD_ID)
+public final class TierThreeCrafting {
+
+    /** Рецепты «Открытия 3» (показ в книге — по тиру, крафт — по тиру). */
+    private static final List<String> RECIPE_IDS = List.of(
+        "gonzotech:third_heavy_door_lead"
+    );
+
+    /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
+    private static final Set<UUID> BOOK_GRANTED = ConcurrentHashMap.newKeySet();
+
+    private TierThreeCrafting() {
+    }
+
+    /** Выдать рецепты книги, когда «Открытие 3» активировано. */
+    @SubscribeEvent
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
+        if (!(player instanceof ServerPlayer serverPlayer)) return;
+        PlayerChalkboardProgress progress = serverPlayer.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        if (!progress.isRecipeTierUnlocked(3) || !BOOK_GRANTED.add(serverPlayer.getUUID())) return;
+
+        List<ResourceKey<Recipe<?>>> keys = RECIPE_IDS.stream()
+            .map(id -> ResourceKey.<Recipe<?>>create(Registries.RECIPE, ResourceLocation.parse(id)))
+            .toList();
+        serverPlayer.awardRecipesByKey(keys);
+    }
+
+    /** Разрешить повторную выдачу после переподключения. */
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        BOOK_GRANTED.remove(event.getEntity().getUUID());
+    }
+
+    /**
+     * Крафт до «Открытия 3» расходует обычные ингредиенты, но каждый результат заменяется
+     * «заплетённым механизмом» — как у тиров 1 и 2.
+     */
+    @SubscribeEvent
+    public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        ItemStack crafted = event.getCrafting();
+        if (crafted.isEmpty() || !isGatedOutput(crafted.getItem())) return;
+
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        // «И»: тир 3 + дополнительные условия предмета (сейчас таких нет).
+        if (progress.isRecipeTierUnlocked(3)
+                && com.gonzotech.core.event.Phase3Events.extraGateMet(player, crafted.getItem())) return;
+
+        int count = crafted.getCount();
+        crafted.setCount(0);
+        // Ветка PICKUP «тот же предмет на курсоре»: ванила увеличивает курсор ДО события.
+        ItemStack carried = player.containerMenu.getCarried();
+        if (!carried.isEmpty() && carried.is(crafted.getItem())) {
+            carried.shrink(count);
+        }
+        com.gonzotech.core.event.Phase3Events.grantBotchedMechanism(player, count);
+    }
+
+    /** true, если предмет — «закрытый» вывод «Открытия 3» (гейт тира 3). */
+    public static boolean isGatedOutput(Item item) {
+        return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get();
+    }
+}

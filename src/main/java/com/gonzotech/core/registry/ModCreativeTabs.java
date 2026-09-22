@@ -166,8 +166,8 @@ public class ModCreativeTabs {
                 // Радиационный экран: бариевый бетон и борное стекло (автор 21.09).
                 output.accept(ModItems.BARIUM_CONCRETE_ITEM.get());
                 output.accept(ModItems.BORE_STAINED_GLASS_ITEM.get());
-                // Эпоха III: гермозатвор чистой комнаты (автор 22.09).
-                output.accept(ModItems.HEAVY_DOOR_LEAD_ITEM.get());
+                // Эпоха III: гермозатвор чистой комнаты (автор 22.09, крафт — с «Открытия 3»).
+                output.accept(ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get());
                 // Саспенс: скалковые руины/данжи.
                 output.accept(ModItems.LEAD_STAINED_GLASS_ITEM.get());
                 output.accept(ModItems.CRIMSON_OBSIDIAN_ITEM.get());

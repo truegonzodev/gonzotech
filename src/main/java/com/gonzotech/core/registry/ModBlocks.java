@@ -128,14 +128,18 @@ public class ModBlocks {
         "bore_stained_glass", TransparentBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
 
     /**
-     * Тяжёлая свинцовая дверь (автор 22.09.2026) — Эпоха III, первый элемент чистой комнаты.
+     * Тяжёлая свинцовая дверь (автор 22.09.2026) — первый элемент чистой комнаты.
      * Два блока в высоту (1×2), раздвижная: закрытая — стенка, ПКМ/редстоун открывают проём.
      * Числа автора: hardness 25, взрывостойкость 8. Хитбокс — габарит модели (6×16×16).
+     *
+     * <p>Префикс {@code third_} — по правилу «id = Открытие»: и показ рецепта, и крафт гейтятся
+     * «Открытием 3» ({@code TierThreeCrafting}). Экранирование — как у свинца (0.02): задаётся
+     * одной строкой в {@code RadMaterials} — этим и будут отличаться следующие двери.
      * В теге {@code gonzotech:contour_seal}: закрытая дверь замыкает контур радиации,
-     * открытая — дырка. См. {@link com.gonzotech.core.block.HeavyDoorBlock}.
+     * открытая — дырка. См. {@link com.gonzotech.core.block.HeavyDoorBlock}.</p>
      */
-    public static final DeferredBlock<HeavyDoorBlock> HEAVY_DOOR_LEAD = BLOCKS.registerBlock(
-        "heavy_door_lead", HeavyDoorBlock::new,
+    public static final DeferredBlock<HeavyDoorBlock> THIRD_HEAVY_DOOR_LEAD = BLOCKS.registerBlock(
+        "third_heavy_door_lead", HeavyDoorBlock::new,
         BlockBehaviour.Properties.of()
             .mapColor(MapColor.METAL)
             .sound(SoundType.METAL)

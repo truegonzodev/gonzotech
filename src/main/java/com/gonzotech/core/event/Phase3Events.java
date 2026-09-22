@@ -145,7 +145,8 @@ public final class Phase3Events {
     public static Integer requiredTierFor(net.minecraft.world.item.Item item) {
         Integer tier1 = gate().get(item);
         if (tier1 != null) return tier1;
-        return com.gonzotech.machines.crafting.TierTwoCrafting.isGatedOutput(item) ? 2 : null;
+        if (com.gonzotech.machines.crafting.TierTwoCrafting.isGatedOutput(item)) return 2;
+        return com.gonzotech.machines.crafting.TierThreeCrafting.isGatedOutput(item) ? 3 : null;
     }
 
     /**

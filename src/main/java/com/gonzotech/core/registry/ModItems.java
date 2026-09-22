@@ -392,9 +392,9 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("bore_stained_glass", ModBlocks.BORE_STAINED_GLASS);
     public static final DeferredItem<BlockItem> CRIMSON_OBSIDIAN_ITEM =
         ITEMS.registerSimpleBlockItem("crimson_obsidian", ModBlocks.CRIMSON_OBSIDIAN);
-    /** Тяжёлая свинцовая дверь (Эпоха III): ставится сразу парой клеток, ПКМ/редстоун открывают проём. */
-    public static final DeferredItem<BlockItem> HEAVY_DOOR_LEAD_ITEM =
-        ITEMS.registerSimpleBlockItem("heavy_door_lead", ModBlocks.HEAVY_DOOR_LEAD);
+    /** Тяжёлая свинцовая дверь («Открытие 3»): ставится парой клеток, ПКМ/редстоун открывают проём. */
+    public static final DeferredItem<BlockItem> THIRD_HEAVY_DOOR_LEAD_ITEM =
+        ITEMS.registerSimpleBlockItem("third_heavy_door_lead", ModBlocks.THIRD_HEAVY_DOOR_LEAD);
     public static final DeferredItem<BlockItem> SCULK_BRICKS_ITEM =
         ITEMS.registerSimpleBlockItem("sculk_bricks", ModBlocks.SCULK_BRICKS);
     public static final DeferredItem<BlockItem> CHISELED_SCULK_BRICKS_ITEM =
