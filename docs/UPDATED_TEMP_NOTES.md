@@ -583,7 +583,7 @@ HUD показывает и облучение (как дозиметр), и У�
 
 ---
 
-**Хотфикс сборки (23.09, по логу автора) — `TelifonItem.java:60`:** `cannot find symbol: method
+**Хотфикс сборки (22.09.2026, по логу автора) — `TelifonItem.java:60`:** `cannot find symbol: method
 withStyle(ChatFormatting), location: interface Component`. Причина: хелпер `percent(double)` был объявлен
 возвращающим `Component`, а у **интерфейса** `Component` нет `withStyle(ChatFormatting)` — он есть у
 `MutableComponent` (поэтому `Component.literal(...).withStyle(...)` и `Component.translatable(...)
