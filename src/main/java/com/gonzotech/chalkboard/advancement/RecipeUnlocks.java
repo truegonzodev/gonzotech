@@ -173,6 +173,24 @@ public final class RecipeUnlocks {
         }
     }
 
+    /**
+     * Пере-выдача уже пройденного тира при входе в мир (автор 22.09.2026).
+     *
+     * <p>«Гейт открыт навсегда» означает не только «не закрывается задним числом»,
+     * но и «догоняет будущее»: список {@link #RECIPES_BY_TIER} растёт от версии к
+     * версии, а выдача идёт один раз в момент активации «Открытия». Игрок, активировавший
+     * тир до обновления мода, новых рецептов иначе не увидел бы НИКОГДА. У тира 2 такая
+     * страховка уже есть ({@code TierTwoCrafting} пере-выдаёт своё на каждом входе),
+     * здесь — то же самое для тира 1 (вызов на {@code PlayerLoggedInEvent}).
+     * {@code awardRecipesByKey} идемпотентен: повторная выдача ничего не ломает.</p>
+     */
+    public static void regrantOnLogin(ServerPlayer player) {
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        if (progress.isRecipeTierUnlocked(1)) {
+            grantForTier(player, 1);
+        }
+    }
+
     private static void grant(ServerPlayer player, List<String> ids) {
         List<ResourceKey<Recipe<?>>> keys = ids.stream()
             .map(id -> ResourceKey.<Recipe<?>>create(Registries.RECIPE, ResourceLocation.parse(id)))

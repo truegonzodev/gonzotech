@@ -90,6 +90,27 @@ public final class NotesNetwork {
     /** Клиентский кэш последнего полученного состояния. */
     public static volatile NotesDataPayload CLIENT_DATA = null;
 
+    /**
+     * Разблокирован ли тир «Открытия» ПОСТОЯННО — клиентская сторона (автор 22.09.2026).
+     *
+     * <p>Нужен там, где клиент решает что-то показать (тултипы, подсказки), а
+     * серверный прогресс — это аттачмент игрока, недоступный клиенту. Тир 1/2
+     * приезжают в {@link NotesDataPayload}: на входе в игру и при каждом изменении
+     * (использование «Открытия», команды). Пока payload не пришёл — считаем тир
+     * закрытым (одна секунда после входа, дальше состояние всегда актуально).</p>
+     */
+    public static boolean isTierUnlocked(int tier) {
+        NotesDataPayload data = CLIENT_DATA;
+        if (data == null) {
+            return false;
+        }
+        return switch (tier) {
+            case 1 -> data.tier1Unlocked();
+            case 2 -> data.tier2Unlocked();
+            default -> false;
+        };
+    }
+
     public static void register(PayloadRegistrar registrar) {
         registrar.playToServer(
                 NotesRequestPayload.TYPE,

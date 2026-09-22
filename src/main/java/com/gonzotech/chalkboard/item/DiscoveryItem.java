@@ -47,6 +47,9 @@ public class DiscoveryItem extends Item {
                 progress.unlockRecipeTier(discoveryNumber);
                 serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
                 ChalkboardNetwork.sendSyncToPlayer(serverPlayer);
+                // Тиры, разблокированные НАВСЕГДА, нужны и клиенту: по ним гейтятся
+                // тултипы (статы материалов — после «Открытия 2») и страницы заметок.
+                com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(serverPlayer);
                 ModAdvancements.checkAndAwardAdvancements(serverPlayer);
                 // Фаза 3: показать в книге рецептов машины этого «Открытия».
                 com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantForTier(serverPlayer, discoveryNumber);

@@ -80,6 +80,16 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.register(com.gonzotech.space.SpaceGravity.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.space.SpaceSleep.class);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
+        // Постоянные «Открытия» (тиры 1/2) должны доехать до клиента сразу при входе:
+        // на них завязаны клиентские гейты (тултипы статов материалов, страницы заметок),
+        // а не только события в мире.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer sp) {
+                com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(sp);
+                // Рецепты пройденного тира 1 «догоняют» обновления списка (тир 2 — в TierTwoCrafting).
+                com.gonzotech.chalkboard.advancement.RecipeUnlocks.regrantOnLogin(sp);
+            }
+        });
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
