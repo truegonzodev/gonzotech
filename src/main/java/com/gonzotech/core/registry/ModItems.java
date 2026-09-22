@@ -298,9 +298,11 @@ public class ModItems {
         List.of(HAZMAT_HELMET, HAZMAT_CHESTPLATE, HAZMAT_LEGGINGS, HAZMAT_BOOTS);
 
     /**
-     * Измерительный прибор «УФ-радиометр»: пока в руке — на HUD видна шкала
-     * «УФ излучение». Предмет и HUD рабочие; рецепта пока нет (шкалу
-     * {@code PlayerPsyche.uv} ещё никто не наполняет — задел под УФ-механику).
+     * Измерительный прибор «УФ-радиометр»: пока в руке — на HUD видна шкала «УФ излучение».
+     * Предмет и HUD рабочие, шкала ЖИВАЯ (22.09.2026): наполняется от дозы радиации выше
+     * 70 %, тает по 1 % от максимума в тик с триггерами — см. {@code psyche.PsycheUltraviolet}.
+     * Рецепта пока нет: ждёт ветку 3 (литография, полупроводники) вместе с дозиметром и
+     * спидометром — решение автора 22.09. До того шкалу видно с «Телифоном».
      */
     public static final DeferredItem<Item> UV_METER =
         ITEMS.registerSimpleItem("uv_meter", new Item.Properties().stacksTo(1));
