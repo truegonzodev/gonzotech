@@ -8,10 +8,12 @@ import com.gonzotech.machines.block.entity.CentrifugeBlockEntity;
 import com.gonzotech.machines.block.entity.CrusherBlockEntity;
 import com.gonzotech.machines.block.entity.CobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.CondenserBlockEntity;
+import com.gonzotech.machines.block.entity.DistillerBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
 import com.gonzotech.machines.block.entity.FermentationVatBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.block.entity.NuclearFireboxBlockEntity;
+import com.gonzotech.machines.block.entity.RectifierBlockEntity;
 import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
 import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
@@ -161,6 +163,14 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<WortKettleBlockEntity>> THIRD_WORT_KETTLE =
         BLOCK_ENTITIES.register("third_wort_kettle", () -> new BlockEntityType<>(
             WortKettleBlockEntity::new, false, ModMachines.THIRD_WORT_KETTLE.get()));
+
+    public static final Supplier<BlockEntityType<DistillerBlockEntity>> THIRD_DISTILLER =
+        BLOCK_ENTITIES.register("third_distiller", () -> new BlockEntityType<>(
+            DistillerBlockEntity::new, false, ModMachines.THIRD_DISTILLER.get()));
+
+    public static final Supplier<BlockEntityType<RectifierBlockEntity>> THIRD_RECTIFIER =
+        BLOCK_ENTITIES.register("third_rectifier", () -> new BlockEntityType<>(
+            RectifierBlockEntity::new, false, ModMachines.THIRD_RECTIFIER.get()));
 
     /**
      * The BE factory is invoked only after DeferredRegister has assigned the

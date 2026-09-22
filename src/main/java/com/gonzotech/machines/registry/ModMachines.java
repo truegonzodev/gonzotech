@@ -8,11 +8,13 @@ import com.gonzotech.machines.block.CentrifugeBlock;
 import com.gonzotech.machines.block.CrusherBlock;
 import com.gonzotech.machines.block.CobbleGeneratorBlock;
 import com.gonzotech.machines.block.CondenserBlock;
+import com.gonzotech.machines.block.DistillerBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FermentationVatBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.NuclearFireboxBlock;
 import com.gonzotech.machines.block.PumpBlock;
+import com.gonzotech.machines.block.RectifierBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
 import com.gonzotech.machines.block.SecondElectricFurnaceBlock;
@@ -347,6 +349,14 @@ public final class ModMachines {
     public static final DeferredBlock<WortKettleBlock> THIRD_WORT_KETTLE =
         BLOCKS.registerBlock("third_wort_kettle", WortKettleBlock::new, machineMetal());
 
+    /** Эпоха III (Открытие 3): Дистиллятор — перегонка сырья в дистиллят и кипяток. */
+    public static final DeferredBlock<DistillerBlock> THIRD_DISTILLER =
+        BLOCKS.registerBlock("third_distiller", DistillerBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Ректификатор — глубокая очистка дистиллята в чистый ректификат. */
+    public static final DeferredBlock<RectifierBlock> THIRD_RECTIFIER =
+        BLOCKS.registerBlock("third_rectifier", RectifierBlock::new, machineMetal());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -524,6 +534,12 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_WORT_KETTLE_ITEM =
         ITEMS.registerSimpleBlockItem("third_wort_kettle", THIRD_WORT_KETTLE);
+
+    public static final DeferredItem<BlockItem> THIRD_DISTILLER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_distiller", THIRD_DISTILLER);
+
+    public static final DeferredItem<BlockItem> THIRD_RECTIFIER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_rectifier", THIRD_RECTIFIER);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

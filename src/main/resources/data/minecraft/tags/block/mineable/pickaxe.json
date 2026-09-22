@@ -188,6 +188,8 @@
     "gonzotech:third_heavy_door_tungsten",
     "gonzotech:third_hermetic_door",
     "gonzotech:third_fermentation_vat",
-    "gonzotech:third_wort_kettle"
+    "gonzotech:third_wort_kettle",
+    "gonzotech:third_distiller",
+    "gonzotech:third_rectifier"
   ]
 }

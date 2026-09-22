@@ -121,6 +121,8 @@ public class ModCreativeTabs {
                 // Эпоха III (Открытие 3): линейка брожения
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })

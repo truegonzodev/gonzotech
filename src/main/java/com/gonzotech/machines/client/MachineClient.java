@@ -35,5 +35,7 @@ public final class MachineClient {
         event.register(ModMenus.FIRST_ITEM_FILTER.get(), ItemFilterScreen::new);
         event.register(ModMenus.THIRD_FERMENTATION_VAT.get(), FermentationVatScreen::new);
         event.register(ModMenus.THIRD_WORT_KETTLE.get(), WortKettleScreen::new);
+        event.register(ModMenus.THIRD_DISTILLER.get(), DistillerScreen::new);
+        event.register(ModMenus.THIRD_RECTIFIER.get(), RectifierScreen::new);
     }
 }
