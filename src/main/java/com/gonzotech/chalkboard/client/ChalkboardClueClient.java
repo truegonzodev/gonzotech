@@ -14,11 +14,17 @@ import java.util.Set;
  *       обводка пропадает сама, без участия сервера;</li>
  *   <li>{@link #isAvailable(String)} — блоки, которые подсказка «принесла» в лоток.
  *       Даже если сервер ещё не успел синхронизировать открытые блоки, плитка
- *       не исчезает из лотка.</li>
+ *       не исчезает из лотка;</li>
+ *   <li>{@link #isPinned(String)} — блок стоит ПЕРВЫМ в лотке. Это только на время
+ *       той доски, при которой подсказку выдали: как только игрок закрыл доску
+ *       (или вышел из мира — экран закрывается сам), {@link #unpin()} возвращает
+ *       блок на его место в категории (автор 22.09.2026).</li>
  * </ul>
  *
  * <p>Состояние живёт до перезапуска клиента: подсказка выдаётся командой (позже —
- * револьвером и водкой), и доску игрок открывает уже после неё.</p>
+ * револьвером и водкой), и доску игрок открывает уже после неё. Доступность блока
+ * (см. {@code ResonanceClue}) — навсегда: это серверный прогресс, а не клиентская
+ * подсветка.</p>
  */
 public final class ChalkboardClueClient {
 
@@ -27,6 +33,8 @@ public final class ChalkboardClueClient {
 
     private static final Set<String> AVAILABLE = new HashSet<>();
     private static String hintedId;
+    /** Показывать блок первым в лотке (только до первого закрытия доски). */
+    private static boolean pinned;
     private static int version;
 
     /** Пришла подсказка: подсветить блок и сделать его доступным в лотке. */
@@ -34,6 +42,7 @@ public final class ChalkboardClueClient {
         if (quantityId == null || quantityId.isEmpty()) return;
         hintedId = quantityId;
         AVAILABLE.add(quantityId);
+        pinned = true;
         version++;
     }
 
@@ -62,16 +71,32 @@ public final class ChalkboardClueClient {
     }
 
     /**
+     * Держать ли этот блок первым в лотке. Только та доска, при которой пришла
+     * подсказка: закрыл доску (или вышел из мира) — блок уже на своём месте в
+     * категории, хотя обводка (см. {@link #isHinted}) ещё горит до использования.
+     */
+    public static boolean isPinned(String quantityId) {
+        return pinned && isHinted(quantityId);
+    }
+
+    /**
      * Блок использован (нажал/перетащил) — обводка пропадает. Сам блок остаётся
      * доступным: подсказка выдала его, и он нужен для решения.
      */
     public static void consume() {
         hintedId = null;
+        pinned = false;
+    }
+
+    /** Доска закрыта (или игрок вышел из мира) — блок больше не первый в лотке. */
+    public static void unpin() {
+        pinned = false;
     }
 
     /** Полный сброс (задел под смену задачи/новую подсказку поверх старой). */
     public static void clear() {
         hintedId = null;
+        pinned = false;
         AVAILABLE.clear();
         version++;
     }

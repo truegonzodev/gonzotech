@@ -361,6 +361,17 @@ public class ResonanceScreen extends Screen {
         super.onClose();
     }
 
+    /**
+     * Экран ушёл (закрытие доски, выход из мира, переход в другой экран) — блок из
+     * подсказки перестаёт быть первым в лотке (автор 22.09.2026). Обводка остаётся:
+     * она гаснет при первом использовании блока, а не при перезаходе.
+     */
+    @Override
+    public void removed() {
+        ChalkboardClueClient.unpin();
+        super.removed();
+    }
+
     // ─────────────────────────── chalk serialization ───────────────────────────
 
     private String serializeDrawingData() {
@@ -569,9 +580,11 @@ public class ResonanceScreen extends Screen {
         }
 
         // Подсказанный блок — ПЕРВЫМ в лотке и вне фильтров: иначе он мог бы уехать
-        // за экран или спрятаться табом/поиском, и обводку было бы не видно.
+        // за экран или спрятаться табом/поиском, и обводку было бы не видно. Только
+        // на время той доски, при которой подсказку выдали (автор 22.09.2026): после
+        // закрытия доски или выхода из мира блок уходит в свою категорию.
         String clueId = ChalkboardClueClient.hintedId();
-        if (clueId != null) {
+        if (clueId != null && ChalkboardClueClient.isPinned(clueId)) {
             Quantity hinted = Quantities.get(clueId);
             if (hinted != null) {
                 out.removeIf(q -> q.id().equals(clueId));

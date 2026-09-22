@@ -108,11 +108,13 @@ public final class WrenchHud {
             net.minecraft.world.item.Item item =
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(payload.items().get(i));
             Component name = item.getName(new net.minecraft.world.item.ItemStack(item));
-            // «Булыжник — 16/т»: имя предмета + количество, цветом предметной трубы.
-            // ГОСТ единиц: имя предмета и количество — цветом предметной трубы,
-            // «/t» остаётся основным цветом строки (на HUD это &f).
+            // «Булыжник — 16 items/т»: имя предмета + количество. ГОСТ единиц
+            // (автор 22.09.2026): единица измерения всегда видна, пробел между числом
+            // и единицей обязателен. Имя и число — цветом предметной трубы, «/t»
+            // остаётся основным цветом строки (на HUD это &f).
             Component itemName = name.copy().setStyle(Style.EMPTY.withColor(PipeType.ITEM.color()));
-            Component count = GtUnits.ticked(payload.counts().get(i), PipeType.ITEM.color());
+            Component count = GtUnits.rate(payload.counts().get(i),
+                    GtUnits.key(GtUnits.U_ITEMS, PipeType.ITEM.color()), PipeType.ITEM.color());
             lines.add(Component.translatable("hud.gonzotech.item_flow_line", itemName, count));
         }
         itemFlowLinesCache = lines;

@@ -59,7 +59,7 @@ public final class RadSickness {
         RadDose.Category category = RadDose.category(permille);
         RadDose.Category previous = LAST_STAGE.put(player.getUUID(), category);
         if (previous != category) {
-            announce(player, category, previous);
+            announce(player, category, previous, permille);
         }
 
         for (RadDose.Steady steady : tier.steady()) {
@@ -106,10 +106,17 @@ public final class RadSickness {
     }
 
     /**
-     * Сообщение о смене категории — в акшен-бар (не засоряет чат):
-     * «Облучение: опасная доза» / «Облучение: фон в норме».
+     * Сообщение о смене категории — от лица ДОЗИМЕТРА, в чат одной строкой, серым
+     * (автор 22.09.2026): «Дозиметр: Уровень облучения поднят до 34.5%».
+     *
+     * <p>Значение — процент дозы, как в отчёте дозиметра ({@code DosimeterItem}), и
+     * покрашено цветом СВОЕГО уровня: FINE зелёный · ELEVATED жёлтый · DANGEROUS
+     * золотой · CRITICAL красный · LETHAL тёмно-красный. При понижении категории
+     * строка зеркальная — «опустился до», иначе «поднят до фон в норме» читалось бы
+     * нелепо (замена одной строки, если автор захочет единый текст).</p>
      */
-    private static void announce(ServerPlayer player, RadDose.Category now, RadDose.Category before) {
+    private static void announce(ServerPlayer player, RadDose.Category now, RadDose.Category before,
+                                int permille) {
         if (before == null) {
             return; // первый вход в игру — молча, состояние и так в HUD
         }
@@ -120,9 +127,13 @@ public final class RadSickness {
             case CRITICAL -> ChatFormatting.RED;
             case LETHAL -> ChatFormatting.DARK_RED;
         };
-        // Автор 22.09.2026: одноразовая подсказка — в ЧАТ одной строкой (не в хотбар).
-        // Цвет — категория дозы (тот же, что у дозиметра и у эффектов лучевой болезни).
+        Component value = Component.literal(String.format(java.util.Locale.ROOT, "%.1f%%",
+                        RadDose.percent(permille)))
+                .withStyle(color);
+        String key = now.ordinal() > before.ordinal()
+                ? "message.gonzotech.rad.stage"
+                : "message.gonzotech.rad.stage.fall";
         player.displayClientMessage(
-                Component.translatable("message.gonzotech.rad.stage", now.label()).withStyle(color), false);
+                Component.translatable(key, value).withStyle(ChatFormatting.GRAY), false);
     }
 }
