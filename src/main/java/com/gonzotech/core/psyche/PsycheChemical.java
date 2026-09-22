@@ -70,6 +70,10 @@ public final class PsycheChemical {
     private static final int ITCH_REFRESH_TICKS = 40;
     /** Урон «как отравление»: 1 HP и только если игрок выше 1 HP (добить нельзя). */
     private static final float ITCH_DAMAGE = 1.0F;
+    /** «Движение» за секунду: 5 см (стоит на месте — смещения нет вообще). */
+    private static final double MOVED_MIN_SQR = 0.05 * 0.05;
+    /** Рывки дальше 32 блоков — телепорт (каскад-чекпойнт), движением не считаем. */
+    private static final double TELEPORT_IGNORE_SQR = 32.0 * 32.0;
 
     private static final Map<UUID, State> STATES = new HashMap<>();
 
@@ -83,7 +87,11 @@ public final class PsycheChemical {
         /** Накопитель доли дозы (2 % от дозы радиации — темп дробный). */
         private double doseAcc;
         private int itchCooldown;
-        private double lastWalkDist;
+        /** Прошлая позиция игрока: «двигался ли» считаем по ней (см. {@link #movedSince}). */
+        private double lastX;
+        private double lastY;
+        private double lastZ;
+        private boolean hasLastPos;
     }
 
     // ═══════════════════════ раз в секунду ═══════════════════════
@@ -213,7 +221,7 @@ public final class PsycheChemical {
         State state = STATES.computeIfAbsent(player.getUUID(), key -> new State());
         if (level == 0) {
             state.itchCooldown = 0;
-            state.lastWalkDist = player.walkDist;
+            movedSince(state, player);   // запомнить позицию, пока зуд не активен
             return;
         }
 
@@ -222,8 +230,7 @@ public final class PsycheChemical {
                 ITCH_REFRESH_TICKS, level - 1, false, true));
 
         // 1. Урон «как отравление»: только на движении, не добивает, свой кулдаун.
-        boolean moved = Math.abs(player.walkDist - state.lastWalkDist) > 0.01F;
-        state.lastWalkDist = player.walkDist;
+        boolean moved = movedSince(state, player);
         if (state.itchCooldown > 0) {
             state.itchCooldown--;
         }
@@ -236,6 +243,37 @@ public final class PsycheChemical {
         if (level >= 2) {
             stompGround(player, level);
         }
+    }
+
+    /**
+     * Двигался ли игрок с прошлого вызова (раз в секунду). Считаем по СМЕЩЕНИЮ ПОЗИЦИИ,
+     * а не по {@code walkDist}: в Mojang-маппингах 1.21.4 такого поля нет (это Yarn-имя,
+     * на нём падала сборка автора) — есть {@code walkAnimation}. Смещение надёжнее:
+     * телепорт (например, каскад-чекпойнт) движением не считаем, иначе игрок «пробегал»
+     * бы полмира и получал урон за перенос.
+     */
+    private static boolean movedSince(State state, ServerPlayer player) {
+        double x = player.getX();
+        double y = player.getY();
+        double z = player.getZ();
+        if (!state.hasLastPos) {
+            state.lastX = x;
+            state.lastY = y;
+            state.lastZ = z;
+            state.hasLastPos = true;
+            return false;
+        }
+        double dx = x - state.lastX;
+        double dy = y - state.lastY;
+        double dz = z - state.lastZ;
+        state.lastX = x;
+        state.lastY = y;
+        state.lastZ = z;
+        double distSqr = dx * dx + dy * dy + dz * dz;
+        if (distSqr > TELEPORT_IGNORE_SQR) {
+            return false;
+        }
+        return distSqr > MOVED_MIN_SQR;
     }
 
     /**
