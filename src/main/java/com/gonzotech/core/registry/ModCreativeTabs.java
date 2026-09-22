@@ -166,8 +166,11 @@ public class ModCreativeTabs {
                 // Радиационный экран: бариевый бетон и борное стекло (автор 21.09).
                 output.accept(ModItems.BARIUM_CONCRETE_ITEM.get());
                 output.accept(ModItems.BORE_STAINED_GLASS_ITEM.get());
-                // Эпоха III: гермозатвор чистой комнаты (автор 22.09, крафт — с «Открытия 3»).
+                // Эпоха III: три двери (автор 22.09, крафт — с «Открытия 3»): свинцовая (0.02),
+                // вольфрамовая (0.003) и гермодверь (0.33 — она и для чистого контура).
                 output.accept(ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get());
+                output.accept(ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get());
+                output.accept(ModItems.THIRD_HERMETIC_DOOR_ITEM.get());
                 // Саспенс: скалковые руины/данжи.
                 output.accept(ModItems.LEAD_STAINED_GLASS_ITEM.get());
                 output.accept(ModItems.CRIMSON_OBSIDIAN_ITEM.get());
@@ -274,6 +277,12 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TMOX_FUEL.get());
                 output.accept(ModItems.SNUP_FUEL.get());
                 output.accept(ModItems.UT_FUEL.get());
+                // Полимеры Эпохи III (автор 22.09) — заглушки без крафта, до химического завода.
+                output.accept(ModItems.POLYETHYLENE.get());
+                output.accept(ModItems.POLYVINYL_CHLORIDE.get());
+                output.accept(ModItems.CELLULOID.get());
+                output.accept(ModItems.RUBBER.get());
+                output.accept(ModItems.RESIN.get());
             })
             .build()
     );

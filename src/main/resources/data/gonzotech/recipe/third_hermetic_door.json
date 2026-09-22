@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "ACA",
+    "IDI",
+    "III"
+  ],
+  "key": {
+    "A": "gonzotech:aluminum_ingot",
+    "C": "gonzotech:celluloid",
+    "I": "minecraft:iron_ingot",
+    "D": "minecraft:iron_door"
+  },
+  "result": {
+    "id": "gonzotech:third_hermetic_door",
+    "count": 1
+  }
+}

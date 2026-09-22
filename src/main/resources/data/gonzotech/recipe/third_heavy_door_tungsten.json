@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "TGT",
+    "TDT",
+    "TGT"
+  ],
+  "key": {
+    "T": "gonzotech:tungsten_ingot",
+    "G": "gonzotech:bore_stained_glass",
+    "D": "minecraft:iron_door"
+  },
+  "result": {
+    "id": "gonzotech:third_heavy_door_tungsten",
+    "count": 1
+  }
+}

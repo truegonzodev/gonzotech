@@ -148,6 +148,39 @@ public class ModBlocks {
             .dynamicShape()
             .pushReaction(PushReaction.BLOCK)
             .requiresCorrectToolForDrops());
+
+    /**
+     * Тяжёлая вольфрамовая дверь (автор 22.09) — «по такому же аналогу», но сильнее:
+     * свинец заменён вольфрамом, свинцовый витраж — борным стеклом. Экранирование —
+     * вольфрамовое (0.003). Питч ниже свинцовой: 0.1–0.3.
+     */
+    public static final DeferredBlock<HeavyDoorBlock> THIRD_HEAVY_DOOR_TUNGSTEN = BLOCKS.registerBlock(
+        "third_heavy_door_tungsten", props -> new HeavyDoorBlock(props, 0.1F, 0.2F),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(25.0f, 8.0f)
+            .noOcclusion()
+            .dynamicShape()
+            .pushReaction(PushReaction.BLOCK)
+            .requiresCorrectToolForDrops());
+
+    /**
+     * Гермодверь (автор 22.09) — элемент ЧИСТОЙ КОМНАТЫ: алюминиевый корпус, целлулоидная
+     * прокладка, железная основа. Защита от фона слабее радиационных дверей — фактор
+     * «×0.33», зато именно она годится для чистого контура (сама механика чистой комнаты
+     * — через эффект, ждём описания автора). Питч: 1.2–1.4.
+     */
+    public static final DeferredBlock<HeavyDoorBlock> THIRD_HERMETIC_DOOR = BLOCKS.registerBlock(
+        "third_hermetic_door", props -> new HeavyDoorBlock(props, 1.2F, 0.2F),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(25.0f, 8.0f)
+            .noOcclusion()
+            .dynamicShape()
+            .pushReaction(PushReaction.BLOCK)
+            .requiresCorrectToolForDrops());
     public static final DeferredBlock<Block> CRIMSON_OBSIDIAN = BLOCKS.registerSimpleBlock(
         "crimson_obsidian", BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN));
     public static final DeferredBlock<Block> SCULK_BRICKS = BLOCKS.registerSimpleBlock(

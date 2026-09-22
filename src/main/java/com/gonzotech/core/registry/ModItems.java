@@ -122,6 +122,21 @@ public class ModItems {
     public static final DeferredItem<Item> SEMICONDUCTOR_PLATE = ITEMS.registerSimpleItem("semiconductor_plate");
     public static final DeferredItem<Item> SEMICONDUCTOR_CORE = ITEMS.registerSimpleItem("semiconductor_core");
 
+    // ─────────────────────── Полимеры Эпохи III (автор 22.09) ───────────────────────
+    // Заглушки: предметы зарегистрированы и лежат во вкладке «Компоненты», рецептов
+    // и применений пока НЕТ — их даст химический завод. Целлулоид уже входит в рецепт
+    // гермодвери, поэтому до завода гермодверь скрафтить нельзя (так и задумано).
+    /** Полиэтилен — плёнки, изоляция, ёмкости. */
+    public static final DeferredItem<Item> POLYETHYLENE = ITEMS.registerSimpleItem("polyethylene");
+    /** Поливинилхлорид (ПВХ) — трубы, прокладки, химстойкая арматура. */
+    public static final DeferredItem<Item> POLYVINYL_CHLORIDE = ITEMS.registerSimpleItem("polyvinyl_chloride");
+    /** Целлулоид — твёрдый прозрачный полимер (гермодверь, остекление, плёнка). */
+    public static final DeferredItem<Item> CELLULOID = ITEMS.registerSimpleItem("celluloid");
+    /** Резина — эластомер: уплотнения, шланги, виброопоры. */
+    public static final DeferredItem<Item> RUBBER = ITEMS.registerSimpleItem("rubber");
+    /** Смола — сырьё полимерной линии (и клей). */
+    public static final DeferredItem<Item> RESIN = ITEMS.registerSimpleItem("resin");
+
     /** Reusable selectors for the press; they are never consumed by a stamp. */
     public static final DeferredItem<Item> FLAT_PUNCH =
         ITEMS.registerItem("flat_punch", props -> new Item(props.stacksTo(1)));
@@ -395,6 +410,12 @@ public class ModItems {
     /** Тяжёлая свинцовая дверь («Открытие 3»): ставится парой клеток, ПКМ/редстоун открывают проём. */
     public static final DeferredItem<BlockItem> THIRD_HEAVY_DOOR_LEAD_ITEM =
         ITEMS.registerSimpleBlockItem("third_heavy_door_lead", ModBlocks.THIRD_HEAVY_DOOR_LEAD);
+    /** Тяжёлая вольфрамовая дверь («Открытие 3») — тот же код, экран 0.003, питч 0.1–0.3. */
+    public static final DeferredItem<BlockItem> THIRD_HEAVY_DOOR_TUNGSTEN_ITEM =
+        ITEMS.registerSimpleBlockItem("third_heavy_door_tungsten", ModBlocks.THIRD_HEAVY_DOOR_TUNGSTEN);
+    /** Гермодверь («Открытие 3») — для чистой комнаты, защита от фона ×0.33, питч 1.2–1.4. */
+    public static final DeferredItem<BlockItem> THIRD_HERMETIC_DOOR_ITEM =
+        ITEMS.registerSimpleBlockItem("third_hermetic_door", ModBlocks.THIRD_HERMETIC_DOOR);
     public static final DeferredItem<BlockItem> SCULK_BRICKS_ITEM =
         ITEMS.registerSimpleBlockItem("sculk_bricks", ModBlocks.SCULK_BRICKS);
     public static final DeferredItem<BlockItem> CHISELED_SCULK_BRICKS_ITEM =

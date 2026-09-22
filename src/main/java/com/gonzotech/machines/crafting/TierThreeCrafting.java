@@ -47,7 +47,9 @@ public final class TierThreeCrafting {
 
     /** Рецепты «Открытия 3» (показ в книге — по тиру, крафт — по тиру). */
     private static final List<String> RECIPE_IDS = List.of(
-        "gonzotech:third_heavy_door_lead"
+        "gonzotech:third_heavy_door_lead",
+        "gonzotech:third_heavy_door_tungsten",
+        "gonzotech:third_hermetic_door"
     );
 
     /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
@@ -103,6 +105,8 @@ public final class TierThreeCrafting {
 
     /** true, если предмет — «закрытый» вывод «Открытия 3» (гейт тира 3). */
     public static boolean isGatedOutput(Item item) {
-        return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get();
+        return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get()
+            || item == ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get()
+            || item == ModItems.THIRD_HERMETIC_DOOR_ITEM.get();
     }
 }

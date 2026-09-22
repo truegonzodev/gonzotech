@@ -64,9 +64,14 @@ public class HeavyDoorBlock extends Block {
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     public static final EnumProperty<DoubleBlockHalf> HALF = BlockStateProperties.DOUBLE_BLOCK_HALF;
 
-    /** Питч открывания/закрывания (автор 22.09): «сделай 0.3–0.5». */
-    private static final float SOUND_PITCH_MIN = 0.3F;
-    private static final float SOUND_PITCH_RANGE = 0.2F;
+    /**
+     * Питч звука задаётся на породу двери (автор 22.09): свинцовая — 0.3–0.5
+     * («сделай 0.3–0.5»), вольфрамовая — 0.1–0.3, гермодверь — 1.2–1.4.
+     * Хардкода в статике нет: одна и та же логика обслуживает все двери,
+     * отличие — в двух числах конструктора.
+     */
+    private final float soundPitchMin;
+    private final float soundPitchRange;
 
     /** Закрытая дверь: сплошная стенка 6 пикселей — габарит модели (автор: «6×16×16»). */
     private static final VoxelShape CLOSED_Z = Block.box(0.0, 0.0, 5.0, 16.0, 16.0, 11.0);
@@ -93,8 +98,19 @@ public class HeavyDoorBlock extends Block {
             Block.box(6.0, 0.0, 0.0, 10.0, 15.0, 2.0),
             Block.box(6.0, 0.0, 14.0, 10.0, 15.0, 16.0));
 
+    /** Конструктор по умолчанию (для {@code simpleCodec}) — питч свинцовой двери. */
     public HeavyDoorBlock(Properties properties) {
+        this(properties, 0.3F, 0.2F);
+    }
+
+    /**
+     * @param soundPitchMin   нижняя граница питча (включительно)
+     * @param soundPitchRange разброс питча (звук = min + rand·range)
+     */
+    public HeavyDoorBlock(Properties properties, float soundPitchMin, float soundPitchRange) {
         super(properties);
+        this.soundPitchMin = soundPitchMin;
+        this.soundPitchRange = soundPitchRange;
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(OPEN, Boolean.FALSE)
@@ -213,10 +229,10 @@ public class HeavyDoorBlock extends Block {
         }
     }
 
-    private static void playSound(@Nullable Player player, Level level, BlockPos pos, boolean opening) {
+    private void playSound(@Nullable Player player, Level level, BlockPos pos, boolean opening) {
         level.playSound(player, pos, opening ? SoundEvents.IRON_DOOR_OPEN : SoundEvents.IRON_DOOR_CLOSE,
                 SoundSource.BLOCKS, 1.0F,
-                SOUND_PITCH_MIN + level.getRandom().nextFloat() * SOUND_PITCH_RANGE);
+                this.soundPitchMin + level.getRandom().nextFloat() * this.soundPitchRange);
     }
 
     // ─────────────────────────── ломание ───────────────────────────

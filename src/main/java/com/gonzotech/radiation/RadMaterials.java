@@ -68,9 +68,12 @@ public final class RadMaterials {
     private static final Map<String, Double> ITEM_EXACT = Map.of(
             "barium_concrete", 0.03,
             "bore_stained_glass", 0.08,
-            // Двери чистой комнаты (автор 22.09): отличаются ОДНИМ параметром — защитой от радиации.
-            // Свинцовая — как свинец (0.02); следующая дверь добавляется сюда одной строкой.
-            "third_heavy_door_lead", 0.02
+            // Двери (автор 22.09): отличаются ОДНИМ параметром — защитой от радиации.
+            // Свинцовая — свинец 0.02, вольфрамовая — вольфрам 0.003,
+            // гермодверь — 0.33 («защита от фона ×0.33», зато для чистого контура).
+            "third_heavy_door_lead", 0.02,
+            "third_heavy_door_tungsten", 0.003,
+            "third_hermetic_door", 0.33
     );
 
     /**
@@ -80,8 +83,10 @@ public final class RadMaterials {
     private static final Map<String, Double> BLOCK_EXACT = Map.of(
             "barium_concrete", 0.01,
             "bore_stained_glass", 0.05,
-            // Дверь как стена контура: тот же параметр, что и у предмета (автор 22.09).
-            "third_heavy_door_lead", 0.02
+            // Двери как стены контура: тот же параметр, что и у предмета (автор 22.09).
+            "third_heavy_door_lead", 0.02,
+            "third_heavy_door_tungsten", 0.003,
+            "third_hermetic_door", 0.33
     );
 
     /** Узнаваемые «прочие металлы и сплавы» (×0.3) — fallback для форм без точной строки. */
