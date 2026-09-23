@@ -1,8 +1,12 @@
 {
-  "parent": "minecraft:block/cube_bottom_top",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "top": "gonzotech:block/canister_top",
-    "bottom": "gonzotech:block/canister_top",
-    "side": "gonzotech:block/canister"
+    "particle": "gonzotech:block/canister",
+    "north": "gonzotech:block/canister_face",
+    "south": "gonzotech:block/canister",
+    "east": "gonzotech:block/canister",
+    "west": "gonzotech:block/canister",
+    "up": "gonzotech:block/canister_top",
+    "down": "gonzotech:block/canister_bottom"
   }
 }

@@ -366,6 +366,10 @@ public final class ModMachines {
     public static final DeferredBlock<com.gonzotech.machines.block.FillerBlock> THIRD_FILLER =
         BLOCKS.registerBlock("third_filler", com.gonzotech.machines.block.FillerBlock::new, machineMetal());
 
+    /** Разливной кран — разлив пива (из сусла) и водки (из дистиллята). */
+    public static final DeferredBlock<com.gonzotech.machines.block.DispensingTapBlock> DISPENSING_TAP =
+        BLOCKS.registerBlock("dispensing_tap", com.gonzotech.machines.block.DispensingTapBlock::new, machineMetal());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -555,6 +559,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_FILLER_ITEM =
         ITEMS.registerSimpleBlockItem("third_filler", THIRD_FILLER);
+
+    public static final DeferredItem<BlockItem> DISPENSING_TAP_ITEM =
+        ITEMS.registerSimpleBlockItem("dispensing_tap", DISPENSING_TAP);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

@@ -126,6 +126,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get());
                 output.accept(ModItems.CANISTER.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.DISPENSING_TAP_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })
@@ -303,6 +304,7 @@ public class ModCreativeTabs {
                 output.accept(ModFluids.DISTILLATE_BUCKET.get());
                 output.accept(ModFluids.MASH_BUCKET.get());
                 output.accept(ModFluids.WORT_BUCKET.get());
+                output.accept(ModItems.AMINOBLAZEETHANOL_BUCKET.get());
             })
             .build()
     );
@@ -322,9 +324,10 @@ public class ModCreativeTabs {
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());
-                // Пиво (автор 22.09) — создаётся в сусловарочном котле.
+                // Пиво и водка (автор 22.09, 23.09).
                 output.accept(ModItems.BEER_MUG.get());
                 output.accept(ModItems.BEER_BUCKET.get());
+                output.accept(ModItems.VODKA_BOTTLE.get());
                 // Админские сингулярности — специально не имеют crafting recipes.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_HEAT_SOURCE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_ENERGY_SOURCE_ITEM.get());

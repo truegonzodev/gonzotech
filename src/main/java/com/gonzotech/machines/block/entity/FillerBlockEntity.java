@@ -39,7 +39,8 @@ import net.minecraft.world.level.block.state.BlockState;
 public class FillerBlockEntity extends BaseMachineBlockEntity implements
         Sinks.GthSink, Sinks.GtuSink, Sinks.WaterSink, Sinks.RectificateSink,
         Sinks.SulfuricAcidSink, Sinks.EthyleneSink, Sinks.AminoblazeethanolSink,
-        Sinks.FormaldehydeSink {
+        Sinks.FormaldehydeSink, Sinks.DistillateSink, Sinks.MashSink, Sinks.WortSink,
+        Sinks.BoilingWaterSink, Sinks.PoisonPotionSink {
 
     public static final int TANK_CAPACITY = 9_000;
     public static final int GTH_CAPACITY = 2_000;
@@ -248,6 +249,31 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         return receiveFluidToTank(FLUID_FORMALDEHYDE, amount, simulate);
     }
 
+    @Override
+    public long receiveDistillate(long amount, boolean simulate) {
+        return receiveFluidToTank(FLUID_DISTILLATE, amount, simulate);
+    }
+
+    @Override
+    public long receiveMash(long amount, int rotPercent, boolean simulate) {
+        return receiveFluidToTank(FLUID_MASH, amount, simulate);
+    }
+
+    @Override
+    public long receiveWort(long amount, int alcoholPercent, boolean simulate) {
+        return receiveFluidToTank(FLUID_WORT, amount, simulate);
+    }
+
+    @Override
+    public long receiveBoilingWater(long amount, boolean simulate) {
+        return receiveFluidToTank(FLUID_HOT_WATER, amount, simulate);
+    }
+
+    @Override
+    public long receivePoisonPotion(long amount, boolean simulate) {
+        return receiveFluidToTank(FLUID_POISON_POTION, amount, simulate);
+    }
+
     // ─────────────────────── Смена баков местами ───────────────────────
 
     public boolean swapTanks(Player player) {
@@ -289,9 +315,13 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             if ((st.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
                     || st.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem)
                     && com.gonzotech.core.item.CorrosiveBucketItem.isExpired(st, gameTime)) {
+                boolean isFluidBucket = st.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem;
                 items.set(i, new ItemStack(ModItems.LEAKY_BUCKET.get(), st.getCount()));
                 level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
                         SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.6F, 1.2F);
+                if (isFluidBucket) {
+                    com.gonzotech.core.item.CorrosiveFluidBucketItem.spillAcidNear(level, pos);
+                }
                 changed = true;
             }
         }
@@ -375,6 +405,42 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 addOutputItem(outSlot, new ItemStack(Items.BUCKET));
                 return true;
             }
+        } else if (in.is(ModFluids.DISTILLATE_BUCKET.get()) && (tankType == FLUID_EMPTY || tankType == FLUID_DISTILLATE) && tankSpace >= 1000) {
+            if (canAcceptItem(out, Items.BUCKET, 1)) {
+                if (tankType == FLUID_EMPTY) tankType = FLUID_DISTILLATE;
+                tankAmount += 1000;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(Items.BUCKET));
+                return true;
+            }
+        } else if (in.is(ModFluids.MASH_BUCKET.get()) && (tankType == FLUID_EMPTY || tankType == FLUID_MASH) && tankSpace >= 1000) {
+            if (canAcceptItem(out, Items.BUCKET, 1)) {
+                if (tankType == FLUID_EMPTY) tankType = FLUID_MASH;
+                tankAmount += 1000;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(Items.BUCKET));
+                return true;
+            }
+        } else if ((in.is(ModFluids.WORT_BUCKET.get()) || in.is(ModItems.BEER_BUCKET.get())) && (tankType == FLUID_EMPTY || tankType == FLUID_WORT) && tankSpace >= 1000) {
+            if (canAcceptItem(out, Items.BUCKET, 1)) {
+                if (tankType == FLUID_EMPTY) tankType = FLUID_WORT;
+                tankAmount += 1000;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(Items.BUCKET));
+                return true;
+            }
+        } else if (in.is(ModItems.AMINOBLAZEETHANOL_BUCKET.get()) && (tankType == FLUID_EMPTY || tankType == FLUID_AMINOBLAZEETHANOL) && tankSpace >= 1000) {
+            if (canAcceptItem(out, Items.BUCKET, 1)) {
+                if (tankType == FLUID_EMPTY) tankType = FLUID_AMINOBLAZEETHANOL;
+                tankAmount += 1000;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(Items.BUCKET));
+                return true;
+            }
         } else if (in.is(ModItems.CANISTER.get())) {
             String canFluid = CanisterItem.getStoredFluid(in);
             int canAmount = CanisterItem.getStoredAmount(in);
@@ -452,6 +518,34 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                     com.gonzotech.core.item.CorrosiveBucketItem.initLeakAt(corrosive, level.getGameTime());
                 }
                 addOutputItem(outSlot, corrosive);
+                return true;
+            } else if (tankType == FLUID_DISTILLATE && canAcceptItem(out, ModFluids.DISTILLATE_BUCKET.get(), 1)) {
+                tankAmount -= 1000;
+                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                applyTankChange(isLeftTank, tankType, tankAmount, 0);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(ModFluids.DISTILLATE_BUCKET.get()));
+                return true;
+            } else if (tankType == FLUID_MASH && canAcceptItem(out, ModFluids.MASH_BUCKET.get(), 1)) {
+                tankAmount -= 1000;
+                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                applyTankChange(isLeftTank, tankType, tankAmount, 0);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(ModFluids.MASH_BUCKET.get()));
+                return true;
+            } else if (tankType == FLUID_WORT && canAcceptItem(out, ModFluids.WORT_BUCKET.get(), 1)) {
+                tankAmount -= 1000;
+                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                applyTankChange(isLeftTank, tankType, tankAmount, 0);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(ModFluids.WORT_BUCKET.get()));
+                return true;
+            } else if (tankType == FLUID_AMINOBLAZEETHANOL && canAcceptItem(out, ModItems.AMINOBLAZEETHANOL_BUCKET.get(), 1)) {
+                tankAmount -= 1000;
+                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                applyTankChange(isLeftTank, tankType, tankAmount, 0);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(ModItems.AMINOBLAZEETHANOL_BUCKET.get()));
                 return true;
             }
         } else if (in.is(ModItems.CANISTER.get()) && tankAmount > 0 && out.isEmpty()) {

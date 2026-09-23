@@ -454,9 +454,13 @@ public final class Phase3Events {
                 || stack.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem) {
             long leakAt = com.gonzotech.core.item.CorrosiveBucketItem.getLeakAt(stack, level.getGameTime());
             if (level.getGameTime() >= leakAt) {
+                boolean isFluidBucket = stack.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem;
                 itemEntity.setItem(new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount()));
                 level.playSound(null, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
                         net.minecraft.sounds.SoundEvents.LAVA_EXTINGUISH, net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.2F);
+                if (isFluidBucket) {
+                    com.gonzotech.core.item.CorrosiveFluidBucketItem.spillAcidNear(level, itemEntity.blockPosition());
+                }
             }
         }
     }

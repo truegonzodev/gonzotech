@@ -181,6 +181,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("third_filler", () -> new BlockEntityType<>(
             com.gonzotech.machines.block.entity.FillerBlockEntity::new, false, ModMachines.THIRD_FILLER.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.DispensingTapBlockEntity>> DISPENSING_TAP =
+        BLOCK_ENTITIES.register("dispensing_tap", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.DispensingTapBlockEntity::new, false, ModMachines.DISPENSING_TAP.get()));
+
     public static final Supplier<BlockEntityType<com.gonzotech.core.block.entity.CanisterBlockEntity>> CANISTER =
         BLOCK_ENTITIES.register("canister", () -> new BlockEntityType<>(
             com.gonzotech.core.block.entity.CanisterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.CANISTER.get()));

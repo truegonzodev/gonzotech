@@ -284,6 +284,16 @@ public class ModItems {
     public static final DeferredItem<com.gonzotech.core.item.CorrosiveBucketItem> ETHYLENE_BUCKET =
         ITEMS.registerItem("ethylene_bucket", com.gonzotech.core.item.CorrosiveBucketItem::new);
 
+    /** Ведро аминоблейзатанола — химический синтез, блока в мире нет. */
+    public static final DeferredItem<Item> AMINOBLAZEETHANOL_BUCKET =
+        ITEMS.registerItem("aminoblazeethanol_bucket", props ->
+            new Item(props.stacksTo(1).craftRemainder(net.minecraft.world.item.Items.BUCKET)));
+
+    /** Бутылка водки — наливается в разливном кране (дистиллят 128 mB + пузырёк). */
+    public static final DeferredItem<Item> VODKA_BOTTLE =
+        ITEMS.registerItem("vodka_bottle", props ->
+            new Item(props.stacksTo(16).craftRemainder(net.minecraft.world.item.Items.GLASS_BOTTLE)));
+
     /**
      * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
      * игрок пытается скрафтить закрытую машину (напр. эл. печь) до нужного
