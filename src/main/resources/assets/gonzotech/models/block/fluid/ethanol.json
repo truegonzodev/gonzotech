@@ -1,8 +1,8 @@
 {
   "parent": "minecraft:block/template_fluid",
   "textures": {
-    "particle": "minecraft:block/water_still",
-    "still": "minecraft:block/water_still",
-    "flow": "minecraft:block/water_flow"
+    "particle": "gonzotech:block/fluid/ethanol_still",
+    "still": "gonzotech:block/fluid/ethanol_still",
+    "flow": "gonzotech:block/fluid/ethanol_flow"
   }
 }

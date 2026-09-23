@@ -298,8 +298,11 @@ public class ModCreativeTabs {
                 output.accept(ModItems.CALCIUM_CHLORIDE.get());
                 output.accept(ModFluids.ETHANOL_BUCKET.get());
                 output.accept(ModFluids.FORMALDEHYDE_BUCKET.get());
-                output.accept(ModItems.SULFURIC_ACID_BUCKET.get());
+                output.accept(ModFluids.SULFURIC_ACID_BUCKET.get());
                 output.accept(ModItems.ETHYLENE_BUCKET.get());
+                output.accept(ModFluids.DISTILLATE_BUCKET.get());
+                output.accept(ModFluids.MASH_BUCKET.get());
+                output.accept(ModFluids.WORT_BUCKET.get());
             })
             .build()
     );

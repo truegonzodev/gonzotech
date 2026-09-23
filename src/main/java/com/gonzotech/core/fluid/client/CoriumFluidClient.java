@@ -7,71 +7,60 @@ import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtension
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 
 /**
- * Клиентская регистрация текстур и оттенков для жидкостей мода
- * (кориум, этанол/ректификат, формальдегид).
- * Предотвращает NPE в FluidSpriteCache.getFluidSprites при тесселяции жидкости в мире.
+ * Клиентская регистрация текстур и оттенков для жидкостей мода Gonzo Tech.
+ * Текстуры лежат в assets/gonzotech/textures/block/fluid/ в формате 16x320 (still) и 32x512 (flow).
+ * 32-bit ARGB в PNG напрямую определяет прозрачность и цвет каждого пикселя в мире.
  */
 public final class CoriumFluidClient {
-
-    private static final ResourceLocation WATER_STILL = ResourceLocation.withDefaultNamespace("block/water_still");
-    private static final ResourceLocation WATER_FLOW = ResourceLocation.withDefaultNamespace("block/water_flow");
 
     private CoriumFluidClient() {
     }
 
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
-        // 1. Расплавленный кориум (серый радиоактивный расплав)
+        // 1. Расплавленный кориум
+        registerFluid(event, ModFluids.MOLTEN_CORIUM_TYPE.get(), "molten_corium", 0xFFFFFFFF);
+
+        // 2. Этанол / Ректификат (water_type, semitransparent)
+        registerFluid(event, ModFluids.ETHANOL_TYPE.get(), "ethanol", 0xFFFFFFFF);
+
+        // 3. Формальдегид (lava_type, nottransparent)
+        registerFluid(event, ModFluids.FORMALDEHYDE_TYPE.get(), "formaldehyde", 0xFFFFFFFF);
+
+        // 4. Серная кислота (water_type, semitransparent)
+        registerFluid(event, ModFluids.SULFURIC_ACID_TYPE.get(), "sulfuric_acid", 0xFFFFFFFF);
+
+        // 5. Дистиллят (water_type, semitransparent)
+        registerFluid(event, ModFluids.DISTILLATE_TYPE.get(), "distillate", 0xFFFFFFFF);
+
+        // 6. Брага (waterlava_type, nottransparent)
+        registerFluid(event, ModFluids.MASH_TYPE.get(), "mash", 0xFFFFFFFF);
+
+        // 7. Сусло (water_type, semitransparent)
+        registerFluid(event, ModFluids.WORT_TYPE.get(), "wort", 0xFFFFFFFF);
+    }
+
+    private static void registerFluid(RegisterClientExtensionsEvent event,
+                                      net.neoforged.neoforge.fluids.FluidType type,
+                                      String textureName,
+                                      int tintColor) {
+        ResourceLocation still = ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "block/fluid/" + textureName + "_still");
+        ResourceLocation flow = ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "block/fluid/" + textureName + "_flow");
+
         event.registerFluidType(new IClientFluidTypeExtensions() {
             @Override
             public ResourceLocation getStillTexture() {
-                return ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "block/fluid/molten_corium_still");
+                return still;
             }
 
             @Override
             public ResourceLocation getFlowingTexture() {
-                return ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "block/fluid/molten_corium_flow");
+                return flow;
             }
 
             @Override
             public int getTintColor() {
-                return 0xFF9A9A9A;
+                return tintColor;
             }
-        }, ModFluids.MOLTEN_CORIUM_TYPE.get());
-
-        // 2. Этанол / Ректификат (прозрачный бирюзово-голубой спирт #8affe9)
-        event.registerFluidType(new IClientFluidTypeExtensions() {
-            @Override
-            public ResourceLocation getStillTexture() {
-                return WATER_STILL;
-            }
-
-            @Override
-            public ResourceLocation getFlowingTexture() {
-                return WATER_FLOW;
-            }
-
-            @Override
-            public int getTintColor() {
-                return 0xFF8AFFE9;
-            }
-        }, ModFluids.ETHANOL_TYPE.get());
-
-        // 3. Формальдегид (ядовито-сиреневая едкая жидкость #8374a6)
-        event.registerFluidType(new IClientFluidTypeExtensions() {
-            @Override
-            public ResourceLocation getStillTexture() {
-                return WATER_STILL;
-            }
-
-            @Override
-            public ResourceLocation getFlowingTexture() {
-                return WATER_FLOW;
-            }
-
-            @Override
-            public int getTintColor() {
-                return 0xFF8374A6;
-            }
-        }, ModFluids.FORMALDEHYDE_TYPE.get());
+        }, type);
     }
 }

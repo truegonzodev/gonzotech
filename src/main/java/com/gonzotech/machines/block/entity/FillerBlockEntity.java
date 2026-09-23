@@ -286,7 +286,8 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         long gameTime = level.getGameTime();
         for (int i = 0; i <= 3; i++) {
             ItemStack st = items.get(i);
-            if (st.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
+            if ((st.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
+                    || st.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem)
                     && com.gonzotech.core.item.CorrosiveBucketItem.isExpired(st, gameTime)) {
                 items.set(i, new ItemStack(ModItems.LEAKY_BUCKET.get(), st.getCount()));
                 level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,

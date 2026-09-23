@@ -450,7 +450,8 @@ public final class Phase3Events {
         }
 
         // Ведро серной кислоты или этилена разъедается через 180 тиков лёжа на земле
-        if (stack.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem) {
+        if (stack.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
+                || stack.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem) {
             long leakAt = com.gonzotech.core.item.CorrosiveBucketItem.getLeakAt(stack, level.getGameTime());
             if (level.getGameTime() >= leakAt) {
                 itemEntity.setItem(new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount()));

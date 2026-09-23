@@ -265,8 +265,20 @@ public class ModItems {
         ITEMS.registerItem("leaky_bucket", props -> new Item(props.stacksTo(16)));
 
     /** Ведро серной кислоты: живёт 180 тиков, затем превращается в дырявое ведро. */
-    public static final DeferredItem<com.gonzotech.core.item.CorrosiveBucketItem> SULFURIC_ACID_BUCKET =
-        ITEMS.registerItem("sulfuric_acid_bucket", com.gonzotech.core.item.CorrosiveBucketItem::new);
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> SULFURIC_ACID_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.SULFURIC_ACID_BUCKET;
+
+    /** Ведро дистиллята. */
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> DISTILLATE_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.DISTILLATE_BUCKET;
+
+    /** Ведро браги. */
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> MASH_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.MASH_BUCKET;
+
+    /** Ведро сусла. */
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> WORT_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.WORT_BUCKET;
 
     /** Ведро этилена: живёт 180 тиков, затем превращается в дырявое ведро. */
     public static final DeferredItem<com.gonzotech.core.item.CorrosiveBucketItem> ETHYLENE_BUCKET =
