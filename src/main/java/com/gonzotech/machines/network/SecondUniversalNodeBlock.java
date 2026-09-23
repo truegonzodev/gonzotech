@@ -28,7 +28,8 @@ public final class SecondUniversalNodeBlock extends UniversalNodeBlock implement
             case WIRE -> SecondTierDefs.WIRE_THROUGHPUT;
             case HEAT -> SecondTierDefs.HEAT_THROUGHPUT;
             case MASH -> SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT / 2;
-            case WATER, STEAM, WORT, DISTILLATE, RECTIFICATE, BOILING_WATER, POISON_POTION ->
+            case WATER, STEAM, WORT, DISTILLATE, RECTIFICATE, BOILING_WATER, POISON_POTION,
+                 SULFURIC_ACID, ETHYLENE, AMINOBLAZEETHANOL, FORMALDEHYDE ->
                 SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT;
             case ITEM -> SecondTierDefs.ITEM_THROUGHPUT;
         };

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "TWT",
+    "EHE",
+    "TTT"
+  ],
+  "key": {
+    "T": "gonzotech:tungsten_ingot",
+    "W": "gonzotech:first_wire",
+    "H": "gonzotech:first_heat_pipe",
+    "E": "gonzotech:first_universal_fluid_pipe"
+  },
+  "result": {
+    "id": "gonzotech:third_filler",
+    "count": 1
+  }
+}

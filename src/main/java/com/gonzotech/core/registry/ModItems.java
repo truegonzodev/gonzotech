@@ -140,6 +140,13 @@ public class ModItems {
     public static final DeferredItem<Item> RESINOUS_SAWDUST = ITEMS.registerSimpleItem("resinous_sawdust");
     /** Твердосмолистые опилки — продукт измельчения еловой и акациевой древесины. */
     public static final DeferredItem<Item> HARD_RESINOUS_SAWDUST = ITEMS.registerSimpleItem("hard_resinous_sawdust");
+    /** Поваренная соль — продукт выпаривания солёной воды. */
+    public static final DeferredItem<Item> SALT = ITEMS.registerSimpleItem("salt");
+    /** Хлорид кальция — химический продукт реакции в наполнителе. */
+    public static final DeferredItem<Item> CALCIUM_CHLORIDE = ITEMS.registerSimpleItem("calcium_chloride");
+    /** Канистра — переносная ёмкость под жидкости (8000 mB). */
+    public static final DeferredItem<com.gonzotech.core.item.CanisterItem> CANISTER =
+        ITEMS.registerItem("canister", props -> new com.gonzotech.core.item.CanisterItem(ModBlocks.CANISTER.get(), props.stacksTo(1)));
 
     /** Reusable selectors for the press; they are never consumed by a stamp. */
     public static final DeferredItem<Item> FLAT_PUNCH =

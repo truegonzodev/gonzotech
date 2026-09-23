@@ -62,7 +62,8 @@ public final class ItemToxicity {
      */
     private static final Map<String, Double> DIRECT_TOXICITY = Map.ofEntries(
             Map.entry("dead_slime_block", 1.0 * RadUnits.MILLI),
-            Map.entry("dead_slime_bucket", 1.0 * RadUnits.MILLI)
+            Map.entry("dead_slime_bucket", 1.0 * RadUnits.MILLI),
+            Map.entry("formaldehyde_bucket", 54.0 * RadUnits.MILLI)
     );
 
     private ItemToxicity() {
@@ -82,6 +83,15 @@ public final class ItemToxicity {
         }
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (!id.getNamespace().equals("gonzotech")) {
+            return 0.0;
+        }
+        if (id.getPath().equals("canister")) {
+            if (data != null) {
+                CompoundTag tag = data.copyTag();
+                if ("formaldehyde".equals(tag.getString("fluid")) && tag.getInt("amount") > 0) {
+                    return 12.0 * RadUnits.MILLI; // Канистра формальдегида: 12 mTx/s
+                }
+            }
             return 0.0;
         }
         return toxicityByPath(id.getPath());

@@ -58,6 +58,10 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     protected static final ResourceLocation BAR_DISTILLATE = gui("bar_distillate.png");
     protected static final ResourceLocation BAR_RECTIFICATE = gui("bar_rectificate.png");
     protected static final ResourceLocation BAR_POISON = gui("bar_poison.png");
+    protected static final ResourceLocation BAR_SULFURIC_ACID = gui("bar_sulfuric_acid.png");
+    protected static final ResourceLocation BAR_ETHYLENE = gui("bar_ethylene.png");
+    protected static final ResourceLocation BAR_AMINOBLAZEETHANOL = gui("bar_aminoblazeethanol.png");
+    protected static final ResourceLocation BAR_FORMALDEHYDE = gui("bar_formaldehyde.png");
 
     private GuiMask mask = GuiMask.forTexture(null, 0, 0);
 
@@ -182,6 +186,27 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         int scLeft = clip[0], scTop = clip[1], scBottom = clip[3];
         if (right <= scLeft) return;
         g.enableScissor(scLeft, scTop, right, scBottom);
+        for (int py = y; py < y + h; py += 16) {
+            for (int px = x; px < x + w; px += 16) {
+                g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
+            }
+        }
+        g.disableScissor();
+    }
+
+    /**
+     * Горизонтальная шкала (прогресс): открывает правые {@code fraction·w} пикселей
+     * (растёт справа налево). Клипуется по дырке PNG.
+     */
+    protected void drawHBarTexRightToLeft(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
+        int[] clip = clipRect(x, y, w, h);
+        if (clip == null) return;
+        int filled = Math.round(clamp01(fraction) * w);
+        if (filled <= 0) return;
+        int left = Math.max(clip[0], x + w - filled);
+        int scTop = clip[1], scRight = clip[2], scBottom = clip[3];
+        if (left >= scRight) return;
+        g.enableScissor(left, scTop, scRight, scBottom);
         for (int py = y; py < y + h; py += 16) {
             for (int px = x; px < x + w; px += 16) {
                 g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);

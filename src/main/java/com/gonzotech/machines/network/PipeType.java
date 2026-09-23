@@ -81,7 +81,27 @@ public enum PipeType {
      * Зелье отравления II: результат перегонки гнилой браги (>8% гнили).
      * Скорость как у воды (база 1000 mB/t). Цвет: #839c66.
      */
-    POISON_POTION("poison_potion", true, 0x839C66, 1000, GtUnits.U_MB);
+    POISON_POTION("poison_potion", true, 0x839C66, 1000, GtUnits.U_MB),
+
+    /**
+     * Серная кислота: кислотный реагент наполнителя. Скорость как у воды (1000 mB/t). Цвет: #c8ff9e.
+     */
+    SULFURIC_ACID("sulfuric_acid", true, 0xC8FF9E, 1000, GtUnits.U_MB),
+
+    /**
+     * Этилен: мономер для полиэтилена. Скорость как у воды (1000 mB/t). Цвет: #42ff94.
+     */
+    ETHYLENE("ethylene", true, 0x42FF94, 1000, GtUnits.U_MB),
+
+    /**
+     * Аминоблейзатанол: реактивный органический раствор. Скорость как у воды (1000 mB/t). Цвет: #ffda05.
+     */
+    AMINOBLAZEETHANOL("aminoblazeethanol", true, 0xFFDA05, 1000, GtUnits.U_MB),
+
+    /**
+     * Формальдегид: едкий альдегид. Скорость как у воды (1000 mB/t). Цвет: #8374a6.
+     */
+    FORMALDEHYDE("formaldehyde", true, 0x8374A6, 1000, GtUnits.U_MB);
 
     private final String id;
     private final boolean fluid;

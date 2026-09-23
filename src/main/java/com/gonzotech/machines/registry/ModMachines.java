@@ -362,6 +362,10 @@ public final class ModMachines {
     public static final DeferredBlock<SnaketypeCondenserBlock> THIRD_SNAKETYPE_CONDENSER =
         BLOCKS.registerBlock("third_snaketype_condenser", SnaketypeCondenserBlock::new, machineMetal());
 
+    /** Эпоха III (Открытие 3): Наполнитель — распределитель жидкостей и химический полу-реактор. */
+    public static final DeferredBlock<com.gonzotech.machines.block.FillerBlock> THIRD_FILLER =
+        BLOCKS.registerBlock("third_filler", com.gonzotech.machines.block.FillerBlock::new, machineMetal());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
@@ -548,6 +552,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_SNAKETYPE_CONDENSER_ITEM =
         ITEMS.registerSimpleBlockItem("third_snaketype_condenser", THIRD_SNAKETYPE_CONDENSER);
+
+    public static final DeferredItem<BlockItem> THIRD_FILLER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_filler", THIRD_FILLER);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

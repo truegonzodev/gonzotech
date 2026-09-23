@@ -91,6 +91,26 @@ public final class Sinks {
         long receivePoisonPotion(long amount, boolean simulate);
     }
 
+    /** Блок умеет принимать серную кислоту (mB) от соседа или по трубе. */
+    public interface SulfuricAcidSink {
+        long receiveSulfuricAcid(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать этилен (mB) от соседа или по трубе. */
+    public interface EthyleneSink {
+        long receiveEthylene(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать аминоблейзатанол (mB) от соседа или по трубе. */
+    public interface AminoblazeethanolSink {
+        long receiveAminoblazeethanol(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать формальдегид (mB) от соседа или по трубе. */
+    public interface FormaldehydeSink {
+        long receiveFormaldehyde(long amount, boolean simulate);
+    }
+
     /**
      * Есть ли среди 6 соседей блок-сущность заданного класса.
      * Используется для проверки «вижу ли я нужного соседа в цепочке».

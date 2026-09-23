@@ -41,7 +41,8 @@ public final class PipeGeometry {
             // Жидкостное семейство (вода/пар/брага/сусло/дистиллят/ретификат/кипяток/зелье)
             // делит ОДИН угол сечения FLUID — потому в пучке одновременно возможна
             // только одна жидкостная труба.
-            case WATER, STEAM, MASH, WORT, DISTILLATE, RECTIFICATE, BOILING_WATER, POISON_POTION -> new int[]{10, 10};
+            case WATER, STEAM, MASH, WORT, DISTILLATE, RECTIFICATE, BOILING_WATER, POISON_POTION,
+                 SULFURIC_ACID, ETHYLENE, AMINOBLAZEETHANOL, FORMALDEHYDE -> new int[]{10, 10};
             case ITEM -> new int[]{10, 2};   // предметы — низ-право
         };
     }

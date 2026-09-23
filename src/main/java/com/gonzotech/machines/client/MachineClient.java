@@ -38,5 +38,6 @@ public final class MachineClient {
         event.register(ModMenus.THIRD_DISTILLER.get(), DistillerScreen::new);
         event.register(ModMenus.THIRD_RECTIFIER.get(), RectifierScreen::new);
         event.register(ModMenus.THIRD_SNAKETYPE_CONDENSER.get(), SnaketypeCondenserScreen::new);
+        event.register(ModMenus.THIRD_FILLER.get(), FillerScreen::new);
     }
 }

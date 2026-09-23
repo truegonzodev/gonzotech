@@ -70,6 +70,14 @@ public final class GtUnits {
     public static final int RECTIFICATE = 0x8AFFE9;
     /** Зелье отравления (гниль): #839c66 (автор 23.09.2026). */
     public static final int POISON_POTION = 0x839C66;
+    /** Серная кислота: #c8ff9e (автор 23.09.2026). */
+    public static final int SULFURIC_ACID = 0xC8FF9E;
+    /** Этилен: #42ff94 (автор 23.09.2026). */
+    public static final int ETHYLENE = 0x42FF94;
+    /** Аминоблейзатанол: #ffda05 (автор 23.09.2026). */
+    public static final int AMINOBLAZEETHANOL = 0xFFDA05;
+    /** Формальдегид: #8374a6 (автор 23.09.2026). */
+    public static final int FORMALDEHYDE = 0x8374A6;
 
     // ─────────────────── Lang-ключи: обозначения и имена ───────────────────
 
@@ -321,6 +329,54 @@ public final class GtUnits {
     public static List<Component> poisonTooltip(Object value, Object capacity) {
         return List.of(
             fluidTitle("resource.gonzotech.poison_potion", value, capacity, POISON_POTION)
+        );
+    }
+
+    /**
+     * Тултип воды (с опциональной солёностью):
+     * line 1: «#3c6bb3Вода&f: #3c6bb3X &f/ #3c6bb3X mB»
+     * line 2 (если saltPercent > 0): «&7Солёность: &fX%»
+     */
+    public static List<Component> waterTooltip(Object value, Object capacity, double saltPercent) {
+        if (saltPercent <= 0.001) {
+            return List.of(fluidTitle("resource.gonzotech.water", value, capacity, WATER));
+        }
+        String formatted = saltPercent >= 10.0
+            ? String.format(java.util.Locale.ROOT, "%.0f%%", saltPercent)
+            : String.format(java.util.Locale.ROOT, "%.1f%%", saltPercent);
+        return List.of(
+            fluidTitle("resource.gonzotech.water", value, capacity, WATER),
+            Component.empty()
+                .append(Component.translatable("gui.gonzotech.lore.salt_prefix").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" "))
+                .append(Component.literal(formatted).withStyle(ChatFormatting.WHITE))
+        );
+    }
+
+    /** Тултип серной кислоты: «#c8ff9eСерная кислота&f: #c8ff9eX &f/ #c8ff9eX mB». */
+    public static List<Component> sulfuricAcidTooltip(Object value, Object capacity) {
+        return List.of(fluidTitle("resource.gonzotech.sulfuric_acid", value, capacity, SULFURIC_ACID));
+    }
+
+    /** Тултип этилена: «#42ff94Этилен&f: #42ff94X &f/ #42ff94X mB». */
+    public static List<Component> ethyleneTooltip(Object value, Object capacity) {
+        return List.of(fluidTitle("resource.gonzotech.ethylene", value, capacity, ETHYLENE));
+    }
+
+    /** Тултип аминоблейзатанола: «#ffda05Аминоблейзатанол&f: #ffda05X &f/ #ffda05X mB». */
+    public static List<Component> aminoblazeethanolTooltip(Object value, Object capacity) {
+        return List.of(fluidTitle("resource.gonzotech.aminoblazeethanol", value, capacity, AMINOBLAZEETHANOL));
+    }
+
+    /**
+     * Тултип формальдегида:
+     * line 1: «#8374a6Формальдегид&f: #8374a6X &f/ #8374a6X mB»
+     * line 2: «&cТоксичность: 54 mTx/s»
+     */
+    public static List<Component> formaldehydeTooltip(Object value, Object capacity) {
+        return List.of(
+            fluidTitle("resource.gonzotech.formaldehyde", value, capacity, FORMALDEHYDE),
+            Component.translatable("gui.gonzotech.lore.toxicity_rate", "54 mTx/s").withStyle(ChatFormatting.RED)
         );
     }
 

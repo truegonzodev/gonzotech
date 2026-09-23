@@ -54,6 +54,42 @@ public final class ModFluids {
     public static final Supplier<BucketItem> CORIUM_BUCKET = ITEMS.registerItem("corium_bucket", props ->
         new BucketItem(MOLTEN_CORIUM.get(), props.stacksTo(1).craftRemainder(Items.BUCKET)));
 
+    // ─────────────────────── Этанол (Ректификат) ───────────────────────
+    public static final Supplier<FluidType> ETHANOL_TYPE = FLUID_TYPES.register("ethanol", () ->
+        new FluidType(FluidType.Properties.create()
+            .density(789)
+            .viscosity(1200)
+            .temperature(300)
+            .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
+            .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)
+        ));
+
+    public static final Supplier<FlowingFluid> ETHANOL = FLUIDS.register("ethanol",
+        () -> new BaseFlowingFluid.Source(ethanolProperties()));
+    public static final Supplier<FlowingFluid> FLOWING_ETHANOL = FLUIDS.register("flowing_ethanol",
+        () -> new BaseFlowingFluid.Flowing(ethanolProperties()));
+
+    public static final Supplier<BucketItem> ETHANOL_BUCKET = ITEMS.registerItem("ethanol_bucket", props ->
+        new BucketItem(ETHANOL.get(), props.stacksTo(1).craftRemainder(Items.BUCKET)));
+
+    // ─────────────────────── Формальдегид ───────────────────────
+    public static final Supplier<FluidType> FORMALDEHYDE_TYPE = FLUID_TYPES.register("formaldehyde", () ->
+        new FluidType(FluidType.Properties.create()
+            .density(815)
+            .viscosity(1400)
+            .temperature(290)
+            .sound(SoundActions.BUCKET_FILL, SoundEvents.BUCKET_FILL)
+            .sound(SoundActions.BUCKET_EMPTY, SoundEvents.BUCKET_EMPTY)
+        ));
+
+    public static final Supplier<FlowingFluid> FORMALDEHYDE = FLUIDS.register("formaldehyde",
+        () -> new BaseFlowingFluid.Source(formaldehydeProperties()));
+    public static final Supplier<FlowingFluid> FLOWING_FORMALDEHYDE = FLUIDS.register("flowing_formaldehyde",
+        () -> new BaseFlowingFluid.Flowing(formaldehydeProperties()));
+
+    public static final Supplier<BucketItem> FORMALDEHYDE_BUCKET = ITEMS.registerItem("formaldehyde_bucket", props ->
+        new BucketItem(FORMALDEHYDE.get(), props.stacksTo(1).craftRemainder(Items.BUCKET)));
+
     /**
      * Свойства собираются в методе, а не в static-поле: поле-супплер жидкостей
      * ссылается на свойства и ведро, ведро — на источник жидкости, и цикличная
@@ -69,6 +105,26 @@ public final class ModFluids {
             .tickRate(30)
             .block(ModBlocks.MOLTEN_CORIUM)
             .bucket(CORIUM_BUCKET);
+    }
+
+    private static BaseFlowingFluid.Properties ethanolProperties() {
+        return new BaseFlowingFluid.Properties(ETHANOL_TYPE, ETHANOL, FLOWING_ETHANOL)
+            .slopeFindDistance(4)
+            .levelDecreasePerBlock(1)
+            .explosionResistance(100.0F)
+            .tickRate(5)
+            .block(ModBlocks.ETHANOL)
+            .bucket(ETHANOL_BUCKET);
+    }
+
+    private static BaseFlowingFluid.Properties formaldehydeProperties() {
+        return new BaseFlowingFluid.Properties(FORMALDEHYDE_TYPE, FORMALDEHYDE, FLOWING_FORMALDEHYDE)
+            .slopeFindDistance(4)
+            .levelDecreasePerBlock(1)
+            .explosionResistance(100.0F)
+            .tickRate(5)
+            .block(ModBlocks.FORMALDEHYDE)
+            .bucket(FORMALDEHYDE_BUCKET);
     }
 
     public static void register(IEventBus modEventBus) {

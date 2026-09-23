@@ -235,6 +235,18 @@ public class ModBlocks {
     public static final DeferredBlock<LiquidBlock> MOLTEN_CORIUM = BLOCKS.registerBlock(
         "molten_corium", properties -> new MoltenCoriumBlock(ModFluids.MOLTEN_CORIUM.get(), properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.LAVA));
+    /** Этанол (ректификат) — чистый спирт в мире. */
+    public static final DeferredBlock<LiquidBlock> ETHANOL = BLOCKS.registerBlock(
+        "ethanol", properties -> new LiquidBlock(ModFluids.ETHANOL.get(), properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Формальдегид — едкая жидкость в мире. */
+    public static final DeferredBlock<LiquidBlock> FORMALDEHYDE = BLOCKS.registerBlock(
+        "formaldehyde", properties -> new LiquidBlock(ModFluids.FORMALDEHYDE.get(), properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Канистра: ёмкость под любые жидкости (8000 mB). */
+    public static final DeferredBlock<com.gonzotech.core.block.CanisterBlock> CANISTER = BLOCKS.registerBlock(
+        "canister", com.gonzotech.core.block.CanisterBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.METAL).strength(2.0f, 6.0f).noOcclusion());
     /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
         "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)

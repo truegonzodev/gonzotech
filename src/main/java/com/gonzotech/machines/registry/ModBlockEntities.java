@@ -177,6 +177,14 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("third_snaketype_condenser", () -> new BlockEntityType<>(
             SnaketypeCondenserBlockEntity::new, false, ModMachines.THIRD_SNAKETYPE_CONDENSER.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.FillerBlockEntity>> THIRD_FILLER =
+        BLOCK_ENTITIES.register("third_filler", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.FillerBlockEntity::new, false, ModMachines.THIRD_FILLER.get()));
+
+    public static final Supplier<BlockEntityType<com.gonzotech.core.block.entity.CanisterBlockEntity>> CANISTER =
+        BLOCK_ENTITIES.register("canister", () -> new BlockEntityType<>(
+            com.gonzotech.core.block.entity.CanisterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.CANISTER.get()));
+
     /**
      * The BE factory is invoked only after DeferredRegister has assigned the
      * supplier. Keeping the lookup behind a method avoids Java's illegal direct

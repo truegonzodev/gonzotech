@@ -117,6 +117,9 @@ public final class ModMenus {
     public static final Supplier<MenuType<SnaketypeCondenserMenu>> THIRD_SNAKETYPE_CONDENSER =
         MENUS.register("third_snaketype_condenser", () -> IMenuTypeExtension.create(SnaketypeCondenserMenu::new));
 
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.FillerMenu>> THIRD_FILLER =
+        MENUS.register("third_filler", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.FillerMenu::new));
+
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);
     }
