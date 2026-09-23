@@ -526,16 +526,12 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 targetIsRight = true;
             }
 
-            if (hasWater && countItem(ModItems.SALT.get()) >= 1 && countItem(Items.CALCITE) >= 1
-                    && (countItem(ModItems.CALCIUM_INGOT.get()) >= 1 || countItem(ModItems.CALCIUM_DUST.get()) >= 1)
+            if (hasWater && countGridItem(ModItems.SALT.get()) >= 1 && countGridItem(Items.CALCITE) >= 1
+                    && countCalcium() >= 1
                     && currentGthMilli >= 24L * MachineDefs.MILLI && currentGtuMilli >= 2L * MachineDefs.MILLI) {
                 consumeFromGrid(ModItems.SALT.get(), 1);
                 consumeFromGrid(Items.CALCITE, 1);
-                if (countItem(ModItems.CALCIUM_INGOT.get()) >= 1) {
-                    consumeFromGrid(ModItems.CALCIUM_INGOT.get(), 1);
-                } else {
-                    consumeFromGrid(ModItems.CALCIUM_DUST.get(), 1);
-                }
+                consumeCalcium(1);
                 activeRecipe = 7;
                 targetTankIsRight = targetIsRight;
                 smeltProgress = 0;
@@ -546,12 +542,12 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             // 6. Формальдегид: Этанол (>=19) + 1 соль + 1 нарост + 1 уголь -> формальдегид (16 mB/t)
             if (leftFluidType == FLUID_RECTIFICATE && leftFluidAmount >= 19
                     && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_FORMALDEHYDE && rightFluidAmount + 16 <= TANK_CAPACITY))
-                    && countItem(ModItems.SALT.get()) >= 1 && countItem(Items.NETHER_WART) >= 1
-                    && (countItem(Items.COAL) >= 1 || countItem(Items.CHARCOAL) >= 1)
+                    && countGridItem(ModItems.SALT.get()) >= 1 && countGridItem(Items.NETHER_WART) >= 1
+                    && (countGridItem(Items.COAL) >= 1 || countGridItem(Items.CHARCOAL) >= 1)
                     && currentGthMilli >= 16L * MachineDefs.MILLI && currentGtuMilli >= 7L * MachineDefs.MILLI) {
                 consumeFromGrid(ModItems.SALT.get(), 1);
                 consumeFromGrid(Items.NETHER_WART, 1);
-                if (countItem(Items.COAL) >= 1) {
+                if (countGridItem(Items.COAL) >= 1) {
                     consumeFromGrid(Items.COAL, 1);
                 } else {
                     consumeFromGrid(Items.CHARCOAL, 1);
@@ -565,7 +561,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             // 5. Аминоблейзатанол: Этанол (>=19) + 2 порошка блейза -> аминоблейзатанол (19 mB/t)
             if (leftFluidType == FLUID_RECTIFICATE && leftFluidAmount >= 19
                     && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_AMINOBLAZEETHANOL && rightFluidAmount + 19 <= TANK_CAPACITY))
-                    && countItem(Items.BLAZE_POWDER) >= 2
+                    && countGridItem(Items.BLAZE_POWDER) >= 2
                     && currentGthMilli >= 2L * MachineDefs.MILLI && currentGtuMilli >= 12L * MachineDefs.MILLI) {
                 consumeFromGrid(Items.BLAZE_POWDER, 2);
                 activeRecipe = 5;
@@ -575,7 +571,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             }
 
             // 3. Растворение кальцита: Вода в левом баке + 1 кальцит -> +5 mB соли/t (всего 100 mB)
-            if (leftFluidType == FLUID_WATER && leftFluidAmount > 0 && countItem(Items.CALCITE) >= 1) {
+            if (leftFluidType == FLUID_WATER && leftFluidAmount > 0 && countGridItem(Items.CALCITE) >= 1) {
                 consumeFromGrid(Items.CALCITE, 1);
                 activeRecipe = 3;
                 smeltProgress = 0;
@@ -584,13 +580,13 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             }
 
             // 2. Этилен: Этанол (>=19) + 2 серы + 1 алюм. пыль -> этилен (20 mB/t)
-            int sulfurCount = countItem(ModItems.RAW_SULFUR.get()) + countItem(ModItems.SULFUR_INGOT.get());
+            int sulfurCount = countSulfur();
             if (leftFluidType == FLUID_RECTIFICATE && leftFluidAmount >= 19
                     && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_ETHYLENE && rightFluidAmount + 20 <= TANK_CAPACITY))
-                    && sulfurCount >= 2 && countItem(ModItems.ALUMINUM_DUST.get()) >= 1
+                    && sulfurCount >= 2 && countAluminumDust() >= 1
                     && currentGthMilli >= 32L * MachineDefs.MILLI && currentGtuMilli >= 3L * MachineDefs.MILLI) {
                 consumeSulfur(2);
-                consumeFromGrid(ModItems.ALUMINUM_DUST.get(), 1);
+                consumeAluminumDust(1);
                 activeRecipe = 2;
                 smeltProgress = 0;
                 smeltTotal = 100;
@@ -706,11 +702,61 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         return true;
     }
 
-    private int countItem(net.minecraft.world.item.Item item) {
+    private boolean isSulfur(ItemStack stack) {
+        net.minecraft.world.item.Item raw = ModItems.RAW_ORE_ITEMS.get("sulfur") != null ? ModItems.RAW_ORE_ITEMS.get("sulfur").get() : null;
+        net.minecraft.world.item.Item ingot = ModItems.INGOT_ITEMS.get("sulfur_ingot") != null ? ModItems.INGOT_ITEMS.get("sulfur_ingot").get() : null;
+        return (raw != null && stack.is(raw)) || (ingot != null && stack.is(ingot));
+    }
+
+    private boolean isAluminumDust(ItemStack stack) {
+        net.minecraft.world.item.Item dust = ModItems.DUST_ITEMS.get("aluminum_dust") != null ? ModItems.DUST_ITEMS.get("aluminum_dust").get() : null;
+        return dust != null && stack.is(dust);
+    }
+
+    private boolean isCalcium(ItemStack stack) {
+        net.minecraft.world.item.Item ingot = ModItems.INGOT_ITEMS.get("calcium_ingot") != null ? ModItems.INGOT_ITEMS.get("calcium_ingot").get() : null;
+        net.minecraft.world.item.Item dust = ModItems.DUST_ITEMS.get("calcium_dust") != null ? ModItems.DUST_ITEMS.get("calcium_dust").get() : null;
+        return (ingot != null && stack.is(ingot)) || (dust != null && stack.is(dust));
+    }
+
+    private int countGridItem(net.minecraft.world.item.Item item) {
         int total = 0;
         for (int i = 4; i <= 9; i++) {
             ItemStack stack = items.get(i);
             if (stack.is(item)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    private int countSulfur() {
+        int total = 0;
+        for (int i = 4; i <= 9; i++) {
+            ItemStack stack = items.get(i);
+            if (isSulfur(stack)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    private int countAluminumDust() {
+        int total = 0;
+        for (int i = 4; i <= 9; i++) {
+            ItemStack stack = items.get(i);
+            if (isAluminumDust(stack)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    private int countCalcium() {
+        int total = 0;
+        for (int i = 4; i <= 9; i++) {
+            ItemStack stack = items.get(i);
+            if (isCalcium(stack)) {
                 total += stack.getCount();
             }
         }
@@ -733,7 +779,31 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         int left = count;
         for (int i = 4; i <= 9 && left > 0; i++) {
             ItemStack stack = items.get(i);
-            if (stack.is(ModItems.RAW_SULFUR.get()) || stack.is(ModItems.SULFUR_INGOT.get())) {
+            if (isSulfur(stack)) {
+                int take = Math.min(left, stack.getCount());
+                stack.shrink(take);
+                left -= take;
+            }
+        }
+    }
+
+    private void consumeAluminumDust(int count) {
+        int left = count;
+        for (int i = 4; i <= 9 && left > 0; i++) {
+            ItemStack stack = items.get(i);
+            if (isAluminumDust(stack)) {
+                int take = Math.min(left, stack.getCount());
+                stack.shrink(take);
+                left -= take;
+            }
+        }
+    }
+
+    private void consumeCalcium(int count) {
+        int left = count;
+        for (int i = 4; i <= 9 && left > 0; i++) {
+            ItemStack stack = items.get(i);
+            if (isCalcium(stack)) {
                 int take = Math.min(left, stack.getCount());
                 stack.shrink(take);
                 left -= take;
@@ -764,19 +834,20 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         if (budget <= 0) return false;
 
         long moved = PipeRouting.drain(level, pos, pipeType, budget, level.getGameTime(), (be, p) -> {
+            if (be == this) return null;
             return switch (rightFluidType) {
-                case FLUID_WATER -> be instanceof Sinks.WaterSink s ? s.receiveWater(p, false) : 0;
-                case FLUID_RECTIFICATE -> be instanceof Sinks.RectificateSink s ? s.receiveRectificate(p, false) : 0;
-                case FLUID_SULFURIC_ACID -> be instanceof Sinks.SulfuricAcidSink s ? s.receiveSulfuricAcid(p, false) : 0;
-                case FLUID_ETHYLENE -> be instanceof Sinks.EthyleneSink s ? s.receiveEthylene(p, false) : 0;
-                case FLUID_AMINOBLAZEETHANOL -> be instanceof Sinks.AminoblazeethanolSink s ? s.receiveAminoblazeethanol(p, false) : 0;
-                case FLUID_FORMALDEHYDE -> be instanceof Sinks.FormaldehydeSink s ? s.receiveFormaldehyde(p, false) : 0;
-                case FLUID_MASH -> be instanceof Sinks.MashSink s ? s.receiveMash(p, 0, 0, false) : 0;
-                case FLUID_WORT -> be instanceof Sinks.WortSink s ? s.receiveWort(p, 0, false) : 0;
-                case FLUID_DISTILLATE -> be instanceof Sinks.DistillateSink s ? s.receiveDistillate(p, false) : 0;
-                case FLUID_HOT_WATER -> be instanceof Sinks.HotWaterSink s ? s.receiveHotWater(p, false) : 0;
-                case FLUID_POISON_POTION -> be instanceof Sinks.PoisonPotionSink s ? s.receivePoisonPotion(p, false) : 0;
-                default -> 0;
+                case FLUID_WATER -> be instanceof Sinks.WaterSink s ? s::receiveWater : null;
+                case FLUID_RECTIFICATE -> be instanceof Sinks.RectificateSink s ? s::receiveRectificate : null;
+                case FLUID_SULFURIC_ACID -> be instanceof Sinks.SulfuricAcidSink s ? s::receiveSulfuricAcid : null;
+                case FLUID_ETHYLENE -> be instanceof Sinks.EthyleneSink s ? s::receiveEthylene : null;
+                case FLUID_AMINOBLAZEETHANOL -> be instanceof Sinks.AminoblazeethanolSink s ? s::receiveAminoblazeethanol : null;
+                case FLUID_FORMALDEHYDE -> be instanceof Sinks.FormaldehydeSink s ? s::receiveFormaldehyde : null;
+                case FLUID_MASH -> be instanceof Sinks.MashSink s ? (amt, sim) -> s.receiveMash(amt, 0, 0, sim) : null;
+                case FLUID_WORT -> be instanceof Sinks.WortSink s ? (amt, sim) -> s.receiveWort(amt, 0, sim) : null;
+                case FLUID_DISTILLATE -> be instanceof Sinks.DistillateSink s ? s::receiveDistillate : null;
+                case FLUID_HOT_WATER -> be instanceof Sinks.HotWaterSink s ? s::receiveHotWater : null;
+                case FLUID_POISON_POTION -> be instanceof Sinks.PoisonPotionSink s ? s::receivePoisonPotion : null;
+                default -> null;
             };
         });
 

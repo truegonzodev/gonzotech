@@ -1,6 +1,6 @@
 package com.gonzotech.core.block.entity;
 
-import com.gonzotech.core.registry.ModBlockEntities;
+import com.gonzotech.machines.registry.ModBlockEntities;
 import com.gonzotech.machines.energy.Sinks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
