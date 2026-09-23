@@ -118,7 +118,7 @@ public class GonzoTechMod {
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
             // Клиентские текстуры/тинт расплавленного кориума и жидкостей в мире.
             modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);
-            modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::onRegisterFluidModels);
+            modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::onClientSetup);
             // Развёртка и тинт надетой брони custom_alloy.
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
             // Тряска камеры от эффекта «Тремор» — только на клиенте.

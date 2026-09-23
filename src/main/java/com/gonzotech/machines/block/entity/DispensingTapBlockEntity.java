@@ -96,7 +96,7 @@ public class DispensingTapBlockEntity extends BaseMachineBlockEntity
     }
 
     @Override
-    public long receiveWort(long amount, int alcoholPercent, boolean simulate) {
+    public long receiveWort(long amount, double alcoholPercent, boolean simulate) {
         return wort.receive(amount, simulate);
     }
 

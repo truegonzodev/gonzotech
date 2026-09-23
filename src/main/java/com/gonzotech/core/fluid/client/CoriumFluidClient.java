@@ -2,16 +2,16 @@ package com.gonzotech.core.fluid.client;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.fluid.ModFluids;
+import com.mojang.blaze3d.shaders.FogShape;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.block.FluidModel;
-import net.minecraft.client.renderer.fog.FogData;
-import net.minecraft.client.renderer.fog.environment.FogEnvironment;
-import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.renderer.FogParameters;
+import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.material.Fluid;
-import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +20,9 @@ import org.joml.Vector4f;
 /**
  * Клиентская регистрация текстур, моделей и шейдерных эффектов для жидкостей мода Gonzo Tech:
  * <ul>
- *   <li>{@link RegisterFluidModelsEvent} — регистрация FluidModel с forceTranslucent=true для полупрозрачных жидкостей (этанол, дистиллят, сусло, кислота) и false для непрозрачных;</li>
+ *   <li>{@link ItemBlockRenderTypes#setRenderLayer} — слой TRANSLUCENT для полупрозрачных жидкостей (этанол, дистиллят, сусло, кислота);</li>
  *   <li>Подводный шейдер/оверлей камеры (underwater.png);</li>
- *   <li>Цветная дымка и туман при нахождении игрока внутри жидкости.</li>
+ *   <li>Цветная дымка и туман при нахождении игрока внутри жидкости через {@link IClientFluidTypeExtensions}.</li>
  * </ul>
  */
 public final class CoriumFluidClient {
@@ -34,42 +34,23 @@ public final class CoriumFluidClient {
     }
 
     /**
-     * Регистрация FluidModel для чанк-мешера 1.21.4 NeoForge.
-     * Задаёт слой рендеринга (TRANSLUCENT для прозрачных, SOLID для кориума/формальдегида/браги).
+     * Регистрация слоёв полупрозрачности в FMLClientSetupEvent.
      */
-    public static void onRegisterFluidModels(RegisterFluidModelsEvent event) {
-        // 1. Расплавленный кориум (solid)
-        registerModel(event, ModFluids.MOLTEN_CORIUM.get(), ModFluids.FLOWING_MOLTEN_CORIUM.get(), "molten_corium", false);
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            // Полупрозрачные жидкости (TRANSLUCENT)
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.ETHANOL.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.FLOWING_ETHANOL.get(), RenderType.translucent());
 
-        // 2. Этанол / Ректификат (translucent)
-        registerModel(event, ModFluids.ETHANOL.get(), ModFluids.FLOWING_ETHANOL.get(), "ethanol", true);
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.SULFURIC_ACID.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.FLOWING_SULFURIC_ACID.get(), RenderType.translucent());
 
-        // 3. Формальдегид (solid)
-        registerModel(event, ModFluids.FORMALDEHYDE.get(), ModFluids.FLOWING_FORMALDEHYDE.get(), "formaldehyde", false);
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.DISTILLATE.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.FLOWING_DISTILLATE.get(), RenderType.translucent());
 
-        // 4. Серная кислота (translucent)
-        registerModel(event, ModFluids.SULFURIC_ACID.get(), ModFluids.FLOWING_SULFURIC_ACID.get(), "sulfuric_acid", true);
-
-        // 5. Дистиллят (translucent)
-        registerModel(event, ModFluids.DISTILLATE.get(), ModFluids.FLOWING_DISTILLATE.get(), "distillate", true);
-
-        // 6. Брага (solid)
-        registerModel(event, ModFluids.MASH.get(), ModFluids.FLOWING_MASH.get(), "mash", false);
-
-        // 7. Сусло (translucent)
-        registerModel(event, ModFluids.WORT.get(), ModFluids.FLOWING_WORT.get(), "wort", true);
-    }
-
-    private static void registerModel(RegisterFluidModelsEvent event, Fluid still, Fluid flow, String name, boolean forceTranslucent) {
-        ResourceLocation stillLoc = ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "block/fluid/" + name + "_still");
-        ResourceLocation flowLoc = ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "block/fluid/" + name + "_flow");
-
-        event.register(new FluidModel.Unbaked(
-                new Material(stillLoc, forceTranslucent),
-                new Material(flowLoc, forceTranslucent),
-                null,
-                null
-        ), still, flow);
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.WORT.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModFluids.FLOWING_WORT.get(), RenderType.translucent());
+        });
     }
 
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
@@ -133,17 +114,15 @@ public final class CoriumFluidClient {
             }
 
             @Override
-            public void modifyFogColor(Camera camera, float partialTick, ClientLevel level,
-                                       int renderDistance, float darkenWorldAmount, Vector4f fluidFogColor) {
-                fluidFogColor.set(fogR, fogG, fogB, 1.0F);
+            public Vector4f modifyFogColor(Camera camera, float partialTick, ClientLevel level,
+                                           int renderDistance, float darkenWorldAmount, Vector4f fluidFogColor) {
+                return new Vector4f(fogR, fogG, fogB, 1.0F);
             }
 
             @Override
-            public void modifyFogRender(Camera camera, @Nullable FogEnvironment environment,
-                                        float renderDistance, float partialTick, FogData fogData) {
-                fogData.environmentalStart = fogStart;
-                fogData.environmentalEnd = fogEnd;
-                fogData.color.set(fogR, fogG, fogB, 1.0F);
+            public FogParameters modifyFogRender(Camera camera, FogRenderer.FogMode mode,
+                                                 float renderDistance, float partialTick, FogParameters fogParameters) {
+                return new FogParameters(fogStart, fogEnd, FogShape.SPHERE, fogR, fogG, fogB, 1.0F);
             }
         }, type);
     }

@@ -40,7 +40,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         Sinks.GthSink, Sinks.GtuSink, Sinks.WaterSink, Sinks.RectificateSink,
         Sinks.SulfuricAcidSink, Sinks.EthyleneSink, Sinks.AminoblazeethanolSink,
         Sinks.FormaldehydeSink, Sinks.DistillateSink, Sinks.MashSink, Sinks.WortSink,
-        Sinks.BoilingWaterSink, Sinks.PoisonPotionSink {
+        Sinks.HotWaterSink, Sinks.PoisonPotionSink {
 
     public static final int TANK_CAPACITY = 9_000;
     public static final int GTH_CAPACITY = 2_000;
@@ -255,17 +255,17 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     }
 
     @Override
-    public long receiveMash(long amount, int rotPercent, boolean simulate) {
+    public long receiveMash(long amount, double alcoholPercent, double rotPercent, boolean simulate) {
         return receiveFluidToTank(FLUID_MASH, amount, simulate);
     }
 
     @Override
-    public long receiveWort(long amount, int alcoholPercent, boolean simulate) {
+    public long receiveWort(long amount, double alcoholPercent, boolean simulate) {
         return receiveFluidToTank(FLUID_WORT, amount, simulate);
     }
 
     @Override
-    public long receiveBoilingWater(long amount, boolean simulate) {
+    public long receiveHotWater(long amount, boolean simulate) {
         return receiveFluidToTank(FLUID_HOT_WATER, amount, simulate);
     }
 
