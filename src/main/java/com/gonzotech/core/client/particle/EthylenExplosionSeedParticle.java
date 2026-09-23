@@ -6,7 +6,6 @@ import net.minecraft.client.particle.NoRenderParticle;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.util.RandomSource;
 
 public class EthylenExplosionSeedParticle extends NoRenderParticle {
 
@@ -33,10 +32,16 @@ public class EthylenExplosionSeedParticle extends NoRenderParticle {
 
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         @Override
-        public Particle createParticle(SimpleParticleType options, ClientLevel level,
-                                       double x, double y, double z,
-                                       double xAux, double yAux, double zAux,
-                                       RandomSource random) {
+        public Particle createParticle(
+            SimpleParticleType options,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
+        ) {
             return new EthylenExplosionSeedParticle(level, x, y, z);
         }
     }

@@ -3,12 +3,12 @@ package com.gonzotech.core.item;
 import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.core.registry.ModParticles;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -110,12 +110,12 @@ public class CorrosiveBucketItem extends Item {
                 }
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        return InteractionResultHolder.pass(player.getItemInHand(hand));
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
     }
 
     @Override

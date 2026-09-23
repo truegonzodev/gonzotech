@@ -11,6 +11,7 @@ import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -23,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -351,34 +353,16 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
 
         // 0. Проверка едких вёдер в слотах тары на разъедание (180 тиков)
         long gameTime = level.getGameTime();
-        for (int i = 0; i <= 3; i++) {
-            ItemStack st = items.get(i);
-            if ((st.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
-                    || st.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem)
-                    && com.gonzotech.core.item.CorrosiveBucketItem.isExpired(st, gameTime)) {
-                boolean isFluidBucket = st.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem;
-                items.set(i, new ItemStack(ModItems.LEAKY_BUCKET.get(), st.getCount()));
-                level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                        SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.6F, 1.2F);
-                if (isFluidBucket) {
-                    com.gonzotech.core.item.CorrosiveFluidBucketItem.spillAcidNear(level, pos);
-                }
-                changed = true;
-            }
-        }
-
-        // 1. Обработка тары в слотах
-        changed |= handleContainers(0, 1, true);
-        changed |= handleContainers(2, 3, false);
-
-        // Проверка разъедания химических вёдер в слотах тары
         for (int s = 0; s < 4; s++) {
             ItemStack st = items.get(s);
-            if (!st.isEmpty() && (st.is(ModItems.ETHYLENE_BUCKET.get()) || st.is(ModItems.SULFURIC_ACID_BUCKET.get()))) {
-                if (com.gonzotech.core.item.CorrosiveBucketItem.isExpired(st, level.getGameTime())) {
+            if (!st.isEmpty() && (st.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
+                    || st.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem)) {
+                if (com.gonzotech.core.item.CorrosiveBucketItem.isExpired(st, gameTime)) {
                     if (st.is(ModItems.ETHYLENE_BUCKET.get())) {
                         com.gonzotech.core.item.CorrosiveBucketItem.triggerEthyleneExplosion(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, null);
-                    } else {
+                    } else if (st.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem) {
+                        level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                                SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.6F, 1.2F);
                         com.gonzotech.core.item.CorrosiveFluidBucketItem.spillAcidNear(level, pos.above());
                     }
                     items.set(s, new ItemStack(ModItems.LEAKY_BUCKET.get(), st.getCount()));
@@ -386,6 +370,10 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 }
             }
         }
+
+        // 1. Обработка тары в слотах
+        changed |= handleContainers(0, 1, true);
+        changed |= handleContainers(2, 3, false);
 
         // 2. Выпаривание соли (Рецепт 4)
         changed |= handleSaltEvaporation();
