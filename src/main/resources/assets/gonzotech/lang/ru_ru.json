@@ -314,6 +314,8 @@
   "gui.gonzotech.poison.title": "Зелье отравления II: %s / %s mB",
   "gui.gonzotech.lore.alcohol": "Спирт: %s",
   "gui.gonzotech.lore.rot": "Гниль: %s",
+  "gui.gonzotech.lore.alcohol_prefix": "Спирт:",
+  "gui.gonzotech.lore.rot_prefix": "Гниль:",
   "gui.gonzotech.condenser.cooling_rate": "Охлаждение: %s",
   "gui.gonzotech.condenser.ice_regular": "  Обычный лёд: x%d (+%d mB/t)",
   "gui.gonzotech.condenser.ice_packed": "  Плотный лёд: x%d (+%d mB/t)",

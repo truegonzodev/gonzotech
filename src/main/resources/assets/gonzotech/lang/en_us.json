@@ -314,6 +314,8 @@
   "gui.gonzotech.poison.title": "Poison Potion II: %s / %s mB",
   "gui.gonzotech.lore.alcohol": "Alcohol: %s",
   "gui.gonzotech.lore.rot": "Rot: %s",
+  "gui.gonzotech.lore.alcohol_prefix": "Alcohol:",
+  "gui.gonzotech.lore.rot_prefix": "Rot:",
   "gui.gonzotech.condenser.cooling_rate": "Cooling: %s",
   "gui.gonzotech.condenser.ice_regular": "  Regular Ice: x%d (+%d mB/t)",
   "gui.gonzotech.condenser.ice_packed": "  Packed Ice: x%d (+%d mB/t)",
