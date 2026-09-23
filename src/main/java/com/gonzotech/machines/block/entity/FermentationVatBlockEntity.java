@@ -1,6 +1,7 @@
 package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.energy.FluidBlends.MashBlend;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.Sinks;
@@ -51,7 +52,8 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
     public static final int BASE_GTH_CAPACITY = 5_040;
     public static final int TUNGSTEN_GTH_BONUS = 30_000;
     public static final int GTH_CONSUMPTION_PER_TICK = 68;
-    public static final int MAX_DRAIN_PER_TICK = 312;
+    public static final int MAX_DRAIN_PER_TICK = 288;
+    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
 
     public static final double MAX_ALCOHOL = 13.0;
     public static final double MAX_ROT = 98.0;
@@ -121,6 +123,12 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
 
     public static boolean isPlantOrganic(ItemStack stack) {
         if (stack.isEmpty()) return false;
+        if (stack.is(ModItems.THE_PROTO_MASH.get()) || stack.is(ModItems.THE_FRUIT_MASH.get())) {
+            return true;
+        }
+        if (stack.is(Items.GOLDEN_APPLE) || stack.is(Items.GOLDEN_CARROT) || stack.is(Items.ENCHANTED_GOLDEN_APPLE)) {
+            return true;
+        }
         if (stack.is(ItemTags.MEAT)) return false;
         if (stack.is(Items.ROTTEN_FLESH) || stack.is(Items.SPIDER_EYE) || stack.is(Items.FERMENTED_SPIDER_EYE)
             || stack.is(Items.COD) || stack.is(Items.COOKED_COD)
@@ -140,7 +148,8 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
     public long receiveGth(long amountMilli, boolean simulate) {
         long maxMilli = (long) getMaxGth() * MachineDefs.MILLI;
         long space = Math.max(0, maxMilli - currentGthMilli);
-        long accepted = Math.min(amountMilli, space);
+        long allowed = Math.min(amountMilli, MAX_GTH_INPUT_PER_TICK);
+        long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
             currentGthMilli += accepted;
             setChanged();
@@ -154,12 +163,20 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
         if (level.isClientSide()) return;
         boolean changed = false;
 
-        // 1. Поглощение органики из слота (128 mB браги с 0% спирта и 0% гнили).
+        // 1. Поглощение органики из слота (128 mB браги с % спирта в зависимости от сырья и 0% гнили).
         ItemStack organic = items.get(SLOT_ORGANIC);
         long space = MASH_CAPACITY - mash.amount();
         if (!organic.isEmpty() && isPlantOrganic(organic) && space >= 128) {
+            double initialAlcohol = 0.0;
+            if (organic.is(ModItems.THE_PROTO_MASH.get()) || organic.is(ModItems.THE_FRUIT_MASH.get())) {
+                initialAlcohol = 0.9;
+            } else if (organic.is(Items.GOLDEN_APPLE) || organic.is(Items.GOLDEN_CARROT)) {
+                initialAlcohol = 2.7;
+            } else if (organic.is(Items.ENCHANTED_GOLDEN_APPLE)) {
+                initialAlcohol = 13.0;
+            }
             organic.shrink(1);
-            mash = mash.withAdded(128, 0.0, 0.0);
+            mash = mash.withAdded(128, initialAlcohol, 0.0);
             changed = true;
         }
 

@@ -92,12 +92,14 @@ public class DispensingTapBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveDistillate(long amount, boolean simulate) {
-        return distillate.receive(amount, simulate);
+        long allowed = Math.min(amount, 492);
+        return distillate.receive(allowed, simulate);
     }
 
     @Override
     public long receiveWort(long amount, double alcoholPercent, boolean simulate) {
-        return wort.receive(amount, simulate);
+        long allowed = Math.min(amount, 492);
+        return wort.receive(allowed, simulate);
     }
 
     // ─────────────────────────── Серверный тик ───────────────────────────

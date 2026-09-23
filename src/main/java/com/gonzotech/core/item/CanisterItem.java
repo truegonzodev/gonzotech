@@ -9,6 +9,8 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 
 import java.util.List;
@@ -78,20 +80,30 @@ public class CanisterItem extends BlockItem {
         String nameKey = getFluidLangKey(fluid);
         tooltip.add(GtUnits.fluidTitle(nameKey, amount, 8000, color));
 
-        if ("water".equals(fluid) && saltMb > 0) {
-            double saltPercent = (double) saltMb * 100.0 / Math.max(1, amount);
-            String formatted = saltPercent >= 10.0
-                ? String.format(Locale.ROOT, "%.0f%%", saltPercent)
-                : String.format(Locale.ROOT, "%.1f%%", saltPercent);
-            tooltip.add(Component.empty()
-                .append(Component.translatable("gui.gonzotech.lore.salt_prefix").withStyle(ChatFormatting.GRAY))
-                .append(Component.literal(" "))
-                .append(Component.literal(formatted).withStyle(ChatFormatting.WHITE)));
+        if ("mash".equals(fluid)) {
+            CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+            double rot = (data != null) ? data.copyTag().getDouble("mash_rot") : 0.0;
+            tooltip.add(GtUnits.rotLore(String.format(Locale.ROOT, "%.1f", rot)));
         }
+    }
 
-        if ("formaldehyde".equals(fluid)) {
-            tooltip.add(Component.translatable("gui.gonzotech.lore.toxicity_rate", "12 mTx/s")
-                .withStyle(ChatFormatting.RED));
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        if (level.isClientSide) return;
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data != null) {
+            CompoundTag tag = data.copyTag();
+            if ("mash".equals(tag.getString("fluid")) && tag.getInt("amount") > 0) {
+                double rot = tag.getDouble("mash_rot");
+                if (rot < 98.0) {
+                    double alc = tag.getDouble("mash_alc");
+                    rot = Math.min(98.0, rot + 0.40 / 1200.0);
+                    alc = Math.max(0.0, alc - 0.10 / 1200.0);
+                    tag.putDouble("mash_rot", rot);
+                    tag.putDouble("mash_alc", alc);
+                    stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                }
+            }
         }
     }
 

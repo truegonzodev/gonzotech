@@ -1,21 +1,29 @@
 package com.gonzotech.core.item;
 
 import com.gonzotech.core.registry.ModItems;
+import com.gonzotech.core.registry.ModParticles;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Ведро с едким химикатом (серная кислота, этилен).
+ * Ведро с едким летучим химикатом (этилен).
  * Обычное ведро разъедается за 180 тиков (9 секунд) в любом месте:
  * в инвентаре, в станке или на земле, превращаясь в «дырявое ведро».
+ * При разъедании или при попытке вылить ПКМ по земле взрывается (взрыв этилена).
  */
 public class CorrosiveBucketItem extends Item {
 
@@ -49,6 +57,51 @@ public class CorrosiveBucketItem extends Item {
         return gameTime >= getLeakAt(stack, gameTime);
     }
 
+    public static void triggerEthyleneExplosion(Level level, double x, double y, double z, @Nullable Entity source) {
+        if (level.isClientSide) return;
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.sendParticles(ModParticles.ETHYLEN_EXPLOSION_EMITTER.get(), x, y, z, 1, 0.0, 0.0, 0.0, 0.0);
+        }
+        level.explode(source, x, y, z, 3.5F, Level.ExplosionInteraction.BLOCK);
+    }
+
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        Player player = context.getPlayer();
+        BlockPos pos = context.getClickedPos();
+        Direction face = context.getClickedFace();
+        BlockPos target = pos.relative(face);
+
+        if (!level.isClientSide) {
+            triggerEthyleneExplosion(level, target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5, player);
+            if (player != null && !player.getAbilities().instabuild) {
+                context.getItemInHand().shrink(1);
+                ItemStack leaky = new ItemStack(ModItems.LEAKY_BUCKET.get());
+                if (!player.getInventory().add(leaky)) {
+                    player.drop(leaky, false);
+                }
+            }
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!level.isClientSide) {
+            triggerEthyleneExplosion(level, player.getX(), player.getY() + 1.0, player.getZ(), player);
+            if (!player.getAbilities().instabuild) {
+                stack.shrink(1);
+                ItemStack leaky = new ItemStack(ModItems.LEAKY_BUCKET.get());
+                if (!player.getInventory().add(leaky)) {
+                    player.drop(leaky, false);
+                }
+            }
+        }
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    }
+
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         if (level.isClientSide) return;
@@ -57,8 +110,7 @@ public class CorrosiveBucketItem extends Item {
             ItemStack leaky = new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount());
             if (entity instanceof Player player) {
                 player.getInventory().setItem(slotId, leaky);
-                level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.LAVA_EXTINGUISH, SoundSource.PLAYERS, 0.6F, 1.2F);
+                triggerEthyleneExplosion(level, player.getX(), player.getY(), player.getZ(), player);
             }
         }
     }

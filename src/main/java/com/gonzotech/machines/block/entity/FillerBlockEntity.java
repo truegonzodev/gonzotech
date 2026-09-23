@@ -65,10 +65,14 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     private int leftFluidType = FLUID_EMPTY;
     private int leftFluidAmount = 0;
     private int leftSaltMb = 0;
+    private double leftMashAlcohol = 0.0;
+    private double leftMashRot = 0.0;
 
     private int rightFluidType = FLUID_EMPTY;
     private int rightFluidAmount = 0;
     private int rightSaltMb = 0;
+    private double rightMashAlcohol = 0.0;
+    private double rightMashRot = 0.0;
 
     private int activeRecipe = 0;
     private int smeltProgress = 0;
@@ -184,7 +188,8 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     @Override
     public long receiveGth(long amount, boolean simulate) {
         long space = (long) GTH_CAPACITY * MachineDefs.MILLI - currentGthMilli;
-        long accepted = Math.min(amount, Math.max(0, space));
+        long allowed = Math.min(amount, 156L * MachineDefs.MILLI);
+        long accepted = Math.min(allowed, Math.max(0, space));
         if (!simulate && accepted > 0) {
             currentGthMilli += accepted;
             setChanged();
@@ -195,7 +200,8 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     @Override
     public long receiveGtu(long amount, boolean simulate) {
         long space = (long) GTU_CAPACITY * MachineDefs.MILLI - currentGtuMilli;
-        long accepted = Math.min(amount, Math.max(0, space));
+        long allowed = Math.min(amount, 66L * MachineDefs.MILLI);
+        long accepted = Math.min(allowed, Math.max(0, space));
         if (!simulate && accepted > 0) {
             currentGtuMilli += accepted;
             setChanged();
@@ -205,10 +211,12 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
 
     private long receiveFluidToTank(int fluidId, long amount, boolean simulate) {
         if (amount <= 0) return 0;
+        long maxThroughput = (fluidId == FLUID_MASH || fluidId == FLUID_FORMALDEHYDE) ? 288 : 492;
+        long allowed = Math.min(amount, maxThroughput);
         // Приоритет — левый бак
         if (leftFluidType == FLUID_EMPTY || (leftFluidType == fluidId && leftFluidAmount < TANK_CAPACITY)) {
             int space = TANK_CAPACITY - leftFluidAmount;
-            long accepted = Math.min(amount, space);
+            long accepted = Math.min(allowed, space);
             if (!simulate && accepted > 0) {
                 leftFluidType = fluidId;
                 leftFluidAmount += (int) accepted;
@@ -256,7 +264,22 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
 
     @Override
     public long receiveMash(long amount, double alcoholPercent, double rotPercent, boolean simulate) {
-        return receiveFluidToTank(FLUID_MASH, amount, simulate);
+        if (amount <= 0) return 0;
+        long allowed = Math.min(amount, 288);
+        if (leftFluidType == FLUID_EMPTY || (leftFluidType == FLUID_MASH && leftFluidAmount < TANK_CAPACITY)) {
+            int space = TANK_CAPACITY - leftFluidAmount;
+            long accepted = Math.min(allowed, space);
+            if (!simulate && accepted > 0) {
+                long total = leftFluidAmount + accepted;
+                leftMashAlcohol = (leftMashAlcohol * leftFluidAmount + alcoholPercent * accepted) / (double) total;
+                leftMashRot = (leftMashRot * leftFluidAmount + rotPercent * accepted) / (double) total;
+                leftFluidType = FLUID_MASH;
+                leftFluidAmount += (int) accepted;
+                setChanged();
+            }
+            return accepted;
+        }
+        return 0;
     }
 
     @Override
@@ -285,14 +308,20 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         int tmpType = leftFluidType;
         int tmpAmount = leftFluidAmount;
         int tmpSalt = leftSaltMb;
+        double tmpAlc = leftMashAlcohol;
+        double tmpRot = leftMashRot;
 
         leftFluidType = rightFluidType;
         leftFluidAmount = rightFluidAmount;
         leftSaltMb = rightSaltMb;
+        leftMashAlcohol = rightMashAlcohol;
+        leftMashRot = rightMashRot;
 
         rightFluidType = tmpType;
         rightFluidAmount = tmpAmount;
         rightSaltMb = tmpSalt;
+        rightMashAlcohol = tmpAlc;
+        rightMashRot = tmpRot;
 
         if (level != null) {
             level.playSound(null, worldPosition, SoundEvents.PISTON_EXTEND, SoundSource.BLOCKS, 0.5f, 1.2f);
@@ -307,6 +336,18 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         if (level.isClientSide) return;
 
         boolean changed = false;
+
+        // Накопление гнили в хранимой браге
+        if (leftFluidType == FLUID_MASH && leftFluidAmount > 0 && leftMashRot < 98.0) {
+            leftMashRot = Math.min(98.0, leftMashRot + 0.40 / 1200.0);
+            leftMashAlcohol = Math.max(0.0, leftMashAlcohol - 0.10 / 1200.0);
+            changed = true;
+        }
+        if (rightFluidType == FLUID_MASH && rightFluidAmount > 0 && rightMashRot < 98.0) {
+            rightMashRot = Math.min(98.0, rightMashRot + 0.40 / 1200.0);
+            rightMashAlcohol = Math.max(0.0, rightMashAlcohol - 0.10 / 1200.0);
+            changed = true;
+        }
 
         // 0. Проверка едких вёдер в слотах тары на разъедание (180 тиков)
         long gameTime = level.getGameTime();
@@ -329,6 +370,22 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         // 1. Обработка тары в слотах
         changed |= handleContainers(0, 1, true);
         changed |= handleContainers(2, 3, false);
+
+        // Проверка разъедания химических вёдер в слотах тары
+        for (int s = 0; s < 4; s++) {
+            ItemStack st = items.get(s);
+            if (!st.isEmpty() && (st.is(ModItems.ETHYLENE_BUCKET.get()) || st.is(ModItems.SULFURIC_ACID_BUCKET.get()))) {
+                if (com.gonzotech.core.item.CorrosiveBucketItem.isExpired(st, level.getGameTime())) {
+                    if (st.is(ModItems.ETHYLENE_BUCKET.get())) {
+                        com.gonzotech.core.item.CorrosiveBucketItem.triggerEthyleneExplosion(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, null);
+                    } else {
+                        com.gonzotech.core.item.CorrosiveFluidBucketItem.spillAcidNear(level, pos.above());
+                    }
+                    items.set(s, new ItemStack(ModItems.LEAKY_BUCKET.get(), st.getCount()));
+                    changed = true;
+                }
+            }
+        }
 
         // 2. Выпаривание соли (Рецепт 4)
         changed |= handleSaltEvaporation();
@@ -416,6 +473,18 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             }
         } else if (in.is(ModFluids.MASH_BUCKET.get()) && (tankType == FLUID_EMPTY || tankType == FLUID_MASH) && tankSpace >= 1000) {
             if (canAcceptItem(out, Items.BUCKET, 1)) {
+                CustomData d = in.get(DataComponents.CUSTOM_DATA);
+                double inAlc = (d != null) ? d.copyTag().getDouble("mash_alc") : 0.0;
+                double inRot = (d != null) ? d.copyTag().getDouble("mash_rot") : 0.0;
+                if (isLeftTank) {
+                    long total = leftFluidAmount + 1000;
+                    leftMashAlcohol = (leftMashAlcohol * leftFluidAmount + inAlc * 1000) / (double) total;
+                    leftMashRot = (leftMashRot * leftFluidAmount + inRot * 1000) / (double) total;
+                } else {
+                    long total = rightFluidAmount + 1000;
+                    rightMashAlcohol = (rightMashAlcohol * rightFluidAmount + inAlc * 1000) / (double) total;
+                    rightMashRot = (rightMashRot * rightFluidAmount + inRot * 1000) / (double) total;
+                }
                 if (tankType == FLUID_EMPTY) tankType = FLUID_MASH;
                 tankAmount += 1000;
                 applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
@@ -528,10 +597,21 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 return true;
             } else if (tankType == FLUID_MASH && canAcceptItem(out, ModFluids.MASH_BUCKET.get(), 1)) {
                 tankAmount -= 1000;
-                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                double curAlc = isLeftTank ? leftMashAlcohol : rightMashAlcohol;
+                double curRot = isLeftTank ? leftMashRot : rightMashRot;
+                if (tankAmount == 0) {
+                    tankType = FLUID_EMPTY;
+                    if (isLeftTank) { leftMashAlcohol = 0.0; leftMashRot = 0.0; }
+                    else { rightMashAlcohol = 0.0; rightMashRot = 0.0; }
+                }
                 applyTankChange(isLeftTank, tankType, tankAmount, 0);
                 in.shrink(1);
-                addOutputItem(outSlot, new ItemStack(ModFluids.MASH_BUCKET.get()));
+                ItemStack filledBucket = new ItemStack(ModFluids.MASH_BUCKET.get());
+                filledBucket.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY, d -> d.update(t -> {
+                    t.putDouble("mash_alc", curAlc);
+                    t.putDouble("mash_rot", curRot);
+                }));
+                addOutputItem(outSlot, filledBucket);
                 return true;
             } else if (tankType == FLUID_WORT && canAcceptItem(out, ModFluids.WORT_BUCKET.get(), 1)) {
                 tankAmount -= 1000;
@@ -1057,7 +1137,8 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         };
         if (pipeType == null) return false;
 
-        long budget = Math.min(rightFluidAmount, pipeType.maxThroughput());
+        long maxDrain = (rightFluidType == FLUID_MASH || rightFluidType == FLUID_FORMALDEHYDE) ? 288 : 492;
+        long budget = Math.min((long) rightFluidAmount, Math.min(pipeType.maxThroughput(), maxDrain));
         if (budget <= 0) return false;
 
         long moved = PipeRouting.drain(level, pos, pipeType, budget, level.getGameTime(), (be, p) -> {
@@ -1069,7 +1150,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 case FLUID_ETHYLENE -> be instanceof Sinks.EthyleneSink s ? s::receiveEthylene : null;
                 case FLUID_AMINOBLAZEETHANOL -> be instanceof Sinks.AminoblazeethanolSink s ? s::receiveAminoblazeethanol : null;
                 case FLUID_FORMALDEHYDE -> be instanceof Sinks.FormaldehydeSink s ? s::receiveFormaldehyde : null;
-                case FLUID_MASH -> be instanceof Sinks.MashSink s ? (amt, sim) -> s.receiveMash(amt, 0, 0, sim) : null;
+                case FLUID_MASH -> be instanceof Sinks.MashSink s ? (amt, sim) -> s.receiveMash(amt, rightMashAlcohol, rightMashRot, sim) : null;
                 case FLUID_WORT -> be instanceof Sinks.WortSink s ? (amt, sim) -> s.receiveWort(amt, 0, sim) : null;
                 case FLUID_DISTILLATE -> be instanceof Sinks.DistillateSink s ? s::receiveDistillate : null;
                 case FLUID_HOT_WATER -> be instanceof Sinks.HotWaterSink s ? s::receiveHotWater : null;
@@ -1135,9 +1216,13 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         tag.putInt("leftFluidType", leftFluidType);
         tag.putInt("leftFluidAmount", leftFluidAmount);
         tag.putInt("leftSaltMb", leftSaltMb);
+        tag.putDouble("leftMashAlcohol", leftMashAlcohol);
+        tag.putDouble("leftMashRot", leftMashRot);
         tag.putInt("rightFluidType", rightFluidType);
         tag.putInt("rightFluidAmount", rightFluidAmount);
         tag.putInt("rightSaltMb", rightSaltMb);
+        tag.putDouble("rightMashAlcohol", rightMashAlcohol);
+        tag.putDouble("rightMashRot", rightMashRot);
         tag.putInt("activeRecipe", activeRecipe);
         tag.putInt("smeltProgress", smeltProgress);
         tag.putInt("smeltTotal", smeltTotal);
@@ -1153,9 +1238,13 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         leftFluidType = tag.getInt("leftFluidType");
         leftFluidAmount = tag.getInt("leftFluidAmount");
         leftSaltMb = tag.getInt("leftSaltMb");
+        leftMashAlcohol = tag.getDouble("leftMashAlcohol");
+        leftMashRot = tag.getDouble("leftMashRot");
         rightFluidType = tag.getInt("rightFluidType");
         rightFluidAmount = tag.getInt("rightFluidAmount");
         rightSaltMb = tag.getInt("rightSaltMb");
+        rightMashAlcohol = tag.getDouble("rightMashAlcohol");
+        rightMashRot = tag.getDouble("rightMashRot");
         activeRecipe = tag.getInt("activeRecipe");
         smeltProgress = tag.getInt("smeltProgress");
         smeltTotal = tag.getInt("smeltTotal");

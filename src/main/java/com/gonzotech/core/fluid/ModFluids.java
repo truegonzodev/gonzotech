@@ -157,7 +157,7 @@ public final class ModFluids {
         () -> new BaseFlowingFluid.Flowing(mashProperties()));
 
     public static final Supplier<BucketItem> MASH_BUCKET = ITEMS.registerItem("mash_bucket", props ->
-        new BucketItem(MASH.get(), props.stacksTo(1).craftRemainder(Items.BUCKET)));
+        new com.gonzotech.core.item.MashBucketItem(MASH, props));
 
     // ─────────────────────── 7. Сусло ───────────────────────
     public static final Supplier<FluidType> WORT_TYPE = FLUID_TYPES.register("wort", () ->

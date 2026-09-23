@@ -54,7 +54,8 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
     public static final int PROCESS_RAW_RATE = 11;
     public static final int PROCESS_WATER_RATE = 20;
     public static final int PROCESS_GTH_COST = 64;
-    public static final int MAX_DRAIN_PER_TICK = 688;
+    public static final int MAX_DRAIN_PER_TICK = 492;
+    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
 
     private static final int GTH_PACKET_BASE = 10_000;
     private static final int[] NO_SLOTS = new int[0];
@@ -139,7 +140,8 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
     public long receiveGth(long amountMilli, boolean simulate) {
         long maxMilli = (long) GTH_CAPACITY * MachineDefs.MILLI;
         long space = Math.max(0, maxMilli - currentGthMilli);
-        long accepted = Math.min(amountMilli, space);
+        long allowed = Math.min(amountMilli, MAX_GTH_INPUT_PER_TICK);
+        long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
             currentGthMilli += accepted;
             setChanged();
@@ -149,7 +151,8 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveWater(long amount, boolean simulate) {
-        int accepted = water.receive(amount, simulate);
+        long allowed = Math.min(amount, 492);
+        int accepted = water.receive(allowed, simulate);
         if (!simulate && accepted > 0) {
             setChanged();
         }
@@ -159,7 +162,8 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
     @Override
     public long receiveMash(long amount, double alcoholPercent, double rotPercent, boolean simulate) {
         long space = Math.max(0, INPUT_CAPACITY - rawInput.amount());
-        long accepted = Math.min(amount, space);
+        long allowed = Math.min(amount, 288);
+        long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
             rawInput = rawInput.withAdded(accepted, alcoholPercent, rotPercent);
             setChanged();
@@ -169,8 +173,15 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveWort(long amount, double alcoholPercent, boolean simulate) {
-        // Сусло — очищенное сырьё с 0% гнили
-        return receiveMash(amount, alcoholPercent, 0.0, simulate);
+        // Сусло — очищенное сырьё с 0% гнили (негустая жидкость, до 492 mB/t)
+        long space = Math.max(0, INPUT_CAPACITY - rawInput.amount());
+        long allowed = Math.min(amount, 492);
+        long accepted = Math.min(allowed, space);
+        if (!simulate && accepted > 0) {
+            rawInput = rawInput.withAdded(accepted, alcoholPercent, 0.0);
+            setChanged();
+        }
+        return accepted;
     }
 
     // ─────────────────────────── Тик ───────────────────────────
@@ -178,6 +189,16 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
     public void tick(Level level, BlockPos pos, BlockState state) {
         if (level.isClientSide()) return;
         boolean changed = false;
+
+        // Накопление гнили в хранимой браге (если не греется и ждёт)
+        if (!rawInput.isEmpty() && rawInput.rotPercent() < 98.0) {
+            double rotGain = 0.40 / 1200.0;
+            double alcLoss = 0.10 / 1200.0;
+            double newRot = Math.min(98.0, rawInput.rotPercent() + rotGain);
+            double newAlc = Math.max(0.0, rawInput.alcoholPercent() - alcLoss);
+            rawInput = rawInput.withAlcoholAndRot(newAlc, newRot);
+            changed = true;
+        }
 
         // 1. Перегонка
         long gthCostMilli = (long) PROCESS_GTH_COST * MachineDefs.MILLI;

@@ -29,6 +29,8 @@ public class CanisterBlockEntity extends BlockEntity implements
     private String fluid = "empty";
     private int amount = 0;
     private int saltMb = 0;
+    private double mashAlcohol = 0.0;
+    private double mashRot = 0.0;
 
     public CanisterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CANISTER.get(), pos, state);
@@ -77,12 +79,22 @@ public class CanisterBlockEntity extends BlockEntity implements
         }
     }
 
+    public void serverTick() {
+        if ("mash".equals(fluid) && amount > 0 && mashRot < 98.0) {
+            mashRot = Math.min(98.0, mashRot + 0.40 / 1200.0);
+            mashAlcohol = Math.max(0.0, mashAlcohol - 0.10 / 1200.0);
+            setChanged();
+        }
+    }
+
     private long receiveGeneric(String fluidType, long incoming, boolean simulate) {
         if (incoming <= 0) return 0;
         if (amount > 0 && !fluid.equals(fluidType) && !"empty".equals(fluid)) {
             return 0;
         }
-        long accepted = Math.min(incoming, space());
+        long maxThroughput = (fluidType.equals("mash") || fluidType.equals("formaldehyde")) ? 288 : 492;
+        long allowed = Math.min(incoming, maxThroughput);
+        long accepted = Math.min(allowed, space());
         if (accepted > 0 && !simulate) {
             fluid = fluidType;
             amount += (int) accepted;
@@ -101,7 +113,24 @@ public class CanisterBlockEntity extends BlockEntity implements
 
     @Override
     public long receiveMash(long incoming, double alc, double rot, boolean simulate) {
-        return receiveGeneric("mash", incoming, simulate);
+        if (incoming <= 0) return 0;
+        if (amount > 0 && !"mash".equals(fluid) && !"empty".equals(fluid)) {
+            return 0;
+        }
+        long allowed = Math.min(incoming, 288);
+        long accepted = Math.min(allowed, space());
+        if (accepted > 0 && !simulate) {
+            long total = amount + accepted;
+            mashAlcohol = (mashAlcohol * amount + alc * accepted) / (double) total;
+            mashRot = (mashRot * amount + rot * accepted) / (double) total;
+            fluid = "mash";
+            amount += (int) accepted;
+            setChanged();
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            }
+        }
+        return accepted;
     }
 
     @Override
@@ -155,6 +184,8 @@ public class CanisterBlockEntity extends BlockEntity implements
                 tag.putString("fluid", fluid);
                 tag.putInt("amount", amount);
                 tag.putInt("salt_mb", saltMb);
+                tag.putDouble("mash_alc", mashAlcohol);
+                tag.putDouble("mash_rot", mashRot);
             }));
         }
     }
@@ -166,8 +197,12 @@ public class CanisterBlockEntity extends BlockEntity implements
             String f = tag.getString("fluid");
             int a = tag.getInt("amount");
             int s = tag.getInt("salt_mb");
+            mashAlcohol = tag.getDouble("mash_alc");
+            mashRot = tag.getDouble("mash_rot");
             setContent(f, a, s);
         } else {
+            mashAlcohol = 0.0;
+            mashRot = 0.0;
             setContent("empty", 0, 0);
         }
     }
@@ -178,6 +213,8 @@ public class CanisterBlockEntity extends BlockEntity implements
         tag.putString("fluid", fluid);
         tag.putInt("amount", amount);
         tag.putInt("salt_mb", saltMb);
+        tag.putDouble("mash_alc", mashAlcohol);
+        tag.putDouble("mash_rot", mashRot);
     }
 
     @Override
@@ -186,6 +223,8 @@ public class CanisterBlockEntity extends BlockEntity implements
         fluid = tag.getString("fluid");
         amount = tag.getInt("amount");
         saltMb = tag.getInt("salt_mb");
+        mashAlcohol = tag.getDouble("mash_alc");
+        mashRot = tag.getDouble("mash_rot");
     }
 
     @Override
@@ -199,6 +238,8 @@ public class CanisterBlockEntity extends BlockEntity implements
         tag.putString("fluid", fluid);
         tag.putInt("amount", amount);
         tag.putInt("salt_mb", saltMb);
+        tag.putDouble("mash_alc", mashAlcohol);
+        tag.putDouble("mash_rot", mashRot);
         return tag;
     }
 }

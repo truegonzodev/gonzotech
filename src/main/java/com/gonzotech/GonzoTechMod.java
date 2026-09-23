@@ -54,6 +54,7 @@ public class GonzoTechMod {
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
         com.gonzotech.core.psyche.ModPsycheAttachments.register(modEventBus);
+        com.gonzotech.core.registry.ModParticles.PARTICLE_TYPES.register(modEventBus);
 
         // Фаза 2 — паровая ветка энергетики (машины, BlockEntity, меню).
         ModMachines.register(modEventBus);
@@ -119,6 +120,7 @@ public class GonzoTechMod {
             // Клиентские текстуры/тинт расплавленного кориума и жидкостей в мире.
             modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);
             modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::onClientSetup);
+            modEventBus.addListener(com.gonzotech.core.client.particle.ModParticleClient::onRegisterParticleProviders);
             // Развёртка и тинт надетой брони custom_alloy.
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
             // Тряска камеры от эффекта «Тремор» — только на клиенте.

@@ -37,9 +37,9 @@ public class SnaketypeCondenserBlockEntity extends BaseMachineBlockEntity
 
     public static final int BOILING_WATER_CAPACITY = 8_000;
     public static final int WATER_CAPACITY = 8_000;
-    public static final int MAX_INLET_PER_TICK = 1_560;
+    public static final int MAX_INLET_PER_TICK = 492;
     public static final int BASE_COOLING_RATE = 2;
-    public static final int MAX_WATER_DRAIN = 1_560;
+    public static final int MAX_WATER_DRAIN = 492;
 
     private int boilingWaterAmount = 0;
     private int waterAmount = 0;

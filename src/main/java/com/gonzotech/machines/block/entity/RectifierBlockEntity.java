@@ -47,7 +47,9 @@ public class RectifierBlockEntity extends BaseMachineBlockEntity
     public static final int PROCESS_RECTIFICATE_YIELD = 1;
     public static final int PROCESS_GTH_COST = 6;
     public static final int PROCESS_GTU_COST = 9;
-    public static final int MAX_DRAIN_PER_TICK = 688;
+    public static final int MAX_DRAIN_PER_TICK = 492;
+    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
+    public static final long MAX_GTU_INPUT_PER_TICK = 66L * MachineDefs.MILLI;
 
     private static final int PACKET_BASE = 10_000;
     private static final int[] NO_SLOTS = new int[0];
@@ -121,7 +123,8 @@ public class RectifierBlockEntity extends BaseMachineBlockEntity
     public long receiveGth(long amountMilli, boolean simulate) {
         long maxMilli = (long) GTH_CAPACITY * MachineDefs.MILLI;
         long space = Math.max(0, maxMilli - currentGthMilli);
-        long accepted = Math.min(amountMilli, space);
+        long allowed = Math.min(amountMilli, MAX_GTH_INPUT_PER_TICK);
+        long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
             currentGthMilli += accepted;
             setChanged();
@@ -133,7 +136,8 @@ public class RectifierBlockEntity extends BaseMachineBlockEntity
     public long receiveGtu(long amountMilli, boolean simulate) {
         long maxMilli = (long) GTU_CAPACITY * MachineDefs.MILLI;
         long space = Math.max(0, maxMilli - currentGtuMilli);
-        long accepted = Math.min(amountMilli, space);
+        long allowed = Math.min(amountMilli, MAX_GTU_INPUT_PER_TICK);
+        long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
             currentGtuMilli += accepted;
             setChanged();
@@ -143,7 +147,8 @@ public class RectifierBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveDistillate(long amount, boolean simulate) {
-        int accepted = distillate.receive(amount, simulate);
+        long allowed = Math.min(amount, 492);
+        int accepted = distillate.receive(allowed, simulate);
         if (!simulate && accepted > 0) {
             setChanged();
         }

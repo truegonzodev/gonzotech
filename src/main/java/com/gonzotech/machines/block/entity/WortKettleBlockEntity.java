@@ -51,7 +51,8 @@ public class WortKettleBlockEntity extends BaseMachineBlockEntity implements Gth
     public static final int BOIL_GTH_COST = 42;
     public static final int EVAPORATE_RATE = 2;
     public static final int EVAPORATE_GTH_COST = 16;
-    public static final int MAX_DRAIN_PER_TICK = 688;
+    public static final int MAX_DRAIN_PER_TICK = 492;
+    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
     public static final double MAX_WORT_ALCOHOL = 30.0;
 
     private static final int GTH_PACKET_BASE = 10_000;
@@ -116,7 +117,8 @@ public class WortKettleBlockEntity extends BaseMachineBlockEntity implements Gth
     public long receiveGth(long amountMilli, boolean simulate) {
         long maxMilli = (long) GTH_CAPACITY * MachineDefs.MILLI;
         long space = Math.max(0, maxMilli - currentGthMilli);
-        long accepted = Math.min(amountMilli, space);
+        long allowed = Math.min(amountMilli, MAX_GTH_INPUT_PER_TICK);
+        long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
             currentGthMilli += accepted;
             setChanged();
@@ -127,7 +129,8 @@ public class WortKettleBlockEntity extends BaseMachineBlockEntity implements Gth
     @Override
     public long receiveMash(long amount, double alcoholPercent, double rotPercent, boolean simulate) {
         long space = Math.max(0, MASH_CAPACITY - mash.amount());
-        long accepted = Math.min(amount, space);
+        long allowed = Math.min(amount, 288);
+        long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
             mash = mash.withAdded(accepted, alcoholPercent, rotPercent);
             setChanged();
