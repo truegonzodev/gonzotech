@@ -237,27 +237,27 @@ public class ModBlocks {
         BlockBehaviour.Properties.ofFullCopy(Blocks.LAVA));
     /** Этанол (ректификат) — чистый спирт в мире. */
     public static final DeferredBlock<LiquidBlock> ETHANOL = BLOCKS.registerBlock(
-        "ethanol", properties -> new LiquidBlock(ModFluids.ETHANOL.get(), properties),
+        "ethanol", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.ETHANOL, com.gonzotech.core.fluid.ModFluidBlock.Kind.ETHANOL, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
     /** Формальдегид — едкая жидкость в мире. */
     public static final DeferredBlock<LiquidBlock> FORMALDEHYDE = BLOCKS.registerBlock(
-        "formaldehyde", properties -> new LiquidBlock(ModFluids.FORMALDEHYDE.get(), properties),
+        "formaldehyde", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.FORMALDEHYDE, com.gonzotech.core.fluid.ModFluidBlock.Kind.FORMALDEHYDE, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
     /** Серная кислота — едкая кислота в мире. */
     public static final DeferredBlock<LiquidBlock> SULFURIC_ACID = BLOCKS.registerBlock(
-        "sulfuric_acid", properties -> new LiquidBlock(ModFluids.SULFURIC_ACID.get(), properties),
+        "sulfuric_acid", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.SULFURIC_ACID, com.gonzotech.core.fluid.ModFluidBlock.Kind.SULFURIC_ACID, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
     /** Дистиллят — промежуточный спиртовой продукт в мире. */
     public static final DeferredBlock<LiquidBlock> DISTILLATE = BLOCKS.registerBlock(
-        "distillate", properties -> new LiquidBlock(ModFluids.DISTILLATE.get(), properties),
+        "distillate", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.DISTILLATE, com.gonzotech.core.fluid.ModFluidBlock.Kind.DISTILLATE, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
     /** Брага — густая бродящая масса в мире. */
     public static final DeferredBlock<LiquidBlock> MASH = BLOCKS.registerBlock(
-        "mash", properties -> new LiquidBlock(ModFluids.MASH.get(), properties),
+        "mash", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.MASH, com.gonzotech.core.fluid.ModFluidBlock.Kind.MASH, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
     /** Сусло — охлаждённое охмелённое сусло в мире. */
     public static final DeferredBlock<LiquidBlock> WORT = BLOCKS.registerBlock(
-        "wort", properties -> new LiquidBlock(ModFluids.WORT.get(), properties),
+        "wort", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.WORT, com.gonzotech.core.fluid.ModFluidBlock.Kind.WORT, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
     /** Канистра: ёмкость под любые жидкости (8000 mB). */
     public static final DeferredBlock<com.gonzotech.core.block.CanisterBlock> CANISTER = BLOCKS.registerBlock(

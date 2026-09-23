@@ -174,6 +174,22 @@ public final class PsycheChemical {
         addPermille(player, whole);
     }
 
+    /**
+     * Добавить токсическую дозу (в nTx).
+     * 1 Tx = 1e9 nTx.
+     * 1 mTx = 1e6 nTx.
+     */
+    public static void addDoseToxicity(ServerPlayer player, double nTx) {
+        if (nTx <= 0.0) return;
+        State state = STATES.computeIfAbsent(player.getUUID(), key -> new State());
+        state.incomeAcc += nTx / com.gonzotech.radiation.RadiationSystem.NZT_PER_PERMILLE;
+        int income = (int) state.incomeAcc;
+        if (income > 0) {
+            state.incomeAcc -= income;
+            addPermille(player, income);
+        }
+    }
+
     /** Смерть: чистится {@value #DEATH_CLEAR_PERCENT} % от ТЕКУЩЕГО значения. */
     public static void onDeath(ServerPlayer player) {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
