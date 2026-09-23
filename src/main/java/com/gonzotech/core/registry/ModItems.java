@@ -260,6 +260,18 @@ public class ModItems {
     public static final DeferredItem<Item> OBSIDIAN_BUCKET =
         ITEMS.registerItem("obsidian_bucket", props -> new Item(props.stacksTo(1)));
 
+    /** «Прикол»: Дырявое ведро — результат разъедания ведра серной кислотой или этиленом через 180 тиков. */
+    public static final DeferredItem<Item> LEAKY_BUCKET =
+        ITEMS.registerItem("leaky_bucket", props -> new Item(props.stacksTo(16)));
+
+    /** Ведро серной кислоты: живёт 180 тиков, затем превращается в дырявое ведро. */
+    public static final DeferredItem<com.gonzotech.core.item.CorrosiveBucketItem> SULFURIC_ACID_BUCKET =
+        ITEMS.registerItem("sulfuric_acid_bucket", com.gonzotech.core.item.CorrosiveBucketItem::new);
+
+    /** Ведро этилена: живёт 180 тиков, затем превращается в дырявое ведро. */
+    public static final DeferredItem<com.gonzotech.core.item.CorrosiveBucketItem> ETHYLENE_BUCKET =
+        ITEMS.registerItem("ethylene_bucket", com.gonzotech.core.item.CorrosiveBucketItem::new);
+
     /**
      * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
      * игрок пытается скрафтить закрытую машину (напр. эл. печь) до нужного

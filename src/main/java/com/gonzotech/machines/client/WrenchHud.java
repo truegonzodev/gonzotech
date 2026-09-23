@@ -190,6 +190,12 @@ public final class WrenchHud {
             return;
         }
 
+        // Канистра: при наведении ключом показывает, чем и насколько наполнена.
+        if (state.is(com.gonzotech.core.registry.ModBlocks.CANISTER.get())) {
+            renderCanister(event.getGuiGraphics(), mc, pos);
+            return;
+        }
+
         // Какую трубу пучка мы держим на прицеле?
         PipeType part = aimedPart(state, pos, bhit);
         if (part == null) return;
@@ -290,6 +296,51 @@ public final class WrenchHud {
         for (Component line : contents) {
             graphics.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
             y += font.lineHeight + 1;
+        }
+    }
+
+    /** Подсказка содержимого канистры при наведении гаечным ключом. */
+    private static void renderCanister(GuiGraphics graphics, Minecraft mc, BlockPos pos) {
+        if (mc.level == null) return;
+        net.minecraft.world.level.block.entity.BlockEntity be = mc.level.getBlockEntity(pos);
+        if (!(be instanceof com.gonzotech.core.block.entity.CanisterBlockEntity canisterBe)) return;
+
+        Font font = mc.font;
+        int screenW = graphics.guiWidth();
+        int y = graphics.guiHeight() / 2 - 30;
+
+        Component header = Component.translatable("block.gonzotech.canister");
+        graphics.drawString(font, header, (screenW - font.width(header)) / 2, y, 0xFFFFFF, true);
+        y += font.lineHeight + 1;
+
+        int amount = canisterBe.getAmount();
+        String fluid = canisterBe.getFluid();
+        if (amount <= 0 || "empty".equals(fluid) || fluid.isEmpty()) {
+            Component empty = Component.translatable("gui.gonzotech.canister.empty").withStyle(ChatFormatting.GRAY);
+            graphics.drawString(font, empty, (screenW - font.width(empty)) / 2, y, 0xAAAAAA, true);
+            return;
+        }
+
+        int color = com.gonzotech.core.item.CanisterItem.getFluidColor(fluid);
+        String nameKey = com.gonzotech.core.item.CanisterItem.getFluidLangKey(fluid);
+        Component title = GtUnits.fluidTitle(nameKey, amount, com.gonzotech.core.block.entity.CanisterBlockEntity.CAPACITY, color);
+        Component line = Component.empty()
+            .append(Component.translatable("hud.gonzotech.canister.contains").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(" "))
+            .append(title);
+        graphics.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
+        y += font.lineHeight + 1;
+
+        if ("water".equals(fluid) && canisterBe.getSaltMb() > 0) {
+            double saltPercent = (double) canisterBe.getSaltMb() * 100.0 / Math.max(1, amount);
+            String formatted = saltPercent >= 10.0
+                ? String.format(java.util.Locale.ROOT, "%.0f%%", saltPercent)
+                : String.format(java.util.Locale.ROOT, "%.1f%%", saltPercent);
+            Component saltLine = Component.empty()
+                .append(Component.translatable("gui.gonzotech.lore.salt_prefix").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" "))
+                .append(Component.literal(formatted).withStyle(ChatFormatting.WHITE));
+            graphics.drawString(font, saltLine, (screenW - font.width(saltLine)) / 2, y, 0xFFFFFF, true);
         }
     }
 

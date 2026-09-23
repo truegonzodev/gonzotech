@@ -48,6 +48,7 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     protected static final ResourceLocation BAR_GTH = gui("bar_gth.png");
     protected static final ResourceLocation BAR_BURNUP = gui("bar_burnup.png");
     protected static final ResourceLocation BAR_SMELTING = gui("bar_smelting.png");
+    protected static final ResourceLocation BAR_CHEMICAL = gui("bar_chemical.png");
     protected static final ResourceLocation BAR_WATER = gui("bar_water.png");
     protected static final ResourceLocation BAR_HOT_WATER = gui("bar_hot_water.png");
     protected static final ResourceLocation BAR_STEAM = gui("bar_steam.png");

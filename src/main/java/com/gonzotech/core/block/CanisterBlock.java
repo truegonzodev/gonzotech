@@ -9,19 +9,26 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Блок канистры: компактная ёмкость для жидкостей (8000 mB).
- * При разрушении киркой сохраняет тип и объём жидкости в выпадающем предмете.
+ * Реализует {@link LiquidBlockContainer} (всегда false) — вода из мира не может
+ * смыть, заменить или занять клетку канистры.
+ * При разрушении игроком сохраняет тип, объём и солёность жидкости в выпадающем предмете.
  */
-public class CanisterBlock extends Block implements EntityBlock {
+public class CanisterBlock extends Block implements EntityBlock, LiquidBlockContainer {
 
     public static final MapCodec<CanisterBlock> CODEC = simpleCodec(CanisterBlock::new);
     private static final VoxelShape SHAPE = Block.box(3.0, 0.0, 3.0, 13.0, 14.0, 13.0);
@@ -41,6 +48,11 @@ public class CanisterBlock extends Block implements EntityBlock {
     }
 
     @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE;
+    }
+
+    @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
@@ -48,6 +60,16 @@ public class CanisterBlock extends Block implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CanisterBlockEntity(pos, state);
+    }
+
+    @Override
+    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos, BlockState state, Fluid fluid) {
+        return false;
+    }
+
+    @Override
+    public boolean placeLiquid(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState) {
+        return false;
     }
 
     @Override

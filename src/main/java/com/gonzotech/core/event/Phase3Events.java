@@ -446,6 +446,17 @@ public final class Phase3Events {
         // Ведро лавы в воде остаётся прежним безвредным «приколом».
         if (stack.is(Items.LAVA_BUCKET)) {
             itemEntity.setItem(new ItemStack(ModItems.OBSIDIAN_BUCKET.get(), stack.getCount()));
+            return;
+        }
+
+        // Ведро серной кислоты или этилена разъедается через 180 тиков лёжа на земле
+        if (stack.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem) {
+            long leakAt = com.gonzotech.core.item.CorrosiveBucketItem.getLeakAt(stack, level.getGameTime());
+            if (level.getGameTime() >= leakAt) {
+                itemEntity.setItem(new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount()));
+                level.playSound(null, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
+                        net.minecraft.sounds.SoundEvents.LAVA_EXTINGUISH, net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.2F);
+            }
         }
     }
 

@@ -282,6 +282,19 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
 
         boolean changed = false;
 
+        // 0. Проверка едких вёдер в слотах тары на разъедание (180 тиков)
+        long gameTime = level.getGameTime();
+        for (int i = 0; i <= 3; i++) {
+            ItemStack st = items.get(i);
+            if (st.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
+                    && com.gonzotech.core.item.CorrosiveBucketItem.isExpired(st, gameTime)) {
+                items.set(i, new ItemStack(ModItems.LEAKY_BUCKET.get(), st.getCount()));
+                level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                        SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.6F, 1.2F);
+                changed = true;
+            }
+        }
+
         // 1. Обработка тары в слотах
         changed |= handleContainers(0, 1, true);
         changed |= handleContainers(2, 3, false);
@@ -337,6 +350,24 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         } else if (in.is(ModFluids.FORMALDEHYDE_BUCKET.get()) && (tankType == FLUID_EMPTY || tankType == FLUID_FORMALDEHYDE) && tankSpace >= 1000) {
             if (canAcceptItem(out, Items.BUCKET, 1)) {
                 if (tankType == FLUID_EMPTY) tankType = FLUID_FORMALDEHYDE;
+                tankAmount += 1000;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(Items.BUCKET));
+                return true;
+            }
+        } else if (in.is(ModItems.SULFURIC_ACID_BUCKET.get()) && (tankType == FLUID_EMPTY || tankType == FLUID_SULFURIC_ACID) && tankSpace >= 1000) {
+            if (canAcceptItem(out, Items.BUCKET, 1)) {
+                if (tankType == FLUID_EMPTY) tankType = FLUID_SULFURIC_ACID;
+                tankAmount += 1000;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                addOutputItem(outSlot, new ItemStack(Items.BUCKET));
+                return true;
+            }
+        } else if (in.is(ModItems.ETHYLENE_BUCKET.get()) && (tankType == FLUID_EMPTY || tankType == FLUID_ETHYLENE) && tankSpace >= 1000) {
+            if (canAcceptItem(out, Items.BUCKET, 1)) {
+                if (tankType == FLUID_EMPTY) tankType = FLUID_ETHYLENE;
                 tankAmount += 1000;
                 applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
                 in.shrink(1);
@@ -399,6 +430,28 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 in.shrink(1);
                 addOutputItem(outSlot, new ItemStack(ModFluids.FORMALDEHYDE_BUCKET.get()));
                 return true;
+            } else if (tankType == FLUID_SULFURIC_ACID && canAcceptItem(out, ModItems.SULFURIC_ACID_BUCKET.get(), 1)) {
+                tankAmount -= 1000;
+                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                applyTankChange(isLeftTank, tankType, tankAmount, 0);
+                in.shrink(1);
+                ItemStack corrosive = new ItemStack(ModItems.SULFURIC_ACID_BUCKET.get());
+                if (level != null) {
+                    com.gonzotech.core.item.CorrosiveBucketItem.initLeakAt(corrosive, level.getGameTime());
+                }
+                addOutputItem(outSlot, corrosive);
+                return true;
+            } else if (tankType == FLUID_ETHYLENE && canAcceptItem(out, ModItems.ETHYLENE_BUCKET.get(), 1)) {
+                tankAmount -= 1000;
+                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                applyTankChange(isLeftTank, tankType, tankAmount, 0);
+                in.shrink(1);
+                ItemStack corrosive = new ItemStack(ModItems.ETHYLENE_BUCKET.get());
+                if (level != null) {
+                    com.gonzotech.core.item.CorrosiveBucketItem.initLeakAt(corrosive, level.getGameTime());
+                }
+                addOutputItem(outSlot, corrosive);
+                return true;
             }
         } else if (in.is(ModItems.CANISTER.get()) && tankAmount > 0 && out.isEmpty()) {
             String canFluid = CanisterItem.getStoredFluid(in);
@@ -414,29 +467,20 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                         takenSalt = (int) Math.round((double) tankSalt * fill / tankAmount);
                         tankSalt -= takenSalt;
                     }
+                    int fluidTypeToFill = (tankType != FLUID_EMPTY) ? tankType : canFluidId;
                     tankAmount -= fill;
                     if (tankAmount == 0) tankType = FLUID_EMPTY;
                     applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
 
                     ItemStack resultCan = in.copy();
                     resultCan.setCount(1);
-                    CanisterItem.setFluidContent(resultCan, fluidNameById(tankType == FLUID_EMPTY ? canFluidId : tankType),
+                    CanisterItem.setFluidContent(resultCan, fluidNameById(fluidTypeToFill),
                             canAmount + fill, CanisterItem.getStoredSaltMb(in) + takenSalt);
 
                     in.shrink(1);
                     items.set(outSlot, resultCan);
                     return true;
                 }
-            }
-        } else if (in.is(Items.GLASS_BOTTLE) && tankType == FLUID_WATER && tankAmount >= 250) {
-            ItemStack waterBottle = PotionContents.createItemStack(Items.POTION, Potions.WATER);
-            if (canAcceptItem(out, waterBottle.getItem(), 1)) {
-                tankAmount -= 250;
-                if (tankAmount == 0) tankType = FLUID_EMPTY;
-                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
-                in.shrink(1);
-                addOutputItem(outSlot, waterBottle);
-                return true;
             }
         }
 
@@ -608,87 +652,175 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             return false;
         }
 
-        // Выполнение активного рецепта
+        // Выполнение активного рецепта:
+        // Всегда проходит smeltTotal тиков, расходуя GTH и GTU на каждом тике.
+        // Если не хватает GTH или GTU — шкала застревает (ждёт).
+        // Жидкость расходуется, если есть в баке. Если осталось меньше минимальной порции рецепта —
+        // удаляется весь грязный остаток, очищая бак.
+        // Продукт добавляется в правый бак, если там есть место и тип подходит.
         switch (activeRecipe) {
-            case 1 -> { // Серная кислота
-                if (currentGthMilli >= 20L * MachineDefs.MILLI && currentGtuMilli >= 9L * MachineDefs.MILLI
-                        && leftFluidType == FLUID_WATER && leftFluidAmount >= 23
-                        && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_SULFURIC_ACID && rightFluidAmount + 17 <= TANK_CAPACITY))) {
-                    currentGthMilli -= 20L * MachineDefs.MILLI;
-                    currentGtuMilli -= 9L * MachineDefs.MILLI;
-                    leftFluidAmount -= 23;
-                    if (leftFluidAmount <= 0) { leftFluidType = FLUID_EMPTY; leftFluidAmount = 0; leftSaltMb = 0; }
-                    rightFluidType = FLUID_SULFURIC_ACID;
-                    rightFluidAmount += 17;
-                    smeltProgress++;
+            case 1 -> { // Серная кислота: 20 GTH/t, 9 GTU/t, порция 23 mB воды -> 17 mB кислоты
+                if (currentGthMilli < 20L * MachineDefs.MILLI || currentGtuMilli < 9L * MachineDefs.MILLI) {
+                    return false;
                 }
-            }
-            case 2 -> { // Этилен
-                if (currentGthMilli >= 32L * MachineDefs.MILLI && currentGtuMilli >= 3L * MachineDefs.MILLI
-                        && leftFluidType == FLUID_RECTIFICATE && leftFluidAmount >= 19
-                        && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_ETHYLENE && rightFluidAmount + 20 <= TANK_CAPACITY))) {
-                    currentGthMilli -= 32L * MachineDefs.MILLI;
-                    currentGtuMilli -= 3L * MachineDefs.MILLI;
-                    leftFluidAmount -= 19;
-                    if (leftFluidAmount <= 0) { leftFluidType = FLUID_EMPTY; leftFluidAmount = 0; }
-                    rightFluidType = FLUID_ETHYLENE;
-                    rightFluidAmount += 20;
-                    smeltProgress++;
+                currentGthMilli -= 20L * MachineDefs.MILLI;
+                currentGtuMilli -= 9L * MachineDefs.MILLI;
+
+                if (leftFluidType == FLUID_WATER && leftFluidAmount > 0) {
+                    if (leftFluidAmount >= 23) {
+                        leftFluidAmount -= 23;
+                        if (rightFluidType == FLUID_EMPTY || rightFluidType == FLUID_SULFURIC_ACID) {
+                            int produce = Math.min(17, TANK_CAPACITY - rightFluidAmount);
+                            if (produce > 0) {
+                                rightFluidType = FLUID_SULFURIC_ACID;
+                                rightFluidAmount += produce;
+                            }
+                        }
+                    } else {
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
+                        leftSaltMb = 0;
+                    }
+                    if (leftFluidAmount <= 0) {
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
+                        leftSaltMb = 0;
+                    }
                 }
+                smeltProgress++;
             }
-            case 3 -> { // Растворение кальцита
+            case 2 -> { // Этилен: 32 GTH/t, 3 GTU/t, порция 19 mB ректификата -> 20 mB этилена
+                if (currentGthMilli < 32L * MachineDefs.MILLI || currentGtuMilli < 3L * MachineDefs.MILLI) {
+                    return false;
+                }
+                currentGthMilli -= 32L * MachineDefs.MILLI;
+                currentGtuMilli -= 3L * MachineDefs.MILLI;
+
+                if (leftFluidType == FLUID_RECTIFICATE && leftFluidAmount > 0) {
+                    if (leftFluidAmount >= 19) {
+                        leftFluidAmount -= 19;
+                        if (rightFluidType == FLUID_EMPTY || rightFluidType == FLUID_ETHYLENE) {
+                            int produce = Math.min(20, TANK_CAPACITY - rightFluidAmount);
+                            if (produce > 0) {
+                                rightFluidType = FLUID_ETHYLENE;
+                                rightFluidAmount += produce;
+                            }
+                        }
+                    } else {
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
+                    }
+                    if (leftFluidAmount <= 0) {
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
+                    }
+                }
+                smeltProgress++;
+            }
+            case 3 -> { // Растворение кальцита: 0 GTH, 0 GTU
                 if (leftFluidType == FLUID_WATER && leftFluidAmount > 0) {
                     leftSaltMb = Math.min(leftFluidAmount, leftSaltMb + 5);
-                    smeltProgress++;
                 }
+                smeltProgress++;
             }
-            case 5 -> { // Аминоблейзатанол
-                if (currentGthMilli >= 2L * MachineDefs.MILLI && currentGtuMilli >= 12L * MachineDefs.MILLI
-                        && leftFluidType == FLUID_RECTIFICATE && leftFluidAmount >= 19
-                        && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_AMINOBLAZEETHANOL && rightFluidAmount + 19 <= TANK_CAPACITY))) {
-                    currentGthMilli -= 2L * MachineDefs.MILLI;
-                    currentGtuMilli -= 12L * MachineDefs.MILLI;
-                    leftFluidAmount -= 19;
-                    if (leftFluidAmount <= 0) { leftFluidType = FLUID_EMPTY; leftFluidAmount = 0; }
-                    rightFluidType = FLUID_AMINOBLAZEETHANOL;
-                    rightFluidAmount += 19;
-                    smeltProgress++;
+            case 5 -> { // Аминоблейзатанол: 2 GTH/t, 12 GTU/t, порция 19 mB ректификата -> 19 mB продукта
+                if (currentGthMilli < 2L * MachineDefs.MILLI || currentGtuMilli < 12L * MachineDefs.MILLI) {
+                    return false;
                 }
-            }
-            case 6 -> { // Формальдегид
-                if (currentGthMilli >= 16L * MachineDefs.MILLI && currentGtuMilli >= 7L * MachineDefs.MILLI
-                        && leftFluidType == FLUID_RECTIFICATE && leftFluidAmount >= 19
-                        && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_FORMALDEHYDE && rightFluidAmount + 16 <= TANK_CAPACITY))) {
-                    currentGthMilli -= 16L * MachineDefs.MILLI;
-                    currentGtuMilli -= 7L * MachineDefs.MILLI;
-                    leftFluidAmount -= 19;
-                    if (leftFluidAmount <= 0) { leftFluidType = FLUID_EMPTY; leftFluidAmount = 0; }
-                    rightFluidType = FLUID_FORMALDEHYDE;
-                    rightFluidAmount += 16;
-                    smeltProgress++;
-                }
-            }
-            case 7 -> { // Хлорид кальция
-                int targetSlot = targetTankIsRight ? 3 : 1;
-                int tankAmt = targetTankIsRight ? rightFluidAmount : leftFluidAmount;
-                int tankTyp = targetTankIsRight ? rightFluidType : leftFluidType;
+                currentGthMilli -= 2L * MachineDefs.MILLI;
+                currentGtuMilli -= 12L * MachineDefs.MILLI;
 
-                if (currentGthMilli >= 24L * MachineDefs.MILLI && currentGtuMilli >= 2L * MachineDefs.MILLI
-                        && tankTyp == FLUID_WATER && tankAmt >= 12
-                        && canAcceptItem(items.get(targetSlot), ModItems.CALCIUM_CHLORIDE.get(), 1)) {
-                    currentGthMilli -= 24L * MachineDefs.MILLI;
-                    currentGtuMilli -= 2L * MachineDefs.MILLI;
-                    if (targetTankIsRight) {
-                        rightFluidAmount -= 12;
-                        if (rightFluidAmount <= 0) { rightFluidType = FLUID_EMPTY; rightFluidAmount = 0; rightSaltMb = 0; }
+                if (leftFluidType == FLUID_RECTIFICATE && leftFluidAmount > 0) {
+                    if (leftFluidAmount >= 19) {
+                        leftFluidAmount -= 19;
+                        if (rightFluidType == FLUID_EMPTY || rightFluidType == FLUID_AMINOBLAZEETHANOL) {
+                            int produce = Math.min(19, TANK_CAPACITY - rightFluidAmount);
+                            if (produce > 0) {
+                                rightFluidType = FLUID_AMINOBLAZEETHANOL;
+                                rightFluidAmount += produce;
+                            }
+                        }
                     } else {
-                        leftFluidAmount -= 12;
-                        if (leftFluidAmount <= 0) { leftFluidType = FLUID_EMPTY; leftFluidAmount = 0; leftSaltMb = 0; }
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
                     }
-                    smeltProgress++;
-                    if (smeltProgress >= smeltTotal) {
-                        addOutputItem(targetSlot, new ItemStack(ModItems.CALCIUM_CHLORIDE.get()));
+                    if (leftFluidAmount <= 0) {
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
                     }
+                }
+                smeltProgress++;
+            }
+            case 6 -> { // Формальдегид: 16 GTH/t, 7 GTU/t, порция 19 mB ректификата -> 16 mB формальдегида
+                if (currentGthMilli < 16L * MachineDefs.MILLI || currentGtuMilli < 7L * MachineDefs.MILLI) {
+                    return false;
+                }
+                currentGthMilli -= 16L * MachineDefs.MILLI;
+                currentGtuMilli -= 7L * MachineDefs.MILLI;
+
+                if (leftFluidType == FLUID_RECTIFICATE && leftFluidAmount > 0) {
+                    if (leftFluidAmount >= 19) {
+                        leftFluidAmount -= 19;
+                        if (rightFluidType == FLUID_EMPTY || rightFluidType == FLUID_FORMALDEHYDE) {
+                            int produce = Math.min(16, TANK_CAPACITY - rightFluidAmount);
+                            if (produce > 0) {
+                                rightFluidType = FLUID_FORMALDEHYDE;
+                                rightFluidAmount += produce;
+                            }
+                        }
+                    } else {
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
+                    }
+                    if (leftFluidAmount <= 0) {
+                        leftFluidAmount = 0;
+                        leftFluidType = FLUID_EMPTY;
+                    }
+                }
+                smeltProgress++;
+            }
+            case 7 -> { // Хлорид кальция: 24 GTH/t, 2 GTU/t, порция 12 mB воды
+                if (currentGthMilli < 24L * MachineDefs.MILLI || currentGtuMilli < 2L * MachineDefs.MILLI) {
+                    return false;
+                }
+                currentGthMilli -= 24L * MachineDefs.MILLI;
+                currentGtuMilli -= 2L * MachineDefs.MILLI;
+
+                int targetSlot = targetTankIsRight ? 3 : 1;
+                if (targetTankIsRight) {
+                    if (rightFluidType == FLUID_WATER && rightFluidAmount > 0) {
+                        if (rightFluidAmount >= 12) {
+                            rightFluidAmount -= 12;
+                        } else {
+                            rightFluidAmount = 0;
+                            rightFluidType = FLUID_EMPTY;
+                            rightSaltMb = 0;
+                        }
+                        if (rightFluidAmount <= 0) {
+                            rightFluidAmount = 0;
+                            rightFluidType = FLUID_EMPTY;
+                            rightSaltMb = 0;
+                        }
+                    }
+                } else {
+                    if (leftFluidType == FLUID_WATER && leftFluidAmount > 0) {
+                        if (leftFluidAmount >= 12) {
+                            leftFluidAmount -= 12;
+                        } else {
+                            leftFluidAmount = 0;
+                            leftFluidType = FLUID_EMPTY;
+                            leftSaltMb = 0;
+                        }
+                        if (leftFluidAmount <= 0) {
+                            leftFluidAmount = 0;
+                            leftFluidType = FLUID_EMPTY;
+                            leftSaltMb = 0;
+                        }
+                    }
+                }
+                smeltProgress++;
+                if (smeltProgress >= smeltTotal) {
+                    addOutputItem(targetSlot, new ItemStack(ModItems.CALCIUM_CHLORIDE.get()));
                 }
             }
         }

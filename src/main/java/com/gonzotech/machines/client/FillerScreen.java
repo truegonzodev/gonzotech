@@ -67,14 +67,14 @@ public class FillerScreen extends MachineScreen<FillerMenu> {
             drawVBarTex(g, rightTankX, barY, barW, barH, rightFrac, rightTex);
         }
 
-        // Арочная шкала bar_smelting: (99, 2), 59×16, растёт справа налево
+        // Арочная шкала bar_chemical: (99, 1), 59×16, растёт справа налево
         int archX = x + 99;
-        int archY = y + 2;
+        int archY = y + 1;
         int archW = 59;
         int archH = 16;
         float smeltFrac = menu.smeltTotal() > 0 ? (float) menu.smeltProgress() / (float) menu.smeltTotal() : 0f;
         if (smeltFrac > 0) {
-            drawHBarTexRightToLeft(g, archX, archY, archW, archH, smeltFrac, BAR_SMELTING);
+            drawHBarTexRightToLeft(g, archX, archY, archW, archH, smeltFrac, BAR_CHEMICAL);
         }
 
         // Тултипы
@@ -163,9 +163,12 @@ public class FillerScreen extends MachineScreen<FillerMenu> {
             case 7 -> "gui.gonzotech.filler.recipe.calcium_chloride";
             default -> "gui.gonzotech.filler.idle";
         };
+        int pct = menu.smeltTotal() > 0 ? (menu.smeltProgress() * 100 / menu.smeltTotal()) : 0;
         return List.of(
-            Component.translatable(key).withStyle(ChatFormatting.WHITE),
-            Component.literal(menu.smeltProgress() + " / " + menu.smeltTotal() + " t").withStyle(ChatFormatting.YELLOW)
+            Component.empty()
+                .append(Component.translatable(key).withStyle(ChatFormatting.WHITE))
+                .append(Component.literal(": ").withStyle(ChatFormatting.WHITE))
+                .append(Component.literal(pct + "%").withStyle(ChatFormatting.WHITE))
         );
     }
 }

@@ -298,6 +298,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.CALCIUM_CHLORIDE.get());
                 output.accept(ModFluids.ETHANOL_BUCKET.get());
                 output.accept(ModFluids.FORMALDEHYDE_BUCKET.get());
+                output.accept(ModItems.SULFURIC_ACID_BUCKET.get());
+                output.accept(ModItems.ETHYLENE_BUCKET.get());
             })
             .build()
     );
@@ -310,6 +312,7 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.OBSIDIAN_BUCKET.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.OBSIDIAN_BUCKET.get());
+                output.accept(ModItems.LEAKY_BUCKET.get());
                 // Миска для питомцев (жирные коты, автор 2026-09-19; перенос в
                 // «Приколы» 2026-09-20 — фан-предмет, не техно-блок).
                 output.accept(ModItems.PET_BOWL_ITEM.get());
