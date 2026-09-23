@@ -49,39 +49,39 @@ public enum PipeType {
 
     /**
      * Брага: динамическая жидкость брожения (% спирта 0..13, % гнили 0..98).
-     * Скорость ×0.5 от воды (база 500 mB/t).
+     * Скорость ×0.5 от воды (база 500 mB/t). Цвет: #b84a28.
      */
-    MASH("mash", true, 0xC4823F, 500, GtUnits.U_MB),
+    MASH("mash", true, 0xB84A28, 500, GtUnits.U_MB),
 
     /**
      * Сусло: выпаренная брага (% спирта 0..30).
-     * Скорость как у воды (база 1000 mB/t).
+     * Скорость как у воды (база 1000 mB/t). Цвет: #ffd582.
      */
-    WORT("wort", true, 0xD99B26, 1000, GtUnits.U_MB),
+    WORT("wort", true, 0xFFD582, 1000, GtUnits.U_MB),
 
     /**
      * Дистиллят: продукт дистилляции (константный 48% спирт).
-     * Скорость как у воды (база 1000 mB/t).
+     * Скорость как у воды (база 1000 mB/t). Цвет: #8bd3fc.
      */
-    DISTILLATE("distillate", true, 0xD0E8F2, 1000, GtUnits.U_MB),
+    DISTILLATE("distillate", true, 0x8BD3FC, 1000, GtUnits.U_MB),
 
     /**
      * Ретификат: чистый спирт (100%), сырьё для полимеров и химического завода.
-     * Скорость как у воды (база 1000 mB/t).
+     * Скорость как у воды (база 1000 mB/t). Цвет: #8affe9.
      */
-    RECTIFICATE("rectificate", true, 0x8FE4F7, 1000, GtUnits.U_MB),
+    RECTIFICATE("rectificate", true, 0x8AFFE9, 1000, GtUnits.U_MB),
 
     /**
      * Кипяток / горячая вода: побочный продукт дистиллятора. Охлаждается в конденсаторе.
-     * Скорость как у воды (база 1000 mB/t).
+     * Скорость как у воды (база 1000 mB/t). Цвет: #4eb8f5.
      */
-    BOILING_WATER("hot_water", true, 0xF08030, 1000, GtUnits.U_MB),
+    BOILING_WATER("hot_water", true, 0x4EB8F5, 1000, GtUnits.U_MB),
 
     /**
      * Зелье отравления II: результат перегонки гнилой браги (>8% гнили).
-     * Скорость как у воды (база 1000 mB/t).
+     * Скорость как у воды (база 1000 mB/t). Цвет: #839c66.
      */
-    POISON_POTION("poison_potion", true, 0x4E9331, 1000, GtUnits.U_MB);
+    POISON_POTION("poison_potion", true, 0x839C66, 1000, GtUnits.U_MB);
 
     private final String id;
     private final boolean fluid;

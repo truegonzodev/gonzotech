@@ -289,6 +289,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.CELLULOID.get());
                 output.accept(ModItems.RUBBER.get());
                 output.accept(ModItems.RESIN.get());
+                output.accept(ModItems.RESINOUS_SAWDUST.get());
+                output.accept(ModItems.HARD_RESINOUS_SAWDUST.get());
             })
             .build()
     );

@@ -63,11 +63,11 @@ public class RectifierScreen extends MachineScreen<RectifierMenu> {
             g.renderComponentTooltip(this.font, List.of(
                 GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, distX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(
-                GtUnits.distillatePair(menu.distillate(), RectifierBlockEntity.DISTILLATE_CAPACITY)), mouseX, mouseY);
+            g.renderComponentTooltip(this.font,
+                GtUnits.distillateTooltip(menu.distillate(), RectifierBlockEntity.DISTILLATE_CAPACITY), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, rectX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(
-                GtUnits.rectificatePair(menu.rectificate(), RectifierBlockEntity.RECTIFICATE_CAPACITY)), mouseX, mouseY);
+            g.renderComponentTooltip(this.font,
+                GtUnits.rectificateTooltip(menu.rectificate(), RectifierBlockEntity.RECTIFICATE_CAPACITY), mouseX, mouseY);
         }
     }
 }

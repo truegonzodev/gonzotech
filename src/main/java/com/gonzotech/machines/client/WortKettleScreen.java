@@ -57,12 +57,12 @@ public class WortKettleScreen extends MachineScreen<WortKettleMenu> {
         if (inRect(mouseX, mouseY, mashX, barY, barW, barH)) {
             String alcStr = String.format(Locale.ROOT, "%.1f", menu.mashAlcohol());
             String rotStr = String.format(Locale.ROOT, "%.1f", menu.mashRot());
-            g.renderComponentTooltip(this.font, List.of(
-                GtUnits.mashPair(menu.mashAmount(), WortKettleBlockEntity.MASH_CAPACITY, alcStr, rotStr)), mouseX, mouseY);
+            g.renderComponentTooltip(this.font,
+                GtUnits.mashTooltip(menu.mashAmount(), WortKettleBlockEntity.MASH_CAPACITY, alcStr, rotStr), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, wortX, barY, barW, barH)) {
             String alcStr = String.format(Locale.ROOT, "%.1f", menu.wortAlcohol());
-            g.renderComponentTooltip(this.font, List.of(
-                GtUnits.wortPair(menu.wortAmount(), WortKettleBlockEntity.WORT_CAPACITY, alcStr)), mouseX, mouseY);
+            g.renderComponentTooltip(this.font,
+                GtUnits.wortTooltip(menu.wortAmount(), WortKettleBlockEntity.WORT_CAPACITY, alcStr), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
                 GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);

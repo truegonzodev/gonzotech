@@ -48,12 +48,12 @@ public class SnaketypeCondenserScreen extends MachineScreen<SnaketypeCondenserMe
         float boilFrac = (float) menu.boilingWater() / (float) SnaketypeCondenserBlockEntity.BOILING_WATER_CAPACITY;
         float waterFrac = (float) menu.water() / (float) SnaketypeCondenserBlockEntity.WATER_CAPACITY;
 
-        drawVBarTex(g, boilX, barY, barW, barH, boilFrac, BAR_GTH);
+        drawVBarTex(g, boilX, barY, barW, barH, boilFrac, BAR_HOT_WATER);
         drawVBarTex(g, waterX, barY, barW, barH, waterFrac, BAR_WATER);
 
         if (inRect(mouseX, mouseY, boilX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(
-                GtUnits.hotWaterPair(menu.boilingWater(), menu.maxBoilingWater())), mouseX, mouseY);
+            g.renderComponentTooltip(this.font,
+                GtUnits.boilingWaterTooltip(menu.boilingWater(), menu.maxBoilingWater()), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
                 GtUnits.waterPair(menu.water(), menu.maxWater())), mouseX, mouseY);

@@ -122,7 +122,10 @@ public final class RecipeUnlocks {
         "gonzotech:pseudo_coil",
         "gonzotech:scholar_notes",
         // Намеренно крафтовый «сломанный механизм» всегда должен быть виден.
-        "gonzotech:botched_mechanism"
+        "gonzotech:botched_mechanism",
+        // Взаимная конверсия смолы и сгустка смолы (доступна всегда).
+        "gonzotech:resin_from_resin_clump",
+        "gonzotech:resin_clump_from_resin"
     );
 
     /** 20 minutes of accumulated Minecraft play time. */

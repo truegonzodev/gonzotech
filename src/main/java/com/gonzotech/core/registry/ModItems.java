@@ -136,6 +136,10 @@ public class ModItems {
     public static final DeferredItem<Item> RUBBER = ITEMS.registerSimpleItem("rubber");
     /** Смола — сырьё полимерной линии (и клей). */
     public static final DeferredItem<Item> RESIN = ITEMS.registerSimpleItem("resin");
+    /** Смолистые опилки — продукт измельчения бледной и мангровой древесины. */
+    public static final DeferredItem<Item> RESINOUS_SAWDUST = ITEMS.registerSimpleItem("resinous_sawdust");
+    /** Твердосмолистые опилки — продукт измельчения еловой и акациевой древесины. */
+    public static final DeferredItem<Item> HARD_RESINOUS_SAWDUST = ITEMS.registerSimpleItem("hard_resinous_sawdust");
 
     /** Reusable selectors for the press; they are never consumed by a stamp. */
     public static final DeferredItem<Item> FLAT_PUNCH =

@@ -2,8 +2,12 @@ package com.gonzotech.core.text;
 
 import com.gonzotech.radiation.ItemToxicity;
 import com.gonzotech.radiation.RadUnits;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+
+import java.util.List;
 
 /**
  * «ГОСТ единиц» (автор 22.09.2026) — единый вид величины в любом тексте мода:
@@ -52,6 +56,20 @@ public final class GtUnits {
     public static final int RADIATION = 0xCEEB2D;
     /** Токсичность: всегда #d12176 (автор 22.09.2026). */
     public static final int TOXICITY = 0xD12176;
+
+    // ─────────────────── Жидкости Эпохи III (брожение/перегонка) ───────────────────
+    /** Брага: #b84a28 (автор 23.09.2026). */
+    public static final int MASH = 0xB84A28;
+    /** Сусло: #ffd582 (автор 23.09.2026). */
+    public static final int WORT = 0xFFD582;
+    /** Кипяток: #4eb8f5 (автор 23.09.2026). */
+    public static final int BOILING_WATER = 0x4EB8F5;
+    /** Дистиллят: #8bd3fc (автор 23.09.2026). */
+    public static final int DISTILLATE = 0x8BD3FC;
+    /** Ретификат (чистый спирт): #8affe9 (автор 23.09.2026). */
+    public static final int RECTIFICATE = 0x8AFFE9;
+    /** Зелье отравления (гниль): #839c66 (автор 23.09.2026). */
+    public static final int POISON_POTION = 0x839C66;
 
     // ─────────────────── Lang-ключи: обозначения и имена ───────────────────
 
@@ -168,33 +186,110 @@ public final class GtUnits {
     /** «§bБрага§7: §b12§7 / §b100 mB (§c12.3%§7 спирта, §a0.0%§7 гнили)». */
     public static MutableComponent mashPair(Object value, Object capacity, Object alcPercent, Object rotPercent) {
         return Component.translatable("gui.gonzotech.mash",
-                num(value, WATER), num(capacity, WATER), mb(WATER),
-                num(alcPercent, GTH), num(rotPercent, 0x8A9A5B));
+                num(value, MASH), num(capacity, MASH), mb(MASH),
+                num(alcPercent, MASH), num(rotPercent, MASH));
     }
 
     /** «§bСусло§7: §b12§7 / §b100 mB (§c12.3%§7 спирта)». */
     public static MutableComponent wortPair(Object value, Object capacity, Object alcPercent) {
         return Component.translatable("gui.gonzotech.wort",
-                num(value, WATER), num(capacity, WATER), mb(WATER),
-                num(alcPercent, GTH));
+                num(value, WORT), num(capacity, WORT), mb(WORT),
+                num(alcPercent, WORT));
     }
 
     /** «§bДистиллят§7: §b12§7 / §b100 mB (48% спирт)». */
     public static MutableComponent distillatePair(Object value, Object capacity) {
         return Component.translatable("gui.gonzotech.distillate",
-                num(value, WATER), num(capacity, WATER), mb(WATER));
+                num(value, DISTILLATE), num(capacity, DISTILLATE), mb(DISTILLATE));
     }
 
     /** «§bРектификат§7: §b12§7 / §b100 mB (100% спирт)». */
     public static MutableComponent rectificatePair(Object value, Object capacity) {
         return Component.translatable("gui.gonzotech.rectificate",
-                num(value, WATER), num(capacity, WATER), mb(WATER));
+                num(value, RECTIFICATE), num(capacity, RECTIFICATE), mb(RECTIFICATE));
     }
 
     /** «§2Зелье отравления II§7: §212§7 / §2100 mB». */
     public static MutableComponent poisonPair(Object value, Object capacity) {
         return Component.translatable("gui.gonzotech.poison",
-                num(value, 0x4E9331), num(capacity, 0x4E9331), mb(0x4E9331));
+                num(value, POISON_POTION), num(capacity, POISON_POTION), mb(POISON_POTION));
+    }
+
+    // ─────────────────── Многострочные тултипы Эпохи III ───────────────────
+
+    /**
+     * Тултип браги:
+     * line 1: «<#b84a28>Брага: X / X mB»
+     * line 2: «&7Спирт: <#b84a28>0%»
+     * line 3: «&7Гниль: <#b84a28>0%»
+     */
+    public static List<Component> mashTooltip(Object value, Object capacity, Object alcPercent, Object rotPercent) {
+        return List.of(
+            Component.translatable("gui.gonzotech.mash.title", value, capacity).withStyle(Style.EMPTY.withColor(MASH)),
+            Component.translatable("gui.gonzotech.lore.alcohol",
+                Component.literal(alcPercent + "%").withStyle(Style.EMPTY.withColor(MASH))).withStyle(ChatFormatting.GRAY),
+            Component.translatable("gui.gonzotech.lore.rot",
+                Component.literal(rotPercent + "%").withStyle(Style.EMPTY.withColor(MASH))).withStyle(ChatFormatting.GRAY)
+        );
+    }
+
+    /**
+     * Тултип сусла:
+     * line 1: «<#ffd582>Сусло: X / X mB»
+     * line 2: «&7Спирт: <#ffd582>X%»
+     */
+    public static List<Component> wortTooltip(Object value, Object capacity, Object alcPercent) {
+        return List.of(
+            Component.translatable("gui.gonzotech.wort.title", value, capacity).withStyle(Style.EMPTY.withColor(WORT)),
+            Component.translatable("gui.gonzotech.lore.alcohol",
+                Component.literal(alcPercent + "%").withStyle(Style.EMPTY.withColor(WORT))).withStyle(ChatFormatting.GRAY)
+        );
+    }
+
+    /**
+     * Тултип дистиллята:
+     * line 1: «<#8bd3fc>Дистиллят: X / X mB»
+     * line 2: «&7Спирт: <#8bd3fc>48%»
+     */
+    public static List<Component> distillateTooltip(Object value, Object capacity) {
+        return List.of(
+            Component.translatable("gui.gonzotech.distillate.title", value, capacity).withStyle(Style.EMPTY.withColor(DISTILLATE)),
+            Component.translatable("gui.gonzotech.lore.alcohol",
+                Component.literal("48%").withStyle(Style.EMPTY.withColor(DISTILLATE))).withStyle(ChatFormatting.GRAY)
+        );
+    }
+
+    /**
+     * Тултип ретификата:
+     * line 1: «<#8affe9>Ретификат: X / X mB»
+     * line 2: «&7Спирт: <#8affe9>98%»
+     */
+    public static List<Component> rectificateTooltip(Object value, Object capacity) {
+        return List.of(
+            Component.translatable("gui.gonzotech.rectificate.title", value, capacity).withStyle(Style.EMPTY.withColor(RECTIFICATE)),
+            Component.translatable("gui.gonzotech.lore.alcohol",
+                Component.literal("98%").withStyle(Style.EMPTY.withColor(RECTIFICATE))).withStyle(ChatFormatting.GRAY)
+        );
+    }
+
+    /**
+     * Тултип кипятка:
+     * line 1: «<#4eb8f5>Кипяток: X / X mB»
+     */
+    public static List<Component> boilingWaterTooltip(Object value, Object capacity) {
+        return List.of(
+            Component.translatable("gui.gonzotech.boiling_water.title", value, capacity).withStyle(Style.EMPTY.withColor(BOILING_WATER))
+        );
+    }
+
+    /**
+     * Тултип зелья отравления:
+     * line 1: «<#839c66>Зелье отравления II: X / X mB»
+     */
+    public static List<Component> poisonTooltip(Object value, Object capacity) {
+        return List.of(
+            Component.translatable("gui.gonzotech.poison.title", value, capacity).withStyle(Style.EMPTY.withColor(POISON_POTION))
+        );
     }
 
     /** Обозначение единицы объёма (mB) цветом ресурса. */

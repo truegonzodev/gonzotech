@@ -63,7 +63,7 @@ public class DistillerScreen extends MachineScreen<DistillerMenu> {
 
         drawVBarTex(g, gthX, barY, barW, barH, gthFrac, BAR_GTH);
         drawVBarTex(g, waterX, barY, barW, barH, waterFrac, BAR_WATER);
-        drawVBarTex(g, boilX, barY, barW, barH, boilFrac, BAR_GTH);
+        drawVBarTex(g, boilX, barY, barW, barH, boilFrac, BAR_HOT_WATER);
         drawVBarTex(g, rawX, barY, barW, barH, rawFrac, rawTex);
         drawVBarTex(g, outX, barY, barW, barH, outFrac, outTex);
 
@@ -74,20 +74,25 @@ public class DistillerScreen extends MachineScreen<DistillerMenu> {
             g.renderComponentTooltip(this.font, List.of(
                 GtUnits.waterPair(menu.water(), DistillerBlockEntity.WATER_CAPACITY)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, boilX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(
-                GtUnits.hotWaterPair(menu.boilingWater(), DistillerBlockEntity.HOT_WATER_CAPACITY)), mouseX, mouseY);
+            g.renderComponentTooltip(this.font,
+                GtUnits.boilingWaterTooltip(menu.boilingWater(), DistillerBlockEntity.HOT_WATER_CAPACITY), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, rawX, barY, barW, barH)) {
             String alcStr = String.format(Locale.ROOT, "%.1f", menu.rawAlcohol());
             String rotStr = String.format(Locale.ROOT, "%.1f", menu.rawRot());
-            g.renderComponentTooltip(this.font, List.of(
-                GtUnits.mashPair(menu.rawAmount(), DistillerBlockEntity.INPUT_CAPACITY, alcStr, rotStr)), mouseX, mouseY);
+            if (menu.rawRot() > 0) {
+                g.renderComponentTooltip(this.font,
+                    GtUnits.mashTooltip(menu.rawAmount(), DistillerBlockEntity.INPUT_CAPACITY, alcStr, rotStr), mouseX, mouseY);
+            } else {
+                g.renderComponentTooltip(this.font,
+                    GtUnits.wortTooltip(menu.rawAmount(), DistillerBlockEntity.INPUT_CAPACITY, alcStr), mouseX, mouseY);
+            }
         } else if (inRect(mouseX, mouseY, outX, barY, barW, barH)) {
             if (hasPoison) {
-                g.renderComponentTooltip(this.font, List.of(
-                    GtUnits.poisonPair(menu.poison(), DistillerBlockEntity.OUTPUT_CAPACITY)), mouseX, mouseY);
+                g.renderComponentTooltip(this.font,
+                    GtUnits.poisonTooltip(menu.poison(), DistillerBlockEntity.OUTPUT_CAPACITY), mouseX, mouseY);
             } else {
-                g.renderComponentTooltip(this.font, List.of(
-                    GtUnits.distillatePair(menu.distillate(), DistillerBlockEntity.OUTPUT_CAPACITY)), mouseX, mouseY);
+                g.renderComponentTooltip(this.font,
+                    GtUnits.distillateTooltip(menu.distillate(), DistillerBlockEntity.OUTPUT_CAPACITY), mouseX, mouseY);
             }
         }
     }

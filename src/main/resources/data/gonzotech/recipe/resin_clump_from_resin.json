@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:resin"
+  ],
+  "result": {
+    "id": "minecraft:resin_clump",
+    "count": 1
+  }
+}
