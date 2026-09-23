@@ -12,6 +12,7 @@ import com.gonzotech.machines.network.ItemFilterBlock;
 import com.gonzotech.machines.network.PipeGeometry;
 import com.gonzotech.machines.network.PipeMode;
 import com.gonzotech.machines.network.PipeType;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
