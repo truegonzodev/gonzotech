@@ -173,8 +173,8 @@ public final class RadiationSystem {
         // дозу на (30 + уровень²) %: уровень 1 → 31 %, уровень 2 → 34 %.
         var absorption = player.getEffect(com.gonzotech.core.registry.ModEffects.DOSE_ABSORPTION);
         if (absorption != null) {
-            int level = absorption.getAmplifier() + 1;
-            int cut = Math.min(100, 30 + level * level);
+            int absLevel = absorption.getAmplifier() + 1;
+            int cut = Math.min(100, 30 + absLevel * absLevel);
             suitFactor *= (100 - cut) / 100.0;
         }
         double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
