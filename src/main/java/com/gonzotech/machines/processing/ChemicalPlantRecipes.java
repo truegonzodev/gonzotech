@@ -5,6 +5,7 @@ import com.gonzotech.core.item.AmpouleItem;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -12,23 +13,15 @@ import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Рецепты Химического завода (тир 3):
- * 11 утверждённых автором химических синтезов:
- * <ul>
- *   <li>1. Ампула формальдегида + 2 лазурита + 1 жемчуг эндера + 1 сахар = 3 ЭДТА (гранулы) [2 катализатора]</li>
- *   <li>2. 2 соли + 1 редстоун + 1 зелёный краситель + ампула серной кислоты = 2 цианата натрия (гранулы) [1 катализатор]</li>
- *   <li>3. 2 ампулы этилена = полиэтилен (гранулы) [1 катализатор]</li>
- *   <li>4. 2 хлорида кальция + 2 соли + 1 ампула серной кислоты = 2 ПВХ гранулы [1 катализатор]</li>
- *   <li>5. 2 смолистых опилок + ампула ректификата = minecraft:resin_clump [0 катализаторов]</li>
- *   <li>6. 2 твердосмольных опилок + ампула ректификата = gonzotech:resin [0 катализаторов]</li>
- *   <li>7. 1 бумажная ткань + 1 ампула серной кислоты + 1 ампула ректификата + 1 соль = 2 целлулоида [1 катализатор]</li>
- *   <li>8. 2 gonzotech:resin + сера = 2 резина [0 катализаторов]</li>
- *   <li>9. 2 ампулы аминоблейзатанола + 1 пустая ампула + 2 сера = цистамин [2 катализатора]</li>
- *   <li>10. 1 ЭДТА + 1 цианат натрия + 1 ферромагнитная пыль + 1 бутылка водки + 1 золотой самородок = пентацин [2 катализатора]</li>
- *   <li>11. 2 ЭДТА + 1 хлорид кальция + 2 йода + 1 бутылка водки + 1 морской огурец = ДТПА [3 катализатора]</li>
- * </ul>
+ * 11 утверждённых автором химических синтезов в сетке 3×3.
+ *
+ * <p>Катализаторы (платиновые и палладиевые самородки) не привязаны к конкретным рецептам:
+ * условием старта синтеза является занятость всех 3 слотов катализаторов. По завершении
+ * реакции случайно тратится от 0 до 3 самородков.</p>
  */
 public final class ChemicalPlantRecipes {
 
@@ -37,10 +30,27 @@ public final class ChemicalPlantRecipes {
         int count();
     }
 
-    public record ItemMatcher(Item item, int count) implements IngredientMatcher {
+    public static class ItemMatcher implements IngredientMatcher {
+        private final Supplier<? extends Item> itemSupplier;
+        private final int count;
+
+        public ItemMatcher(Supplier<? extends Item> itemSupplier, int count) {
+            this.itemSupplier = itemSupplier;
+            this.count = count;
+        }
+
+        public ItemMatcher(Item item, int count) {
+            this(() -> item, count);
+        }
+
         @Override
         public boolean matches(ItemStack stack) {
-            return !stack.isEmpty() && stack.is(item);
+            return !stack.isEmpty() && stack.is(itemSupplier.get());
+        }
+
+        @Override
+        public int count() {
+            return count;
         }
     }
 
@@ -59,9 +69,12 @@ public final class ChemicalPlantRecipes {
     public record ChemicalRecipe(
         String id,
         List<IngredientMatcher> ingredients,
-        int catalystCount,
-        ItemStack output
-    ) {}
+        Supplier<ItemStack> outputSupplier
+    ) {
+        public ItemStack output() {
+            return outputSupplier.get().copy();
+        }
+    }
 
     public static final List<ChemicalRecipe> RECIPES = new ArrayList<>();
 
@@ -74,93 +87,101 @@ public final class ChemicalPlantRecipes {
             new ItemMatcher(Items.LAPIS_LAZULI, 2),
             new ItemMatcher(Items.ENDER_PEARL, 1),
             new ItemMatcher(Items.SUGAR, 1)
-        ), 2, new ItemStack(ModItems.EDTA.get(), 3)));
+        ), () -> new ItemStack(ModItems.EDTA.get(), 3)));
 
         // 2. Цианат натрия: 2 соли + 1 редстоун + 1 зелёный краситель + ампула серной кислоты = 2 цианата натрия
         RECIPES.add(new ChemicalRecipe("sodium_cyanate", List.of(
-            new ItemMatcher(ModItems.SALT.get(), 2),
+            new ItemMatcher(ModItems.SALT::get, 2),
             new ItemMatcher(Items.REDSTONE, 1),
             new ItemMatcher(Items.GREEN_DYE, 1),
             new AmpouleMatcher("sulfuric_acid", 1)
-        ), 1, new ItemStack(ModItems.SODIUM_CYANATE.get(), 2)));
+        ), () -> new ItemStack(ModItems.SODIUM_CYANATE.get(), 2)));
 
-        // 3. Полиэтилен: 2 ампулы этилена = полиэтилен (гранулы)
+        // 3. Полиэтилен: 2 ампулы этилена = 1 полиэтилен (гранулы)
         RECIPES.add(new ChemicalRecipe("polyethylene", List.of(
             new AmpouleMatcher("ethylene", 2)
-        ), 1, new ItemStack(ModItems.POLYETHYLENE.get(), 1)));
+        ), () -> new ItemStack(ModItems.POLYETHYLENE.get(), 1)));
 
         // 4. ПВХ: 2 хлорида кальция + 2 соли + 1 ампула серной кислоты = 2 ПВХ гранулы
         RECIPES.add(new ChemicalRecipe("polyvinyl_chloride", List.of(
-            new ItemMatcher(ModItems.CALCIUM_CHLORIDE.get(), 2),
-            new ItemMatcher(ModItems.SALT.get(), 2),
+            new ItemMatcher(ModItems.CALCIUM_CHLORIDE::get, 2),
+            new ItemMatcher(ModItems.SALT::get, 2),
             new AmpouleMatcher("sulfuric_acid", 1)
-        ), 1, new ItemStack(ModItems.POLYVINYL_CHLORIDE.get(), 2)));
+        ), () -> new ItemStack(ModItems.POLYVINYL_CHLORIDE.get(), 2)));
 
-        // 5. Смолистые опилки: 2 смолистых опилок + ампула ректификата = resin_clump
+        // 5. Сгусток смолы: 2 смолистых опилок + ампула ректификата = resin_clump
         RECIPES.add(new ChemicalRecipe("resin_clump", List.of(
-            new ItemMatcher(ModItems.RESINOUS_SAWDUST.get(), 2),
+            new ItemMatcher(ModItems.RESINOUS_SAWDUST::get, 2),
             new AmpouleMatcher("rectificate", 1)
-        ), 0, new ItemStack(Items.RESIN_CLUMP, 1)));
+        ), () -> new ItemStack(Items.RESIN_CLUMP, 1)));
 
         // 6. Твердосмольные опилки: 2 твердосмольных опилок + ампула ректификата = resin
         RECIPES.add(new ChemicalRecipe("resin", List.of(
-            new ItemMatcher(ModItems.HARD_RESINOUS_SAWDUST.get(), 2),
+            new ItemMatcher(ModItems.HARD_RESINOUS_SAWDUST::get, 2),
             new AmpouleMatcher("rectificate", 1)
-        ), 0, new ItemStack(ModItems.RESIN.get(), 1)));
+        ), () -> new ItemStack(ModItems.RESIN.get(), 1)));
 
         // 7. Целлулоид: 1 бумажная ткань + 1 ампула серной кислоты + 1 ампула ректификата + 1 соль = 2 целлулоида
         RECIPES.add(new ChemicalRecipe("celluloid", List.of(
-            new ItemMatcher(ModItems.PAPER_FABRIC.get(), 1),
+            new ItemMatcher(ModItems.PAPER_FABRIC::get, 1),
             new AmpouleMatcher("sulfuric_acid", 1),
             new AmpouleMatcher("rectificate", 1),
-            new ItemMatcher(ModItems.SALT.get(), 1)
-        ), 1, new ItemStack(ModItems.CELLULOID.get(), 2)));
+            new ItemMatcher(ModItems.SALT::get, 1)
+        ), () -> new ItemStack(ModItems.CELLULOID.get(), 2)));
 
         // 8. Резина: 2 смолы + 1 сера = 2 резины
         RECIPES.add(new ChemicalRecipe("rubber", List.of(
-            new ItemMatcher(ModItems.RESIN.get(), 2),
-            new ItemMatcher(ModItems.SULFUR.get(), 1)
-        ), 0, new ItemStack(ModItems.RUBBER.get(), 2)));
+            new ItemMatcher(ModItems.RESIN::get, 2),
+            new ItemMatcher(() -> ModItems.RAW_ORE_ITEMS.get("sulfur").get(), 1)
+        ), () -> new ItemStack(ModItems.RUBBER.get(), 2)));
 
-        // 9. Цистамин: 2 ампулы аминоблейзатанола + 1 пустая ампула + 2 серы = цистамин
+        // 9. Цистамин: 2 ампулы аминоблейзатанола + 1 пустая ампула + 2 серы = 1 цистамин
         RECIPES.add(new ChemicalRecipe("cysteamine", List.of(
             new AmpouleMatcher("aminoblazeethanol", 2),
-            new ItemMatcher(ModItems.EMPTY_AMPOULE.get(), 1),
-            new ItemMatcher(ModItems.SULFUR.get(), 2)
-        ), 2, new ItemStack(ModItems.CYSTEAMINE.get(), 1)));
+            new ItemMatcher(ModItems.EMPTY_AMPOULE::get, 1),
+            new ItemMatcher(() -> ModItems.RAW_ORE_ITEMS.get("sulfur").get(), 2)
+        ), () -> new ItemStack(ModItems.CYSTEAMINE.get(), 1)));
 
-        // 10. Пентацин: 1 ЭДТА + 1 цианат натрия + 1 ферромагнитная пыль + 1 водка + 1 золотой самородок = пентацин
+        // 10. Пентацин: 1 ЭДТА + 1 цианат натрия + 1 ферромагнитная пыль + 1 водка + 1 золотой самородок = 1 пентацин
         RECIPES.add(new ChemicalRecipe("pentacin", List.of(
-            new ItemMatcher(ModItems.EDTA.get(), 1),
-            new ItemMatcher(ModItems.SODIUM_CYANATE.get(), 1),
-            new ItemMatcher(ModItems.FERROMAGNETIC_DUST.get(), 1),
-            new ItemMatcher(ModItems.VODKA_BOTTLE.get(), 1),
+            new ItemMatcher(ModItems.EDTA::get, 1),
+            new ItemMatcher(ModItems.SODIUM_CYANATE::get, 1),
+            new ItemMatcher(() -> ModItems.DUST_ITEMS.get("ferromagnetic_dust").get(), 1),
+            new ItemMatcher(ModItems.VODKA_BOTTLE::get, 1),
             new ItemMatcher(Items.GOLD_NUGGET, 1)
-        ), 2, new ItemStack(ModItems.PENTACIN.get(), 1)));
+        ), () -> new ItemStack(ModItems.PENTACIN.get(), 1)));
 
-        // 11. ДТПА: 2 ЭДТА + 1 хлорид кальция + 2 йода + 1 водка + 1 морской огурец = ДТПА
+        // 11. ДТПА: 2 ЭДТА + 1 хлорид кальция + 2 сырого йода + 1 водка + 1 морской огурец = 1 ДТПА
         RECIPES.add(new ChemicalRecipe("dtpa", List.of(
-            new ItemMatcher(ModItems.EDTA.get(), 2),
-            new ItemMatcher(ModItems.CALCIUM_CHLORIDE.get(), 1),
-            new ItemMatcher(ModItems.IODINE_DUST.get(), 2),
-            new ItemMatcher(ModItems.VODKA_BOTTLE.get(), 1),
+            new ItemMatcher(ModItems.EDTA::get, 2),
+            new ItemMatcher(ModItems.CALCIUM_CHLORIDE::get, 1),
+            new ItemMatcher(() -> ModItems.RAW_ORE_ITEMS.get("iodine").get(), 2),
+            new ItemMatcher(ModItems.VODKA_BOTTLE::get, 1),
             new ItemMatcher(Items.SEA_PICKLE, 1)
-        ), 3, new ItemStack(ModItems.DTPA.get(), 1)));
+        ), () -> new ItemStack(ModItems.DTPA.get(), 1)));
     }
 
+    /**
+     * Проверяет, является ли предмет допустимым катализатором (платиновый или палладиевый самородок).
+     */
     public static boolean isCatalyst(ItemStack stack) {
-        if (stack.isEmpty()) return false;
+        if (stack == null || stack.isEmpty()) return false;
+        var plat = ModItems.NUGGET_ITEMS.get("platinum_nugget");
+        var pal = ModItems.NUGGET_ITEMS.get("palladium_nugget");
+        if (plat != null && stack.is(plat.get())) return true;
+        if (pal != null && stack.is(pal.get())) return true;
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return id.getNamespace().equals(GonzoTechMod.MOD_ID)
                 && (id.getPath().equals("platinum_nugget") || id.getPath().equals("palladium_nugget"));
     }
 
-    public static ChemicalRecipe findRecipe(Container container, int gridStart, int gridCount, int availableCatalysts) {
+    /**
+     * Поиск подходящего рецепта по ингредиентам в рабочей сетке 3×3.
+     */
+    public static ChemicalRecipe findRecipe(Container container, int gridStart, int gridCount) {
         init();
         for (ChemicalRecipe r : RECIPES) {
-            if (availableCatalysts < r.catalystCount()) continue;
-
-            // Проверяем, что все ингредиенты рецепта есть в сетке
+            // 1. Проверяем наличие всех ингредиентов рецепта в сетке
             boolean allPresent = true;
             for (IngredientMatcher m : r.ingredients()) {
                 int total = 0;
@@ -177,7 +198,7 @@ public final class ChemicalPlantRecipes {
             }
             if (!allPresent) continue;
 
-            // Проверяем, что в сетке нет посторонних предметов, не входящих в рецепт
+            // 2. Проверяем, что в сетке нет лишних посторонних предметов
             boolean hasForeign = false;
             for (int s = gridStart; s < gridStart + gridCount; s++) {
                 ItemStack st = container.getItem(s);
@@ -201,6 +222,9 @@ public final class ChemicalPlantRecipes {
         return null;
     }
 
+    /**
+     * Поглощение ингредиентов рецепта из сетки 3×3.
+     */
     public static void consumeInputs(Container container, int gridStart, int gridCount, ChemicalRecipe recipe) {
         for (IngredientMatcher m : recipe.ingredients()) {
             int need = m.count();
@@ -216,17 +240,22 @@ public final class ChemicalPlantRecipes {
         }
     }
 
-    public static void consumeCatalysts(Container container, int catStart, int catCount, int requiredCatalysts) {
-        int need = requiredCatalysts;
-        if (need <= 0) return;
-        for (int c = catStart; c < catStart + catCount; c++) {
-            ItemStack st = container.getItem(c);
-            if (!st.isEmpty() && isCatalyst(st)) {
-                int take = Math.min(need, st.getCount());
-                st.shrink(take);
-                need -= take;
-                if (need <= 0) break;
+    /**
+     * Случайное поглощение 0–3 самородков катализатора из слотов катализаторов.
+     */
+    public static void consumeCatalystsRandomly(Container container, int catStart, int catCount, RandomSource random) {
+        int toConsume = random.nextInt(4); // 0, 1, 2 или 3 самородка
+        for (int i = 0; i < toConsume; i++) {
+            List<Integer> availableSlots = new ArrayList<>();
+            for (int c = catStart; c < catStart + catCount; c++) {
+                ItemStack st = container.getItem(c);
+                if (!st.isEmpty() && isCatalyst(st)) {
+                    availableSlots.add(c);
+                }
             }
+            if (availableSlots.isEmpty()) break;
+            int pickedSlot = availableSlots.get(random.nextInt(availableSlots.size()));
+            container.getItem(pickedSlot).shrink(1);
         }
     }
 

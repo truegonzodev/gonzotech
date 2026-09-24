@@ -1,7 +1,7 @@
 package com.gonzotech.machines.block.entity;
 
-import com.gonzotech.machines.energy.GtuSink;
 import com.gonzotech.machines.energy.MachineDefs;
+import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.ChemicalPlantMenu;
 import com.gonzotech.machines.processing.ChemicalPlantRecipes;
 import com.gonzotech.machines.registry.ModBlockEntities;
@@ -23,11 +23,11 @@ import net.minecraft.world.level.block.state.BlockState;
  * Блок-энтити Химического завода (тир 3):
  * <ul>
  *   <li>Приём и хранение GTU: макс. 2600 GTU, макс. приём 66 GTU/t;</li>
- *   <li>Слоты катализаторов: 0, 1, 2 (платиновые и палладиевые самородки);</li>
+ *   <li>Слоты катализаторов: 0, 1, 2 (платиновые и палладиевые самородки, все 3 должны быть заняты);</li>
  *   <li>Сетка ингредиентов 3×3: слоты 3..11;</li>
  *   <li>Слот готовой продукции: слот 12;</li>
  *   <li>Длительность любой реакции: ровно 160 тиков, расход 1.9 GTU/t (1900 mGTU/t);</li>
- *   <li>По завершении: поглощает сырьё из сетки и 0–3 самородка катализатора, выдавая продукт.</li>
+ *   <li>По завершении: поглощает сырьё из сетки и случайно 0–3 самородка катализатора, выдавая продукт.</li>
  * </ul>
  */
 public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
@@ -40,7 +40,8 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     public static final int GRID_COUNT = 9;
     public static final int SLOT_OUTPUT = 12;
 
-    public static final long GTU_CAPACITY_MILLI = 2600L * MachineDefs.MILLI;
+    public static final long GTU_CAPACITY = 2600L;
+    public static final long GTU_CAPACITY_MILLI = GTU_CAPACITY * MachineDefs.MILLI;
     public static final long MAX_GTU_INTAKE_MILLI = 66L * MachineDefs.MILLI;
     public static final long GTU_PER_TICK_MILLI = 1900L; // 1.9 GTU/t
     public static final int REACTION_TICKS = 160;
@@ -103,15 +104,14 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     @Override
     public long receiveGtu(long amount, boolean simulate) {
         if (amount <= 0) return 0;
-        long allowed = Math.min(amount, 66L);
-        long allowedMilli = allowed * MachineDefs.MILLI;
         long spaceMilli = GTU_CAPACITY_MILLI - currentGtuMilli;
-        long toReceiveMilli = Math.min(allowedMilli, Math.max(0, spaceMilli));
-        if (!simulate && toReceiveMilli > 0) {
-            currentGtuMilli += toReceiveMilli;
+        long allowedMilli = Math.min(amount, MAX_GTU_INTAKE_MILLI);
+        long acceptedMilli = Math.min(allowedMilli, Math.max(0, spaceMilli));
+        if (!simulate && acceptedMilli > 0) {
+            currentGtuMilli += acceptedMilli;
             setChanged();
         }
-        return toReceiveMilli / MachineDefs.MILLI;
+        return acceptedMilli;
     }
 
     // ─────────────────────────── Серверный тик ───────────────────────────
@@ -119,18 +119,25 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     public void tick(Level level, BlockPos pos, BlockState state) {
         if (level.isClientSide) return;
 
-        // 1. Подсчёт доступных катализаторов (платина/палладий)
-        int availableCatalysts = 0;
+        // 1. Проверка катализаторов: ВСЕ ТРИ СЛОТА должны быть обязательно заняты
+        boolean allCatalystsPresent = true;
         for (int c = CATALYST_START; c < CATALYST_START + CATALYST_COUNT; c++) {
             ItemStack catStack = items.get(c);
-            if (!catStack.isEmpty() && ChemicalPlantRecipes.isCatalyst(catStack)) {
-                availableCatalysts += catStack.getCount();
+            if (catStack.isEmpty() || !ChemicalPlantRecipes.isCatalyst(catStack)) {
+                allCatalystsPresent = false;
+                break;
             }
+        }
+        if (!allCatalystsPresent) {
+            if (progress > 0) {
+                progress = 0;
+                setChanged();
+            }
+            return;
         }
 
         // 2. Поиск активного рецепта
-        ChemicalPlantRecipes.ChemicalRecipe recipe = ChemicalPlantRecipes.findRecipe(
-                this, GRID_START, GRID_COUNT, availableCatalysts);
+        ChemicalPlantRecipes.ChemicalRecipe recipe = ChemicalPlantRecipes.findRecipe(this, GRID_START, GRID_COUNT);
 
         if (recipe == null) {
             if (progress > 0) {
@@ -165,8 +172,8 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
             // Реакция завершена:
             // а) Поглощаем сырьё из сетки
             ChemicalPlantRecipes.consumeInputs(this, GRID_START, GRID_COUNT, recipe);
-            // б) Поглощаем катализаторы
-            ChemicalPlantRecipes.consumeCatalysts(this, CATALYST_START, CATALYST_COUNT, recipe.catalystCount());
+            // б) Поглощаем случайно 0–3 самородка катализатора
+            ChemicalPlantRecipes.consumeCatalystsRandomly(this, CATALYST_START, CATALYST_COUNT, level.random);
             // в) Выдаём результат
             if (outSlotStack.isEmpty()) {
                 items.set(SLOT_OUTPUT, expectedOut.copy());
@@ -227,7 +234,7 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("gui.gonzotech.chemical_plant.title");
+        return Component.translatable("block.gonzotech.third_chemical_plant");
     }
 
     @Override

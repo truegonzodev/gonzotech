@@ -39,11 +39,11 @@ public class DtpaItem extends Item {
         Necrosis.cure(serverPlayer);
 
         // 2. Мощный курс выведения радиации (уровень 2 = 60% дозы за курс)
-        serverPlayer.addEffect(new MobEffectInstance(ModEffects.RAD_CLEANSE.get(),
+        serverPlayer.addEffect(new MobEffectInstance(ModEffects.RAD_CLEANSE,
                 60 * 20, 2, false, true));
 
         // 3. Радиозащитный щит на 60 секунд
-        serverPlayer.addEffect(new MobEffectInstance(ModEffects.CYSTEAMINE.get(),
+        serverPlayer.addEffect(new MobEffectInstance(ModEffects.CYSTEAMINE,
                 60 * 20, 0, false, true));
 
         // Мягкий побочный эффект: лёгкий голод I на 5 секунд

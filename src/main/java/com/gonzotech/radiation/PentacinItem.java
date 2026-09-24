@@ -1,6 +1,6 @@
 package com.gonzotech.radiation;
 
-import com.gonzotech.chalkboard.progress.ModPsycheAttachments;
+import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import net.minecraft.ChatFormatting;

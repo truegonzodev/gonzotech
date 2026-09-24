@@ -34,7 +34,7 @@ public class CysteamineItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        serverPlayer.addEffect(new MobEffectInstance(ModEffects.CYSTEAMINE.get(),
+        serverPlayer.addEffect(new MobEffectInstance(ModEffects.CYSTEAMINE,
                 DURATION_SECONDS * 20, 0, false, true));
 
         if (!serverPlayer.getAbilities().instabuild) {
