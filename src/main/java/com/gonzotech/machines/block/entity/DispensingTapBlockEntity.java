@@ -73,7 +73,7 @@ public class DispensingTapBlockEntity extends BaseMachineBlockEntity
     };
 
     public DispensingTapBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.DISPENSING_TAP.get(), pos, state, 2);
+        super(ModBlockEntities.THIRD_DISPENSING_TAP.get(), pos, state, 2);
     }
 
     public ResourceBuffer distillateBuffer() {

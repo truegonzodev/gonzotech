@@ -215,7 +215,8 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         if (amount <= 0) return 0;
         long maxThroughput = (fluidId == FLUID_MASH || fluidId == FLUID_FORMALDEHYDE) ? 288 : 492;
         long allowed = Math.min(amount, maxThroughput);
-        // Приоритет — левый бак
+        // Приём из труб/тары — ТОЛЬКО в левый бак (сырьё); правый бак — продукт
+        // реакций, извне он не наполняется (автор 24.09.2026).
         if (leftFluidType == FLUID_EMPTY || (leftFluidType == fluidId && leftFluidAmount < TANK_CAPACITY)) {
             int space = TANK_CAPACITY - leftFluidAmount;
             long accepted = Math.min(allowed, space);
@@ -526,7 +527,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                     return true;
                 }
             }
-        } else if (in.is(ModItems.AMPOULE.get())) {
+        } else if (com.gonzotech.core.item.AmpouleItem.isFilledAmpoule(in)) {
             String ampFluid = com.gonzotech.core.item.AmpouleItem.getStoredFluid(in);
             int ampAmount = com.gonzotech.core.item.AmpouleItem.getStoredAmount(in);
             int ampFluidId = fluidIdByName(ampFluid);
@@ -536,7 +537,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 tankAmount += ampAmount;
                 applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
                 in.shrink(1);
-                // При опустошении в филлере ампула пропадает (одноразовая).
+                // При опустошении в филлере ампула пропадает (одноразовая — оба типа).
                 return true;
             }
         }
