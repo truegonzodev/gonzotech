@@ -1,0 +1,64 @@
+{
+  "variants": {
+    "facing=north,half=lower,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_closed"
+    },
+    "facing=north,half=lower,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_opened"
+    },
+    "facing=north,half=upper,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_closed"
+    },
+    "facing=north,half=upper,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_opened"
+    },
+    "facing=east,half=lower,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_closed",
+      "y": 90
+    },
+    "facing=east,half=lower,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_opened",
+      "y": 90
+    },
+    "facing=east,half=upper,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_closed",
+      "y": 90
+    },
+    "facing=east,half=upper,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_opened",
+      "y": 90
+    },
+    "facing=south,half=lower,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_closed",
+      "y": 180
+    },
+    "facing=south,half=lower,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_opened",
+      "y": 180
+    },
+    "facing=south,half=upper,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_closed",
+      "y": 180
+    },
+    "facing=south,half=upper,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_opened",
+      "y": 180
+    },
+    "facing=west,half=lower,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_closed",
+      "y": 270
+    },
+    "facing=west,half=lower,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_down_opened",
+      "y": 270
+    },
+    "facing=west,half=upper,open=false": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_closed",
+      "y": 270
+    },
+    "facing=west,half=upper,open=true": {
+      "model": "gonzotech:block/third/heavy_door_tungsten_up_opened",
+      "y": 270
+    }
+  }
+}

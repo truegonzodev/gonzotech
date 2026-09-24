@@ -59,10 +59,12 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("chalkboard", ModBlocks.CHALKBOARD);
 
     /**
-     * Фаза 3 — «Заметки учёного»: будущее руководство по моду (аналог таумономикона /
-     * лексикона Botania). Пока только предмет-заглушка без функционала: выдаётся
-     * игроку один раз при первом входе в мир, крафтится бесформенно (книга + верстак).
-     * ПКМ открывает GUI-буклет ({@link com.gonzotech.chalkboard.item.ScholarNotesItem}).
+     * «Заметки учёного» — руководство по моду (аналог таумономикона / лексикона Botania).
+     * Выдаётся один раз при первом входе в мир, крафтится бесформенно (книга + верстак).
+     * ПКМ открывает GUI-буклет ({@link com.gonzotech.chalkboard.item.ScholarNotesItem}):
+     * 40 страниц по 5 главам-эрам, вкладки, иллюстрации и витрины
+     * ({@code chalkboard/notes/ScholarNotesContent}). Наполнены главы I–II,
+     * главы III–V — пустые вкладки (задел).
      */
     public static final DeferredItem<com.gonzotech.chalkboard.item.ScholarNotesItem> SCHOLAR_NOTES =
         ITEMS.registerItem("scholar_notes",
@@ -116,8 +118,58 @@ public class ModItems {
     public static final DeferredItem<Item> REDSTONE_PLATE = ITEMS.registerSimpleItem("redstone_plate");
     public static final DeferredItem<Item> REDSTONE_CORE = ITEMS.registerSimpleItem("redstone_core");
     public static final DeferredItem<Item> TITANIUM_PLATE = ITEMS.registerSimpleItem("titanium_plate");
+    public static final DeferredItem<Item> ZIRCONIUM_PLATE = ITEMS.registerSimpleItem("zirconium_plate");
     public static final DeferredItem<Item> SEMICONDUCTOR_PLATE = ITEMS.registerSimpleItem("semiconductor_plate");
     public static final DeferredItem<Item> SEMICONDUCTOR_CORE = ITEMS.registerSimpleItem("semiconductor_core");
+
+    // ─────────────────────── Полимеры Эпохи III (автор 22.09) ───────────────────────
+    // Заглушки: предметы зарегистрированы и лежат во вкладке «Компоненты», рецептов
+    // и применений пока НЕТ — их даст химический завод. Целлулоид уже входит в рецепт
+    // гермодвери, поэтому до завода гермодверь скрафтить нельзя (так и задумано).
+    /** Полиэтилен — плёнки, изоляция, ёмкости. */
+    public static final DeferredItem<Item> POLYETHYLENE = ITEMS.registerSimpleItem("polyethylene");
+    /** Поливинилхлорид (ПВХ) — трубы, прокладки, химстойкая арматура. */
+    public static final DeferredItem<Item> POLYVINYL_CHLORIDE = ITEMS.registerSimpleItem("polyvinyl_chloride");
+    /** Целлулоид — твёрдый прозрачный полимер (гермодверь, остекление, плёнка). */
+    public static final DeferredItem<Item> CELLULOID = ITEMS.registerSimpleItem("celluloid");
+    /** Резина — эластомер: уплотнения, шланги, виброопоры. */
+    public static final DeferredItem<Item> RUBBER = ITEMS.registerSimpleItem("rubber");
+    /** Смола — сырьё полимерной линии (и клей). */
+    public static final DeferredItem<Item> RESIN = ITEMS.registerSimpleItem("resin");
+    /** Смолистые опилки — продукт измельчения бледной и мангровой древесины. */
+    public static final DeferredItem<Item> RESINOUS_SAWDUST = ITEMS.registerSimpleItem("resinous_sawdust");
+    /** Твердосмолистые опилки — продукт измельчения еловой и акациевой древесины. */
+    public static final DeferredItem<Item> HARD_RESINOUS_SAWDUST = ITEMS.registerSimpleItem("hard_resinous_sawdust");
+    /** Поваренная соль — продукт выпаривания солёной воды. */
+    public static final DeferredItem<Item> SALT = ITEMS.registerSimpleItem("salt");
+    /** Хлорид кальция — химический продукт реакции в наполнителе. */
+    public static final DeferredItem<Item> CALCIUM_CHLORIDE = ITEMS.registerSimpleItem("calcium_chloride");
+    /** Канистра — переносная ёмкость под жидкости (8000 mB). */
+    public static final DeferredItem<com.gonzotech.core.item.CanisterItem> CANISTER =
+        ITEMS.registerItem("canister", props -> new com.gonzotech.core.item.CanisterItem(ModBlocks.CANISTER.get(), props.stacksTo(1)));
+
+    /** Пустая ампула (2 стекла) — ёмкость под 128 mB жидкости. */
+    public static final DeferredItem<Item> EMPTY_AMPOULE = ITEMS.registerSimpleItem("empty_ampoule");
+    /** Стойкая ампула (2 борных стекла) — термо- и химстойкая ампула (128 mB). */
+    public static final DeferredItem<Item> DURABLE_AMPOULE = ITEMS.registerSimpleItem("durable_ampoule");
+    /** Наполненная ампула с жидкостью (128 mB). */
+    public static final DeferredItem<com.gonzotech.core.item.AmpouleItem> AMPOULE =
+        ITEMS.registerItem("ampoule", com.gonzotech.core.item.AmpouleItem::new);
+
+    /** ЭДТА (гранулы) — этилендиаминтетрауксусная кислота, прекурсор препаратов. */
+    public static final DeferredItem<Item> EDTA = ITEMS.registerSimpleItem("edta");
+    /** Цианат натрия (гранулы) — прекурсор Пентацина. */
+    public static final DeferredItem<Item> SODIUM_CYANATE = ITEMS.registerSimpleItem("sodium_cyanate");
+
+    /** Цистамин — радиозащитный препарат («щит»). */
+    public static final DeferredItem<com.gonzotech.radiation.CysteamineItem> CYSTEAMINE =
+        ITEMS.registerItem("cysteamine", com.gonzotech.radiation.CysteamineItem::new);
+    /** Пентацин — экстренный хелатирующий препарат («быстрое лечение радиации с дебаффами»). */
+    public static final DeferredItem<com.gonzotech.radiation.PentacinItem> PENTACIN =
+        ITEMS.registerItem("pentacin", com.gonzotech.radiation.PentacinItem::new);
+    /** ДТПА — мощный препарат глубокого лечения («лечение и защита, снимает некроз»). */
+    public static final DeferredItem<com.gonzotech.radiation.DtpaItem> DTPA =
+        ITEMS.registerItem("dtpa", com.gonzotech.radiation.DtpaItem::new);
 
     /** Reusable selectors for the press; they are never consumed by a stamp. */
     public static final DeferredItem<Item> FLAT_PUNCH =
@@ -132,8 +184,9 @@ public class ModItems {
         ITEMS.registerItem("core_form", props -> new Item(props.stacksTo(1)));
 
     // ─────────────────────── Материалы переработки: компоненты ───────────────────────
-    // Пока это только зарегистрированные ингредиенты с placeholder-ресурсами: рецепты
-    // и машинная переработка будут добавлены отдельной, согласованной задачей.
+    // Ингредиенты строительных замесов и машинной переработки: грит-цепочка
+    // (granite/andesite/diorite → trio → clinker), замесы (armor/barium/bore-silicate)
+    // и арматура. Рецепты у всех есть; машинная переработка — ЦФ1УР/дробилка.
     public static final DeferredItem<Item> GRANITE_GRIT =
         ITEMS.registerSimpleItem("granite_grit");
     public static final DeferredItem<Item> ANDESITE_GRIT =
@@ -148,6 +201,18 @@ public class ModItems {
         ITEMS.registerSimpleItem("armor_mix");
     public static final DeferredItem<Item> ANDESITE_SILICATE_CLINKER =
         ITEMS.registerSimpleItem("andesite_silicate_clinker");
+    /**
+     * Экранирующий замес (бариевый): связка «барий + клинкер + андезитовая
+     * крошка» для бариевого бетона — основы радиационного экрана.
+     */
+    public static final DeferredItem<Item> BARIUM_MIX =
+        ITEMS.registerSimpleItem("barium_mix");
+    /**
+     * Боросиликатный замес: бор + кремень(кремний) + песок. При переплавке в
+     * любой печи даёт борное стекло — прозрачную защиту контура.
+     */
+    public static final DeferredItem<Item> BORE_SILICATE_MIX =
+        ITEMS.registerSimpleItem("bore_silicate_mix");
     public static final DeferredItem<Item> WHITE_PORCELAIN_BATCH =
         ITEMS.registerSimpleItem("white_porcelain_batch");
     public static final DeferredItem<Item> REBAR =
@@ -159,6 +224,11 @@ public class ModItems {
      * (природный уран/реакторный плутоний остаются формами в Metals);
      * текстуры временные — повторно использованы существующие слитки/пыли,
      * финальную графику рисует автор (помечено «под замену»).
+     * <p>
+     * <b>Назначение:</b> это НЕ топливо ядерной топки Discovery-2 — та работает
+     * только на природных формах урана/тория (см.
+     * {@code NuclearFireboxBlockEntity#burnTicks}). Изотопы и смеси —
+     * заготовки под будущие продвинутые реакторы (обогащение, СО/ТСО/СНУП/УТ).
      */
     public static final DeferredItem<Item> URANIUM_238 =
         ITEMS.registerSimpleItem("uranium_238");
@@ -184,6 +254,9 @@ public class ModItems {
         ITEMS.registerSimpleItem("tmox_fuel");
     public static final DeferredItem<Item> SNUP_FUEL =
         ITEMS.registerSimpleItem("snup_fuel");
+    /** УТ — уран-ториевое топливо (автор 21.09: забыли в первом списке). */
+    public static final DeferredItem<Item> UT_FUEL =
+        ITEMS.registerSimpleItem("ut_fuel");
 
     /**
      * Пыли ванильных металлов для побочных выходов ЦФ1УР. Они намеренно не добавлены
@@ -210,6 +283,40 @@ public class ModItems {
     public static final DeferredItem<Item> OBSIDIAN_BUCKET =
         ITEMS.registerItem("obsidian_bucket", props -> new Item(props.stacksTo(1)));
 
+    /** «Прикол»: Дырявое ведро — результат разъедания ведра серной кислотой или этиленом через 180 тиков. */
+    public static final DeferredItem<Item> LEAKY_BUCKET =
+        ITEMS.registerItem("leaky_bucket", props -> new Item(props.stacksTo(16)));
+
+    /** Ведро серной кислоты: живёт 180 тиков, затем превращается в дырявое ведро. */
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> SULFURIC_ACID_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.SULFURIC_ACID_BUCKET;
+
+    /** Ведро дистиллята. */
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> DISTILLATE_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.DISTILLATE_BUCKET;
+
+    /** Ведро браги. */
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> MASH_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.MASH_BUCKET;
+
+    /** Ведро сусла. */
+    public static final java.util.function.Supplier<? extends net.minecraft.world.item.BucketItem> WORT_BUCKET =
+        com.gonzotech.core.fluid.ModFluids.WORT_BUCKET;
+
+    /** Ведро этилена: живёт 180 тиков, затем превращается в дырявое ведро. */
+    public static final DeferredItem<com.gonzotech.core.item.CorrosiveBucketItem> ETHYLENE_BUCKET =
+        ITEMS.registerItem("ethylene_bucket", com.gonzotech.core.item.CorrosiveBucketItem::new);
+
+    /** Ведро аминоблейзатанола — химический синтез, блока в мире нет. */
+    public static final DeferredItem<Item> AMINOBLAZEETHANOL_BUCKET =
+        ITEMS.registerItem("aminoblazeethanol_bucket", props ->
+            new Item(props.stacksTo(1).craftRemainder(net.minecraft.world.item.Items.BUCKET)));
+
+    /** Бутылка водки — наливается в разливном кране (дистиллят 128 mB + пузырёк). */
+    public static final DeferredItem<Item> VODKA_BOTTLE =
+        ITEMS.registerItem("vodka_bottle", props ->
+            new Item(props.stacksTo(16).craftRemainder(net.minecraft.world.item.Items.GLASS_BOTTLE)));
+
     /**
      * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
      * игрок пытается скрафтить закрытую машину (напр. эл. печь) до нужного
@@ -228,8 +335,57 @@ public class ModItems {
             props.stacksTo(1)));
 
     /**
-     * Фаза 3 — измерительный прибор «УФ-радиометр». Пока плейсхолдер без рецепта:
-     * пока игрок держит его в руке, на HUD видна шкала «УФ излучение».
+     * «Телифон» (автор 22.09) — прибор рядом с дозиметром: пока в руке, показывает все шкалы
+     * измерительных приборов разом (облучение, УФ) плюс строки спидометра и солнечных часов,
+     * а ПКМ выводит в чат полный отчёт: доза, чанк, кортизол, кризис, зависимость, сколько
+     * секунд не пил сусло, УФ и химическое заражение ({@code TelifonItem}).
+     */
+    public static final DeferredItem<Item> TELIFON =
+        ITEMS.registerItem("telifon", props -> new com.gonzotech.core.item.TelifonItem(
+            props.stacksTo(1)));
+
+    /**
+     * Расходник «Антирадиновый абсорбент» (автор 22.09): ПКМ накладывает
+     * «Очищение» — эффект плавно выводит 20% текущей дозы за 30 с, после курса
+     * голод I на 10 с и синие крапинки лазурита (абсорбент, а не лекарство).
+     * Рецепт виден после Открытия 2 ({@code RecipeUnlocks} тир 2), во вкладке
+     * «Снаряжение»; физически рецепт доступен всегда.
+     */
+    public static final DeferredItem<Item> RAD_ABSORBENT =
+        ITEMS.registerItem("rad_absorbent", props -> new com.gonzotech.radiation.RadAbsorbentItem(props));
+
+    /** Бумажная ткань — основа хазмат-костюма (крафт 3×3 из бумаги). */
+    public static final DeferredItem<Item> PAPER_FABRIC =
+        ITEMS.registerSimpleItem("paper_fabric");
+
+    // ── Хазмат I: маска, фартук, трико, шуфли (автор 22.09) ──
+    public static final DeferredItem<Item> HAZMAT_HELMET =
+        ITEMS.registerItem("hazmat_helmet", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.HELMET, props));
+    public static final DeferredItem<Item> HAZMAT_CHESTPLATE =
+        ITEMS.registerItem("hazmat_chestplate", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.CHESTPLATE, props));
+    public static final DeferredItem<Item> HAZMAT_LEGGINGS =
+        ITEMS.registerItem("hazmat_leggings", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.LEGGINGS, props));
+    public static final DeferredItem<Item> HAZMAT_BOOTS =
+        ITEMS.registerItem("hazmat_boots", props ->
+            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+                net.minecraft.world.item.equipment.ArmorType.BOOTS, props));
+
+    /** Части хазмата в порядке слотов HEAD, CHEST, LEGS, FEET — для подсчёта сета. */
+    public static final List<DeferredItem<Item>> HAZMAT_PIECES =
+        List.of(HAZMAT_HELMET, HAZMAT_CHESTPLATE, HAZMAT_LEGGINGS, HAZMAT_BOOTS);
+
+    /**
+     * Измерительный прибор «УФ-радиометр»: пока в руке — на HUD видна шкала «УФ излучение».
+     * Предмет и HUD рабочие, шкала ЖИВАЯ (22.09.2026): наполняется от дозы радиации выше
+     * 70 %, тает по 1 % от максимума в тик с триггерами — см. {@code psyche.PsycheUltraviolet}.
+     * Рецепта пока нет: ждёт ветку 3 (литография, полупроводники) вместе с дозиметром и
+     * спидометром — решение автора 22.09. До того шкалу видно с «Телифоном».
      */
     public static final DeferredItem<Item> UV_METER =
         ITEMS.registerSimpleItem("uv_meter", new Item.Properties().stacksTo(1));
@@ -285,13 +441,22 @@ public class ModItems {
         ITEMS.registerItem("the_fruit_mash",
             props -> new Item(props.food(MASH_FOOD, MASH_CONSUMABLE)));
 
+    /** Кружка пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (128 mB сусла + бутылёк). */
+    public static final DeferredItem<Item> BEER_MUG =
+        ITEMS.registerItem("beer_mug", props -> new Item(props.stacksTo(16)));
+
+    /** Ведро пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (1000 mB сусла + ведро). */
+    public static final DeferredItem<Item> BEER_BUCKET =
+        ITEMS.registerItem("beer_bucket", props -> new Item(props.stacksTo(1)));
+
 
     /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */
     public static final DeferredItem<BlockItem> LUNAR_DIRT_ITEM =
         ITEMS.registerSimpleBlockItem("lunar_dirt", ModBlocks.LUNAR_DIRT);
 
     // ─────────────────────── Материалы переработки: строительные блоки ───────────────────────
-    // Декоративные блоки-заготовки без рецептов и специальной механики.
+    // Бетоны и фарфор из грит-цепочки: собственные рецепты + прочностные статы,
+    // часть блоков экранирует радиацию (см. RadMaterials: бариевый бетон, борное стекло).
     public static final DeferredItem<BlockItem> ARMOR_CONCRETE_ITEM =
         ITEMS.registerSimpleBlockItem("armor_concrete", ModBlocks.ARMOR_CONCRETE);
     public static final DeferredItem<BlockItem> REINFORCED_ARMOR_CONCRETE_ITEM =
@@ -306,12 +471,27 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("industrial_concrete", ModBlocks.INDUSTRIAL_CONCRETE);
     public static final DeferredItem<BlockItem> REINFORCED_INDUSTRIAL_CONCRETE_ITEM =
         ITEMS.registerSimpleBlockItem("reinforced_industrial_concrete", ModBlocks.REINFORCED_INDUSTRIAL_CONCRETE);
+    /** Бариевый бетон — тяжёлый радиационный экран (см. {@code RadMaterials}). */
+    public static final DeferredItem<BlockItem> BARIUM_CONCRETE_ITEM =
+        ITEMS.registerSimpleBlockItem("barium_concrete", ModBlocks.BARIUM_CONCRETE);
 
     // ──────────────── Декоративные блоки данжей: саспенс / радиация / метеоры ────────────────
     public static final DeferredItem<BlockItem> LEAD_STAINED_GLASS_ITEM =
         ITEMS.registerSimpleBlockItem("lead_stained_glass", ModBlocks.LEAD_STAINED_GLASS);
+    /** Борное стекло — прозрачный экран контура (см. {@code RadMaterials}). */
+    public static final DeferredItem<BlockItem> BORE_STAINED_GLASS_ITEM =
+        ITEMS.registerSimpleBlockItem("bore_stained_glass", ModBlocks.BORE_STAINED_GLASS);
     public static final DeferredItem<BlockItem> CRIMSON_OBSIDIAN_ITEM =
         ITEMS.registerSimpleBlockItem("crimson_obsidian", ModBlocks.CRIMSON_OBSIDIAN);
+    /** Тяжёлая свинцовая дверь («Открытие 3»): ставится парой клеток, ПКМ/редстоун открывают проём. */
+    public static final DeferredItem<BlockItem> THIRD_HEAVY_DOOR_LEAD_ITEM =
+        ITEMS.registerSimpleBlockItem("third_heavy_door_lead", ModBlocks.THIRD_HEAVY_DOOR_LEAD);
+    /** Тяжёлая вольфрамовая дверь («Открытие 3») — тот же код, экран 0.003, питч 0.1–0.3. */
+    public static final DeferredItem<BlockItem> THIRD_HEAVY_DOOR_TUNGSTEN_ITEM =
+        ITEMS.registerSimpleBlockItem("third_heavy_door_tungsten", ModBlocks.THIRD_HEAVY_DOOR_TUNGSTEN);
+    /** Гермодверь («Открытие 3») — для чистой комнаты, защита от фона ×0.33, питч 1.2–1.4. */
+    public static final DeferredItem<BlockItem> THIRD_HERMETIC_DOOR_ITEM =
+        ITEMS.registerSimpleBlockItem("third_hermetic_door", ModBlocks.THIRD_HERMETIC_DOOR);
     public static final DeferredItem<BlockItem> SCULK_BRICKS_ITEM =
         ITEMS.registerSimpleBlockItem("sculk_bricks", ModBlocks.SCULK_BRICKS);
     public static final DeferredItem<BlockItem> CHISELED_SCULK_BRICKS_ITEM =

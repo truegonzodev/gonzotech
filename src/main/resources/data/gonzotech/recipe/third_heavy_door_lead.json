@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "LGL",
+    "LDL",
+    "LGL"
+  ],
+  "key": {
+    "L": "gonzotech:lead_ingot",
+    "G": "gonzotech:lead_stained_glass",
+    "D": "minecraft:iron_door"
+  },
+  "result": {
+    "id": "gonzotech:third_heavy_door_lead",
+    "count": 1
+  }
+}

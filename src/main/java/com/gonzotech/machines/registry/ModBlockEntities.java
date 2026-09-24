@@ -8,9 +8,13 @@ import com.gonzotech.machines.block.entity.CentrifugeBlockEntity;
 import com.gonzotech.machines.block.entity.CrusherBlockEntity;
 import com.gonzotech.machines.block.entity.CobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.CondenserBlockEntity;
+import com.gonzotech.machines.block.entity.DistillerBlockEntity;
 import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
+import com.gonzotech.machines.block.entity.FermentationVatBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.block.entity.NuclearFireboxBlockEntity;
+import com.gonzotech.machines.block.entity.RectifierBlockEntity;
+import com.gonzotech.machines.block.entity.SnaketypeCondenserBlockEntity;
 import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
 import com.gonzotech.machines.block.entity.PumpBlockEntity;
 import com.gonzotech.machines.block.entity.SingularEnergySourceBlockEntity;
@@ -24,6 +28,7 @@ import com.gonzotech.machines.block.entity.SecondPressBlockEntity;
 import com.gonzotech.machines.block.entity.SecondPumpBlockEntity;
 import com.gonzotech.machines.block.entity.StirlingBlockEntity;
 import com.gonzotech.machines.block.entity.TurbineRotorBlockEntity;
+import com.gonzotech.machines.block.entity.WortKettleBlockEntity;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -44,9 +49,9 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("firebox", () -> new BlockEntityType<>(
             FireboxBlockEntity::new, false, ModMachines.FIREBOX.get()));
 
-    public static final Supplier<BlockEntityType<NuclearFireboxBlockEntity>> NUCLEAR_FIREBOX =
-        BLOCK_ENTITIES.register("nuclear_firebox", () -> new BlockEntityType<>(
-            NuclearFireboxBlockEntity::new, false, ModMachines.NUCLEAR_FIREBOX.get()));
+    public static final Supplier<BlockEntityType<NuclearFireboxBlockEntity>> SECOND_NUCLEAR_FIREBOX =
+        BLOCK_ENTITIES.register("second_nuclear_firebox", () -> new BlockEntityType<>(
+            NuclearFireboxBlockEntity::new, false, ModMachines.SECOND_NUCLEAR_FIREBOX.get()));
 
     public static final Supplier<BlockEntityType<TungstenAbsorberBlockEntity>> TUNGSTEN_ABSORBER =
         BLOCK_ENTITIES.register("tungsten_absorber", () -> new BlockEntityType<>(
@@ -69,9 +74,9 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("solar_panel", () -> new BlockEntityType<>(
             SolarPanelBlockEntity::new, false, ModMachines.SOLAR_PANEL.get()));
 
-    public static final Supplier<BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
-        BLOCK_ENTITIES.register("electric_furnace", () -> new BlockEntityType<>(
-            ElectricFurnaceBlockEntity::new, false, ModMachines.ELECTRIC_FURNACE.get()));
+    public static final Supplier<BlockEntityType<ElectricFurnaceBlockEntity>> FIRST_ELECTRIC_FURNACE =
+        BLOCK_ENTITIES.register("first_electric_furnace", () -> new BlockEntityType<>(
+            ElectricFurnaceBlockEntity::new, false, ModMachines.FIRST_ELECTRIC_FURNACE.get()));
 
     public static final Supplier<BlockEntityType<SecondElectricFurnaceBlockEntity>> SECOND_ELECTRIC_FURNACE =
         BLOCK_ENTITIES.register("second_electric_furnace", () -> new BlockEntityType<>(
@@ -81,25 +86,25 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("condenser", () -> new BlockEntityType<>(
             CondenserBlockEntity::new, false, ModMachines.CONDENSER.get()));
 
-    public static final Supplier<BlockEntityType<PumpBlockEntity>> PUMP =
-        BLOCK_ENTITIES.register("pump", () -> new BlockEntityType<>(
-            PumpBlockEntity::new, false, ModMachines.PUMP.get()));
+    public static final Supplier<BlockEntityType<PumpBlockEntity>> FIRST_PUMP =
+        BLOCK_ENTITIES.register("first_pump", () -> new BlockEntityType<>(
+            PumpBlockEntity::new, false, ModMachines.FIRST_PUMP.get()));
 
     public static final Supplier<BlockEntityType<SecondPumpBlockEntity>> SECOND_PUMP =
         BLOCK_ENTITIES.register("second_pump", () -> new BlockEntityType<>(
             SecondPumpBlockEntity::new, false, ModMachines.SECOND_PUMP.get()));
 
-    public static final Supplier<BlockEntityType<AccumulatorBlockEntity>> ACCUMULATOR =
-        BLOCK_ENTITIES.register("accumulator", () -> new BlockEntityType<>(
-            AccumulatorBlockEntity::new, false, ModMachines.ACCUMULATOR.get()));
+    public static final Supplier<BlockEntityType<AccumulatorBlockEntity>> FIRST_ACCUMULATOR =
+        BLOCK_ENTITIES.register("first_accumulator", () -> new BlockEntityType<>(
+            AccumulatorBlockEntity::new, false, ModMachines.FIRST_ACCUMULATOR.get()));
 
     public static final Supplier<BlockEntityType<SecondAccumulatorBlockEntity>> SECOND_ACCUMULATOR =
         BLOCK_ENTITIES.register("second_accumulator", () -> new BlockEntityType<>(
             SecondAccumulatorBlockEntity::new, false, ModMachines.SECOND_ACCUMULATOR.get()));
 
-    public static final Supplier<BlockEntityType<CobbleGeneratorBlockEntity>> COBBLE_GENERATOR =
-        BLOCK_ENTITIES.register("cobble_generator", () -> new BlockEntityType<>(
-            CobbleGeneratorBlockEntity::new, false, ModMachines.COBBLE_GENERATOR.get()));
+    public static final Supplier<BlockEntityType<CobbleGeneratorBlockEntity>> FIRST_COBBLE_GENERATOR =
+        BLOCK_ENTITIES.register("first_cobble_generator", () -> new BlockEntityType<>(
+            CobbleGeneratorBlockEntity::new, false, ModMachines.FIRST_COBBLE_GENERATOR.get()));
 
     public static final Supplier<BlockEntityType<SecondCobbleGeneratorBlockEntity>> SECOND_COBBLE_GENERATOR =
         BLOCK_ENTITIES.register("second_cobble_generator", () -> new BlockEntityType<>(
@@ -118,13 +123,13 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("second_press", () -> new BlockEntityType<>(
             SecondPressBlockEntity::new, false, ModMachines.SECOND_PRESS.get()));
 
-    public static final Supplier<BlockEntityType<CrusherBlockEntity>> CRUSHER =
-        BLOCK_ENTITIES.register("crusher", () -> new BlockEntityType<>(
-            CrusherBlockEntity::new, false, ModMachines.CRUSHER.get()));
+    public static final Supplier<BlockEntityType<CrusherBlockEntity>> SECOND_CRUSHER =
+        BLOCK_ENTITIES.register("second_crusher", () -> new BlockEntityType<>(
+            CrusherBlockEntity::new, false, ModMachines.SECOND_CRUSHER.get()));
 
-    public static final Supplier<BlockEntityType<CentrifugeBlockEntity>> CENTRIFUGE =
-        BLOCK_ENTITIES.register("centrifuge", () -> new BlockEntityType<>(
-            CentrifugeBlockEntity::new, false, ModMachines.CENTRIFUGE.get()));
+    public static final Supplier<BlockEntityType<CentrifugeBlockEntity>> SECOND_CENTRIFUGE =
+        BLOCK_ENTITIES.register("second_centrifuge", () -> new BlockEntityType<>(
+            CentrifugeBlockEntity::new, false, ModMachines.SECOND_CENTRIFUGE.get()));
 
     public static final Supplier<BlockEntityType<SingularHeatSourceBlockEntity>> SINGULAR_HEAT_SOURCE =
         BLOCK_ENTITIES.register("singular_heat_source", () -> new BlockEntityType<>(
@@ -134,23 +139,60 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("singular_energy_source", () -> new BlockEntityType<>(
             SingularEnergySourceBlockEntity::new, false, ModMachines.SINGULAR_ENERGY_SOURCE.get()));
 
-    public static final Supplier<BlockEntityType<TurbineRotorBlockEntity>> TURBINE_ROTOR =
-        BLOCK_ENTITIES.register("turbine_rotor", () -> new BlockEntityType<>(
-            TurbineRotorBlockEntity::new, false, ModMachines.TURBINE_ROTOR.get()));
+    public static final Supplier<BlockEntityType<TurbineRotorBlockEntity>> FIRST_TURBINE_ROTOR =
+        BLOCK_ENTITIES.register("first_turbine_rotor", () -> new BlockEntityType<>(
+            TurbineRotorBlockEntity::new, false, ModMachines.FIRST_TURBINE_ROTOR.get()));
 
-    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity>> STEAMGEN_CORE =
-        BLOCK_ENTITIES.register("steamgen_core", () -> new BlockEntityType<>(
-            com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity::new, false, ModMachines.STEAMGEN_CORE.get()));
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity>> SECOND_STEAMGEN_CORE =
+        BLOCK_ENTITIES.register("second_steamgen_core", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity::new, false, ModMachines.SECOND_STEAMGEN_CORE.get()));
 
-    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> ITEM_FILTER =
-        BLOCK_ENTITIES.register("item_filter", () -> new BlockEntityType<>(
-            com.gonzotech.machines.block.entity.ItemFilterBlockEntity::new, false, ModMachines.ITEM_FILTER.get()));
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> FIRST_ITEM_FILTER =
+        BLOCK_ENTITIES.register("first_item_filter", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.ItemFilterBlockEntity::new, false, ModMachines.FIRST_ITEM_FILTER.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ItemFilterBlockEntity>> SECOND_ITEM_FILTER =
         BLOCK_ENTITIES.register("second_item_filter", () -> new BlockEntityType<>(
             (pos, state) -> new com.gonzotech.machines.block.entity.ItemFilterBlockEntity(
                 secondItemFilterType(), pos, state, SecondTierDefs.ITEM_FILTER_SLOTS),
             false, ModMachines.SECOND_ITEM_FILTER.get()));
+
+    public static final Supplier<BlockEntityType<FermentationVatBlockEntity>> THIRD_FERMENTATION_VAT =
+        BLOCK_ENTITIES.register("third_fermentation_vat", () -> new BlockEntityType<>(
+            FermentationVatBlockEntity::new, false, ModMachines.THIRD_FERMENTATION_VAT.get()));
+
+    public static final Supplier<BlockEntityType<WortKettleBlockEntity>> THIRD_WORT_KETTLE =
+        BLOCK_ENTITIES.register("third_wort_kettle", () -> new BlockEntityType<>(
+            WortKettleBlockEntity::new, false, ModMachines.THIRD_WORT_KETTLE.get()));
+
+    public static final Supplier<BlockEntityType<DistillerBlockEntity>> THIRD_DISTILLER =
+        BLOCK_ENTITIES.register("third_distiller", () -> new BlockEntityType<>(
+            DistillerBlockEntity::new, false, ModMachines.THIRD_DISTILLER.get()));
+
+    public static final Supplier<BlockEntityType<RectifierBlockEntity>> THIRD_RECTIFIER =
+        BLOCK_ENTITIES.register("third_rectifier", () -> new BlockEntityType<>(
+            RectifierBlockEntity::new, false, ModMachines.THIRD_RECTIFIER.get()));
+
+    public static final Supplier<BlockEntityType<SnaketypeCondenserBlockEntity>> THIRD_SNAKETYPE_CONDENSER =
+        BLOCK_ENTITIES.register("third_snaketype_condenser", () -> new BlockEntityType<>(
+            SnaketypeCondenserBlockEntity::new, false, ModMachines.THIRD_SNAKETYPE_CONDENSER.get()));
+
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.FillerBlockEntity>> THIRD_FILLER =
+        BLOCK_ENTITIES.register("third_filler", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.FillerBlockEntity::new, false, ModMachines.THIRD_FILLER.get()));
+
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ChemicalPlantBlockEntity>> CHEMICAL_PLANT =
+        BLOCK_ENTITIES.register("third_chemical_plant", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.ChemicalPlantBlockEntity::new, false, ModMachines.THIRD_CHEMICAL_PLANT.get()));
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ChemicalPlantBlockEntity>> THIRD_CHEMICAL_PLANT = CHEMICAL_PLANT;
+
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.DispensingTapBlockEntity>> DISPENSING_TAP =
+        BLOCK_ENTITIES.register("dispensing_tap", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.DispensingTapBlockEntity::new, false, ModMachines.DISPENSING_TAP.get()));
+
+    public static final Supplier<BlockEntityType<com.gonzotech.core.block.entity.CanisterBlockEntity>> CANISTER =
+        BLOCK_ENTITIES.register("canister", () -> new BlockEntityType<>(
+            com.gonzotech.core.block.entity.CanisterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.CANISTER.get()));
 
     /**
      * The BE factory is invoked only after DeferredRegister has assigned the

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "gonzotech:block/dispensing_tap_top",
+    "bottom": "gonzotech:block/dispensing_tap_top",
+    "side": "gonzotech:block/dispensing_tap"
+  }
+}

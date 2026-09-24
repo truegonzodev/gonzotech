@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "LPL",
+    "BFW",
+    "LPL"
+  ],
+  "key": {
+    "L": "gonzotech:lead_ingot",
+    "P": "gonzotech:steel_plate",
+    "B": "gonzotech:lead_block",
+    "F": "gonzotech:firebox",
+    "W": "gonzotech:tungsten_ingot"
+  },
+  "result": {
+    "id": "gonzotech:second_nuclear_firebox",
+    "count": 1
+  }
+}

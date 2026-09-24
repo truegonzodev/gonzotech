@@ -31,7 +31,7 @@ import java.util.Optional;
  * звук «крафт не удался» (levelEvent 1050), выход не выдаётся, сетка НЕ
  * тратится. Если крафтить что-то нужно — позже появится наш кастомный
  * паровой сборщик (тир-1 машина после Открытия 1), его правила крафта —
- * отдельное обсуждение. См. TEMP_NOTES §3.5.
+ * отдельное обсуждение. См. docs/UPDATED_TEMP_NOTES.md §3.5.
  */
 @Mixin(CrafterBlock.class)
 public abstract class CrafterBlockMixin {

@@ -111,6 +111,17 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
         return THROUGHPUT_FACTOR;
     }
 
+    @Override
+    public long throughputLimit(BlockState state, PipeType type) {
+        if (type == PipeType.MASH) {
+            return com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT / 2;
+        }
+        if (type.isFluid()) {
+            return com.gonzotech.machines.energy.MachineDefs.UNIVERSAL_FLUID_OUTPUT;
+        }
+        return type.maxThroughput();
+    }
+
     // ─────────────────────────── постановка/форма ───────────────────────────
 
     @Override

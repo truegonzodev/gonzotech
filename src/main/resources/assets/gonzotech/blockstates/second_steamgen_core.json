@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "controller=false,formed=false": { "model": "gonzotech:block/second_steamgen_core" },
+    "controller=false,formed=true":  { "model": "gonzotech:block/second_steamgen_core" },
+    "controller=true,formed=false":  { "model": "gonzotech:block/second_steamgen_core" },
+    "controller=true,formed=true":   { "model": "gonzotech:block/second_steamgen_core" }
+  }
+}

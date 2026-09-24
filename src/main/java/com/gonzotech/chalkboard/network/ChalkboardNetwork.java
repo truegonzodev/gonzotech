@@ -56,6 +56,25 @@ public class ChalkboardNetwork {
         }
     }
 
+    /**
+     * C2S: «интерфейс доски резонанса открыт» — сердечко раз в секунду, пока экран
+     * жив. Сервер по нему считает +30 очков стресса в секунду (автор 22.09.2026).
+     * Отдельного «закрыл» нет намеренно: если пинги пропали (экран закрыт, смерть,
+     * релог), шкала сама перестаёт капать через {@code PsycheStress}.BOARD_PRESENCE_TTL.
+     */
+    public record BoardPresencePayload() implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<BoardPresencePayload> TYPE =
+                new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "board_presence"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, BoardPresencePayload> STREAM_CODEC =
+                StreamCodec.unit(new BoardPresencePayload());
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     public record SaveExprPayload(int discoveryIndex, String exprJson, String drawingJson) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<SaveExprPayload> TYPE =
                 new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "chalkboard_save_expr"));
@@ -166,6 +185,17 @@ public class ChalkboardNetwork {
                 })
         );
 
+        // C2S: сердечко «доска резонанса открыта» (шкала стресса).
+        registrar.playToServer(
+                BoardPresencePayload.TYPE,
+                BoardPresencePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof ServerPlayer player) {
+                        com.gonzotech.core.psyche.PsycheStress.seenBoard(player);
+                    }
+                })
+        );
+
         // C2S Save Expr & Drawing.  A save is not a trusted shortcut around claim validation:
         // it is only accepted for the player's current server-owned discovery and legal board tree.
         registrar.playToServer(
@@ -205,6 +235,21 @@ public class ChalkboardNetwork {
                 (payload, context) -> context.enqueueWork(() ->
                         com.gonzotech.chalkboard.client.DiscoveryActivationClient.play(payload.discoveryNumber()))
         );
+
+        // S2C: подсказка по доске резонанса (блок из решения) — клиент подсветит
+        // его в лотке толстой белой рамкой.
+        registrar.playToClient(
+                CluePayload.TYPE,
+                CluePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() ->
+                        com.gonzotech.chalkboard.client.ChalkboardClueClient.accept(payload.quantityId()))
+        );
+    }
+
+    /** Отправить игроку подсказку: идентификатор блока из решения текущей задачи. */
+    public static void sendClue(ServerPlayer player, String quantityId) {
+        if (quantityId == null || quantityId.isEmpty()) return;
+        PacketDistributor.sendToPlayer(player, new CluePayload(quantityId));
     }
 
     public static void sendSyncToPlayer(ServerPlayer player) {
@@ -329,7 +374,7 @@ public class ChalkboardNetwork {
                             .append(" ")
                             .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
                             .withStyle(ChatFormatting.GREEN),
-                    true
+                    false
             );
         } else if (!isInfiniteMode) {
             // Completed Discovery 1..15
@@ -347,7 +392,7 @@ public class ChalkboardNetwork {
                             .append(" ")
                             .append(Component.translatable("item.gonzotech.discovery_" + awardNum))
                             .withStyle(ChatFormatting.GREEN),
-                    true
+                    false
             );
         } else {
             // Infinite Mode completion (Stage 17+)!
@@ -363,7 +408,7 @@ public class ChalkboardNetwork {
             player.displayClientMessage(
                     Component.translatable("gui.gonzotech.chalkboard.infinite_xp_award", currentStage, xpReward)
                             .withStyle(ChatFormatting.GOLD),
-                    true
+                    false
             );
         }
 

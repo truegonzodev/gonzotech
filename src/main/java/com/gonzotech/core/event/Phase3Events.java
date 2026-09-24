@@ -31,6 +31,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
+import com.gonzotech.core.psyche.PsycheStress;
 import com.gonzotech.core.psyche.PsycheNetwork;
 
 import java.util.ArrayList;
@@ -105,10 +106,10 @@ public final class Phase3Events {
         if (craftGate == null) {
             craftGate = Map.ofEntries(
                 // Станки Открытия 1 (гаечный КЛЮЧ НЕ гейтим — он крафтится всегда).
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ACCUMULATOR_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.COBBLE_GENERATOR_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ELECTRIC_FURNACE_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_PUMP_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ACCUMULATOR_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_COBBLE_GENERATOR_ITEM.get(), 1),
                 // Трубы
                 Map.entry(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get(), 1),
                 Map.entry(com.gonzotech.machines.registry.ModMachines.HEAT_PIPE_ITEM.get(), 1),
@@ -125,11 +126,11 @@ public final class Phase3Events {
                 Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_FLUID_NODE_ITEM.get(), 1),
                 Map.entry(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get(), 1),
                 // Сортировка предметов
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_FILTER_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_SCAVENGER_ITEM.get(), 1),
                 // Части многоблочной паровой турбины.
-                Map.entry(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get(), 1)
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_CASING_ITEM.get(), 1),
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_ROTOR_ITEM.get(), 1)
             );
         }
         return craftGate;
@@ -144,7 +145,27 @@ public final class Phase3Events {
     public static Integer requiredTierFor(net.minecraft.world.item.Item item) {
         Integer tier1 = gate().get(item);
         if (tier1 != null) return tier1;
-        return com.gonzotech.machines.crafting.TierTwoCrafting.isGatedOutput(item) ? 2 : null;
+        if (com.gonzotech.machines.crafting.TierTwoCrafting.isGatedOutput(item)) return 2;
+        return com.gonzotech.machines.crafting.TierThreeCrafting.isGatedOutput(item) ? 3 : null;
+    }
+
+    /**
+     * Дополнительное условие гейта СВЕРХ тира «Открытия» (автор 22.09.2026) —
+     * условие «И». Пока такое есть ровно у одного предмета: <b>солнечные часы</b>
+     * открываются только когда игрок УЖЕ видел багровый день
+     * ({@link ScholarNoteFlags#SUN_EVENT}) И активировал «Открытие 2». Тот же
+     * составной гейт стоит на странице заметок про часы
+     * ({@code ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2}).
+     *
+     * <p>Предметы без дополнительных условий всегда возвращают {@code true} —
+     * вызывающие добавляют эту проверку к проверке тира через «И».</p>
+     */
+    public static boolean extraGateMet(ServerPlayer player, net.minecraft.world.item.Item item) {
+        if (item != ModItems.SOLAR_WATCH.get()) {
+            return true;
+        }
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        return progress.hasNoteFlag(ScholarNoteFlags.SUN_EVENT);
     }
 
     /**
@@ -154,7 +175,7 @@ public final class Phase3Events {
      * гейт живёт в per-player аттачменте, а машина не игрок, и привязать крафт
      * машины к прогрессу какого-то игрока нельзя. Правило: все рецепты с
      * загейченным выводом из пула сборщика убираются целиком (тир 1 и всё,
-     * что позже). См. TEMP_NOTES §3.5.
+     * что позже). См. docs/UPDATED_TEMP_NOTES.md §3.5.
      */
     public static boolean isAttachmentGated(net.minecraft.world.item.Item item) {
         return requiredTierFor(item) != null;
@@ -172,7 +193,10 @@ public final class Phase3Events {
         if (requiredTier == null) return;
 
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
-        if (progress.isRecipeTierUnlocked(requiredTier)) return;
+        // Условия соединяются по «И»: тир «Открытия» + дополнительные условия предмета
+        // (солнечные часы требуют ещё и встреченный багровый день).
+        if (progress.isRecipeTierUnlocked(requiredTier)
+                && extraGateMet(player, crafted.getItem())) return;
 
         // Открытие ещё не активировано: ингредиенты уже потрачены (не откатываем —
         // это часть «прикола»), результат заменяем на бесполезный механизм.
@@ -186,6 +210,19 @@ public final class Phase3Events {
         if (!carried.isEmpty() && carried.is(crafted.getItem())) {
             carried.shrink(count);
         }
+        grantBotchedMechanism(player, count);
+    }
+
+    /**
+     * «Botched gate»: выдать «заплетённый механизм» вместо преждевременно
+     * скрафченного предмета, сообщить в чат и начислить стресс.
+     *
+     * <p>Единая точка для всех путей крафта — обычный клик ({@code onItemCrafted}),
+     * быстрый крафт ({@code CraftingMenuMixin}) и гейт второго тира
+     * ({@code TierTwoCrafting}). Стресс ({@value PsycheStress#BOTCHED_CRAFT_STRESS}
+     * очков) начисляется ОДИН раз на крафт — автор 22.09.2026.</p>
+     */
+    public static void grantBotchedMechanism(ServerPlayer player, int count) {
         for (int i = 0; i < count; i++) {
             ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
             if (!player.getInventory().add(botched)) {
@@ -196,7 +233,7 @@ public final class Phase3Events {
             Component.translatable("message.gonzotech.botched_craft").withStyle(ChatFormatting.RED),
             false
         );
-        // TODO(Фаза X): здесь начислять «стресс» игроку за преждевременный крафт.
+        com.gonzotech.core.psyche.PsycheStress.gain(player, com.gonzotech.core.psyche.PsycheStress.BOTCHED_CRAFT_STRESS);
     }
 
     // ─────────────────── 2. Ванильные печи: свинец + взрыв цезия ───────────────────
@@ -409,6 +446,26 @@ public final class Phase3Events {
         // Ведро лавы в воде остаётся прежним безвредным «приколом».
         if (stack.is(Items.LAVA_BUCKET)) {
             itemEntity.setItem(new ItemStack(ModItems.OBSIDIAN_BUCKET.get(), stack.getCount()));
+            return;
+        }
+
+        // Ведро серной кислоты или этилена разъедается через 180 тиков лёжа на земле
+        if (stack.getItem() instanceof com.gonzotech.core.item.CorrosiveBucketItem
+                || stack.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem) {
+            long leakAt = com.gonzotech.core.item.CorrosiveBucketItem.getLeakAt(stack, level.getGameTime());
+            if (level.getGameTime() >= leakAt) {
+                boolean isFluidBucket = stack.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem;
+                itemEntity.setItem(new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount()));
+                if (stack.is(ModItems.ETHYLENE_BUCKET.get())) {
+                    com.gonzotech.core.item.CorrosiveBucketItem.triggerEthyleneExplosion(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), itemEntity);
+                } else {
+                    level.playSound(null, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(),
+                            net.minecraft.sounds.SoundEvents.LAVA_EXTINGUISH, net.minecraft.sounds.SoundSource.BLOCKS, 0.6F, 1.2F);
+                    if (isFluidBucket) {
+                        com.gonzotech.core.item.CorrosiveFluidBucketItem.spillAcidNear(level, itemEntity.blockPosition());
+                    }
+                }
+            }
         }
     }
 
@@ -432,10 +489,10 @@ public final class Phase3Events {
     // ─────────────────── 6. Психика: зависимость от сусла ───────────────────
 
     /**
-     * Прибавка зависимости за одно съеденное сусло: +0.1% = +1 тысячная
-     * (см. {@link PlayerPsyche#MAX}).
+     * Прибавка зависимости за одно съеденное сусло: +0.1 %.
+     * Зависимость считается В ОЧКАХ (0..1 000 000 = 100 %), поэтому 0.1 % = 1000 очков.
      */
-    private static final int MASH_ADDICTION_PER_EAT = 1;
+    private static final int MASH_ADDICTION_PER_EAT = 1_000;
 
     /** Синк трёх HUD-шкал и состояния космического неба при входе в мир. */
     @SubscribeEvent
@@ -458,6 +515,10 @@ public final class Phase3Events {
         psyche.addAddiction(MASH_ADDICTION_PER_EAT);
         player.setData(ModPsycheAttachments.PSYCHE, psyche);
         PsycheNetwork.sendToPlayer(player);
+
+        // Автор 22.09: сусло ещё и снимает стресс (−1000 очков) и сбрасывает
+        // «коридор зависимости» — таймер последнего сусла живёт в PsycheStress.
+        PsycheStress.onMashDrunk(player);
     }
 
     // ─────────────────── 7. Брожение фруктов в инвентаре ───────────────────

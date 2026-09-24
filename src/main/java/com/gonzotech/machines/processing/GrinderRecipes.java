@@ -58,6 +58,19 @@ public final class GrinderRecipes {
         put(recipes, require(ModItems.RAW_ORE_ITEMS, "manganese"), ModItems.DUST_ITEMS.get("manganese_dust").get());
         put(recipes, Items.QUARTZ, Items.SAND);
 
+        // Древесина в смолистые и твердосмолистые опилки (автор 23.09.2026).
+        Item hardSawdust = ModItems.HARD_RESINOUS_SAWDUST.get();
+        put(recipes, Items.SPRUCE_LOG, hardSawdust);
+        put(recipes, Items.STRIPPED_SPRUCE_LOG, hardSawdust);
+        put(recipes, Items.ACACIA_LOG, hardSawdust);
+        put(recipes, Items.STRIPPED_ACACIA_LOG, hardSawdust);
+
+        Item resinSawdust = ModItems.RESINOUS_SAWDUST.get();
+        put(recipes, Items.PALE_OAK_LOG, resinSawdust);
+        put(recipes, Items.STRIPPED_PALE_OAK_LOG, resinSawdust);
+        put(recipes, Items.MANGROVE_LOG, resinSawdust);
+        put(recipes, Items.STRIPPED_MANGROVE_LOG, resinSawdust);
+
         return Map.copyOf(recipes);
     }
 

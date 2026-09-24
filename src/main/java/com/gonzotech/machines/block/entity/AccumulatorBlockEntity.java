@@ -71,7 +71,7 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
     };
 
     public AccumulatorBlockEntity(BlockPos pos, BlockState state) {
-        this(ModBlockEntities.ACCUMULATOR.get(), pos, state);
+        this(ModBlockEntities.FIRST_ACCUMULATOR.get(), pos, state);
     }
 
     /**

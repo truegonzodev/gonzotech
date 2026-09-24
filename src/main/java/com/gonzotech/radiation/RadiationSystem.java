@@ -2,7 +2,10 @@ package com.gonzotech.radiation;
 
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
+import com.gonzotech.core.psyche.PsycheChemical;
+import com.gonzotech.core.psyche.PsycheUltraviolet;
 import com.gonzotech.core.psyche.PsycheNetwork;
+import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
@@ -48,6 +51,12 @@ import java.util.UUID;
  * 0.2% от текущего значения в секунду, спадающее стекает в чанк. После смерти
  * шкала сбрасывается в ноль (PlayerEvent.Clone).</p>
  *
+ * <p><b>Последствия шкалы (автор 22.09.2026, «заняться шкалами»):</b> категории
+ * {@link RadDose} бьют по игроку эффектами, вспышками и смертью на 100 %
+ * ({@link RadSickness}); при высокой дозе случаен вечный {@link ModEffects#NECROSIS}
+ * ({@link Necrosis} — спринт жжёт воздух, моб-агр растёт); дозу режет
+ * {@link Hazmat} и выводит {@link RadAbsorbentItem} через {@link RadCleanse}.</p>
+ *
  * <p>Все ставки — в nZt/с (п.7: «всё считаем /в сек»).</p>
  */
 public final class RadiationSystem {
@@ -57,7 +66,7 @@ public final class RadiationSystem {
      *  под целевые темпы автора 21.09 (без учёта одновременного спада — спад
      *  идёт только БЕЗ облучения): уран-слиток (3mZt) ≈ 8%/час, торий (0.6mZt)
      *  ≈ 1.6%/час, плутоний (13mZt) ≈ 35%/час, радий (75mZt) ≈ 100%/30 мин. */
-    private static final double NZT_PER_PERMILLE = 1.35e8;
+    public static final double NZT_PER_PERMILLE = 1.35e8;
     /** Фон чанка действует на шкалу в 10 раз слабее, чем источник «в руках». */
     private static final double CHUNK_DOSE_WEIGHT = 0.1;
     /** Доза в тик, НИЖЕ которой игрок «не облучается» и шкала спадает
@@ -102,7 +111,13 @@ public final class RadiationSystem {
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % PLAYER_PERIOD_TICKS != 0) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        // Воздух некроза держим КАЖДЫЙ тик: ваниль восстанавливает 4 пузырька в тик,
+        // поэтому вычитать раз в секунду бесполезно (автор 22.09.2026 — полоска мигала).
+        Necrosis.tickAir(player);
+        if (player.tickCount % PLAYER_PERIOD_TICKS != 0) {
             return;
         }
         ServerLevel level = (ServerLevel) player.level();
@@ -148,8 +163,16 @@ public final class RadiationSystem {
         double totalNzt = intrinsic + induced;
 
         // Доза шкалы: инвентарь полным весом + фон чанка с весом 1/10.
-        double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0)
-                + totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        // Хазмат I (автор 22.09) режет входящую дозу, но пробивается горячим
+        // источником: множитель считается от дозы/сек (см. Hazmat.factor).
+        double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
+        rawDose *= PsycheChemical.doseMultiplier(player);
+        double suitFactor = Hazmat.factor(player, rawDose);
+        if (player.hasEffect(com.gonzotech.core.registry.ModEffects.CYSTEAMINE)) {
+            suitFactor *= 0.15; // Цистамин: радиозащитный щит (-85% к входящей радиации)
+        }
+        double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
         acc -= gainPermille * NZT_PER_PERMILLE;
         DOSE_ACC.put(player.getUUID(), acc);
@@ -160,7 +183,7 @@ public final class RadiationSystem {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         int scale = psyche.getRadiation();
         int shedPermille = 0;
-        double doseThisTick = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        double doseThisTick = rawDose * suitFactor;
         if (scale > 0 && doseThisTick < DOSE_CLEAR_FLOOR) {
             double shedAcc = SHED_ACC.getOrDefault(player.getUUID(), 0.0) + scale * RECOVERY_RATE;
             shedPermille = (int) shedAcc;
@@ -174,6 +197,24 @@ public final class RadiationSystem {
             PsycheNetwork.sendToPlayer(player);
         }
 
+        // Химическое заражение: 2 % дозы уходит в шестую шкалу (автор 22.09.2026):
+        // «шкалы радиации и заражения имеют одинаковую размерность».
+        if (doseThisTick > 0.0) {
+            PsycheChemical.addFromDose(player, doseThisTick / NZT_PER_PERMILLE);
+        }
+
+        // Антирадиновый абсорбент (автор 22.09): «Очищение» плавно выводит долю
+        // дозы; выведенное уходит в чанк так же, как обычный спад.
+        int cleansed = RadCleanse.tick(player);
+
+        // Некроз (автор 22.09): спринт жжёт воздух, моб-агр растёт (вечный эффект
+        // выдаёт RadSickness случайно при высокой дозе).
+        Necrosis.tick(player);
+
+        // Последствия дозы: эффекты/вспышки/смерть по категориям RadDose.
+        // Считаются здесь же, чтобы не заводить второй тик на игрока.
+        RadSickness.tick(player, psyche.getRadiation());
+
         // Игрок → чанк: ТОЛЬКО пресетная эмиссия (наведённый фон не греет местность),
         // логистика к ПОЛНОЙ сумме инвентаря: ближе к уровню источника — медленнее,
         // выше — никогда («источник не может заразить больше, чем имеет сам»).
@@ -185,6 +226,10 @@ public final class RadiationSystem {
         if (shedPermille > 0 && contam < SHED_CEILING) {
             data.addContamination(chunkKey,
                     shedPermille * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING));
+        }
+        if (cleansed > 0 && contam < SHED_CEILING) {
+            data.addContamination(chunkKey,
+                    cleansed * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING));
         }
 
         // Скан содержимого контейнеров своего чанка (сундуки/бочки с ураном греют чанк).
@@ -218,6 +263,21 @@ public final class RadiationSystem {
         }
     }
 
+    // ═══════════════════════ выход из игры: чистим карты ═══════════════════════
+
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DOSE_ACC.remove(player.getUUID());
+            SHED_ACC.remove(player.getUUID());
+            RadSickness.forget(player.getUUID());
+            RadCleanse.forget(player.getUUID());
+            Necrosis.forget(player.getUUID());
+            PsycheUltraviolet.forget(player.getUUID());
+            PsycheChemical.forget(player.getUUID());
+        }
+    }
+
     // ═══════════════════════ смерть: шкала в ноль ═══════════════════════
 
     @SubscribeEvent
@@ -234,6 +294,9 @@ public final class RadiationSystem {
             }
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
+            RadSickness.forget(player.getUUID());
+            RadCleanse.forget(player.getUUID());
+            Necrosis.forget(player.getUUID());
             PsycheNetwork.sendToPlayer(player);
         }
     }

@@ -49,6 +49,8 @@ public class ModCreativeTabs {
                 // Инструменты: ключ сразу за заметками, затем измерительные приборы.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.DOSIMETER.get());
+                // Телифон — сразу за дозиметром (автор, 22.09): совмещает все приборы.
+                output.accept(ModItems.TELIFON.get());
                 // Солнечные часы — рядом с дозиметром (автор, 2026-09-18).
                 output.accept(ModItems.SOLAR_WATCH.get());
                 output.accept(ModItems.UV_METER.get());
@@ -59,13 +61,13 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.BOILER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.STIRLING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_CASING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.TURBINE_ROTOR_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ELECTRIC_FURNACE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_ROTOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.CONDENSER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.PUMP_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ACCUMULATOR_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.COBBLE_GENERATOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_PUMP_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ACCUMULATOR_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_COBBLE_GENERATOR_ITEM.get());
 
                 // Логистика — трубы энергосети + гаечный ключ.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WIRE_ITEM.get());
@@ -81,11 +83,11 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_FLUID_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_FILTER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.ITEM_SCAVENGER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_FILTER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_SCAVENGER_ITEM.get());
                 // Технологическая цепочка обработки руды завершает список машин.
-                output.accept(com.gonzotech.machines.registry.ModMachines.CRUSHER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.CENTRIFUGE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CRUSHER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CENTRIFUGE_ITEM.get());
 
 
                 // Порядок фиксирует progression-витрину второго открытия.
@@ -112,10 +114,20 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get());
                 // Продвинутый парогенератор — в витрине второго открытия.
-                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CASING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.STEAMGEN_CORE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CORE_ITEM.get());
                 // Ядерная топка замыкает вкладку: самая опасная и поздняя машина.
-                output.accept(com.gonzotech.machines.registry.ModMachines.NUCLEAR_FIREBOX_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get());
+                // Эпоха III (Открытие 3): линейка брожения
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get());
+                output.accept(ModItems.CANISTER.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.DISPENSING_TAP_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })
@@ -131,12 +143,19 @@ public class ModCreativeTabs {
             .title(Component.translatable("itemGroup.gonzotech.equipment"))
             .icon(() -> new ItemStack(ModItems.ALLOY_PICKAXE.get()))
             .displayItems((params, output) -> {
+                // Расходники к шкале облучения — во вкладке снаряжения (автор 22.09).
+                output.accept(ModItems.RAD_ABSORBENT.get());
+                output.accept(ModItems.CYSTEAMINE.get());
+                output.accept(ModItems.PENTACIN.get());
+                output.accept(ModItems.DTPA.get());
                 output.accept(ModItems.ALLOY_PICKAXE.get());
                 output.accept(ModItems.ALLOY_SWORD.get());
                 output.accept(ModItems.ALLOY_CHESTPLATE.get());
                 output.accept(ModItems.ALLOY_HELMET.get());
                 output.accept(ModItems.ALLOY_LEGGINGS.get());
                 output.accept(ModItems.ALLOY_BOOTS.get());
+                // Хазмат I — рабочий костюм (автор 22.09: вкладка «Снаряжение»).
+                ModItems.HAZMAT_PIECES.forEach(item -> output.accept(item.get()));
             })
             .build()
     );
@@ -157,6 +176,14 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SLAG_CONCRETE_ITEM.get());
                 output.accept(ModItems.INDUSTRIAL_CONCRETE_ITEM.get());
                 output.accept(ModItems.REINFORCED_INDUSTRIAL_CONCRETE_ITEM.get());
+                // Радиационный экран: бариевый бетон и борное стекло (автор 21.09).
+                output.accept(ModItems.BARIUM_CONCRETE_ITEM.get());
+                output.accept(ModItems.BORE_STAINED_GLASS_ITEM.get());
+                // Эпоха III: три двери (автор 22.09, крафт — с «Открытия 3»): свинцовая (0.02),
+                // вольфрамовая (0.003) и гермодверь (0.33 — она и для чистого контура).
+                output.accept(ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get());
+                output.accept(ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get());
+                output.accept(ModItems.THIRD_HERMETIC_DOOR_ITEM.get());
                 // Саспенс: скалковые руины/данжи.
                 output.accept(ModItems.LEAD_STAINED_GLASS_ITEM.get());
                 output.accept(ModItems.CRIMSON_OBSIDIAN_ITEM.get());
@@ -211,6 +238,7 @@ public class ModCreativeTabs {
             .title(Component.translatable("itemGroup.gonzotech.components"))
             .icon(() -> new ItemStack(ModItems.PSEUDO_COIL.get()))
             .displayItems((params, output) -> {
+                output.accept(ModItems.PAPER_FABRIC.get());
                 output.accept(ModItems.PSEUDO_COIL.get());
                 output.accept(ModItems.COPPER_PLATE.get());
                 output.accept(ModItems.COPPER_WIRE.get());
@@ -226,6 +254,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.REDSTONE_PLATE.get());
                 output.accept(ModItems.REDSTONE_CORE.get());
                 output.accept(ModItems.TITANIUM_PLATE.get());
+                output.accept(ModItems.ZIRCONIUM_PLATE.get());
                 output.accept(ModItems.SEMICONDUCTOR_PLATE.get());
                 output.accept(ModItems.SEMICONDUCTOR_CORE.get());
                 output.accept(ModItems.FLAT_PUNCH.get());
@@ -241,6 +270,10 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TRIO_GRIT.get());
                 output.accept(ModItems.CLINKER_GRIT.get());
                 output.accept(ModItems.ARMOR_MIX.get());
+                // Радиационные замесы (автор 21.09) — сразу за бронезамесом:
+                // экранирующий (бариевый бетон) и боросиликатный (борное стекло).
+                output.accept(ModItems.BARIUM_MIX.get());
+                output.accept(ModItems.BORE_SILICATE_MIX.get());
                 output.accept(ModItems.ANDESITE_SILICATE_CLINKER.get());
                 output.accept(ModItems.WHITE_PORCELAIN_BATCH.get());
                 output.accept(ModItems.REBAR.get());
@@ -256,6 +289,31 @@ public class ModCreativeTabs {
                 output.accept(ModItems.MOX_FUEL.get());
                 output.accept(ModItems.TMOX_FUEL.get());
                 output.accept(ModItems.SNUP_FUEL.get());
+                output.accept(ModItems.UT_FUEL.get());
+                // Полимеры Эпохи III (автор 22.09) — заглушки без крафта, до химического завода.
+                output.accept(ModItems.POLYETHYLENE.get());
+                output.accept(ModItems.POLYVINYL_CHLORIDE.get());
+                output.accept(ModItems.CELLULOID.get());
+                output.accept(ModItems.RUBBER.get());
+                output.accept(ModItems.RESIN.get());
+                output.accept(ModItems.RESINOUS_SAWDUST.get());
+                output.accept(ModItems.HARD_RESINOUS_SAWDUST.get());
+                // Химические продукты и реагенты (автор 23-24.09).
+                output.accept(ModItems.EMPTY_AMPOULE.get());
+                output.accept(ModItems.DURABLE_AMPOULE.get());
+                output.accept(ModItems.AMPOULE.get());
+                output.accept(ModItems.EDTA.get());
+                output.accept(ModItems.SODIUM_CYANATE.get());
+                output.accept(ModItems.SALT.get());
+                output.accept(ModItems.CALCIUM_CHLORIDE.get());
+                output.accept(ModFluids.ETHANOL_BUCKET.get());
+                output.accept(ModFluids.FORMALDEHYDE_BUCKET.get());
+                output.accept(ModFluids.SULFURIC_ACID_BUCKET.get());
+                output.accept(ModItems.ETHYLENE_BUCKET.get());
+                output.accept(ModFluids.DISTILLATE_BUCKET.get());
+                output.accept(ModFluids.MASH_BUCKET.get());
+                output.accept(ModFluids.WORT_BUCKET.get());
+                output.accept(ModItems.AMINOBLAZEETHANOL_BUCKET.get());
             })
             .build()
     );
@@ -268,12 +326,17 @@ public class ModCreativeTabs {
             .icon(() -> new ItemStack(ModItems.OBSIDIAN_BUCKET.get()))
             .displayItems((params, output) -> {
                 output.accept(ModItems.OBSIDIAN_BUCKET.get());
+                output.accept(ModItems.LEAKY_BUCKET.get());
                 // Миска для питомцев (жирные коты, автор 2026-09-19; перенос в
                 // «Приколы» 2026-09-20 — фан-предмет, не техно-блок).
                 output.accept(ModItems.PET_BOWL_ITEM.get());
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());
+                // Пиво и водка (автор 22.09, 23.09).
+                output.accept(ModItems.BEER_MUG.get());
+                output.accept(ModItems.BEER_BUCKET.get());
+                output.accept(ModItems.VODKA_BOTTLE.get());
                 // Админские сингулярности — специально не имеют crafting recipes.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_HEAT_SOURCE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SINGULAR_ENERGY_SOURCE_ITEM.get());

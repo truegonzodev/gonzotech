@@ -303,7 +303,7 @@ public final class TurbineStructure {
                         if (!isShellBlock(state)) return null;
                         if (isSteamPort(state)) steam.add(pos.immutable());
                         if (isWirePort(state)) wire.add(pos.immutable());
-                    } else if (!state.is(ModMachines.TURBINE_ROTOR.get())) {
+                    } else if (!state.is(ModMachines.FIRST_TURBINE_ROTOR.get())) {
                         return null;
                     }
                     all.add(pos.immutable());
@@ -312,12 +312,12 @@ public final class TurbineStructure {
         }
         if (steam.isEmpty() || wire.isEmpty()) return null;
         BlockPos root = new BlockPos(min.getX() + 1, min.getY() + 1, min.getZ() + 1);
-        if (!level.getBlockState(root).is(ModMachines.TURBINE_ROTOR.get())) return null;
+        if (!level.getBlockState(root).is(ModMachines.FIRST_TURBINE_ROTOR.get())) return null;
         return new Build(min.immutable(), max.immutable(), root, (int) rotorLong, all, steam, wire);
     }
 
     private static boolean isShellBlock(BlockState state) {
-        return state.is(ModMachines.TURBINE_CASING.get()) || isSteamPort(state) || isWirePort(state);
+        return state.is(ModMachines.FIRST_TURBINE_CASING.get()) || isSteamPort(state) || isWirePort(state);
     }
 
     private static boolean isCandidateState(BlockState state) {
@@ -325,8 +325,8 @@ public final class TurbineStructure {
     }
 
     public static boolean isCandidateBlock(Block block) {
-        return block == ModMachines.TURBINE_CASING.get()
-            || block == ModMachines.TURBINE_ROTOR.get()
+        return block == ModMachines.FIRST_TURBINE_CASING.get()
+            || block == ModMachines.FIRST_TURBINE_ROTOR.get()
             || block == ModMachines.STEAM_NODE.get()
             || block == ModMachines.UNIVERSAL_FLUID_NODE.get()
             || block == ModMachines.WIRE_NODE.get()

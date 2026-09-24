@@ -31,6 +31,9 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
  * <p>Видимость: Зависимость/Стресс/Кризис и Химическое заражение видны всегда;
  * Облучение — только пока в руке дозиметр; УФ излучение — только пока в руке
  * УФ-радиометр ({@code isShown}). Значения 0..1000 = 0..100%.
+ *
+ * <p>Зависимость, стресс и кризис приходят по сети в ОЧКАХ ({@code 0..1_000_000}) —
+ * перевод в тысячные делает {@link PlayerPsyche#pointsToPermille(int)}.
  */
 public final class PsycheHud {
 
@@ -68,16 +71,20 @@ public final class PsycheHud {
         if (mc.options.hideGui) return;
 
         PsycheNetwork.PsycheDataPayload data = PsycheNetwork.CLIENT_DATA;
-        int addiction = data != null ? data.addiction() : 0;
-        int stress = data != null ? data.stress() : 0;
-        int crisis = data != null ? data.crisis() : 0;
+        // Зависимость, стресс и кризис хранятся В ОЧКАХ (1 000 000 = 100 %) —
+        // бары рисуются в тысячных, перевод делает PlayerPsyche.pointsToPermille.
+        int addiction = data != null ? PlayerPsyche.pointsToPermille(data.addiction()) : 0;
+        int stress = data != null ? PlayerPsyche.pointsToPermille(data.stress()) : 0;
+        int crisis = data != null ? PlayerPsyche.pointsToPermille(data.crisis()) : 0;
         int radiation = data != null ? data.radiation() : 0;
         int uv = data != null ? data.uv() : 0;
         int chemical = data != null ? data.chemical() : 0;
 
-        // isShown: измерительные шкалы видны только с прибором в руке.
-        boolean showRadiation = isHolding(player, ModItems.DOSIMETER.get());
-        boolean showUv = isHolding(player, ModItems.UV_METER.get());
+        // isShown: измерительные шкалы видны только с прибором в руке. Телифон (автор 22.09)
+        // совмещает приборы, поэтому с ним видно и облучение, и УФ.
+        boolean telifon = isHolding(player, ModItems.TELIFON.get());
+        boolean showRadiation = telifon || isHolding(player, ModItems.DOSIMETER.get());
+        boolean showUv = telifon || isHolding(player, ModItems.UV_METER.get());
 
         GuiGraphics g = event.getGuiGraphics();
         int screenW = g.guiWidth();

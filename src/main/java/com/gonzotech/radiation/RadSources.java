@@ -25,7 +25,7 @@ import java.util.Map;
  *   природный уран 0.02mZt · торий 0.007mZt · реакторный плутоний-239 3.6mZt · радий 75mZt
  *   изотопы: U-238 0.01 · U-235 0.10 · U-233 1.50 · оружейный Pu 1.20 ·
  *            Pu-238 12.00 · Pu-242 0.30 · Th-229 0.80   (mZt)
- *   топлива: урановое 0.03 · СО (MOX) 0.45 · ТСО 0.35 · СНУП 0.85   (mZt)
+ *   топлива: урановое 0.03 · СО (MOX) 0.45 · ТСО 0.35 · СНУП 0.85 · УТ 0.20   (mZt)
  * </pre>
  */
 public final class RadSources {
@@ -54,7 +54,19 @@ public final class RadSources {
             Map.entry("uranium_fuel", 0.03 * RadUnits.MILLI),
             Map.entry("mox_fuel", 0.45 * RadUnits.MILLI),   // СО — смесь оксидов
             Map.entry("tmox_fuel", 0.35 * RadUnits.MILLI),  // ТСО — ториевая смесь оксидов
-            Map.entry("snup_fuel", 0.85 * RadUnits.MILLI)
+            Map.entry("snup_fuel", 0.85 * RadUnits.MILLI),
+            Map.entry("ut_fuel", 0.20 * RadUnits.MILLI),      // УТ — уран-ториевое топливо
+            // Кориум (автор 21.09): фонят все три формы — ведро (корм для топки),
+            // поставленный блок и сам флюидный блок (лужа), все по 3 mZt.
+            // Радиоактивный слизневый блок и мёртвая жижа (автор 22.09.2026):
+            // слизень 5 mZt/с, жижа 0.2 mZt/с. Жижа — и блок, и ведро: id-путь один и
+            // тот же, так что и поставленный блок, и предмет в руке фонят одинаково.
+            Map.entry("radioactive_slime_block", 5.0 * RadUnits.MILLI),
+            Map.entry("dead_slime_block", 0.2 * RadUnits.MILLI),
+            Map.entry("dead_slime_bucket", 0.2 * RadUnits.MILLI),
+            Map.entry("corium_bucket", 3.0 * RadUnits.MILLI),
+            Map.entry("corium", 3.0 * RadUnits.MILLI),
+            Map.entry("molten_corium", 3.0 * RadUnits.MILLI)
     );
 
     private RadSources() {

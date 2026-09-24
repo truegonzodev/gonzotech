@@ -21,7 +21,7 @@ public class AccumulatorMenu extends BaseMachineMenu {
     }
 
     public AccumulatorMenu(int id, Inventory inv, AccumulatorBlockEntity be, ContainerData data) {
-        super(ModMenus.ACCUMULATOR.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.FIRST_ACCUMULATOR.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
         addPlayerInventory(inv, 8, 84);
     }

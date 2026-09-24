@@ -32,7 +32,7 @@ public class CrusherBlock extends MachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.CRUSHER.get(), CrusherBlockEntity::serverTick);
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.SECOND_CRUSHER.get(), CrusherBlockEntity::serverTick);
     }
 
     @Override

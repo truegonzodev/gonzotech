@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "C C",
+    "CHC",
+    "CBC"
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "H": "gonzotech:first_heat_pipe",
+    "B": "minecraft:cauldron"
+  },
+  "result": {
+    "id": "gonzotech:third_wort_kettle",
+    "count": 1
+  }
+}

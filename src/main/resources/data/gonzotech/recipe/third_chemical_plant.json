@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "TWT",
+    "ECE",
+    "TTT"
+  ],
+  "key": {
+    "T": "gonzotech:tungsten_ingot",
+    "W": "gonzotech:first_wire",
+    "E": "gonzotech:first_universal_fluid_pipe",
+    "C": "minecraft:crafting_table"
+  },
+  "result": {
+    "id": "gonzotech:third_chemical_plant",
+    "count": 1
+  }
+}

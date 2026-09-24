@@ -4,7 +4,17 @@ import java.util.Locale;
 
 /**
  * Headless parity check for the ported engine — runs without Minecraft.
- * <pre>./gradlew compileJava &amp;&amp; java -cp build/classes/java/main com.gonzotech.chalkboard.core.SelfTest</pre>
+ *
+ * <p>Это единственный автотест ядра доски резонанса (главной механики мода):
+ * размерностный ({@code S_D}) и числовой ({@code S_N}) счёт, конфликты
+ * размерностей, анти-инфляция, серверная авторитетность отправки формулы и
+ * гарантия решаемости головоломок на всех трёх сложностях.</p>
+ *
+ * <p>Запуск (Gradle-таск из {@code build.gradle}, Minecraft не поднимается):</p>
+ * <pre>./gradlew selfTest</pre>
+ *
+ * <p>Падение любого чека = exit code 1. Ручной запуск без Gradle (если нужно):</p>
+ * <pre>java -cp build/classes/java/main com.gonzotech.chalkboard.core.SelfTest</pre>
  */
 public final class SelfTest {
 

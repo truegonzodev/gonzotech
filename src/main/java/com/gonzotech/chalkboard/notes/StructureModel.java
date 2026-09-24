@@ -86,13 +86,13 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, boolean assembly, 
                     boolean outer = x == 0 || x == 2 || y == 0 || y == 2 || z == 0 || z == 2;
                     String id;
                     if (!outer) {
-                        id = "gonzotech:turbine_rotor";
+                        id = "gonzotech:first_turbine_rotor";
                     } else if (z == 0 && y == 1 && x == 0) {
                         id = "gonzotech:first_steam_node";
                     } else if (z == 0 && y == 1 && x == 2) {
                         id = "gonzotech:first_wire_node";
                     } else {
-                        id = "gonzotech:turbine_casing";
+                        id = "gonzotech:first_turbine_casing";
                     }
                     out.add(new StructureBlock(x, y, z, id));
                 }

@@ -3,9 +3,6 @@ package com.gonzotech.mixin;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.event.Phase3Events;
-import com.gonzotech.core.registry.ModItems;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.CraftingMenu;
@@ -56,7 +53,9 @@ public abstract class CraftingMenuMixin {
         if (requiredTier == null) return;
 
         PlayerChalkboardProgress progress = serverPlayer.getData(ModAttachments.CHALKBOARD_PROGRESS);
-        if (progress.isRecipeTierUnlocked(requiredTier)) return;
+        // «И»: тир «Открытия» + доп. условия предмета (часы — ещё и багровый день).
+        if (progress.isRecipeTierUnlocked(requiredTier)
+                && Phase3Events.extraGateMet(serverPlayer, result.getItem())) return;
 
         // «Выстреливаем» крафт ровно один раз: расходим сетку по одному на каждую
         // непустую ячейку (как ResultSlot.onTake) и очищаем результат.
@@ -67,17 +66,8 @@ public abstract class CraftingMenuMixin {
         }
         resultSlot.setByPlayer(ItemStack.EMPTY);
 
-        int count = result.getCount();
-        for (int i = 0; i < count; i++) {
-            ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
-            if (!serverPlayer.getInventory().add(botched)) {
-                serverPlayer.drop(botched, false);
-            }
-        }
-        serverPlayer.displayClientMessage(
-            Component.translatable("message.gonzotech.botched_craft").withStyle(ChatFormatting.RED),
-            false
-        );
+        // Тот же гейт, что и у обычного клика: механизм + сообщение + стресс.
+        Phase3Events.grantBotchedMechanism(serverPlayer, result.getCount());
 
         // Быстрый крафт «завершён»: продолжать ванильную quick-move-логику не надо
         // (покажет while-циклу в AbstractContainerMenu.clicked, что переносить нечего).

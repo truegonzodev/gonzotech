@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Universal node II. It carries all current resource streams and applies the
- * same 0.9 factor as the first universal node to the level-II base limits.
+ * higher throughput of the second opening.
  */
 public final class SecondUniversalNodeBlock extends UniversalNodeBlock implements SecondTierPipe {
 
@@ -27,8 +27,10 @@ public final class SecondUniversalNodeBlock extends UniversalNodeBlock implement
         return switch (type) {
             case WIRE -> SecondTierDefs.WIRE_THROUGHPUT;
             case HEAT -> SecondTierDefs.HEAT_THROUGHPUT;
-            // Water/Steam are one universal-fluid stream, not two 1900 mB/t streams.
-            case WATER, STEAM -> SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT;
+            case MASH -> SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT / 2;
+            case WATER, STEAM, WORT, DISTILLATE, RECTIFICATE, BOILING_WATER, POISON_POTION,
+                 SULFURIC_ACID, ETHYLENE, AMINOBLAZEETHANOL, FORMALDEHYDE ->
+                SecondTierDefs.UNIVERSAL_FLUID_THROUGHPUT;
             case ITEM -> SecondTierDefs.ITEM_THROUGHPUT;
         };
     }

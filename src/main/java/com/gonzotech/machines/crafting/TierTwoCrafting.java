@@ -5,9 +5,7 @@ import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.registry.ModMachines;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,6 +35,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TierTwoCrafting {
 
     private static final List<String> RECIPE_IDS = List.of(
+        // Хазмат I (автор 22.09): гейт на крафт — Открытие 2. Абсорбента здесь
+        // СОЗНАТЕЛЬНО нет: его крафт доступен всегда, гейтится только
+        // видимость рецепта (RecipeUnlocks) — прямая просьба автора.
+        "gonzotech:hazmat_helmet",
+        "gonzotech:hazmat_chestplate",
+        "gonzotech:hazmat_leggings",
+        "gonzotech:hazmat_boots",
         "gonzotech:coil",
         "gonzotech:inductive_module",
         "gonzotech:wedge_punch",
@@ -48,8 +53,8 @@ public final class TierTwoCrafting {
         "gonzotech:second_press",
         "gonzotech:second_cobble_generator",
         "gonzotech:second_alloy_foundry",
-        "gonzotech:crusher",
-        "gonzotech:centrifuge",
+        "gonzotech:second_crusher",
+        "gonzotech:second_centrifuge",
         "gonzotech:second_electric_furnace",
         "gonzotech:second_accumulator",
         "gonzotech:second_wire_aluminum",
@@ -71,9 +76,9 @@ public final class TierTwoCrafting {
         "gonzotech:second_wire_node",
         "gonzotech:second_universal_node",
         "gonzotech:second_pump",
-        "gonzotech:nuclear_firebox",
-        "gonzotech:steamgen_casing",
-        "gonzotech:steamgen_core"
+        "gonzotech:second_nuclear_firebox",
+        "gonzotech:second_steamgen_casing",
+        "gonzotech:second_steamgen_core"
     );
 
     /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
@@ -114,7 +119,9 @@ public final class TierTwoCrafting {
         if (crafted.isEmpty() || !isGatedOutput(crafted.getItem())) return;
 
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
-        if (progress.isRecipeTierUnlocked(2)) return;
+        // «И»: тир 2 + доп. условия предмета (солнечные часы — ещё и багровый день).
+        if (progress.isRecipeTierUnlocked(2)
+                && com.gonzotech.core.event.Phase3Events.extraGateMet(player, crafted.getItem())) return;
 
         int count = crafted.getCount();
         crafted.setCount(0);
@@ -126,21 +133,16 @@ public final class TierTwoCrafting {
         if (!carried.isEmpty() && carried.is(crafted.getItem())) {
             carried.shrink(count);
         }
-        for (int i = 0; i < count; i++) {
-            ItemStack botched = new ItemStack(ModItems.BOTCHED_MECHANISM.get());
-            if (!player.getInventory().add(botched)) {
-                player.drop(botched, false);
-            }
-        }
-        player.displayClientMessage(
-            Component.translatable("message.gonzotech.botched_craft").withStyle(ChatFormatting.RED),
-            false
-        );
+        // Тот же гейт, что и у первого тира: механизм + сообщение + стресс.
+        com.gonzotech.core.event.Phase3Events.grantBotchedMechanism(player, count);
     }
 
     /** true, если предмет — «закрытый» вывод Discovery-2 (гейт тира 2). */
     public static boolean isGatedOutput(Item item) {
-        return item == ModItems.COIL.get()
+        // Солнечные часы: тир 2 И встреченный багровый день (автор 22.09.2026) —
+        // дополнительное условие проверяет Phase3Events.extraGateMet на всех путях крафта.
+        return item == ModItems.SOLAR_WATCH.get()
+            || item == ModItems.COIL.get()
             || item == ModItems.INDUCTIVE_MODULE.get()
             || item == ModItems.WEDGE_PUNCH.get()
             || item == ModItems.FLAT_PUNCH.get()
@@ -151,9 +153,9 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_PRESS_ITEM.get()
             || item == ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get()
             || item == ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get()
-            || item == ModMachines.CRUSHER_ITEM.get()
+            || item == ModMachines.SECOND_CRUSHER_ITEM.get()
             // This confirmed recipe intentionally crafts the existing centrifuge.
-            || item == ModMachines.CENTRIFUGE_ITEM.get()
+            || item == ModMachines.SECOND_CENTRIFUGE_ITEM.get()
             || item == ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get()
             || item == ModMachines.SECOND_ACCUMULATOR_ITEM.get()
             || item == ModMachines.SECOND_WIRE_ITEM.get()
@@ -172,8 +174,8 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_WIRE_NODE_ITEM.get()
             || item == ModMachines.SECOND_UNIVERSAL_NODE_ITEM.get()
             || item == ModMachines.SECOND_PUMP_ITEM.get()
-            || item == ModMachines.NUCLEAR_FIREBOX_ITEM.get()
-            || item == ModMachines.STEAMGEN_CASING_ITEM.get()
-            || item == ModMachines.STEAMGEN_CORE_ITEM.get();
+            || item == ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get()
+            || item == ModMachines.SECOND_STEAMGEN_CASING_ITEM.get()
+            || item == ModMachines.SECOND_STEAMGEN_CORE_ITEM.get();
     }
 }

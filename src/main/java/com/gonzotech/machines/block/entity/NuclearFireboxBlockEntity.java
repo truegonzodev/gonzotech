@@ -91,7 +91,7 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
     };
 
     public NuclearFireboxBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.NUCLEAR_FIREBOX.get(), pos, state, 1);
+        super(ModBlockEntities.SECOND_NUCLEAR_FIREBOX.get(), pos, state, 1);
     }
 
     public ContainerData data() {
@@ -136,6 +136,18 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
         updateComparatorOutput();
     }
 
+    /**
+     * Единственная точка приёма топлива (слот, {@code canPlaceItem} и воронка
+     * спрашивают именно её). Топка Discovery-2 работает только на ПРИРОДНОМ
+     * уране и тории — слиток, самородок, блок, пыль и сырая руда
+     * (уранинит/торианит — тоже природная форма, оставлена автором 21.09).
+     * <p>
+     * Всё наработанное ядерное топливо и изотопы ({@code uranium_238/235/233},
+     * {@code weapons_plutonium}, {@code plutonium_238/242}, {@code thorium_229},
+     * {@code uranium_fuel}, {@code mox_fuel}, {@code tmox_fuel}, {@code snup_fuel},
+     * {@code ut_fuel}) сюда НЕ принимается by design: это сырьё будущих
+     * продвинутых реакторов, а не топливо «природной» топки.
+     */
     public static boolean isNuclearFuel(ItemStack stack) {
         return burnTicks(stack) > 0;
     }
@@ -145,10 +157,12 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
         if (stack.is(ModItems.INGOT_ITEMS.get("uranium_ingot").get())) return NuclearDefs.URANIUM_INGOT_BURN_TICKS;
         if (stack.is(ModItems.NUGGET_ITEMS.get("uranium_nugget").get())) return NuclearDefs.URANIUM_NUGGET_BURN_TICKS;
         if (stack.is(ModItems.METAL_BLOCK_ITEMS.get("uranium_block").get())) return NuclearDefs.URANIUM_BLOCK_BURN_TICKS;
+        if (stack.is(ModItems.DUST_ITEMS.get("uranium_dust").get())) return NuclearDefs.URANIUM_DUST_BURN_TICKS;
         if (stack.is(ModItems.RAW_ORE_ITEMS.get("uranium").get())) return NuclearDefs.URANINITE_BURN_TICKS;
         if (stack.is(ModItems.INGOT_ITEMS.get("thorium_ingot").get())) return NuclearDefs.THORIUM_INGOT_BURN_TICKS;
         if (stack.is(ModItems.NUGGET_ITEMS.get("thorium_nugget").get())) return NuclearDefs.THORIUM_NUGGET_BURN_TICKS;
         if (stack.is(ModItems.METAL_BLOCK_ITEMS.get("thorium_block").get())) return NuclearDefs.THORIUM_BLOCK_BURN_TICKS;
+        if (stack.is(ModItems.DUST_ITEMS.get("thorium_dust").get())) return NuclearDefs.THORIUM_DUST_BURN_TICKS;
         if (stack.is(ModItems.RAW_ORE_ITEMS.get("thorium").get())) return NuclearDefs.THORIANITE_BURN_TICKS;
         return 0;
     }
@@ -271,7 +285,7 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.nuclear_firebox");
+        return Component.translatable("block.gonzotech.second_nuclear_firebox");
     }
 
     @Override

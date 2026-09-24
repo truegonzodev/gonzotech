@@ -53,7 +53,7 @@ public final class TurbineRotorBlock extends TurbinePartBlock implements EntityB
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                     BlockEntityType<T> type) {
         if (level.isClientSide() || !state.getValue(CONTROLLER)) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.TURBINE_ROTOR.get(),
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.FIRST_TURBINE_ROTOR.get(),
             TurbineRotorBlockEntity::serverTick);
     }
 }

@@ -23,7 +23,7 @@ public class ElectricFurnaceMenu extends BaseMachineMenu {
     }
 
     public ElectricFurnaceMenu(int id, Inventory inv, ElectricFurnaceBlockEntity be, ContainerData data) {
-        super(ModMenus.ELECTRIC_FURNACE.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.FIRST_ELECTRIC_FURNACE.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
         addSlot(new Slot(be, ElectricFurnaceBlockEntity.SLOT_INPUT, 44, 35));

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "TGT",
+    "EHE",
+    "TTT"
+  ],
+  "key": {
+    "T": "gonzotech:tungsten_ingot",
+    "G": "minecraft:glass",
+    "H": "gonzotech:first_heat_pipe",
+    "E": "gonzotech:first_universal_fluid_pipe"
+  },
+  "result": {
+    "id": "gonzotech:third_rectifier",
+    "count": 1
+  }
+}

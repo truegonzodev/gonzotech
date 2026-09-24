@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.BoilerMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -46,13 +47,13 @@ public class BoilerScreen extends MachineScreen<BoilerMenu> {
 
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gth", menu.gth(), MachineDefs.toUnits(MachineDefs.BOILER_GTH_CAPACITY))), mouseX, mouseY);
+                GtUnits.gthPair(menu.gth(), MachineDefs.toUnits(MachineDefs.BOILER_GTH_CAPACITY))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, watX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.water", menu.water(), MachineDefs.BOILER_WATER_CAPACITY)), mouseX, mouseY);
+                GtUnits.waterPair(menu.water(), MachineDefs.BOILER_WATER_CAPACITY)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, steX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.steam", menu.steam(), MachineDefs.BOILER_STEAM_CAPACITY)), mouseX, mouseY);
+                GtUnits.steamPair(menu.steam(), MachineDefs.BOILER_STEAM_CAPACITY)), mouseX, mouseY);
         }
     }
 }

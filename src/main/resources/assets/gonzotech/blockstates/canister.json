@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/canister" },
+    "facing=east":  { "model": "gonzotech:block/canister", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/canister", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/canister", "y": 270 }
+  }
+}

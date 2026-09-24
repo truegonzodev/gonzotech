@@ -9,9 +9,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * Маленькие интерфейсы «приёмников» ресурсов, чтобы блоки могли толкать
  * ресурс соседу, не зная его конкретного класса.
  * <p>
- * Пока это прямая передача блок→сосед (мы ставим блоки вплотную вместо
- * проводов). Позже, когда появятся трубы/провода, здесь же можно будет
- * повесить NeoForge-capability, а логика толкания в {@link #push} не изменится.
+ * Передача блок→сосед работает и сейчас (машины ставятся вплотную). С появлением
+ * логистики она дополняет, а не заменяет трубы: труба/узел спрашивает тот же
+ * {@link #push}, поэтому при переезде на NeoForge-capability логика не изменится.
  */
 public final class Sinks {
 
@@ -44,6 +44,71 @@ public final class Sinks {
     public interface WaterSink {
         /** @return сколько воды (mB) реально принято */
         long receiveWater(long amount, boolean simulate);
+    }
+
+    // ────────────────────── Жидкостные приёмники Эпохи III ──────────────────────
+
+    /** Блок умеет принимать брагу (mB) от соседа или по трубе. */
+    public interface MashSink {
+        /**
+         * @param amount         объём в mB
+         * @param alcoholPercent процент спирта (0..13%)
+         * @param rotPercent     процент гнили (0..98%)
+         * @param simulate       проверка или реальный приём
+         * @return сколько mB реально принято
+         */
+        long receiveMash(long amount, double alcoholPercent, double rotPercent, boolean simulate);
+    }
+
+    /** Блок умеет принимать сусло (mB) от соседа или по трубе. */
+    public interface WortSink {
+        /**
+         * @param amount         объём в mB
+         * @param alcoholPercent процент спирта (0..30%)
+         * @param simulate       проверка или реальный приём
+         * @return сколько mB реально принято
+         */
+        long receiveWort(long amount, double alcoholPercent, boolean simulate);
+    }
+
+    /** Блок умеет принимать дистиллят (mB) от соседа или по трубе (константный 48% спирт). */
+    public interface DistillateSink {
+        long receiveDistillate(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать ретификат / чистый спирт (mB) от соседа или по трубе. */
+    public interface RectificateSink {
+        long receiveRectificate(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать кипяток / горячую воду (mB) от соседа или по трубе. */
+    public interface HotWaterSink {
+        long receiveHotWater(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать зелье отравления II (mB) от соседа или по трубе. */
+    public interface PoisonPotionSink {
+        long receivePoisonPotion(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать серную кислоту (mB) от соседа или по трубе. */
+    public interface SulfuricAcidSink {
+        long receiveSulfuricAcid(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать этилен (mB) от соседа или по трубе. */
+    public interface EthyleneSink {
+        long receiveEthylene(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать аминоблейзатанол (mB) от соседа или по трубе. */
+    public interface AminoblazeethanolSink {
+        long receiveAminoblazeethanol(long amount, boolean simulate);
+    }
+
+    /** Блок умеет принимать формальдегид (mB) от соседа или по трубе. */
+    public interface FormaldehydeSink {
+        long receiveFormaldehyde(long amount, boolean simulate);
     }
 
     /**

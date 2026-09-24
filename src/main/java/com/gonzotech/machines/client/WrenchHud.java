@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.GtFormat;
 import com.gonzotech.machines.energy.NuclearDefs;
 import com.gonzotech.core.registry.ModBlocks;
@@ -11,6 +12,7 @@ import com.gonzotech.machines.network.ItemFilterBlock;
 import com.gonzotech.machines.network.PipeGeometry;
 import com.gonzotech.machines.network.PipeMode;
 import com.gonzotech.machines.network.PipeType;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -107,11 +109,14 @@ public final class WrenchHud {
             net.minecraft.world.item.Item item =
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(payload.items().get(i));
             Component name = item.getName(new net.minecraft.world.item.ItemStack(item));
-            // «Булыжник — 16/т»: имя предмета + количество, цветом предметной трубы.
-            Component fl = Component.translatable(
-                "hud.gonzotech.item_flow_line", name,
-                Component.literal(Integer.toString(payload.counts().get(i))));
-            lines.add(fl.copy().setStyle(Style.EMPTY.withColor(PipeType.ITEM.color())));
+            // «Булыжник — 16 items/т»: имя предмета + количество. ГОСТ единиц
+            // (автор 22.09.2026): единица измерения всегда видна, пробел между числом
+            // и единицей обязателен. Имя и число — цветом предметной трубы, «/t»
+            // остаётся основным цветом строки (на HUD это &f).
+            Component itemName = name.copy().setStyle(Style.EMPTY.withColor(PipeType.ITEM.color()));
+            Component count = GtUnits.rate(payload.counts().get(i),
+                    GtUnits.key(GtUnits.U_ITEMS, PipeType.ITEM.color()), PipeType.ITEM.color());
+            lines.add(Component.translatable("hud.gonzotech.item_flow_line", itemName, count));
         }
         itemFlowLinesCache = lines;
     }
@@ -186,6 +191,12 @@ public final class WrenchHud {
             return;
         }
 
+        // Канистра: при наведении ключом показывает, чем и насколько наполнена.
+        if (state.is(com.gonzotech.core.registry.ModBlocks.CANISTER.get())) {
+            renderCanister(event.getGuiGraphics(), mc, pos);
+            return;
+        }
+
         // Какую трубу пучка мы держим на прицеле?
         PipeType part = aimedPart(state, pos, bhit);
         if (part == null) return;
@@ -247,13 +258,11 @@ public final class WrenchHud {
         graphics.drawString(font, title, (screenW - font.width(title)) / 2, y, 0xFFFFFF, true);
         y += font.lineHeight + 1;
 
-        Component state = tungstenAbsorberGth <= 0
-            ? Component.translatable("hud.gonzotech.tungsten_absorber.cold")
-            : tungstenAbsorberGth <= 12_000
-                ? Component.translatable("hud.gonzotech.tungsten_absorber.warm", tungstenAbsorberGth)
-                : tungstenAbsorberGth <= 60_000
-                    ? Component.translatable("hud.gonzotech.tungsten_absorber.hot", tungstenAbsorberGth)
-                    : Component.translatable("hud.gonzotech.tungsten_absorber.incandescent", tungstenAbsorberGth);
+        String stateKey = tungstenAbsorberGth <= 0 ? "hud.gonzotech.tungsten_absorber.cold"
+            : tungstenAbsorberGth <= 12_000 ? "hud.gonzotech.tungsten_absorber.warm"
+            : tungstenAbsorberGth <= 60_000 ? "hud.gonzotech.tungsten_absorber.hot"
+            : "hud.gonzotech.tungsten_absorber.incandescent";
+        Component state = GtUnits.amountLine(stateKey, tungstenAbsorberGth, GtUnits.U_GTH, GtUnits.GTH);
         int color = tungstenAbsorberGth > NuclearDefs.TUNGSTEN_ABSORBER_IGNITION_THRESHOLD ? 0xFF6A33 : 0xFFFFFF;
         graphics.drawString(font, state, (screenW - font.width(state)) / 2, y, color, true);
     }
@@ -288,6 +297,51 @@ public final class WrenchHud {
         for (Component line : contents) {
             graphics.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
             y += font.lineHeight + 1;
+        }
+    }
+
+    /** Подсказка содержимого канистры при наведении гаечным ключом. */
+    private static void renderCanister(GuiGraphics graphics, Minecraft mc, BlockPos pos) {
+        if (mc.level == null) return;
+        net.minecraft.world.level.block.entity.BlockEntity be = mc.level.getBlockEntity(pos);
+        if (!(be instanceof com.gonzotech.core.block.entity.CanisterBlockEntity canisterBe)) return;
+
+        Font font = mc.font;
+        int screenW = graphics.guiWidth();
+        int y = graphics.guiHeight() / 2 - 30;
+
+        Component header = Component.translatable("block.gonzotech.canister");
+        graphics.drawString(font, header, (screenW - font.width(header)) / 2, y, 0xFFFFFF, true);
+        y += font.lineHeight + 1;
+
+        int amount = canisterBe.getAmount();
+        String fluid = canisterBe.getFluid();
+        if (amount <= 0 || "empty".equals(fluid) || fluid.isEmpty()) {
+            Component empty = Component.translatable("gui.gonzotech.canister.empty").withStyle(ChatFormatting.GRAY);
+            graphics.drawString(font, empty, (screenW - font.width(empty)) / 2, y, 0xAAAAAA, true);
+            return;
+        }
+
+        int color = com.gonzotech.core.item.CanisterItem.getFluidColor(fluid);
+        String nameKey = com.gonzotech.core.item.CanisterItem.getFluidLangKey(fluid);
+        Component title = GtUnits.fluidTitle(nameKey, amount, com.gonzotech.core.block.entity.CanisterBlockEntity.CAPACITY, color);
+        Component line = Component.empty()
+            .append(Component.translatable("hud.gonzotech.canister.contains").withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(" "))
+            .append(title);
+        graphics.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
+        y += font.lineHeight + 1;
+
+        if ("water".equals(fluid) && canisterBe.getSaltMb() > 0) {
+            double saltPercent = (double) canisterBe.getSaltMb() * 100.0 / Math.max(1, amount);
+            String formatted = saltPercent >= 10.0
+                ? String.format(java.util.Locale.ROOT, "%.0f%%", saltPercent)
+                : String.format(java.util.Locale.ROOT, "%.1f%%", saltPercent);
+            Component saltLine = Component.empty()
+                .append(Component.translatable("gui.gonzotech.lore.salt_prefix").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(" "))
+                .append(Component.literal(formatted).withStyle(ChatFormatting.WHITE));
+            graphics.drawString(font, saltLine, (screenW - font.width(saltLine)) / 2, y, 0xFFFFFF, true);
         }
     }
 
@@ -446,14 +500,12 @@ public final class WrenchHud {
         Component name = Component.translatable("resource.gonzotech." + part.id())
             .setStyle(Style.EMPTY.withColor(color));
         Component sep = Component.literal(" | ").setStyle(Style.EMPTY.withColor(0xA0A0A0));
-        Component unit = Component.translatable("resource.gonzotech." + part.id() + ".unit");
         // GTU/GTH идут по проводам в МИЛЛИ (×1000) — показываем целые единицы с
         // суффиксом больших тиров и одной десятой (12.3M). Вода/пар в mB — как есть.
-        Component value = part.isFluid()
-            ? Component.literal(Long.toString(total))
-            : Component.literal(GtFormat.formatRate(total));
-        Component amount = Component.translatable("hud.gonzotech.flow_amount", value, unit)
-            .setStyle(Style.EMPTY.withColor(color));
+        // ГОСТ единиц: число и обозначение — цветом ресурса, «/t» — цветом строки.
+        String value = part.isFluid() ? Long.toString(total) : GtFormat.formatRate(total);
+        Component amount = Component.translatable("hud.gonzotech.flow_amount",
+            GtUnits.rate(value, GtUnits.key(part.unitKey(), color), color));
         return Component.empty().append(name).append(sep).append(amount);
     }
 }

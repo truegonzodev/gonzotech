@@ -25,20 +25,38 @@ public final class RadUnits {
     }
 
     /**
-     * Формат «12.34mZt/t»: подбираем приставку, чтобы мантисса была [1, 1000),
-     * знаков — до 3 значимых (старшие цифры важнее хвоста).
+     * Формат-текст «12.34 mZt/t» (без цвета — для логов и простых сообщений).
+     * В интерфейсе использовать {@code core.text.GtUnits#zt(double)}: там число и
+     * обозначение красятся цветом радиации по ГОСТ единиц, а «/t» наследует
+     * основной цвет строки.
      */
     public static String format(double nZt) {
-        if (nZt < 0.0) {
-            nZt = 0.0;
+        return value(nZt) + " " + unit(nZt) + "/t";
+    }
+
+    /** Мантисса (до 3 значимых цифр, без хвостовых нулей): «4.2», «34.5», «120». */
+    public static String value(double nZt) {
+        double v = Math.max(0.0, nZt);
+        for (int i = tier(nZt); i > 0; i--) {
+            v /= 1000.0;
         }
+        return trim(v);
+    }
+
+    /** Обозначение с приставкой: «nZt», «µZt», «mZt», «Zt», «kZt», «MZt», «GZt». */
+    public static String unit(double nZt) {
+        return PREFIXES[tier(nZt)];
+    }
+
+    /** Тир приставки: 0 = nZt (нано), дальше ×1000. */
+    private static int tier(double nZt) {
+        double v = Math.max(0.0, nZt);
         int idx = 0;
-        double v = nZt;
         while (v >= 1000.0 && idx < PREFIXES.length - 1) {
             v /= 1000.0;
             idx++;
         }
-        return trim(v) + PREFIXES[idx] + "/t";
+        return idx;
     }
 
     /** 3 значимые цифры, без хвостовых нулей: 4.2 / 34.5 / 120. */

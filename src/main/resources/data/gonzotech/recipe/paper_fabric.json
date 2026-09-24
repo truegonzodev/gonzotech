@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    "PPP"
+  ],
+  "key": {
+    "P": "minecraft:paper"
+  },
+  "result": {
+    "id": "gonzotech:paper_fabric",
+    "count": 1
+  }
+}

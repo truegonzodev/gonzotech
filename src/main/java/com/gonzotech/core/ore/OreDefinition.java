@@ -5,7 +5,8 @@ import net.minecraft.util.valueproviders.UniformInt;
 import java.util.List;
 
 /**
- * Полная классификация рудных блоков (см. addendum: таблица высот/жил/host-вариантов).
+ * Полная классификация рудных блоков: высоты, размер жилы, host-варианты —
+ * таблица задана прямо в {@link #ALL} ниже.
  * <p>
  * Единый источник правды для Java-регистрации блоков и предметов
  * ({@link com.gonzotech.core.registry.ModBlocks}, {@link com.gonzotech.core.registry.ModItems}).
@@ -20,7 +21,7 @@ import java.util.List;
  * @param veinSize     максимальный размер жилы (баланс-параметр, независим от toolTier)
  * @param toolTier     минимальный тир кирки — задаётся явно, НЕ выводится из veinSize
  *                     (раньше выводился автоматически, но это ломало тир при
- *                     балансных правках veinSize — см. addendum по фиксу v0.5)
+ *                     балансных правках veinSize)
  * @param avgPerChunk  среднее число блоков руды на чанк (все host-варианты суммарно)
  * @param baseHardness твёрдость STONE/CALCITE-варианта; DEEPSLATE = +1.5, NETHER = ×0.6
  * @param hosts        в каких вмещающих породах встречается руда
@@ -53,9 +54,9 @@ public record OreDefinition(
         DEEPSLATE("deepslate_"),
         NETHER("nether_"),
         // Не размещается через configured_feature/placed_feature: это не жила, а шанс
-        // 10%, что уже сгенерированный кальцитовый блок геоды станет рудой (только кальций).
-        // Блок/лут/тег регистрируются, но автоворлдгена для него пока нет — нужен
-        // отдельный Feature/mixin поверх геод.
+        // 10% (CALCITE_CHANCE в MineralReplacementFeature), что уже
+        // сгенерированный кальцитовый блок геоды станет рудой (только кальций).
+        // Реализовано пост-обработкой чанка на шаге top_layer_modification.
         CALCITE("calcite_");
 
         public final String prefix;

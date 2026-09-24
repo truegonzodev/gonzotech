@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CIC",
+    "UOU",
+    "CIC"
+  ],
+  "key": {
+    "C": "minecraft:copper_ingot",
+    "I": "minecraft:ice",
+    "U": "gonzotech:first_universal_fluid_pipe",
+    "O": "gonzotech:condenser"
+  },
+  "result": {
+    "id": "gonzotech:third_snaketype_condenser",
+    "count": 1
+  }
+}

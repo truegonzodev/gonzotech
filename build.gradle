@@ -67,6 +67,22 @@ dependencies {
     // сюда позже: GeckoLib/AzureLib, JEI (localRuntime), и т.д.
 }
 
+// ───────────────────────── Headless self-test движка формул ─────────────────────────
+// SelfTest проверяет ядро доски резонанса (Expr/Evaluator/GameSolver/
+// ChalkboardSubmissionValidator/Serde) чистой Java, без запуска Minecraft:
+// размерностный и числовой счёт, конфликты, анти-инфляция, серверная
+// авторитетность и решаемость головоломок на всех сложностях.
+// Запуск: ./gradlew selfTest   (падение = exit code 1)
+// При желании вешается на сборку: tasks.named('check') { dependsOn 'selfTest' }
+tasks.register('selfTest', JavaExec) {
+    group = 'verification'
+    description = 'Headless-тест движка формул доски резонанса (без запуска Minecraft)'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.gonzotech.chalkboard.core.SelfTest'
+    // Класс печатает отчёт сам; логи Gradle от него не нужны.
+    standardOutput = System.out
+}
+
 tasks.withType(ProcessResources).configureEach {
     var replaceProperties = [
         minecraft_version      : minecraft_version,

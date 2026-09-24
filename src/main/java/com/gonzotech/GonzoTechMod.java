@@ -47,11 +47,14 @@ public class GonzoTechMod {
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
         ModDataComponents.register(modEventBus);
+        // Эффекты мода: радиация (некроз/очищение) + психика (тремор/сердечный приступ).
+        com.gonzotech.core.registry.ModEffects.register(modEventBus);
         ModRecipeSerializers.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
         com.gonzotech.core.psyche.ModPsycheAttachments.register(modEventBus);
+        com.gonzotech.core.registry.ModParticles.PARTICLE_TYPES.register(modEventBus);
 
         // Фаза 2 — паровая ветка энергетики (машины, BlockEntity, меню).
         ModMachines.register(modEventBus);
@@ -69,6 +72,8 @@ public class GonzoTechMod {
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
+        // Админ-команды психики: /gonzotech debug psyche add|remove|set|trigger (автор 22.09).
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.core.psyche.command.PsycheCommand::onRegisterCommands);
 
         // Фаза 4 — космос: отладочный телепорт /gonzotech tp <dimension>.
         NeoForge.EVENT_BUS.addListener(com.gonzotech.space.SpaceCommand::onRegisterCommands);
@@ -76,12 +81,35 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.register(com.gonzotech.space.SpaceGravity.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.space.SpaceSleep.class);
         NeoForge.EVENT_BUS.addListener(com.gonzotech.chalkboard.advancement.ModAdvancements::onPlayerLoggedIn);
+        // Постоянные «Открытия» (тиры 1/2) должны доехать до клиента сразу при входе:
+        // на них завязаны клиентские гейты (тултипы статов материалов, страницы заметок),
+        // а не только события в мире.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent e) -> {
+            if (e.getEntity() instanceof net.minecraft.server.level.ServerPlayer sp) {
+                com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(sp);
+                // Рецепты пройденного тира 1 «догоняют» обновления списка (тир 2 — в TierTwoCrafting).
+                com.gonzotech.chalkboard.advancement.RecipeUnlocks.regrantOnLogin(sp);
+            }
+        });
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
         // Радиация (спека 2026-09-20): доза шкалы, наведённый фон предметов,
         // динамический фон чанков, учёт поставленных радио-блоков.
         NeoForge.EVENT_BUS.register(com.gonzotech.radiation.RadiationSystem.class);
+        // Психика (спека 2026-09-22): стресс и экзистенциальный кризис в очках.
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStress.class);
+        // Психика: событийные источники (урон, взрывы, смерти зверей, тотем, рычаг, скример).
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheStressEvents.class);
+        // Психика: эффекты экзистенциального кризиса (каскад-чекпойнт, подмена предмета, сон).
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheCrisis.class);
+
+        // «Вечные» эффекты не снимаются молоком (автор 22.09.2026).
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.event.UncurableEffects.class);
+
+        // УФ шкала (в тик) и химическое заражение (в секунду) — автор 22.09.2026.
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheUltraviolet.class);
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.PsycheChemical.class);
         // Суневеты (багровые дни): драйвер + синк при заходе.
         NeoForge.EVENT_BUS.register(com.gonzotech.sunevent.SunEventServer.class);
 
@@ -89,10 +117,16 @@ public class GonzoTechMod {
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
-            // Клиентские текстуры/тинт расплавленного кориума.
+            // Клиентские текстуры/тинт расплавленного кориума и жидкостей в мире.
             modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);
+            modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::onClientSetup);
+            modEventBus.addListener(com.gonzotech.core.client.particle.ModParticleClient::onRegisterParticleProviders);
             // Развёртка и тинт надетой брони custom_alloy.
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
+            // Тряска камеры от эффекта «Тремор» — только на клиенте.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheTremorClient.class);
+            // Эффекты кризиса на клиенте: экранный эффект, фиксация камеры, ложная смерть.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheCrisisClient.class);
             // Texture-only Smart CTM корпусной оболочки турбины.
             modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
             // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
@@ -101,8 +135,10 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
             // Спидометр измеряет клиентскую скорость и выводит её над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
-            // Радиация: lore-строка «☢ Радиоактивность» в самом низу тултипов.
+            // Радиация: lore-строка «Радиоактивность» в самом низу тултипов.
             NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.RadTooltip.class);
+            // Хазмат: лор «Полный комплект: 60% защиты…» у каждой из четырёх частей.
+            NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.HazmatTooltips.class);
             // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
@@ -144,6 +180,9 @@ public class GonzoTechMod {
 
         // Sync трёх HUD-шкал «психики» (зависимость/стресс/кризис).
         com.gonzotech.core.psyche.PsycheNetwork.register(registrar);
+
+        // Эффекты кризиса: фиксация камеры, ложный экран смерти, ЛКМ-«использование предмета».
+        com.gonzotech.core.psyche.PsycheCrisisNetwork.register(registrar);
 
         // HUD живого потока труб (ключ ↔ сервер).
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);

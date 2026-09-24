@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.menu.SecondCobbleGeneratorMenu;
@@ -53,11 +54,11 @@ public final class SecondCobbleGeneratorScreen extends MachineScreen<SecondCobbl
 
         if (inRect(mouseX, mouseY, watX, barY, 17, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.water", menu.water(), SecondTierDefs.COBBLE_WATER_CAPACITY)),
+                GtUnits.waterPair(menu.water(), SecondTierDefs.COBBLE_WATER_CAPACITY)),
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, 16, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), gtuCapacity)), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), gtuCapacity)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, digX, digY, digW, digH)) {
             g.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.second_cobble_generator.generation_progress",

@@ -136,6 +136,8 @@ public class ResonanceScreen extends Screen {
     // ── tray ──
     private EditBox search;
     private int trayScroll;
+    /** Версия подсказки, которую экран уже показал (см. {@link ChalkboardClueClient}). */
+    private int seenClueVersion = -1;
     private int activeCategoryTab = 0;
     private int weightFilter = -1;     // -1: все, 0, 1, 2, 3
     private int tierFilter = -1;       // -1: все, 0, 1, 2, 3, 4, 99
@@ -270,6 +272,20 @@ public class ResonanceScreen extends Screen {
         if (ChalkboardNetwork.CLIENT_DATA != null) {
             updateFromNetwork();
         }
+        // Новая подсказка (команда /gonzotech debug clue, позже — револьвер/водка):
+        // подсказанный блок встаёт в начало лотка, прокрутка сбрасывается.
+        if (ChalkboardClueClient.version() != seenClueVersion) {
+            seenClueVersion = ChalkboardClueClient.version();
+            trayScroll = 0;
+            refreshTray();
+        }
+        // Сердечко для шкалы стресса: пока интерфейс доски открыт — раз в секунду
+        // сообщаем серверу (+30 очков стресса/с, автор 22.09.2026).
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level != null && mc.level.getGameTime() % 20L == 0L) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                    new ChalkboardNetwork.BoardPresencePayload());
+        }
     }
 
     private void updateFromNetwork() {
@@ -343,6 +359,17 @@ public class ResonanceScreen extends Screen {
     public void onClose() {
         autoSave();
         super.onClose();
+    }
+
+    /**
+     * Экран ушёл (закрытие доски, выход из мира, переход в другой экран) — блок из
+     * подсказки перестаёт быть первым в лотке (автор 22.09.2026). Обводка остаётся:
+     * она гаснет при первом использовании блока, а не при перезаходе.
+     */
+    @Override
+    public void removed() {
+        ChalkboardClueClient.unpin();
+        super.removed();
     }
 
     // ─────────────────────────── chalk serialization ───────────────────────────
@@ -527,8 +554,11 @@ public class ResonanceScreen extends Screen {
             // Hide pure numbers except Pi
             if (q.kind() == Quantity.Kind.NUMBER && !q.id().equals("num_pi")) continue;
 
-            // Check if player has unlocked this quantity
-            boolean unlocked = cheatsEnabled || q.tier() <= unlockedTrayTier || unlockedSecrets.contains(q.id());
+            // Check if player has unlocked this quantity. Подсказка (автор 22.09.2026)
+            // «приносит» блок в лоток, даже если игрок его ещё не открыл.
+            boolean unlocked = cheatsEnabled || q.tier() <= unlockedTrayTier
+                    || unlockedSecrets.contains(q.id())
+                    || ChalkboardClueClient.isAvailable(q.id());
             if (!unlocked) continue;
 
             // Category Tab filter
@@ -547,6 +577,19 @@ public class ResonanceScreen extends Screen {
                 if (!hay.contains(needle)) continue;
             }
             out.add(q);
+        }
+
+        // Подсказанный блок — ПЕРВЫМ в лотке и вне фильтров: иначе он мог бы уехать
+        // за экран или спрятаться табом/поиском, и обводку было бы не видно. Только
+        // на время той доски, при которой подсказку выдали (автор 22.09.2026): после
+        // закрытия доски или выхода из мира блок уходит в свою категорию.
+        String clueId = ChalkboardClueClient.hintedId();
+        if (clueId != null && ChalkboardClueClient.isPinned(clueId)) {
+            Quantity hinted = Quantities.get(clueId);
+            if (hinted != null) {
+                out.removeIf(q -> q.id().equals(clueId));
+                out.add(0, hinted);
+            }
         }
         trayItems = out;
     }
@@ -1165,6 +1208,22 @@ public class ResonanceScreen extends Screen {
             tinyCentered(g, tr("gui.gonzotech.chalkboard.target_tile"), x + TILE_W / 2, y + 12, Palette.AMBER);
             tinyCentered(g, tr("gui.gonzotech.chalkboard.locked_tile"), x + TILE_W / 2, y + 22, Palette.TEXT_FAINT);
         }
+
+        // Подсказка (автор 22.09.2026): нужный блок — ТОЛСТАЯ (4 px) белая обводка
+        // поверх плитки. Пропадает при первом использовании блока (нажал/перетащил).
+        if (ChalkboardClueClient.isHinted(q.id())) {
+            clueOutline(g, x, y, TILE_W, TILE_H);
+        }
+    }
+
+    /** Толстая (4 px) белая обводка «нужного блока» из подсказки. */
+    private void clueOutline(GuiGraphics g, int x, int y, int w, int h) {
+        int t = 4;
+        int pad = 2;
+        g.fill(x - pad, y - pad, x + w + pad, y - pad + t, Palette.STROKE);
+        g.fill(x - pad, y + h + pad - t, x + w + pad, y + h + pad, Palette.STROKE);
+        g.fill(x - pad, y - pad, x - pad + t, y + h + pad, Palette.STROKE);
+        g.fill(x + w + pad - t, y - pad, x + w + pad, y + h + pad, Palette.STROKE);
     }
 
     private void drawDragGhost(GuiGraphics g, int mouseX, int mouseY) {
@@ -1686,6 +1745,10 @@ public class ResonanceScreen extends Screen {
         if (my >= tilesY) {
             Quantity q = tileAt(mx, my);
             if (q != null && !isBlocked(q)) {
+                // Первое использование подсказанного блока (нажал/перетащил) — обводка пропадает.
+                if (ChalkboardClueClient.isHinted(q.id())) {
+                    ChalkboardClueClient.consume();
+                }
                 pressedQuantity = q;
                 dragFromSlotId = null;
                 dragging = false;

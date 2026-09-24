@@ -22,7 +22,7 @@ public class PumpMenu extends BaseMachineMenu {
     }
 
     public PumpMenu(int id, Inventory inv, PumpBlockEntity be, ContainerData data) {
-        super(ModMenus.PUMP.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.FIRST_PUMP.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
         addSlot(new PumpInputSlot(be, PumpBlockEntity.SLOT_CONTAINER_IN, 80, 17));

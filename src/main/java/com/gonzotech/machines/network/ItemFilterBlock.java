@@ -55,7 +55,7 @@ public class ItemFilterBlock extends Block implements EntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return createTickerHelper(type, ModBlockEntities.ITEM_FILTER.get(), ItemFilterBlockEntity::serverTick);
+        return createTickerHelper(type, ModBlockEntities.FIRST_ITEM_FILTER.get(), ItemFilterBlockEntity::serverTick);
     }
 
     @Override

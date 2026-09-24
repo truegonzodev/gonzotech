@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:bore_stained_glass",
+    "gonzotech:bore_stained_glass"
+  ],
+  "result": {
+    "id": "gonzotech:durable_ampoule",
+    "count": 1
+  }
+}

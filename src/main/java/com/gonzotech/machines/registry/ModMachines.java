@@ -8,10 +8,14 @@ import com.gonzotech.machines.block.CentrifugeBlock;
 import com.gonzotech.machines.block.CrusherBlock;
 import com.gonzotech.machines.block.CobbleGeneratorBlock;
 import com.gonzotech.machines.block.CondenserBlock;
+import com.gonzotech.machines.block.DistillerBlock;
 import com.gonzotech.machines.block.ElectricFurnaceBlock;
+import com.gonzotech.machines.block.FermentationVatBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.NuclearFireboxBlock;
 import com.gonzotech.machines.block.PumpBlock;
+import com.gonzotech.machines.block.RectifierBlock;
+import com.gonzotech.machines.block.SnaketypeCondenserBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
 import com.gonzotech.machines.block.SecondElectricFurnaceBlock;
@@ -26,6 +30,7 @@ import com.gonzotech.machines.block.SteamGenCasingBlock;
 import com.gonzotech.machines.block.SteamGenCoreBlock;
 import com.gonzotech.machines.block.TurbineCasingBlock;
 import com.gonzotech.machines.block.TurbineRotorBlock;
+import com.gonzotech.machines.block.WortKettleBlock;
 import com.gonzotech.machines.item.WrenchItem;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.ItemFilterBlock;
@@ -123,8 +128,8 @@ public final class ModMachines {
         BLOCKS.registerBlock("firebox", FireboxBlock::new, machineMetal());
 
     /** Discovery-2 heat source: one uranium/thorium fuel slot and a dangerous GTH buffer. */
-    public static final DeferredBlock<NuclearFireboxBlock> NUCLEAR_FIREBOX =
-        BLOCKS.registerBlock("nuclear_firebox", NuclearFireboxBlock::new, machineMetal());
+    public static final DeferredBlock<NuclearFireboxBlock> SECOND_NUCLEAR_FIREBOX =
+        BLOCKS.registerBlock("second_nuclear_firebox", NuclearFireboxBlock::new, machineMetal());
 
     public static final DeferredBlock<BoilerBlock> BOILER =
         BLOCKS.registerBlock("boiler", BoilerBlock::new, machineMetalCustomShape());
@@ -132,28 +137,28 @@ public final class ModMachines {
     public static final DeferredBlock<StirlingBlock> STIRLING =
         BLOCKS.registerBlock("stirling_generator", StirlingBlock::new, machineCopper());
 
-    public static final DeferredBlock<ElectricFurnaceBlock> ELECTRIC_FURNACE =
-        BLOCKS.registerBlock("electric_furnace", ElectricFurnaceBlock::new, machineMetal());
+    public static final DeferredBlock<ElectricFurnaceBlock> FIRST_ELECTRIC_FURNACE =
+        BLOCKS.registerBlock("first_electric_furnace", ElectricFurnaceBlock::new, machineMetal());
 
     public static final DeferredBlock<CondenserBlock> CONDENSER =
         BLOCKS.registerBlock("condenser", CondenserBlock::new, machineCopper());
 
-    public static final DeferredBlock<PumpBlock> PUMP =
-        BLOCKS.registerBlock("pump", PumpBlock::new, machineCopper());
+    public static final DeferredBlock<PumpBlock> FIRST_PUMP =
+        BLOCKS.registerBlock("first_pump", PumpBlock::new, machineCopper());
 
-    public static final DeferredBlock<AccumulatorBlock> ACCUMULATOR =
-        BLOCKS.registerBlock("accumulator", AccumulatorBlock::new, lightMetal());
+    public static final DeferredBlock<AccumulatorBlock> FIRST_ACCUMULATOR =
+        BLOCKS.registerBlock("first_accumulator", AccumulatorBlock::new, lightMetal());
 
-    public static final DeferredBlock<CobbleGeneratorBlock> COBBLE_GENERATOR =
-        BLOCKS.registerBlock("cobble_generator", CobbleGeneratorBlock::new, machineCopper());
+    public static final DeferredBlock<CobbleGeneratorBlock> FIRST_COBBLE_GENERATOR =
+        BLOCKS.registerBlock("first_cobble_generator", CobbleGeneratorBlock::new, machineCopper());
 
     /** Дробилка: первая стадия извлечения raw-материала из рудного блока. */
-    public static final DeferredBlock<CrusherBlock> CRUSHER =
-        BLOCKS.registerBlock("crusher", CrusherBlock::new, machineMetal());
+    public static final DeferredBlock<CrusherBlock> SECOND_CRUSHER =
+        BLOCKS.registerBlock("second_crusher", CrusherBlock::new, machineMetal());
 
     /** ЦФ1УР — атомная центрифуга для первой стадии промывки руд. */
-    public static final DeferredBlock<CentrifugeBlock> CENTRIFUGE =
-        BLOCKS.registerBlock("centrifuge", CentrifugeBlock::new, machineMetal());
+    public static final DeferredBlock<CentrifugeBlock> SECOND_CENTRIFUGE =
+        BLOCKS.registerBlock("second_centrifuge", CentrifugeBlock::new, machineMetal());
 
     /** Creative-only GTH emitter without an internal storage or crafting recipe. */
     public static final DeferredBlock<SingularHeatSourceBlock> SINGULAR_HEAT_SOURCE =
@@ -164,20 +169,20 @@ public final class ModMachines {
         BLOCKS.registerBlock("singular_energy_source", SingularEnergySourceBlock::new, lightMetal());
 
     /** Бесшовный после формирования внешний корпус прямоугольной паровой турбины. */
-    public static final DeferredBlock<TurbineCasingBlock> TURBINE_CASING =
-        BLOCKS.registerBlock("turbine_casing", TurbineCasingBlock::new, machineMetal());
+    public static final DeferredBlock<TurbineCasingBlock> FIRST_TURBINE_CASING =
+        BLOCKS.registerBlock("first_turbine_casing", TurbineCasingBlock::new, machineMetal());
 
     /** Единственно допустимое содержимое внутреннего объёма турбины. */
-    public static final DeferredBlock<TurbineRotorBlock> TURBINE_ROTOR =
-        BLOCKS.registerBlock("turbine_rotor", TurbineRotorBlock::new, machineMetal());
+    public static final DeferredBlock<TurbineRotorBlock> FIRST_TURBINE_ROTOR =
+        BLOCKS.registerBlock("first_turbine_rotor", TurbineRotorBlock::new, machineMetal());
 
     /** Бесшовный после формирования корпус продвинутого парогенератора 5×5×5. */
-    public static final DeferredBlock<SteamGenCasingBlock> STEAMGEN_CASING =
-        BLOCKS.registerBlock("steamgen_casing", SteamGenCasingBlock::new, machineMetal());
+    public static final DeferredBlock<SteamGenCasingBlock> SECOND_STEAMGEN_CASING =
+        BLOCKS.registerBlock("second_steamgen_casing", SteamGenCasingBlock::new, machineMetal());
 
     /** Ядро продвинутого парогенератора; одно из них — контроллер установки. */
-    public static final DeferredBlock<SteamGenCoreBlock> STEAMGEN_CORE =
-        BLOCKS.registerBlock("steamgen_core", SteamGenCoreBlock::new, machineMetal());
+    public static final DeferredBlock<SteamGenCoreBlock> SECOND_STEAMGEN_CORE =
+        BLOCKS.registerBlock("second_steamgen_core", SteamGenCoreBlock::new, machineMetal());
 
     // ─────────────────────────── трубы энергосети (логистика) ───────────────────────────
     // Axis-блоки без BlockEntity: состояние (ось + режим) в блокстейте, передача —
@@ -255,11 +260,11 @@ public final class ModMachines {
     // сеть, отсеянное — в reject-ветку Отсеивателя. Отсеиватель без меню: без
     // redstone он корень этой сети, с redstone он удаляет reject-предметы.
 
-    public static final DeferredBlock<ItemFilterBlock> ITEM_FILTER =
-        BLOCKS.registerBlock("item_filter", ItemFilterBlock::new, copperLogisticsMachine());
+    public static final DeferredBlock<ItemFilterBlock> FIRST_ITEM_FILTER =
+        BLOCKS.registerBlock("first_item_filter", ItemFilterBlock::new, copperLogisticsMachine());
 
-    public static final DeferredBlock<ItemScavengerBlock> ITEM_SCAVENGER =
-        BLOCKS.registerBlock("item_scavenger", ItemScavengerBlock::new, copperLogisticsMachine());
+    public static final DeferredBlock<ItemScavengerBlock> FIRST_ITEM_SCAVENGER =
+        BLOCKS.registerBlock("first_item_scavenger", ItemScavengerBlock::new, copperLogisticsMachine());
 
 
     // ─────────────────────────── второе открытие ───────────────────────────
@@ -309,15 +314,15 @@ public final class ModMachines {
     public static final DeferredBlock<SecondElectricFurnaceBlock> SECOND_ELECTRIC_FURNACE =
         BLOCKS.registerBlock("second_electric_furnace", SecondElectricFurnaceBlock::new, machineMetal());
 
-    /** Завод сплавов II: 5×5 сетка и первые беспитательные именные плавки. */
+    /** Завод сплавов (тир-2): 5×5 сетка и первые беспитательные именные плавки. */
     public static final DeferredBlock<AlloyFoundryBlock> SECOND_ALLOY_FOUNDRY =
         BLOCKS.registerBlock("second_alloy_foundry", AlloyFoundryBlock::new, machineMetal());
 
-    /** Измельчитель II: два слота, 35 оплачиваемых тиков, слитки/кварц/raw Mn. */
+    /** Измельчитель (тир-2): два слота, 35 оплачиваемых тиков, слитки/кварц/raw Mn. */
     public static final DeferredBlock<SecondGrinderBlock> SECOND_GRINDER =
         BLOCKS.registerBlock("second_grinder", SecondGrinderBlock::new, machineMetal());
 
-    /** Пресс II: мгновенный ход, затем 60 тиков возврата пуансона. */
+    /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
 
@@ -337,13 +342,45 @@ public final class ModMachines {
     public static final DeferredBlock<SolarPanelBlock> SOLAR_PANEL =
         BLOCKS.registerBlock("solar_panel", SolarPanelBlock::new, machineCopper());
 
+    /** Эпоха III (Открытие 3): Бродильный чан — поглощает органику, сбраживает брагу. */
+    public static final DeferredBlock<FermentationVatBlock> THIRD_FERMENTATION_VAT =
+        BLOCKS.registerBlock("third_fermentation_vat", FermentationVatBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Сусловарочный котёл — варит брагу в сусло, выпаривает, разливает пиво. */
+    public static final DeferredBlock<WortKettleBlock> THIRD_WORT_KETTLE =
+        BLOCKS.registerBlock("third_wort_kettle", WortKettleBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Дистиллятор — перегонка сырья в дистиллят и кипяток. */
+    public static final DeferredBlock<DistillerBlock> THIRD_DISTILLER =
+        BLOCKS.registerBlock("third_distiller", DistillerBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Ректификатор — глубокая очистка дистиллята в чистый ректификат. */
+    public static final DeferredBlock<RectifierBlock> THIRD_RECTIFIER =
+        BLOCKS.registerBlock("third_rectifier", RectifierBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Змеевиковый конденсатор — охлаждение кипятка в воду с ледяными бонусами. */
+    public static final DeferredBlock<SnaketypeCondenserBlock> THIRD_SNAKETYPE_CONDENSER =
+        BLOCKS.registerBlock("third_snaketype_condenser", SnaketypeCondenserBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Наполнитель — распределитель жидкостей и химический полу-реактор. */
+    public static final DeferredBlock<com.gonzotech.machines.block.FillerBlock> THIRD_FILLER =
+        BLOCKS.registerBlock("third_filler", com.gonzotech.machines.block.FillerBlock::new, machineMetal());
+
+    /** Эпоха III (Открытие 3): Химический завод — аппарат синтеза полимеров, хелатов и препаратов. */
+    public static final DeferredBlock<com.gonzotech.machines.block.ChemicalPlantBlock> THIRD_CHEMICAL_PLANT =
+        BLOCKS.registerBlock("third_chemical_plant", com.gonzotech.machines.block.ChemicalPlantBlock::new, machineMetal());
+
+    /** Разливной кран — разлив пива (из сусла) и водки (из дистиллята). */
+    public static final DeferredBlock<com.gonzotech.machines.block.DispensingTapBlock> DISPENSING_TAP =
+        BLOCKS.registerBlock("dispensing_tap", com.gonzotech.machines.block.DispensingTapBlock::new, machineMetal());
+
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
     public static final DeferredItem<BlockItem> FIREBOX_ITEM =
         ITEMS.registerSimpleBlockItem("firebox", FIREBOX);
 
-    public static final DeferredItem<BlockItem> NUCLEAR_FIREBOX_ITEM =
-        ITEMS.registerSimpleBlockItem("nuclear_firebox", NUCLEAR_FIREBOX);
+    public static final DeferredItem<BlockItem> SECOND_NUCLEAR_FIREBOX_ITEM =
+        ITEMS.registerSimpleBlockItem("second_nuclear_firebox", SECOND_NUCLEAR_FIREBOX);
 
     public static final DeferredItem<BlockItem> BOILER_ITEM =
         ITEMS.registerSimpleBlockItem("boiler", BOILER);
@@ -351,26 +388,26 @@ public final class ModMachines {
     public static final DeferredItem<BlockItem> STIRLING_ITEM =
         ITEMS.registerSimpleBlockItem("stirling_generator", STIRLING);
 
-    public static final DeferredItem<BlockItem> ELECTRIC_FURNACE_ITEM =
-        ITEMS.registerSimpleBlockItem("electric_furnace", ELECTRIC_FURNACE);
+    public static final DeferredItem<BlockItem> FIRST_ELECTRIC_FURNACE_ITEM =
+        ITEMS.registerSimpleBlockItem("first_electric_furnace", FIRST_ELECTRIC_FURNACE);
 
     public static final DeferredItem<BlockItem> CONDENSER_ITEM =
         ITEMS.registerSimpleBlockItem("condenser", CONDENSER);
 
-    public static final DeferredItem<BlockItem> PUMP_ITEM =
-        ITEMS.registerSimpleBlockItem("pump", PUMP);
+    public static final DeferredItem<BlockItem> FIRST_PUMP_ITEM =
+        ITEMS.registerSimpleBlockItem("first_pump", FIRST_PUMP);
 
-    public static final DeferredItem<BlockItem> ACCUMULATOR_ITEM =
-        ITEMS.registerSimpleBlockItem("accumulator", ACCUMULATOR);
+    public static final DeferredItem<BlockItem> FIRST_ACCUMULATOR_ITEM =
+        ITEMS.registerSimpleBlockItem("first_accumulator", FIRST_ACCUMULATOR);
 
-    public static final DeferredItem<BlockItem> COBBLE_GENERATOR_ITEM =
-        ITEMS.registerSimpleBlockItem("cobble_generator", COBBLE_GENERATOR);
+    public static final DeferredItem<BlockItem> FIRST_COBBLE_GENERATOR_ITEM =
+        ITEMS.registerSimpleBlockItem("first_cobble_generator", FIRST_COBBLE_GENERATOR);
 
-    public static final DeferredItem<BlockItem> CRUSHER_ITEM =
-        ITEMS.registerSimpleBlockItem("crusher", CRUSHER);
+    public static final DeferredItem<BlockItem> SECOND_CRUSHER_ITEM =
+        ITEMS.registerSimpleBlockItem("second_crusher", SECOND_CRUSHER);
 
-    public static final DeferredItem<BlockItem> CENTRIFUGE_ITEM =
-        ITEMS.registerSimpleBlockItem("centrifuge", CENTRIFUGE);
+    public static final DeferredItem<BlockItem> SECOND_CENTRIFUGE_ITEM =
+        ITEMS.registerSimpleBlockItem("second_centrifuge", SECOND_CENTRIFUGE);
 
     /** Админский источник: выдаётся только вкладкой «Приколы»/командой. */
     public static final DeferredItem<BlockItem> SINGULAR_HEAT_SOURCE_ITEM =
@@ -380,17 +417,17 @@ public final class ModMachines {
     public static final DeferredItem<BlockItem> SINGULAR_ENERGY_SOURCE_ITEM =
         ITEMS.registerSimpleBlockItem("singular_energy_source", SINGULAR_ENERGY_SOURCE);
 
-    public static final DeferredItem<BlockItem> TURBINE_CASING_ITEM =
-        ITEMS.registerSimpleBlockItem("turbine_casing", TURBINE_CASING);
+    public static final DeferredItem<BlockItem> FIRST_TURBINE_CASING_ITEM =
+        ITEMS.registerSimpleBlockItem("first_turbine_casing", FIRST_TURBINE_CASING);
 
-    public static final DeferredItem<BlockItem> TURBINE_ROTOR_ITEM =
-        ITEMS.registerSimpleBlockItem("turbine_rotor", TURBINE_ROTOR);
+    public static final DeferredItem<BlockItem> FIRST_TURBINE_ROTOR_ITEM =
+        ITEMS.registerSimpleBlockItem("first_turbine_rotor", FIRST_TURBINE_ROTOR);
 
-    public static final DeferredItem<BlockItem> STEAMGEN_CASING_ITEM =
-        ITEMS.registerSimpleBlockItem("steamgen_casing", STEAMGEN_CASING);
+    public static final DeferredItem<BlockItem> SECOND_STEAMGEN_CASING_ITEM =
+        ITEMS.registerSimpleBlockItem("second_steamgen_casing", SECOND_STEAMGEN_CASING);
 
-    public static final DeferredItem<BlockItem> STEAMGEN_CORE_ITEM =
-        ITEMS.registerSimpleBlockItem("steamgen_core", STEAMGEN_CORE);
+    public static final DeferredItem<BlockItem> SECOND_STEAMGEN_CORE_ITEM =
+        ITEMS.registerSimpleBlockItem("second_steamgen_core", SECOND_STEAMGEN_CORE);
 
     public static final DeferredItem<BlockItem> WIRE_ITEM =
         ITEMS.registerSimpleBlockItem("first_wire", WIRE);
@@ -431,11 +468,11 @@ public final class ModMachines {
     public static final DeferredItem<BlockItem> UNIVERSAL_NODE_ITEM =
         ITEMS.registerSimpleBlockItem("first_universal_node", UNIVERSAL_NODE);
 
-    public static final DeferredItem<BlockItem> ITEM_FILTER_ITEM =
-        ITEMS.registerSimpleBlockItem("item_filter", ITEM_FILTER);
+    public static final DeferredItem<BlockItem> FIRST_ITEM_FILTER_ITEM =
+        ITEMS.registerSimpleBlockItem("first_item_filter", FIRST_ITEM_FILTER);
 
-    public static final DeferredItem<BlockItem> ITEM_SCAVENGER_ITEM =
-        ITEMS.registerSimpleBlockItem("item_scavenger", ITEM_SCAVENGER);
+    public static final DeferredItem<BlockItem> FIRST_ITEM_SCAVENGER_ITEM =
+        ITEMS.registerSimpleBlockItem("first_item_scavenger", FIRST_ITEM_SCAVENGER);
 
 
     // Порядок объявлений совпадает с порядком второго открытия во вкладке
@@ -508,6 +545,30 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SOLAR_PANEL_ITEM =
         ITEMS.registerSimpleBlockItem("solar_panel", SOLAR_PANEL);
+
+    public static final DeferredItem<BlockItem> THIRD_FERMENTATION_VAT_ITEM =
+        ITEMS.registerSimpleBlockItem("third_fermentation_vat", THIRD_FERMENTATION_VAT);
+
+    public static final DeferredItem<BlockItem> THIRD_WORT_KETTLE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_wort_kettle", THIRD_WORT_KETTLE);
+
+    public static final DeferredItem<BlockItem> THIRD_DISTILLER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_distiller", THIRD_DISTILLER);
+
+    public static final DeferredItem<BlockItem> THIRD_RECTIFIER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_rectifier", THIRD_RECTIFIER);
+
+    public static final DeferredItem<BlockItem> THIRD_SNAKETYPE_CONDENSER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_snaketype_condenser", THIRD_SNAKETYPE_CONDENSER);
+
+    public static final DeferredItem<BlockItem> THIRD_FILLER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_filler", THIRD_FILLER);
+
+    public static final DeferredItem<BlockItem> THIRD_CHEMICAL_PLANT_ITEM =
+        ITEMS.registerSimpleBlockItem("third_chemical_plant", THIRD_CHEMICAL_PLANT);
+
+    public static final DeferredItem<BlockItem> DISPENSING_TAP_ITEM =
+        ITEMS.registerSimpleBlockItem("dispensing_tap", DISPENSING_TAP);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/template_fluid",
+  "textures": {
+    "particle": "gonzotech:block/fluid/distillate_still",
+    "still": "gonzotech:block/fluid/distillate_still",
+    "flow": "gonzotech:block/fluid/distillate_flow"
+  }
+}

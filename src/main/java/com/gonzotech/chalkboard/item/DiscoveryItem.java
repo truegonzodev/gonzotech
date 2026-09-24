@@ -47,9 +47,17 @@ public class DiscoveryItem extends Item {
                 progress.unlockRecipeTier(discoveryNumber);
                 serverPlayer.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
                 ChalkboardNetwork.sendSyncToPlayer(serverPlayer);
+                // Тиры, разблокированные НАВСЕГДА, нужны и клиенту: по ним гейтятся
+                // тултипы (статы материалов — после «Открытия 2») и страницы заметок.
+                com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(serverPlayer);
                 ModAdvancements.checkAndAwardAdvancements(serverPlayer);
                 // Фаза 3: показать в книге рецептов машины этого «Открытия».
                 com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantForTier(serverPlayer, discoveryNumber);
+                // Солнечные часы: если багровый день уже был — рецепт открывается
+                // этим же «Открытием 2» (два условия по «И», автор 22.09.2026).
+                com.gonzotech.chalkboard.advancement.RecipeUnlocks.grantSolarWatchIfReady(serverPlayer);
+                // Психика (автор 22.09): проюз открытия снимает 10000 стресса и даёт 3000 кризиса.
+                com.gonzotech.core.psyche.PsycheStress.onDiscoveryUsed(serverPlayer);
                 stack.shrink(1);
 
                 // Стильный визуал: анимация «выброса» на экран (как тотем бессмертия) —
@@ -60,17 +68,16 @@ public class DiscoveryItem extends Item {
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8F, 1.2F);
 
+                // Автор 22.09.2026: одноразовая подсказка — в чат, а не в хотбар.
                 player.displayClientMessage(
-                        Component.literal("§aОткрытие " + discoveryNumber + " активировано! Разблокированы новые рецепты.")
-                                .withStyle(ChatFormatting.GREEN),
-                        true
+                        Component.translatable("message.gonzotech.discovery.activated", discoveryNumber),
+                        false
                 );
                 return InteractionResult.CONSUME;
             } else {
                 player.displayClientMessage(
-                        Component.literal("§eРецепты Открытия " + discoveryNumber + " уже разблокированы!")
-                                .withStyle(ChatFormatting.YELLOW),
-                        true
+                        Component.translatable("message.gonzotech.discovery.already", discoveryNumber),
+                        false
                 );
                 return InteractionResult.PASS;
             }
@@ -81,7 +88,8 @@ public class DiscoveryItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("§7Используйте (ПКМ), чтобы навсегда разблокировать рецепты Tier " + discoveryNumber + "."));
+        tooltip.add(Component.translatable("tooltip.gonzotech.discovery_item", discoveryNumber)
+                .withStyle(ChatFormatting.GRAY));
         super.appendHoverText(stack, context, tooltip, flag);
     }
 }

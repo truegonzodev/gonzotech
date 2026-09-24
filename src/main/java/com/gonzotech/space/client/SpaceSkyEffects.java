@@ -709,8 +709,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         float v1;
         if (isVanillaMoonPhases) {
             // Vanilla's moon atlas contains four columns and two rows.  Keep its
-            // indexing and UV orientation so a stock moon_phases.png can replace
-            // this repository placeholder without any code changes.
+            // indexing and UV orientation so the shipped overworld moon atlas
+            // (gonzotech:textures/environment/overworld/moon_phases.png) stays
+            // interchangeable with a stock vanilla moon_phases.png.
             int phase = Math.floorMod(level.getMoonPhase(), 8);
             int column = phase % 4;
             int row = phase / 4;

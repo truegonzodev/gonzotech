@@ -23,7 +23,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Grinder II: one validated input, one reserved output, and an exact 35 paid
+ * Grinder (первый и единственный, Открытие 2): one validated input, one reserved output,
+ * and an exact 35 paid
  * ticks per operation. The input is consumed only after the result slot has
  * room and the first 2.6-GTU tick can be paid; a pending result is persisted so
  * an unloaded chunk or a break cannot duplicate or delete material.

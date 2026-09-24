@@ -18,7 +18,9 @@ import java.util.Map;
  * Эти crafting-рецепты ФИЗИЧЕСКИ доступны всегда (файлы в data/.../recipe),
  * но их подсказки в КНИГЕ скрыты до соответствующего «Открытия»: здесь они
  * выдаются игроку через {@code awardRecipesByKey}. Исключение — отдельные
- * рецепты с физическим crafting-гейтом из {@code Phase3Events}.
+ * рецепты с физическим crafting-гейтом из {@code Phase3Events}; у некоторых
+ * гейт СОСТАВНОЙ по «И» (солнечные часы: «Открытие 2» + встреченный багровый
+ * день — см. {@link #grantSolarWatchIfReady}).
  * <p>
  * Доска резонанса открыта априори собственным reward-advancement и здесь не
  * фигурирует. Эл. печь до «Открытия 1» ещё и физически «закрыта» гейтом крафта
@@ -34,17 +36,15 @@ public final class RecipeUnlocks {
             "gonzotech:boiler",
             "gonzotech:stirling_generator",
             "gonzotech:condenser",
-            "gonzotech:electric_furnace",
-            "gonzotech:pump",
-            "gonzotech:accumulator",
-            "gonzotech:cobble_generator",
+            "gonzotech:first_electric_furnace",
+            "gonzotech:first_pump",
+            "gonzotech:first_accumulator",
+            "gonzotech:first_cobble_generator",
             // Части паровой турбины
-            "gonzotech:turbine_casing",
-            "gonzotech:turbine_rotor",
+            "gonzotech:first_turbine_casing",
+            "gonzotech:first_turbine_rotor",
             // Логистика: инструмент
             "gonzotech:wrench",
-            // Суневеты: солнечные часы (крафт и книга — после Открытия 1, автор)
-            "gonzotech:solar_watch",
             // Логистика: трубы
             "gonzotech:first_wire",
             "gonzotech:first_heat_pipe",
@@ -61,8 +61,8 @@ public final class RecipeUnlocks {
             "gonzotech:first_universal_fluid_node",
             "gonzotech:first_universal_node",
             // Логистика: сортировка предметов
-            "gonzotech:item_filter",
-            "gonzotech:item_scavenger",
+            "gonzotech:first_item_filter",
+            "gonzotech:first_item_scavenger",
             // Строительные материалы II. Рецепты физически доступны всегда,
             // но в книге появляются вместе с Открытием 1.
             "gonzotech:trio_grit",
@@ -77,7 +77,14 @@ public final class RecipeUnlocks {
             "gonzotech:industrial_concrete",
             "gonzotech:reinforced_armor_concrete",
             "gonzotech:reinforced_industrial_concrete",
-            "gonzotech:slag_concrete"
+            "gonzotech:slag_concrete",
+            // Радиационный экран (автор 21.09): экранирующий замес → бариевый
+            // бетон и боросиликатный замес → борное стекло.
+            "gonzotech:barium_mix",
+            "gonzotech:barium_concrete",
+            "gonzotech:bore_silicate_mix",
+            "gonzotech:bore_stained_glass_smelting",
+            "gonzotech:bore_stained_glass_blasting"
         ),
         2, List.of(
             // Пылевые сплавы верстака. Они физически крафтятся по обычным
@@ -90,7 +97,17 @@ public final class RecipeUnlocks {
             "gonzotech:cantor_dust_from_metal_dusts",
             "gonzotech:vr20_dust_from_metal_dusts",
             "gonzotech:alnico_dust_from_metal_dusts",
-            "gonzotech:telluride_dust_from_metal_dusts"
+            "gonzotech:telluride_dust_from_metal_dusts",
+            // Расходник к шкале облучения + хазмат I (автор 22.09): крафт доступен
+            // всегда, но в книге появляется после Открытия 2.
+            "gonzotech:rad_absorbent",
+            "gonzotech:hazmat_helmet",
+            "gonzotech:hazmat_chestplate",
+            "gonzotech:hazmat_leggings",
+            "gonzotech:hazmat_boots",
+            // Ампулы (автор 24.09): крафт доступен всегда, показ в книге — с Открытия 2.
+            "gonzotech:empty_ampoule",
+            "gonzotech:durable_ampoule"
         ),
         6, List.of(
             // Физически крафтится всегда, в книге появляется с Открытием 6.
@@ -108,7 +125,10 @@ public final class RecipeUnlocks {
         "gonzotech:pseudo_coil",
         "gonzotech:scholar_notes",
         // Намеренно крафтовый «сломанный механизм» всегда должен быть виден.
-        "gonzotech:botched_mechanism"
+        "gonzotech:botched_mechanism",
+        // Взаимная конверсия смолы и сгустка смолы (доступна всегда).
+        "gonzotech:resin_from_resin_clump",
+        "gonzotech:resin_clump_from_resin"
     );
 
     /** 20 minutes of accumulated Minecraft play time. */
@@ -157,6 +177,45 @@ public final class RecipeUnlocks {
         if (recipes != null) {
             grant(player, recipes);
         }
+    }
+
+    /**
+     * Пере-выдача уже пройденного тира при входе в мир (автор 22.09.2026).
+     *
+     * <p>«Гейт открыт навсегда» означает не только «не закрывается задним числом»,
+     * но и «догоняет будущее»: список {@link #RECIPES_BY_TIER} растёт от версии к
+     * версии, а выдача идёт один раз в момент активации «Открытия». Игрок, активировавший
+     * тир до обновления мода, новых рецептов иначе не увидел бы НИКОГДА. У тира 2 такая
+     * страховка уже есть ({@code TierTwoCrafting} пере-выдаёт своё на каждом входе),
+     * здесь — то же самое для тира 1 (вызов на {@code PlayerLoggedInEvent}).
+     * {@code awardRecipesByKey} идемпотентен: повторная выдача ничего не ломает.</p>
+     */
+    public static void regrantOnLogin(ServerPlayer player) {
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        if (progress.isRecipeTierUnlocked(1)) {
+            grantForTier(player, 1);
+        }
+        grantSolarWatchIfReady(player);
+    }
+
+    /**
+     * Солнечные часы: показ рецепта открывается по ДВУМ условиям, соединённым «И»
+     * (автор 22.09.2026) — «Открытие 2» активировано И игрок уже видел багровый день
+     * (флаг {@link com.gonzotech.chalkboard.notes.ScholarNoteFlags#SUN_EVENT}).
+     * Точно такой же гейт стоит на ФИЗИЧЕСКОМ крафте часов
+     * ({@code Phase3Events.extraGateMet}); страница заметок — на составном
+     * {@code ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2}.
+     *
+     * <p>Зовётся на всех входах, через которые условия могут стать истинными: вход
+     * в мир (условия уже были выполнены раньше), использование «Открытия»
+     * ({@code DiscoveryItem}) и наступление багрового дня
+     * ({@code SunEventServer}). {@code awardRecipesByKey} идемпотентен.</p>
+     */
+    public static void grantSolarWatchIfReady(ServerPlayer player) {
+        PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+        if (!progress.isRecipeTierUnlocked(2)) return;
+        if (!progress.hasNoteFlag(com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_EVENT)) return;
+        grant(player, List.of("gonzotech:solar_watch"));
     }
 
     private static void grant(ServerPlayer player, List<String> ids) {

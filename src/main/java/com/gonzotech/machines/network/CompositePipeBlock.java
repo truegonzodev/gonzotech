@@ -52,12 +52,17 @@ import java.util.Map;
  * и т.п.) — запланированный апгрейд (Шаг 2), потребует per-type оси, multipart-
  * моделей и валидации непересечения.
  * <p>
- * <b>Генерик по {@link PipeType}.</b> Свойства и логика строятся из
- * {@code PipeType.values()}. Сейчас реально участвуют WIRE + HEAT; когда добавим
- * FLUID/ITEM — они автоматически получат свой угол и заработают в связке без
- * переделок.
+ * <b>Угловые типы пучка ({@link #BUNDLE_TYPES}).</b> Физически связка имеет ровно 4
+ * угла сечения (WIRE, HEAT, FLUID, ITEM). В пучок собираются только эти базовые типы;
+ * специализированные жидкости Эпохи III текут через универсальный жидкостный угол
+ * (когда в связке стоят оба флага WATER+STEAM) и не плодят комбинаторные блокстейты.
  */
 public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrier, SimpleWaterloggedBlock {
+
+    /** Физические типы одиночных труб, которые можно собрать в связку. */
+    public static final List<PipeType> BUNDLE_TYPES = List.of(
+        PipeType.WIRE, PipeType.HEAT, PipeType.WATER, PipeType.STEAM, PipeType.ITEM
+    );
 
     /** Присутствует ли тип в блоке. Ключ — {@link PipeType}. */
     public static final Map<PipeType, BooleanProperty> PRESENT = new EnumMap<>(PipeType.class);
@@ -75,7 +80,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         EnumProperty.create("axis_lower", Direction.Axis.class);
 
     static {
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             PRESENT.put(t, BooleanProperty.create("has_" + t.id()));
             MODE.put(t, EnumProperty.create("mode_" + t.id(), PipeMode.class));
         }
@@ -90,7 +95,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             .setValue(AXIS, Direction.Axis.Z)
             .setValue(AXIS_LOWER, Direction.Axis.Z)
             .setValue(WATERLOGGED, false);
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             def = def.setValue(PRESENT.get(t), false).setValue(MODE.get(t), PipeMode.AUTO);
         }
         this.registerDefaultState(def);
@@ -104,7 +109,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(AXIS, AXIS_LOWER, WATERLOGGED);
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             builder.add(PRESENT.get(t));
             builder.add(MODE.get(t));
         }
@@ -131,7 +136,15 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     @Override
     public boolean carries(BlockState state, PipeType type) {
-        return state.getValue(PRESENT.get(type));
+        if (BUNDLE_TYPES.contains(type)) {
+            BooleanProperty p = PRESENT.get(type);
+            return p != null && state.getValue(p);
+        }
+        // Жидкости Эпохи III переносятся пучком, если в нём смонтирован универсальный FLUID-угол.
+        if (type.isFluid() && carriesUniversalFluid(state)) {
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -143,7 +156,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     /**
      * В нижнем ли слое сечения находится тип. Нижний слой — HEAT + ITEM (v=2);
-     * верхний — WIRE + FLUID/вода/пар (v=10). Разбивка совпадает с
+     * верхний — WIRE + FLUID/жидкости (v=10). Разбивка совпадает с
      * {@link PipeGeometry#corner}.
      */
     private static boolean isLowerLayer(PipeType type) {
@@ -161,14 +174,21 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     @Override
     public PipeMode modeFor(BlockState state, PipeType type) {
-        return state.getValue(MODE.get(type));
+        if (BUNDLE_TYPES.contains(type)) {
+            EnumProperty<PipeMode> m = MODE.get(type);
+            return m != null ? state.getValue(m) : PipeMode.AUTO;
+        }
+        if (type.isFluid() && carriesUniversalFluid(state)) {
+            return state.getValue(MODE.get(PipeType.WATER));
+        }
+        return PipeMode.AUTO;
     }
 
     // ─────────────────────────── форма (хитбокс) ───────────────────────────
 
     private static VoxelShape shapeFor(BlockState state) {
         VoxelShape shape = Shapes.empty();
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             if (!state.getValue(PRESENT.get(t))) continue;
             shape = Shapes.join(shape, PipeGeometry.cornerBox(axisOf(state, t), t), BooleanOp.OR);
         }
@@ -186,9 +206,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     }
 
     // ─────────── активный тик, если в пучке есть предметная труба ───────────
-    // Пучок остаётся БЕЗ BlockEntity: забор предметов гоняем запланированным
-    // тиком блока (как одиночная предметная труба). Тик заводим/перепланируем,
-    // только пока в пучке присутствует тип ITEM.
 
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
@@ -200,7 +217,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (!state.getValue(PRESENT.get(PipeType.ITEM))) return; // тип убрали — тик прекращаем
+        if (!state.getValue(PRESENT.get(PipeType.ITEM))) return;
         ItemRouting.tickExtract(level, pos, state);
         level.scheduleTick(pos, this, ItemPipeBlock.TICK_INTERVAL);
     }
@@ -210,19 +227,12 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        // Ключ по КОНКРЕТНОЙ трубе пучка — той, куда наведён прицел.
-        //  • обычный ПКМ (этот метод) — прокрутка режима (AUTO/PULL/PUSH);
-        //  • «присесть + ПКМ» — поворот слоя, но при сидении с предметом в руке
-        //    ванилла НЕ зовёт useItemOn у блока, поэтому поворот живёт в
-        //    {@link WrenchItem#useOn} (см. rotateLayerAt).
         if (stack.getItem() instanceof WrenchItem) {
             PipeType part = partAt(state, pos, hit);
             if (part == null) return InteractionResult.PASS;
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE.get(part)).next();
                 level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
-                // Ничего в action-bar: type/mode/поток трубы под прицелом уже
-                // показывает WrenchHud.
             }
             return InteractionResult.SUCCESS;
         }
@@ -244,8 +254,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             && !state.getValue(PRESENT.get(adding)) && canAdd(state, adding)) {
             if (!level.isClientSide()) {
                 level.setBlock(pos, state.setValue(PRESENT.get(adding), true), Block.UPDATE_ALL);
-                // Если в пучок добавили предметную трубу — запускаем забор-тик
-                // (setBlock тем же блоком не всегда вызывает onPlace).
                 if (adding == PipeType.ITEM) {
                     level.scheduleTick(pos, this, ItemPipeBlock.TICK_INTERVAL);
                 }
@@ -256,55 +264,35 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         return InteractionResult.PASS;
     }
 
-    /**
-     * Можно ли добавить тип {@code adding} в пучок {@code state}. Жидкостные типы
-     * (вода/пар/…) делят один угол сечения FLUID — поэтому в пучке одновременно
-     * допустима только ОДНА жидкостная труба. Прочие типы ограничены лишь тем,
-     * что такого типа ещё нет (проверяется у места вызова).
-     */
     public static boolean canAdd(BlockState state, PipeType adding) {
         if (!adding.isFluid()) return true;
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             if (t.isFluid() && t != adding && state.getValue(PRESENT.get(t))) {
-                return false; // жидкостный угол уже занят другой жидкостью
+                return false;
             }
         }
         return true;
     }
 
-    /** Тип трубы пучка, в которую сейчас смотрит игрок (по точке наведения). */
     private static PipeType partAt(BlockState state, BlockPos pos, BlockHitResult hit) {
         return partAt(state, pos, hit.getLocation());
     }
 
-    /** Тип трубы пучка по мировой точке наведения (для {@code Item.useOn}). */
     public static PipeType partAt(BlockState state, BlockPos pos, net.minecraft.world.phys.Vec3 hitLoc) {
         List<PipeType> present = new ArrayList<>();
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             if (state.getValue(PRESENT.get(t))) present.add(t);
         }
         if (present.isEmpty()) return null;
         return PipeGeometry.partAt(t -> axisOf(state, t), pos, hitLoc, present);
     }
 
-    /**
-     * Повернуть СЛОЙ наведённой трубы X↔Z (по точке {@code hitLoc}). Слой = пара
-     * труб по высоте сечения: верх WIRE+FLUID ({@link #AXIS}), низ HEAT+ITEM
-     * ({@link #AXIS_LOWER}). Вертикальный (Y) слой не поворачиваем — из-за зеркала
-     * модели Y-раскол невозможен. Вызывается из {@link WrenchItem#useOn} на
-     * «присесть + ПКМ ключом», т.к. ванилла при сидении с предметом в руке НЕ
-     * зовёт {@code BlockState.useItemOn} у блока.
-     *
-     * @return {@code true}, если состояние блока изменилось (или клик надо
-     *         «съесть» как обработанный — например, вертикальный слой).
-     */
     public static boolean rotateLayerAt(Level level, BlockPos pos, BlockState state, net.minecraft.world.phys.Vec3 hitLoc) {
         PipeType part = partAt(state, pos, hitLoc);
         if (part == null) return false;
         EnumProperty<Direction.Axis> axisProp = isLowerLayer(part) ? AXIS_LOWER : AXIS;
         Direction.Axis cur = state.getValue(axisProp);
         if (cur == Direction.Axis.Y) {
-            // Вертикальный слой не крутим, но клик считаем обработанным.
             return true;
         }
         if (!level.isClientSide()) {
@@ -314,18 +302,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         return true;
     }
 
-    // Дропы связки описаны в data/gonzotech/loot_table/blocks/composite_pipe.json:
-    // state-условия возвращают каждый присутствующий компонент и применяют
-    // minecraft:survives_explosion к каждому из них. Две жидкостные flags вместе
-    // означают одну универсальную жидкостную трубу.
-
-    /**
-     * {@link PipeType} предмета-ТРУБЫ, или {@code null} если это не обычная труба.
-     * Узлы ({@link NodeBlock#connectsAllSides()}) в пучок не стакаются — для них
-     * возвращаем {@code null}. Универсальная труба тоже {@code null} здесь — у неё
-     * отдельный путь ({@link #isUniversalPipeItem}), т.к. она занимает FLUID-угол
-     * СРАЗУ двумя ресурсами.
-     */
     static PipeType pipeTypeOf(ItemStack stack) {
         if (stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof PipeBlock pipe
             && !pipe.connectsAllSides()
@@ -335,43 +311,31 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         return null;
     }
 
-    /**
-     * Предмет ли это ОБЫЧНОЙ (не-узел) универсальной жидкостной трубы. В пучке она
-     * представлена ОБОИМИ жидкостными флагами (вода+пар) в общем FLUID-углу.
-     */
     static boolean isUniversalPipeItem(ItemStack stack) {
         return stack.getItem() instanceof BlockItem bi
             && bi.getBlock() instanceof UniversalFluidPipeBlock u
             && !u.connectsAllSides();
     }
 
-    /** Принадлежит ли BlockItem трубы/узла второму открытию. */
     static boolean isSecondTierPipeItem(ItemStack stack) {
         return stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof SecondTierPipe;
     }
 
-    /** Заняты ли в пучке ОБА жидкостных флага (вода+пар) — т.е. FLUID-угол универсальный. */
     public static boolean carriesUniversalFluid(BlockState state) {
         if (!(state.getBlock() instanceof CompositePipeBlock)) return false;
         return state.getValue(PRESENT.get(PipeType.WATER))
             && state.getValue(PRESENT.get(PipeType.STEAM));
     }
 
-    /** Свободен ли FLUID-угол пучка (нет ни воды, ни пара). */
     public static boolean fluidCornerFree(BlockState state) {
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             if (t.isFluid() && state.getValue(PRESENT.get(t))) return false;
         }
         return true;
     }
 
-    /**
-     * Состояние пучка с добавленной универсальной жидк.трубой: выставляет ОБА
-     * жидкостных флага (вода+пар) в режиме AUTO. Вызывать, только если
-     * {@link #fluidCornerFree} истинно.
-     */
     public static BlockState withUniversalFluid(BlockState state) {
-        for (PipeType t : PipeType.values()) {
+        for (PipeType t : BUNDLE_TYPES) {
             if (t.isFluid()) {
                 state = state.setValue(PRESENT.get(t), true).setValue(MODE.get(t), PipeMode.AUTO);
             }

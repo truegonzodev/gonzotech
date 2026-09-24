@@ -87,7 +87,7 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
     };
 
     public TurbineRotorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.TURBINE_ROTOR.get(), pos, state, 0);
+        super(ModBlockEntities.FIRST_TURBINE_ROTOR.get(), pos, state, 0);
     }
 
     public boolean isFormedController() {
@@ -307,7 +307,7 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.turbine_rotor");
+        return Component.translatable("block.gonzotech.first_turbine_rotor");
     }
 
     @Override

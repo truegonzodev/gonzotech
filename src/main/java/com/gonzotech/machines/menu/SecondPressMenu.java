@@ -11,7 +11,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Four-slot Press II menu: source, protected output, reusable form, and reusable
+ * Four-slot Press menu: source, protected output, reusable form, and reusable
  * punch. Form/punch placement is filtered locally by the exact same container
  * rule used by server-side automation.
  */

@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.ChalkboardBlock;
+import com.gonzotech.core.block.HeavyDoorBlock;
 import com.gonzotech.core.block.TungstenAbsorberBlock;
 import com.gonzotech.core.fluid.ModFluids;
 import com.gonzotech.core.fluid.MoltenCoriumBlock;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -51,10 +53,9 @@ public class ModBlocks {
         "tungsten_block", TungstenAbsorberBlock::new, metalBlockProperties("tungsten"));
 
     /**
-     * Доска резонанса (com.gonzotech.chalkboard) — Фаза 1: просто ставится,
-     * ПКМ открывает экран конструктора формул. См.
-     * info/gonzo_tech_chalkboard_design.md. Дерево/мел — не руда, не
-     * требует инструмента, ломается быстро.
+     * Доска резонанса (com.gonzotech.chalkboard): ставится, ПКМ открывает экран
+     * конструктора формул. Дерево/мел — не руда, не требует инструмента, ломается
+     * быстро. Дизайн-док автора лежит вне репозитория ({@code info/} в .gitignore).
      */
     public static final DeferredBlock<ChalkboardBlock> CHALKBOARD = BLOCKS.registerBlock(
         "chalkboard",
@@ -94,6 +95,13 @@ public class ModBlocks {
         "industrial_concrete", constructionMaterialProperties(SoundType.STONE, 5.0f, 6.0f, 0.60f));
     public static final DeferredBlock<Block> REINFORCED_INDUSTRIAL_CONCRETE = BLOCKS.registerSimpleBlock(
         "reinforced_industrial_concrete", constructionMaterialProperties(SoundType.STONE, 10.0f, 8.0f, 0.60f));
+    /**
+     * Бариевый бетон (автор 21.09) — радиационный экран из экранирующего замеса:
+     * тяжёлый бетон, самый плотный из строительных. Экранирование задаётся
+     * пресетом в {@code RadMaterials} (предмет ×0.03, стена контура ×0.01).
+     */
+    public static final DeferredBlock<Block> BARIUM_CONCRETE = BLOCKS.registerSimpleBlock(
+        "barium_concrete", constructionMaterialProperties(SoundType.STONE, 8.0f, 12.0f, 0.60f));
 
     private static BlockBehaviour.Properties constructionMaterialProperties(
         SoundType sound, float hardness, float explosionResistance, float friction
@@ -110,6 +118,69 @@ public class ModBlocks {
     // Обычные кубы и ванильные формы кирпичей: специальные модели/BE не нужны.
     public static final DeferredBlock<TransparentBlock> LEAD_STAINED_GLASS = BLOCKS.registerBlock(
         "lead_stained_glass", TransparentBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
+    /**
+     * Борное стекло (автор 21.09) — прозрачный экран контура из боросиликатного
+     * замеса. Как и свинцовое стекло, ломается любым инструментом и дропается
+     * только с шёлковым касанием. Экранирование — {@code RadMaterials}
+     * (предмет ×0.08, стена контура ×0.05).
+     */
+    public static final DeferredBlock<TransparentBlock> BORE_STAINED_GLASS = BLOCKS.registerBlock(
+        "bore_stained_glass", TransparentBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS));
+
+    /**
+     * Тяжёлая свинцовая дверь (автор 22.09.2026) — первый элемент чистой комнаты.
+     * Два блока в высоту (1×2), раздвижная: закрытая — стенка, ПКМ/редстоун открывают проём.
+     * Числа автора: hardness 25, взрывостойкость 8. Хитбокс — габарит модели (6×16×16).
+     *
+     * <p>Префикс {@code third_} — по правилу «id = Открытие»: и показ рецепта, и крафт гейтятся
+     * «Открытием 3» ({@code TierThreeCrafting}). Экранирование — как у свинца (0.02): задаётся
+     * одной строкой в {@code RadMaterials} — этим и будут отличаться следующие двери.
+     * В теге {@code gonzotech:contour_seal}: закрытая дверь замыкает контур радиации,
+     * открытая — дырка. См. {@link com.gonzotech.core.block.HeavyDoorBlock}.</p>
+     */
+    public static final DeferredBlock<HeavyDoorBlock> THIRD_HEAVY_DOOR_LEAD = BLOCKS.registerBlock(
+        "third_heavy_door_lead", HeavyDoorBlock::new,
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(25.0f, 8.0f)
+            .noOcclusion()
+            .dynamicShape()
+            .pushReaction(PushReaction.BLOCK)
+            .requiresCorrectToolForDrops());
+
+    /**
+     * Тяжёлая вольфрамовая дверь (автор 22.09) — «по такому же аналогу», но сильнее:
+     * свинец заменён вольфрамом, свинцовый витраж — борным стеклом. Экранирование —
+     * вольфрамовое (0.003). Питч ниже свинцовой: 0.1–0.3.
+     */
+    public static final DeferredBlock<HeavyDoorBlock> THIRD_HEAVY_DOOR_TUNGSTEN = BLOCKS.registerBlock(
+        "third_heavy_door_tungsten", props -> new HeavyDoorBlock(props, 0.1F, 0.2F),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(25.0f, 8.0f)
+            .noOcclusion()
+            .dynamicShape()
+            .pushReaction(PushReaction.BLOCK)
+            .requiresCorrectToolForDrops());
+
+    /**
+     * Гермодверь (автор 22.09) — элемент ЧИСТОЙ КОМНАТЫ: алюминиевый корпус, целлулоидная
+     * прокладка, железная основа. Защита от фона слабее радиационных дверей — фактор
+     * «×0.33», зато именно она годится для чистого контура (сама механика чистой комнаты
+     * — через эффект, ждём описания автора). Питч: 1.2–1.4.
+     */
+    public static final DeferredBlock<HeavyDoorBlock> THIRD_HERMETIC_DOOR = BLOCKS.registerBlock(
+        "third_hermetic_door", props -> new HeavyDoorBlock(props, 1.2F, 0.2F),
+        BlockBehaviour.Properties.of()
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(25.0f, 8.0f)
+            .noOcclusion()
+            .dynamicShape()
+            .pushReaction(PushReaction.BLOCK)
+            .requiresCorrectToolForDrops());
     public static final DeferredBlock<Block> CRIMSON_OBSIDIAN = BLOCKS.registerSimpleBlock(
         "crimson_obsidian", BlockBehaviour.Properties.ofFullCopy(Blocks.OBSIDIAN));
     public static final DeferredBlock<Block> SCULK_BRICKS = BLOCKS.registerSimpleBlock(
@@ -164,6 +235,34 @@ public class ModBlocks {
     public static final DeferredBlock<LiquidBlock> MOLTEN_CORIUM = BLOCKS.registerBlock(
         "molten_corium", properties -> new MoltenCoriumBlock(ModFluids.MOLTEN_CORIUM.get(), properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.LAVA));
+    /** Этанол (ректификат) — чистый спирт в мире. */
+    public static final DeferredBlock<LiquidBlock> ETHANOL = BLOCKS.registerBlock(
+        "ethanol", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.ETHANOL, com.gonzotech.core.fluid.ModFluidBlock.Kind.ETHANOL, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Формальдегид — едкая жидкость в мире. */
+    public static final DeferredBlock<LiquidBlock> FORMALDEHYDE = BLOCKS.registerBlock(
+        "formaldehyde", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.FORMALDEHYDE, com.gonzotech.core.fluid.ModFluidBlock.Kind.FORMALDEHYDE, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Серная кислота — едкая кислота в мире. */
+    public static final DeferredBlock<LiquidBlock> SULFURIC_ACID = BLOCKS.registerBlock(
+        "sulfuric_acid", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.SULFURIC_ACID, com.gonzotech.core.fluid.ModFluidBlock.Kind.SULFURIC_ACID, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Дистиллят — промежуточный спиртовой продукт в мире. */
+    public static final DeferredBlock<LiquidBlock> DISTILLATE = BLOCKS.registerBlock(
+        "distillate", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.DISTILLATE, com.gonzotech.core.fluid.ModFluidBlock.Kind.DISTILLATE, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Брага — густая бродящая масса в мире. */
+    public static final DeferredBlock<LiquidBlock> MASH = BLOCKS.registerBlock(
+        "mash", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.MASH, com.gonzotech.core.fluid.ModFluidBlock.Kind.MASH, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Сусло — охлаждённое охмелённое сусло в мире. */
+    public static final DeferredBlock<LiquidBlock> WORT = BLOCKS.registerBlock(
+        "wort", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.WORT, com.gonzotech.core.fluid.ModFluidBlock.Kind.WORT, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Канистра: ёмкость под любые жидкости (8000 mB). */
+    public static final DeferredBlock<com.gonzotech.core.block.CanisterBlock> CANISTER = BLOCKS.registerBlock(
+        "canister", com.gonzotech.core.block.CanisterBlock::new,
+        BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.METAL).strength(2.0f, 6.0f).noOcclusion());
     /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
         "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)

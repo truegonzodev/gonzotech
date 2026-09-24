@@ -82,7 +82,7 @@ public class CrusherBlockEntity extends BaseMachineBlockEntity implements GtuSin
     };
 
     public CrusherBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.CRUSHER.get(), pos, state, 5);
+        super(ModBlockEntities.SECOND_CRUSHER.get(), pos, state, 5);
     }
 
     public GtBuffer gtuBuffer() {
@@ -278,7 +278,7 @@ public class CrusherBlockEntity extends BaseMachineBlockEntity implements GtuSin
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.crusher");
+        return Component.translatable("block.gonzotech.second_crusher");
     }
 
     @Override

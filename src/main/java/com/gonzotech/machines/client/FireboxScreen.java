@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.menu.FireboxMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -45,7 +46,7 @@ public class FireboxScreen extends MachineScreen<FireboxMenu> {
 
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.gth", menu.gth(), MachineDefs.toUnits(MachineDefs.FIREBOX_GTH_CAPACITY))
+                GtUnits.gthPair(menu.gth(), MachineDefs.toUnits(MachineDefs.FIREBOX_GTH_CAPACITY))
             ), mouseX, mouseY);
         }
     }

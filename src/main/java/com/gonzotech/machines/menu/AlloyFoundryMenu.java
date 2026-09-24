@@ -11,7 +11,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Меню Завода сплавов II: 25 независимых входных ячеек 5×5 и один output.
+ * Меню Завода сплавов (тир-2, id {@code second_alloy_foundry}): 25 независимых
+ * входных ячеек 5×5 и один output.
  * Позиция ингредиента не несёт смысла — сервер агрегирует состав всей сетки.
  */
 public final class AlloyFoundryMenu extends BaseMachineMenu {

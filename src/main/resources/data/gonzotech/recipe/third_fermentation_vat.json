@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "I I",
+    "IHI",
+    "IBI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "H": "gonzotech:first_heat_pipe",
+    "B": "minecraft:barrel"
+  },
+  "result": {
+    "id": "gonzotech:third_fermentation_vat",
+    "count": 1
+  }
+}

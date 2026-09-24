@@ -43,10 +43,14 @@ public final class NuclearDefs {
     public static final int URANIUM_NUGGET_BURN_TICKS = 100 * TICKS_PER_SECOND;
     public static final int URANIUM_BLOCK_BURN_TICKS = 8_100 * TICKS_PER_SECOND;
     public static final int URANINITE_BURN_TICKS = 500 * TICKS_PER_SECOND;
+    /** Пыль переплавляется в слиток 1:1, поэтому горит как слиток. */
+    public static final int URANIUM_DUST_BURN_TICKS = 900 * TICKS_PER_SECOND;
     public static final int THORIUM_INGOT_BURN_TICKS = 300 * TICKS_PER_SECOND;
     public static final int THORIUM_NUGGET_BURN_TICKS = 35 * TICKS_PER_SECOND;
     public static final int THORIUM_BLOCK_BURN_TICKS = 2_700 * TICKS_PER_SECOND;
     public static final int THORIANITE_BURN_TICKS = 175 * TICKS_PER_SECOND;
+    /** Пыль переплавляется в слиток 1:1, поэтому горит как слиток. */
+    public static final int THORIUM_DUST_BURN_TICKS = 300 * TICKS_PER_SECOND;
 
     // ───────────────────────── Вольфрамовый абсорбер ─────────────────────────
 

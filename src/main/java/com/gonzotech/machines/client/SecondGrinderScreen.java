@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.menu.SecondGrinderMenu;
@@ -10,7 +11,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
 
-/** Grinder II UI using the standard paired PNG background/foreground sheet convention. */
+/** Grinder UI using the standard paired PNG background/foreground sheet convention. */
 public final class SecondGrinderScreen extends MachineScreen<SecondGrinderMenu> {
 
     public SecondGrinderScreen(SecondGrinderMenu menu, Inventory inventory, Component title) {
@@ -41,7 +42,7 @@ public final class SecondGrinderScreen extends MachineScreen<SecondGrinderMenu> 
 
         if (inRect(mouseX, mouseY, gtuX, barY, 16, 52)) {
             g.renderComponentTooltip(font, List.of(
-                Component.translatable("gui.gonzotech.gtu", menu.gtu(), capacity)), mouseX, mouseY);
+                GtUnits.gtuPair(menu.gtu(), capacity)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, progressX, progressY, 50, 14)) {
             g.renderComponentTooltip(font, List.of(
                 Component.translatable("gui.gonzotech.grinder.grinding_progress", menu.grindProgressPercent())), mouseX, mouseY);

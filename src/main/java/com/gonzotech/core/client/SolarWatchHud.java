@@ -51,8 +51,11 @@ public final class SolarWatchHud {
         graphics.drawString(font, line, x, y, HUD_COLOR, true);
     }
 
+    /** Солнечные часы — или «Телифон», который совмещает все приборы (автор 22.09). */
     private static boolean isHoldingWatch(Player player) {
         return player.getMainHandItem().is(ModItems.SOLAR_WATCH.get())
-            || player.getOffhandItem().is(ModItems.SOLAR_WATCH.get());
+            || player.getOffhandItem().is(ModItems.SOLAR_WATCH.get())
+            || player.getMainHandItem().is(ModItems.TELIFON.get())
+            || player.getOffhandItem().is(ModItems.TELIFON.get());
     }
 }

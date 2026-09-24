@@ -114,7 +114,7 @@ public class CobbleGeneratorBlockEntity extends BaseMachineBlockEntity
     };
 
     public CobbleGeneratorBlockEntity(BlockPos pos, BlockState state) {
-        this(ModBlockEntities.COBBLE_GENERATOR.get(), pos, state);
+        this(ModBlockEntities.FIRST_COBBLE_GENERATOR.get(), pos, state);
     }
 
     /**

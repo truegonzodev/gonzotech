@@ -4,7 +4,6 @@ build/
 info/
 out/
 run/
-src/generated/
 
 # IDE
 .idea/
@@ -18,3 +17,6 @@ bin/
 # OS
 .DS_Store
 
+giradle build.bat
+giradle runclient.bat
+git add.bat
