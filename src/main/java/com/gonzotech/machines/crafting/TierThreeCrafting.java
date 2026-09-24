@@ -38,9 +38,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Быстрый крафт (Shift-клик) закрыт отдельно — {@code CraftingMenuMixin} берёт тир из
  * {@code Phase3Events.requiredTierFor}, который теперь знает и про третий тир.</p>
  *
- * <p>Первый (и пока единственный) предмет тира — <b>тяжёлая свинцовая дверь</b>
- * ({@code gonzotech:third_heavy_door_lead}): и показ рецепта, и крафт гейтятся «Открытием 3»
- * (автор 22.09.2026).</p>
+ * <p>Состав тира (24.09.2026): три тяжёлые двери, линия брожения/разлива
+ * (чан, сусловарочный котёл, дистиллятор, ректификатор, змеевиковый конденсатор,
+ * разливной кран), наполнитель и химический завод.</p>
  */
 @EventBusSubscriber(modid = GonzoTechMod.MOD_ID)
 public final class TierThreeCrafting {
@@ -56,7 +56,8 @@ public final class TierThreeCrafting {
         "gonzotech:third_rectifier",
         "gonzotech:third_snaketype_condenser",
         "gonzotech:third_filler",
-        "gonzotech:third_chemical_plant"
+        "gonzotech:third_chemical_plant",
+        "gonzotech:third_dispensing_tap"
     );
 
     /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
@@ -121,6 +122,7 @@ public final class TierThreeCrafting {
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get();
+            || item == com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get()
+            || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get();
     }
 }

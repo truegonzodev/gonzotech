@@ -186,9 +186,9 @@ public final class ModBlockEntities {
             com.gonzotech.machines.block.entity.ChemicalPlantBlockEntity::new, false, ModMachines.THIRD_CHEMICAL_PLANT.get()));
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ChemicalPlantBlockEntity>> THIRD_CHEMICAL_PLANT = CHEMICAL_PLANT;
 
-    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.DispensingTapBlockEntity>> DISPENSING_TAP =
-        BLOCK_ENTITIES.register("dispensing_tap", () -> new BlockEntityType<>(
-            com.gonzotech.machines.block.entity.DispensingTapBlockEntity::new, false, ModMachines.DISPENSING_TAP.get()));
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.DispensingTapBlockEntity>> THIRD_DISPENSING_TAP =
+        BLOCK_ENTITIES.register("third_dispensing_tap", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.DispensingTapBlockEntity::new, false, ModMachines.THIRD_DISPENSING_TAP.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.core.block.entity.CanisterBlockEntity>> CANISTER =
         BLOCK_ENTITIES.register("canister", () -> new BlockEntityType<>(
