@@ -152,9 +152,12 @@ public class ModItems {
     public static final DeferredItem<Item> EMPTY_AMPOULE = ITEMS.registerSimpleItem("empty_ampoule");
     /** Стойкая ампула (2 борных стекла) — термо- и химстойкая ампула (128 mB). */
     public static final DeferredItem<Item> DURABLE_AMPOULE = ITEMS.registerSimpleItem("durable_ampoule");
-    /** Наполненная ампула с жидкостью (128 mB). */
+    /** Наполненная ампула с жидкостью (128 mB) — из пустой стеклянной. */
     public static final DeferredItem<com.gonzotech.core.item.AmpouleItem> AMPOULE =
         ITEMS.registerItem("ampoule", com.gonzotech.core.item.AmpouleItem::new);
+    /** Наполненная стойкая ампула (128 mB) — из стойкой; в будущем для цезия, натрия и т.п. */
+    public static final DeferredItem<com.gonzotech.core.item.AmpouleItem> FILLED_DURABLE_AMPOULE =
+        ITEMS.registerItem("filled_durable_ampoule", com.gonzotech.core.item.AmpouleItem::new);
 
     /** ЭДТА (гранулы) — этилендиаминтетрауксусная кислота, прекурсор препаратов. */
     public static final DeferredItem<Item> EDTA = ITEMS.registerSimpleItem("edta");

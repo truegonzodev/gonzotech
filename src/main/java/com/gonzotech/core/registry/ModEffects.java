@@ -27,7 +27,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  *       земли и бонусы к стрессу/дозе — {@code psyche.PsycheChemical};</li>
  *   <li><b>{@code heart_attack} «Сердечный приступ»</b> (психика) — выше 99 % стресса;
  *       по истечении 40 секунд — «чистый» урон, который ничем не блокируется и всегда
- *       оставляет ровно 1 HP (см. теги урона {@code gonzotech:heart_attack}).</li>
+ *       оставляет ровно 1 HP (см. теги урона {@code gonzotech:heart_attack}).
+ *       Пентацин тоже вешает его при передозировке (33 % при повторе за 2 минуты);</li>
+ *   <li><b>{@code dose_absorption} «Абсорбция дозы»</b> (радиация, препараты) —
+ *       срезает получаемую игроком дозу на {@code (30 + уровень²)} % (31/34 % для
+ *       уровней 1/2), см. {@code radiation.RadiationSystem}. Дают Цистамин
+ *       (2 уровень, 8 мин) и ДТПА (1 уровень, 1 мин), спека 24.09.2026;</li>
+ *   <li><b>{@code treatment_course} «Курс лечения»</b> (препараты) — пока висит,
+ *       следующий ДТПА принять нельзя (3 минуты после каждой дозы), спека 24.09.2026.</li>
  * </ul>
  */
 public final class ModEffects {
@@ -60,10 +67,15 @@ public final class ModEffects {
             MOB_EFFECTS.register("heart_attack", () ->
                     new PlainEffect(MobEffectCategory.HARMFUL, 0x8B1A1A));
 
-    /** Цистамин — радиозащитный щит, поглощающий входящую радиацию. */
-    public static final DeferredHolder<MobEffect, MobEffect> CYSTEAMINE =
-            MOB_EFFECTS.register("cysteamine", () ->
+    /** Абсорбция дозы — срезает получаемую игроком дозу на (30 + уровень²) %. */
+    public static final DeferredHolder<MobEffect, MobEffect> DOSE_ABSORPTION =
+            MOB_EFFECTS.register("dose_absorption", () ->
                     new PlainEffect(MobEffectCategory.BENEFICIAL, 0xF5C542));
+
+    /** Курс лечения — блокирует повторный ДТПА, пока висит. */
+    public static final DeferredHolder<MobEffect, MobEffect> TREATMENT_COURSE =
+            MOB_EFFECTS.register("treatment_course", () ->
+                    new PlainEffect(MobEffectCategory.BENEFICIAL, 0x5FA8A0));
 
     private ModEffects() {
     }

@@ -127,7 +127,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get());
                 output.accept(ModItems.CANISTER.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.DISPENSING_TAP_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })
@@ -302,6 +302,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.EMPTY_AMPOULE.get());
                 output.accept(ModItems.DURABLE_AMPOULE.get());
                 output.accept(ModItems.AMPOULE.get());
+                output.accept(ModItems.FILLED_DURABLE_AMPOULE.get());
                 output.accept(ModItems.EDTA.get());
                 output.accept(ModItems.SODIUM_CYANATE.get());
                 output.accept(ModItems.SALT.get());

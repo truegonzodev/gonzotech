@@ -169,8 +169,13 @@ public final class RadiationSystem {
         // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
         rawDose *= PsycheChemical.doseMultiplier(player);
         double suitFactor = Hazmat.factor(player, rawDose);
-        if (player.hasEffect(com.gonzotech.core.registry.ModEffects.CYSTEAMINE)) {
-            suitFactor *= 0.15; // Цистамин: радиозащитный щит (-85% к входящей радиации)
+        // «Абсорбция дозы» (Цистамин/ДТПА, спека 24.09): срезает получаемую игроком
+        // дозу на (30 + уровень²) %: уровень 1 → 31 %, уровень 2 → 34 %.
+        var absorption = player.getEffect(com.gonzotech.core.registry.ModEffects.DOSE_ABSORPTION);
+        if (absorption != null) {
+            int level = absorption.getAmplifier() + 1;
+            int cut = Math.min(100, 30 + level * level);
+            suitFactor *= (100 - cut) / 100.0;
         }
         double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
