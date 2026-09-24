@@ -40,6 +40,6 @@ public final class MachineClient {
         event.register(ModMenus.THIRD_SNAKETYPE_CONDENSER.get(), SnaketypeCondenserScreen::new);
         event.register(ModMenus.THIRD_FILLER.get(), FillerScreen::new);
         event.register(ModMenus.THIRD_CHEMICAL_PLANT.get(), ChemicalPlantScreen::new);
-        event.register(ModMenus.DISPENSING_TAP.get(), DispensingTapScreen::new);
+        event.register(ModMenus.THIRD_DISPENSING_TAP.get(), DispensingTapScreen::new);
     }
 }

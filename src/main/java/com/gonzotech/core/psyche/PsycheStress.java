@@ -491,7 +491,7 @@ public final class PsycheStress {
     /**
      * Разовое начисление стресса извне: прибавка идёт через бонус зависимости, как и всё
      * остальное. Готовый вызов для будущих источников (например, «преждевременный крафт» —
-     * число за автором, см. TODO в {@code Phase3Events}).
+     * см. {@code Phase3Events.grantBotchedMechanism}).
      */
     public static void gain(ServerPlayer player, int points) {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);

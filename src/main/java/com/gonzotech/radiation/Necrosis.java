@@ -41,10 +41,11 @@ public final class Necrosis {
 
     /**
      * Расход воздуха на спринте, базовый (уровень I). Автор 22.09.2026: «поднять траты
-     * пузырьков в 30–40 раз» — берём середину: 35 пузырьков в секунду (полная полоска,
-     * 300 пузырьков, уходит за ~8.5 с спринта) вместо прежнего 1 пузырька в секунду.
+     * пузырьков в 30–40 раз»; автор 24.09.2026: «поднять в 100 раз» — итого 3500 единиц
+     * в секунду (полоска 300 выгорает мгновенно при старте спринта). Единица здесь —
+     * 1 «пузырёк» = 1 единица ванильного воздуха: полоска = 300 = 10 HUD-пузырей.
      */
-    private static final double BUBBLES_BASE_PER_SECOND = 35.0;
+    private static final double BUBBLES_BASE_PER_SECOND = 3500.0;
     /** Прирост расхода за уровень — +10 % (та же логика «±10 % за уровень», что у агра). */
     private static final double BUBBLES_PER_LEVEL = 0.1;
 
@@ -58,10 +59,17 @@ public final class Necrosis {
      */
     private static final Map<UUID, Integer> HELD_AIR = new HashMap<>();
 
+    /** ID модификатора макс. HP под некрозом (см. {@link #updateMaxHealth}). */
+    private static final ResourceLocation NECROSIS_HP_ID =
+            ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "necrosis_max_health");
+
     private Necrosis() {
     }
 
-    /** Выдать (или усилить) вечный некроз. Порядок уровней не понижаем. */
+    /**
+     * Выдать (или усилить) вечный некроз. Порядок уровней не понижаем.
+     * Без сообщений (автор 24.09: системные подсказки в чат убрать).
+     */
     public static void grant(ServerPlayer player, int level) {
         MobEffectInstance current = player.getEffect(ModEffects.NECROSIS);
         if (current != null && current.getAmplifier() >= level && current.isInfiniteDuration()) {
@@ -69,20 +77,43 @@ public final class Necrosis {
         }
         player.addEffect(new MobEffectInstance(ModEffects.NECROSIS,
                 MobEffectInstance.INFINITE_DURATION, level, false, true));
-        player.displayClientMessage(
-                net.minecraft.network.chat.Component.translatable("message.gonzotech.necrosis.caught",
-                        level + 1).withStyle(net.minecraft.ChatFormatting.DARK_RED), false);
+        updateMaxHealth(player);
     }
 
     /**
-     * Снять некроз (лечение — будущие препараты; сегодня вызывается вручную/командой).
-     * Через {@link UncurableEffects#runUncancelled}: молоко и прочие «общие» снятия этот
-     * эффект не берут (автор 22.09.2026).
+     * Снять некроз — ЕДИНСТВЕННЫЙ способ (автор 24.09): полное прохождение курса ДТПА
+     * (шестая доза, сброс счётчика — см. {@code DtpaItem}). Через
+     * {@link UncurableEffects#runUncancelled}: молоко и прочие «общие» снятия этот эффект
+     * не берут (автор 22.09.2026).
      */
     public static void cure(ServerPlayer player) {
         UncurableEffects.runUncancelled(() -> player.removeEffect(ModEffects.NECROSIS));
         AIR_DEBT.remove(player.getUUID());
         HELD_AIR.remove(player.getUUID());
+        updateMaxHealth(player);
+    }
+
+    /**
+     * Макс. HP под некрозом (автор 24.09: «I снимает 2 макс.хп, II — 3, III — 4 и тд»):
+     * уровень L (1-based) отнимает {@code L + 1} HP — амплитуда 0 → −2, 1 → −3, 2 → −4.
+     * Пересчитывается тиком {@link #tick}, из {@link #grant} и {@link #cure}.
+     */
+    public static void updateMaxHealth(Player player) {
+        // Синхронизация силы идёт по тику секунды — обновляем и макс. HP заодно.
+        AttributeInstance maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth == null) {
+            return;
+        }
+        maxHealth.removeModifier(NECROSIS_HP_ID);
+        MobEffectInstance necrosis = player.getEffect(ModEffects.NECROSIS);
+        if (necrosis != null) {
+            int penalty = -(necrosis.getAmplifier() + 2);
+            maxHealth.addTransientModifier(new AttributeModifier(NECROSIS_HP_ID,
+                    penalty, AttributeModifier.Operation.ADD_VALUE));
+        }
+        if (player.getHealth() > player.getMaxHealth()) {
+            player.setHealth(player.getMaxHealth());
+        }
     }
 
     /**
@@ -117,7 +148,10 @@ public final class Necrosis {
         player.setAirSupply(Math.min(player.getAirSupply(), held));
     }
 
-    /** Секундный тик: расход воздуха на спринте + «добор» агра. */
+    /**
+     * Секундный тик: пересчёт макс. HP под некрозом (см. {@link #updateMaxHealth}),
+     * расход воздуха на спринте + «добор» агра.
+     */
     public static void tick(ServerPlayer player) {
         MobEffectInstance necrosis = player.getEffect(ModEffects.NECROSIS);
         if (necrosis == null) {

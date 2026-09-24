@@ -19,9 +19,14 @@ import java.util.function.Supplier;
  * Рецепты Химического завода (тир 3):
  * 11 утверждённых автором химических синтезов в сетке 3×3.
  *
- * <p>Катализаторы (платиновые и палладиевые самородки) не привязаны к конкретным рецептам:
- * условием старта синтеза является занятость всех 3 слотов катализаторов. По завершении
- * реакции случайно тратится от 0 до 3 самородков.</p>
+ * <p>Катализаторы (платиновые и палладиевые самородки). Правила автора 24.09.2026:</p>
+ * <ul>
+ *   <li>обычные рецепты: для старта заняты ВСЕ 3 слота катализаторов; по завершении
+ *       случайно тратится от 0 до 3 самородков;</li>
+ *   <li>опилочные рецепты (смолистые/твердо­смольные опилки): исключение — для старта
+ *       нужен всего 1 самородок; по завершении в 90 % случаев не тратится ничего,
+ *       в 10 % — тратится 1 самородок.</li>
+ * </ul>
  */
 public final class ChemicalPlantRecipes {
 
@@ -57,7 +62,8 @@ public final class ChemicalPlantRecipes {
     public record AmpouleMatcher(String fluid, int count) implements IngredientMatcher {
         @Override
         public boolean matches(ItemStack stack) {
-            if (stack.isEmpty() || !stack.is(ModItems.AMPOULE.get())) return false;
+            // Любая наполненная ампула (обычная или стойкая) — 24.09.2026.
+            if (stack.isEmpty() || !AmpouleItem.isFilledAmpoule(stack)) return false;
             String stored = AmpouleItem.getStoredFluid(stack);
             if ("rectificate".equals(fluid) || "ethanol".equals(fluid)) {
                 return "rectificate".equals(stored) || "ethanol".equals(stored);
@@ -69,8 +75,14 @@ public final class ChemicalPlantRecipes {
     public record ChemicalRecipe(
         String id,
         List<IngredientMatcher> ingredients,
-        Supplier<ItemStack> outputSupplier
+        Supplier<ItemStack> outputSupplier,
+        int catalystRequired,
+        boolean softCatalysts
     ) {
+        public ChemicalRecipe(String id, List<IngredientMatcher> ingredients, Supplier<ItemStack> outputSupplier) {
+            this(id, ingredients, outputSupplier, 3, false);
+        }
+
         public ItemStack output() {
             return outputSupplier.get().copy();
         }
@@ -110,16 +122,18 @@ public final class ChemicalPlantRecipes {
         ), () -> new ItemStack(ModItems.POLYVINYL_CHLORIDE.get(), 2)));
 
         // 5. Сгусток смолы: 2 смолистых опилок + ампула ректификата = resin_clump
+        //    (опилочный рецепт: старт от 1 самородка, расход 90 % — 0 / 10 % — 1)
         RECIPES.add(new ChemicalRecipe("resin_clump", List.of(
             new ItemMatcher(ModItems.RESINOUS_SAWDUST::get, 2),
             new AmpouleMatcher("rectificate", 1)
-        ), () -> new ItemStack(Items.RESIN_CLUMP, 1)));
+        ), () -> new ItemStack(Items.RESIN_CLUMP, 1), 1, true));
 
         // 6. Твердосмольные опилки: 2 твердосмольных опилок + ампула ректификата = resin
+        //    (опилочный рецепт: старт от 1 самородка, расход 90 % — 0 / 10 % — 1)
         RECIPES.add(new ChemicalRecipe("resin", List.of(
             new ItemMatcher(ModItems.HARD_RESINOUS_SAWDUST::get, 2),
             new AmpouleMatcher("rectificate", 1)
-        ), () -> new ItemStack(ModItems.RESIN.get(), 1)));
+        ), () -> new ItemStack(ModItems.RESIN.get(), 1), 1, true));
 
         // 7. Целлулоид: 1 бумажная ткань + 1 ампула серной кислоты + 1 ампула ректификата + 1 соль = 2 целлулоида
         RECIPES.add(new ChemicalRecipe("celluloid", List.of(
@@ -241,10 +255,14 @@ public final class ChemicalPlantRecipes {
     }
 
     /**
-     * Случайное поглощение 0–3 самородков катализатора из слотов катализаторов.
+     * Расход катализаторов по завершении синтеза (правила автора 24.09.2026):
+     * обычный рецепт — случайно 0–3 самородка; опилочный (softCatalysts) —
+     * 90 % ничего, 10 % один самородок.
      */
-    public static void consumeCatalystsRandomly(Container container, int catStart, int catCount, RandomSource random) {
-        int toConsume = random.nextInt(4); // 0, 1, 2 или 3 самородка
+    public static void consumeCatalystsRandomly(Container container, int catStart, int catCount, RandomSource random, boolean softCatalysts) {
+        int toConsume = softCatalysts
+                ? (random.nextDouble() < 0.10 ? 1 : 0)   // опилочные: 90 % 0, 10 % 1
+                : random.nextInt(4);                      // обычные: 0, 1, 2 или 3 самородка
         for (int i = 0; i < toConsume; i++) {
             List<Integer> availableSlots = new ArrayList<>();
             for (int c = catStart; c < catStart + catCount; c++) {
