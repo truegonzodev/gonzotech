@@ -23,11 +23,14 @@ import net.minecraft.world.level.block.state.BlockState;
  * Блок-энтити Химического завода (тир 3):
  * <ul>
  *   <li>Приём и хранение GTU: макс. 2600 GTU, макс. приём 66 GTU/t;</li>
- *   <li>Слоты катализаторов: 0, 1, 2 (платиновые и палладиевые самородки, все 3 должны быть заняты);</li>
+ *   <li>Слоты катализаторов: 0, 1, 2 (платиновые и палладиевые самородки);
+ *       обычным рецептам нужны заняты все 3 слота, опилочным — 1 самородок
+ *       (правила автора 24.09.2026, см. {@link ChemicalPlantRecipes});</li>
  *   <li>Сетка ингредиентов 3×3: слоты 3..11;</li>
  *   <li>Слот готовой продукции: слот 12;</li>
  *   <li>Длительность любой реакции: ровно 160 тиков, расход 1.9 GTU/t (1900 mGTU/t);</li>
- *   <li>По завершении: поглощает сырьё из сетки и случайно 0–3 самородка катализатора, выдавая продукт.</li>
+ *   <li>По завершении: поглощает сырьё из сетки и катализаторы по правилу рецепта
+ *       (обычные — случайно 0–3 самородка; опилочные — 90 % ничего, 10 % 1).</li>
  * </ul>
  */
 public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
@@ -119,16 +122,10 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     public void tick(Level level, BlockPos pos, BlockState state) {
         if (level.isClientSide) return;
 
-        // 1. Проверка катализаторов: ВСЕ ТРИ СЛОТА должны быть обязательно заняты
-        boolean allCatalystsPresent = true;
-        for (int c = CATALYST_START; c < CATALYST_START + CATALYST_COUNT; c++) {
-            ItemStack catStack = items.get(c);
-            if (catStack.isEmpty() || !ChemicalPlantRecipes.isCatalyst(catStack)) {
-                allCatalystsPresent = false;
-                break;
-            }
-        }
-        if (!allCatalystsPresent) {
+        // 1. Поиск активного рецепта (требование катализаторов живёт в рецепте)
+        ChemicalPlantRecipes.ChemicalRecipe recipe = ChemicalPlantRecipes.findRecipe(this, GRID_START, GRID_COUNT);
+
+        if (recipe == null) {
             if (progress > 0) {
                 progress = 0;
                 setChanged();
@@ -136,10 +133,16 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
             return;
         }
 
-        // 2. Поиск активного рецепта
-        ChemicalPlantRecipes.ChemicalRecipe recipe = ChemicalPlantRecipes.findRecipe(this, GRID_START, GRID_COUNT);
-
-        if (recipe == null) {
+        // 2. Проверка катализаторов: обычным рецептам нужны все 3 слота занятыми,
+        //    опилочным — минимум 1 самородок (автор 24.09.2026)
+        int catalystsPresent = 0;
+        for (int c = CATALYST_START; c < CATALYST_START + CATALYST_COUNT; c++) {
+            ItemStack catStack = items.get(c);
+            if (!catStack.isEmpty() && ChemicalPlantRecipes.isCatalyst(catStack)) {
+                catalystsPresent++;
+            }
+        }
+        if (catalystsPresent < recipe.catalystRequired()) {
             if (progress > 0) {
                 progress = 0;
                 setChanged();
@@ -172,8 +175,8 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
             // Реакция завершена:
             // а) Поглощаем сырьё из сетки
             ChemicalPlantRecipes.consumeInputs(this, GRID_START, GRID_COUNT, recipe);
-            // б) Поглощаем случайно 0–3 самородка катализатора
-            ChemicalPlantRecipes.consumeCatalystsRandomly(this, CATALYST_START, CATALYST_COUNT, level.random);
+            // б) Поглощаем катализаторы по правилу рецепта (0–3, либо 90/10 опилочным)
+            ChemicalPlantRecipes.consumeCatalystsRandomly(this, CATALYST_START, CATALYST_COUNT, level.random, recipe.softCatalysts());
             // в) Выдаём результат
             if (outSlotStack.isEmpty()) {
                 items.set(SLOT_OUTPUT, expectedOut.copy());
