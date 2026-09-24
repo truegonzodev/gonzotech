@@ -15,8 +15,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * Цвета заливки ниже — тоже временные.</p>
  *
  * <ul>
- *   <li><b>{@code necrosis} «Некроз»</b> (радиация) — вечный дебафф выше 30 % дозы,
- *       см. {@code radiation.RadSickness} / {@code radiation.Necrosis};</li>
+ *   <li><b>{@code necrosis} «Некроз»</b> (радиация) — вечный дебафф выше 30 % дозы
+ *       (или по шансу от пентацина/УФ): срезает макс. HP на {@code уровень + 2}
+ *       (автор 24.09), спринт жжёт воздух, агр мобов; лечится ТОЛЬКО полным курсом
+ *       ДТПА (шестая доза), см. {@code radiation.Necrosis};</li>
  *   <li><b>{@code rad_cleanse} «Очищение»</b> (радиация) — вывод дозы абсорбентом,
  *       см. {@code radiation.RadCleanse};</li>
  *   <li><b>{@code tremor} «Тремор»</b> (психика) — приступы тряски выше 40 % стресса
@@ -27,7 +29,14 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  *       земли и бонусы к стрессу/дозе — {@code psyche.PsycheChemical};</li>
  *   <li><b>{@code heart_attack} «Сердечный приступ»</b> (психика) — выше 99 % стресса;
  *       по истечении 40 секунд — «чистый» урон, который ничем не блокируется и всегда
- *       оставляет ровно 1 HP (см. теги урона {@code gonzotech:heart_attack}).</li>
+ *       оставляет ровно 1 HP (см. теги урона {@code gonzotech:heart_attack}).
+ *       Пентацин тоже вешает его при передозировке (33 % при повторе за 2 минуты);</li>
+ *   <li><b>{@code dose_absorption} «Абсорбция дозы»</b> (радиация, препараты) —
+ *       срезает получаемую игроком дозу на {@code (30 + уровень²)} % (31/34 % для
+ *       уровней 1/2), см. {@code radiation.RadiationSystem}. Дают Цистамин
+ *       (2 уровень, 8 мин) и ДТПА (1 уровень, 1 мин), спека 24.09.2026;</li>
+ *   <li><b>{@code treatment_course} «Курс лечения»</b> (препараты) — пока висит,
+ *       следующий ДТПА принять нельзя (3 минуты после каждой дозы), спека 24.09.2026.</li>
  * </ul>
  */
 public final class ModEffects {
@@ -35,7 +44,10 @@ public final class ModEffects {
     public static final DeferredRegister<MobEffect> MOB_EFFECTS =
             DeferredRegister.create(Registries.MOB_EFFECT, GonzoTechMod.MOD_ID);
 
-    /** Некроз — вредный, вечный, лечится отдельно. */
+    /**
+     * Некроз — вредный, вечный, лечится только полным курсом ДТПА (автор 24.09).
+     * Уровень L (амплитуда) отнимает {@code L + 2} макс. HP (см. {@code radiation.Necrosis#updateMaxHealth}).
+     */
     public static final DeferredHolder<MobEffect, MobEffect> NECROSIS =
             MOB_EFFECTS.register("necrosis", () ->
                     new PlainEffect(MobEffectCategory.HARMFUL, 0x4A2B18));
@@ -60,10 +72,15 @@ public final class ModEffects {
             MOB_EFFECTS.register("heart_attack", () ->
                     new PlainEffect(MobEffectCategory.HARMFUL, 0x8B1A1A));
 
-    /** Цистамин — радиозащитный щит, поглощающий входящую радиацию. */
-    public static final DeferredHolder<MobEffect, MobEffect> CYSTEAMINE =
-            MOB_EFFECTS.register("cysteamine", () ->
+    /** Абсорбция дозы — срезает получаемую игроком дозу на (30 + уровень²) %. */
+    public static final DeferredHolder<MobEffect, MobEffect> DOSE_ABSORPTION =
+            MOB_EFFECTS.register("dose_absorption", () ->
                     new PlainEffect(MobEffectCategory.BENEFICIAL, 0xF5C542));
+
+    /** Курс лечения — блокирует повторный ДТПА, пока висит. */
+    public static final DeferredHolder<MobEffect, MobEffect> TREATMENT_COURSE =
+            MOB_EFFECTS.register("treatment_course", () ->
+                    new PlainEffect(MobEffectCategory.BENEFICIAL, 0x5FA8A0));
 
     private ModEffects() {
     }

@@ -37,6 +37,6 @@ public class DispensingTapBlock extends MachineBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.DISPENSING_TAP.get(), DispensingTapBlockEntity::serverTick);
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.THIRD_DISPENSING_TAP.get(), DispensingTapBlockEntity::serverTick);
     }
 }

@@ -61,6 +61,10 @@ public final class PsycheChemical {
     public static final int ITCH2_PERMILLE = 520;
     public static final int ITCH3_PERMILLE = 690;
     /** Кулдаун урона по уровням (секунды): 3 / 2 / 1. */
+    /**
+     * Зуд (автор 24.09): срезает natural regen игрока на {@code 20 * уровень} %
+     * (I → −20 %, II → −40 %, III → −60 %). Хук — {@code mixin.FoodDataMixin}.
+     */
     public static final int[] ITCH_DAMAGE_COOLDOWN_SECONDS = {3, 2, 1};
     /** Бонус к получению стресса по уровням: +10 / +20 / +40 %. */
     public static final double[] ITCH_STRESS_BONUS = {0.10, 0.20, 0.40};

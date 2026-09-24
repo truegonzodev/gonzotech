@@ -11,7 +11,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "gonzotech:dispensing_tap"
+          "name": "gonzotech:third_dispensing_tap"
         }
       ],
       "rolls": 1.0
