@@ -1,11 +1,17 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.event.UncurableEffects;
 import com.gonzotech.core.registry.ModEffects;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 
 import java.util.HashMap;
