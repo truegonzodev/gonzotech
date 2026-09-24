@@ -23,7 +23,7 @@ public class DispensingTapMenu extends BaseMachineMenu {
     }
 
     public DispensingTapMenu(int id, Inventory inv, DispensingTapBlockEntity be, ContainerData data) {
-        super(ModMenus.DISPENSING_TAP.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.THIRD_DISPENSING_TAP.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
 
         addSlot(new PumpInputSlot(be, DispensingTapBlockEntity.SLOT_CONTAINER_IN, 80, 17));

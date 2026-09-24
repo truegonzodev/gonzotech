@@ -36,13 +36,15 @@ import java.util.UUID;
  * <h2>Как спадает</h2>
  * <p>Сама тает на {@value #DECAY_PERCENT_PER_SECOND} % ОТ ТЕКУЩЕГО значения ежесекундно
  * (как радиация: «−0.2 % от текущего в секунду»). Смерть чистит
- * {@value #DEATH_CLEAR_PERCENT} % от текущего; препараты-очистители — потом (автор).</p>
+ * {@value #DEATH_CLEAR_PERCENT} % от текущего. Препараты есть (Цистамин/Пентацин/ДТПА,
+ * 0.3.14–0.3.16), но эту шкалу пока не чистит ни один — чистка химии отложена (автор).</p>
  *
  * <h2>Эффект «Зуд»</h2>
  * <p>Пороги {@value #ITCH1_PERMILLE} / {@value #ITCH2_PERMILLE} / {@value #ITCH3_PERMILLE}
  * тысячных (38 / 52 / 69 %). Работает только если на игроке <b>хотя бы одна часть брони</b>,
  * иначе тело «дышит» и ничего не чешется (условие автора). Урон — как от отравления:
- * только на движении, не может добить (при HP ≤ 1 урона нет), кулдаун 3 / 2 / 1 секунды.</p>
+ * только на движении, не может добить (при HP ≤ 1 урона нет), кулдаун 3 / 2 / 1 секунды.
+ * Плюс зуд срезает натуральную регенерацию HP на {@code 20·L} % (0.3.16, {@code FoodDataMixin}).</p>
  */
 public final class PsycheChemical {
 
@@ -61,6 +63,10 @@ public final class PsycheChemical {
     public static final int ITCH2_PERMILLE = 520;
     public static final int ITCH3_PERMILLE = 690;
     /** Кулдаун урона по уровням (секунды): 3 / 2 / 1. */
+    /**
+     * Зуд (автор 24.09): срезает natural regen игрока на {@code 20 * уровень} %
+     * (I → −20 %, II → −40 %, III → −60 %). Хук — {@code mixin.FoodDataMixin}.
+     */
     public static final int[] ITCH_DAMAGE_COOLDOWN_SECONDS = {3, 2, 1};
     /** Бонус к получению стресса по уровням: +10 / +20 / +40 %. */
     public static final double[] ITCH_STRESS_BONUS = {0.10, 0.20, 0.40};
