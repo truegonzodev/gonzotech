@@ -315,10 +315,12 @@ public class ModItems {
         ITEMS.registerItem("aminoblazeethanol_bucket", props ->
             new Item(props.stacksTo(1).craftRemainder(net.minecraft.world.item.Items.BUCKET)));
 
-    /** Бутылка водки — наливается в разливном кране (дистиллят 128 mB + пузырёк). */
+    /** Бутылка водки — наливается в разливном кране (дистиллят 128 mB + пузырёк). Пьётся зажатием ПКМ (автор 24.09). */
     public static final DeferredItem<Item> VODKA_BOTTLE =
         ITEMS.registerItem("vodka_bottle", props ->
-            new Item(props.stacksTo(16).craftRemainder(net.minecraft.world.item.Items.GLASS_BOTTLE)));
+            new com.gonzotech.core.item.DrinkItem(
+                props.stacksTo(16).craftRemainder(net.minecraft.world.item.Items.GLASS_BOTTLE),
+                net.minecraft.world.item.Items.GLASS_BOTTLE));
 
     /**
      * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
@@ -444,13 +446,14 @@ public class ModItems {
         ITEMS.registerItem("the_fruit_mash",
             props -> new Item(props.food(MASH_FOOD, MASH_CONSUMABLE)));
 
-    /** Кружка пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (128 mB сусла + бутылёк). */
+    /** Кружка пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (128 mB сусла + бутылёк). Пьётся зажатием ПКМ (автор 24.09). */
     public static final DeferredItem<Item> BEER_MUG =
-        ITEMS.registerItem("beer_mug", props -> new Item(props.stacksTo(16)));
+        ITEMS.registerItem("beer_mug", props -> new com.gonzotech.core.item.DrinkItem(props.stacksTo(16), null));
 
-    /** Ведро пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (1000 mB сусла + ведро). */
+    /** Ведро пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (1000 mB сусла + ведро). После глотка остаётся пустое ведро (автор 24.09). */
     public static final DeferredItem<Item> BEER_BUCKET =
-        ITEMS.registerItem("beer_bucket", props -> new Item(props.stacksTo(1)));
+        ITEMS.registerItem("beer_bucket", props -> new com.gonzotech.core.item.DrinkItem(props.stacksTo(1),
+            net.minecraft.world.item.Items.BUCKET));
 
 
     /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */

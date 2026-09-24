@@ -359,7 +359,6 @@
   "tooltip.gonzotech.botched_mechanism": "A tangle of parts that does nothing. I got ahead of myself.",
   "item.gonzotech.scholar_notes": "Scholar's Notes",
   "tooltip.gonzotech.scholar_notes": "Right-click to open. A field guide to Gonzo Tech.",
-  "tooltip.gonzotech.rad_absorbent": "Applies Cleansing I for 30 seconds: smoothly clears 20%% of the current dose. Afterwards — hunger for 10 seconds.",
   "tooltip.gonzotech.hazmat.set": "Full set: %s radiation protection,",
   "tooltip.gonzotech.hazmat.soft_dose": "with dose below %s.",
   "tooltip.gonzotech.paper_fabric": "The base layer of the protective suit.",
@@ -753,12 +752,6 @@
   "effect.gonzotech.itch": "Itch",
   "effect.gonzotech.dose_absorption": "Dose Absorption",
   "effect.gonzotech.treatment_course": "Treatment Course",
-  "message.gonzotech.cysteamine.applied": "Cysteamine ingested: Dose Absorption II for 8 minutes.",
-  "message.gonzotech.pentacin.applied": "Pentacin taken: −20 %% of current dose — chemistry and heart paid the price.",
-  "message.gonzotech.dtpa.applied": "DTPA injected: Treatment Course for 3 minutes, dose slightly reduced.",
-  "message.gonzotech.dtpa.blocked": "Treatment Course still running: another DTPA is impossible right now.",
-  "message.gonzotech.dtpa.course_complete": "DTPA course complete: Cleansing IV and −80 %% dose!",
-  "message.gonzotech.absorbent.applied": "The absorbent dissolves: the dose is draining smoothly.",
   "message.gonzotech.necrosis.caught": "Necrosis %s: sprinting burns your air. Needs a separate cure.",
   "message.gonzotech.heart_attack.warning": "My heart seized up. I have 40 seconds...",
   "death.attack.heart_attack": "%1$s's heart gave out",
@@ -881,8 +874,6 @@
   "item.gonzotech.cysteamine": "Cysteamine",
   "item.gonzotech.pentacin": "Pentacin",
   "item.gonzotech.dtpa": "DTPA",
-  "item.gonzotech.cysteamine.desc": "Dose Absorption II for 8 minutes: −34 %% incoming dose. Chemistry +260 mTx, addiction +1 %%.",
-  "item.gonzotech.pentacin.desc": "−20 %% of current dose and Cleansing II for 10 s. Price: wither II 5 s, +1 Tx chemistry, +2 %% stress and addiction. Repeat within 2 min is dangerous.",
-  "item.gonzotech.dtpa.desc": "−2 %% dose, Dose Absorption I for 1 min. Course of 6 doses (3 min apart): the sixth — Cleansing IV and −80 %% dose.",
-  "gui.gonzotech.chemical_plant.reaction": "Reaction: %s%%"
+  "gui.gonzotech.chemical_plant.reaction": "Reaction: %s%%",
+  "itemGroup.gonzotech.adaptations": "Gonzo Tech Adaptations"
 }

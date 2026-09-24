@@ -5,9 +5,7 @@ import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModEffects;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -15,34 +13,35 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
-
-import java.util.List;
 
 /**
  * ДТПА (диэтилентриаминпентауксусная кислота) — хелат курса лечения
  * (спека автора 24.09.2026).
  *
- * <p>Каждый приём:</p>
+ * <p>Применение — «как еда»: зажать ПКМ ({@value #USE_TICKS} тиков), без сообщений
+ * и лора (автор 24.09). Пока висит «Курс лечения», применение невозможно (жест отказа,
+ * без текста). Каждый приём:</p>
  * <ol>
  *   <li>моментально <b>−2 % от ТЕКУЩЕЙ</b> дозы;</li>
- *   <li>«Абсорбция дозы» <b>1 уровня на 1 минуту</b> (амплитуда 0; разрез дозы
- *       {@code (30 + 1²) = 31 %}, см. {@link RadiationSystem});</li>
+ *   <li>«Абсорбция дозы» <b>1 уровня на 1 минуту</b> (разрез 31 %);</li>
  *   <li>скрытый счётчик «ДТПА принято» +1 (живёт в {@link PlayerPsyche});</li>
- *   <li>«Курс лечения» на 3 минуты — пока висит, ещё один ДТПА принять
- *       <b>невозможно</b> ({@link ModEffects#TREATMENT_COURSE}, не сбить молоком);</li>
+ *   <li>«Курс лечения» на 3 минуты ({@link ModEffects#TREATMENT_COURSE});</li>
  *   <li>когда счётчик становится 6: «Очищение» 4 уровня на 10 секунд, аппаратно
- *       <b>−80 % дозы</b>, счётчик сбрасывается, приятный звук и красивые
- *       партиклы вокруг игрока;</li>
+ *       <b>−80 % дозы</b>, сброс счёта, приятный звук и красивые партиклы;</li>
  *   <li>каждый приём: <b>−2000 стресса</b>, <b>+2000 зависимости</b> (по 0.2 % шкалы),
  *       <b>+100 mTx</b> химии.</li>
  * </ol>
  */
 public class DtpaItem extends Item {
+
+    /** Задержка «как у еды». */
+    public static final int USE_TICKS = 32;
 
     /** Доз курса: шестая доза даёт «Очищение IV» и аппаратный откат. */
     public static final int COURSE_DOSES = 6;
@@ -78,16 +77,31 @@ public class DtpaItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
-            return InteractionResult.SUCCESS;
+        // «Курс лечения» ещё идёт — принять ещё один ДТПА невозможно (без текста).
+        if (player.hasEffect(ModEffects.TREATMENT_COURSE)) {
+            return InteractionResult.FAIL;
         }
+        player.startUsingItem(hand);
+        return InteractionResult.CONSUME;
+    }
 
-        // «Курс лечения» ещё идёт — принять ещё один ДТПА невозможно.
+    @Override
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.EAT;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        return USE_TICKS;
+    }
+
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity livingEntity) {
+        if (!(level instanceof ServerLevel serverLevel) || !(livingEntity instanceof ServerPlayer serverPlayer)) {
+            return stack;
+        }
         if (serverPlayer.hasEffect(ModEffects.TREATMENT_COURSE)) {
-            serverPlayer.displayClientMessage(Component.translatable("message.gonzotech.dtpa.blocked")
-                    .withStyle(ChatFormatting.YELLOW), false);
-            return InteractionResult.SUCCESS;
+            return stack;
         }
 
         PlayerPsyche psyche = serverPlayer.getData(ModPsycheAttachments.PSYCHE);
@@ -124,8 +138,6 @@ public class DtpaItem extends Item {
             serverLevel.sendParticles(ParticleTypes.ENCHANT, x, y, z, 20, 0.5, 0.8, 0.5, 0.2);
             serverLevel.playSound(null, serverPlayer.blockPosition(),
                     SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.7F, 1.1F);
-            serverPlayer.displayClientMessage(Component.translatable("message.gonzotech.dtpa.course_complete")
-                    .withStyle(ChatFormatting.AQUA), false);
         }
         psyche.setDtpaCourseCount(count);
 
@@ -137,21 +149,11 @@ public class DtpaItem extends Item {
         serverPlayer.setData(ModPsycheAttachments.PSYCHE, psyche);
         PsycheNetwork.sendToPlayer(serverPlayer);
 
+        serverLevel.playSound(null, serverPlayer.blockPosition(),
+                SoundEvents.GENERIC_EAT.value(), SoundSource.PLAYERS, 0.8F, 1.1F);
         if (!serverPlayer.getAbilities().instabuild) {
             stack.shrink(1);
         }
-
-        serverPlayer.displayClientMessage(Component.translatable("message.gonzotech.dtpa.applied")
-                .withStyle(ChatFormatting.LIGHT_PURPLE), false);
-        serverLevel.playSound(null, serverPlayer.blockPosition(),
-                SoundEvents.HONEY_DRINK.value(), SoundSource.PLAYERS, 0.8F, 1.1F);
-        return InteractionResult.SUCCESS;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context,
-                                List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable(getDescriptionId() + ".desc").withStyle(ChatFormatting.GRAY));
-        super.appendHoverText(stack, context, tooltip, flag);
+        return stack;
     }
 }

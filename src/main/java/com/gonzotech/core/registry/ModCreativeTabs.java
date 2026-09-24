@@ -126,7 +126,6 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get());
-                output.accept(ModItems.CANISTER.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
@@ -204,8 +203,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SCORCHED_TUFT_MEDIUM_ITEM.get());
                 output.accept(ModItems.SCORCHED_TUFT_LARGE_ITEM.get());
                 output.accept(ModItems.CORIUM_ITEM.get());
-                output.accept(ModFluids.CORIUM_BUCKET.get());
-                output.accept(ModItems.DEAD_SLIME_BUCKET.get());
+                // (Вёдра кориума и мёртвой жижи перенесены во вкладку «Приспособления», автор 24.09.)
                 output.accept(ModItems.WASTE_BARREL_ITEM.get());
                 output.accept(ModItems.DEAD_SLIME_BLOCK_ITEM.get());
                 output.accept(ModItems.RADIOACTIVE_SLIME_BLOCK_ITEM.get());
@@ -299,14 +297,25 @@ public class ModCreativeTabs {
                 output.accept(ModItems.RESINOUS_SAWDUST.get());
                 output.accept(ModItems.HARD_RESINOUS_SAWDUST.get());
                 // Химические продукты и реагенты (автор 23-24.09).
-                output.accept(ModItems.EMPTY_AMPOULE.get());
-                output.accept(ModItems.DURABLE_AMPOULE.get());
-                output.accept(ModItems.AMPOULE.get());
-                output.accept(ModItems.FILLED_DURABLE_AMPOULE.get());
+                // (Ампулы и вёдра перенесены во вкладку «Приспособления», автор 24.09.)
                 output.accept(ModItems.EDTA.get());
                 output.accept(ModItems.SODIUM_CYANATE.get());
                 output.accept(ModItems.SALT.get());
                 output.accept(ModItems.CALCIUM_CHLORIDE.get());
+                // (Вёдра жидкостей перенесены во вкладку «Приспособления», автор 24.09.)
+            })
+            .build()
+    );
+
+    /** «Приспособления Gonzo Tech» — тара: вёдра жидкостей, ампулы, канистры (автор 24.09). */
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> ADAPTATIONS_TAB = CREATIVE_TABS.register(
+        "adaptations",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.gonzotech.adaptations"))
+            .icon(() -> new ItemStack(ModItems.CANISTER.get()))
+            .displayItems((params, output) -> {
+                // Вёдра жидкостей (автор 24.09: «+ кориум и мёртвая жижа»). Ведро пива
+                // и водка остаются в «Приколах».
                 output.accept(ModFluids.ETHANOL_BUCKET.get());
                 output.accept(ModFluids.FORMALDEHYDE_BUCKET.get());
                 output.accept(ModFluids.SULFURIC_ACID_BUCKET.get());
@@ -315,6 +324,15 @@ public class ModCreativeTabs {
                 output.accept(ModFluids.MASH_BUCKET.get());
                 output.accept(ModFluids.WORT_BUCKET.get());
                 output.accept(ModItems.AMINOBLAZEETHANOL_BUCKET.get());
+                output.accept(ModFluids.CORIUM_BUCKET.get());
+                output.accept(ModItems.DEAD_SLIME_BUCKET.get());
+                // Ампулы.
+                output.accept(ModItems.EMPTY_AMPOULE.get());
+                output.accept(ModItems.DURABLE_AMPOULE.get());
+                output.accept(ModItems.AMPOULE.get());
+                output.accept(ModItems.FILLED_DURABLE_AMPOULE.get());
+                // Канистра.
+                output.accept(ModItems.CANISTER.get());
             })
             .build()
     );

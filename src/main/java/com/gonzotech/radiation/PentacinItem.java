@@ -15,32 +15,33 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
-
-import java.util.List;
 
 /**
  * Пентацин — экстренная декорпорация (спека автора 24.09.2026).
  *
- * <p>Приём (в порядке спеки):</p>
+ * <p>Применение — «как еда»: зажать ПКМ ({@value #USE_TICKS} тиков), без сообщений
+ * и лора (автор 24.09). Приём (в порядке спеки):</p>
  * <ol>
  *   <li>«Очищение» 2 уровня на 10 секунд ({@link ModEffects#RAD_CLEANSE}, амплитуда 1);</li>
  *   <li>моментально <b>−20 % от ТЕКУЩЕЙ</b> дозы (100 % → 80 %, 50 % → 40 %);</li>
  *   <li>«Исушение» (ванильный Wither) 2 уровня на 5 секунд;</li>
- *   <li><b>+1 Tx</b> химии (= 1e9 nTx, {@link PsycheChemical#addDoseToxicity});</li>
- *   <li><b>+2 % шкалы стресса</b> и <b>+2 % зависимости</b> (= 20 000 очков; начислено
- *       ровно, без бонуса зависимости — так в спеке «+2 % шкалы»);</li>
- *   <li>скрытый таймер 120 секунд: если принять ещё пентацин в этом окне —
- *       <b>33 %</b> «Сердечный приступ» на 40 секунд с подсказкой в чате
- *       (готовый эффект {@link ModEffects#HEART_ATTACK}: по истечении — «чистый»
- *       урон до 1 HP) и <b>5 %</b> «Некроз» ({@link Necrosis#grant}).</li>
+ *   <li><b>+1 Tx</b> химии (= 1e9 nTx);</li>
+ *   <li><b>+2 % шкалы стресса</b> и <b>+2 % зависимости</b> (= 20 000 очков, ровно);</li>
+ *   <li>скрытый таймер 120 секунд: повтор в окне — <b>33 %</b> «Сердечный приступ»
+ *       на 40 секунд (единственное оставляемое сообщение в чате — «Сердце
+ *       прихватило…», автор 24.09) и <b>5 %</b> «Некроз».</li>
  * </ol>
  */
 public class PentacinItem extends Item {
+
+    /** Задержка «как у еды». */
+    public static final int USE_TICKS = 32;
 
     /** Моментальный срез дозы: −20 % текущей. */
     private static final double DOSE_REMAINING = 0.8;
@@ -72,9 +73,24 @@ public class PentacinItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
-            return InteractionResult.SUCCESS;
+        player.startUsingItem(hand);
+        return InteractionResult.CONSUME;
+    }
+
+    @Override
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.EAT;
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        return USE_TICKS;
+    }
+
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity livingEntity) {
+        if (!(level instanceof ServerLevel serverLevel) || !(livingEntity instanceof ServerPlayer serverPlayer)) {
+            return stack;
         }
 
         PlayerPsyche psyche = serverPlayer.getData(ModPsycheAttachments.PSYCHE);
@@ -106,6 +122,7 @@ public class PentacinItem extends Item {
             if (serverLevel.getRandom().nextDouble() < HEART_ATTACK_CHANCE) {
                 serverPlayer.addEffect(new MobEffectInstance(ModEffects.HEART_ATTACK,
                         40 * 20, 0, false, true));
+                // Единственное сообщение, которое оставили (автор 24.09).
                 serverPlayer.displayClientMessage(Component.translatable("message.gonzotech.heart_attack.warning")
                         .withStyle(ChatFormatting.RED), false);
             }
@@ -118,21 +135,11 @@ public class PentacinItem extends Item {
         serverPlayer.setData(ModPsycheAttachments.PSYCHE, psyche);
         PsycheNetwork.sendToPlayer(serverPlayer);
 
+        serverLevel.playSound(null, serverPlayer.blockPosition(),
+                SoundEvents.GENERIC_EAT.value(), SoundSource.PLAYERS, 0.8F, 1.1F);
         if (!serverPlayer.getAbilities().instabuild) {
             stack.shrink(1);
         }
-
-        serverPlayer.displayClientMessage(Component.translatable("message.gonzotech.pentacin.applied")
-                .withStyle(ChatFormatting.RED), false);
-        serverLevel.playSound(null, serverPlayer.blockPosition(),
-                SoundEvents.HONEY_DRINK.value(), SoundSource.PLAYERS, 0.8F, 1.1F);
-        return InteractionResult.SUCCESS;
-    }
-
-    @Override
-    public void appendHoverText(ItemStack stack, Item.TooltipContext context,
-                                List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable(getDescriptionId() + ".desc").withStyle(ChatFormatting.GRAY));
-        super.appendHoverText(stack, context, tooltip, flag);
+        return stack;
     }
 }

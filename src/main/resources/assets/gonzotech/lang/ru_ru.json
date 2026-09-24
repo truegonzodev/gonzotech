@@ -359,7 +359,6 @@
   "tooltip.gonzotech.botched_mechanism": "Клубок деталей, который ничего не делает. Поспешил.",
   "item.gonzotech.scholar_notes": "Заметки учёного",
   "tooltip.gonzotech.scholar_notes": "ПКМ — открыть. Руководство по Gonzo Tech.",
-  "tooltip.gonzotech.rad_absorbent": "Накладывает «Очищение I» на 30 секунд: плавно выводит 20% текущей дозы. После курса — голод на 10 секунд.",
   "tooltip.gonzotech.hazmat.set": "Полный комплект: %s защиты от облучения,",
   "tooltip.gonzotech.hazmat.soft_dose": "дозой меньше %s.",
   "tooltip.gonzotech.paper_fabric": "Основа защитного костюма.",
@@ -753,12 +752,6 @@
   "effect.gonzotech.itch": "Зуд",
   "effect.gonzotech.dose_absorption": "Абсорбция дозы",
   "effect.gonzotech.treatment_course": "Курс лечения",
-  "message.gonzotech.cysteamine.applied": "Цистамин усвоен: «Абсорбция дозы II» на 8 минут.",
-  "message.gonzotech.pentacin.applied": "Пентацин принят: −20 %% текущей дозы, но химия и сердце пострадали.",
-  "message.gonzotech.dtpa.applied": "ДТПА введён: «Курс лечения» 3 минуты, доза слегка снижена.",
-  "message.gonzotech.dtpa.blocked": "Курс лечения ещё идёт: повторный ДТПА сейчас невозможен.",
-  "message.gonzotech.dtpa.course_complete": "Курс ДТПА завершён: «Очищение IV» и −80 %% дозы!",
-  "message.gonzotech.absorbent.applied": "Абсорбент растворяется: доза выводится плавно.",
   "message.gonzotech.necrosis.caught": "Некроз %s: спринт сжигает воздух. Нужно отдельное лечение.",
   "message.gonzotech.heart_attack.warning": "Сердце прихватило. У Меня есть 40 секунд...",
   "death.attack.heart_attack": "%1$s не пережил сердечный приступ",
@@ -881,8 +874,6 @@
   "item.gonzotech.cysteamine": "Цистамин",
   "item.gonzotech.pentacin": "Пентацин",
   "item.gonzotech.dtpa": "ДТПА",
-  "item.gonzotech.cysteamine.desc": "«Абсорбция дозы II» на 8 минут: −34 %% получаемой дозы. Химия +260 mTx, зависимость +1 %%.",
-  "item.gonzotech.pentacin.desc": "−20 %% текущей дозы и «Очищение II» на 10 с. Цена: иссушение II 5 с, +1 Tx химии, +2 %% стресса и зависимости. Повтор за 2 мин опасен.",
-  "item.gonzotech.dtpa.desc": "−2 %% дозы, «Абсорбция дозы I» на 1 мин. Курс 6 доз (перерыв 3 мин): шестая — «Очищение IV» и −80 %% дозы.",
-  "gui.gonzotech.chemical_plant.reaction": "Реакция: %s%%"
+  "gui.gonzotech.chemical_plant.reaction": "Реакция: %s%%",
+  "itemGroup.gonzotech.adaptations": "Приспособления Gonzo Tech"
 }
