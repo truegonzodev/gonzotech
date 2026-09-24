@@ -526,6 +526,19 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                     return true;
                 }
             }
+        } else if (in.is(ModItems.AMPOULE.get())) {
+            String ampFluid = com.gonzotech.core.item.AmpouleItem.getStoredFluid(in);
+            int ampAmount = com.gonzotech.core.item.AmpouleItem.getStoredAmount(in);
+            int ampFluidId = fluidIdByName(ampFluid);
+
+            if (ampAmount > 0 && ampFluidId != FLUID_EMPTY && (tankType == FLUID_EMPTY || tankType == ampFluidId) && tankSpace >= ampAmount) {
+                if (tankType == FLUID_EMPTY) tankType = ampFluidId;
+                tankAmount += ampAmount;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                // При опустошении в филлере ампула пропадает (одноразовая).
+                return true;
+            }
         }
 
         // Ветка 2: Наполнение пустой тары из бака
@@ -644,6 +657,22 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                     items.set(outSlot, resultCan);
                     return true;
                 }
+            }
+        } else if ((in.is(ModItems.EMPTY_AMPOULE.get()) || in.is(ModItems.DURABLE_AMPOULE.get())) && tankAmount >= 128 && tankType != FLUID_EMPTY) {
+            boolean durable = in.is(ModItems.DURABLE_AMPOULE.get());
+            String fluidName = fluidNameById(tankType);
+            ItemStack filled = com.gonzotech.core.item.AmpouleItem.createFilled(fluidName, 128, durable);
+
+            if (out.isEmpty() || (ItemStack.isSameItemSameComponents(out, filled) && out.getCount() < out.getMaxStackSize())) {
+                tankAmount -= 128;
+                if (tankSalt > 0) {
+                    tankSalt = (int) Math.round((double) tankSalt * tankAmount / (tankAmount + 128));
+                }
+                if (tankAmount == 0) tankType = FLUID_EMPTY;
+                applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
+                in.shrink(1);
+                addOutputItem(outSlot, filled);
+                return true;
             }
         }
 

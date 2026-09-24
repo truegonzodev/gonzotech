@@ -148,6 +148,29 @@ public class ModItems {
     public static final DeferredItem<com.gonzotech.core.item.CanisterItem> CANISTER =
         ITEMS.registerItem("canister", props -> new com.gonzotech.core.item.CanisterItem(ModBlocks.CANISTER.get(), props.stacksTo(1)));
 
+    /** Пустая ампула (2 стекла) — ёмкость под 128 mB жидкости. */
+    public static final DeferredItem<Item> EMPTY_AMPOULE = ITEMS.registerSimpleItem("empty_ampoule");
+    /** Стойкая ампула (2 борных стекла) — термо- и химстойкая ампула (128 mB). */
+    public static final DeferredItem<Item> DURABLE_AMPOULE = ITEMS.registerSimpleItem("durable_ampoule");
+    /** Наполненная ампула с жидкостью (128 mB). */
+    public static final DeferredItem<com.gonzotech.core.item.AmpouleItem> AMPOULE =
+        ITEMS.registerItem("ampoule", com.gonzotech.core.item.AmpouleItem::new);
+
+    /** ЭДТА (гранулы) — этилендиаминтетрауксусная кислота, прекурсор препаратов. */
+    public static final DeferredItem<Item> EDTA = ITEMS.registerSimpleItem("edta");
+    /** Цианат натрия (гранулы) — прекурсор Пентацина. */
+    public static final DeferredItem<Item> SODIUM_CYANATE = ITEMS.registerSimpleItem("sodium_cyanate");
+
+    /** Цистамин — радиозащитный препарат («щит»). */
+    public static final DeferredItem<com.gonzotech.radiation.CysteamineItem> CYSTEAMINE =
+        ITEMS.registerItem("cysteamine", com.gonzotech.radiation.CysteamineItem::new);
+    /** Пентацин — экстренный хелатирующий препарат («быстрое лечение радиации с дебаффами»). */
+    public static final DeferredItem<com.gonzotech.radiation.PentacinItem> PENTACIN =
+        ITEMS.registerItem("pentacin", com.gonzotech.radiation.PentacinItem::new);
+    /** ДТПА — мощный препарат глубокого лечения («лечение и защита, снимает некроз»). */
+    public static final DeferredItem<com.gonzotech.radiation.DtpaItem> DTPA =
+        ITEMS.registerItem("dtpa", com.gonzotech.radiation.DtpaItem::new);
+
     /** Reusable selectors for the press; they are never consumed by a stamp. */
     public static final DeferredItem<Item> FLAT_PUNCH =
         ITEMS.registerItem("flat_punch", props -> new Item(props.stacksTo(1)));

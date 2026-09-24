@@ -60,6 +60,11 @@ public final class ModEffects {
             MOB_EFFECTS.register("heart_attack", () ->
                     new PlainEffect(MobEffectCategory.HARMFUL, 0x8B1A1A));
 
+    /** Цистамин — радиозащитный щит, поглощающий входящую радиацию. */
+    public static final DeferredHolder<MobEffect, MobEffect> CYSTEAMINE =
+            MOB_EFFECTS.register("cysteamine", () ->
+                    new PlainEffect(MobEffectCategory.BENEFICIAL, 0xF5C542));
+
     private ModEffects() {
     }
 

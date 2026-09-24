@@ -120,6 +120,10 @@ public final class ModMenus {
     public static final Supplier<MenuType<com.gonzotech.machines.menu.FillerMenu>> THIRD_FILLER =
         MENUS.register("third_filler", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.FillerMenu::new));
 
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.ChemicalPlantMenu>> CHEMICAL_PLANT =
+        MENUS.register("third_chemical_plant", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ChemicalPlantMenu::new));
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.ChemicalPlantMenu>> THIRD_CHEMICAL_PLANT = CHEMICAL_PLANT;
+
     public static final Supplier<MenuType<com.gonzotech.machines.menu.DispensingTapMenu>> DISPENSING_TAP =
         MENUS.register("dispensing_tap", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.DispensingTapMenu::new));
 

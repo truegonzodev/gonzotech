@@ -169,6 +169,9 @@ public final class RadiationSystem {
         // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
         rawDose *= PsycheChemical.doseMultiplier(player);
         double suitFactor = Hazmat.factor(player, rawDose);
+        if (player.hasEffect(com.gonzotech.core.registry.ModEffects.CYSTEAMINE)) {
+            suitFactor *= 0.15; // Цистамин: радиозащитный щит (-85% к входящей радиации)
+        }
         double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
         acc -= gainPermille * NZT_PER_PERMILLE;

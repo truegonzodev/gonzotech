@@ -125,6 +125,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get());
                 output.accept(ModItems.CANISTER.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.DISPENSING_TAP_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
@@ -142,8 +143,11 @@ public class ModCreativeTabs {
             .title(Component.translatable("itemGroup.gonzotech.equipment"))
             .icon(() -> new ItemStack(ModItems.ALLOY_PICKAXE.get()))
             .displayItems((params, output) -> {
-                // Расходник к шкале облучения — во вкладке снаряжения (автор 22.09).
+                // Расходники к шкале облучения — во вкладке снаряжения (автор 22.09).
                 output.accept(ModItems.RAD_ABSORBENT.get());
+                output.accept(ModItems.CYSTEAMINE.get());
+                output.accept(ModItems.PENTACIN.get());
+                output.accept(ModItems.DTPA.get());
                 output.accept(ModItems.ALLOY_PICKAXE.get());
                 output.accept(ModItems.ALLOY_SWORD.get());
                 output.accept(ModItems.ALLOY_CHESTPLATE.get());
@@ -294,7 +298,12 @@ public class ModCreativeTabs {
                 output.accept(ModItems.RESIN.get());
                 output.accept(ModItems.RESINOUS_SAWDUST.get());
                 output.accept(ModItems.HARD_RESINOUS_SAWDUST.get());
-                // Химические продукты и реагенты наполнителя (автор 23.09).
+                // Химические продукты и реагенты (автор 23-24.09).
+                output.accept(ModItems.EMPTY_AMPOULE.get());
+                output.accept(ModItems.DURABLE_AMPOULE.get());
+                output.accept(ModItems.AMPOULE.get());
+                output.accept(ModItems.EDTA.get());
+                output.accept(ModItems.SODIUM_CYANATE.get());
                 output.accept(ModItems.SALT.get());
                 output.accept(ModItems.CALCIUM_CHLORIDE.get());
                 output.accept(ModFluids.ETHANOL_BUCKET.get());

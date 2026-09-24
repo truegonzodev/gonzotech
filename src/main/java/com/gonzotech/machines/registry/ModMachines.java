@@ -366,6 +366,10 @@ public final class ModMachines {
     public static final DeferredBlock<com.gonzotech.machines.block.FillerBlock> THIRD_FILLER =
         BLOCKS.registerBlock("third_filler", com.gonzotech.machines.block.FillerBlock::new, machineMetal());
 
+    /** Эпоха III (Открытие 3): Химический завод — аппарат синтеза полимеров, хелатов и препаратов. */
+    public static final DeferredBlock<com.gonzotech.machines.block.ChemicalPlantBlock> THIRD_CHEMICAL_PLANT =
+        BLOCKS.registerBlock("third_chemical_plant", com.gonzotech.machines.block.ChemicalPlantBlock::new, machineMetal());
+
     /** Разливной кран — разлив пива (из сусла) и водки (из дистиллята). */
     public static final DeferredBlock<com.gonzotech.machines.block.DispensingTapBlock> DISPENSING_TAP =
         BLOCKS.registerBlock("dispensing_tap", com.gonzotech.machines.block.DispensingTapBlock::new, machineMetal());
@@ -559,6 +563,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_FILLER_ITEM =
         ITEMS.registerSimpleBlockItem("third_filler", THIRD_FILLER);
+
+    public static final DeferredItem<BlockItem> THIRD_CHEMICAL_PLANT_ITEM =
+        ITEMS.registerSimpleBlockItem("third_chemical_plant", THIRD_CHEMICAL_PLANT);
 
     public static final DeferredItem<BlockItem> DISPENSING_TAP_ITEM =
         ITEMS.registerSimpleBlockItem("dispensing_tap", DISPENSING_TAP);

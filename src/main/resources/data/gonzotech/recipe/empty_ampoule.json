@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:glass",
+    "minecraft:glass"
+  ],
+  "result": {
+    "id": "gonzotech:empty_ampoule",
+    "count": 1
+  }
+}

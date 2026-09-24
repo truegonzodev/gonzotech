@@ -104,7 +104,10 @@ public final class RecipeUnlocks {
             "gonzotech:hazmat_helmet",
             "gonzotech:hazmat_chestplate",
             "gonzotech:hazmat_leggings",
-            "gonzotech:hazmat_boots"
+            "gonzotech:hazmat_boots",
+            // Ампулы (автор 24.09): крафт доступен всегда, показ в книге — с Открытия 2.
+            "gonzotech:empty_ampoule",
+            "gonzotech:durable_ampoule"
         ),
         6, List.of(
             // Физически крафтится всегда, в книге появляется с Открытием 6.
