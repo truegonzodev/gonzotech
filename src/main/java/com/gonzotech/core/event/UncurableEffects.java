@@ -28,11 +28,12 @@ public final class UncurableEffects {
     private UncurableEffects() {
     }
 
-    /** Защищённые эффекты: некроз, тремор, сердечный приступ. */
+    /** Защищённые эффекты: некроз, тремор, сердечный приступ, курс лечения (ДТПА). */
     private static boolean isGuarded(Holder<MobEffect> effect) {
         return effect.value() == ModEffects.NECROSIS.value()
                 || effect.value() == ModEffects.TREMOR.value()
-                || effect.value() == ModEffects.HEART_ATTACK.value();
+                || effect.value() == ModEffects.HEART_ATTACK.value()
+                || effect.value() == ModEffects.TREATMENT_COURSE.value();
     }
 
     @SubscribeEvent

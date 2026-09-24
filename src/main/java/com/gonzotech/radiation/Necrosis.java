@@ -1,11 +1,17 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.event.UncurableEffects;
 import com.gonzotech.core.registry.ModEffects;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 
 import java.util.HashMap;
@@ -40,16 +46,29 @@ public final class Necrosis {
     private static final double AGGRO_PER_LEVEL = 0.1;
 
     /**
-     * Расход воздуха на спринте, базовый (уровень I). Автор 22.09.2026: «поднять траты
-     * пузырьков в 30–40 раз» — берём середину: 35 пузырьков в секунду (полная полоска,
-     * 300 пузырьков, уходит за ~8.5 с спринта) вместо прежнего 1 пузырька в секунду.
+     * Расход воздуха на спринте, базовый (уровень I). Автор 24.09.2026 (вечер):
+     * «расход пузырьков с 3500/с до 220/с при беге». Единица здесь —
+     * 1 «пузырёк» = 1 единица ванильного воздуха: полоска = 300 = 10 HUD-пузырей.
      */
-    private static final double BUBBLES_BASE_PER_SECOND = 35.0;
+    private static final double BUBBLES_BASE_PER_SECOND = 220.0;
     /** Прирост расхода за уровень — +10 % (та же логика «±10 % за уровень», что у агра). */
     private static final double BUBBLES_PER_LEVEL = 0.1;
+    /**
+     * Пассивный расход воздуха (автор 24.09, вечер): −70 пузырьков/с всегда, пока
+     * воздух не на 100 %. Ванильный реген +80/с против −70/с → нетто +10/с («1/3
+     * пузырька в сек»). При 100 % не тратим — иначе HUD-пузырьки мигают (автор).
+     */
+    private static final double PASSIVE_DRAIN_PER_SECOND = 70.0;
 
     /** Накопитель расхода воздуха: «пузырьки в секунду» дробные. */
     private static final Map<UUID, Double> AIR_DEBT = new HashMap<>();
+    /** Накопитель пассивного расхода (дробные пузырьки {@link #PASSIVE_DRAIN_PER_SECOND}). */
+    private static final Map<UUID, Double> PASSIVE_DEBT = new HashMap<>();
+    /**
+     * Какой срез макс. HP сейчас применён (автор 24.09, вечер: сердца должны возвращаться
+     * и при самопроизвольном конце эффекта) — флаг «срез висит» для мгновенного возврата.
+     */
+    private static final Map<UUID, Integer> APPLIED_PENALTY = new HashMap<>();
     /**
      * Воздух, который мы держим «своим»: ваниль каждый тик восстанавливает 4 пузырька
      * ({@code LivingEntity.baseTick}), поэтому просто вычитать бесполезно — полоска
@@ -58,10 +77,17 @@ public final class Necrosis {
      */
     private static final Map<UUID, Integer> HELD_AIR = new HashMap<>();
 
+    /** ID модификатора макс. HP под некрозом (см. {@link #updateMaxHealth}). */
+    private static final ResourceLocation NECROSIS_HP_ID =
+            ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "necrosis_max_health");
+
     private Necrosis() {
     }
 
-    /** Выдать (или усилить) вечный некроз. Порядок уровней не понижаем. */
+    /**
+     * Выдать (или усилить) вечный некроз. Порядок уровней не понижаем.
+     * Без сообщений (автор 24.09: системные подсказки в чат убрать).
+     */
     public static void grant(ServerPlayer player, int level) {
         MobEffectInstance current = player.getEffect(ModEffects.NECROSIS);
         if (current != null && current.getAmplifier() >= level && current.isInfiniteDuration()) {
@@ -69,20 +95,48 @@ public final class Necrosis {
         }
         player.addEffect(new MobEffectInstance(ModEffects.NECROSIS,
                 MobEffectInstance.INFINITE_DURATION, level, false, true));
-        player.displayClientMessage(
-                net.minecraft.network.chat.Component.translatable("message.gonzotech.necrosis.caught",
-                        level + 1).withStyle(net.minecraft.ChatFormatting.DARK_RED), false);
+        updateMaxHealth(player);
     }
 
     /**
-     * Снять некроз (лечение — будущие препараты; сегодня вызывается вручную/командой).
-     * Через {@link UncurableEffects#runUncancelled}: молоко и прочие «общие» снятия этот
-     * эффект не берут (автор 22.09.2026).
+     * Снять некроз — ЕДИНСТВЕННЫЙ способ (автор 24.09): полное прохождение курса ДТПА
+     * (шестая доза, сброс счётчика — см. {@code DtpaItem}). Через
+     * {@link UncurableEffects#runUncancelled}: молоко и прочие «общие» снятия этот эффект
+     * не берут (автор 22.09.2026).
      */
     public static void cure(ServerPlayer player) {
         UncurableEffects.runUncancelled(() -> player.removeEffect(ModEffects.NECROSIS));
         AIR_DEBT.remove(player.getUUID());
+        PASSIVE_DEBT.remove(player.getUUID());
         HELD_AIR.remove(player.getUUID());
+        updateMaxHealth(player);
+    }
+
+    /**
+     * Макс. HP под некрозом (автор 24.09, вечер: «забирает 2/4/6/8…, но не 1/3/5/7 —
+     * чтобы сердца были полные»): амплитуда L отнимает {@code 2·(L + 1)} HP —
+     * I −2, II −4, III −6, IV −8 «и тд» (всегда чётные). Пересчитывается из {@link #grant},
+     * {@link #cure} и тика ({@link #tickAir}/{@link #tick}) — возврат срабатывает и когда
+     * эффект кончился сам, и когда снят внешне (/effect remove), не только через курс ДТПА.
+     */
+    public static void updateMaxHealth(Player player) {
+        AttributeInstance maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth == null) {
+            return;
+        }
+        maxHealth.removeModifier(NECROSIS_HP_ID);
+        MobEffectInstance necrosis = player.getEffect(ModEffects.NECROSIS);
+        if (necrosis != null) {
+            int penalty = -2 * (necrosis.getAmplifier() + 1);
+            maxHealth.addTransientModifier(new AttributeModifier(NECROSIS_HP_ID,
+                    penalty, AttributeModifier.Operation.ADD_VALUE));
+            APPLIED_PENALTY.put(player.getUUID(), penalty);
+        } else {
+            APPLIED_PENALTY.remove(player.getUUID());
+        }
+        if (player.getHealth() > player.getMaxHealth()) {
+            player.setHealth(player.getMaxHealth());
+        }
     }
 
     /**
@@ -97,11 +151,28 @@ public final class Necrosis {
         UUID id = player.getUUID();
         if (necrosis == null) {
             AIR_DEBT.remove(id);
+            PASSIVE_DEBT.remove(id);
             HELD_AIR.remove(id);
+            // Эффект кончился сам или снят внешне (автор 24.09, вечер) — вернуть сердца
+            // мгновенно, не дожидаясь секундного тика: раньше срез висел вечно.
+            if (APPLIED_PENALTY.containsKey(id)) {
+                updateMaxHealth(player);
+            }
             return;
         }
         if (player.isCreative() || player.isSpectator()) {
             return;
+        }
+        // Пассивный расход (автор 24.09, вечер): −70/с, ТОЛЬКО пока воздух не на 100 %
+        // (иначе HUD-пузырьки мигают — ванильный реген держит максимум). Ванила +4/тик,
+        // мы −3.5/тик → нетто +0.5/тик = +10/с.
+        if (player.getAirSupply() < player.getMaxAirSupply()) {
+            double pdebt = PASSIVE_DEBT.getOrDefault(id, 0.0) + PASSIVE_DRAIN_PER_SECOND / 20.0;
+            int pspend = (int) pdebt;
+            PASSIVE_DEBT.put(id, pdebt - pspend);
+            if (pspend > 0) {
+                player.setAirSupply(Math.max(0, player.getAirSupply() - pspend));
+            }
         }
         if (!player.isSprinting()) {
             HELD_AIR.put(id, player.getAirSupply());
@@ -117,14 +188,21 @@ public final class Necrosis {
         player.setAirSupply(Math.min(player.getAirSupply(), held));
     }
 
-    /** Секундный тик: расход воздуха на спринте + «добор» агра. */
+    /**
+     * Секундный тик: пересчёт макс. HP под некрозом (см. {@link #updateMaxHealth}),
+     * расход воздуха на спринте + «добор» агра.
+     */
     public static void tick(ServerPlayer player) {
         MobEffectInstance necrosis = player.getEffect(ModEffects.NECROSIS);
         if (necrosis == null) {
             AIR_DEBT.remove(player.getUUID());
+            PASSIVE_DEBT.remove(player.getUUID());
             HELD_AIR.remove(player.getUUID());
             return;
         }
+        // Срез макс. HP (автор 24.09: «не работает»): пересчёт тут, до creative-return,
+        // чтобы подхватывать и внешние эффекты (/effect), и любые изменения уровня.
+        updateMaxHealth(player);
         if (player.isCreative() || player.isSpectator()) {
             return;
         }
@@ -176,7 +254,9 @@ public final class Necrosis {
     /** Забыть игрока (выход/смерть). */
     public static void forget(UUID playerId) {
         AIR_DEBT.remove(playerId);
+        PASSIVE_DEBT.remove(playerId);
         HELD_AIR.remove(playerId);
+        APPLIED_PENALTY.remove(playerId);
     }
 
     /** Утилита для отладки: уровень некроза игрока (-1 — нет эффекта). */
