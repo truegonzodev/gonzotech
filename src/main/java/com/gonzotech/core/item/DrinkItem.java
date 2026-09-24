@@ -26,9 +26,6 @@ public class DrinkItem extends Item {
 
     /** Задержка «как у еды». */
     public static final int USE_TICKS = 32;
-    /** Награда полного курса ДТПА (автор 24.09): снятие стресса и кризиса. */
-    private static final int COURSE_STRESS_RELIEF = 20_000;
-    private static final int COURSE_CRISIS_RELIEF = 2_000;
 
     /** Что остаётся после глотка; {@code null} — не остаётся ничего (кружка). */
     private final Item remainder;
