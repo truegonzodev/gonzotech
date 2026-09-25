@@ -8,16 +8,20 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Clean-room filter: three item slots and an internal GTU buffer. */
-public final class AirFilterBlockEntity extends BlockEntity implements WorldlyContainer, GtuSink {
+public final class AirFilterBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider, GtuSink {
     private static final int SLOT_COUNT = 3;
     private static final long GTU_PER_SECOND = 1_000L;
     private static final NonNullList<ItemStack> EMPTY = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
@@ -70,6 +74,12 @@ public final class AirFilterBlockEntity extends BlockEntity implements WorldlyCo
     @Override public void setItem(int slot, ItemStack stack) { items.set(slot, stack.copyWithCount(Math.min(stack.getCount(), getMaxStackSize()))); setChanged(); }
     @Override public int getMaxStackSize() { return 64; }
     @Override public boolean stillValid(Player player) { return player.distanceToSqr(worldPosition.getX()+0.5, worldPosition.getY()+0.5, worldPosition.getZ()+0.5) <= 64.0; }
+    @Override public Component getDisplayName() {
+        return Component.translatable(getBlockState().getBlock().getDescriptionId());
+    }
+    @Override public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
+        return new com.gonzotech.machines.menu.AirFilterMenu(id, inventory, this);
+    }
     @Override public void clearContent() { items.clear(); }
     @Override public int[] getSlotsForFace(Direction side) { return new int[]{0,1,2}; }
     @Override public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction side) { return true; }
