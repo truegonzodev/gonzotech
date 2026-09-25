@@ -1,15 +1,11 @@
 package com.gonzotech.core.client;
 
-import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.item.CustomAlloyItem;
 import com.gonzotech.chalkboard.network.NotesNetwork;
 import com.gonzotech.machines.processing.AlloyMaterialCatalog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import java.util.List;
@@ -17,7 +13,7 @@ import java.util.Locale;
 
 /**
  * Статы базовых материалов в тултипе (автор 2026-09-18, гейт исправлен 22.09.2026):
- * после активации <b>«Открытия 2»</b> ГЛАВНАЯ форма каждого материала каталога —
+ * после активации <b>«Открытия 3»</b> ГЛАВНАЯ форма каждого материала каталога —
  * слиток (для ванильных: слитки железо/медь/золото, сам алмаз, сам редстоун) —
  * показывает те же строки статов, что и custom_alloy, но статично, из
  * {@link AlloyMaterialCatalog}: материал их «не несёт», просто имеет тултип.
@@ -35,20 +31,18 @@ import java.util.Locale;
  * прогресс, что открывает крафты тира 2), а сам payload приходит на входе в игру
  * и сразу после использования «Открытия».</p>
  */
-@EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = Dist.CLIENT)
 public final class MaterialStatTooltips {
 
     private MaterialStatTooltips() {
     }
 
-    @SubscribeEvent
-    public static void onItemTooltip(ItemTooltipEvent event) {
+    public static void append(ItemTooltipEvent event) {
         Player player = event.getEntity();
         // На старте тултип собирается для search-tree без игрока — не трогаем.
         if (player == null) return;
         // Гейт — ПОСТОЯННАЯ активация «Открытия 2» (автор 22.09.2026), а не предмет
         // в инвентаре: статы видны навсегда, в том числе после проюза всех открытий.
-        if (!NotesNetwork.isTierUnlocked(2)) return;
+        if (!NotesNetwork.isTierUnlocked(3)) return;
 
         ItemStack stack = event.getItemStack();
         AlloyMaterialCatalog.Ingredient ingredient = AlloyMaterialCatalog.ingredient(stack);

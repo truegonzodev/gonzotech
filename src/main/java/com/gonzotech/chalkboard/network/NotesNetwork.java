@@ -107,6 +107,7 @@ public final class NotesNetwork {
         return switch (tier) {
             case 1 -> data.tier1Unlocked();
             case 2 -> data.tier2Unlocked();
+            case 3 -> data.noteFlags().contains("discovery_3");
             default -> false;
         };
     }

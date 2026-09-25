@@ -764,6 +764,7 @@
   "death.attack.radiation": "%1$s died of radiation sickness",
   "message.gonzotech.rad.stage": "Dosimeter: radiation level raised to %s",
   "message.gonzotech.rad.stage.fall": "Dosimeter: radiation level lowered to %s",
+  "tooltip.gonzotech.shielding": "Shielding property: %s",
   "tooltip.gonzotech.radioactivity": "Radioactivity: %s",
   "tooltip.gonzotech.toxicity": "Toxicity: %s",
   "gui.gonzotech.notes.p15.title": "Steam Turbine",

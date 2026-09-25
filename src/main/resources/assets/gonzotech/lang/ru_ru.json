@@ -764,6 +764,7 @@
   "death.attack.radiation": "%1$s погиб от лучевой болезни",
   "message.gonzotech.rad.stage": "Дозиметр: Уровень облучения поднят до %s",
   "message.gonzotech.rad.stage.fall": "Дозиметр: Уровень облучения опустился до %s",
+  "tooltip.gonzotech.shielding": "Экранирующее свойство: %s",
   "tooltip.gonzotech.radioactivity": "Радиоактивность: %s",
   "tooltip.gonzotech.toxicity": "Токсичность: %s",
   "gui.gonzotech.notes.p15.title": "Паровая турбина",
