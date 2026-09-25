@@ -112,37 +112,6 @@ public final class ItemRadioactivity {
         setInduced(stack, tag.getDouble(TAG_RAD) / Math.max(1, stack.getCount()));
     }
 
-    /** Удалить только радиационные поля во временной копии для equality-check. */
-    public static void removeRadiationForComparison(ItemStack stack) {
-        clear(stack);
-    }
-
-    /** Сравнение для нашего серверного объединителя: радиационный компонент игнорируется. */
-    public static boolean sameExceptRadiation(ItemStack first, ItemStack second) {
-        if (first.isEmpty() || second.isEmpty()) return false;
-        ItemStack a = first.copy();
-        ItemStack b = second.copy();
-        clear(a);
-        clear(b);
-        // matches() may include count in this mappings version; count is not
-        // an identity component for stackability, so normalize it first.
-        a.setCount(1);
-        b.setCount(1);
-        return ItemStack.matches(a, b);
-    }
-
-    /** Объединяет два совместимых стака и усредняет per-item дозу без потери суммы. */
-    public static void mergeInto(ItemStack target, ItemStack source, int amount) {
-        if (amount <= 0) return;
-        int oldCount = target.getCount();
-        int moved = Math.min(amount, source.getCount());
-        double weighted = (getInduced(target) * oldCount + getInduced(source) * moved)
-                / Math.max(1, oldCount + moved);
-        target.grow(moved);
-        source.shrink(moved);
-        setInduced(target, weighted);
-    }
-
     /** Полная эмиссия стака: preset per-item × count + induced per-item × count. */
     public static double totalEmission(ItemStack stack) {
         return RadSources.emissionOfStack(stack) + getInduced(stack) * Math.max(1, stack.getCount());
