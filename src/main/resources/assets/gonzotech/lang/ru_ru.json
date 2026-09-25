@@ -875,5 +875,14 @@
   "item.gonzotech.pentacin": "Пентацин",
   "item.gonzotech.dtpa": "ДТПА",
   "gui.gonzotech.chemical_plant.reaction": "Реакция: %s%%",
-  "itemGroup.gonzotech.adaptations": "Приспособления Gonzo Tech"
+  "itemGroup.gonzotech.adaptations": "Приспособления Gonzo Tech",
+  "item.gonzotech.energy_module": "Энергетический модуль",
+  "item.gonzotech.logic_module": "Логический модуль",
+  "item.gonzotech.electric_motor": "Электромотор",
+  "item.gonzotech.transistor": "Транзистор",
+  "item.gonzotech.fluid_module": "Жидкостный модуль",
+  "block.gonzotech.sheathing": "Обшивка",
+  "item.gonzotech.sheathing": "Обшивка",
+  "block.gonzotech.aluminum_housing": "Алюминиевый корпус",
+  "item.gonzotech.aluminum_housing": "Алюминиевый корпус"
 }

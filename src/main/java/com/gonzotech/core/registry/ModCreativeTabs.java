@@ -263,6 +263,14 @@ public class ModCreativeTabs {
                 output.accept(ModItems.CORE_FORM.get());
                 output.accept(ModItems.COIL.get());
                 output.accept(ModItems.INDUCTIVE_MODULE.get());
+                // Базовые компоненты тир-3: предметы и компонентные блоки, без рецептов.
+                output.accept(ModItems.ENERGY_MODULE.get());
+                output.accept(ModItems.LOGIC_MODULE.get());
+                output.accept(ModItems.ELECTRIC_MOTOR.get());
+                output.accept(ModItems.TRANSISTOR.get());
+                output.accept(ModItems.FLUID_MODULE.get());
+                output.accept(ModItems.SHEATHING_ITEM.get());
+                output.accept(ModItems.ALUMINUM_HOUSING_ITEM.get());
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());
                 output.accept(ModItems.DIORITE_GRIT.get());

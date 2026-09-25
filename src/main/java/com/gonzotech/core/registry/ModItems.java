@@ -102,6 +102,14 @@ public class ModItems {
     public static final DeferredItem<Item> INDUCTIVE_MODULE =
         ITEMS.registerSimpleItem("inductive_module");
 
+    // ─────────────────────── Компоненты тир-3 ───────────────────────
+    // Базовые заготовки третьей эпохи. Рецепты намеренно не добавлены.
+    public static final DeferredItem<Item> ENERGY_MODULE = ITEMS.registerSimpleItem("energy_module");
+    public static final DeferredItem<Item> LOGIC_MODULE = ITEMS.registerSimpleItem("logic_module");
+    public static final DeferredItem<Item> ELECTRIC_MOTOR = ITEMS.registerSimpleItem("electric_motor");
+    public static final DeferredItem<Item> TRANSISTOR = ITEMS.registerSimpleItem("transistor");
+    public static final DeferredItem<Item> FLUID_MODULE = ITEMS.registerSimpleItem("fluid_module");
+
     // ─────────────────────── Прессованные компоненты ───────────────────────
     // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».
     public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
@@ -429,6 +437,12 @@ public class ModItems {
                 new net.minecraft.world.effect.MobEffectInstance(
                     net.minecraft.world.effect.MobEffects.CONFUSION, 20, 0), 1.0f))
             .build();
+
+    /** Tier-3 component blocks; recipes are intentionally deferred. */
+    public static final DeferredItem<BlockItem> SHEATHING_ITEM =
+        ITEMS.registerSimpleBlockItem("sheathing", ModBlocks.SHEATHING);
+    public static final DeferredItem<BlockItem> ALUMINUM_HOUSING_ITEM =
+        ITEMS.registerSimpleBlockItem("aluminum_housing", ModBlocks.ALUMINUM_HOUSING);
 
     /**
      * Фаза 3 — «прикол»: прото-сусло. Крафтится бесформенно (семена + костная

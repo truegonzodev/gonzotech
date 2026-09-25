@@ -875,5 +875,14 @@
   "item.gonzotech.pentacin": "Pentacin",
   "item.gonzotech.dtpa": "DTPA",
   "gui.gonzotech.chemical_plant.reaction": "Reaction: %s%%",
-  "itemGroup.gonzotech.adaptations": "Gonzo Tech Adaptations"
+  "itemGroup.gonzotech.adaptations": "Gonzo Tech Adaptations",
+  "item.gonzotech.energy_module": "Energy Module",
+  "item.gonzotech.logic_module": "Logic Module",
+  "item.gonzotech.electric_motor": "Electric Motor",
+  "item.gonzotech.transistor": "Transistor",
+  "item.gonzotech.fluid_module": "Fluid Module",
+  "block.gonzotech.sheathing": "Sheathing",
+  "item.gonzotech.sheathing": "Sheathing",
+  "block.gonzotech.aluminum_housing": "Aluminum Housing",
+  "item.gonzotech.aluminum_housing": "Aluminum Housing"
 }
