@@ -17,6 +17,12 @@ public final class RadiationMistParticle extends TextureSheetParticle {
                                   double dx, double dy, double dz, SpriteSet sprites) {
         super(level, x, y, z, dx, dy, dz);
         this.sprites = sprites;
+        // Keep the requested velocity verbatim. Some vanilla particle
+        // constructors normalize their incoming speed; radiation uses the
+        // value as a visual physical scale, so restore it explicitly.
+        this.xd = dx;
+        this.yd = dy;
+        this.zd = dz;
         this.friction = 0.94F;
         this.gravity = 0.0F;
         // Vanilla particle movement must not collide with ordinary blocks.
@@ -49,7 +55,13 @@ public final class RadiationMistParticle extends TextureSheetParticle {
             yd = 0.0;
             zd = 0.0;
         } else {
-            move(xd, yd, zd);
+            // Move directly instead of Particle.move(): the latter is a
+            // vanilla collision/motion helper and can normalize or clamp
+            // visual velocity even when hasPhysics=false.
+            x += xd;
+            y += yd;
+            z += zd;
+            setPos(x, y, z);
             xd *= friction; yd *= friction; zd *= friction;
         }
         alpha = 0.28F * (1.0F - (float) age / lifetime);
