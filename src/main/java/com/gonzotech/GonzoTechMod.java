@@ -72,6 +72,8 @@ public class GonzoTechMod {
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
+        // Радиационная диагностика: /gonzotech debug purge|getdose.
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.radiation.RadiationDebugCommand::onRegisterCommands);
         // Админ-команды психики: /gonzotech debug psyche add|remove|set|trigger (автор 22.09).
         NeoForge.EVENT_BUS.addListener(com.gonzotech.core.psyche.command.PsycheCommand::onRegisterCommands);
 

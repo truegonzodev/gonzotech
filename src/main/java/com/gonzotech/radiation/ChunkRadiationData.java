@@ -93,6 +93,46 @@ public class ChunkRadiationData extends SavedData {
         return baselineOf(level, chunkKey) + contamination.get(chunkKey);
     }
 
+    /**
+     * Полностью обнулить радиационные данные в квадрате чанков вокруг центра.
+     * baseline фиксируется в нуле, чтобы ленивый природный фон не создался заново
+     * при следующем запросе дозиметра.
+     */
+    public void purgeAround(ChunkPos center, int radius) {
+        for (int cx = center.x - radius; cx <= center.x + radius; cx++) {
+            for (int cz = center.z - radius; cz <= center.z + radius; cz++) {
+                long key = ChunkPos.asLong(cx, cz);
+                baseline.put(key, 0.0);
+                contamination.remove(key);
+                placed.remove(key);
+                placedPos.remove(key);
+            }
+        }
+        setDirty();
+    }
+
+    /** Actual radioactive blocks currently present in one chunk, for diagnostics. */
+    public List<VisualSource> sourcesInChunk(ServerLevel level, long chunkKey) {
+        List<VisualSource> out = new ArrayList<>();
+        ChunkPos cp = new ChunkPos(chunkKey);
+        int minY = level.getMinY();
+        int maxY = level.getMaxY();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = cp.getMinBlockX(); x < cp.getMinBlockX() + 16; x++) {
+            for (int z = cp.getMinBlockZ(); z < cp.getMinBlockZ() + 16; z++) {
+                for (int y = minY; y < maxY; y++) {
+                    pos.set(x, y, z);
+                    var state = level.getBlockState(pos);
+                    double emission = RadSources.blockEmission(
+                            BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath());
+                    if (emission > 0.0) out.add(new VisualSource(pos.immutable(), emission));
+                }
+            }
+        }
+        out.sort((a, b) -> Double.compare(b.emission(), a.emission()));
+        return out;
+    }
+
     /** Только динамическое заражение (без baseline) — для мягких потолков помп. */
     public double contaminationOf(long chunkKey) {
         return contamination.get(chunkKey);
