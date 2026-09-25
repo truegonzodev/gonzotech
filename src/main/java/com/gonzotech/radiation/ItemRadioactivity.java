@@ -69,6 +69,20 @@ public final class ItemRadioactivity {
         if (after != null && after.isEmpty()) stack.remove(DataComponents.CUSTOM_DATA);
     }
 
+    /** Рассчитать следующий per-item уровень без изменения ItemStack. */
+    public static double nextInduced(double current, ItemStack stack,
+                                     boolean hasSource, double sourceNzt, double factor) {
+        int count = Math.max(1, stack.getCount());
+        double target = Math.min(sourceNzt / count, INDUCED_CAP);
+        if (hasSource && target >= 1.0 && factor > 0.0) {
+            if (current > target) return current / GROWTH;
+            double seeded = Math.max(current, 1.0 / count);
+            double next = seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor;
+            return Math.min(next, target);
+        }
+        return current > 0.0 ? current / GROWTH : 0.0;
+    }
+
     /**
      * Шаг роста одного предмета. {@code sourceNzt} — суммарный уровень
      * локального источника, поэтому для большого стака наведённая часть
@@ -76,22 +90,9 @@ public final class ItemRadioactivity {
      * размера стака и не дюпается при split.
      */
     public static void tickInduced(ItemStack stack, boolean hasSource, double sourceNzt, double factor) {
-        double current = getInduced(stack);
-        int count = Math.max(1, stack.getCount());
-        double target = Math.min(sourceNzt / count, INDUCED_CAP);
-        // Для источника самого стака target не должен быть уменьшен: его
-        // собственная preset-эмиссия уже считается отдельно.
-        if (hasSource && target >= 1.0 && factor > 0.0) {
-            if (current > target) {
-                setInduced(stack, current / GROWTH);
-                return;
-            }
-            double seeded = Math.max(current, 1.0 / count);
-            double next = seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor;
-            setInduced(stack, Math.min(next, target));
-        } else if (current > 0.0) {
-            setInduced(stack, current / GROWTH);
-        }
+        double next = nextInduced(getInduced(stack), stack, hasSource, sourceNzt, factor);
+        if (next > 0.0) setInduced(stack, next);
+        else clear(stack);
     }
 
     /** Совместимость со старыми callers: split больше не требует ручного деления. */

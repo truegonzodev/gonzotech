@@ -11,6 +11,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -103,6 +104,25 @@ public final class RadiationSystem {
     /** Накопители дробной дозы/спада по игрокам (permille дискретен). */
     private static final Map<UUID, Double> DOSE_ACC = new HashMap<>();
     private static final Map<UUID, Double> SHED_ACC = new HashMap<>();
+    /** Виртуальная радиация активного предмета: не трогаем carried NBT во время действия. */
+    private static final Map<HeldKey, HeldRadState> HELD_RAD = new HashMap<>();
+    private record HeldKey(UUID player, InteractionHand hand) {}
+    private static final int USE_SOFT_CD_TICKS = 40;
+    private static final int HELD_FLUSH_TICKS = 20 * 35;
+
+    private static final class HeldRadState {
+        private ItemStack stack;
+        private double value;
+        private int lastUseTick;
+        private int lastFlushTick;
+
+        private HeldRadState(ItemStack stack, double value, int tick) {
+            this.stack = stack;
+            this.value = value;
+            this.lastUseTick = tick;
+            this.lastFlushTick = tick;
+        }
+    }
 
     private RadiationSystem() {
     }
@@ -154,18 +174,19 @@ public final class RadiationSystem {
                 if (stack.isEmpty()) {
                     continue;
                 }
-                // Нельзя переписывать custom_data предмета в активной руке во
-                // время копания: сервер считает это сменой carried stack и
-                // сбрасывает BlockHit прогресс. Он всё равно учитывается как
-                // источник через preset/уже сохранённое значение; NBT-тиканье
-                // возобновится, когда предмет выйдет из руки.
-                boolean activelyHeld = stack == player.getMainHandItem()
+                boolean activeHand = stack == player.getMainHandItem()
                         || stack == player.getOffhandItem();
-                if (!activelyHeld) {
+                boolean hardUse = activeHand && isHardUsing(player, stack);
+                double perItem;
+                if (activeHand) {
+                    perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
+                            sourceLevel, RadMaterials.itemFactor(stack));
+                } else {
                     ItemRadioactivity.tickInduced(stack, hasSourceContext, sourceLevel,
                             RadMaterials.itemFactor(stack));
+                    perItem = ItemRadioactivity.getInduced(stack);
                 }
-                induced += ItemRadioactivity.getInduced(stack) * Math.max(1, stack.getCount());
+                induced += perItem * Math.max(1, stack.getCount());
             }
         }
 
@@ -250,6 +271,45 @@ public final class RadiationSystem {
         scanContainersInto(level, chunkKey, data);
     }
 
+    private static boolean isHardUsing(ServerPlayer player, ItemStack stack) {
+        if (player.isUsingItem() && player.getUseItem() == stack) {
+            return true;
+        }
+        // Mining is not a normal ItemStack use action. A swing pulse is the
+        // server-visible signal; the soft cooldown bridges the gaps between
+        // consecutive vanilla swings while the block is still being mined.
+        return stack == player.getMainHandItem() && player.isSwinging();
+    }
+
+    private static double tickHeldRadiation(ServerPlayer player, ItemStack stack, boolean hardUse,
+                                            boolean hasSource, double sourceNzt, double factor) {
+        InteractionHand hand = stack == player.getOffhandItem()
+                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        HeldKey key = new HeldKey(player.getUUID(), hand);
+        int now = player.tickCount;
+        HeldRadState state = HELD_RAD.get(key);
+        if (state == null && !hardUse) {
+            ItemRadioactivity.tickInduced(stack, hasSource, sourceNzt, factor);
+            return ItemRadioactivity.getInduced(stack);
+        }
+        if (state == null || state.stack != stack) {
+            if (state != null) ItemRadioactivity.setInduced(state.stack, state.value);
+            state = new HeldRadState(stack, ItemRadioactivity.getInduced(stack), now);
+            HELD_RAD.put(key, state);
+        }
+        if (hardUse) state.lastUseTick = now;
+        state.value = ItemRadioactivity.nextInduced(state.value, stack, hasSource, sourceNzt, factor);
+
+        boolean inSoftCd = now - state.lastUseTick < USE_SOFT_CD_TICKS;
+        boolean periodicFlush = now - state.lastFlushTick >= HELD_FLUSH_TICKS;
+        if (!hardUse && !inSoftCd || periodicFlush) {
+            ItemRadioactivity.setInduced(stack, state.value);
+            HELD_RAD.remove(key);
+            return ItemRadioactivity.getInduced(stack);
+        }
+        return state.value;
+    }
+
     /** Контейнеры активного чанка: логистика к сумме эмиссии содержимого,
      *  на каждый горячий контейнер — свой экран контура (свинцовый купол над
      *  сундуком с ураном гасит вклад, автор 21.09). */
@@ -284,6 +344,7 @@ public final class RadiationSystem {
         if (event.getEntity() instanceof ServerPlayer player) {
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
+            HELD_RAD.entrySet().removeIf(entry -> entry.getKey().player().equals(player.getUUID()));
             RadSickness.forget(player.getUUID());
             RadCleanse.forget(player.getUUID());
             Necrosis.forget(player.getUUID());
