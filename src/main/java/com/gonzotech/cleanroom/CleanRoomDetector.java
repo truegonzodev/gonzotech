@@ -2,6 +2,7 @@ package com.gonzotech.cleanroom;
 
 import com.gonzotech.core.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -49,9 +50,18 @@ public final class CleanRoomDetector {
         return block == ModBlocks.PORCELAIN.get()
                 || block == ModBlocks.BORE_STAINED_GLASS.get()
                 || block == ModBlocks.THIRD_HERMETIC_DOOR.get()
+                // Every logistics node is a full cube and may be used as a
+                // clean-room wall/connection point. Keep this name-based so
+                // first/second tier and future *_node blocks all work.
+                || isNodeBlock(block)
                 || block == Blocks.QUARTZ_BLOCK
                 || block == Blocks.QUARTZ_BRICKS
                 || block == Blocks.CHISELED_QUARTZ_BLOCK
                 || block == Blocks.WHITE_CONCRETE;
+    }
+
+    private static boolean isNodeBlock(net.minecraft.world.level.block.Block block) {
+        var key = BuiltInRegistries.BLOCK.getKey(block);
+        return key != null && key.getPath().endsWith("_node");
     }
 }
