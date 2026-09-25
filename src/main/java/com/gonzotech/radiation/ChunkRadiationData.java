@@ -221,6 +221,11 @@ public class ChunkRadiationData extends SavedData {
      * </ol>
      */
     public void maintain(ServerLevel level) {
+        // Before feeding contamination, reconcile the registry with the world.
+        // A piston can move a source without firing the player break/place path;
+        // a bounded local search preserves that source at its new position.
+        reconcilePlacedSources(level);
+
         // 1) Питание от поставленных блоков.
         for (var pe : placed.long2DoubleEntrySet()) {
             double emitted = pe.getDoubleValue();
@@ -282,6 +287,61 @@ public class ChunkRadiationData extends SavedData {
             }
         });
         setDirty();
+    }
+
+    /**
+     * Rebuild the placed-source index from its known coordinates. Missing sources
+     * are removed; when a source disappeared from its old position, search only
+     * the piston-sized neighbourhood for the same radioactive block and migrate
+     * the registration if found. This never scans the world.
+     */
+    private void reconcilePlacedSources(ServerLevel level) {
+        List<SourceRecord> known = new ArrayList<>();
+        for (var entry : placedPos.long2ObjectEntrySet()) {
+            for (long raw : entry.getValue()) {
+                BlockPos pos = BlockPos.of(raw);
+                double expected = RadSources.blockEmission(
+                        BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+                if (expected > 0.0) {
+                    known.add(new SourceRecord(pos, expected));
+                    continue;
+                }
+                BlockPos moved = findNearbySource(level, pos);
+                if (moved != null) {
+                    double movedEmission = RadSources.blockEmission(BuiltInRegistries.BLOCK.getKey(
+                            level.getBlockState(moved).getBlock()).getPath());
+                    known.add(new SourceRecord(moved, movedEmission));
+                }
+            }
+        }
+
+        placedPos.clear();
+        placed.clear();
+        for (SourceRecord source : known) {
+            long key = new ChunkPos(source.pos()).toLong();
+            placedPos.computeIfAbsent(key, ignored -> new LongOpenHashSet()).add(source.pos().asLong());
+            placed.put(key, placed.get(key) + source.emission());
+        }
+        if (!known.isEmpty() || !placed.isEmpty()) setDirty();
+    }
+
+    private record SourceRecord(BlockPos pos, double emission) {}
+
+    /** Vanilla pistons can move a block up to twelve positions. */
+    private BlockPos findNearbySource(ServerLevel level, BlockPos origin) {
+        for (int dx = -12; dx <= 12; dx++) {
+            for (int dy = -12; dy <= 12; dy++) {
+                for (int dz = -12; dz <= 12; dz++) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+                    BlockPos candidate = origin.offset(dx, dy, dz);
+                    if (!level.hasChunkAt(candidate)) continue;
+                    double actual = RadSources.blockEmission(BuiltInRegistries.BLOCK.getKey(
+                            level.getBlockState(candidate).getBlock()).getPath());
+                    if (Math.abs(actual - emission) < 1.0e-9) return candidate;
+                }
+            }
+        }
+        return null;
     }
 
     /**
