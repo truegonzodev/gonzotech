@@ -104,6 +104,8 @@ public final class RadiationSystem {
     /** Накопители дробной дозы/спада по игрокам (permille дискретен). */
     private static final Map<UUID, Double> DOSE_ACC = new HashMap<>();
     private static final Map<UUID, Double> SHED_ACC = new HashMap<>();
+    /** Последний swing pulse: mining не является обычным isUsingItem(). */
+    private static final Map<UUID, Integer> LAST_SWING = new HashMap<>();
     /** Виртуальная радиация активного предмета: не трогаем carried NBT во время действия. */
     private static final Map<HeldKey, HeldRadState> HELD_RAD = new HashMap<>();
     private record HeldKey(UUID player, InteractionHand hand) {}
@@ -133,6 +135,9 @@ public final class RadiationSystem {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
+        }
+        if (player.isSwinging()) {
+            LAST_SWING.put(player.getUUID(), player.tickCount);
         }
         // Воздух некроза держим КАЖДЫЙ тик: ваниль восстанавливает 4 пузырька в тик,
         // поэтому вычитать раз в секунду бесполезно (автор 22.09.2026 — полоска мигала).
@@ -275,10 +280,11 @@ public final class RadiationSystem {
         if (player.isUsingItem() && player.getUseItem() == stack) {
             return true;
         }
-        // Mining is not a normal ItemStack use action. A swing pulse is the
-        // server-visible signal; the soft cooldown bridges the gaps between
-        // consecutive vanilla swings while the block is still being mined.
-        return stack == player.getMainHandItem() && player.isSwinging();
+        // Mining is not a normal ItemStack use action. Record swing pulses on
+        // every player tick, not only on the once-per-second radiation tick.
+        // The window bridges gaps between consecutive vanilla swings.
+        int lastSwing = LAST_SWING.getOrDefault(player.getUUID(), Integer.MIN_VALUE);
+        return stack == player.getMainHandItem() && player.tickCount - lastSwing <= 10;
     }
 
     private static double tickHeldRadiation(ServerPlayer player, ItemStack stack, boolean hardUse,
@@ -344,6 +350,7 @@ public final class RadiationSystem {
         if (event.getEntity() instanceof ServerPlayer player) {
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
+            LAST_SWING.remove(player.getUUID());
             HELD_RAD.entrySet().removeIf(entry -> entry.getKey().player().equals(player.getUUID()));
             RadSickness.forget(player.getUUID());
             RadCleanse.forget(player.getUUID());
