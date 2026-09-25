@@ -1,4 +1,0 @@
-craftingTable.addShaped("logic_module", <item:gonzotech:logic_module> * 1, [
-[<item:gonzotech:copper_wire>, <item:minecraft:comparator>, <item:gonzotech:copper_wire>], 
-[<item:gonzotech:semiconductor_plate>, <item:gonzotech:semiconductor_core>, <item:gonzotech:semiconductor_plate>], 
-[<item:minecraft:clay_ball>, <item:minecraft:smooth_stone>, <item:minecraft:clay_ball>]]);

@@ -1,4 +1,0 @@
-craftingTable.addShaped("motor3", <item:gonzotech:electric_motor> * 1, [
-[<item:gonzotech:silver_wire>, <item:minecraft:piston>, <item:gonzotech:silver_wire>], 
-[<item:gonzotech:inductive_module>, <item:gonzotech:redstone_core>, <item:gonzotech:inductive_module>], 
-[<item:gonzotech:silver_wire>, <item:gonzotech:steel_plate>, <item:gonzotech:silver_wire>]]);

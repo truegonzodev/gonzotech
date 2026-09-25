@@ -1,4 +1,0 @@
-craftingTable.addShaped("filler", <item:gonzotech:third_filler> * 1, [
-[<item:gonzotech:fluid_module>, <item:gonzotech:energy_module>, <item:gonzotech:fluid_module>], 
-[<item:minecraft:bucket>, <item:gonzotech:logic_module>, <item:minecraft:bucket>], 
-[<item:gonzotech:nickel_plate>, <item:gonzotech:sheathing>, <item:gonzotech:nickel_plate>]]);

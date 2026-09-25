@@ -1,4 +1,0 @@
-craftingTable.addShaped("wort_kettle", <item:gonzotech:third_wort_kettle> * 1, [
-[<item:gonzotech:stainless_steel_plate>, <item:gonzotech:tungsten_ingot>, <item:gonzotech:stainless_steel_plate>], 
-[<item:gonzotech:stainless_steel_ingot>, <item:gonzotech:fluid_module>, <item:gonzotech:stainless_steel_ingot>], 
-[<item:minecraft:cauldron>, <item:gonzotech:stainless_steel_plate>, <item:minecraft:cauldron>]]);
