@@ -20,6 +20,8 @@ public final class UniversalTooltip {
 
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
+        TooltipLayout.removeRadiatedCreativeCategory(event.getToolTip(), event.getItemStack(),
+                event.getEntity() != null && event.getEntity().isCreative());
         List<Component> advanced = TooltipLayout.takeAdvanced(event.getToolTip());
         // block 0 (creative category) remains vanilla-owned; mod blocks start
         // at the first lore line and are deliberately ordered here.
@@ -27,6 +29,7 @@ public final class UniversalTooltip {
         HazmatTooltips.append(event);       // item description block
         ShieldingTooltip.append(event);     // block 13, only when factor < 1
         RadTooltip.append(event);           // blocks 14-15, only when present
+        TooltipLayout.collapseEmptyRuns(event.getToolTip());
         event.getToolTip().addAll(advanced); // block 17: vanilla F3+H at the end
     }
 }
