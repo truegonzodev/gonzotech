@@ -83,12 +83,38 @@ public final class RadiationVisualClient {
             // a face before spawn; this is cheaper than spawning hidden mist.
             if (neighbor.canOcclude() && RadMaterials.blockFactor(neighbor) < 1.0) continue;
             for (int i = 0; i < attempts / 2 + 1; i++) {
-                double x = source.getX() + 0.5 + face.getStepX() * 0.52 + (level.random.nextDouble() - 0.5) * 0.45;
-                double y = source.getY() + 0.5 + face.getStepY() * 0.52 + (level.random.nextDouble() - 0.5) * 0.45;
-                double z = source.getZ() + 0.5 + face.getStepZ() * 0.52 + (level.random.nextDouble() - 0.5) * 0.45;
+                double u = level.random.nextDouble() - 0.5;
+                double v = level.random.nextDouble() - 0.5;
+                double x = source.getX() + 0.5 + face.getStepX() * 0.52;
+                double y = source.getY() + 0.5 + face.getStepY() * 0.52;
+                double z = source.getZ() + 0.5 + face.getStepZ() * 0.52;
+                // Pick a genuinely random point over the whole face, not the
+                // centre-line of the block.
+                if (face.getAxis() == Direction.Axis.X) {
+                    y += u * 0.92;
+                    z += v * 0.92;
+                } else if (face.getAxis() == Direction.Axis.Y) {
+                    x += u * 0.92;
+                    z += v * 0.92;
+                } else {
+                    x += u * 0.92;
+                    y += v * 0.92;
+                }
                 double speed = 0.006 + 0.035 * speedFactor;
-                level.addParticle(ModParticles.RADIATION_MIST.get(), x, y, z,
-                        face.getStepX() * speed, face.getStepY() * speed, face.getStepZ() * speed);
+                // Calibration from the in-game pass: radium is the visual
+                // reference, plutonium is the secondary tier, other sources
+                // retain their current speed.
+                double speedMultiplier = ratio >= 0.5 && ratio <= 2.0 ? 3.0
+                        : (ratio >= 0.02 && ratio < 0.08 ? 1.7 : 1.0);
+                speed *= speedMultiplier;
+                // Every radioactive cloud has buoyancy. The face direction
+                // is only the initial impulse; it is not the whole trajectory.
+                double upward = 0.010 + level.random.nextDouble() * 0.012;
+                double spread = speed * (0.18 + level.random.nextDouble() * 0.28);
+                double dx = face.getStepX() * speed + (level.random.nextDouble() - 0.5) * spread;
+                double dy = face.getStepY() * speed + upward + (level.random.nextDouble() - 0.5) * spread;
+                double dz = face.getStepZ() * speed + (level.random.nextDouble() - 0.5) * spread;
+                level.addParticle(ModParticles.RADIATION_MIST.get(), x, y, z, dx, dy, dz);
             }
         }
     }
