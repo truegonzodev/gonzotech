@@ -63,8 +63,17 @@ public final class RadiationVisualClient {
         } else {
             visualFactor = 0.18 + 0.12 * Math.log(ratio * 3750.0) / Math.log(187.5);
         }
-        visualFactor = Math.max(0.18, visualFactor);
-        double speedFactor = ratio > 1.0 ? Math.sqrt(ratio) : visualFactor;
+        // Second calibration pass from in-game measurements: plutonium is
+        // half of the previous grade, uranium three times weaker; the small
+        // sludge/corium family is reduced by roughly 2.8/2.3 respectively.
+        double divisor = ratio <= 0.00028 ? 3.0
+                : ratio <= 0.00032 ? 2.8
+                : ratio < 0.01 ? 2.3
+                : ratio < 0.08 ? 2.0 : 1.0;
+        visualFactor = Math.max(0.04, visualFactor / divisor);
+        // No artificial speed ceiling for very hot containers. A sub-linear
+        // exponent keeps 1.1 kZt/s visibly fast without making it explode.
+        double speedFactor = ratio > 1.0 ? Math.pow(ratio, 0.35) : visualFactor;
         int attempts = Math.max(1, Math.min(13, (int) Math.round(8.0 * visualFactor)));
         for (Direction face : Direction.values()) {
             BlockPos next = source.relative(face);

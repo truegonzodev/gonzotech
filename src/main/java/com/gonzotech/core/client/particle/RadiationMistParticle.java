@@ -19,6 +19,9 @@ public final class RadiationMistParticle extends TextureSheetParticle {
         this.sprites = sprites;
         this.friction = 0.94F;
         this.gravity = 0.0F;
+        // Vanilla particle movement must not collide with ordinary blocks.
+        // Shielding collision is handled explicitly below using RadMaterials.
+        this.hasPhysics = false;
         this.lifetime = 20 + this.random.nextInt(30);
         this.quadSize = 0.08F + this.random.nextFloat() * 0.10F;
         this.rCol = 0.55F;
@@ -40,11 +43,15 @@ public final class RadiationMistParticle extends TextureSheetParticle {
         BlockPos next = BlockPos.containing(x + xd, y + yd, z + zd);
         var nextState = level.getBlockState(next);
         if (nextState.canOcclude() && RadMaterials.blockFactor(nextState) < 1.0) {
-            remove();
-            return;
+            // Shielding is a deposition surface, not a hard vanilla collider:
+            // stop the particle at the face and let it fade there.
+            xd = 0.0;
+            yd = 0.0;
+            zd = 0.0;
+        } else {
+            move(xd, yd, zd);
+            xd *= friction; yd *= friction; zd *= friction;
         }
-        move(xd, yd, zd);
-        xd *= friction; yd *= friction; zd *= friction;
         alpha = 0.28F * (1.0F - (float) age / lifetime);
         setSpriteFromAge(sprites);
     }
