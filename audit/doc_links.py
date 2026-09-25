@@ -31,7 +31,7 @@ LINK = re.compile(r"(?:docs/)?[A-Za-z0-9_\-./]*[A-Za-z0-9_\-]+\.md")
 
 problems, checked, info = [], 0, []
 for root, dirs, files in os.walk(ROOT):
-    dirs[:] = [d for d in dirs if d not in (".git", "build", ".gradle", "node_modules", "run", "src", "gradle")]
+    dirs[:] = [d for d in dirs if d not in (".git", "build", ".gradle", ".cache", "node_modules", "run", "src", "gradle")]
     for f in files:
         if not f.endswith(TEXT_EXT):
             continue

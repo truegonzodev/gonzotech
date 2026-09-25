@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>все рецепты текущего пакета выдаются в книгу только после активации «Открытия 3»
  *       ({@code PlayerChalkboardProgress.isRecipeTierUnlocked(3)});</li>
- *   <li>до открытия 3 только восемь machine-block outputs расходуют ингредиенты и
+ *   <li>до открытия 3 только машины и двери расходуют ингредиенты и
  *       подменяются на {@code botched_mechanism}. Компоненты и корпуса физически
  *       крафтятся до открытия 3 без подмены результата.</li>
  * </ul>
@@ -128,7 +128,12 @@ public final class TierThreeCrafting {
 
     /** true, если предмет — «закрытый» вывод «Открытия 3» (гейт тира 3). */
     public static boolean isGatedOutput(Item item) {
-        return item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
+        return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get()
+            || item == ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get()
+            || item == ModItems.THIRD_HERMETIC_DOOR_ITEM.get()
+            || item == ModItems.AIR_CLEANER_ITEM.get()
+            || item == ModItems.AIR_FILTER_ITEM.get()
+            || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get()

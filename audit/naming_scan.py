@@ -7,7 +7,7 @@
      механизм, то есть какое открытие гейтит его крафт.
      Источники истины: `Phase3Events.gate()` (Открытие 1),
      `TierTwoCrafting.RECIPE_IDS` (Открытие 2) и
-     `TierThreeCrafting.RECIPE_IDS` (Открытие 3).
+     `TierThreeCrafting.isGatedOutput` (Открытие 3; не путать с видимостью рецептов).
 
   2) ЦИФРА в ИМЕНИ (— / II / III) — версия механизма: была ли до неё менее
      эффективная. Значит: цифра есть ⟺ существует «первая» версия
@@ -47,13 +47,27 @@ for m in re.finditer(r'ModMachines\.(\w+)\.get\(\),\s*(\d+)', gate_src):     # �
     if bare in const2id:
         tier[const2id[bare]] = t
 
-for src, t in ((T2, 2), (T3, 3)):                                            # тир 2 и тир 3
+for src, t in ((T2, 2),):                                                   # тир 2
     body = open(src, encoding="utf-8").read()
     body = body[body.index("RECIPE_IDS"):body.index(");", body.index("RECIPE_IDS"))]
     for r in re.findall(r'"gonzotech:([a-z0-9_]+)"', body):
         hits = [b for b in ids if r == b or r.startswith(b + "_")]
         if hits:
             tier.setdefault(max(hits, key=len), t)
+
+# Тир 3: RECIPE_IDS включает свободно крафтящиеся компоненты. Проверяем
+# реальную подмену результата, иначе скан не замечает снятие гейта с дверей.
+items_src = open(f"{SRC}/core/registry/ModItems.java", encoding="utf-8").read()
+item_ids = dict(re.findall(
+    r'DeferredItem<BlockItem>\s+(\w+)\s*=\s*ITEMS\.registerSimpleBlockItem\(\s*"([a-z0-9_]+)"',
+    items_src))
+t3_src = open(T3, encoding="utf-8").read()
+t3_gate = t3_src[t3_src.index("public static boolean isGatedOutput"):]
+t3_gate = t3_gate[:t3_gate.index("}")]
+for registry, const in re.findall(r'(ModItems|ModMachines)\.(\w+)\.get\(\)', t3_gate):
+    block_id = item_ids.get(const) if registry == "ModItems" else const2id.get(const.removesuffix("_ITEM"))
+    if block_id in ids:
+        tier[block_id] = 3
 
 # пакеты труб (composite_pipe / second_composite_pipe) не крафтятся вовсе —
 # они формируются в мире гаечным ключом из труб своего поколения

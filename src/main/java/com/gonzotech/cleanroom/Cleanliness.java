@@ -24,6 +24,6 @@ public final class Cleanliness {
     public void setDirt(double value) { dirt = clamp(value); }
 
     private static double clamp(double value) {
-        return Math.max(0.0, Math.min(100.0, value));
+        return Double.isFinite(value) ? Math.max(0.0, Math.min(100.0, value)) : 0.0;
     }
 }

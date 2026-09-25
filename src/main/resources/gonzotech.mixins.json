@@ -10,6 +10,7 @@
     "CatFatnessMixin",
     "CraftingMenuMixin",
     "FoodDataMixin",
+    "LevelChunkCleanRoomMixin",
     "MobGoalAccessorMixin",
     "CrafterBlockMixin",
     "MobSunEventBurnMixin",

@@ -891,5 +891,7 @@
   "block.gonzotech.aluminum_housing": "Aluminum Housing",
   "item.gonzotech.aluminum_housing": "Aluminum Housing",
   "message.gonzotech.telifon.air_quality": "Air quality: %s",
-  "message.gonzotech.telifon.air_quality.normal": "Air quality: normal"
+  "message.gonzotech.telifon.air_quality.normal": "Air quality: normal",
+  "gui.gonzotech.air_filter.no_room": "No single enclosed clean room",
+  "gui.gonzotech.air_filter.fuel_time": "Operating reserve: coal %s s, catalyst %s s"
 }

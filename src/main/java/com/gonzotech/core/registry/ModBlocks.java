@@ -103,7 +103,7 @@ public class ModBlocks {
     public static final DeferredBlock<Block> BARIUM_CONCRETE = BLOCKS.registerSimpleBlock(
         "barium_concrete", constructionMaterialProperties(SoundType.STONE, 8.0f, 12.0f, 0.60f));
 
-    // Компонентные блоки тир-3. Рецепты намеренно не добавлены.
+    // Компонентные блоки тир-3: крафт свободный, показ рецепта — после открытия 3.
     public static final DeferredBlock<Block> SHEATHING = BLOCKS.registerSimpleBlock(
         "sheathing", componentBlockProperties());
     public static final DeferredBlock<Block> ALUMINUM_HOUSING = BLOCKS.registerSimpleBlock(

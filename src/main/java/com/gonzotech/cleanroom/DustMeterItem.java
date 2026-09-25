@@ -1,6 +1,5 @@
 package com.gonzotech.cleanroom;
 
-import com.gonzotech.core.text.GtUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,12 +18,12 @@ public final class DustMeterItem extends Item {
         if (level instanceof net.minecraft.server.level.ServerLevel server && player instanceof ServerPlayer serverPlayer) {
             double quality = CleanRoomSystem.quality(server, serverPlayer.blockPosition());
             if (quality < 0.0) {
-                serverPlayer.sendSystemMessage(Component.literal("Качество воздуха: обычное")
+                serverPlayer.sendSystemMessage(Component.translatable("message.gonzotech.telifon.air_quality.normal")
                         .withStyle(ChatFormatting.GRAY));
             } else {
                 int rounded = (int) Math.round(quality);
-                serverPlayer.sendSystemMessage(Component.literal("Качество воздуха: ")
-                        .append(Component.literal(rounded + "%").withStyle(color(rounded)))
+                serverPlayer.sendSystemMessage(Component.translatable("message.gonzotech.telifon.air_quality",
+                                Component.literal(rounded + "%").withStyle(color(rounded)))
                         .withStyle(ChatFormatting.GRAY));
             }
         }

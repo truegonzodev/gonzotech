@@ -191,6 +191,10 @@
     "gonzotech:third_wort_kettle",
     "gonzotech:third_distiller",
     "gonzotech:third_rectifier",
-    "gonzotech:third_snaketype_condenser"
+    "gonzotech:third_snaketype_condenser",
+    "gonzotech:third_air_cleaner",
+    "gonzotech:third_air_filter",
+    "gonzotech:aluminum_housing",
+    "gonzotech:sheathing"
   ]
 }

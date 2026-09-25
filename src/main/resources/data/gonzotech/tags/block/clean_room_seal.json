@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:porcelain",
+    "minecraft:quartz_block",
+    "minecraft:quartz_bricks",
+    "minecraft:quartz_pillar",
+    "minecraft:chiseled_quartz_block",
+    "minecraft:smooth_quartz",
+    "minecraft:white_concrete",
+    "gonzotech:bore_stained_glass",
+    "gonzotech:third_hermetic_door",
+    "gonzotech:third_air_cleaner",
+    "gonzotech:third_air_filter"
+  ]
+}

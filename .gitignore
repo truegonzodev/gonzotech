@@ -20,3 +20,5 @@ bin/
 giradle build.bat
 giradle runclient.bat
 git add.bat
+# Local audit toolchains / downloaded dependencies
+.cache/

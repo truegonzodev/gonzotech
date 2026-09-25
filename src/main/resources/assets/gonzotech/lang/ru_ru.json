@@ -891,5 +891,7 @@
   "block.gonzotech.aluminum_housing": "Алюминиевый корпус",
   "item.gonzotech.aluminum_housing": "Алюминиевый корпус",
   "message.gonzotech.telifon.air_quality": "Качество воздуха: %s",
-  "message.gonzotech.telifon.air_quality.normal": "Качество воздуха: обычное"
+  "message.gonzotech.telifon.air_quality.normal": "Качество воздуха: обычное",
+  "gui.gonzotech.air_filter.no_room": "Нет единственного замкнутого контура",
+  "gui.gonzotech.air_filter.fuel_time": "Запас работы: уголь %s с, катализатор %s с"
 }
