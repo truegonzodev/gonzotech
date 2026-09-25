@@ -1,11 +1,7 @@
 package com.gonzotech.cleanroom;
 
-import com.gonzotech.core.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -25,43 +21,25 @@ public final class CleanRoomDetector {
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         queue.add(origin.immutable());
         long hash = 0xcbf29ce484222325L;
-        boolean valid = true;
         while (!queue.isEmpty()) {
             BlockPos pos = queue.removeFirst();
             if (!visited.add(pos.asLong())) continue;
+            // The component is bounded by the contour. A solid block inside
+            // it is simply an obstacle and must not invalidate the room.
             if (visited.size() > MAX_VOLUME) return new Result(false, 0L, visited.size());
             hash ^= pos.asLong();
             hash *= 0x100000001b3L;
             for (var direction : net.minecraft.core.Direction.values()) {
                 BlockPos next = pos.relative(direction);
-                BlockState state = level.getBlockState(next);
-                if (state.isAir()) {
-                    if (!visited.contains(next.asLong())) queue.add(next.immutable());
-                } else if (!isCleanShell(state)) {
-                    valid = false;
+                if (level.getBlockState(next).isAir()
+                        && !visited.contains(next.asLong())) {
+                    queue.add(next.immutable());
                 }
             }
         }
-        return valid ? new Result(true, hash, visited.size()) : new Result(false, 0L, visited.size());
-    }
-
-    private static boolean isCleanShell(BlockState state) {
-        var block = state.getBlock();
-        return block == ModBlocks.PORCELAIN.get()
-                || block == ModBlocks.BORE_STAINED_GLASS.get()
-                || block == ModBlocks.THIRD_HERMETIC_DOOR.get()
-                // Every logistics node is a full cube and may be used as a
-                // clean-room wall/connection point. Keep this name-based so
-                // first/second tier and future *_node blocks all work.
-                || isNodeBlock(block)
-                || block == Blocks.QUARTZ_BLOCK
-                || block == Blocks.QUARTZ_BRICKS
-                || block == Blocks.CHISELED_QUARTZ_BLOCK
-                || block == Blocks.WHITE_CONCRETE;
-    }
-
-    private static boolean isNodeBlock(net.minecraft.world.level.block.Block block) {
-        var key = BuiltInRegistries.BLOCK.getKey(block);
-        return key != null && key.getPath().endsWith("_node");
+        // A closed contour produces a finite air component. Interior machines,
+        // filters, nodes and other solid blocks never become part of the
+        // component, so they cannot break an already closed contour.
+        return new Result(true, hash, visited.size());
     }
 }

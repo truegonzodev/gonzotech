@@ -29,9 +29,11 @@ public final class AirCleanerBlockEntity extends BlockEntity {
             if (be.activeTicks % 20 == 0) be.setChanged();
         }
         if (level instanceof net.minecraft.server.level.ServerLevel server && be.active()) {
-            server.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+            // CLOUD particles fall in the client renderer. Use campfire smoke,
+            // whose native motion is upward, for the cleaner's vertical stream.
+            server.sendParticles(net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE,
                     pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
-                    3, 0.12, 0.15, 0.12, 0.01);
+                    3, 0.12, 0.05, 0.12, 0.003);
         }
     }
 
