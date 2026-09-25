@@ -21,6 +21,8 @@ public final class ShieldingTooltip {
         String value = Math.abs(percent - Math.rint(percent)) < 0.0001
                 ? String.format(Locale.ROOT, "%.0f%%", percent)
                 : String.format(Locale.ROOT, "%.1f%%", percent);
+        // Start the shared material-property block after the metal stats.
+        event.getToolTip().add(Component.empty());
         event.getToolTip().add(Component.translatable("tooltip.gonzotech.shielding",
                         Component.literal(value).withColor(0xFFFFFF))
                 .withStyle(ChatFormatting.GRAY));

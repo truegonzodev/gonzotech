@@ -1,6 +1,7 @@
 package com.gonzotech.core.client;
 
 import com.gonzotech.core.registry.ModCreativeTabs;
+import com.gonzotech.radiation.ItemRadioactivity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
@@ -19,21 +20,24 @@ public final class TooltipLayout {
     /** Restore the creative-tab line when NBT makes vanilla's tab membership
      * check miss the otherwise identical item stack. */
     public static void ensureCreativeCategory(List<Component> tooltip, ItemStack stack, boolean creative) {
-        if (!creative) return;
+        // Before the first dose vanilla already supplies the category. Only
+        // restore it after gonzo_rad makes vanilla's component-sensitive tab
+        // membership check lose the line.
+        if (!creative || ItemRadioactivity.getInduced(stack) <= 0.0) return;
         for (var holder : List.of(ModCreativeTabs.ORES_TAB, ModCreativeTabs.FUNCTIONAL_TAB,
                 ModCreativeTabs.EQUIPMENT_TAB, ModCreativeTabs.BLOCKS_TAB,
                 ModCreativeTabs.COMPONENTS_TAB, ModCreativeTabs.ADAPTATIONS_TAB,
                 ModCreativeTabs.GAGS_TAB)) {
             CreativeModeTab tab = holder.get();
-            if (tab.getDisplayItems().stream().anyMatch(candidate ->
-                    ItemStack.isSameItem(candidate, stack))) {
-                String title = tab.getDisplayName().getString();
-                if (tooltip.stream().noneMatch(line -> line.getString().equals(title))) {
-                    tooltip.add(1, tab.getDisplayName().copy().withStyle(net.minecraft.ChatFormatting.BLUE));
-                    tooltip.add(2, Component.empty());
-                }
-                return;
-            }
+            if (!tab.getDisplayItems().stream().anyMatch(candidate ->
+                    ItemStack.isSameItem(candidate, stack))) continue;
+            String title = tab.getDisplayName().getString();
+            // Remove any vanilla/previously-added copies, then insert exactly
+            // one canonical category line and its one separator.
+            tooltip.removeIf(line -> line.getString().equals(title));
+            tooltip.add(1, tab.getDisplayName().copy().withStyle(net.minecraft.ChatFormatting.BLUE));
+            tooltip.add(2, Component.empty());
+            return;
         }
     }
 
