@@ -6,8 +6,6 @@
   "refmap": "gonzotech.refmap.json",
   "mixins": [
     "AbstractFurnaceBlockEntityMixin",
-    "AbstractContainerMenuRadiationMixin",
-    "ItemStackRadiationMixin",
     "BucketItemMixin",
     "CatFatnessMixin",
     "CraftingMenuMixin",
