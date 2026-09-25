@@ -63,7 +63,7 @@ public final class RadiationDebugCommand {
                 .append(Component.literal(" (" + category(percent) + ")"))
                 .withStyle(ChatFormatting.GRAY));
         player.sendSystemMessage(Component.literal("Чанк [" + chunk.x + ", " + chunk.z + "]: ")
-                .append(Component.literal(GtUnits.zt(chunkNzt)))
+                .append(GtUnits.zt(chunkNzt))
                 .append(Component.literal("/s"))
                 .withStyle(ChatFormatting.GRAY));
 
