@@ -8,56 +8,41 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
 /**
- * Наведённая («приобретённая») радиоактивность предмета — динамический NBT-тег
- * {@code gonzo_rad} внутри {@code custom_data} (автор 20.09, п.1). Значение —
- * эмиссия ЦЕЛОГО СТАКА в nZt/с (не per-item: деление стака делит и фон
- * примерно пропорционально, чем мельче дробь — см. {@link #split}).
+ * Наведённая радиоактивность предмета.
  *
- * <p>Правила из спеки (с учётом правок автора 21.09):</p>
- * <ul>
- *   <li>наводится, пока рядом в инвентаре лежат пресетные источники
- *       ({@link RadSources}) или стоишь в фонящем чанке (&gt;30mZt);</li>
- *   <li>рост — <b>логистический</b> к уровню источника S: старт ≈ экспонента
- *       ×1.25/с (ранние стадии НЕ ускорены), по мере приближения к S —
- *       замедление, и <b>выше уровня источника подняться нельзя</b>
- *       («источник не может заразить больше, чем имеет сам»);</li>
- *   <li>затухание без источника — экспонентой /1.25/с (симметрично раннему росту);</li>
- *   <li>предмет, заражённый СЛАБЕЕ, не передаёт радиацию более горячему
- *       (слабее источника не растим; сильнее — только стравливаем лишнее);</li>
- *   <li>материал замедляет накопление фоном есть фактор прохождения
- *       ({@link RadMaterials}): свинец ×0.02 — теперь он не «иммунен», а гасит
- *       98% дозы (поправка автора).</li>
- * </ul>
+ * <p>ВАЖНО: {@code gonzo_rad} хранит дозу ОДНОГО предмета в стаке, а не дозу
+ * стака. Это намеренно: ваниль при разделении стака копирует компоненты, и
+ * per-item модель не создаёт радиацию из воздуха. Полная эмиссия стака всегда
+ * считается как {@code perItem * count}.</p>
  */
 public final class ItemRadioactivity {
-
-    /** Имя NBT-поля эмиссии в custom_data стака (nZt/с, double). */
     public static final String TAG_RAD = "gonzo_rad";
-
-    /** Шаг роста/затухания в секунду (×1.25 ≈ ×10⁶ за минуту — точно пример автора «1n→1m за минуту»). */
+    /** Версия формата: 1 = значение на один предмет; без версии — старый total-stack формат. */
+    private static final String TAG_RAD_MODEL = "gonzo_rad_model";
+    private static final int PER_ITEM_MODEL = 1;
     public static final double GROWTH = 1.25;
-    /** Потолок наведённой эмиссии стака. */
     public static final double INDUCED_CAP = 5.0 * RadUnits.UNIT;
-    /** Порог сброса тега (ниже — стак снова «чистый», NBT удаляется). */
     public static final double CLEANUP_FLOOR = 1.0;
 
     private ItemRadioactivity() {
     }
 
     public static boolean isLeadImmune(ItemStack stack) {
-        // Совместимость с клиентским лором: «иммунитета» больше нет (автор 21.09),
-        // метод оставлен как «экранит ≥99%» — по факту не используется в тике.
-        if (stack.isEmpty()) {
-            return true;
-        }
+        if (stack.isEmpty()) return true;
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return id.getPath().contains("lead");
     }
 
-    /** Наведённая эмиссия стака (nZt/с); 0, если тега нет. */
+    /** Наведённая эмиссия одного предмета внутри стака (nZt/s). */
     public static double getInduced(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data == null ? 0.0 : data.copyTag().getDouble(TAG_RAD);
+        if (data == null) return 0.0;
+        CompoundTag tag = data.copyTag();
+        double value = Math.max(0.0, tag.getDouble(TAG_RAD));
+        // Сейвы до 0.3.17 содержали total-stack. Мигрируем чтением лениво;
+        // ближайшая запись setInduced зафиксирует новый формат явно.
+        return tag.getInt(TAG_RAD_MODEL) == PER_ITEM_MODEL
+                ? value : value / Math.max(1, stack.getCount());
     }
 
     public static void setInduced(ItemStack stack, double value) {
@@ -66,69 +51,95 @@ public final class ItemRadioactivity {
             return;
         }
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
-                data -> data.update(tag -> tag.putDouble(TAG_RAD, value)));
+                data -> data.update(tag -> {
+                    tag.putDouble(TAG_RAD, value);
+                    tag.putInt(TAG_RAD_MODEL, PER_ITEM_MODEL);
+                }));
     }
 
     private static void clear(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) {
-            return;
-        }
+        if (data == null) return;
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
-                d -> d.update(tag -> tag.remove(TAG_RAD)));
+                d -> d.update(tag -> {
+                    tag.remove(TAG_RAD);
+                    tag.remove(TAG_RAD_MODEL);
+                }));
         CustomData after = stack.get(DataComponents.CUSTOM_DATA);
-        if (after != null && after.isEmpty()) {
-            stack.remove(DataComponents.CUSTOM_DATA);
-        }
+        if (after != null && after.isEmpty()) stack.remove(DataComponents.CUSTOM_DATA);
     }
 
     /**
-     * Один серверный шаг (раз в секунду) роста/затухания стака — ЛОГИСТИКА
-     * (автор 21.09): {@code v += v·(G−1)·(1−v/S)·factor}.
-     *
-     * @param hasSource рядом есть пресетный источник (инвентарь) или фонящий чанк
-     * @param sourceNzt эмиссия СИЛЬНЕЙШЕГО локального источника — цель роста:
-     *                  выше неё подняться нельзя («источник не может заразить
-     *                  больше, чем имеет сам»), а к ней — всё медленнее
-     * @param factor    фактор прохождения материала стака ({@link RadMaterials}):
-     *                  замедляет накопление (свинец ×0.02 = защита 98%)
+     * Шаг роста одного предмета. {@code sourceNzt} — суммарный уровень
+     * локального источника, поэтому для большого стака наведённая часть
+     * делится на его количество. Суммарная полученная доза не зависит от
+     * размера стака и не дюпается при split.
      */
     public static void tickInduced(ItemStack stack, boolean hasSource, double sourceNzt, double factor) {
         double current = getInduced(stack);
-        double target = Math.min(sourceNzt, INDUCED_CAP);
+        int count = Math.max(1, stack.getCount());
+        double target = Math.min(sourceNzt / count, INDUCED_CAP);
+        // Для источника самого стака target не должен быть уменьшен: его
+        // собственная preset-эмиссия уже считается отдельно.
         if (hasSource && target >= 1.0 && factor > 0.0) {
-            if (current > target) { // контекст ослаб — стравливаем лишнее той же скоростью
+            if (current > target) {
                 setInduced(stack, current / GROWTH);
                 return;
             }
-            double seeded = Math.max(current, 1.0); // посев 1nZt, как раньше
-            // Логистика: ранняя фаза ≈ ×GROWTH/с (не ускоряем старт),
-            // поздняя — замедление по (1−v/S), у самой крыши — ноль.
+            double seeded = Math.max(current, 1.0 / count);
             double next = seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor;
-            next = Math.min(next, target);
-            if (next != current) {
-                setInduced(stack, next);
-            }
+            setInduced(stack, Math.min(next, target));
         } else if (current > 0.0) {
             setInduced(stack, current / GROWTH);
         }
     }
 
-    /** Доля фона при делении стака пополам и т.п. (вызывается из событий переноса при необходимости). */
+    /** Совместимость со старыми callers: split больше не требует ручного деления. */
     public static void split(ItemStack stack, double fraction) {
-        double current = getInduced(stack);
-        if (current > 0.0) {
-            setInduced(stack, current * fraction);
-        }
+        // Ничего не делаем: ванильный split копирует per-item значение правильно.
     }
 
-    /** Полная эмиссия стака для тултипа/дозы: пресетная (×count) + наведённая. */
+    /** Однократная миграция старого total-stack тега до любых split/merge операций. */
+    public static void migrateLegacy(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return;
+        CompoundTag tag = data.copyTag();
+        if (!tag.contains(TAG_RAD) || tag.getInt(TAG_RAD_MODEL) == PER_ITEM_MODEL) return;
+        setInduced(stack, tag.getDouble(TAG_RAD) / Math.max(1, stack.getCount()));
+    }
+
+    /** Сравнение для нашего серверного объединителя: радиационный компонент игнорируется. */
+    public static boolean sameExceptRadiation(ItemStack first, ItemStack second) {
+        if (first.isEmpty() || second.isEmpty()) return false;
+        ItemStack a = first.copy();
+        ItemStack b = second.copy();
+        clear(a);
+        clear(b);
+        // matches() may include count in this mappings version; count is not
+        // an identity component for stackability, so normalize it first.
+        a.setCount(1);
+        b.setCount(1);
+        return ItemStack.matches(a, b);
+    }
+
+    /** Объединяет два совместимых стака и усредняет per-item дозу без потери суммы. */
+    public static void mergeInto(ItemStack target, ItemStack source, int amount) {
+        if (amount <= 0) return;
+        int oldCount = target.getCount();
+        int moved = Math.min(amount, source.getCount());
+        double weighted = (getInduced(target) * oldCount + getInduced(source) * moved)
+                / Math.max(1, oldCount + moved);
+        target.grow(moved);
+        source.shrink(moved);
+        setInduced(target, weighted);
+    }
+
+    /** Полная эмиссия стака: preset per-item × count + induced per-item × count. */
     public static double totalEmission(ItemStack stack) {
-        return RadSources.emissionOfStack(stack) + getInduced(stack);
+        return RadSources.emissionOfStack(stack) + getInduced(stack) * Math.max(1, stack.getCount());
     }
 
-    /** Дебаг/совместимость: прямое чтение любого стороннего {@code custom_data}. */
     public static double rawTagValue(CompoundTag tag) {
-        return tag == null ? 0.0 : tag.getDouble(TAG_RAD);
+        return tag == null ? 0.0 : Math.max(0.0, tag.getDouble(TAG_RAD));
     }
 }

@@ -124,6 +124,12 @@ public final class RadiationSystem {
         ChunkRadiationData data = ChunkRadiationData.get(level);
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
 
+        // До расчёта дозы исправляем ванильное ограничение stackability: разные
+        // per-item значения gonzo_rad должны объединяться. Это также делает
+        // операцию игрока «32 + 16» консервативной: радиация усредняется,
+        // а не копируется из одного из стаков. Per-item NBT безопасен для split.
+        normalizeInventoryStacks(player);
+
         // Скан инвентаря: пресетная эмиссия + самый горячий стак (цель логистики фона).
         List<List<ItemStack>> compartments = List.of(
                 player.getInventory().items, player.getInventory().armor, player.getInventory().offhand);
@@ -154,9 +160,18 @@ public final class RadiationSystem {
                 if (stack.isEmpty()) {
                     continue;
                 }
-                ItemRadioactivity.tickInduced(stack, hasSourceContext, sourceLevel,
-                        RadMaterials.itemFactor(stack));
-                induced += ItemRadioactivity.getInduced(stack);
+                // Нельзя переписывать custom_data предмета в активной руке во
+                // время копания: сервер считает это сменой carried stack и
+                // сбрасывает BlockHit прогресс. Он всё равно учитывается как
+                // источник через preset/уже сохранённое значение; NBT-тиканье
+                // возобновится, когда предмет выйдет из руки.
+                boolean activelyHeld = stack == player.getMainHandItem()
+                        || stack == player.getOffhandItem();
+                if (!activelyHeld) {
+                    ItemRadioactivity.tickInduced(stack, hasSourceContext, sourceLevel,
+                            RadMaterials.itemFactor(stack));
+                }
+                induced += ItemRadioactivity.getInduced(stack) * Math.max(1, stack.getCount());
             }
         }
 
@@ -239,6 +254,30 @@ public final class RadiationSystem {
 
         // Скан содержимого контейнеров своего чанка (сундуки/бочки с ураном греют чанк).
         scanContainersInto(level, chunkKey, data);
+    }
+
+    /** Объединяет радиоактивные стаки в инвентарии игрока с сохранением полной
+     * радиоактивности. Вызывается раз в секунду; контейнеры намеренно не трогаем
+     * (их обработка должна остаться дешёвой и не ломать чужие интерфейсы). */
+    private static void normalizeInventoryStacks(ServerPlayer player) {
+        List<List<ItemStack>> compartments = List.of(
+                player.getInventory().items, player.getInventory().armor, player.getInventory().offhand);
+        for (List<ItemStack> part : compartments) {
+            for (int i = 0; i < part.size(); i++) {
+                ItemStack target = part.get(i);
+                if (target.isEmpty()) continue;
+                ItemRadioactivity.migrateLegacy(target);
+                for (int j = i + 1; j < part.size(); j++) {
+                    ItemStack source = part.get(j);
+                    if (source.isEmpty() || !ItemRadioactivity.sameExceptRadiation(target, source)) continue;
+                    int room = Math.max(0, target.getMaxStackSize() - target.getCount());
+                    if (room > 0) {
+                        ItemRadioactivity.mergeInto(target, source, Math.min(room, source.getCount()));
+                    }
+                    if (source.isEmpty()) part.set(j, ItemStack.EMPTY);
+                }
+            }
+        }
     }
 
     /** Контейнеры активного чанка: логистика к сумме эмиссии содержимого,
