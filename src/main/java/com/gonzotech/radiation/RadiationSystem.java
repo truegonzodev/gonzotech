@@ -6,16 +6,19 @@ import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.core.psyche.PsycheUltraviolet;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModEffects;
+import com.gonzotech.core.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -103,6 +106,27 @@ public final class RadiationSystem {
     /** Накопители дробной дозы/спада по игрокам (permille дискретен). */
     private static final Map<UUID, Double> DOSE_ACC = new HashMap<>();
     private static final Map<UUID, Double> SHED_ACC = new HashMap<>();
+    /** Последний swing pulse: mining не является обычным isUsingItem(). */
+    private static final Map<UUID, Integer> LAST_SWING = new HashMap<>();
+    /** Виртуальная радиация активного предмета: не трогаем carried NBT во время действия. */
+    private static final Map<HeldKey, HeldRadState> HELD_RAD = new HashMap<>();
+    private record HeldKey(UUID player, InteractionHand hand) {}
+    private static final int USE_SOFT_CD_TICKS = 40;
+    private static final int HELD_FLUSH_TICKS = 20 * 35;
+
+    private static final class HeldRadState {
+        private ItemStack stack;
+        private double value;
+        private int lastUseTick;
+        private int lastFlushTick;
+
+        private HeldRadState(ItemStack stack, double value, int tick) {
+            this.stack = stack;
+            this.value = value;
+            this.lastUseTick = tick;
+            this.lastFlushTick = tick;
+        }
+    }
 
     private RadiationSystem() {
     }
@@ -114,6 +138,11 @@ public final class RadiationSystem {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
+        // LivingEntity does not expose a public isSwinging() in 1.21.4.
+        // Attack animation is the mapped public signal for the same pulse.
+        if (player.getAttackAnim(0.0F) > 0.0F) {
+            LAST_SWING.put(player.getUUID(), player.tickCount);
+        }
         // Воздух некроза держим КАЖДЫЙ тик: ваниль восстанавливает 4 пузырька в тик,
         // поэтому вычитать раз в секунду бесполезно (автор 22.09.2026 — полоска мигала).
         Necrosis.tickAir(player);
@@ -122,6 +151,12 @@ public final class RadiationSystem {
         }
         ServerLevel level = (ServerLevel) player.level();
         ChunkRadiationData data = ChunkRadiationData.get(level);
+        if (hasVisualInstrument(player)) {
+            List<RadiationVisualPayload.Source> visual = data.visualSources(level, player.blockPosition(), 18).stream()
+                    .map(s -> new RadiationVisualPayload.Source(s.pos().asLong(), (float) s.emission()))
+                    .toList();
+            PacketDistributor.sendToPlayer(player, new RadiationVisualPayload(visual));
+        }
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
 
         // Скан инвентаря: пресетная эмиссия + самый горячий стак (цель логистики фона).
@@ -154,9 +189,19 @@ public final class RadiationSystem {
                 if (stack.isEmpty()) {
                     continue;
                 }
-                ItemRadioactivity.tickInduced(stack, hasSourceContext, sourceLevel,
-                        RadMaterials.itemFactor(stack));
-                induced += ItemRadioactivity.getInduced(stack);
+                boolean activeHand = stack == player.getMainHandItem()
+                        || stack == player.getOffhandItem();
+                boolean hardUse = activeHand && isHardUsing(player, stack);
+                double perItem;
+                if (activeHand) {
+                    perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
+                            sourceLevel, RadMaterials.itemFactor(stack));
+                } else {
+                    ItemRadioactivity.tickInduced(stack, hasSourceContext, sourceLevel,
+                            RadMaterials.itemFactor(stack));
+                    perItem = ItemRadioactivity.getInduced(stack);
+                }
+                induced += perItem * Math.max(1, stack.getCount());
             }
         }
 
@@ -169,8 +214,13 @@ public final class RadiationSystem {
         // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
         rawDose *= PsycheChemical.doseMultiplier(player);
         double suitFactor = Hazmat.factor(player, rawDose);
-        if (player.hasEffect(com.gonzotech.core.registry.ModEffects.CYSTEAMINE)) {
-            suitFactor *= 0.15; // Цистамин: радиозащитный щит (-85% к входящей радиации)
+        // «Абсорбция дозы» (Цистамин/ДТПА, спека 24.09): срезает получаемую игроком
+        // дозу на (30 + уровень²) %: уровень 1 → 31 %, уровень 2 → 34 %.
+        var absorption = player.getEffect(com.gonzotech.core.registry.ModEffects.DOSE_ABSORPTION);
+        if (absorption != null) {
+            int absLevel = absorption.getAmplifier() + 1;
+            int cut = Math.min(100, 30 + absLevel * absLevel);
+            suitFactor *= (100 - cut) / 100.0;
         }
         double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
@@ -236,6 +286,53 @@ public final class RadiationSystem {
         scanContainersInto(level, chunkKey, data);
     }
 
+    private static boolean hasVisualInstrument(ServerPlayer player) {
+        return player.getMainHandItem().is(ModItems.DOSIMETER.get())
+                || player.getMainHandItem().is(ModItems.TELIFON.get())
+                || player.getOffhandItem().is(ModItems.DOSIMETER.get())
+                || player.getOffhandItem().is(ModItems.TELIFON.get());
+    }
+
+    private static boolean isHardUsing(ServerPlayer player, ItemStack stack) {
+        if (player.isUsingItem() && player.getUseItem() == stack) {
+            return true;
+        }
+        // Mining is not a normal ItemStack use action. Record swing pulses on
+        // every player tick, not only on the once-per-second radiation tick.
+        // The window bridges gaps between consecutive vanilla swings.
+        int lastSwing = LAST_SWING.getOrDefault(player.getUUID(), Integer.MIN_VALUE);
+        return stack == player.getMainHandItem() && player.tickCount - lastSwing <= 10;
+    }
+
+    private static double tickHeldRadiation(ServerPlayer player, ItemStack stack, boolean hardUse,
+                                            boolean hasSource, double sourceNzt, double factor) {
+        InteractionHand hand = stack == player.getOffhandItem()
+                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        HeldKey key = new HeldKey(player.getUUID(), hand);
+        int now = player.tickCount;
+        HeldRadState state = HELD_RAD.get(key);
+        if (state == null && !hardUse) {
+            ItemRadioactivity.tickInduced(stack, hasSource, sourceNzt, factor);
+            return ItemRadioactivity.getInduced(stack);
+        }
+        if (state == null || state.stack != stack) {
+            if (state != null) ItemRadioactivity.setInduced(state.stack, state.value);
+            state = new HeldRadState(stack, ItemRadioactivity.getInduced(stack), now);
+            HELD_RAD.put(key, state);
+        }
+        if (hardUse) state.lastUseTick = now;
+        state.value = ItemRadioactivity.nextInduced(state.value, stack, hasSource, sourceNzt, factor);
+
+        boolean inSoftCd = now - state.lastUseTick < USE_SOFT_CD_TICKS;
+        boolean periodicFlush = now - state.lastFlushTick >= HELD_FLUSH_TICKS;
+        if (!hardUse && !inSoftCd || periodicFlush) {
+            ItemRadioactivity.setInduced(stack, state.value);
+            HELD_RAD.remove(key);
+            return ItemRadioactivity.getInduced(stack);
+        }
+        return state.value;
+    }
+
     /** Контейнеры активного чанка: логистика к сумме эмиссии содержимого,
      *  на каждый горячий контейнер — свой экран контура (свинцовый купол над
      *  сундуком с ураном гасит вклад, автор 21.09). */
@@ -270,6 +367,8 @@ public final class RadiationSystem {
         if (event.getEntity() instanceof ServerPlayer player) {
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
+            LAST_SWING.remove(player.getUUID());
+            HELD_RAD.entrySet().removeIf(entry -> entry.getKey().player().equals(player.getUUID()));
             RadSickness.forget(player.getUUID());
             RadCleanse.forget(player.getUUID());
             Necrosis.forget(player.getUUID());

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDC",
+    "DDD"
+  ],
+  "key": {
+    "A": "minecraft:bucket",
+    "B": "gonzotech:aluminum_wire",
+    "C": "minecraft:lever",
+    "D": "gonzotech:aluminum_plate"
+  },
+  "result": {
+    "id": "gonzotech:third_dispensing_tap",
+    "count": 1
+  },
+  "group": "tier3_machines"
+}

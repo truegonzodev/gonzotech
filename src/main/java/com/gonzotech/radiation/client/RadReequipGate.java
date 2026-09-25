@@ -43,7 +43,10 @@ public final class RadReequipGate {
     private static void stripRad(ItemStack stack) {
         stack.update(DataComponents.CUSTOM_DATA,
                 net.minecraft.world.item.component.CustomData.EMPTY,
-                d -> d.update(tag -> tag.remove(ItemRadioactivity.TAG_RAD)));
+                d -> d.update(tag -> {
+                    tag.remove(ItemRadioactivity.TAG_RAD);
+                    tag.remove("gonzo_rad_model");
+                }));
         net.minecraft.world.item.component.CustomData after = stack.get(DataComponents.CUSTOM_DATA);
         if (after != null && after.isEmpty()) {
             stack.remove(DataComponents.CUSTOM_DATA);

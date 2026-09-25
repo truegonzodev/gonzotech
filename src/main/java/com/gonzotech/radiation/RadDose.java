@@ -1,14 +1,7 @@
 package com.gonzotech.radiation;
 
-import com.gonzotech.GonzoTechMod;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
 
@@ -61,11 +54,6 @@ public final class RadDose {
     /** Антирадиновый абсорбент: 20 % дозы за 30 с на уровне I (+20 % за уровень). */
     public static final int CLEANSE_PER_LEVEL_PERMILLE = 200;
     public static final int CLEANSE_SECONDS = 30;
-
-    /** Ключ урона «лучевая болезнь» — тип лежит в датапаке мода ({@code gonzotech:radiation}). */
-    private static final ResourceKey<DamageType> RADIATION =
-            ResourceKey.create(Registries.DAMAGE_TYPE,
-                    ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "radiation"));
 
     /** Постоянный («фоновый») эффект категории: держится, пока доза в категории. */
     public record Steady(Holder<MobEffect> effect, int amplifier) {
@@ -178,11 +166,4 @@ public final class RadDose {
                 / (1000.0 * CLEANSE_SECONDS);
     }
 
-    /** Источник урона «лучевая болезнь» (сообщение о смерти — {@code death.attack.radiation}). */
-    public static DamageSource damageSource(ServerLevel level) {
-        Holder<DamageType> type = level.registryAccess()
-                .lookupOrThrow(Registries.DAMAGE_TYPE)
-                .getOrThrow(RADIATION);
-        return new DamageSource(type);
-    }
 }

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDC",
+    "AEA"
+  ],
+  "key": {
+    "A": "gonzotech:crimson_obsidian",
+    "B": "minecraft:lever",
+    "C": "gonzotech:redstone_plate",
+    "D": "gonzotech:redstone_core",
+    "E": "gonzotech:silver_wire"
+  },
+  "result": {
+    "id": "gonzotech:energy_module",
+    "count": 1
+  },
+  "group": "tier3_energy_module"
+}

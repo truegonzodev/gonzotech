@@ -15,13 +15,16 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  *       Облучение, УФ и Химическое заражение (там числа заданы в mZt/процентах).</li>
  * </ul>
  *
- * <p>Перевод: 1 % шкалы в очках = 10 000 очков, 1 тысячная = 1 000 очков.
+ * <p>Перевод: 1 % шкалы в очках = 10 000 очков, 1 тысячная = 1 000 очков
+ * (автор 24.09 спрашивал про конверсию «10000 очков = 1 %» — она верная).
  * В HUD очки показываются в тысячных — {@link #pointsToPermille(int)}.</p>
  *
- * <p>Таймеры источников стресса живут здесь же (переживают выход и смерть):
- * {@link #getSleepTick()} — когда игрок последний раз спал, {@link #getMashTick()} —
- * когда последний раз пил сусло. Иначе после релога пришлось бы считать игрока
- * «никогда не спавшим».</p>
+ * <p>Таймеры источников стресса и скрытые таймеры препаратов живут здесь же
+ * (переживают выход и смерть): {@link #getSleepTick()} — когда игрок последний раз
+ * спал, {@link #getMashTick()} — когда последний раз пил сусло,
+ * {@link #getPentacinOverdoseUntil()} — скрытое окно передозировки Пентацином
+ * (120 с, спека 24.09), {@link #getDtpaCourseCount()} — скрытый счётчик доз
+ * ДТПА («ДТПА принято кол-во», шестая доза завершает курс).</p>
  *
  * <ul>
  *   <li><b>Зависимость</b> (addiction) — ЖИВАЯ, в очках: каждое съеденное сусло
@@ -35,7 +38,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  *       &gt; 70 % и зависимости &gt; 60 % ({@link PsycheStress}); эффекты — позже;</li>
  *   <li><b>УФ излучение</b> (uv) — ЗАДЕЛ под УФ-механику (пока 0); шкала видна
  *       с УФ-радиометром;</li>
- *   <li><b>Химическое заражение</b> (chemical) — ЗАДЕЛ (пока 0), шкала видна всегда.</li>
+ *   <li><b>Химическое заражение</b> (chemical) — ЖИВАЯ (зуд и бонусы дозы),
+ *       шкала видна всегда.</li>
  * </ul>
  */
 public class PlayerPsyche {
@@ -56,7 +60,9 @@ public class PlayerPsyche {
                     Codec.INT.optionalFieldOf("uv", 0).forGetter(PlayerPsyche::getUv),
                     Codec.INT.optionalFieldOf("chemical", 0).forGetter(PlayerPsyche::getChemical),
                     Codec.LONG.optionalFieldOf("sleep_tick", 0L).forGetter(PlayerPsyche::getSleepTick),
-                    Codec.LONG.optionalFieldOf("mash_tick", 0L).forGetter(PlayerPsyche::getMashTick)
+                    Codec.LONG.optionalFieldOf("mash_tick", 0L).forGetter(PlayerPsyche::getMashTick),
+                    Codec.INT.optionalFieldOf("dtpa_course_count", 0).forGetter(PlayerPsyche::getDtpaCourseCount),
+                    Codec.LONG.optionalFieldOf("pentacin_overdose_until", 0L).forGetter(PlayerPsyche::getPentacinOverdoseUntil)
             ).apply(instance, PlayerPsyche::new)
     );
 
@@ -70,17 +76,26 @@ public class PlayerPsyche {
     private long sleepTick;
     /** Игровое время последнего выпитого сусла (для «коридора зависимости»). */
     private long mashTick;
+    /** Скрытый счётчик «ДТПА принято кол-во» (спека 24.09; 0..5, шестая доза сбрасывает). */
+    private int dtpaCourseCount;
+    /** Игровое время окончания скрытого окна передозировки Пентацином (спека 24.09). */
+    private long pentacinOverdoseUntil;
 
     public PlayerPsyche() {
-        this(0, 0, 0, 0, 0, 0, 0L, 0L);
+        this(0, 0, 0, 0, 0, 0, 0L, 0L, 0, 0L);
     }
 
     public PlayerPsyche(int addiction, int stress, int crisis, int radiation, int uv, int chemical) {
-        this(addiction, stress, crisis, radiation, uv, chemical, 0L, 0L);
+        this(addiction, stress, crisis, radiation, uv, chemical, 0L, 0L, 0, 0L);
     }
 
     public PlayerPsyche(int addiction, int stress, int crisis, int radiation, int uv, int chemical,
                         long sleepTick, long mashTick) {
+        this(addiction, stress, crisis, radiation, uv, chemical, sleepTick, mashTick, 0, 0L);
+    }
+
+    public PlayerPsyche(int addiction, int stress, int crisis, int radiation, int uv, int chemical,
+                        long sleepTick, long mashTick, int dtpaCourseCount, long pentacinOverdoseUntil) {
         this.addiction = clampPoints(addiction);
         this.stress = clampPoints(stress);
         this.crisis = clampPoints(crisis);
@@ -89,6 +104,8 @@ public class PlayerPsyche {
         this.chemical = clampPercent(chemical);
         this.sleepTick = sleepTick;
         this.mashTick = mashTick;
+        this.dtpaCourseCount = Math.max(0, dtpaCourseCount);
+        this.pentacinOverdoseUntil = pentacinOverdoseUntil;
     }
 
     private static int clampPercent(int v) {
@@ -131,6 +148,14 @@ public class PlayerPsyche {
         return mashTick;
     }
 
+    public int getDtpaCourseCount() {
+        return dtpaCourseCount;
+    }
+
+    public long getPentacinOverdoseUntil() {
+        return pentacinOverdoseUntil;
+    }
+
     /** Зависимость — в очках ({@link #POINT_MAX} = 100 %). */
     public void setAddiction(int v) {
         this.addiction = clampPoints(v);
@@ -164,6 +189,14 @@ public class PlayerPsyche {
 
     public void setMashTick(long v) {
         this.mashTick = v;
+    }
+
+    public void setDtpaCourseCount(int v) {
+        this.dtpaCourseCount = Math.max(0, v);
+    }
+
+    public void setPentacinOverdoseUntil(long v) {
+        this.pentacinOverdoseUntil = v;
     }
 
     /** Прибавить к зависимости {@code delta} очков (1000 очков = 0.1 %). */

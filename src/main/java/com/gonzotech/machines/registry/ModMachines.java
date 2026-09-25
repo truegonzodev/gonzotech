@@ -370,9 +370,9 @@ public final class ModMachines {
     public static final DeferredBlock<com.gonzotech.machines.block.ChemicalPlantBlock> THIRD_CHEMICAL_PLANT =
         BLOCKS.registerBlock("third_chemical_plant", com.gonzotech.machines.block.ChemicalPlantBlock::new, machineMetal());
 
-    /** Разливной кран — разлив пива (из сусла) и водки (из дистиллята). */
-    public static final DeferredBlock<com.gonzotech.machines.block.DispensingTapBlock> DISPENSING_TAP =
-        BLOCKS.registerBlock("dispensing_tap", com.gonzotech.machines.block.DispensingTapBlock::new, machineMetal());
+    /** Разливной кран (Открытие 3) — разлив пива (из сусла) и водки (из дистиллята). */
+    public static final DeferredBlock<com.gonzotech.machines.block.DispensingTapBlock> THIRD_DISPENSING_TAP =
+        BLOCKS.registerBlock("third_dispensing_tap", com.gonzotech.machines.block.DispensingTapBlock::new, machineMetal());
 
     // ─────────────────────────── предметы-блоки ───────────────────────────
 
@@ -567,8 +567,8 @@ public final class ModMachines {
     public static final DeferredItem<BlockItem> THIRD_CHEMICAL_PLANT_ITEM =
         ITEMS.registerSimpleBlockItem("third_chemical_plant", THIRD_CHEMICAL_PLANT);
 
-    public static final DeferredItem<BlockItem> DISPENSING_TAP_ITEM =
-        ITEMS.registerSimpleBlockItem("dispensing_tap", DISPENSING_TAP);
+    public static final DeferredItem<BlockItem> THIRD_DISPENSING_TAP_ITEM =
+        ITEMS.registerSimpleBlockItem("third_dispensing_tap", THIRD_DISPENSING_TAP);
 
     // ─────────────────────────── инструменты ───────────────────────────
 

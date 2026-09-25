@@ -157,6 +157,13 @@ public final class ModBlockEntities {
                 secondItemFilterType(), pos, state, SecondTierDefs.ITEM_FILTER_SLOTS),
             false, ModMachines.SECOND_ITEM_FILTER.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.cleanroom.AirCleanerBlockEntity>> AIR_CLEANER =
+        BLOCK_ENTITIES.register("third_air_cleaner", () -> new BlockEntityType<>(
+            com.gonzotech.cleanroom.AirCleanerBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.AIR_CLEANER.get()));
+    public static final Supplier<BlockEntityType<com.gonzotech.cleanroom.AirFilterBlockEntity>> AIR_FILTER =
+        BLOCK_ENTITIES.register("third_air_filter", () -> new BlockEntityType<>(
+            com.gonzotech.cleanroom.AirFilterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.AIR_FILTER.get()));
+
     public static final Supplier<BlockEntityType<FermentationVatBlockEntity>> THIRD_FERMENTATION_VAT =
         BLOCK_ENTITIES.register("third_fermentation_vat", () -> new BlockEntityType<>(
             FermentationVatBlockEntity::new, false, ModMachines.THIRD_FERMENTATION_VAT.get()));
@@ -186,9 +193,9 @@ public final class ModBlockEntities {
             com.gonzotech.machines.block.entity.ChemicalPlantBlockEntity::new, false, ModMachines.THIRD_CHEMICAL_PLANT.get()));
     public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.ChemicalPlantBlockEntity>> THIRD_CHEMICAL_PLANT = CHEMICAL_PLANT;
 
-    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.DispensingTapBlockEntity>> DISPENSING_TAP =
-        BLOCK_ENTITIES.register("dispensing_tap", () -> new BlockEntityType<>(
-            com.gonzotech.machines.block.entity.DispensingTapBlockEntity::new, false, ModMachines.DISPENSING_TAP.get()));
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.DispensingTapBlockEntity>> THIRD_DISPENSING_TAP =
+        BLOCK_ENTITIES.register("third_dispensing_tap", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.DispensingTapBlockEntity::new, false, ModMachines.THIRD_DISPENSING_TAP.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.core.block.entity.CanisterBlockEntity>> CANISTER =
         BLOCK_ENTITIES.register("canister", () -> new BlockEntityType<>(

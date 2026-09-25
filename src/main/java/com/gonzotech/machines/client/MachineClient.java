@@ -33,6 +33,7 @@ public final class MachineClient {
         event.register(ModMenus.SECOND_CRUSHER.get(), CrusherScreen::new);
         event.register(ModMenus.SECOND_CENTRIFUGE.get(), CentrifugeScreen::new);
         event.register(ModMenus.FIRST_ITEM_FILTER.get(), ItemFilterScreen::new);
+        event.register(ModMenus.AIR_FILTER.get(), AirFilterScreen::new);
         event.register(ModMenus.THIRD_FERMENTATION_VAT.get(), FermentationVatScreen::new);
         event.register(ModMenus.THIRD_WORT_KETTLE.get(), WortKettleScreen::new);
         event.register(ModMenus.THIRD_DISTILLER.get(), DistillerScreen::new);
@@ -40,6 +41,6 @@ public final class MachineClient {
         event.register(ModMenus.THIRD_SNAKETYPE_CONDENSER.get(), SnaketypeCondenserScreen::new);
         event.register(ModMenus.THIRD_FILLER.get(), FillerScreen::new);
         event.register(ModMenus.THIRD_CHEMICAL_PLANT.get(), ChemicalPlantScreen::new);
-        event.register(ModMenus.DISPENSING_TAP.get(), DispensingTapScreen::new);
+        event.register(ModMenus.THIRD_DISPENSING_TAP.get(), DispensingTapScreen::new);
     }
 }

@@ -2,18 +2,21 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "TWT",
-    "EHE",
-    "TTT"
+    "ABA",
+    "CDC",
+    "EFE"
   ],
   "key": {
-    "T": "gonzotech:tungsten_ingot",
-    "W": "gonzotech:first_wire",
-    "H": "gonzotech:first_heat_pipe",
-    "E": "gonzotech:first_universal_fluid_pipe"
+    "A": "gonzotech:fluid_module",
+    "B": "gonzotech:energy_module",
+    "C": "minecraft:bucket",
+    "D": "gonzotech:logic_module",
+    "E": "gonzotech:nickel_plate",
+    "F": "gonzotech:sheathing"
   },
   "result": {
     "id": "gonzotech:third_filler",
     "count": 1
-  }
+  },
+  "group": "tier3_machines"
 }

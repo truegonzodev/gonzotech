@@ -5,7 +5,6 @@ import com.gonzotech.radiation.ItemToxicity;
 import com.gonzotech.core.text.GtUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
@@ -24,8 +23,7 @@ public final class RadTooltip {
     private RadTooltip() {
     }
 
-    @SubscribeEvent
-    public static void onTooltip(ItemTooltipEvent event) {
+    public static void append(ItemTooltipEvent event) {
         double total = ItemRadioactivity.totalEmission(event.getItemStack());
         double toxicity = ItemToxicity.toxicityOfStack(event.getItemStack());
         if (total < 1.0 && toxicity <= 0.0) {

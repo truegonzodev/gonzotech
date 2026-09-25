@@ -10,8 +10,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
@@ -75,6 +77,8 @@ public class ChunkRadiationData extends SavedData {
         placed.defaultReturnValue(0.0);
     }
 
+    public record VisualSource(BlockPos pos, double emission) {}
+
     // ───────────────────────── доступ ─────────────────────────
 
     public static ChunkRadiationData get(ServerLevel level) {
@@ -89,6 +93,46 @@ public class ChunkRadiationData extends SavedData {
         return baselineOf(level, chunkKey) + contamination.get(chunkKey);
     }
 
+    /**
+     * Полностью обнулить радиационные данные в квадрате чанков вокруг центра.
+     * baseline фиксируется в нуле, чтобы ленивый природный фон не создался заново
+     * при следующем запросе дозиметра.
+     */
+    public void purgeAround(ChunkPos center, int radius) {
+        for (int cx = center.x - radius; cx <= center.x + radius; cx++) {
+            for (int cz = center.z - radius; cz <= center.z + radius; cz++) {
+                long key = ChunkPos.asLong(cx, cz);
+                baseline.put(key, 0.0);
+                contamination.remove(key);
+                placed.remove(key);
+                placedPos.remove(key);
+            }
+        }
+        setDirty();
+    }
+
+    /** Actual radioactive blocks currently present in one chunk, for diagnostics. */
+    public List<VisualSource> sourcesInChunk(ServerLevel level, long chunkKey) {
+        List<VisualSource> out = new ArrayList<>();
+        ChunkPos cp = new ChunkPos(chunkKey);
+        int minY = level.getMinY();
+        int maxY = level.getMaxY();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = cp.getMinBlockX(); x < cp.getMinBlockX() + 16; x++) {
+            for (int z = cp.getMinBlockZ(); z < cp.getMinBlockZ() + 16; z++) {
+                for (int y = minY; y < maxY; y++) {
+                    pos.set(x, y, z);
+                    var state = level.getBlockState(pos);
+                    double emission = RadSources.blockEmission(
+                            BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath());
+                    if (emission > 0.0) out.add(new VisualSource(pos.immutable(), emission));
+                }
+            }
+        }
+        out.sort((a, b) -> Double.compare(b.emission(), a.emission()));
+        return out;
+    }
+
     /** Только динамическое заражение (без baseline) — для мягких потолков помп. */
     public double contaminationOf(long chunkKey) {
         return contamination.get(chunkKey);
@@ -99,6 +143,36 @@ public class ChunkRadiationData extends SavedData {
         double next = Math.max(0.0, contamination.get(chunkKey) + deltaNzt);
         contamination.put(chunkKey, next);
         setDirty();
+    }
+
+    /** Read-only nearby source snapshot for the instrument visualizer. */
+    public List<VisualSource> visualSources(ServerLevel level, BlockPos center, int radius) {
+        List<VisualSource> out = new ArrayList<>();
+        double max = radius * radius;
+        for (var entry : placedPos.long2ObjectEntrySet()) {
+            for (long raw : entry.getValue()) {
+                BlockPos pos = BlockPos.of(raw);
+                if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
+                double emission = RadSources.blockEmission(
+                        BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+                if (emission > 0.0) out.add(new VisualSource(pos, emission));
+            }
+        }
+        int minChunkX = (center.getX() - radius) >> 4, maxChunkX = (center.getX() + radius) >> 4;
+        int minChunkZ = (center.getZ() - radius) >> 4, maxChunkZ = (center.getZ() + radius) >> 4;
+        for (int cx = minChunkX; cx <= maxChunkX; cx++) for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+            LevelChunk chunk = level.getChunk(cx, cz);
+            for (var be : chunk.getBlockEntities().values()) {
+                if (!(be instanceof Container container)) continue;
+                BlockPos pos = be.getBlockPos();
+                if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
+                double emission = 0.0;
+                for (int i = 0; i < container.getContainerSize(); i++) emission += RadSources.emissionOfStack(container.getItem(i));
+                if (emission > 0.0) out.add(new VisualSource(pos, emission));
+            }
+        }
+        out.sort((a, b) -> Double.compare(b.emission(), a.emission()));
+        return out.size() <= 64 ? out : new ArrayList<>(out.subList(0, 64));
     }
 
     public double baselineOf(ServerLevel level, long chunkKey) {
@@ -147,6 +221,11 @@ public class ChunkRadiationData extends SavedData {
      * </ol>
      */
     public void maintain(ServerLevel level) {
+        // Before feeding contamination, reconcile the registry with the world.
+        // A piston can move a source without firing the player break/place path;
+        // a bounded local search preserves that source at its new position.
+        reconcilePlacedSources(level);
+
         // 1) Питание от поставленных блоков.
         for (var pe : placed.long2DoubleEntrySet()) {
             double emitted = pe.getDoubleValue();
@@ -208,6 +287,61 @@ public class ChunkRadiationData extends SavedData {
             }
         });
         setDirty();
+    }
+
+    /**
+     * Rebuild the placed-source index from its known coordinates. Missing sources
+     * are removed; when a source disappeared from its old position, search only
+     * the piston-sized neighbourhood for the same radioactive block and migrate
+     * the registration if found. This never scans the world.
+     */
+    private void reconcilePlacedSources(ServerLevel level) {
+        List<SourceRecord> known = new ArrayList<>();
+        for (var entry : placedPos.long2ObjectEntrySet()) {
+            for (long raw : entry.getValue()) {
+                BlockPos pos = BlockPos.of(raw);
+                double expected = RadSources.blockEmission(
+                        BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+                if (expected > 0.0) {
+                    known.add(new SourceRecord(pos, expected));
+                    continue;
+                }
+                BlockPos moved = findNearbySource(level, pos);
+                if (moved != null) {
+                    double movedEmission = RadSources.blockEmission(BuiltInRegistries.BLOCK.getKey(
+                            level.getBlockState(moved).getBlock()).getPath());
+                    known.add(new SourceRecord(moved, movedEmission));
+                }
+            }
+        }
+
+        placedPos.clear();
+        placed.clear();
+        for (SourceRecord source : known) {
+            long key = new ChunkPos(source.pos()).toLong();
+            placedPos.computeIfAbsent(key, ignored -> new LongOpenHashSet()).add(source.pos().asLong());
+            placed.put(key, placed.get(key) + source.emission());
+        }
+        if (!known.isEmpty() || !placed.isEmpty()) setDirty();
+    }
+
+    private record SourceRecord(BlockPos pos, double emission) {}
+
+    /** Vanilla pistons can move a block up to twelve positions. */
+    private BlockPos findNearbySource(ServerLevel level, BlockPos origin) {
+        for (int dx = -12; dx <= 12; dx++) {
+            for (int dy = -12; dy <= 12; dy++) {
+                for (int dz = -12; dz <= 12; dz++) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+                    BlockPos candidate = origin.offset(dx, dy, dz);
+                    if (!level.hasChunkAt(candidate)) continue;
+                    double actual = RadSources.blockEmission(BuiltInRegistries.BLOCK.getKey(
+                            level.getBlockState(candidate).getBlock()).getPath());
+                    if (actual > 0.0) return candidate;
+                }
+            }
+        }
+        return null;
     }
 
     /**

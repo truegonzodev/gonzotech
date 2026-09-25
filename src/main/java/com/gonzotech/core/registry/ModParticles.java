@@ -17,6 +17,9 @@ public final class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> ETHYLEN_EXPLOSION_EMITTER =
             PARTICLE_TYPES.register("ethylen_explosion_emitter", () -> new SimpleParticleType(true));
 
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RADIATION_MIST =
+            PARTICLE_TYPES.register("radiation_mist", () -> new SimpleParticleType(true));
+
     private ModParticles() {
     }
 }

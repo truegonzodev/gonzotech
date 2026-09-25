@@ -102,6 +102,9 @@ public final class ModMenus {
     public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> FIRST_ITEM_FILTER =
         MENUS.register("first_item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));
 
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.AirFilterMenu>> AIR_FILTER =
+        MENUS.register("third_air_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.AirFilterMenu::new));
+
     public static final Supplier<MenuType<FermentationVatMenu>> THIRD_FERMENTATION_VAT =
         MENUS.register("third_fermentation_vat", () -> IMenuTypeExtension.create(FermentationVatMenu::new));
 
@@ -124,8 +127,8 @@ public final class ModMenus {
         MENUS.register("third_chemical_plant", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ChemicalPlantMenu::new));
     public static final Supplier<MenuType<com.gonzotech.machines.menu.ChemicalPlantMenu>> THIRD_CHEMICAL_PLANT = CHEMICAL_PLANT;
 
-    public static final Supplier<MenuType<com.gonzotech.machines.menu.DispensingTapMenu>> DISPENSING_TAP =
-        MENUS.register("dispensing_tap", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.DispensingTapMenu::new));
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.DispensingTapMenu>> THIRD_DISPENSING_TAP =
+        MENUS.register("third_dispensing_tap", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.DispensingTapMenu::new));
 
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);

@@ -2,18 +2,22 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "TWT",
-    "ECE",
-    "TTT"
+    "ABC",
+    "DEF",
+    "GAG"
   ],
   "key": {
-    "T": "gonzotech:tungsten_ingot",
-    "W": "gonzotech:first_wire",
-    "E": "gonzotech:first_universal_fluid_pipe",
-    "C": "minecraft:crafting_table"
+    "A": "gonzotech:nickel_plate",
+    "B": "gonzotech:tungsten_ingot",
+    "C": "gonzotech:logic_module",
+    "D": "gonzotech:energy_module",
+    "E": "minecraft:crafting_table",
+    "F": "gonzotech:fluid_module",
+    "G": "gonzotech:sheathing"
   },
   "result": {
     "id": "gonzotech:third_chemical_plant",
     "count": 1
-  }
+  },
+  "group": "tier3_machines"
 }

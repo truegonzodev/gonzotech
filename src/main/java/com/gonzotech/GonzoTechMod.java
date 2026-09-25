@@ -72,6 +72,8 @@ public class GonzoTechMod {
         });
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
+        // Радиационная диагностика: /gonzotech debug purge|getdose.
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.radiation.RadiationDebugCommand::onRegisterCommands);
         // Админ-команды психики: /gonzotech debug psyche add|remove|set|trigger (автор 22.09).
         NeoForge.EVENT_BUS.addListener(com.gonzotech.core.psyche.command.PsycheCommand::onRegisterCommands);
 
@@ -135,10 +137,8 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
             // Спидометр измеряет клиентскую скорость и выводит её над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
-            // Радиация: lore-строка «Радиоактивность» в самом низу тултипов.
-            NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.RadTooltip.class);
-            // Хазмат: лор «Полный комплект: 60% защиты…» у каждой из четырёх частей.
-            NeoForge.EVENT_BUS.register(com.gonzotech.radiation.client.HazmatTooltips.class);
+            // Единый порядок lore, радиации, токсичности, экранирования и F3+H.
+            // Регистрируется через UniversalTooltip (@EventBusSubscriber).
             // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
@@ -183,6 +183,13 @@ public class GonzoTechMod {
 
         // Эффекты кризиса: фиксация камеры, ложный экран смерти, ЛКМ-«использование предмета».
         com.gonzotech.core.psyche.PsycheCrisisNetwork.register(registrar);
+
+        registrar.playToClient(
+            com.gonzotech.radiation.RadiationVisualPayload.TYPE,
+            com.gonzotech.radiation.RadiationVisualPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                com.gonzotech.radiation.RadiationVisualClient.accept(payload))
+        );
 
         // HUD живого потока труб (ключ ↔ сервер).
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);

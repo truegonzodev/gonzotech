@@ -102,6 +102,16 @@ public class ModItems {
     public static final DeferredItem<Item> INDUCTIVE_MODULE =
         ITEMS.registerSimpleItem("inductive_module");
 
+    // ─────────────────────── Компоненты тир-3 ───────────────────────
+    // Базовые заготовки третьей эпохи. Рецепты намеренно не добавлены.
+    public static final DeferredItem<Item> ENERGY_MODULE = ITEMS.registerSimpleItem("energy_module");
+    public static final DeferredItem<Item> LOGIC_MODULE = ITEMS.registerSimpleItem("logic_module");
+    public static final DeferredItem<Item> ELECTRIC_MOTOR = ITEMS.registerSimpleItem("electric_motor");
+    public static final DeferredItem<Item> TRANSISTOR = ITEMS.registerSimpleItem("transistor");
+    public static final DeferredItem<Item> FLUID_MODULE = ITEMS.registerSimpleItem("fluid_module");
+    public static final DeferredItem<Item> DUST_METER = ITEMS.registerItem("dust_meter",
+        props -> new com.gonzotech.cleanroom.DustMeterItem(props));
+
     // ─────────────────────── Прессованные компоненты ───────────────────────
     // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».
     public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
@@ -152,9 +162,12 @@ public class ModItems {
     public static final DeferredItem<Item> EMPTY_AMPOULE = ITEMS.registerSimpleItem("empty_ampoule");
     /** Стойкая ампула (2 борных стекла) — термо- и химстойкая ампула (128 mB). */
     public static final DeferredItem<Item> DURABLE_AMPOULE = ITEMS.registerSimpleItem("durable_ampoule");
-    /** Наполненная ампула с жидкостью (128 mB). */
+    /** Наполненная ампула с жидкостью (128 mB) — из пустой стеклянной. */
     public static final DeferredItem<com.gonzotech.core.item.AmpouleItem> AMPOULE =
         ITEMS.registerItem("ampoule", com.gonzotech.core.item.AmpouleItem::new);
+    /** Наполненная стойкая ампула (128 mB) — из стойкой; в будущем для цезия, натрия и т.п. */
+    public static final DeferredItem<com.gonzotech.core.item.AmpouleItem> FILLED_DURABLE_AMPOULE =
+        ITEMS.registerItem("filled_durable_ampoule", com.gonzotech.core.item.AmpouleItem::new);
 
     /** ЭДТА (гранулы) — этилендиаминтетрауксусная кислота, прекурсор препаратов. */
     public static final DeferredItem<Item> EDTA = ITEMS.registerSimpleItem("edta");
@@ -312,10 +325,12 @@ public class ModItems {
         ITEMS.registerItem("aminoblazeethanol_bucket", props ->
             new Item(props.stacksTo(1).craftRemainder(net.minecraft.world.item.Items.BUCKET)));
 
-    /** Бутылка водки — наливается в разливном кране (дистиллят 128 mB + пузырёк). */
+    /** Бутылка водки — наливается в разливном кране (дистиллят 128 mB + пузырёк). Пьётся зажатием ПКМ (автор 24.09). */
     public static final DeferredItem<Item> VODKA_BOTTLE =
         ITEMS.registerItem("vodka_bottle", props ->
-            new Item(props.stacksTo(16).craftRemainder(net.minecraft.world.item.Items.GLASS_BOTTLE)));
+            new com.gonzotech.core.item.DrinkItem(
+                props.stacksTo(16).craftRemainder(net.minecraft.world.item.Items.GLASS_BOTTLE),
+                net.minecraft.world.item.Items.GLASS_BOTTLE));
 
     /**
      * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
@@ -425,6 +440,16 @@ public class ModItems {
                     net.minecraft.world.effect.MobEffects.CONFUSION, 20, 0), 1.0f))
             .build();
 
+    /** Tier-3 component blocks; recipes are intentionally deferred. */
+    public static final DeferredItem<BlockItem> SHEATHING_ITEM =
+        ITEMS.registerSimpleBlockItem("sheathing", ModBlocks.SHEATHING);
+    public static final DeferredItem<BlockItem> ALUMINUM_HOUSING_ITEM =
+        ITEMS.registerSimpleBlockItem("aluminum_housing", ModBlocks.ALUMINUM_HOUSING);
+    public static final DeferredItem<BlockItem> AIR_CLEANER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_air_cleaner", ModBlocks.AIR_CLEANER);
+    public static final DeferredItem<BlockItem> AIR_FILTER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_air_filter", ModBlocks.AIR_FILTER);
+
     /**
      * Фаза 3 — «прикол»: прото-сусло. Крафтится бесформенно (семена + костная
      * мука). Съедобно: +1.5 голода, 0 сытости, тошнота 1 сек.
@@ -441,13 +466,14 @@ public class ModItems {
         ITEMS.registerItem("the_fruit_mash",
             props -> new Item(props.food(MASH_FOOD, MASH_CONSUMABLE)));
 
-    /** Кружка пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (128 mB сусла + бутылёк). */
+    /** Кружка пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (128 mB сусла + бутылёк). Пьётся зажатием ПКМ (автор 24.09). */
     public static final DeferredItem<Item> BEER_MUG =
-        ITEMS.registerItem("beer_mug", props -> new Item(props.stacksTo(16)));
+        ITEMS.registerItem("beer_mug", props -> new com.gonzotech.core.item.DrinkItem(props.stacksTo(16), null));
 
-    /** Ведро пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (1000 mB сусла + ведро). */
+    /** Ведро пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (1000 mB сусла + ведро). После глотка остаётся пустое ведро (автор 24.09). */
     public static final DeferredItem<Item> BEER_BUCKET =
-        ITEMS.registerItem("beer_bucket", props -> new Item(props.stacksTo(1)));
+        ITEMS.registerItem("beer_bucket", props -> new com.gonzotech.core.item.DrinkItem(props.stacksTo(1),
+            net.minecraft.world.item.Items.BUCKET));
 
 
     /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */

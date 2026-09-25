@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AAA",
+    "ABA",
+    "AAA"
+  ],
+  "key": {
+    "A": "gonzotech:nickel_plate",
+    "B": "gonzotech:stainless_steel_block"
+  },
+  "result": {
+    "id": "gonzotech:sheathing",
+    "count": 1
+  },
+  "group": "tier3_sheathing"
+}

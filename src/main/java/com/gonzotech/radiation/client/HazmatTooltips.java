@@ -7,7 +7,6 @@ import com.gonzotech.radiation.RadUnits;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
@@ -30,8 +29,7 @@ public final class HazmatTooltips {
     private HazmatTooltips() {
     }
 
-    @SubscribeEvent
-    public static void onTooltip(ItemTooltipEvent event) {
+    public static void append(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
         if (!isHazmatPiece(stack)) {
             return;
