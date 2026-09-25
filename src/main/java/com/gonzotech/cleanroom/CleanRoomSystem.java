@@ -23,7 +23,9 @@ public final class CleanRoomSystem {
 
     private record RoomKey(String dimension, long fingerprint) {}
     private static final class RoomState {
-        private double quality;
+        // A newly detected closed contour starts clean. Filters maintain and
+        // restore this value; an opened contour is represented by quality -1.
+        private double quality = 100.0;
         private long topologyTick;
         private RoomState(long tick) { topologyTick = tick; }
     }
