@@ -73,7 +73,10 @@ public final class ItemRadioactivity {
     public static double nextInduced(double current, ItemStack stack,
                                      boolean hasSource, double sourceNzt, double factor) {
         int count = Math.max(1, stack.getCount());
-        double target = Math.min(sourceNzt / count, INDUCED_CAP);
+        // Preset emission is a permanent floor, not an inducible part. A
+        // source may only raise a target above its own intrinsic baseline.
+        double intrinsic = RadSources.emissionOfStack(stack);
+        double target = Math.min(Math.max(0.0, sourceNzt - intrinsic) / count, INDUCED_CAP);
         if (hasSource && target >= 1.0 && factor > 0.0) {
             if (current > target) return current / GROWTH;
             double seeded = Math.max(current, 1.0 / count);
@@ -107,6 +110,11 @@ public final class ItemRadioactivity {
         CompoundTag tag = data.copyTag();
         if (!tag.contains(TAG_RAD) || tag.getInt(TAG_RAD_MODEL) == PER_ITEM_MODEL) return;
         setInduced(stack, tag.getDouble(TAG_RAD) / Math.max(1, stack.getCount()));
+    }
+
+    /** Удалить только радиационные поля во временной копии для equality-check. */
+    public static void removeRadiationForComparison(ItemStack stack) {
+        clear(stack);
     }
 
     /** Сравнение для нашего серверного объединителя: радиационный компонент игнорируется. */

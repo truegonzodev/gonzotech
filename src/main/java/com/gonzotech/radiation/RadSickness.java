@@ -1,6 +1,7 @@
 package com.gonzotech.radiation;
 
 import com.gonzotech.core.registry.ModEffects;
+import com.gonzotech.core.registry.ModItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,7 +59,7 @@ public final class RadSickness {
         RadDose.Tier tier = RadDose.tier(permille);
         RadDose.Category category = RadDose.category(permille);
         RadDose.Category previous = LAST_STAGE.put(player.getUUID(), category);
-        if (previous != category) {
+        if (previous != category && hasRadiationInstrument(player)) {
             announce(player, category, previous, permille);
         }
 
@@ -103,6 +104,19 @@ public final class RadSickness {
             player.addEffect(new MobEffectInstance(flavor.effect(), seconds * 20,
                     flavor.amplifier(), true, true));
         }
+    }
+
+    private static boolean hasRadiationInstrument(ServerPlayer player) {
+        for (net.minecraft.world.item.ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.DOSIMETER.get()) || stack.is(ModItems.TELIFON.get())) return true;
+        }
+        for (net.minecraft.world.item.ItemStack stack : player.getInventory().armor) {
+            if (stack.is(ModItems.DOSIMETER.get()) || stack.is(ModItems.TELIFON.get())) return true;
+        }
+        for (net.minecraft.world.item.ItemStack stack : player.getInventory().offhand) {
+            if (stack.is(ModItems.DOSIMETER.get()) || stack.is(ModItems.TELIFON.get())) return true;
+        }
+        return false;
     }
 
     /**
