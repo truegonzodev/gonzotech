@@ -49,20 +49,35 @@ public final class RadiationVisualClient {
                 || mc.player.getOffhandItem().is(ModItems.TELIFON.get());
     }
 
+    private static final double RADIUM_BLOCK = 675.0 * RadUnits.MILLI;
+
     private static void spawnFaces(ClientLevel level, BlockPos source, float emission) {
-        BlockState state = level.getBlockState(source);
-        double strength = Math.min(1.0, Math.log1p(Math.max(0.0, emission) / 0.001) / Math.log1p(100.0));
-        int attempts = Math.max(1, Math.min(8, 1 + (int) (strength * 7.0)));
+        double ratio = Math.max(0.0, emission) / RADIUM_BLOCK;
+        // Reference point: a 675 mZt/s radium block remains exactly the
+        // current visual. We interpolate in log space for weaker sources.
+        double visualFactor;
+        if (ratio >= 1.0) {
+            visualFactor = Math.min(1.6, 1.0 + 0.6 * Math.log1p(ratio) / Math.log1p(20.0));
+        } else if (ratio >= 1.0 / 20.0) {
+            visualFactor = 0.30 + 0.70 * Math.log(ratio * 20.0) / Math.log(20.0);
+        } else {
+            visualFactor = 0.18 + 0.12 * Math.log(ratio * 3750.0) / Math.log(187.5);
+        }
+        visualFactor = Math.max(0.18, visualFactor);
+        double speedFactor = ratio > 1.0 ? Math.sqrt(ratio) : visualFactor;
+        int attempts = Math.max(1, Math.min(13, (int) Math.round(8.0 * visualFactor)));
         for (Direction face : Direction.values()) {
             BlockPos next = source.relative(face);
             BlockState neighbor = level.getBlockState(next);
-            // Cheap pre-cull: never create a particle on a fully closed face.
-            if (!neighbor.isAir() && neighbor.canOcclude()) continue;
+            // Ordinary stone/earth is not a radiation shield: particles pass
+            // through it. Only an actually occluding shielding material closes
+            // a face before spawn; this is cheaper than spawning hidden mist.
+            if (neighbor.canOcclude() && RadMaterials.blockFactor(neighbor) < 1.0) continue;
             for (int i = 0; i < attempts / 2 + 1; i++) {
                 double x = source.getX() + 0.5 + face.getStepX() * 0.52 + (level.random.nextDouble() - 0.5) * 0.45;
                 double y = source.getY() + 0.5 + face.getStepY() * 0.52 + (level.random.nextDouble() - 0.5) * 0.45;
                 double z = source.getZ() + 0.5 + face.getStepZ() * 0.52 + (level.random.nextDouble() - 0.5) * 0.45;
-                double speed = 0.006 + strength * 0.035;
+                double speed = 0.006 + 0.035 * speedFactor;
                 level.addParticle(ModParticles.RADIATION_MIST.get(), x, y, z,
                         face.getStepX() * speed, face.getStepY() * speed, face.getStepZ() * speed);
             }

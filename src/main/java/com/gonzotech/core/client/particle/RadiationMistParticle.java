@@ -6,7 +6,9 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
+import com.gonzotech.radiation.RadMaterials;
 
 public final class RadiationMistParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
@@ -29,7 +31,15 @@ public final class RadiationMistParticle extends TextureSheetParticle {
     @Override
     public void tick() {
         xo = x; yo = y; zo = z;
-        if (age++ >= lifetime || !level.noCollision(getBoundingBox())) {
+        // Visual particles are not physical radiation. Geometry is culled
+        // before spawn; they must pass through ordinary stone/earth.
+        if (age++ >= lifetime) {
+            remove();
+            return;
+        }
+        BlockPos next = BlockPos.containing(x + xd, y + yd, z + zd);
+        var nextState = level.getBlockState(next);
+        if (nextState.canOcclude() && RadMaterials.blockFactor(nextState) < 1.0) {
             remove();
             return;
         }
