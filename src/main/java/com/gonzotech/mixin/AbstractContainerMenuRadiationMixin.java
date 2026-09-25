@@ -1,6 +1,7 @@
 package com.gonzotech.mixin;
 
 import com.gonzotech.radiation.RadiationStackContext;
+import com.gonzotech.radiation.RadiationClickMerge;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
