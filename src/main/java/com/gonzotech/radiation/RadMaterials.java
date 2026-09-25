@@ -68,28 +68,28 @@ public final class RadMaterials {
      * конструкционных экранов: id-путь → доля прохождения. Проверяются раньше
      * префиксной таблицы, иначе «barium_concrete» поймал бы общий префикс «barium».
      */
-    private static final Map<String, Double> ITEM_EXACT = Map.of(
-            "barium_concrete", 0.10,
-            "bore_stained_glass", 0.008,
-            "copper_dust", 1.0,
-            "copper_nugget", 1.0,
-            "copper_plate", 1.0,
-            "copper_wire", 1.0,
-            "aluminum_plate", 0.68,
-            "aluminum_wire", 0.68,
-            "steel_plate", 0.72,
-            "stainless_steel_plate", 0.72,
-            "silver_wire", 0.72,
-            "titanium_plate", 0.72,
-            "zirconium_plate", 0.72,
-            "semiconductor_plate", 0.72,
-            "semiconductor_core", 0.72,
+    private static final Map<String, Double> ITEM_EXACT = Map.ofEntries(
+            Map.entry("barium_concrete", 0.10),
+            Map.entry("bore_stained_glass", 0.008),
+            Map.entry("copper_dust", 1.0),
+            Map.entry("copper_nugget", 1.0),
+            Map.entry("copper_plate", 1.0),
+            Map.entry("copper_wire", 1.0),
+            Map.entry("aluminum_plate", 0.68),
+            Map.entry("aluminum_wire", 0.68),
+            Map.entry("steel_plate", 0.72),
+            Map.entry("stainless_steel_plate", 0.72),
+            Map.entry("silver_wire", 0.72),
+            Map.entry("titanium_plate", 0.72),
+            Map.entry("zirconium_plate", 0.72),
+            Map.entry("semiconductor_plate", 0.72),
+            Map.entry("semiconductor_core", 0.72),
             // Двери (автор 22.09): отличаются ОДНИМ параметром — защитой от радиации.
             // Свинцовая — свинец 0.02, вольфрамовая — вольфрам 0.003,
             // гермодверь — 0.33 («защита от фона ×0.33», зато для чистого контура).
-            "third_heavy_door_lead", 0.02,
-            "third_heavy_door_tungsten", 0.003,
-            "third_hermetic_door", 0.33
+            Map.entry("third_heavy_door_lead", 0.02),
+            Map.entry("third_heavy_door_tungsten", 0.003),
+            Map.entry("third_hermetic_door", 0.33)
     );
 
     /**
