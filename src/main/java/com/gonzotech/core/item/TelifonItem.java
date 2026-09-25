@@ -94,8 +94,12 @@ public class TelifonItem extends Item {
             serverPlayer.sendSystemMessage(Component.translatable("message.gonzotech.telifon.air_quality.normal")
                     .withStyle(ChatFormatting.GRAY));
         } else {
+            int roundedQuality = (int) Math.round(airQuality);
+            // Style the value itself, then apply gray only to the label. Applying
+            // gray to the parent component would override the value's color.
             serverPlayer.sendSystemMessage(Component.translatable("message.gonzotech.telifon.air_quality",
-                    Component.literal(Math.round(airQuality) + "%")).withStyle(ChatFormatting.GRAY));
+                    Component.literal(roundedQuality + "%").withStyle(colorForAirQuality(roundedQuality)))
+                    .withStyle(ChatFormatting.GRAY));
         }
 
         serverLevel.playSound(null, serverPlayer.blockPosition(),
@@ -118,6 +122,15 @@ public class TelifonItem extends Item {
     private static MutableComponent percent(double value) {
         return Component.literal(String.format(Locale.ROOT, "%.1f %%", value))
                 .withStyle(ChatFormatting.YELLOW);
+    }
+
+    private static ChatFormatting colorForAirQuality(int quality) {
+        if (quality < 20) return ChatFormatting.DARK_RED;
+        if (quality < 40) return ChatFormatting.RED;
+        if (quality < 60) return ChatFormatting.GOLD;
+        if (quality < 80) return ChatFormatting.YELLOW;
+        if (quality < 95) return ChatFormatting.GREEN;
+        return ChatFormatting.DARK_GREEN;
     }
 
     /** Цвет категории дозы — те же пороги, что у дозиметра и лучевой болезни. */
