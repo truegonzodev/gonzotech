@@ -1,4 +1,20 @@
-# План визуальной радиации — 25.09.2026
+# Визуальная радиация — итог реализации 25.09.2026
+
+> **Статус:** реализовано и закрыто в survival scope. Этот документ сохраняет исходные проектные решения как историю, но фактическая реализация описана в разделе «Фактическая реализация». Не реализованные варианты BFS/volume ниже являются историческим планом и не должны восприниматься как текущий код.
+>
+> Главный итог: сервер передаёт snapshot источников, клиент спавнит custom particles, частицы проходят через обычные блоки и останавливаются на shielding. После piston relocation визуальный snapshot может обновиться с задержкой до 20 секунд — это допустимая задержка reconciliation.
+
+## Фактическая реализация
+
+- Server source snapshot: [`RadiationSystem.java`](../src/main/java/com/gonzotech/radiation/RadiationSystem.java#L150-L158).
+- Source positions and container sources: [`ChunkRadiationData.visualSources`](../src/main/java/com/gonzotech/radiation/ChunkRadiationData.java#L149-L181).
+- Client instrument gate and snapshot handling: [`RadiationVisualClient.java`](../src/main/java/com/gonzotech/radiation/RadiationVisualClient.java#L19-L48).
+- Emission-based particle density/speed and face spawning: [`spawnFaces`](../src/main/java/com/gonzotech/radiation/RadiationVisualClient.java#L68-L122).
+- Shielding/closed-door test before spawning: [`blocksRadiation`](../src/main/java/com/gonzotech/radiation/RadiationVisualClient.java#L54-L66).
+- Explicit particle movement and shielding collision: [`RadiationMistParticle.java`](../src/main/java/com/gonzotech/core/client/particle/RadiationMistParticle.java#L41-L84).
+- Authoritative material factor: [`RadMaterials.java`](../src/main/java/com/gonzotech/radiation/RadMaterials.java#L147-L157).
+
+No separate visual BFS, volume renderer, or per-particle network stream is used.
 
 ## 0. Цель
 
