@@ -75,6 +75,12 @@ public final class RadiationVisualClient {
         // exponent keeps 1.1 kZt/s visibly fast without making it explode.
         double speedFactor = ratio > 1.0 ? Math.pow(ratio, 0.35) : visualFactor;
         int attempts = Math.max(1, Math.min(13, (int) Math.round(8.0 * visualFactor)));
+        // Everything below the plutonium reference loses another 30% of
+        // visual density. Keep one minimum attempt so weak sources remain
+        // discoverable by the instrument.
+        if (ratio < 1.0 / 20.0) {
+            attempts = Math.max(1, (int) Math.ceil(attempts * 0.70));
+        }
         for (Direction face : Direction.values()) {
             BlockPos next = source.relative(face);
             BlockState neighbor = level.getBlockState(next);
@@ -105,11 +111,14 @@ public final class RadiationVisualClient {
                 // reference, plutonium is the secondary tier, other sources
                 // retain their current speed.
                 double speedMultiplier = ratio >= 0.5 && ratio <= 2.0 ? 3.0
-                        : (ratio >= 0.02 && ratio < 0.08 ? 1.7 : 1.0);
+                        : (ratio >= 0.02 && ratio < 0.08 ? 1.8 : 1.0);
                 speed *= speedMultiplier;
                 // Every radioactive cloud has buoyancy. The face direction
                 // is only the initial impulse; it is not the whole trajectory.
-                double upward = 0.010 + level.random.nextDouble() * 0.012;
+                // Buoyancy keeps its old constant component and adds 20% of
+                // the source's main speed, so hotter particles rise more
+                // strongly without losing the common upward drift.
+                double upward = 0.010 + level.random.nextDouble() * 0.012 + speed * 0.20;
                 double spread = speed * (0.18 + level.random.nextDouble() * 0.28);
                 double dx = face.getStepX() * speed + (level.random.nextDouble() - 0.5) * spread;
                 double dy = face.getStepY() * speed + upward + (level.random.nextDouble() - 0.5) * spread;
