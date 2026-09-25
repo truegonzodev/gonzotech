@@ -50,6 +50,8 @@ public class ModCreativeTabs {
                 // Инструменты: ключ сразу за заметками, затем измерительные приборы.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.DOSIMETER.get());
+                // Пылемер и телифон — рядом с дозиметром как приборы контроля среды.
+                output.accept(ModItems.DUST_METER.get());
                 // Телифон — сразу за дозиметром (автор, 22.09): совмещает все приборы.
                 output.accept(ModItems.TELIFON.get());
                 // Солнечные часы — рядом с дозиметром (автор, 2026-09-18).
@@ -275,7 +277,6 @@ public class ModCreativeTabs {
                 output.accept(ModItems.FLUID_MODULE.get());
                 output.accept(ModItems.SHEATHING_ITEM.get());
                 output.accept(ModItems.ALUMINUM_HOUSING_ITEM.get());
-                output.accept(ModItems.DUST_METER.get());
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());
                 output.accept(ModItems.DIORITE_GRIT.get());
