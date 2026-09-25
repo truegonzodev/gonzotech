@@ -136,7 +136,9 @@ public final class RadiationSystem {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        if (player.isSwinging()) {
+        // LivingEntity does not expose a public isSwinging() in 1.21.4.
+        // Attack animation is the mapped public signal for the same pulse.
+        if (player.getAttackAnim(0.0F) > 0.0F) {
             LAST_SWING.put(player.getUUID(), player.tickCount);
         }
         // Воздух некроза держим КАЖДЫЙ тик: ваниль восстанавливает 4 пузырька в тик,
