@@ -337,7 +337,7 @@ public class ChunkRadiationData extends SavedData {
                     if (!level.hasChunkAt(candidate)) continue;
                     double actual = RadSources.blockEmission(BuiltInRegistries.BLOCK.getKey(
                             level.getBlockState(candidate).getBlock()).getPath());
-                    if (Math.abs(actual - emission) < 1.0e-9) return candidate;
+                    if (actual > 0.0) return candidate;
                 }
             }
         }
