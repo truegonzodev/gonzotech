@@ -21,6 +21,14 @@ public class ModAttachments {
                             .build()
             );
 
+    public static final Supplier<AttachmentType<com.gonzotech.cleanroom.Cleanliness>> CLEANLINESS =
+            ATTACHMENT_TYPES.register("cleanliness", () ->
+                    AttachmentType.builder(com.gonzotech.cleanroom.Cleanliness::new)
+                            .serialize(com.gonzotech.cleanroom.Cleanliness.CODEC)
+                            .copyOnDeath()
+                            .build()
+            );
+
     public static void register(IEventBus eventBus) {
         ATTACHMENT_TYPES.register(eventBus);
     }

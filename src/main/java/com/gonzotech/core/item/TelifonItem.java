@@ -89,6 +89,15 @@ public class TelifonItem extends Item {
         serverPlayer.sendSystemMessage(Component.translatable("message.gonzotech.telifon.chemical",
                         percent(psyche.getChemical() / 10.0D)).withStyle(ChatFormatting.GRAY));
 
+        double airQuality = com.gonzotech.cleanroom.CleanRoomSystem.quality(serverLevel, serverPlayer.blockPosition());
+        if (airQuality < 0.0) {
+            serverPlayer.sendSystemMessage(Component.translatable("message.gonzotech.telifon.air_quality.normal")
+                    .withStyle(ChatFormatting.GRAY));
+        } else {
+            serverPlayer.sendSystemMessage(Component.translatable("message.gonzotech.telifon.air_quality",
+                    Component.literal(Math.round(airQuality) + "%")).withStyle(ChatFormatting.GRAY));
+        }
+
         serverLevel.playSound(null, serverPlayer.blockPosition(),
                 SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 0.4F, 1.2F);
         return InteractionResult.SUCCESS;

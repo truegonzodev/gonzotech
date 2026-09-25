@@ -876,6 +876,11 @@
   "item.gonzotech.dtpa": "DTPA",
   "gui.gonzotech.chemical_plant.reaction": "Reaction: %s%%",
   "itemGroup.gonzotech.adaptations": "Gonzo Tech Adaptations",
+  "item.gonzotech.dust_meter": "Dust Meter",
+  "block.gonzotech.air_cleaner": "Air Cleaner",
+  "item.gonzotech.air_cleaner": "Air Cleaner",
+  "block.gonzotech.air_filter": "Clean Room Filter",
+  "item.gonzotech.air_filter": "Clean Room Filter",
   "item.gonzotech.energy_module": "Energy Module",
   "item.gonzotech.logic_module": "Logic Module",
   "item.gonzotech.electric_motor": "Electric Motor",
@@ -884,5 +889,7 @@
   "block.gonzotech.sheathing": "Sheathing",
   "item.gonzotech.sheathing": "Sheathing",
   "block.gonzotech.aluminum_housing": "Aluminum Housing",
-  "item.gonzotech.aluminum_housing": "Aluminum Housing"
+  "item.gonzotech.aluminum_housing": "Aluminum Housing",
+  "message.gonzotech.telifon.air_quality": "Air quality: %s",
+  "message.gonzotech.telifon.air_quality.normal": "Air quality: normal"
 }

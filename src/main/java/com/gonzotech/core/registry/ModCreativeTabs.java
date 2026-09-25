@@ -271,6 +271,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.FLUID_MODULE.get());
                 output.accept(ModItems.SHEATHING_ITEM.get());
                 output.accept(ModItems.ALUMINUM_HOUSING_ITEM.get());
+                output.accept(ModItems.AIR_CLEANER_ITEM.get());
+                output.accept(ModItems.AIR_FILTER_ITEM.get());
+                output.accept(ModItems.DUST_METER.get());
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());
                 output.accept(ModItems.DIORITE_GRIT.get());

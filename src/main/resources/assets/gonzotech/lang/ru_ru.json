@@ -876,6 +876,11 @@
   "item.gonzotech.dtpa": "ДТПА",
   "gui.gonzotech.chemical_plant.reaction": "Реакция: %s%%",
   "itemGroup.gonzotech.adaptations": "Приспособления Gonzo Tech",
+  "item.gonzotech.dust_meter": "Пылемер",
+  "block.gonzotech.air_cleaner": "Очиститель воздуха",
+  "item.gonzotech.air_cleaner": "Очиститель воздуха",
+  "block.gonzotech.air_filter": "Фильтр чистой комнаты",
+  "item.gonzotech.air_filter": "Фильтр чистой комнаты",
   "item.gonzotech.energy_module": "Энергетический модуль",
   "item.gonzotech.logic_module": "Логический модуль",
   "item.gonzotech.electric_motor": "Электромотор",
@@ -884,5 +889,7 @@
   "block.gonzotech.sheathing": "Обшивка",
   "item.gonzotech.sheathing": "Обшивка",
   "block.gonzotech.aluminum_housing": "Алюминиевый корпус",
-  "item.gonzotech.aluminum_housing": "Алюминиевый корпус"
+  "item.gonzotech.aluminum_housing": "Алюминиевый корпус",
+  "message.gonzotech.telifon.air_quality": "Качество воздуха: %s",
+  "message.gonzotech.telifon.air_quality.normal": "Качество воздуха: обычное"
 }

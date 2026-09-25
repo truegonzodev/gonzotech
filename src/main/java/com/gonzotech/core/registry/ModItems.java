@@ -109,6 +109,8 @@ public class ModItems {
     public static final DeferredItem<Item> ELECTRIC_MOTOR = ITEMS.registerSimpleItem("electric_motor");
     public static final DeferredItem<Item> TRANSISTOR = ITEMS.registerSimpleItem("transistor");
     public static final DeferredItem<Item> FLUID_MODULE = ITEMS.registerSimpleItem("fluid_module");
+    public static final DeferredItem<Item> DUST_METER = ITEMS.registerItem("dust_meter",
+        props -> new com.gonzotech.cleanroom.DustMeterItem(props));
 
     // ─────────────────────── Прессованные компоненты ───────────────────────
     // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».
@@ -443,6 +445,10 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("sheathing", ModBlocks.SHEATHING);
     public static final DeferredItem<BlockItem> ALUMINUM_HOUSING_ITEM =
         ITEMS.registerSimpleBlockItem("aluminum_housing", ModBlocks.ALUMINUM_HOUSING);
+    public static final DeferredItem<BlockItem> AIR_CLEANER_ITEM =
+        ITEMS.registerSimpleBlockItem("air_cleaner", ModBlocks.AIR_CLEANER);
+    public static final DeferredItem<BlockItem> AIR_FILTER_ITEM =
+        ITEMS.registerSimpleBlockItem("air_filter", ModBlocks.AIR_FILTER);
 
     /**
      * Фаза 3 — «прикол»: прото-сусло. Крафтится бесформенно (семена + костная
