@@ -1,0 +1,4 @@
+craftingTable.addShaped("snaketype_condenser", <item:gonzotech:third_snaketype_condenser> * 1, [
+[<item:gonzotech:aluminum_wire>, <item:minecraft:bucket>, <item:gonzotech:aluminum_wire>], 
+[<item:gonzotech:aluminum_plate>, <item:gonzotech:aluminum_wire>, <item:gonzotech:aluminum_plate>], 
+[<item:gonzotech:aluminum_wire>, <item:minecraft:bucket>, <item:gonzotech:aluminum_wire>]]);

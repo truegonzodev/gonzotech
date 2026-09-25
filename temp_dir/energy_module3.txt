@@ -1,0 +1,4 @@
+craftingTable.addShaped("energy_module3", <item:gonzotech:energy_module> * 1, [
+[<item:gonzotech:crimson_obsidian>, <item:minecraft:lever>, <item:gonzotech:crimson_obsidian>], 
+[<item:gonzotech:redstone_plate>, <item:gonzotech:redstone_core>, <item:gonzotech:redstone_plate>], 
+[<item:gonzotech:crimson_obsidian>, <item:gonzotech:gold_wire>, <item:gonzotech:crimson_obsidian>]]);

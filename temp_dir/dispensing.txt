@@ -1,0 +1,4 @@
+craftingTable.addShaped("dispensing", <item:gonzotech:third_dispensing_tap> * 1, [
+[<item:minecraft:bucket>, <item:gonzotech:aluminum_wire>, <item:minecraft:bucket>], 
+[<item:minecraft:lever>, <item:gonzotech:aluminum_plate>, <item:minecraft:lever>], 
+[<item:gonzotech:aluminum_plate>, <item:gonzotech:aluminum_plate>, <item:gonzotech:aluminum_plate>]]);

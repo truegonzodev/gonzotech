@@ -1,0 +1,4 @@
+craftingTable.addShaped("transistor", <item:gonzotech:transistor> * 1, [
+[<item:gonzotech:gold_wire>, <item:gonzotech:gold_wire>, <item:gonzotech:gold_wire>], 
+[<item:gonzotech:logic_module>, <item:gonzotech:semiconductor_core>, <item:gonzotech:logic_module>], 
+[<item:gonzotech:polyvinyl_chloride>, <item:gonzotech:polyvinyl_chloride>, <item:gonzotech:polyvinyl_chloride>]]);

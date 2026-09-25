@@ -1,0 +1,4 @@
+craftingTable.addShaped("plating", <item:gonzotech:sheathing> * 1, [
+[<item:gonzotech:nickel_plate>, <item:gonzotech:nickel_plate>, <item:gonzotech:nickel_plate>], 
+[<item:gonzotech:nickel_plate>, <item:gonzotech:stainless_steel_block>, <item:gonzotech:nickel_plate>], 
+[<item:gonzotech:nickel_plate>, <item:gonzotech:nickel_plate>, <item:gonzotech:nickel_plate>]]);

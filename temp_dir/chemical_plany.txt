@@ -1,0 +1,4 @@
+craftingTable.addShaped("chemical_plany", <item:gonzotech:third_chemical_plant> * 1, [
+[<item:gonzotech:nickel_plate>, <item:gonzotech:tungsten_ingot>, <item:gonzotech:logic_module>], 
+[<item:gonzotech:energy_module>, <item:minecraft:crafting_table>, <item:gonzotech:fluid_module>], 
+[<item:gonzotech:sheathing>, <item:gonzotech:nickel_plate>, <item:gonzotech:sheathing>]]);
