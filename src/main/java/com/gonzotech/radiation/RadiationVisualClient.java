@@ -51,6 +51,20 @@ public final class RadiationVisualClient {
 
     private static final double RADIUM_BLOCK = 675.0 * RadUnits.MILLI;
 
+    private static boolean blocksRadiation(BlockState state) {
+        if (RadMaterials.blockFactor(state) >= 1.0) return false;
+        if (state.canOcclude()) return true;
+        // Doors are intentionally not full cubes in vanilla collision/occlusion
+        // terms. A closed shielding door is nevertheless a radiation barrier.
+        for (var property : state.getProperties()) {
+            if ("open".equals(property.getName())) {
+                Object value = state.getValue(property);
+                return value instanceof Boolean && !((Boolean) value);
+            }
+        }
+        return false;
+    }
+
     private static void spawnFaces(ClientLevel level, BlockPos source, float emission) {
         double ratio = Math.max(0.0, emission) / RADIUM_BLOCK;
         // Reference point: a 675 mZt/s radium block remains exactly the
@@ -87,7 +101,7 @@ public final class RadiationVisualClient {
             // Ordinary stone/earth is not a radiation shield: particles pass
             // through it. Only an actually occluding shielding material closes
             // a face before spawn; this is cheaper than spawning hidden mist.
-            if (neighbor.canOcclude() && RadMaterials.blockFactor(neighbor) < 1.0) continue;
+            if (blocksRadiation(neighbor)) continue;
             for (int i = 0; i < attempts / 2 + 1; i++) {
                 double u = level.random.nextDouble() - 0.5;
                 double v = level.random.nextDouble() - 0.5;

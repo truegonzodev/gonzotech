@@ -48,7 +48,7 @@ public final class RadiationMistParticle extends TextureSheetParticle {
         }
         BlockPos next = BlockPos.containing(x + xd, y + yd, z + zd);
         var nextState = level.getBlockState(next);
-        if (nextState.canOcclude() && RadMaterials.blockFactor(nextState) < 1.0) {
+        if (blocksRadiation(nextState)) {
             // Shielding is a deposition surface, not a hard vanilla collider:
             // stop the particle at the face and let it fade there.
             xd = 0.0;
@@ -66,6 +66,18 @@ public final class RadiationMistParticle extends TextureSheetParticle {
         }
         alpha = 0.28F * (1.0F - (float) age / lifetime);
         setSpriteFromAge(sprites);
+    }
+
+    private static boolean blocksRadiation(net.minecraft.world.level.block.state.BlockState state) {
+        if (RadMaterials.blockFactor(state) >= 1.0) return false;
+        if (state.canOcclude()) return true;
+        for (var property : state.getProperties()) {
+            if ("open".equals(property.getName())) {
+                Object value = state.getValue(property);
+                return value instanceof Boolean && !((Boolean) value);
+            }
+        }
+        return false;
     }
 
     @Override

@@ -108,7 +108,19 @@ public final class RadMaterials {
             return 1.0;
         }
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
-        return factorForPath(id.getPath(), true);
+        // Material shielding belongs to Gonzo Tech materials. Vanilla items
+        // such as minecraft:lead (the lead) and minecraft:iron_bars are not
+        // radiation shields just because their ids contain a metal word.
+        if (!id.getNamespace().equals("gonzotech")) {
+            return 1.0;
+        }
+        String path = id.getPath();
+        // Ores and finished equipment are not shielding material. Do not let
+        // players build a bunker from ore blocks or iron tools/armor.
+        if (path.contains("ore") || isFinishedEquipment(path)) {
+            return 1.0;
+        }
+        return factorForPath(path, true);
     }
 
     /**
@@ -118,6 +130,9 @@ public final class RadMaterials {
      */
     public static double blockFactor(BlockState state) {
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        if (!id.getNamespace().equals("gonzotech") || id.getPath().contains("ore")) {
+            return 1.0;
+        }
         return factorForPath(id.getPath(), false);
     }
 
@@ -147,6 +162,15 @@ public final class RadMaterials {
         }
         // блоки: только явные металлы-формы, остальное — «воздух для гаммы»
         return (path.endsWith("_block") || path.endsWith("_ingot_form")) && hasMetalPrefix(path) ? 0.3 : 1.0;
+    }
+
+    private static boolean isFinishedEquipment(String path) {
+        return path.endsWith("_pickaxe") || path.endsWith("_axe") || path.endsWith("_shovel")
+                || path.endsWith("_hoe") || path.endsWith("_sword")
+                || path.endsWith("_helmet") || path.endsWith("_chestplate")
+                || path.endsWith("_leggings") || path.endsWith("_boots")
+                || path.endsWith("_horse_armor") || path.endsWith("_armor")
+                || path.endsWith("_tools") || path.endsWith("_bars");
     }
 
     private static boolean hasMetalPrefix(String path) {
