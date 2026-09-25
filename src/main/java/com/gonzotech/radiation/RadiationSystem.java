@@ -6,6 +6,7 @@ import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.core.psyche.PsycheUltraviolet;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModEffects;
+import com.gonzotech.core.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
@@ -149,6 +151,12 @@ public final class RadiationSystem {
         }
         ServerLevel level = (ServerLevel) player.level();
         ChunkRadiationData data = ChunkRadiationData.get(level);
+        if (hasVisualInstrument(player)) {
+            List<RadiationVisualPayload.Source> visual = data.visualSources(level, player.blockPosition(), 18).stream()
+                    .map(s -> new RadiationVisualPayload.Source(s.pos().asLong(), (float) s.emission()))
+                    .toList();
+            PacketDistributor.sendToPlayer(player, new RadiationVisualPayload(visual));
+        }
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
 
         // Скан инвентаря: пресетная эмиссия + самый горячий стак (цель логистики фона).
@@ -276,6 +284,13 @@ public final class RadiationSystem {
 
         // Скан содержимого контейнеров своего чанка (сундуки/бочки с ураном греют чанк).
         scanContainersInto(level, chunkKey, data);
+    }
+
+    private static boolean hasVisualInstrument(ServerPlayer player) {
+        return player.getMainHandItem().is(ModItems.DOSIMETER.get())
+                || player.getMainHandItem().is(ModItems.TELIFON.get())
+                || player.getOffhandItem().is(ModItems.DOSIMETER.get())
+                || player.getOffhandItem().is(ModItems.TELIFON.get());
     }
 
     private static boolean isHardUsing(ServerPlayer player, ItemStack stack) {

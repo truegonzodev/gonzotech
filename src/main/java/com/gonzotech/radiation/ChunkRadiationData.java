@@ -10,8 +10,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.Container;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
@@ -75,6 +77,8 @@ public class ChunkRadiationData extends SavedData {
         placed.defaultReturnValue(0.0);
     }
 
+    public record VisualSource(BlockPos pos, double emission) {}
+
     // ───────────────────────── доступ ─────────────────────────
 
     public static ChunkRadiationData get(ServerLevel level) {
@@ -99,6 +103,36 @@ public class ChunkRadiationData extends SavedData {
         double next = Math.max(0.0, contamination.get(chunkKey) + deltaNzt);
         contamination.put(chunkKey, next);
         setDirty();
+    }
+
+    /** Read-only nearby source snapshot for the instrument visualizer. */
+    public List<VisualSource> visualSources(ServerLevel level, BlockPos center, int radius) {
+        List<VisualSource> out = new ArrayList<>();
+        double max = radius * radius;
+        for (var entry : placedPos.long2ObjectEntrySet()) {
+            for (long raw : entry.getValue()) {
+                BlockPos pos = BlockPos.of(raw);
+                if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
+                double emission = RadSources.blockEmission(
+                        BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+                if (emission > 0.0) out.add(new VisualSource(pos, emission));
+            }
+        }
+        int minChunkX = (center.getX() - radius) >> 4, maxChunkX = (center.getX() + radius) >> 4;
+        int minChunkZ = (center.getZ() - radius) >> 4, maxChunkZ = (center.getZ() + radius) >> 4;
+        for (int cx = minChunkX; cx <= maxChunkX; cx++) for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+            LevelChunk chunk = level.getChunk(cx, cz);
+            for (var be : chunk.getBlockEntities().values()) {
+                if (!(be instanceof Container container)) continue;
+                BlockPos pos = be.getBlockPos();
+                if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
+                double emission = 0.0;
+                for (int i = 0; i < container.getContainerSize(); i++) emission += RadSources.emissionOfStack(container.getItem(i));
+                if (emission > 0.0) out.add(new VisualSource(pos, emission));
+            }
+        }
+        out.sort((a, b) -> Double.compare(b.emission(), a.emission()));
+        return out.size() <= 64 ? out : new ArrayList<>(out.subList(0, 64));
     }
 
     public double baselineOf(ServerLevel level, long chunkKey) {

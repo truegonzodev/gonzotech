@@ -182,6 +182,13 @@ public class GonzoTechMod {
         // Эффекты кризиса: фиксация камеры, ложный экран смерти, ЛКМ-«использование предмета».
         com.gonzotech.core.psyche.PsycheCrisisNetwork.register(registrar);
 
+        registrar.playToClient(
+            com.gonzotech.radiation.RadiationVisualPayload.TYPE,
+            com.gonzotech.radiation.RadiationVisualPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                com.gonzotech.radiation.RadiationVisualClient.accept(payload))
+        );
+
         // HUD живого потока труб (ключ ↔ сервер).
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
 
