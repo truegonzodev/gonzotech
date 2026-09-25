@@ -446,9 +446,9 @@ public class ModItems {
     public static final DeferredItem<BlockItem> ALUMINUM_HOUSING_ITEM =
         ITEMS.registerSimpleBlockItem("aluminum_housing", ModBlocks.ALUMINUM_HOUSING);
     public static final DeferredItem<BlockItem> AIR_CLEANER_ITEM =
-        ITEMS.registerSimpleBlockItem("air_cleaner", ModBlocks.AIR_CLEANER);
+        ITEMS.registerSimpleBlockItem("third_air_cleaner", ModBlocks.AIR_CLEANER);
     public static final DeferredItem<BlockItem> AIR_FILTER_ITEM =
-        ITEMS.registerSimpleBlockItem("air_filter", ModBlocks.AIR_FILTER);
+        ITEMS.registerSimpleBlockItem("third_air_filter", ModBlocks.AIR_FILTER);
 
     /**
      * Фаза 3 — «прикол»: прото-сусло. Крафтится бесформенно (семена + костная

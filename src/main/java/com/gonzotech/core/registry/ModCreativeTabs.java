@@ -86,6 +86,10 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.UNIVERSAL_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_SCAVENGER_ITEM.get());
+
+                // Эпоха III — оборудование чистой комнаты.
+                output.accept(ModItems.AIR_CLEANER_ITEM.get());
+                output.accept(ModItems.AIR_FILTER_ITEM.get());
                 // Технологическая цепочка обработки руды завершает список машин.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CRUSHER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CENTRIFUGE_ITEM.get());
@@ -271,8 +275,6 @@ public class ModCreativeTabs {
                 output.accept(ModItems.FLUID_MODULE.get());
                 output.accept(ModItems.SHEATHING_ITEM.get());
                 output.accept(ModItems.ALUMINUM_HOUSING_ITEM.get());
-                output.accept(ModItems.AIR_CLEANER_ITEM.get());
-                output.accept(ModItems.AIR_FILTER_ITEM.get());
                 output.accept(ModItems.DUST_METER.get());
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());

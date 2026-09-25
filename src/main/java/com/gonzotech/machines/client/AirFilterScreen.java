@@ -12,7 +12,7 @@ import net.minecraft.world.entity.player.Inventory;
 /** GUI for the clean-room air filter. */
 public final class AirFilterScreen extends AbstractContainerScreen<AirFilterMenu> {
     private static final ResourceLocation BACKGROUND = ResourceLocation.fromNamespaceAndPath(
-            GonzoTechMod.MOD_ID, "textures/gui/air_filter_gui_bg.png");
+            GonzoTechMod.MOD_ID, "textures/gui/third_air_filter_gui_bg.png");
 
     public AirFilterScreen(AirFilterMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);

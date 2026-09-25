@@ -158,10 +158,10 @@ public final class ModBlockEntities {
             false, ModMachines.SECOND_ITEM_FILTER.get()));
 
     public static final Supplier<BlockEntityType<com.gonzotech.cleanroom.AirCleanerBlockEntity>> AIR_CLEANER =
-        BLOCK_ENTITIES.register("air_cleaner", () -> new BlockEntityType<>(
+        BLOCK_ENTITIES.register("third_air_cleaner", () -> new BlockEntityType<>(
             com.gonzotech.cleanroom.AirCleanerBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.AIR_CLEANER.get()));
     public static final Supplier<BlockEntityType<com.gonzotech.cleanroom.AirFilterBlockEntity>> AIR_FILTER =
-        BLOCK_ENTITIES.register("air_filter", () -> new BlockEntityType<>(
+        BLOCK_ENTITIES.register("third_air_filter", () -> new BlockEntityType<>(
             com.gonzotech.cleanroom.AirFilterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.AIR_FILTER.get()));
 
     public static final Supplier<BlockEntityType<FermentationVatBlockEntity>> THIRD_FERMENTATION_VAT =

@@ -111,10 +111,10 @@ public class ModBlocks {
 
     /** Эпоха III: вертикальный редстоун-очиститель воздуха. */
     public static final DeferredBlock<com.gonzotech.cleanroom.AirCleanerBlock> AIR_CLEANER = BLOCKS.registerBlock(
-        "air_cleaner", com.gonzotech.cleanroom.AirCleanerBlock::new, componentBlockProperties());
+        "third_air_cleaner", com.gonzotech.cleanroom.AirCleanerBlock::new, componentBlockProperties());
     /** Эпоха III: фильтр чистой комнаты, GTU + уголь + Pt/Pd catalyst. */
     public static final DeferredBlock<com.gonzotech.cleanroom.AirFilterBlock> AIR_FILTER = BLOCKS.registerBlock(
-        "air_filter", com.gonzotech.cleanroom.AirFilterBlock::new, componentBlockProperties());
+        "third_air_filter", com.gonzotech.cleanroom.AirFilterBlock::new, componentBlockProperties());
 
     private static BlockBehaviour.Properties componentBlockProperties() {
         return BlockBehaviour.Properties.of()
