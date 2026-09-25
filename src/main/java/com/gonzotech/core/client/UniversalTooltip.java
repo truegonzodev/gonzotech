@@ -20,7 +20,7 @@ public final class UniversalTooltip {
 
     @SubscribeEvent
     public static void onTooltip(ItemTooltipEvent event) {
-        TooltipLayout.removeRadiatedCreativeCategory(event.getToolTip(), event.getItemStack(),
+        TooltipLayout.ensureCreativeCategory(event.getToolTip(), event.getItemStack(),
                 event.getEntity() != null && event.getEntity().isCreative());
         List<Component> advanced = TooltipLayout.takeAdvanced(event.getToolTip());
         // block 0 (creative category) remains vanilla-owned; mod blocks start

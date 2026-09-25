@@ -1,7 +1,8 @@
 package com.gonzotech.core.client;
 
-import com.gonzotech.radiation.ItemRadioactivity;
+import com.gonzotech.core.registry.ModCreativeTabs;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -15,15 +16,22 @@ public final class TooltipLayout {
 
     private TooltipLayout() {}
 
-    public static void removeRadiatedCreativeCategory(List<Component> tooltip, ItemStack stack, boolean creative) {
-        if (!creative || ItemRadioactivity.getInduced(stack) <= 0.0) return;
-        for (int i = 0; i < tooltip.size(); i++) {
-            String text = tooltip.get(i).getString();
-            if (text.equals("Ресурсы и материалы Gonzo Tech")
-                    || text.equals("Resources and Materials Gonzo Tech")
-                    || text.endsWith("Gonzo Tech")) {
-                tooltip.remove(i);
-                if (i < tooltip.size() && tooltip.get(i).getString().isEmpty()) tooltip.remove(i);
+    /** Restore the creative-tab line when NBT makes vanilla's tab membership
+     * check miss the otherwise identical item stack. */
+    public static void ensureCreativeCategory(List<Component> tooltip, ItemStack stack, boolean creative) {
+        if (!creative) return;
+        for (var holder : List.of(ModCreativeTabs.ORES_TAB, ModCreativeTabs.FUNCTIONAL_TAB,
+                ModCreativeTabs.EQUIPMENT_TAB, ModCreativeTabs.BLOCKS_TAB,
+                ModCreativeTabs.COMPONENTS_TAB, ModCreativeTabs.ADAPTATIONS_TAB,
+                ModCreativeTabs.GAGS_TAB)) {
+            CreativeModeTab tab = holder.get();
+            if (tab.getDisplayItems().stream().anyMatch(candidate ->
+                    ItemStack.isSameItem(candidate, stack))) {
+                String title = tab.getDisplayName().getString();
+                if (tooltip.stream().noneMatch(line -> line.getString().equals(title))) {
+                    tooltip.add(1, tab.getDisplayName().copy().withStyle(net.minecraft.ChatFormatting.BLUE));
+                    tooltip.add(2, Component.empty());
+                }
                 return;
             }
         }
