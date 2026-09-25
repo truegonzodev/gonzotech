@@ -72,6 +72,18 @@ public final class RadMaterials {
             "barium_concrete", 0.10,
             "bore_stained_glass", 0.008,
             "copper_dust", 1.0,
+            "copper_nugget", 1.0,
+            "copper_plate", 1.0,
+            "copper_wire", 1.0,
+            "aluminum_plate", 0.68,
+            "aluminum_wire", 0.68,
+            "steel_plate", 0.72,
+            "stainless_steel_plate", 0.72,
+            "silver_wire", 0.72,
+            "titanium_plate", 0.72,
+            "zirconium_plate", 0.72,
+            "semiconductor_plate", 0.72,
+            "semiconductor_core", 0.72,
             // Двери (автор 22.09): отличаются ОДНИМ параметром — защитой от радиации.
             // Свинцовая — свинец 0.02, вольфрамовая — вольфрам 0.003,
             // гермодверь — 0.33 («защита от фона ×0.33», зато для чистого контура).
@@ -115,13 +127,13 @@ public final class RadMaterials {
         // Material shielding belongs to Gonzo Tech materials. Vanilla items
         // such as minecraft:lead (the lead) and minecraft:iron_bars are not
         // radiation shields just because their ids contain a metal word.
-        if (!id.getNamespace().equals("gonzotech")) {
-            return 1.0;
-        }
         String path = id.getPath();
+        if (!id.getNamespace().equals("gonzotech")) {
+            return vanillaItemFactor(id.getNamespace(), path);
+        }
         // Ores and finished equipment are not shielding material. Do not let
         // players build a bunker from ore blocks or iron tools/armor.
-        if (path.contains("ore") || isFinishedEquipment(path)) {
+        if (isOrePath(path) || isFinishedEquipment(path)) {
             return 1.0;
         }
         return factorForPath(path, true);
@@ -134,7 +146,10 @@ public final class RadMaterials {
      */
     public static double blockFactor(BlockState state) {
         ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        if (!id.getNamespace().equals("gonzotech") || id.getPath().contains("ore")) {
+        if (!id.getNamespace().equals("gonzotech")) {
+            return vanillaBlockFactor(id.getNamespace(), id.getPath());
+        }
+        if (isOrePath(id.getPath())) {
             return 1.0;
         }
         return factorForPath(id.getPath(), false);
@@ -166,6 +181,29 @@ public final class RadMaterials {
         }
         // блоки: только явные металлы-формы, остальное — «воздух для гаммы»
         return (path.endsWith("_block") || path.endsWith("_ingot_form")) && hasMetalPrefix(path) ? 0.72 : 1.0;
+    }
+
+    private static boolean isOrePath(String path) {
+        return path.equals("ore") || path.startsWith("ore_")
+                || path.endsWith("_ore") || path.contains("_ore_");
+    }
+
+    private static double vanillaItemFactor(String namespace, String path) {
+        if (!namespace.equals("minecraft")) return 1.0;
+        return switch (path) {
+            case "iron_ingot", "iron_nugget", "iron_door", "iron_trapdoor", "iron_block" -> 0.90;
+            case "gold_ingot", "gold_nugget", "gold_block" -> 0.50;
+            default -> 1.0;
+        };
+    }
+
+    private static double vanillaBlockFactor(String namespace, String path) {
+        if (!namespace.equals("minecraft")) return 1.0;
+        return switch (path) {
+            case "iron_door", "iron_trapdoor", "iron_block" -> 0.90;
+            case "gold_block" -> 0.50;
+            default -> 1.0;
+        };
     }
 
     private static boolean isFinishedEquipment(String path) {
