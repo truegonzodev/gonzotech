@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDC",
+    "EFE"
+  ],
+  "key": {
+    "A": "gonzotech:copper_wire",
+    "B": "minecraft:comparator",
+    "C": "gonzotech:semiconductor_plate",
+    "D": "gonzotech:semiconductor_core",
+    "E": "minecraft:clay_ball",
+    "F": "minecraft:smooth_stone"
+  },
+  "result": {
+    "id": "gonzotech:logic_module",
+    "count": 1
+  },
+  "group": "tier3_logic_module"
+}

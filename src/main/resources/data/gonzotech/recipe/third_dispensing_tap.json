@@ -2,18 +2,19 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    " I ",
-    "CLC",
-    "BBB"
+    "ABA",
+    "CDC",
+    "DDD"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "C": "minecraft:copper_ingot",
-    "L": "minecraft:lever",
-    "B": "minecraft:barrel"
+    "A": "minecraft:bucket",
+    "B": "gonzotech:aluminum_wire",
+    "C": "minecraft:lever",
+    "D": "gonzotech:aluminum_plate"
   },
   "result": {
     "id": "gonzotech:third_dispensing_tap",
     "count": 1
-  }
+  },
+  "group": "tier3_machines"
 }

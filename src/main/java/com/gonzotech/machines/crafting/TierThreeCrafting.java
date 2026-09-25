@@ -25,14 +25,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Рецепты «Открытия 3» (Эпоха III) и их прогрессия — по образцу {@link TierTwoCrafting}.
  *
- * <p>Файлы рецептов — обычные ванильные shaped-рецепты; здесь только два per-player правила,
+ * <p>Файлы рецептов — обычные ванильные shaped-рецепты; здесь два per-player правила,
  * которых рецепт-данные не умеют:</p>
  * <ul>
- *   <li>показ рецепта в книге — после активации «Открытия 3»
+ *   <li>все рецепты текущего пакета выдаются в книгу только после активации «Открытия 3»
  *       ({@code PlayerChalkboardProgress.isRecipeTierUnlocked(3)});</li>
- *   <li>крафт до открытия тратит ингредиенты и подменяет результат на
- *       {@code botched_mechanism} — общий гейт {@code Phase3Events.grantBotchedMechanism}
- *       (тот же механизм, сообщение и стресс, что у тиров 1 и 2).</li>
+ *   <li>до открытия 3 только восемь machine-block outputs расходуют ингредиенты и
+ *       подменяются на {@code botched_mechanism}. Компоненты и корпуса физически
+ *       крафтятся до открытия 3 без подмены результата.</li>
  * </ul>
  *
  * <p>Быстрый крафт (Shift-клик) закрыт отдельно — {@code CraftingMenuMixin} берёт тир из
@@ -47,6 +47,21 @@ public final class TierThreeCrafting {
 
     /** Рецепты «Открытия 3» (показ в книге — по тиру, крафт — по тиру). */
     private static final List<String> RECIPE_IDS = List.of(
+        // Компоненты и корпуса: видны после открытия 3, но физически крафтятся всегда.
+        "gonzotech:energy_module_redstone",
+        "gonzotech:energy_module_aluminum",
+        "gonzotech:energy_module_gold",
+        "gonzotech:energy_module_silver",
+        "gonzotech:motor_copper",
+        "gonzotech:motor_aluminum",
+        "gonzotech:motor_silver",
+        "gonzotech:motor_gold",
+        "gonzotech:logic_module",
+        "gonzotech:transistor",
+        "gonzotech:fluid_module",
+        "gonzotech:sheathing",
+        "gonzotech:aluminum_housing",
+        // Машины и двери текущей Эпохи III.
         "gonzotech:third_heavy_door_lead",
         "gonzotech:third_heavy_door_tungsten",
         "gonzotech:third_hermetic_door",
@@ -113,10 +128,7 @@ public final class TierThreeCrafting {
 
     /** true, если предмет — «закрытый» вывод «Открытия 3» (гейт тира 3). */
     public static boolean isGatedOutput(Item item) {
-        return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get()
-            || item == ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get()
-            || item == ModItems.THIRD_HERMETIC_DOOR_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
+        return item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get()

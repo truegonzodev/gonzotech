@@ -2,17 +2,20 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "C C",
-    "CHC",
-    "CBC"
+    "ABA",
+    "CDC",
+    "EAE"
   ],
   "key": {
-    "C": "minecraft:copper_ingot",
-    "H": "gonzotech:first_heat_pipe",
-    "B": "minecraft:cauldron"
+    "A": "gonzotech:stainless_steel_plate",
+    "B": "gonzotech:tungsten_ingot",
+    "C": "gonzotech:stainless_steel_ingot",
+    "D": "gonzotech:fluid_module",
+    "E": "minecraft:cauldron"
   },
   "result": {
     "id": "gonzotech:third_wort_kettle",
     "count": 1
-  }
+  },
+  "group": "tier3_machines"
 }

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AAA",
+    "BCB",
+    "DDD"
+  ],
+  "key": {
+    "A": "gonzotech:gold_wire",
+    "B": "gonzotech:logic_module",
+    "C": "gonzotech:semiconductor_core",
+    "D": "gonzotech:polyvinyl_chloride"
+  },
+  "result": {
+    "id": "gonzotech:transistor",
+    "count": 1
+  },
+  "group": "tier3_transistor"
+}

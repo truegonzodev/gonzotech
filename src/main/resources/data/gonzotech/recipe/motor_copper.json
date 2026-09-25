@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDC",
+    "AEA"
+  ],
+  "key": {
+    "A": "gonzotech:copper_wire",
+    "B": "minecraft:piston",
+    "C": "gonzotech:inductive_module",
+    "D": "gonzotech:redstone_core",
+    "E": "gonzotech:steel_plate"
+  },
+  "result": {
+    "id": "gonzotech:electric_motor",
+    "count": 1
+  },
+  "group": "tier3_electric_motor"
+}

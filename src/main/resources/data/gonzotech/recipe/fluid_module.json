@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDC",
+    "EFE"
+  ],
+  "key": {
+    "A": "gonzotech:stainless_steel_plate",
+    "B": "minecraft:iron_trapdoor",
+    "C": "minecraft:bucket",
+    "D": "gonzotech:second_universal_fluid_node",
+    "E": "minecraft:iron_ingot",
+    "F": "minecraft:cauldron"
+  },
+  "result": {
+    "id": "gonzotech:fluid_module",
+    "count": 1
+  },
+  "group": "tier3_fluid_module"
+}

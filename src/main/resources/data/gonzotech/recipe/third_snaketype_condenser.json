@@ -2,18 +2,18 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "CIC",
-    "UOU",
-    "CIC"
+    "ABA",
+    "CAC",
+    "ABA"
   ],
   "key": {
-    "C": "minecraft:copper_ingot",
-    "I": "minecraft:ice",
-    "U": "gonzotech:first_universal_fluid_pipe",
-    "O": "gonzotech:condenser"
+    "A": "gonzotech:aluminum_wire",
+    "B": "minecraft:bucket",
+    "C": "gonzotech:aluminum_plate"
   },
   "result": {
     "id": "gonzotech:third_snaketype_condenser",
     "count": 1
-  }
+  },
+  "group": "tier3_machines"
 }
