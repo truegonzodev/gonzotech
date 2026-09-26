@@ -2,6 +2,8 @@
 
 **26.09.2026, срез 0.3.21. Только исследование: поведение частиц в этом патче не менялось.**
 
+> **Продолжение:** согласованная реализация 0.3.22 описана в [новом аудите](AUDIT-2026-09-26-FLUID-FOAM.md). Ниже — исторический срез 0.3.21.
+
 ## Где создаётся
 
 [ModFluidBlock.animateTick](../src/main/java/com/gonzotech/core/fluid/ModFluidBlock.java) — общий клиентский обработчик для шести видов жидкости. Регистрация блоков — [ModBlocks](../src/main/java/com/gonzotech/core/registry/ModBlocks.java), source/flowing fluids — [ModFluids](../src/main/java/com/gonzotech/core/fluid/ModFluids.java).

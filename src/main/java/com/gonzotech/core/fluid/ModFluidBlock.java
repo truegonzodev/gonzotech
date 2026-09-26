@@ -3,9 +3,7 @@ package com.gonzotech.core.fluid;
 import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.radiation.RadUnits;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -18,7 +16,7 @@ import net.minecraft.world.level.material.FlowingFluid;
 import java.util.function.Supplier;
 
 /**
- * Кастомный блок жидкости с анимацией пыли на фактической поверхности и эффектами при погружении.
+ * Кастомный блок жидкости: цвет поверхностной пенки и серверные эффекты при погружении.
  */
 public class ModFluidBlock extends LiquidBlock {
 
@@ -49,28 +47,8 @@ public class ModFluidBlock extends LiquidBlock {
         this.kind = kind;
     }
 
-    @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        super.animateTick(state, level, pos, random);
-
-        // Частицы создаются ТОЛЬКО на фактической верхней поверхности жидкости
-        if (level.getFluidState(pos.above()).isEmpty()) {
-            if (random.nextInt(30) == 0) { // каждые 1-4 сек
-                int count = 5 + random.nextInt(6); // 5-10 частиц
-                float fluidHeight = state.getFluidState().getHeight(level, pos);
-                double surfaceY = pos.getY() + (double) fluidHeight;
-
-                for (int i = 0; i < count; i++) {
-                    double px = pos.getX() + random.nextDouble();
-                    double pz = pos.getZ() + random.nextDouble();
-                    double py = surfaceY + (random.nextDouble() * 0.05);
-                    float scale = 0.5F + random.nextFloat() * 1.0F; // 0.5-1.5
-
-                    level.addParticle(new DustParticleOptions(kind.particleColor, scale), px, py, pz, 0.0, 0.015, 0.0);
-                }
-            }
-        }
-    }
+    /** Shared source/flowing-fluid colour; emission is scheduled by the client puddle controller. */
+    public Kind foamKind() { return kind; }
 
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
