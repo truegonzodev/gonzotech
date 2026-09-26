@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "gonzotech:item/durable_ampoule"
+    "layer0": "gonzotech:item/filled_durable_ampoule"
   }
 }

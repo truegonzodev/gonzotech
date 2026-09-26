@@ -89,9 +89,6 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_SCAVENGER_ITEM.get());
 
-                // Эпоха III — оборудование чистой комнаты.
-                output.accept(ModItems.AIR_CLEANER_ITEM.get());
-                output.accept(ModItems.AIR_FILTER_ITEM.get());
                 // Технологическая цепочка обработки руды завершает список машин.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CRUSHER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CENTRIFUGE_ITEM.get());
@@ -133,6 +130,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get());
+                // Эпоха III — оборудование чистой комнаты.
+                output.accept(ModItems.AIR_CLEANER_ITEM.get());
+                output.accept(ModItems.AIR_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());

@@ -170,6 +170,66 @@ public final class CleanRoomSelfTest {
         check(new CleanerPulse(999, true).remaining() == 160, "corrupt pulse duration clamped");
         int energy = 100_000;
         near((energy & 0xffff) | (((energy >>> 16) & 0xffff) << 16), energy, "GTU short-pair sync does not wrap");
+        World furnished = new World(); furnished.box(0, 64, 0, 3, 3, 3);
+        Pos standing = new Pos(0, 64, 0), decoration = new Pos(1, 65, 1);
+        RoomLedger stable = new RoomLedger(() -> {});
+        var original = stable.find(furnished::get, standing, 1); stable.adjust(original, 63);
+        furnished.blocks.put(decoration, Kind.SEAL);
+        stable.blockChanged(furnished::get, decoration, Kind.INTERIOR, Kind.SEAL);
+        check(stable.find(furnished::get, standing, 2) == original, "seal-capable furniture does not redefine outer envelope");
+        near(original.quality(), 63, "placing allowed seal inside keeps quality");
+        RoomLedger furnitureReload = new RoomLedger(() -> {});
+        furnitureReload.restore(original.cells(), original.shell(), original.quality());
+        near(furnitureReload.find(furnished::get, standing, 3).quality(), 63, "interior seal accepted on SavedData revalidation");
+        furnished.blocks.put(decoration, Kind.INTERIOR);
+        stable.blockChanged(furnished::get, decoration, Kind.SEAL, Kind.INTERIOR);
+        near(stable.find(furnished::get, standing, 4).quality(), 63, "removing interior furniture keeps quality");
+        Pos realFloor = new Pos(1, 63, 1);
+        furnished.blocks.put(realFloor, Kind.INTERIOR);
+        stable.blockChanged(furnished::get, realFloor, Kind.SEAL, Kind.INTERIOR);
+        check(stable.rooms().isEmpty(), "real outer shell breach still invalidates immediately");
+        furnished.blocks.put(realFloor, Kind.SEAL);
+        stable.blockChanged(furnished::get, realFloor, Kind.INTERIOR, Kind.SEAL);
+        near(stable.find(furnished::get, standing, 5).quality(), 0, "reseal after real breach still starts at zero");
+        furnished.blocks.put(decoration, Kind.FORBIDDEN);
+        stable.blockChanged(furnished::get, decoration, Kind.INTERIOR, Kind.FORBIDDEN);
+        check(stable.find(furnished::get, standing, 6) == null, "forbidden interior is not made legal by preservation fix");
+        World corridor = new World(); corridor.box(0, 64, 0, 3, 1, 1);
+        RoomLedger partitioned = new RoomLedger(() -> {});
+        Pos corridorLeft = new Pos(0,64,0), door = new Pos(1,64,0), corridorRight = new Pos(2,64,0);
+        var connected = partitioned.find(corridor::get, corridorLeft, 1); partitioned.adjust(connected, 70);
+        corridor.blocks.put(door, Kind.SEAL);
+        partitioned.blockChanged(corridor::get, door, Kind.INTERIOR, Kind.SEAL);
+        check(partitioned.rooms().isEmpty(), "real interior partition invalidates the old topology");
+        var leftRoom = partitioned.find(corridor::get, corridorLeft, 2);
+        var rightRoom = partitioned.find(corridor::get, corridorRight, 2);
+        check(leftRoom != rightRoom, "new hermetic partition produces independent rooms");
+        near(leftRoom.quality(), 0, "new corridorLeft topology starts at zero");
+        near(rightRoom.quality(), 0, "new corridorRight topology starts at zero");
+
+        World spacious = new World(); spacious.box(0, 64, 0, 9, 9, 9);
+        RoomLedger fast = new RoomLedger(() -> {});
+        var spaciousRoom = fast.find(spacious::get, corridorLeft, 1); fast.adjust(spaciousRoom, 63);
+        Pos centre = new Pos(4,68,4);
+        spacious.blocks.put(centre, Kind.SEAL);
+        int[] furnitureReads = {0};
+        fast.blockChanged(p -> { furnitureReads[0]++; return spacious.get(p); }, centre, Kind.INTERIOR, Kind.SEAL);
+        check(furnitureReads[0] < 128, "ordinary furniture stops locally instead of traversing all 729 cells");
+        check(fast.find(spacious::get, corridorLeft, 2) == spaciousRoom, "non-partitioning furniture keeps room identity");
+        near(spaciousRoom.quality(), 63, "large room keeps quality after local connectivity proof");
+        World wallBuild = new World(); wallBuild.box(0,64,0,3,3,3);
+        RoomLedger wallLedger = new RoomLedger(() -> {});
+        var beforeWall = wallLedger.find(wallBuild::get, corridorLeft, 1); wallLedger.adjust(beforeWall, 63);
+        int placedWall = 0;
+        for (int y=64; y<67; y++) for (int z=0; z<3; z++) {
+            Pos panel = new Pos(1,y,z);
+            wallBuild.blocks.put(panel, Kind.SEAL);
+            wallLedger.blockChanged(wallBuild::get, panel, Kind.INTERIOR, Kind.SEAL);
+            placedWall++;
+            if (placedWall < 9) check(wallLedger.find(wallBuild::get, corridorLeft, placedWall + 1) == beforeWall
+                    && beforeWall.quality() == 63, "incomplete partition preserves connected room: " + placedWall);
+            else check(wallLedger.rooms().isEmpty(), "only completed partition changes room topology");
+        }
         System.out.println("Clean-room core: " + checks + " checks passed");
     }
 }

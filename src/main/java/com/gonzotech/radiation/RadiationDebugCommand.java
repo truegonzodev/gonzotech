@@ -67,6 +67,14 @@ public final class RadiationDebugCommand {
                 .append(Component.literal("/s"))
                 .withStyle(ChatFormatting.GRAY));
 
+        var observer = net.minecraft.core.BlockPos.containing(player.getEyePosition());
+        var contour = Containment.result(level, observer);
+        player.sendSystemMessage(Component.translatable("command.gonzotech.radiation.contour",
+                Component.translatable(contour.enclosed() ? "gui.yes" : "gui.no"),
+                String.format(Locale.ROOT, "%.6f", contour.factor())).withStyle(ChatFormatting.GRAY));
+        player.sendSystemMessage(Component.translatable("command.gonzotech.radiation.inside_dose",
+                GtUnits.zt(Containment.insideDose(level, observer))).withStyle(ChatFormatting.GRAY));
+
         var sources = data.sourcesInChunk(level, chunk.toLong());
         if (sources.isEmpty()) {
             player.sendSystemMessage(Component.literal("Источники в чанке: не обнаружены")
@@ -76,7 +84,8 @@ public final class RadiationDebugCommand {
                 player.sendSystemMessage(Component.literal(
                         "Источник радиации в чанке " + chunk.x + "," + chunk.z
                                 + " точке " + source.pos().getX() + " " + source.pos().getY() + " "
-                                + source.pos().getZ() + " — " + GtUnits.zt(source.emission()) + "/s")
+                                + source.pos().getZ() + " — ")
+                        .append(GtUnits.zt(source.emission())).append(Component.literal("/s"))
                         .withStyle(ChatFormatting.YELLOW));
             }
         }

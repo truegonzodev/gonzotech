@@ -42,9 +42,21 @@ public final class CleanRoomSystem {
 
     /** Called after an actual LevelChunk mutation, not a cancellable player attempt. */
     public static void blockChanged(ServerLevel level, BlockPos pos, BlockState before, BlockState after) {
+        if (!level.getServer().isSameThread()) {
+            // Never read neighbouring chunks or mutate the ledger on a generation worker.
+            // A deferred edit cannot reconstruct historical connectivity: invalidate safely.
+            BlockPos changed = pos.immutable();
+            level.getServer().execute(() -> {
+                CleanRoomData loaded = LOADED.get(level);
+                if (loaded != null && CleanRoomDetector.kind(before) != CleanRoomDetector.kind(after)) {
+                    loaded.ledger.invalidate(CleanRoomDetector.pos(changed));
+                }
+            });
+            return;
+        }
         CleanRoomData data = LOADED.get(level);
-        if (data != null && CleanRoomDetector.kind(before) != CleanRoomDetector.kind(after)) {
-            data.ledger.invalidate(CleanRoomDetector.pos(pos));
+        if (data != null) {
+            data.ledger.blockChanged(p -> CleanRoomDetector.read(level, p), CleanRoomDetector.pos(pos), CleanRoomDetector.kind(before), CleanRoomDetector.kind(after));
         }
     }
 

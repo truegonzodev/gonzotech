@@ -906,5 +906,7 @@
   "gui.gonzotech.air_filter.catalyst_used": "Catalyst: %s%%",
   "item.gonzotech.gonzo_painting": "Painting",
   "painting.gonzotech.gonzo.title": "Knyghte",
-  "painting.gonzotech.gonzo.author": "Gonzo"
+  "painting.gonzotech.gonzo.author": "Gonzo",
+  "command.gonzotech.radiation.contour": "Enclosed radiation volume: %s; exterior transmission factor: %s",
+  "command.gonzotech.radiation.inside_dose": "Internal block dose (before protection): %s/s"
 }

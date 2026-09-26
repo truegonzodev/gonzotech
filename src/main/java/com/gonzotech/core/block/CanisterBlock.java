@@ -40,7 +40,7 @@ public class CanisterBlock extends Block implements EntityBlock, LiquidBlockCont
 
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final MapCodec<CanisterBlock> CODEC = simpleCodec(CanisterBlock::new);
-    private static final VoxelShape SHAPE = Block.box(3.0, 0.0, 3.0, 13.0, 14.0, 13.0);
+    private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 16.0, 16.0);
 
     public CanisterBlock(Properties properties) {
         super(properties);

@@ -1,5 +1,6 @@
 package com.gonzotech.cleanroom;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public final class RoomLedger {
             for (RoomTopology.Pos p : known.cells) {
                 var kind = world.apply(p);
                 unloaded |= kind == RoomTopology.Kind.UNLOADED;
-                invalid |= kind != RoomTopology.Kind.UNLOADED && kind != RoomTopology.Kind.INTERIOR;
+                invalid |= kind != RoomTopology.Kind.UNLOADED && !allowedInside(kind);
             }
             for (RoomTopology.Pos p : known.shell) {
                 var kind = world.apply(p);
@@ -100,6 +101,56 @@ public final class RoomLedger {
         for (RoomTopology.Pos p : shell) byShell.computeIfAbsent(p, ignored -> new HashSet<>()).add(room);
         changed.run();
         return room;
+    }
+
+    private static boolean allowedInside(RoomTopology.Kind kind) {
+        return kind == RoomTopology.Kind.INTERIOR || kind == RoomTopology.Kind.SEAL;
+    }
+
+    /** Preserve approved furniture only if it does not split the known air volume. */
+    public void blockChanged(Function<RoomTopology.Pos, RoomTopology.Kind> world, RoomTopology.Pos pos,
+                             RoomTopology.Kind before, RoomTopology.Kind after) {
+        if (before == after) return;
+        Room room = byCell.get(pos);
+        if (room != null && allowedInside(before) && allowedInside(after)
+                && (after == RoomTopology.Kind.INTERIOR || connectedWithout(world, room, pos))) return;
+        invalidate(pos);
+    }
+
+    private static final int[][] DIRECTIONS = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
+
+    // Removing one traversable vertex preserves connectivity iff its air neighbours
+    // are still mutually reachable. Stop as soon as those (at most six) targets meet;
+    // ordinary furniture needs only a small local walk, worst case <= MAX_VOLUME.
+    private static boolean connectedWithout(Function<RoomTopology.Pos, RoomTopology.Kind> world,
+                                             Room room, RoomTopology.Pos blocked) {
+        Set<RoomTopology.Pos> targets = new HashSet<>();
+        for (int[] d : DIRECTIONS) {
+            var p = blocked.offset(d[0], d[1], d[2]);
+            if (!room.cells.contains(p)) continue;
+            var kind = world.apply(p);
+            if (kind == RoomTopology.Kind.UNLOADED) return false;
+            if (kind == RoomTopology.Kind.INTERIOR) targets.add(p);
+        }
+        if (targets.isEmpty()) return false; // No air left at this location.
+        var start = targets.iterator().next();
+        targets.remove(start);
+        var seen = new HashSet<RoomTopology.Pos>();
+        seen.add(blocked); seen.add(start);
+        var queue = new ArrayDeque<RoomTopology.Pos>();
+        queue.add(start);
+        while (!targets.isEmpty() && !queue.isEmpty()) {
+            var p = queue.removeFirst();
+            for (int[] d : DIRECTIONS) {
+                var next = p.offset(d[0], d[1], d[2]);
+                if (room.cells.contains(next) && seen.add(next)
+                        && world.apply(next) == RoomTopology.Kind.INTERIOR) {
+                    targets.remove(next);
+                    queue.add(next);
+                }
+            }
+        }
+        return targets.isEmpty();
     }
 
     /** Called at the actual block mutation, including break-and-replace in a single tick. */

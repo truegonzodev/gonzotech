@@ -210,7 +210,11 @@ public final class RadiationSystem {
         // Доза шкалы: инвентарь полным весом + фон чанка с весом 1/10.
         // Хазмат I (автор 22.09) режет входящую дозу, но пробивается горячим
         // источником: множитель считается от дозы/сек (см. Hazmat.factor).
-        double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT;
+        // The enclosure protects the outside chunk, not somebody standing beside
+        // its sources. Add 40% of actual block emission in this same closed cavity;
+        // this does not feed chunk contamination or inventory-induced radiation.
+        double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT
+                + Containment.insideDose(level, BlockPos.containing(player.getEyePosition()));
         // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
         rawDose *= PsycheChemical.doseMultiplier(player);
         double suitFactor = Hazmat.factor(player, rawDose);

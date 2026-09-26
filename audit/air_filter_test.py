@@ -3,7 +3,7 @@
 Java 21 required (JAVA_HOME/PATH); alternatively Java 21 + ECJ_JAR. Pillow required.
 """
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageChops
 import json
 import os
 import shutil
@@ -33,8 +33,13 @@ fg = Image.open(RES / 'assets/gonzotech/textures/gui/third_air_filter_gui.png').
 bg = Image.open(RES / 'assets/gonzotech/textures/gui/third_air_filter_gui_bg.png').convert('RGBA')
 check(fg.size == bg.size == (512, 512), '512 sheets')
 for x, y, w, h in [(136, 145, 16, 52), (190, 145, 52, 16), (190, 181, 52, 16)]:
-    check(fg.crop((x, y, x+w, y+h)).getchannel('A').getextrema() == (0, 0), 'complete transparent gauge opening')
-    check(bg.crop((x, y, x+w, y+h)).getchannel('A').getextrema() == (255, 255), 'gauge has background')
+    opening = ImageChops.invert(fg.crop((x, y, x+w, y+h)).getchannel('A'))
+    bounds = opening.getbbox()
+    # Author's 2c1fb45 art has shaped fish openings, not placeholder rectangles.
+    check(bounds is not None and bounds[0] == 0 and bounds[2] == w, 'gauge opening spans its full fill width')
+    backing = bg.crop((x, y, x+w, y+h)).getchannel('A')
+    check(all(backing.getpixel((px, py)) == 255 for py in range(h) for px in range(w)
+              if opening.getpixel((px, py)) > 247), 'every visible gauge pixel has a background')
 slots = [(x, 163) for x in (190, 208, 226)]
 slots += [(136 + 18*c, 212 + 18*r) for r in range(3) for c in range(9)]
 slots += [(136 + 18*c, 270) for c in range(9)]

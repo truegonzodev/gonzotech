@@ -59,7 +59,7 @@ public class ChunkRadiationData extends SavedData {
     private static final ResourceLocation DESOLATION =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "desolation");
 
-    /** Максимум позиций радио-блоков, реально проверяемых контуром за проход (остальные считаются открытыми). */
+    /** Максимум новых обходов контура за проход чанка; источники в уже закэшированной полости лимит не тратят. */
     private static final int MAX_PROBES_PER_CHUNK = 16;
 
     /** baseline-кэш: chunkKey → природный фон (nZt/с). -1 = ещё не вычисляли. */
@@ -192,7 +192,6 @@ public class ChunkRadiationData extends SavedData {
         long key = new ChunkPos(pos).toLong();
         placed.put(key, placed.get(key) + emissionNzt);
         placedPos.computeIfAbsent(key, k -> new LongOpenHashSet()).add(pos.asLong());
-        Containment.invalidate(pos);
         setDirty();
     }
 
@@ -204,7 +203,6 @@ public class ChunkRadiationData extends SavedData {
         if (set != null) {
             set.remove(pos.asLong());
         }
-        Containment.invalidate(pos);
         setDirty();
     }
 
@@ -366,8 +364,11 @@ public class ChunkRadiationData extends SavedData {
                 (stale == null ? stale = new ArrayList<>() : stale).add(packed);
                 continue;
             }
-            double f = probed < MAX_PROBES_PER_CHUNK ? Containment.factor(level, pos) : 1.0;
-            probed++;
+            var cached = Containment.cachedResult(level, pos);
+            // Budget new geometry probes, not the number of sources: a shared
+            // closed cavity already covers all its blocks, including the 17th+.
+            double f = cached != null ? cached.factor()
+                    : probed++ < MAX_PROBES_PER_CHUNK ? Containment.factor(level, pos) : 1.0;
             weighted += e * f;
             weight += e;
         }

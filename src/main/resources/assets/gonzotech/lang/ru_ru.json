@@ -906,5 +906,7 @@
   "gui.gonzotech.air_filter.catalyst_used": "Катализатор: %s%%",
   "item.gonzotech.gonzo_painting": "Картина",
   "painting.gonzotech.gonzo.title": "Рыцорь",
-  "painting.gonzotech.gonzo.author": "Gonzo"
+  "painting.gonzotech.gonzo.author": "Gonzo",
+  "command.gonzotech.radiation.contour": "Замкнутый радиационный контур: %s; множитель внешней утечки: %s",
+  "command.gonzotech.radiation.inside_dose": "Доза от блоков внутри (до защиты): %s/s"
 }

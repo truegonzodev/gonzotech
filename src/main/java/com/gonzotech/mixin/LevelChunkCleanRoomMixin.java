@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Invalidate only indexed rooms, including explosions, pistons and command edits. */
+/** Notify clean-room/radiation geometry after explosions, pistons and command edits too. */
 @Mixin(LevelChunk.class)
 public abstract class LevelChunkCleanRoomMixin {
     @Inject(method = "setBlockState", at = @At("RETURN"))
@@ -19,7 +19,9 @@ public abstract class LevelChunkCleanRoomMixin {
         LevelChunk chunk = (LevelChunk) (Object) this;
         BlockState old = callback.getReturnValue();
         if (old != null && chunk.getLevel() instanceof ServerLevel level) {
-            CleanRoomSystem.blockChanged(level, pos, old, chunk.getBlockState(pos));
+            BlockState actual = chunk.getBlockState(pos);
+            CleanRoomSystem.blockChanged(level, pos, old, actual);
+            com.gonzotech.radiation.Containment.blockChanged(level, pos, old, actual);
         }
     }
 }
