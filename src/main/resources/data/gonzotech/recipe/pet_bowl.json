@@ -1,19 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "key": {
-    "i": {
-      "item": "minecraft:iron_ingot"
-    }
-  },
   "pattern": [
-    "i i",
-    "i i",
-    " i "
+    "n n",
+    "ibi",
+    "iii"
   ],
+  "key": {
+    "n": "minecraft:iron_nugget",
+    "i": "minecraft:iron_ingot",
+    "b": "minecraft:bone"
+  },
   "result": {
-    "count": 1,
-    "id": "gonzotech:pet_bowl"
+    "id": "gonzotech:pet_bowl",
+    "count": 1
   },
   "show_notification": true
 }

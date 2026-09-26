@@ -220,7 +220,8 @@ public final class PsycheStressEvents {
     @SubscribeEvent
     public static void onWakeUp(PlayerWakeUpEvent event) {
         // NeoForge: метод называется wakeImmediately(); false = сон «доспал до утра» (не разбудили)
-        if (event.getEntity() instanceof ServerPlayer player && !event.wakeImmediately()) {
+        if (event.getEntity() instanceof ServerPlayer player && !event.wakeImmediately()
+                && !AlcoholFainting.isFainting(player)) {
             PsycheStress.relieve(player, PsycheStress.SLEEP_RELIEF);
         }
     }

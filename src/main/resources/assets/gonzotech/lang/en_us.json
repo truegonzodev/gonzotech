@@ -908,5 +908,8 @@
   "painting.gonzotech.gonzo.title": "Knyghte",
   "painting.gonzotech.gonzo.author": "Gonzo",
   "command.gonzotech.radiation.contour": "Enclosed radiation volume: %s; exterior transmission factor: %s",
-  "command.gonzotech.radiation.inside_dose": "Internal block dose (before protection): %s/s"
+  "command.gonzotech.radiation.inside_dose": "Internal block dose (before protection): %s/s",
+  "message.gonzotech.clue.elementary": "Piece of cake...",
+  "gonzotech.configuration.cosmeticFluidParticles": "Cosmetic Fluid Particles",
+  "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Foam on Gonzo Tech fluid surfaces. Visual only; does not affect radiation particles or fluid gameplay."
 }

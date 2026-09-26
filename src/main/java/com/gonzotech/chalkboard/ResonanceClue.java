@@ -8,6 +8,9 @@ import com.gonzotech.chalkboard.network.ChalkboardNetwork;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.core.psyche.AlcoholDose;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -32,10 +35,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * доски резонанса (радиус {@value #BOARD_PARTICLE_RADIUS} блоков) вспыхивают
  * {@code happy_villager} партиклы.</p>
  *
- * <p><b>Единственная точка входа.</b> Сейчас подсказку зовёт только
- * {@code /gonzotech debug clue}; в будущем так же будут звать револьвер и водка
- * (автор 22.09.2026). Если подсказка будет стоить стресса/кризиса — это тоже
- * добавится здесь, одной строкой, чтобы все источники вели себя одинаково.</p>
+ * <p><b>Общий механизм.</b> Подсказку зовут {@code /gonzotech debug clue} и
+ * напитки через {@link #giveNatural}. Револьвер остаётся будущим источником.
+ * Отдельная цена самой подсказки в стрессе/кризисе пока не назначена.</p>
  */
 public final class ResonanceClue {
 
@@ -43,7 +45,7 @@ public final class ResonanceClue {
     }
 
     /** Радиус поиска доски резонанса для партиклов. */
-    public static final int BOARD_PARTICLE_RADIUS = 16;
+    public static final int BOARD_PARTICLE_RADIUS = (int) AlcoholDose.CLUE_RADIUS;
     /** Сколько партиклов {@code happy_villager} вспыхивает у доски. */
     public static final int BOARD_PARTICLE_COUNT = 12;
 
@@ -54,6 +56,20 @@ public final class ResonanceClue {
      *         (у задачи пустое решение) — тогда вызывающий сам решает, что сказать.
      */
     public static Quantity give(ServerPlayer player) {
+        return give(player, nearestBoard(player)); // Debug remains usable even without a board.
+    }
+
+    /** Natural sources must actually be near a loaded board; failed/no-op clues say nothing. */
+    public static Quantity giveNatural(ServerPlayer player) {
+        BlockPos board = nearestBoard(player);
+        if (board == null) return null;
+        Quantity hinted = give(player, board);
+        if (hinted != null) player.sendSystemMessage(Component.translatable("message.gonzotech.clue.elementary")
+                .withStyle(ChatFormatting.RED));
+        return hinted;
+    }
+
+    private static Quantity give(ServerPlayer player, BlockPos board) {
         ServerLevel level = player.serverLevel();
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
         GameSolver.Puzzle puzzle = ChalkboardWorldData.get(level)
@@ -74,7 +90,7 @@ public final class ResonanceClue {
         // Свежий синк: лоток и открытые блоки обновляются сразу, даже если доска
         // уже открыта на экране.
         ChalkboardNetwork.sendSyncToPlayer(player);
-        spawnBoardParticles(level, player);
+        spawnBoardParticles(level, board);
         return hinted;
     }
 
@@ -91,19 +107,25 @@ public final class ResonanceClue {
         return Quantities.get(ids.get(ThreadLocalRandom.current().nextInt(ids.size())));
     }
 
-    /** Партиклы {@code happy_villager} вокруг ближайшей доски резонанса. */
-    private static void spawnBoardParticles(ServerLevel level, ServerPlayer player) {
+    /** Loaded boards inside a true 16-block sphere, not the corners of a 33-block cube. */
+    private static BlockPos nearestBoard(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
         BlockPos origin = player.blockPosition();
         int r = BOARD_PARTICLE_RADIUS;
         BlockPos nearest = null;
-        double best = Double.MAX_VALUE;
+        double best = Double.POSITIVE_INFINITY;
         for (BlockPos pos : BlockPos.betweenClosed(origin.offset(-r, -r, -r), origin.offset(r, r, r))) {
-            if (pos.distSqr(origin) >= best) continue;
+            double distance = pos.distToCenterSqr(player.getX(), player.getY(), player.getZ());
+            if (!AlcoholDose.withinClueRadius(distance) || distance >= best) continue;
             if (!level.isLoaded(pos)) continue;
             if (!level.getBlockState(pos).is(ModBlocks.CHALKBOARD.get())) continue;
-            best = pos.distSqr(origin);
+            best = distance;
             nearest = pos.immutable();
         }
+        return nearest;
+    }
+
+    private static void spawnBoardParticles(ServerLevel level, BlockPos nearest) {
         if (nearest == null) return;
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER,
                 nearest.getX() + 0.5D, nearest.getY() + 1.0D, nearest.getZ() + 0.5D,

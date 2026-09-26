@@ -1,5 +1,6 @@
 package com.gonzotech.core.fluid.client;
 
+import com.gonzotech.core.config.GonzoClientConfig;
 import com.gonzotech.core.fluid.FoamPopulation;
 import com.gonzotech.core.fluid.FoamSurface;
 import com.gonzotech.core.fluid.ModFluidBlock;
@@ -43,6 +44,10 @@ public final class FluidFoamClient {
         if (world != mc.level) {
             reset();
             world = mc.level;
+        }
+        if (GonzoClientConfig.SPEC.isLoaded() && !GonzoClientConfig.COSMETIC_FLUID_PARTICLES.get()) {
+            reset(); // Remove only our own particles and stop all surface scans immediately.
+            return;
         }
         if (world == null || mc.player == null || mc.isPaused()) return;
         // createParticle gives us the real handle, but bypasses LevelRenderer's density

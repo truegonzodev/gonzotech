@@ -234,6 +234,7 @@ public final class PsycheStress {
         // Спящий не копит: сон и есть «пауза» шкалы; заодно отмечаем время сна,
         // чтобы после пробуждения день начался со снятия стресса.
         if (player.isSleeping()) {
+            if (AlcoholFainting.isFainting(player)) return; // A four-second faint is not restorative sleep.
             psyche.setSleepTick(now);
             save(player, psyche);
             return;

@@ -908,5 +908,8 @@
   "painting.gonzotech.gonzo.title": "Рыцорь",
   "painting.gonzotech.gonzo.author": "Gonzo",
   "command.gonzotech.radiation.contour": "Замкнутый радиационный контур: %s; множитель внешней утечки: %s",
-  "command.gonzotech.radiation.inside_dose": "Доза от блоков внутри (до защиты): %s/s"
+  "command.gonzotech.radiation.inside_dose": "Доза от блоков внутри (до защиты): %s/s",
+  "message.gonzotech.clue.elementary": "Элементарно...",
+  "gonzotech.configuration.cosmeticFluidParticles": "Косметические частицы жидкостей",
+  "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Пенка на поверхности жидкостей Gonzo Tech. Только визуальный эффект; не влияет на радиационные частицы и свойства жидкостей."
 }

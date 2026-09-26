@@ -1,5 +1,7 @@
 package com.gonzotech.core.item;
 
+import com.gonzotech.core.psyche.AlcoholDose;
+import com.gonzotech.core.psyche.AlcoholEffects;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -29,10 +31,12 @@ public class DrinkItem extends Item {
 
     /** Что остаётся после глотка; {@code null} — не остаётся ничего (кружка). */
     private final Item remainder;
+    private final AlcoholDose dose;
 
-    public DrinkItem(Properties properties, Item remainder) {
+    public DrinkItem(Properties properties, Item remainder, AlcoholDose dose) {
         super(properties);
         this.remainder = remainder;
+        this.dose = dose;
     }
 
     @Override
@@ -56,6 +60,7 @@ public class DrinkItem extends Item {
         if (!(level instanceof ServerLevel serverLevel) || !(livingEntity instanceof ServerPlayer serverPlayer)) {
             return stack;
         }
+        AlcoholEffects.consume(serverPlayer, dose);
         serverLevel.playSound(null, serverPlayer.blockPosition(),
                 SoundEvents.HONEY_DRINK.value(), SoundSource.PLAYERS, 0.8F, 1.1F);
         if (serverPlayer.getAbilities().instabuild) {

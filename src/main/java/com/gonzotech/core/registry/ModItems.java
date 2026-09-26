@@ -333,7 +333,7 @@ public class ModItems {
         ITEMS.registerItem("vodka_bottle", props ->
             new com.gonzotech.core.item.DrinkItem(
                 props.stacksTo(16).craftRemainder(net.minecraft.world.item.Items.GLASS_BOTTLE),
-                net.minecraft.world.item.Items.GLASS_BOTTLE));
+                net.minecraft.world.item.Items.GLASS_BOTTLE, com.gonzotech.core.psyche.AlcoholDose.VODKA));
 
     /**
      * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
@@ -471,12 +471,12 @@ public class ModItems {
 
     /** Кружка пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (128 mB сусла + бутылёк). Пьётся зажатием ПКМ (автор 24.09). */
     public static final DeferredItem<Item> BEER_MUG =
-        ITEMS.registerItem("beer_mug", props -> new com.gonzotech.core.item.DrinkItem(props.stacksTo(16), null));
+        ITEMS.registerItem("beer_mug", props -> new com.gonzotech.core.item.DrinkItem(props.stacksTo(16), null, com.gonzotech.core.psyche.AlcoholDose.BEER_MUG));
 
     /** Ведро пива — вкладка «Приколы» (автор 22.09). Наливается в сусловарочном котле (1000 mB сусла + ведро). После глотка остаётся пустое ведро (автор 24.09). */
     public static final DeferredItem<Item> BEER_BUCKET =
         ITEMS.registerItem("beer_bucket", props -> new com.gonzotech.core.item.DrinkItem(props.stacksTo(1),
-            net.minecraft.world.item.Items.BUCKET));
+            net.minecraft.world.item.Items.BUCKET, com.gonzotech.core.psyche.AlcoholDose.BEER_BUCKET));
 
 
     /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */
