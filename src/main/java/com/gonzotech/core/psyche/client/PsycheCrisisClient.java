@@ -230,14 +230,18 @@ public final class PsycheCrisisClient {
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.options.hideGui) {
+        if (mc.player == null) {
             return;
         }
         GuiGraphics g = event.getGuiGraphics();
         int width = g.guiWidth();
         int height = g.guiHeight();
 
-        renderScreenEffect(g, width, height);
+        if (!mc.options.hideGui) {
+            renderScreenEffect(g, width, height);
+        }
+        // F1 hides the HUD, not the interactive illusion: its cursor/buttons remain active.
+        // NeoForge GuiLayerManager posts RenderGuiEvent.Post outside hideGui-gated layers.
         if (fakeDeath) {
             renderFakeDeath(g, mc, width, height);
         }

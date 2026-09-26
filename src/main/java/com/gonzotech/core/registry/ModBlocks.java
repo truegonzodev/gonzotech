@@ -284,7 +284,11 @@ public class ModBlocks {
     public static final DeferredBlock<com.gonzotech.core.block.CanisterBlock> CANISTER = BLOCKS.registerBlock(
         "canister", com.gonzotech.core.block.CanisterBlock::new,
         BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.METAL).strength(2.0f, 6.0f).noOcclusion());
-    /** Чисто декоративная бочка: top/side/bottom — лишь текстурные грани, без BE. */
+    /**
+     * Будущий схрон реакторных шлаков и блок природных структур (автор 27.09).
+     * Сейчас простой Block без BE; радиоактивность, токсичность и защита отходов
+     * от уничтожения ещё не реализованы. Не считать бочку безвредным декором.
+     */
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
         "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
             .sound(SoundType.METAL).strength(2.0f, 6.0f));
@@ -315,6 +319,7 @@ public class ModBlocks {
         "mechanisms", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     public static final DeferredBlock<Block> WEATHERED_MECHANISMS = BLOCKS.registerSimpleBlock(
         "weathered_mechanisms", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE).sound(SoundType.COPPER));
+    /** Будущий источник кремния в структурах; лут кремния уже есть, это не контейнер с BE. */
     public static final DeferredBlock<Block> SILICON_CACHE = BLOCKS.registerSimpleBlock(
         "silicon_cache", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.STONE));
     public static final DeferredBlock<Block> PLASTIC_WASTE = BLOCKS.registerSimpleBlock(

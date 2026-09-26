@@ -56,7 +56,9 @@ public class ModFluidBlock extends LiquidBlock {
         if (level.isClientSide) return;
         if (!(entity instanceof LivingEntity living)) return;
 
-        // Эффекты накладываются каждую секунду пока ты погружён в жидкость
+        // Дозирование раз в 20 тиков на callback клетки, не дедуплицировать на игрока:
+        // автор 27.09 допускает усиление при пересечении нескольких клеток.
+        // Это не измерение скорости движения; геометрию/нагрузку проверить в игре.
         if (living.tickCount % 20 != 0) return;
 
         switch (kind) {

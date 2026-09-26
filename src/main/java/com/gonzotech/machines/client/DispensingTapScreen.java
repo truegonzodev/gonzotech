@@ -2,6 +2,7 @@ package com.gonzotech.machines.client;
 
 import com.gonzotech.machines.block.entity.DispensingTapBlockEntity;
 import com.gonzotech.machines.menu.DispensingTapMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -50,11 +51,13 @@ public class DispensingTapScreen extends MachineScreen<DispensingTapMenu> {
 
         if (inRect(mouseX, mouseY, distX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                    Component.literal("§bДистиллят: " + menu.distillate() + " / " + DispensingTapBlockEntity.DISTILLATE_CAPACITY + " mB")
+                    Component.translatable("gui.gonzotech.distillate.title", menu.distillate(),
+                            DispensingTapBlockEntity.DISTILLATE_CAPACITY).withStyle(ChatFormatting.AQUA)
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, wortX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                    Component.literal("§6Сусло: " + menu.wort() + " / " + DispensingTapBlockEntity.WORT_CAPACITY + " mB")
+                    Component.translatable("gui.gonzotech.wort.title", menu.wort(),
+                            DispensingTapBlockEntity.WORT_CAPACITY).withStyle(ChatFormatting.GOLD)
             ), mouseX, mouseY);
         }
     }

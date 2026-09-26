@@ -575,7 +575,8 @@ public class ScholarNotesScreen extends Screen {
         if (il.structure() != null) {
             drawStructureNav(g, il.structure());
         } else if (il.deckView() != null) {
-            drawSubpageNav(g, "Слой (" + (structureSubpage + 1) + "/" + il.deckView().subpageCount() + ")",
+            drawSubpageNav(g, Component.translatable("gui.gonzotech.notes.layer",
+                            structureSubpage + 1, il.deckView().subpageCount()).getString(),
                     il.deckView().subpageCount());
         } else if (il.flatView() != null) {
             String text = Component.translatable(il.flatView().captionKey()).getString();
@@ -588,17 +589,18 @@ public class ScholarNotesScreen extends Screen {
     /** Подпись подстраницы: «Сборка (1)» или «Нижний/Средний/Верхний слой (N)»
      *  (1 = нижний слой, подстраницы идут снизу вверх). */
     private static String structureTitle(StructureModel m, int sub) {
-        if (m.assembly()) return "Сборка (1)";
+        if (m.assembly()) return Component.translatable("gui.gonzotech.notes.assembly", 1).getString();
         int total = m.sizeY();
         if (total == 3) {
-            if (sub == 0) return "Нижний слой (1)";
-            if (sub == 1) return "Средний слой (2)";
-            return "Верхний слой (3)";
+            if (sub == 0) return Component.translatable("gui.gonzotech.notes.layer.bottom", 1).getString();
+            if (sub == 1) return Component.translatable("gui.gonzotech.notes.layer.middle", 2).getString();
+            return Component.translatable("gui.gonzotech.notes.layer.top", 3).getString();
         }
         if (total == 2) {
-            return sub == 0 ? "Нижний слой (1)" : "Верхний слой (2)";
+            return Component.translatable(sub == 0 ? "gui.gonzotech.notes.layer.bottom"
+                    : "gui.gonzotech.notes.layer.top", sub + 1).getString();
         }
-        return "Слой (" + (sub + 1) + "/" + total + ")";
+        return Component.translatable("gui.gonzotech.notes.layer", sub + 1, total).getString();
     }
 
     /**
