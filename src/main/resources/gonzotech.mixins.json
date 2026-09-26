@@ -12,6 +12,7 @@
     "FoodDataMixin",
     "PlayerFaintingMixin",
     "ServerPlayerFaintingMixin",
+    "SleepStatusFaintingMixin",
     "LivingFaintPoseMixin",
     "LevelChunkCleanRoomMixin",
     "MobGoalAccessorMixin",
@@ -24,6 +25,7 @@
     "GonzoPaintingMixin"
   ],
   "client": [
+    "client.InBedFaintingScreenMixin",
     "client.CatRenderStateMixin",
     "client.CatRendererMixin",
     "client.ClientLevelSkyDarkenMixin",

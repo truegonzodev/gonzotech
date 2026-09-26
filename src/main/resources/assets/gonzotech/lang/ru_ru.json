@@ -911,5 +911,6 @@
   "command.gonzotech.radiation.inside_dose": "Доза от блоков внутри (до защиты): %s/s",
   "message.gonzotech.clue.elementary": "Элементарно...",
   "gonzotech.configuration.cosmeticFluidParticles": "Косметические частицы жидкостей",
-  "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Пенка на поверхности жидкостей Gonzo Tech. Только визуальный эффект; не влияет на радиационные частицы и свойства жидкостей."
+  "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Пенка на поверхности жидкостей Gonzo Tech. Только визуальный эффект; не влияет на радиационные частицы и свойства жидкостей.",
+  "gui.gonzotech.faint.get_up": "Встать"
 }

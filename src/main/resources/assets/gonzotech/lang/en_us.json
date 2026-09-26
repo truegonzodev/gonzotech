@@ -911,5 +911,6 @@
   "command.gonzotech.radiation.inside_dose": "Internal block dose (before protection): %s/s",
   "message.gonzotech.clue.elementary": "Piece of cake...",
   "gonzotech.configuration.cosmeticFluidParticles": "Cosmetic Fluid Particles",
-  "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Foam on Gonzo Tech fluid surfaces. Visual only; does not affect radiation particles or fluid gameplay."
+  "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Foam on Gonzo Tech fluid surfaces. Visual only; does not affect radiation particles or fluid gameplay.",
+  "gui.gonzotech.faint.get_up": "Get up"
 }
