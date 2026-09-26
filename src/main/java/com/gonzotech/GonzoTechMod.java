@@ -48,6 +48,7 @@ public class GonzoTechMod {
         ModFluids.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
+        com.gonzotech.core.registry.ModSounds.register(modEventBus);
         ModDataComponents.register(modEventBus);
         // Эффекты мода: радиация (некроз/очищение) + психика (тремор/сердечный приступ).
         com.gonzotech.core.registry.ModEffects.register(modEventBus);

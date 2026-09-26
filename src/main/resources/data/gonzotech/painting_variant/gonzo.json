@@ -1,0 +1,13 @@
+{
+  "asset_id": "gonzotech:gonzo",
+  "width": 4,
+  "height": 5,
+  "title": {
+    "translate": "painting.gonzotech.gonzo.title",
+    "color": "yellow"
+  },
+  "author": {
+    "translate": "painting.gonzotech.gonzo.author",
+    "color": "gray"
+  }
+}

@@ -24,12 +24,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Three supply slots; one shared room, 1 GTU/s and +0.2 quality percentage points/s. */
+/** Three input-only supply slots; 2.6 GTU/t active + 0.019 GTU/t leakage; +0.2 quality/s. */
 public final class AirFilterBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider, GtuSink {
     public static final int SLOT_COUNT = 3;
     public static final int DATA_COUNT = 5;
-    public static final int CAPACITY_GTU = 100_000;
-    private static final long GTU_PER_SECOND = 1_000L;
+    public static final int CAPACITY_GTU = FilterCycle.CAPACITY_GTU;
+    private final FilterIntake intake = new FilterIntake();
+    private RoomLedger.Room room;
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final GtBuffer gtu = new GtBuffer(CAPACITY_GTU * 1_000L);
     private FilterCycle cycle = new FilterCycle(0, 0);
@@ -38,11 +39,11 @@ public final class AirFilterBlockEntity extends BlockEntity implements WorldlyCo
     private final ContainerData data = new ContainerData() {
         @Override public int get(int index) {
             return switch (index) {
-                // ContainerData travels as signed shorts: split 100,000 GTU into two words.
-                case 0 -> gtu.amountUnitsInt() & 0xffff;
-                case 1 -> gtu.amountUnitsInt() >>> 16;
-                case 2 -> cycle.coal();
-                case 3 -> cycle.catalyst();
+                // Preserve milli-GTU precision across the signed-short container protocol.
+                case 0 -> (int) gtu.amountAsLong() & 0xffff;
+                case 1 -> (int) gtu.amountAsLong() >>> 16;
+                case 2 -> cycle.coalUsedHundredths();
+                case 3 -> cycle.catalystUsedHundredths();
                 case 4 -> airQuality;
                 default -> 0;
             };
@@ -58,22 +59,26 @@ public final class AirFilterBlockEntity extends BlockEntity implements WorldlyCo
     public GtBuffer gtuBuffer() { return gtu; }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AirFilterBlockEntity be) {
-        if (!(level instanceof ServerLevel server) || server.getGameTime() % 20 != 0) return;
-        RoomLedger.Room room = CleanRoomSystem.filterRoom(server, pos);
-        be.airQuality = room == null ? -1 : (int) Math.round(room.quality() * 100);
-        if (room == null || !be.gtu.has(GTU_PER_SECOND)) return;
+        if (!(level instanceof ServerLevel server)) return;
+        // Known rooms are checked every working tick (breach/unload stops work).
+        // Failed/open-space searches retry once per second, not 20 flood fills/s.
+        if (be.room != null || server.getGameTime() % 20 == 0) {
+            be.room = CleanRoomSystem.filterRoom(server, pos);
+        }
+        be.airQuality = be.room == null ? -1 : (int) Math.round(be.room.quality() * 100);
         int coal = be.find(AirFilterBlockEntity::isCoal);
         int catalyst = be.find(AirFilterBlockEntity::isCatalyst);
-        if ((be.cycle.needsCoal() && coal < 0) || (be.cycle.needsCatalyst() && catalyst < 0)) return;
-        // All preconditions checked before spending anything. One item buys 60/180
-        // actual operating seconds, so breaking the machine cannot reset unpaid debt.
-        if (be.cycle.needsCoal()) be.items.get(coal).shrink(1);
-        if (be.cycle.needsCatalyst()) be.items.get(catalyst).shrink(1);
-        be.gtu.extract(GTU_PER_SECOND, false);
-        be.cycle.workedSecond();
-        CleanRoomSystem.improve(server, room, 0.2);
-        be.airQuality = (int) Math.round(room.quality() * 100);
-        be.setChanged();
+        FilterCycle.Step step = be.cycle.tick(be.gtu.amountAsLong(), be.room != null, coal >= 0, catalyst >= 0);
+        if (step.loadCoal()) be.items.get(coal).shrink(1);
+        if (step.loadCatalyst()) be.items.get(catalyst).shrink(1);
+        if (step.energySpent() > 0) {
+            be.gtu.extract(step.energySpent(), false);
+            be.setChanged();
+        }
+        if (step.working()) {
+            CleanRoomSystem.improve(server, be.room, FilterCycle.QUALITY_PER_TICK);
+            be.airQuality = (int) Math.round(be.room.quality() * 100);
+        }
     }
 
     public static boolean isSupply(ItemStack stack) { return isCoal(stack) || isCatalyst(stack); }
@@ -88,7 +93,9 @@ public final class AirFilterBlockEntity extends BlockEntity implements WorldlyCo
         return -1;
     }
     @Override public long receiveGtu(long amount, boolean simulate) {
-        long received = gtu.receive(amount, simulate);
+        long accepted = intake.offer(level == null ? 0 : level.getGameTime(), amount,
+                CAPACITY_GTU * 1000L - gtu.amountAsLong(), simulate);
+        long received = gtu.receive(accepted, simulate);
         if (!simulate && received > 0) setChanged();
         return received;
     }
@@ -122,21 +129,28 @@ public final class AirFilterBlockEntity extends BlockEntity implements WorldlyCo
     @Override public boolean canPlaceItem(int slot, ItemStack stack) { return isSupply(stack); }
     @Override public int[] getSlotsForFace(Direction side) { return new int[]{0, 1, 2}; }
     @Override public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction side) { return canPlaceItem(slot, stack); }
-    @Override public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) { return true; }
+    // Supplies are inputs, never outputs: automation must not redistribute them between filters.
+    @Override public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) { return false; }
 
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
         gtu.save(tag, "Gtu");
-        tag.putInt("CoalSeconds", cycle.coal());
-        tag.putInt("CatalystSeconds", cycle.catalyst());
+        tag.putInt("CoalCreditTicks", cycle.coalTicks());
+        tag.putInt("CatalystCreditTicks", cycle.catalystTicks());
+        tag.putBoolean("CoalStarted", cycle.coalStarted());
+        tag.putBoolean("CatalystStarted", cycle.catalystStarted());
     }
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         ContainerHelper.loadAllItems(tag, items, registries);
         gtu.load(tag, "Gtu");
         // Legacy CoalTicks/CatalystTicks were unpaid elapsed counters, not fuel credit.
-        cycle = new FilterCycle(tag.getInt("CoalSeconds"), tag.getInt("CatalystSeconds"));
+        cycle = tag.contains("CoalCreditTicks")
+                ? FilterCycle.fromTicks(tag.getInt("CoalCreditTicks"), tag.getInt("CatalystCreditTicks"),
+                        tag.getBoolean("CoalStarted"), tag.getBoolean("CatalystStarted"))
+                : new FilterCycle(tag.getInt("CoalSeconds"), tag.getInt("CatalystSeconds"));
+        room = null;
         airQuality = -1;
     }
 }

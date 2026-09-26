@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "gonzotech:paintings/gonzo",
+      "sprite": "gonzotech:gonzo"
+    }
+  ]
+}

@@ -32,22 +32,17 @@ public final class AirFilterMenu extends BaseMachineMenu {
         super(ModMenus.AIR_FILTER.get(), id, container, data, AirFilterBlockEntity.SLOT_COUNT);
         access = ContainerLevelAccess.create(inventory.player.level(), pos);
         for (int slot = 0; slot < 3; slot++) {
-            addSlot(new Slot(container, slot, 62 + slot * 18, 124) {
+            addSlot(new Slot(container, slot, 62 + slot * 18, 35) {
                 @Override public boolean mayPlace(ItemStack stack) { return AirFilterBlockEntity.isSupply(stack); }
             });
         }
-        // Author's reference: canvas (136,145), step 18; hotbar (136,212).
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 17 + row * 18));
-            }
-        }
-        for (int column = 0; column < 9; column++) addSlot(new Slot(inventory, column, 8 + column * 18, 84));
+        // Same layout as the other machines: machine grid above player inventory.
+        addPlayerInventory(inventory, 8, 84);
     }
 
-    public int gtu() { return (data.get(0) & 0xffff) | ((data.get(1) & 0xffff) << 16); }
-    public int coalSeconds() { return data.get(2); }
-    public int catalystSeconds() { return data.get(3); }
+    public int gtuMilli() { return (data.get(0) & 0xffff) | ((data.get(1) & 0xffff) << 16); }
+    public int coalUsedHundredths() { return data.get(2); }
+    public int catalystUsedHundredths() { return data.get(3); }
     public int qualityHundredths() { return data.get(4); }
 
     @Override

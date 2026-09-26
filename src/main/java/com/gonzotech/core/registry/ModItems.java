@@ -27,6 +27,9 @@ public class ModItems {
     public static final DeferredRegister.Items ITEMS =
         DeferredRegister.createItems(GonzoTechMod.MOD_ID);
 
+    public static final DeferredItem<com.gonzotech.core.item.GonzoPaintingItem> GONZO_PAINTING =
+        ITEMS.registerItem("gonzo_painting", com.gonzotech.core.item.GonzoPaintingItem::new);
+
     /** ore id -> (host -> BlockItem этого host-варианта). */
     public static final Map<String, Map<Host, DeferredItem<BlockItem>>> ORE_BLOCK_ITEMS = new LinkedHashMap<>();
 

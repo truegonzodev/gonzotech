@@ -120,6 +120,21 @@ public final class CleanRoomSelfTest {
         check(open.status() == RoomTopology.Status.TOO_LARGE && open.cells().size() == 2049, "open air scan bounded");
         check(RoomTopology.find(p -> Kind.UNLOADED, a).status() == RoomTopology.Status.UNLOADED, "never treat unloaded as air");
 
+        RoomLedger outdoor = new RoomLedger(() -> {});
+        AtomicInteger reads = new AtomicInteger();
+        java.util.function.Function<Pos, Kind> sky = p -> { reads.incrementAndGet(); return Kind.INTERIOR; };
+        check(outdoor.find(sky, a, 40) == null, "large outdoor volume rejected");
+        int firstScan = reads.get();
+        for (int tick = 41; tick < 60; tick++) {
+            check(outdoor.find(sky, a, tick) == null, "outdoor miss cached");
+        }
+        check(reads.get() == firstScan, "no 20x outdoor flood-fill regression for tick-based filters");
+        outdoor.find(sky, a, 60);
+        check(reads.get() > firstScan, "outdoor miss expires next second");
+        World sealed = new World(); sealed.box(a.x(), a.y(), a.z(), 1, 1, 1);
+        outdoor.invalidate(a.offset(1, 0, 0));
+        check(outdoor.find(sealed::get, a, 60) != null, "block edit immediately clears outdoor miss cache");
+
         FilterCycle cycle = new FilterCycle(0, 0);
         int coal = 0, catalyst = 0;
         for (int second = 1; second <= 360; second++) {

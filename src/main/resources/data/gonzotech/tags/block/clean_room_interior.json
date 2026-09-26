@@ -2,6 +2,11 @@
   "replace": false,
   "values": [
     "gonzotech:aluminum_housing",
-    "gonzotech:sheathing"
+    "gonzotech:sheathing",
+    "minecraft:heavy_weighted_pressure_plate",
+    "minecraft:light_weighted_pressure_plate",
+    "gonzotech:singular_energy_source",
+    "gonzotech:singular_heat_source",
+    "minecraft:light"
   ]
 }

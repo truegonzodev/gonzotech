@@ -364,6 +364,7 @@ public class ModCreativeTabs {
                 // Миска для питомцев (жирные коты, автор 2026-09-19; перенос в
                 // «Приколы» 2026-09-20 — фан-предмет, не техно-блок).
                 output.accept(ModItems.PET_BOWL_ITEM.get());
+                output.accept(ModItems.GONZO_PAINTING.get());
                 output.accept(ModItems.BOTCHED_MECHANISM.get());
                 output.accept(ModItems.THE_PROTO_MASH.get());
                 output.accept(ModItems.THE_FRUIT_MASH.get());

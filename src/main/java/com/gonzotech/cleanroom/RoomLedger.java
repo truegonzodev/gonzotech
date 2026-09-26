@@ -27,6 +27,10 @@ public final class RoomLedger {
         public double quality() { return quality; }
     }
 
+    // A wall filter also queries its outside face. Tick-based operation must not
+    // flood-fill 2049 outdoor cells 20 times/second for the same origin.
+    private final Set<RoomTopology.Pos> oversized = new HashSet<>();
+    private long oversizedEpoch = Long.MIN_VALUE;
     private final Set<Room> rooms = new HashSet<>();
     private final Map<RoomTopology.Pos, Room> byCell = new HashMap<>();
     private final Map<RoomTopology.Pos, Set<Room>> byShell = new HashMap<>();
@@ -36,6 +40,11 @@ public final class RoomLedger {
     public Collection<Room> rooms() { return new ArrayList<>(rooms); }
 
     public Room find(Function<RoomTopology.Pos, RoomTopology.Kind> world, RoomTopology.Pos origin, long tick) {
+        long epoch = Math.floorDiv(tick, 20);
+        if (epoch != oversizedEpoch) {
+            oversized.clear();
+            oversizedEpoch = epoch;
+        }
         Room known = byCell.get(origin);
         if (known != null) {
             if (known.checkedAt == tick) return known.available ? known : null;
@@ -60,8 +69,15 @@ public final class RoomLedger {
             }
             remove(known);
         }
+        if (oversized.contains(origin)) return null;
         RoomTopology.Result result = RoomTopology.find(world, origin);
-        if (!result.valid()) return null;
+        if (!result.valid()) {
+            if (result.status() == RoomTopology.Status.TOO_LARGE) {
+                if (oversized.size() >= 4096) oversized.clear();
+                oversized.add(origin);
+            }
+            return null;
+        }
         Room room = restore(result.cells(), result.shell(), 0.0);
         room.checkedAt = tick;
         room.available = true;
@@ -88,6 +104,7 @@ public final class RoomLedger {
 
     /** Called at the actual block mutation, including break-and-replace in a single tick. */
     public void invalidate(RoomTopology.Pos pos) {
+        oversized.clear(); // Sealing a formerly open space must be visible immediately.
         Room inside = byCell.get(pos);
         Set<Room> affected = new HashSet<>(byShell.getOrDefault(pos, Set.of()));
         if (inside != null) affected.add(inside);

@@ -17,7 +17,8 @@
     "MonsterSunEventSpawnMixin",
     "PathfinderMobSunEventRulesMixin",
     "ServerLevelSunEventSnowMixin",
-    "WolfFatnessMixin"
+    "WolfFatnessMixin",
+    "GonzoPaintingMixin"
   ],
   "client": [
     "client.CatRenderStateMixin",
