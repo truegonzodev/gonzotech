@@ -84,6 +84,9 @@ public final class TierTwoCrafting {
     /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
     private static final Set<UUID> BOOK_GRANTED = ConcurrentHashMap.newKeySet();
 
+    /** Read-only recipe-book policy, shared with diagnostics (not the physical craft gate). */
+    public static List<String> recipeIds() { return RECIPE_IDS; }
+
     private TierTwoCrafting() {
     }
 

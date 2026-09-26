@@ -893,5 +893,14 @@
   "message.gonzotech.telifon.air_quality": "Качество воздуха: %s",
   "message.gonzotech.telifon.air_quality.normal": "Качество воздуха: обычное",
   "gui.gonzotech.air_filter.no_room": "Нет единственного замкнутого контура",
-  "gui.gonzotech.air_filter.fuel_time": "Запас работы: уголь %s с, катализатор %s с"
+  "gui.gonzotech.air_filter.fuel_time": "Запас работы: уголь %s с, катализатор %s с",
+  "gonzotech.configuration.extendedAdvancedTooltips": "Расширенные расширенные подсказки",
+  "gonzotech.configuration.extendedAdvancedTooltips.tooltip": "Показывать крафт-гейт и рецепт-гейт Gonzo Tech внизу подсказки. Только в креативе и при включённом F3+H. На сами гейты не влияет.",
+  "tooltip.gonzotech.gate.craft": "крафт-гейт %s",
+  "tooltip.gonzotech.gate.recipe": "рецепт-гейт %s",
+  "tooltip.gonzotech.gate.discovery": "открытие %s",
+  "tooltip.gonzotech.gate.none": "нет",
+  "tooltip.gonzotech.gate.waiting": "ожидание данных сервера",
+  "tooltip.gonzotech.gate.sun_event": "встреча с багровым днём",
+  "tooltip.gonzotech.gate.play_time": "20 минут игры"
 }

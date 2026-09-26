@@ -149,6 +149,11 @@ public final class Phase3Events {
         return com.gonzotech.machines.crafting.TierThreeCrafting.isGatedOutput(item) ? 3 : null;
     }
 
+    /** Shared extra condition for server crafting and creative diagnostics. */
+    public static boolean requiresSunEvent(net.minecraft.world.item.Item item) {
+        return item == ModItems.SOLAR_WATCH.get();
+    }
+
     /**
      * Дополнительное условие гейта СВЕРХ тира «Открытия» (автор 22.09.2026) —
      * условие «И». Пока такое есть ровно у одного предмета: <b>солнечные часы</b>
@@ -161,7 +166,7 @@ public final class Phase3Events {
      * вызывающие добавляют эту проверку к проверке тира через «И».</p>
      */
     public static boolean extraGateMet(ServerPlayer player, net.minecraft.world.item.Item item) {
-        if (item != ModItems.SOLAR_WATCH.get()) {
+        if (!requiresSunEvent(item)) {
             return true;
         }
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);

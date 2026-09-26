@@ -893,5 +893,14 @@
   "message.gonzotech.telifon.air_quality": "Air quality: %s",
   "message.gonzotech.telifon.air_quality.normal": "Air quality: normal",
   "gui.gonzotech.air_filter.no_room": "No single enclosed clean room",
-  "gui.gonzotech.air_filter.fuel_time": "Operating reserve: coal %s s, catalyst %s s"
+  "gui.gonzotech.air_filter.fuel_time": "Operating reserve: coal %s s, catalyst %s s",
+  "gonzotech.configuration.extendedAdvancedTooltips": "Extended Advanced Tooltips",
+  "gonzotech.configuration.extendedAdvancedTooltips.tooltip": "Show Gonzo Tech crafting and recipe-book gates at the bottom of tooltips. Creative mode and F3+H only. Does not change the gates themselves.",
+  "tooltip.gonzotech.gate.craft": "craft gate: %s",
+  "tooltip.gonzotech.gate.recipe": "recipe gate: %s",
+  "tooltip.gonzotech.gate.discovery": "discovery %s",
+  "tooltip.gonzotech.gate.none": "none",
+  "tooltip.gonzotech.gate.waiting": "waiting for server data",
+  "tooltip.gonzotech.gate.sun_event": "witnessed crimson day",
+  "tooltip.gonzotech.gate.play_time": "20 minutes played"
 }

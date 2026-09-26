@@ -7,6 +7,7 @@ import com.gonzotech.radiation.client.ShieldingTooltip;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
@@ -18,7 +19,7 @@ import java.util.List;
 public final class UniversalTooltip {
     private UniversalTooltip() {}
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onTooltip(ItemTooltipEvent event) {
         TooltipLayout.ensureCreativeCategory(event.getToolTip(), event.getItemStack(),
                 event.getEntity() != null && event.getEntity().isCreative());
@@ -30,6 +31,7 @@ public final class UniversalTooltip {
         ShieldingTooltip.append(event);     // block 13, only when factor < 1
         RadTooltip.append(event);           // blocks 14-15, only when present
         TooltipLayout.collapseEmptyRuns(event.getToolTip());
-        event.getToolTip().addAll(advanced); // block 17: vanilla F3+H at the end
+        event.getToolTip().addAll(advanced); // block 17: vanilla F3+H id/components
+        GateTooltips.append(event);         // creative-only gate diagnostics, after vanilla
     }
 }

@@ -38,6 +38,8 @@ public class GonzoTechMod {
     private static final double MAX_BLAST_REQUEST_DISTANCE = 5.0D;
 
     public GonzoTechMod(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,
+                com.gonzotech.core.config.GonzoClientConfig.SPEC);
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::registerPayloads);
 
@@ -117,6 +119,7 @@ public class GonzoTechMod {
 
         // Клиентская привязка экранов машин — только на физическом клиенте.
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.gonzotech.core.client.GateTooltips.registerConfigScreen(modContainer);
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
             // Клиентские текстуры/тинт расплавленного кориума и жидкостей в мире.
@@ -174,6 +177,7 @@ public class GonzoTechMod {
         );
 
         ChalkboardNetwork.register(registrar);
+        com.gonzotech.core.tooltip.GateTooltipNetwork.register(registrar);
 
         // Sync для GUI «Заметок учёного» (наигранное время + tier 1).
         com.gonzotech.chalkboard.network.NotesNetwork.register(registrar);

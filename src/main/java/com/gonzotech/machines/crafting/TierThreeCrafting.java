@@ -78,6 +78,9 @@ public final class TierThreeCrafting {
     /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
     private static final Set<UUID> BOOK_GRANTED = ConcurrentHashMap.newKeySet();
 
+    /** Read-only recipe-book policy, shared with diagnostics (not the physical craft gate). */
+    public static List<String> recipeIds() { return RECIPE_IDS; }
+
     private TierThreeCrafting() {
     }
 

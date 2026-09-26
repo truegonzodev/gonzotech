@@ -2,6 +2,9 @@ package com.gonzotech.chalkboard.advancement;
 
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
+import com.gonzotech.core.tooltip.GateRequirement;
+import com.gonzotech.machines.crafting.TierTwoCrafting;
+import com.gonzotech.machines.crafting.TierThreeCrafting;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -141,6 +144,32 @@ public final class RecipeUnlocks {
         "gonzotech:plastic_waste"
     );
 
+    private static final String SOLAR_WATCH_RECIPE = "gonzotech:solar_watch";
+
+    /** Actual recipe ids, not item prefixes: alternate recipes may produce the same item. */
+    public static GateRequirement gateForRecipe(ResourceLocation recipe) {
+        String id = recipe.toString();
+        if (RECIPES_ALWAYS.contains(id)) return GateRequirement.NONE;
+        if (id.equals(SOLAR_WATCH_RECIPE)) {
+            return new GateRequirement(2,
+                    GateRequirement.Extra.SUN_EVENT);
+        }
+        if (RECIPES_AFTER_TWENTY_MINUTES.contains(id)) {
+            return new GateRequirement(0,
+                    GateRequirement.Extra.PLAY_TIME_20_MINUTES);
+        }
+        for (var entry : RECIPES_BY_TIER.entrySet()) {
+            if (entry.getValue().contains(id)) return GateRequirement.discovery(entry.getKey());
+        }
+        if (TierTwoCrafting.recipeIds().contains(id)) {
+            return GateRequirement.discovery(2);
+        }
+        if (TierThreeCrafting.recipeIds().contains(id)) {
+            return GateRequirement.discovery(3);
+        }
+        return GateRequirement.NONE;
+    }
+
     private RecipeUnlocks() {
     }
 
@@ -215,7 +244,7 @@ public final class RecipeUnlocks {
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
         if (!progress.isRecipeTierUnlocked(2)) return;
         if (!progress.hasNoteFlag(com.gonzotech.chalkboard.notes.ScholarNoteFlags.SUN_EVENT)) return;
-        grant(player, List.of("gonzotech:solar_watch"));
+        grant(player, List.of(SOLAR_WATCH_RECIPE));
     }
 
     private static void grant(ServerPlayer player, List<String> ids) {
