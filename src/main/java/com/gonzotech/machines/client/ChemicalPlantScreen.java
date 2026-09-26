@@ -13,7 +13,7 @@ import java.util.List;
  * Экран Химического завода:
  * <ul>
  *   <li>Шкала GTU: (8, 17) 16×52 с тултипом GTU;</li>
- *   <li>Шкала реакции chemical: (116, 35) 24×16 (слева направо);</li>
+ *   <li>Шкала реакции chemical: (116, 35) 34×16 (слева направо);</li>
  *   <li>Слоты катализаторов и сетка 3×3 оформлены в текстуре.</li>
  * </ul>
  */
@@ -43,10 +43,10 @@ public class ChemicalPlantScreen extends MachineScreen<ChemicalPlantMenu> {
         float gtuFraction = menu.maxGtu() > 0 ? (float) menu.gtu() / menu.maxGtu() : 0f;
         drawVBarTex(graphics, gtuX, gtuY, gtuW, gtuH, gtuFraction, BAR_GTU);
 
-        // 2. Стрелка прогресса реакции chemical слева направо (116, 35) 24×16
+        // 2. Стрелка прогресса реакции chemical слева направо (116, 35) 34×16
         int progX = x + 116;
         int progY = y + 35;
-        int progW = 24;
+        int progW = 34;
         int progH = 16;
         float progFraction = menu.total() > 0 ? (float) menu.progress() / menu.total() : 0f;
         drawHBarTex(graphics, progX, progY, progW, progH, progFraction, BAR_CHEMICAL);

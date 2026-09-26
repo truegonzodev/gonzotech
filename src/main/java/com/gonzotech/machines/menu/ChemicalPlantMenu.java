@@ -11,13 +11,13 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Меню Химического завода:
+ * Меню Химического завода. Координаты окна = координаты PNG из SUPER_CRUCIAL_FILE − 128:
  * <ul>
  *   <li>Шкала GTU: (8, 17) 16×52;</li>
- *   <li>3 слота катализаторов: (30, 17), (30, 35), (30, 53);</li>
- *   <li>Сетка ингредиентов 3×3: X: 58, 76, 94; Y: 17, 35, 53;</li>
- *   <li>Стрелка прогресса chemical: (116, 35) 24×16;</li>
- *   <li>Слот выхода: (148, 35).</li>
+ *   <li>3 слота катализаторов: (26, 17), (26, 35), (26, 53);</li>
+ *   <li>Сетка ингредиентов 3×3: X: 62, 80, 98; Y: 17, 35, 53;</li>
+ *   <li>Стрелка прогресса chemical: (116, 35) 34×16;</li>
+ *   <li>Слот выхода: (152, 35).</li>
  * </ul>
  */
 public class ChemicalPlantMenu extends BaseMachineMenu {
@@ -36,19 +36,19 @@ public class ChemicalPlantMenu extends BaseMachineMenu {
         this.be = be;
 
         // 0..2: Слоты катализаторов (платиновые/палладиевые самородки)
-        addSlot(new Slot(be, 0, 30, 17) {
+        addSlot(new Slot(be, 0, 26, 17) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return ChemicalPlantRecipes.isCatalyst(stack);
             }
         });
-        addSlot(new Slot(be, 1, 30, 35) {
+        addSlot(new Slot(be, 1, 26, 35) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return ChemicalPlantRecipes.isCatalyst(stack);
             }
         });
-        addSlot(new Slot(be, 2, 30, 53) {
+        addSlot(new Slot(be, 2, 26, 53) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return ChemicalPlantRecipes.isCatalyst(stack);
@@ -59,12 +59,12 @@ public class ChemicalPlantMenu extends BaseMachineMenu {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 int slotIndex = 3 + row * 3 + col;
-                addSlot(new Slot(be, slotIndex, 58 + col * 18, 17 + row * 18));
+                addSlot(new Slot(be, slotIndex, 62 + col * 18, 17 + row * 18));
             }
         }
 
         // 12: Слот выхода (готовая продукция)
-        addSlot(new Slot(be, 12, 148, 35) {
+        addSlot(new Slot(be, 12, 152, 35) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;

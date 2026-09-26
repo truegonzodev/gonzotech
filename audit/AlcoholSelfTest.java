@@ -13,7 +13,7 @@ public final class AlcoholSelfTest {
         check(mug.addiction == 4000 && mug.addiction / 10000.0 == .4, "mug is 0.4%, not 400 points");
         check(mug.stress == -3000 && mug.crisis == 0 && mug.food == 2 && mug.saturation == -2, "mug dose");
         check(mug.clueChance == 1 && mug.poisonChance == 0 && mug.faintChance == 0, "mug probabilities");
-        check(bucket.addiction == 4000 && bucket.stress == -9000 && bucket.crisis == 0, "bucket points");
+        check(bucket.addiction == 12000 && bucket.stress == -9000 && bucket.crisis == 0, "bucket points");
         check(bucket.food == 6 && bucket.saturation == -8 && bucket.clueChance == 3, "bucket food and clue");
         check(bucket.slownessTicks == 30*20 && bucket.poisonChance == 50 && bucket.poisonTicks == 6*20, "bucket effects");
         check(vodka.addiction == 80000 && vodka.stress == -40000 && vodka.crisis == 1000, "vodka points");

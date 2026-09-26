@@ -28,7 +28,7 @@ import java.util.Random;
  *   <li><b>Экранный эффект</b> (кризис &gt; 74 %): анимированный оверлей, непрозрачность
  *       {@code 10 % + 2 % за каждый процент выше 74} (потолок 62 % на 100 %). Кадры анимации
  *       листаются вручную: GUI-текстуры не проходят через атлас, поэтому {@code .mcmeta}
- *       для них не «тикает» — плейсхолдер-анимация лежит в файле, а номер кадра считает мод;</li>
+ *       для них не «тикает» — номер кадра и геометрию исходника задаёт мод;</li>
  *   <li><b>Фиксация камеры</b> после переноса на чекпойнт: 0.3 с игрок не может шевелить камерой;</li>
  *   <li><b>Ложный экран смерти</b> (кризис &gt; 87 %): рисуется оверлеем, а не {@code Screen} —
  *       поэтому WASD продолжают работать, а кнопки просто убирают экран (клик по ним
@@ -50,11 +50,12 @@ public final class PsycheCrisisClient {
     private static final float OVERLAY_BASE_ALPHA = 0.10F;
     private static final float OVERLAY_ALPHA_PER_PERCENT = 0.02F;
 
-    /** Анимированный оверлей: {@code 64x64} кадров, 24 кадра в вертикальной ленте. */
+    /** 16:9 overlay: 23 whole 128×72 frames in a 128×1656 strip; see matching .mcmeta. */
     private static final ResourceLocation TEX_SCREEN_EFFECT =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/crisis_screen_effect.png");
-    private static final int FRAME_SIZE = 64;
-    private static final int FRAME_COUNT = 24;
+    private static final int FRAME_WIDTH = 128;
+    private static final int FRAME_HEIGHT = 72;
+    private static final int FRAME_COUNT = 23;
     private static final int FRAME_TICKS = 2;
 
     // ─────────────────────── ложный экран смерти: ванильные константы ───────────────────────
@@ -255,16 +256,16 @@ public final class PsycheCrisisClient {
         float alpha = OVERLAY_BASE_ALPHA + (percent - OVERLAY_MIN_PERCENT) * OVERLAY_ALPHA_PER_PERCENT;
         alpha = Mth.clamp(alpha, 0.0F, 1.0F);
 
-        // Анимированный кадр (номер кадра считаем сами — см. шапку класса).
-        // Автор 22.09: оверлей «дробился на мелкие квадраты». Причина — блит брал источник
-        // размером со весь экран, и текстура повторялась мозаикой. Теперь берём ровно кадр
-        // 64×64, а на весь экран его растягивает масштаб позы: PNG любого размера ляжет так же.
-        int v = (frame / FRAME_TICKS) * FRAME_SIZE;
+        // GUI textures are not atlas animations: select a WHOLE 128×72 frame ourselves.
+        // Source dimensions and strip height must match the PNG, not the screen or a
+        // square placeholder. Using 24 frames for a 23-frame strip slid the crop down
+        // through neighbouring frames. Keep destination bounds fixed at (0,0)..(width,height).
+        int v = (frame / FRAME_TICKS) * FRAME_HEIGHT;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
         g.pose().pushPose();
-        g.pose().scale(width / (float) FRAME_SIZE, height / (float) FRAME_SIZE, 1.0F);
+        g.pose().scale(width / (float) FRAME_WIDTH, height / (float) FRAME_HEIGHT, 1.0F);
         g.blit(RenderType::guiTextured, TEX_SCREEN_EFFECT, 0, 0, 0.0F, (float) v,
-                FRAME_SIZE, FRAME_SIZE, FRAME_SIZE, FRAME_SIZE * FRAME_COUNT);
+                FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT * FRAME_COUNT);
         g.pose().popPose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 

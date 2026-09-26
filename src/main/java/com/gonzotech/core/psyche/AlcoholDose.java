@@ -3,7 +3,7 @@ package com.gonzotech.core.psyche;
 /** Author's one-shot doses. Points: 1,000,000 = 100%; food: vanilla 0..20 units. */
 public enum AlcoholDose {
     BEER_MUG(4_000, -3_000, 0, 2, -2, 1, 0, 0, 0, 0, 0),
-    BEER_BUCKET(4_000, -9_000, 0, 6, -8, 3, 600, 50, 120, 0, 0),
+    BEER_BUCKET(12_000, -9_000, 0, 6, -8, 3, 600, 50, 120, 0, 0),
     VODKA(80_000, -40_000, 1_000, -3, -6, 9, 0, 100, 260, 400, 25);
 
     public final int addiction, stress, crisis, food, saturation, clueChance;
