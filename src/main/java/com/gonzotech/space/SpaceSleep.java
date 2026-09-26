@@ -7,7 +7,7 @@ import net.neoforged.neoforge.event.entity.player.CanPlayerSleepEvent;
 
 /**
  * СОН В КОСМИЧЕСКИХ МИРАХ (по фидбэку): кровати больше НЕ взрываются
- * ({@code bed_works: true} во всех 6 dimension_type), но и спать в них нельзя.
+ * ({@code bed_works: true} во всех 8 dimension_type), но и спать в них нельзя.
  *
  * <p>Ловим {@link CanPlayerSleepEvent} (сервер) и, если игрок в одном из наших
  * измерений, выставляем «проблему» {@link Player.BedSleepingProblem#NOT_POSSIBLE_HERE}

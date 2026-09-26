@@ -142,7 +142,7 @@ public class ModCreativeTabs {
 
     // ─────────────────────────── Фаза 3: новые вкладки ───────────────────────────
 
-    /** «Снаряжение Gonzo Tech» — будущая линейка вооружения и брони из сплавов. */
+    /** «Снаряжение Gonzo Tech» — сплавные инструменты/броня, хазмат и препараты. */
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EQUIPMENT_TAB = CREATIVE_TABS.register(
         "equipment",
         () -> CreativeModeTab.builder()
@@ -303,7 +303,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TMOX_FUEL.get());
                 output.accept(ModItems.SNUP_FUEL.get());
                 output.accept(ModItems.UT_FUEL.get());
-                // Полимеры Эпохи III (автор 22.09) — заглушки без крафта, до химического завода.
+                // Полимеры Эпохи III — продукты химзавода (часть применений ещё в плане).
                 output.accept(ModItems.POLYETHYLENE.get());
                 output.accept(ModItems.POLYVINYL_CHLORIDE.get());
                 output.accept(ModItems.CELLULOID.get());

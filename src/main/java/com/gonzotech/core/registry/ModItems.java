@@ -106,7 +106,7 @@ public class ModItems {
         ITEMS.registerSimpleItem("inductive_module");
 
     // ─────────────────────── Компоненты тир-3 ───────────────────────
-    // Базовые заготовки третьей эпохи. Рецепты намеренно не добавлены.
+    // Компоненты третьей эпохи имеют JSON-рецепты; пылемер ниже пока без рецепта.
     public static final DeferredItem<Item> ENERGY_MODULE = ITEMS.registerSimpleItem("energy_module");
     public static final DeferredItem<Item> LOGIC_MODULE = ITEMS.registerSimpleItem("logic_module");
     public static final DeferredItem<Item> ELECTRIC_MOTOR = ITEMS.registerSimpleItem("electric_motor");
@@ -136,9 +136,9 @@ public class ModItems {
     public static final DeferredItem<Item> SEMICONDUCTOR_CORE = ITEMS.registerSimpleItem("semiconductor_core");
 
     // ─────────────────────── Полимеры Эпохи III (автор 22.09) ───────────────────────
-    // Заглушки: предметы зарегистрированы и лежат во вкладке «Компоненты», рецептов
-    // и применений пока НЕТ — их даст химический завод. Целлулоид уже входит в рецепт
-    // гермодвери, поэтому до завода гермодверь скрафтить нельзя (так и задумано).
+    // Производятся химзаводом; смола также обратимо крафтится из resin_clump.
+    // Целлулоид нужен гермодвери, ПВХ — транзистору, смола — резине.
+    // Полиэтилен и резина пока не имеют специализированных потребителей.
     /** Полиэтилен — плёнки, изоляция, ёмкости. */
     public static final DeferredItem<Item> POLYETHYLENE = ITEMS.registerSimpleItem("polyethylene");
     /** Поливинилхлорид (ПВХ) — трубы, прокладки, химстойкая арматура. */
@@ -338,7 +338,7 @@ public class ModItems {
     /**
      * Фаза 3 — «прикол»: неудавшийся механизм. Выдаётся вместо результата, если
      * игрок пытается скрафтить закрытую машину (напр. эл. печь) до нужного
-     * «Открытия» (см. RecipeGateEvents). Заготовка под будущую механику стресса.
+     * «Открытия». Phase3Events.grantBotchedMechanism уже начисляет стресс за такой крафт.
      */
     public static final DeferredItem<Item> BOTCHED_MECHANISM =
         ITEMS.registerSimpleItem("botched_mechanism");
@@ -403,7 +403,7 @@ public class ModItems {
      * Предмет и HUD рабочие, шкала ЖИВАЯ (22.09.2026): наполняется от дозы радиации выше
      * 70 %, тает по 1 % от максимума в тик с триггерами — см. {@code psyche.PsycheUltraviolet}.
      * Рецепта пока нет: ждёт ветку 3 (литография, полупроводники) вместе с дозиметром и
-     * спидометром — решение автора 22.09. До того шкалу видно с «Телифоном».
+     * спидометром — решение автора 22.09. «Телифон» тоже пока не имеет survival-рецепта.
      */
     public static final DeferredItem<Item> UV_METER =
         ITEMS.registerSimpleItem("uv_meter", new Item.Properties().stacksTo(1));

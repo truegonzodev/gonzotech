@@ -13,16 +13,16 @@ import java.util.List;
  * (1..30): стартовые 14 + турбина и редстоун («Открытие 1») + атомный пласт
  * (дробилка, измельчитель, металлургия, пресс, завод сплавов, центрифуга,
  * тир-2, логистика II — трубы/узел/предметы — и пароген, ядерная топка —
- * «Открытие 2»). Между текстовыми страницами — пустые страницы (16, 21, 27)
- * под будущие иллюстрации.
+ * «Открытие 2»). Страницы 16, 21, 27 — иллюстрационные: структура турбины,
+ * сетки сплавов и цикл рецептов логистики соответственно.
  *
  * <p>Иллюстрации — не личные PNG на страницу, а ШАБЛОНЫ
  * ({@link NoteIllustrationKind}): прозрачный оверлей (сетка крафта / панель
  * структуры / пары брожения) поверх фона главы; предметы в слотах и подписи
  * рендерит GUI (локализуемо, hover-тултипы). Привязаны страницы 1–30:
  * крафты машин/труб/узлов (реальные рецепты из data/gonzotech/recipe),
- * брожение (стр. 3, гибрид крафт+пара), структуры (пока пустые панели —
- * раскладка слотов по каждой структуре позже), стр. 27 — цикл кадров
+ * брожение (стр. 3, гибрид крафт+пара), структуры из StructureModel и плоских
+ * представлений; стр. 27 — цикл кадров
  * (правое окно «остальные трубы тир-2» тикает и меняется).
  *
  * <p>Книга делится на две ЧАСТИ:
@@ -192,7 +192,7 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("minecraft:iron_bars", "gonzotech:cast_iron_ingot", "gonzotech:calcium_ingot", "minecraft:iron_bars", "minecraft:iron_ingot", "minecraft:iron_bars", "gonzotech:calcium_ingot", "gonzotech:cast_iron_ingot", "minecraft:iron_bars"), "gonzotech:first_turbine_casing")),
 
-            // 16 — пустая страница после турбины — слева крафт ротора,
+            // 16 — страница иллюстраций после турбины — слева крафт ротора,
             // справа структура: МИНИМАЛЬНАЯ турбина 3×3×3 (24 корпуса, ротор
             // в центре, паровой узел слева и узел провода справа в среднем ряду
             // передней грани) — 3 подстраницы-СЛОЯ: Нижний/Средний/Верхний слой
@@ -244,7 +244,7 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:iron_dust", "gonzotech:iron_dust", "gonzotech:iron_dust", "minecraft:coal", "", "", "", "", ""), "gonzotech:steel_dust")),
 
-            // 21 — пустая страница после металлургии — слева ферро-пыль, справа нержавейка;
+            // 21 — страница иллюстраций после металлургии — слева ферро-пыль, справа нержавейка;
             // витрина — пыли сплавов
             // Заголовок = продублированный «Простая металлургия» (стр. 20) —
             // страница-продолжение про сплавы (автор 2026-09-18)
@@ -311,7 +311,7 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:second_wire_node", "", "gonzotech:second_universal_fluid_pipe", "gonzotech:nickel_plate", "minecraft:hopper", "gonzotech:nickel_plate", "gonzotech:second_heat_pipe", "", "gonzotech:second_item_pipe"), "gonzotech:second_universal_node")),
 
-            // 27 — пустая страница после логистики 2 — ЦИКЛ: слева провод 2 (4 варианта:
+            // 27 — страница иллюстраций после логистики 2 — ЦИКЛ: слева провод 2 (4 варианта:
             // медь/алюминий/золото/серебро), справа остальные трубы тир-2 (3 с на рецепт)
             // Заголовок = продублированный «Логистика второго поколения» (стр. 26)
             // — страница-продолжение про логистику тир-2 (автор 2026-09-18)
@@ -330,7 +330,7 @@ public final class ScholarNotesContent {
                                     new NoteIllustration.Craft(List.of("", "gonzotech:steel_ingot", "", "minecraft:hopper", "gonzotech:cast_iron_ingot", "minecraft:chest", "", "gonzotech:steel_ingot", ""), "gonzotech:second_item_pipe"),
                                     new NoteIllustration.Craft(List.of("", "minecraft:iron_trapdoor", "gonzotech:steel_ingot", "gonzotech:cast_iron_ingot", "minecraft:bucket", "gonzotech:cast_iron_ingot", "gonzotech:steel_ingot", "", ""), "gonzotech:second_universal_fluid_pipe")))),
 
-            // 28 — «Логистика предметов 2» (после пустой страницы логистики)
+            // 28 — «Логистика предметов 2» (после страницы иллюстраций логистики)
             // — справа отсеиватель 2
             new ScholarPage(28, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p28.title",
