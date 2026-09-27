@@ -1,5 +1,6 @@
 package com.gonzotech.core.client;
 
+import com.gonzotech.core.entity.AltVillagerEntity;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;

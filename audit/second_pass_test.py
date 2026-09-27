@@ -66,6 +66,12 @@ for frag in ['head.yRot = state.yRot', 'head.xRot = state.xRot',
 renderer=read('core/client/AltVillagerRenderer.java')
 assert 'ModelLayers.VILLAGER' in renderer and '0.5F' in renderer \
     and 'textures/entity/alt_villager.png' in renderer, 'vanilla mesh + own texture'
+# 0.3.35: перекрёстные ссылки на классы мода обязаны иметь импорт
+# (реальная сборка javac ловит пропущенный import — регресс-защита).
+assert 'import com.gonzotech.core.entity.AltVillagerEntity;' in renderer, 'cross-package import must exist'
+for src_name in ['core/client/AltVillagerClient.java']:
+    src_text=read(src_name)
+    assert 'com.gonzotech.core.registry.ModEntities' in src_text, 'qualified registry reference'
 alt_client=read('core/client/AltVillagerClient.java')
 assert 'RegisterRenderers' in alt_client and 'AltVillagerRenderer::new' in alt_client
 alt_mod=read('GonzoTechMod.java')
