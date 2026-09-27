@@ -8,22 +8,26 @@ import net.minecraft.resources.ResourceLocation;
 
 /**
  * Рендерер «альт-жителя»: ванильный меш {@code ModelLayers.VILLAGER}, та же
- * тень 0.5, что у {@code VillagerRenderer}, и своя текстура (63 % копия не
- * требуется — «любая текстура», автор 27.09.2026). Слоёв профессий/шляп нет:
+ * тень 0.5, что у {@code VillagerRenderer}, и скин по варианту сущности
+ * (0.3.36): четыре текстуры в {@code textures/entity/alt/}, выбор —
+ * взвешенная рулетка 70/15/11/4 в самой сущности. Слоёв профессий/шляп нет:
  * наш житель один на все случаи.
  */
 public class AltVillagerRenderer extends MobRenderer<AltVillagerEntity, AltVillagerRenderState, AltVillagerModel> {
-
-    private static final ResourceLocation TEXTURE =
-        ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/entity/alt_villager.png");
 
     public AltVillagerRenderer(EntityRendererProvider.Context context) {
         super(context, new AltVillagerModel(context.bakeLayer(ModelLayers.VILLAGER)), 0.5F);
     }
 
     @Override
+    public void extractRenderState(AltVillagerEntity entity, AltVillagerRenderState state, float partialTick) {
+        super.extractRenderState(entity, state, partialTick);
+        state.texture = entity.getVariant().texture();
+    }
+
+    @Override
     public ResourceLocation getTextureLocation(AltVillagerRenderState state) {
-        return TEXTURE;
+        return state.texture;
     }
 
     @Override

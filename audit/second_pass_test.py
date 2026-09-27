@@ -58,14 +58,28 @@ assert 'extends PathfinderMob' in alt and 'removeWhenFarAway' in alt
 alt_code=re.sub(r'/\*.*?\*/|//[^\n]*','',alt,flags=re.S)
 for banned in ['Goal', 'Brain', 'goalSelector', 'registerGoals', 'SpawnPlacements']:
     assert banned not in alt_code, 'no AI by design: ' + banned
+# 0.3.36: скин-варианты 70/15/11/4, рулетка в конструкторе = любой путь спавна.
+assert 'SynchedEntityData.defineId(AltVillagerEntity.class, EntityDataSerializers.INT)' in alt_code
+assert 'defineSynchedData(SynchedEntityData.Builder' in alt_code, 'variant synced to client'
+assert 'weightedPick(this.getRandom())' in alt_code, 'roll in constructor covers egg/summon/spawner/natural'
+assert 'putString("AltVariant", this.getVariant().name())' in alt_code, 'skin persists in NBT'
+assert 'byName(tag.getString("AltVariant")' in alt_code, 'legacy saves reroll'
+variant=read('core/entity/AltVariant.java')
+variant_code=re.sub(r'/\*.*?\*/|//[^\n]*','',variant,flags=re.S)
+for frag in ['ALT("alt_villager", 70)', 'ANOTHER_ALT("another_alt_villager", 15)',
+             'NOT_ALT("not_alt_villager", 11)', 'SO_ALT("so_alt_villager", 4)']:
+    assert frag in variant_code, 'author weights: ' + frag
+assert 'random.nextInt(totalWeight())' in variant_code and 'textures/entity/alt/' in variant_code
 model=read('core/client/AltVillagerModel.java')
 for frag in ['head.yRot = state.yRot', 'head.xRot = state.xRot',
              'Mth.cos(state.walkAnimationPos * 0.6662F)', '* 1.4F * state.walkAnimationSpeed * 0.5F',
              '+ (float) Math.PI']:
     assert frag in model, 'villager animation: ' + frag
 renderer=read('core/client/AltVillagerRenderer.java')
-assert 'ModelLayers.VILLAGER' in renderer and '0.5F' in renderer \
-    and 'textures/entity/alt_villager.png' in renderer, 'vanilla mesh + own texture'
+assert 'ModelLayers.VILLAGER' in renderer and '0.5F' in renderer, 'vanilla mesh + shadow'
+assert 'extractRenderState' in renderer and 'state.texture = entity.getVariant().texture()' in renderer, 'variant texture into render state'
+assert 'getTextureLocation(AltVillagerRenderState state)' in renderer
+assert 'entity/alt_villager.png' not in renderer, 'texture comes from the variant, not a constant'
 # 0.3.35: перекрёстные ссылки на классы мода обязаны иметь импорт
 # (реальная сборка javac ловит пропущенный import — регресс-защита).
 assert 'import com.gonzotech.core.entity.AltVillagerEntity;' in renderer, 'cross-package import must exist'
@@ -85,8 +99,13 @@ assert eggdef['model']['model']=='gonzotech:item/alt_spawn_egg' and 'tints' not 
 eggmodel=json.loads((ROOT/'src/main/resources/assets/gonzotech/models/item/alt_spawn_egg.json').read_text())
 assert eggmodel['parent']=='minecraft:item/generated' and eggmodel['textures']['layer0']=='gonzotech:item/alt_spawn_egg'
 from PIL import Image
-alttex=Image.open(ROOT/'src/main/resources/assets/gonzotech/textures/entity/alt_villager.png')
+# 0.3.36: четыре скина 64×64 в entity/alt/; старый одиночный файл удалён.
+alttex=Image.open(ROOT/'src/main/resources/assets/gonzotech/textures/entity/alt/alt_villager.png')
 assert alttex.size==(64,64), 'standard 64x64 entity skin layout'
+for alt_skin in ['alt_villager','another_alt_villager','not_alt_villager','so_alt_villager']:
+    alt_img=Image.open(ROOT/f'src/main/resources/assets/gonzotech/textures/entity/alt/{alt_skin}.png')
+    assert alt_img.size==(64,64), '64x64 skin: ' + alt_skin
+assert not (ROOT/'src/main/resources/assets/gonzotech/textures/entity/alt_villager.png').exists(), 'old single skin removed'
 eggtex=Image.open(ROOT/'src/main/resources/assets/gonzotech/textures/item/alt_spawn_egg.png')
 assert eggtex.size==(16,16) and eggtex.getpixel((8,3))[3]==255, 'own full-colour egg png'
 tabs=read('core/registry/ModCreativeTabs.java')
