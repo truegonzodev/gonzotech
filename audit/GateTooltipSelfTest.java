@@ -34,7 +34,18 @@ public final class GateTooltipSelfTest {
         check(result.get("gonzotech:solar_watch").equals(List.of(new GateRequirement(2, GateRequirement.Extra.SUN_EVENT))), "compound gate");
         check(result.get("minecraft:charcoal").contains(new GateRequirement(0, GateRequirement.Extra.PLAY_TIME_20_MINUTES)), "timed recipe with different id/output");
         check(!result.containsKey("gonzotech:motor_copper"), "recipe id is NOT item id");
-        check(!result.containsKey("gonzotech:third_air_filter"), "do not invent absent recipes from craft gate");
+        // 0.3.30: the air filter recipe now EXISTS, so its gate must follow the real
+        // recipe instead of the old "gate without recipe" guard inversion.
+        check(result.get("gonzotech:third_air_filter").equals(List.of(GateRequirement.discovery(3))),
+                "air filter gate 3 follows its real recipe");
+        check(result.get("gonzotech:speedometer").equals(List.of(GateRequirement.discovery(2))),
+                "speedometer gate 2 follows its real recipe");
+        check(result.get("gonzotech:canister").equals(List.of(GateRequirement.discovery(3))),
+                "both canister routes aggregate into one distinct gate 3");
+        check(result.get("gonzotech:dust_meter").equals(List.of(GateRequirement.discovery(3)))
+                && result.get("gonzotech:dosimeter").equals(List.of(GateRequirement.discovery(3)))
+                && result.get("gonzotech:uv_meter").equals(List.of(GateRequirement.discovery(3))),
+                "instrument gates 3 follow their real recipes");
 
         // Alternate recipes: an ungated route must not disappear, nor duplicate lines proliferate.
         RecipeGateIndex<String> alternatives = new RecipeGateIndex<>();

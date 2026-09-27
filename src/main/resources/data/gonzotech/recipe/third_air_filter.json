@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABC",
+    "DEF",
+    "GHC"
+  ],
+  "key": {
+    "A": "gonzotech:aluminum_wire",
+    "B": "minecraft:hopper",
+    "C": "gonzotech:aluminum_plate",
+    "D": "gonzotech:energy_module",
+    "E": "minecraft:coal_block",
+    "F": "gonzotech:aluminum_housing",
+    "G": "gonzotech:electric_motor",
+    "H": "minecraft:cauldron"
+  },
+  "result": {
+    "id": "gonzotech:third_air_filter",
+    "count": 1
+  },
+  "group": "tier3_air_filter"
+}

@@ -38,9 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Быстрый крафт (Shift-клик) закрыт отдельно — {@code CraftingMenuMixin} берёт тир из
  * {@code Phase3Events.requiredTierFor}, который теперь знает и про третий тир.</p>
  *
- * <p>Состав тира (24.09.2026): три тяжёлые двери, линия брожения/разлива
+ * <p>Состав тира (27.09.2026): три тяжёлые двери, линия брожения/разлива
  * (чан, сусловарочный котёл, дистиллятор, ректификатор, змеевиковый конденсатор,
- * разливной кран), наполнитель и химический завод.</p>
+ * разливной кран), наполнитель, химический завод, фильтр и очиститель воздуха,
+ * дозиметр, УФ-радиометр, пылемер и канистра (два рецепта).</p>
  */
 @EventBusSubscriber(modid = GonzoTechMod.MOD_ID)
 public final class TierThreeCrafting {
@@ -72,7 +73,16 @@ public final class TierThreeCrafting {
         "gonzotech:third_snaketype_condenser",
         "gonzotech:third_filler",
         "gonzotech:third_chemical_plant",
-        "gonzotech:third_dispensing_tap"
+        "gonzotech:third_dispensing_tap",
+        // Приборы и оборудование чистой комнаты/канистра (автор 27.09.2026):
+        // полный гейт — и выдача книги, и подмена крафта до «Открытия 3».
+        "gonzotech:third_air_filter",
+        "gonzotech:third_air_cleaner",
+        "gonzotech:dosimeter",
+        "gonzotech:uv_meter",
+        "gonzotech:dust_meter",
+        "gonzotech:canister",
+        "gonzotech:canister_from_stainless_steel"
     );
 
     /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
@@ -134,8 +144,14 @@ public final class TierThreeCrafting {
         return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get()
             || item == ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get()
             || item == ModItems.THIRD_HERMETIC_DOOR_ITEM.get()
-            || item == ModItems.AIR_CLEANER_ITEM.get()
-            || item == ModItems.AIR_FILTER_ITEM.get()
+        || item == ModItems.AIR_CLEANER_ITEM.get()
+        || item == ModItems.AIR_FILTER_ITEM.get()
+        // Приборы (автор 27.09.2026): дозиметр, УФ-радиометр, пылемер и канистра —
+        // полный гейт «Открытия 3»; спидометр гейтится вторым тиром (TierTwoCrafting).
+        || item == ModItems.DOSIMETER.get()
+        || item == ModItems.UV_METER.get()
+        || item == ModItems.DUST_METER.get()
+        || item == ModItems.CANISTER.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get()

@@ -71,7 +71,8 @@ public class AuditFollowupHarness {
             for (int frame = 0; frame < 100; frame++)
                 onRenderGui(new RenderGuiEvent.Post(new GuiGraphics(width,240)));
             check(deathRenders == (player && death ? 100 : 0));
-            check(screenEffectRenders == (player && !hidden ? 100 : 0));
+            // 0.3.30: F1 hides the HUD only; the crisis status effect persists (author request).
+            check(screenEffectRenders == (player ? 100 : 0));
             check(fakeDeath == death); // F1/render cannot dismiss or stack the illusion.
             check(mc.options.hideGui == hidden); // Never force the user's HUD on.
         }

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABC",
+    "ADE",
+    "ACF"
+  ],
+  "key": {
+    "A": "gonzotech:copper_wire",
+    "B": "minecraft:potion",
+    "C": "gonzotech:steel_plate",
+    "D": "gonzotech:coil",
+    "E": "gonzotech:semiconductor_plate",
+    "F": "minecraft:target"
+  },
+  "result": {
+    "id": "gonzotech:speedometer",
+    "count": 1
+  },
+  "group": "tier2_speedometer"
+}

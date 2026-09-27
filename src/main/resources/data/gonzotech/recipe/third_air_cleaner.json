@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "A A",
+    "BCB",
+    "DED"
+  ],
+  "key": {
+    "A": "gonzotech:aluminum_wire",
+    "B": "gonzotech:electric_motor",
+    "C": "gonzotech:aluminum_housing",
+    "D": "gonzotech:energy_module"
+  },
+  "result": {
+    "id": "gonzotech:third_air_cleaner",
+    "count": 1
+  },
+  "group": "tier3_air_cleaner"
+}

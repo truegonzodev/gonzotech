@@ -251,11 +251,11 @@ public final class PsycheCrisisClient {
         int width = g.guiWidth();
         int height = g.guiHeight();
 
-        if (!mc.options.hideGui) {
-            renderScreenEffect(g, width, height);
-        }
-        // F1 hides the HUD, not the interactive illusion: its cursor/buttons remain active.
-        // NeoForge GuiLayerManager posts RenderGuiEvent.Post outside hideGui-gated layers.
+        // 0.3.30 (автор 27.09.2026): F1 прячет только HUD; кризисный «статус-эффект»
+        // и ложная смерть — состояние игрока, а не элементы интерфейса, поэтому
+        // остаются на экране. NeoForge GuiLayerManager posts RenderGuiEvent.Post
+        // outside hideGui-gated layers, так что событие приходит и при скрытом HUD.
+        renderScreenEffect(g, width, height);
         if (fakeDeath) {
             renderFakeDeath(g, mc, width, height);
         }

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDC",
+    "AEA"
+  ],
+  "key": {
+    "A": "gonzotech:steel_plate",
+    "B": "gonzotech:redstone_core",
+    "C": "gonzotech:logic_module",
+    "D": "gonzotech:uranium_nugget",
+    "E": "minecraft:paper"
+  },
+  "result": {
+    "id": "gonzotech:dust_meter",
+    "count": 1
+  },
+  "group": "tier3_dust_meter"
+}

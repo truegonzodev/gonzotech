@@ -78,7 +78,9 @@ public final class TierTwoCrafting {
         "gonzotech:second_pump",
         "gonzotech:second_nuclear_firebox",
         "gonzotech:second_steamgen_casing",
-        "gonzotech:second_steamgen_core"
+        "gonzotech:second_steamgen_core",
+        // Спидометр — полный гейт «Открытия 2» (автор 27.09.2026): и книга, и подмена.
+        "gonzotech:speedometer"
     );
 
     /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
@@ -179,6 +181,8 @@ public final class TierTwoCrafting {
             || item == ModMachines.SECOND_PUMP_ITEM.get()
             || item == ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get()
             || item == ModMachines.SECOND_STEAMGEN_CASING_ITEM.get()
+            // Спидометр — полный гейт тира 2 (автор 27.09.2026).
+            || item == ModItems.SPEEDOMETER.get()
             || item == ModMachines.SECOND_STEAMGEN_CORE_ITEM.get();
     }
 }

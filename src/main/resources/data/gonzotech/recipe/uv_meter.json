@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDC",
+    "EFE"
+  ],
+  "key": {
+    "A": "gonzotech:aluminum_wire",
+    "B": "gonzotech:semiconductor_plate",
+    "C": "gonzotech:silicon",
+    "D": "gonzotech:logic_module",
+    "E": "gonzotech:aluminum_plate",
+    "F": "gonzotech:redstone_core"
+  },
+  "result": {
+    "id": "gonzotech:uv_meter",
+    "count": 1
+  },
+  "group": "tier3_uv_meter"
+}

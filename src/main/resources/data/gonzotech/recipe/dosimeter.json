@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABA",
+    "CDE",
+    "AFA"
+  ],
+  "key": {
+    "A": "gonzotech:zirconium_plate",
+    "B": "gonzotech:redstone_core",
+    "C": "gonzotech:bore_stained_glass",
+    "D": "gonzotech:vodka_bottle",
+    "E": "gonzotech:semiconductor_plate",
+    "F": "gonzotech:transistor"
+  },
+  "result": {
+    "id": "gonzotech:dosimeter",
+    "count": 1
+  },
+  "group": "tier3_dosimeter"
+}

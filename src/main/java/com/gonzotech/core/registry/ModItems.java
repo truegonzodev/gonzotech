@@ -106,7 +106,7 @@ public class ModItems {
         ITEMS.registerSimpleItem("inductive_module");
 
     // ─────────────────────── Компоненты тир-3 ───────────────────────
-    // Компоненты третьей эпохи имеют JSON-рецепты; пылемер ниже пока без рецепта.
+    // Компоненты третьей эпохи имеют JSON-рецепты; пылемер ниже — тоже (0.3.30).
     public static final DeferredItem<Item> ENERGY_MODULE = ITEMS.registerSimpleItem("energy_module");
     public static final DeferredItem<Item> LOGIC_MODULE = ITEMS.registerSimpleItem("logic_module");
     public static final DeferredItem<Item> ELECTRIC_MOTOR = ITEMS.registerSimpleItem("electric_motor");
