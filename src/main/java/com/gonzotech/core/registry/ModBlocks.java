@@ -286,8 +286,8 @@ public class ModBlocks {
         BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).sound(SoundType.METAL).strength(2.0f, 6.0f).noOcclusion());
     /**
      * Будущий схрон реакторных шлаков и блок природных структур (автор 27.09).
-     * Сейчас простой Block без BE; радиоактивность, токсичность и защита отходов
-     * от уничтожения ещё не реализованы. Не считать бочку безвредным декором.
+     * Простой Block без BE; пресеты 0.7 mZt/s и 2.3 mTx/s, защита выброшенного
+     * предмета/отсеивателя через item-tag non_disposable. Не контейнер с GUI.
      */
     public static final DeferredBlock<Block> WASTE_BARREL = BLOCKS.registerSimpleBlock(
         "waste_barrel", BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)

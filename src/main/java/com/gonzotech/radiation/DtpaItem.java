@@ -1,5 +1,6 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.core.item.ConsumptionAccounting;
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.psyche.PsycheChemical;
@@ -108,6 +109,7 @@ public class DtpaItem extends Item {
         if (serverPlayer.hasEffect(ModEffects.TREATMENT_COURSE)) {
             return stack;
         }
+        ConsumptionAccounting.record(serverPlayer, stack);
 
         PlayerPsyche psyche = serverPlayer.getData(ModPsycheAttachments.PSYCHE);
 

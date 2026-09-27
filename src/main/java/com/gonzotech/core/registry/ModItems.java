@@ -553,7 +553,7 @@ public class ModItems {
     public static final DeferredItem<BlockItem> CORIUM_ITEM =
         ITEMS.registerSimpleBlockItem("corium", ModBlocks.CORIUM);
     public static final DeferredItem<BlockItem> WASTE_BARREL_ITEM =
-        ITEMS.registerSimpleBlockItem("waste_barrel", ModBlocks.WASTE_BARREL);
+        ITEMS.registerSimpleBlockItem("waste_barrel", ModBlocks.WASTE_BARREL, new Item.Properties().fireResistant());
     public static final DeferredItem<BlockItem> DEAD_SLIME_BLOCK_ITEM =
         ITEMS.registerSimpleBlockItem("dead_slime_block", ModBlocks.DEAD_SLIME_BLOCK);
     /** Ведро мёртвой жижи — твёрдый «бакет», как ванильное ведро рыхлого снега. */

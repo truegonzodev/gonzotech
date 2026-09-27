@@ -1,5 +1,6 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.core.item.ConsumptionAccounting;
 import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,6 +60,7 @@ public class RadAbsorbentItem extends Item {
         if (!(level instanceof ServerLevel serverLevel) || !(livingEntity instanceof ServerPlayer serverPlayer)) {
             return stack;
         }
+        ConsumptionAccounting.record(serverPlayer, stack);
         serverPlayer.addEffect(new MobEffectInstance(ModEffects.RAD_CLEANSE,
                 RadDose.CLEANSE_SECONDS * 20, 0, false, true));
 

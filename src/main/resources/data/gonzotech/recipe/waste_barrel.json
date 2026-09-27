@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["STS", "UPU", "LTL"],
+  "key": {
+    "S": "gonzotech:steel_plate",
+    "T": "gonzotech:tungsten_ingot",
+    "U": "gonzotech:tellurium_ingot",
+    "P": "gonzotech:plutonium_block",
+    "L": "gonzotech:lead_ingot"
+  },
+  "result": {"id": "gonzotech:waste_barrel", "count": 1}
+}

@@ -61,6 +61,7 @@ public final class ItemToxicity {
      * Проверяется ДО парсинга материала.
      */
     private static final Map<String, Double> DIRECT_TOXICITY = Map.ofEntries(
+            Map.entry("waste_barrel", 2.3 * RadUnits.MILLI), // per barrel in inventory
             Map.entry("dead_slime_block", 1.0 * RadUnits.MILLI),
             Map.entry("dead_slime_bucket", 1.0 * RadUnits.MILLI),
             Map.entry("formaldehyde_bucket", 54.0 * RadUnits.MILLI)

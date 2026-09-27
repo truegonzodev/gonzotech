@@ -60,6 +60,7 @@ public class DrinkItem extends Item {
         if (!(level instanceof ServerLevel serverLevel) || !(livingEntity instanceof ServerPlayer serverPlayer)) {
             return stack;
         }
+        ConsumptionAccounting.record(serverPlayer, stack);
         AlcoholEffects.consume(serverPlayer, dose);
         serverLevel.playSound(null, serverPlayer.blockPosition(),
                 SoundEvents.HONEY_DRINK.value(), SoundSource.PLAYERS, 0.8F, 1.1F);

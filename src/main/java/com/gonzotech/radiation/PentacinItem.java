@@ -1,5 +1,6 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.core.item.ConsumptionAccounting;
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.psyche.PsycheChemical;
@@ -92,6 +93,7 @@ public class PentacinItem extends Item {
         if (!(level instanceof ServerLevel serverLevel) || !(livingEntity instanceof ServerPlayer serverPlayer)) {
             return stack;
         }
+        ConsumptionAccounting.record(serverPlayer, stack);
 
         PlayerPsyche psyche = serverPlayer.getData(ModPsycheAttachments.PSYCHE);
 

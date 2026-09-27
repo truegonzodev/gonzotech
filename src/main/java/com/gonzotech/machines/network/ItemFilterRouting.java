@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.block.entity.ItemFilterBlockEntity;
+import com.gonzotech.core.item.WasteProtection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -177,6 +178,9 @@ public final class ItemFilterRouting {
                 boolean matched = matches(be, cur);
                 ChannelBudget budget = matched ? passBudget : rejectBudget;
                 if (!budget.canMove(cur.getItem()) || !totalBudget.canMove(cur.getItem())) break;
+
+                // Do not extract protected waste into a deletion branch. Leave it in the source.
+                if (!matched && poweredScavenger != null && WasteProtection.isProtected(cur)) break;
 
                 ItemStack one = cur.copy();
                 one.setCount(1);

@@ -44,6 +44,7 @@ public final class RadSources {
      * предмет; стак — умножением (п.3). Проверяется ДО форм-парсинга.
      */
     private static final Map<String, Double> DIRECT_EMISSION = Map.ofEntries(
+            Map.entry("waste_barrel", 0.7 * RadUnits.MILLI), // per barrel, item AND placed block
             Map.entry("uranium_238", 0.01 * RadUnits.MILLI),
             Map.entry("uranium_235", 0.10 * RadUnits.MILLI),
             Map.entry("uranium_233", 1.50 * RadUnits.MILLI),

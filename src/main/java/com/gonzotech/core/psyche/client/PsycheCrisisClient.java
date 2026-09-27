@@ -14,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -119,6 +120,19 @@ public final class PsycheCrisisClient {
     private static final Random RNG = new Random();
 
     private PsycheCrisisClient() {
+    }
+
+    /** Session-local illusion: never carry it (or a camera/input latch) into another world. */
+    @SubscribeEvent
+    public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        fakeDeath = false;
+        fakeDeathCause = null;
+        lockTicks = 0;
+        lockedYaw = lockedPitch = 0.0F;
+        attackWasDown = false;
+        frame = 0;
+        PsycheNetwork.CLIENT_DATA = null;
+        // Do NOT grab/release the mouse here: vanilla owns it during disconnect/menu transitions.
     }
 
     // ─────────────────────────── сеть → клиент ───────────────────────────

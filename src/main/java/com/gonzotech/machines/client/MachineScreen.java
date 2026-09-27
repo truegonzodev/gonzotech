@@ -29,11 +29,8 @@ import net.minecraft.world.entity.player.Inventory;
  * {@code *_gui_bg.png} и {@code *_gui.png} берутся из ресурсов конкретной машины;
  * цвет/оформление не задаются этим классом.
  *
- * <h2>Защита шкал альфа-маской</h2>
- * Из переднего PNG ({@link #foregroundTexture()}) строится {@link GuiMask}:
- * пиксели с альфой выше порога «закрыты», шкалы туда физически не рисуются
- * (клипуются по наибольшей дырке). Так заливка не может вылезти за рисунок —
- * она навечно погребена под непрозрачным оверлеем.
+ * Шкалы ограничены только своей заданной в коде областью и долей заполнения.
+ * PNG не читается на CPU: непрозрачные части переднего слоя визуально закрывают заливку.
  */
 public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractContainerScreen<T> {
 
@@ -64,8 +61,6 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     protected static final ResourceLocation BAR_AMINOBLAZEETHANOL = gui("bar_aminoblazeethanol.png");
     protected static final ResourceLocation BAR_FORMALDEHYDE = gui("bar_formaldehyde.png");
 
-    private GuiMask mask = GuiMask.forTexture(null, 0, 0);
-
     protected MachineScreen(T menu, Inventory inv, Component title) {
         super(menu, inv, title);
         this.imageWidth = 176;
@@ -79,10 +74,6 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         this.titleLabelY = 6;
         this.inventoryLabelX = 8;
         this.inventoryLabelY = this.imageHeight - 94;
-        // Маска строится под РЕАЛЬНЫЙ размер окна: нестандартные высоты
-        // (завод сплавов 222, фильтр предметов 184) иначе теряют клип ниже 166 px.
-        this.mask = GuiMask.forTexture(foregroundTexture(), texOffsetX(), texOffsetY(),
-            this.imageWidth, this.imageHeight);
     }
 
     // ─────────────────── Настройки PNG-листа (переопределяемые) ───────────────────
@@ -153,18 +144,13 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     /**
      * Вертикальная шкала: открывает нижние {@code fraction·h} пикселей затайленной
-     * 16×16 текстуры (растёт снизу вверх). Клипуется по дырке в переднем PNG —
-     * заливка не может залезть под непрозрачный рисунок.
+     * 16×16 текстуры (растёт снизу вверх). Scissor ограничивает тайлы областью заполнения.
      */
     protected void drawVBarTex(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
-        int[] clip = clipRect(x, y, w, h);
-        if (clip == null) return;
+        if (w <= 0 || h <= 0) return;
         int filled = Math.round(clamp01(fraction) * h);
         if (filled <= 0) return;
-        int top = Math.max(clip[1], y + h - filled);
-        int scLeft = clip[0], scRight = clip[2], scBottom = clip[3];
-        if (top >= scBottom) return;
-        g.enableScissor(scLeft, top, scRight, scBottom);
+        g.enableScissor(x, y + h - filled, x + w, y + h);
         // тайлим 16×16, привязка к НИЗУ шкалы → рост без сдвига паттерна
         for (int py = y + h - 16; py > y - 16; py -= 16) {
             for (int px = x; px < x + w; px += 16) {
@@ -176,17 +162,13 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     /**
      * Горизонтальная шкала (прогресс): открывает левые {@code fraction·w} пикселей
-     * (растёт слева направо). Тоже клипуется по дырке PNG.
+     * (растёт слева направо). Ограничена областью заполнения.
      */
     protected void drawHBarTex(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
-        int[] clip = clipRect(x, y, w, h);
-        if (clip == null) return;
+        if (w <= 0 || h <= 0) return;
         int filled = Math.round(clamp01(fraction) * w);
         if (filled <= 0) return;
-        int right = Math.min(clip[2], x + filled);
-        int scLeft = clip[0], scTop = clip[1], scBottom = clip[3];
-        if (right <= scLeft) return;
-        g.enableScissor(scLeft, scTop, right, scBottom);
+        g.enableScissor(x, y, x + filled, y + h);
         for (int py = y; py < y + h; py += 16) {
             for (int px = x; px < x + w; px += 16) {
                 g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
@@ -197,17 +179,13 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     /**
      * Горизонтальная шкала (прогресс): открывает правые {@code fraction·w} пикселей
-     * (растёт справа налево). Клипуется по дырке PNG.
+     * (растёт справа налево). Ограничена областью заполнения.
      */
     protected void drawHBarTexRightToLeft(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
-        int[] clip = clipRect(x, y, w, h);
-        if (clip == null) return;
+        if (w <= 0 || h <= 0) return;
         int filled = Math.round(clamp01(fraction) * w);
         if (filled <= 0) return;
-        int left = Math.max(clip[0], x + w - filled);
-        int scTop = clip[1], scRight = clip[2], scBottom = clip[3];
-        if (left >= scRight) return;
-        g.enableScissor(left, scTop, scRight, scBottom);
+        g.enableScissor(x + w - filled, y, x + w, y + h);
         for (int py = y; py < y + h; py += 16) {
             for (int px = x; px < x + w; px += 16) {
                 g.blit(RenderType::guiTextured, tex, px, py, 0f, 0f, 16, 16, 16, 16);
@@ -220,33 +198,15 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
      * Горизонтальная шкала из ЕДИНОЙ (не тайлящейся) текстуры ровно w×h:
      * открывает левые {@code fraction·w} пикселей (растёт слева направо),
      * как {@link #drawHBarTex}, но текстура блитится одним куском, а не
-     * тайлом 16×16. Тоже клипуется по дырке PNG.
+     * тайлом 16×16. Ограничена областью заполнения.
      */
     protected void drawHBarTexFull(GuiGraphics g, int x, int y, int w, int h, float fraction, ResourceLocation tex) {
-        int[] clip = clipRect(x, y, w, h);
-        if (clip == null) return;
+        if (w <= 0 || h <= 0) return;
         int filled = Math.round(clamp01(fraction) * w);
         if (filled <= 0) return;
-        int right = Math.min(clip[2], x + filled);
-        if (right <= clip[0]) return;
-        g.enableScissor(clip[0], clip[1], right, clip[3]);
+        g.enableScissor(x, y, x + filled, y + h);
         g.blit(RenderType::guiTextured, tex, x, y, 0f, 0f, w, h, w, h);
         g.disableScissor();
-    }
-
-    /**
-     * Пересечение footprint шкалы с «дыркой» в переднем PNG, в ЭКРАННЫХ координатах.
-     * @return {@code [left,top,right,bottom]} или {@code null}, если дырки нет.
-     */
-    private int[] clipRect(int x, int y, int w, int h) {
-        int wx = x - this.leftPos;
-        int wy = y - this.topPos;
-        int[] open = mask.openSubRect(wx, wy, w, h);
-        if (open == null) return null;
-        return new int[]{
-            this.leftPos + open[0], this.topPos + open[1],
-            this.leftPos + open[2], this.topPos + open[3]
-        };
     }
 
     /** Наведение мыши на прямоугольник (для тултипов шкал). */
