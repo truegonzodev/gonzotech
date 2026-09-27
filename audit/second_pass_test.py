@@ -19,6 +19,10 @@ gui=read('machines/client/MachineScreen.java')
 account=read('core/item/ConsumptionAccounting.java')
 waste=read('core/item/WasteProtection.java')
 routing=read('machines/network/ItemFilterRouting.java')
+first_scavenger=read('machines/network/ItemScavengerBlock.java')
+second_scavenger=read('machines/network/SecondItemScavengerBlock.java')
+assert 'extends ItemScavengerBlock' in second_scavenger
+assert 'scavenger.isPowered(level, npos)' in routing
 assert 'ClientPlayerNetworkEvent.LoggingOut' in client and 'PsycheCrisisClient.class' in read('GonzoTechMod.java')
 assert 'mouseHandler' not in method(client,'onLogout')
 assert not (SRC/'machines/client/GuiMask.java').exists()
@@ -122,7 +126,12 @@ public class SecondPassHarness {
         EntityInvulnerabilityCheckEvent normalEntity=new EntityInvulnerabilityCheckEvent(new Object(),false);
         WasteProtection.onDamageCheck(normalEntity);check(!normalEntity.invulnerable);
         for(boolean protectedItem:new boolean[]{false,true}) for(boolean matched:new boolean[]{false,true})
-        for(boolean powered:new boolean[]{false,true}) for(boolean ignore:new boolean[]{false,true}) {
+        for(boolean signal:new boolean[]{false,true}) for(boolean ignore:new boolean[]{false,true})
+        for(FirstScavenger scavenger:new FirstScavenger[]{new FirstScavenger(),new SecondScavenger()}) {
+            Level level=new Level();level.signal=signal;
+            boolean powered=scavenger.isPowered(level,new BlockPos());
+            check(powered==(scavenger instanceof SecondScavenger && signal));
+            check(level.powerQueries==(scavenger instanceof SecondScavenger?1:0));
             Item item=new Item(protectedItem,false); Container source=new Container(new ItemStack(item,4));
             Container sink=new Container(new ItemStack(item,0)); ItemFilterBlockEntity be=new ItemFilterBlockEntity(matched);
             List<ItemRouting_Sink> sinks=List.of(new ItemRouting_Sink(sink,null,List.of(new BlockPos())));
@@ -188,7 +197,7 @@ class EntityInvulnerabilityCheckEvent {
     EntityInvulnerabilityCheckEvent(Object e,boolean i){entity=e;invulnerable=i;}
     Object getEntity(){return entity;}void setInvulnerable(boolean v){invulnerable=v;}
 }
-class Level {}
+class Level { boolean signal;int powerQueries;boolean hasNeighborSignal(BlockPos pos){powerQueries++;return signal;} }
 class BlockPos {}
 class Direction {}
 class ItemFilterBlockEntity { boolean matched;ItemFilterBlockEntity(boolean m){matched=m;} }
@@ -211,6 +220,8 @@ class ChannelBudget {
 }
 class ItemFlowTracker { static void record(Level l,BlockPos p,Item i,int n){} }
 '''
+harness+='class FirstScavenger {'+method(first_scavenger,'isPowered')+'}\n'
+harness+='class SecondScavenger extends FirstScavenger {'+method(second_scavenger,'isPowered')+'}\n'
 home=os.environ.get('JAVA_HOME')
 java=str(Path(home)/'bin/java') if home else shutil.which('java')
 javac=str(Path(home)/'bin/javac') if home else shutil.which('javac')

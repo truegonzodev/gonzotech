@@ -14,9 +14,8 @@ import net.minecraft.world.level.block.state.BlockState;
  * сеть предметных труб, начинающуюся у Отсеивателя (см. {@link ItemFilterRouting}).
  * Самостоятельно он не извлекает предметы из контейнеров.
  * <p>
- * Если Отсеиватель получает redstone-сигнал, он становится конечной точкой reject
- * ветки: Фильтр удаляет предметы сразу в нём, не продолжая поиск подключённых к
- * нему труб или контейнеров. Без сигнала сохраняется обычная маршрутизация.
+ * Отсеиватель I игнорирует redstone: reject-ветка остаётся маршрутизацией.
+ * Удаление при сигнале — возможность только {@link SecondItemScavengerBlock}.
  */
 public class ItemScavengerBlock extends Block {
 
@@ -41,9 +40,9 @@ public class ItemScavengerBlock extends Block {
         return ItemRouting.PER_ITEM_TICK_CAP;
     }
 
-    /** true, если соседний redstone-компонент питает этот Отсеиватель. */
+    /** Разрешено ли удаление reject-предметов: у I всегда выключено, II переопределяет. */
     public boolean isPowered(Level level, BlockPos pos) {
-        return level.hasNeighborSignal(pos);
+        return false;
     }
 
     /** true, если блок в этом состоянии — Отсеиватель. */
