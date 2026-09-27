@@ -74,14 +74,18 @@ assert 'AltVillagerClient::onRegisterRenderers' in alt_mod and 'EntityAttributeC
 alt_items=read('core/registry/ModItems.java')
 assert 'SpawnEggItem(ModEntities.ALT.get(), props)' in alt_items
 eggdef=json.loads((ROOT/'src/main/resources/assets/gonzotech/items/alt_spawn_egg.json').read_text())
-assert eggdef['model']['model']=='minecraft:item/template_spawn_egg' and len(eggdef['model']['tints'])==2
+# 0.3.34: яйцо без тинтов — обычная полноцветная PNG-текстура.
+assert eggdef['model']['model']=='gonzotech:item/alt_spawn_egg' and 'tints' not in eggdef['model']
 eggmodel=json.loads((ROOT/'src/main/resources/assets/gonzotech/models/item/alt_spawn_egg.json').read_text())
-assert eggmodel['parent']=='minecraft:item/template_spawn_egg'
+assert eggmodel['parent']=='minecraft:item/generated' and eggmodel['textures']['layer0']=='gonzotech:item/alt_spawn_egg'
 from PIL import Image
 alttex=Image.open(ROOT/'src/main/resources/assets/gonzotech/textures/entity/alt_villager.png')
 assert alttex.size==(64,64), 'standard 64x64 entity skin layout'
+eggtex=Image.open(ROOT/'src/main/resources/assets/gonzotech/textures/item/alt_spawn_egg.png')
+assert eggtex.size==(16,16) and eggtex.getpixel((8,3))[3]==255, 'own full-colour egg png'
 tabs=read('core/registry/ModCreativeTabs.java')
-assert 'ALT_SPAWN_EGG.get()' in tabs
+assert tabs.count('ALT_SPAWN_EGG.get()')==1
+assert tabs.index('ALT_SPAWN_EGG.get()') > tabs.index('ModItems.CANISTER.get()'), 'egg in adaptations, next to buckets and canister'
 for lang in ['ru_ru','en_us']:
     langjson=json.loads((ROOT/f'src/main/resources/assets/gonzotech/lang/{lang}.json').read_text(encoding='utf-8'))
     assert 'entity.gonzotech.alt' in langjson and 'item.gonzotech.alt_spawn_egg' in langjson

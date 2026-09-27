@@ -162,7 +162,7 @@ public class ModItems {
         ITEMS.registerItem("canister", props -> new com.gonzotech.core.item.CanisterItem(ModBlocks.CANISTER.get(), props.stacksTo(1)));
 
     // ─────────────────────── Мобы ───────────────────────
-    /** Яйцо призыва «альт-жителя» ({@code gonzotech:alt}); цвета яйца — в item-определении (data-driven тинты 1.21.4). */
+    /** Яйцо призыва «альт-жителя» ({@code gonzotech:alt}); полноцветная PNG-текстура без тинтов (автор 27.09.2026). */
     public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> ALT_SPAWN_EGG =
         ITEMS.registerItem("alt_spawn_egg", props -> new net.minecraft.world.item.SpawnEggItem(ModEntities.ALT.get(), props));
 
