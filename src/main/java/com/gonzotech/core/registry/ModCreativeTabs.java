@@ -59,6 +59,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.UV_METER.get());
                 output.accept(ModItems.SPEEDOMETER.get());
                 ModItems.DISCOVERY_ITEMS.forEach(item -> output.accept(item.get()));
+                // Яйцо призыва «альт-жителя» (автор 27.09.2026).
+                output.accept(ModItems.ALT_SPAWN_EGG.get());
 
                 // Фаза 2 — паровая ветка энергетики.
                 output.accept(com.gonzotech.machines.registry.ModMachines.FIREBOX_ITEM.get());

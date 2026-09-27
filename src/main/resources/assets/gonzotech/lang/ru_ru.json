@@ -917,5 +917,7 @@
   "message.gonzotech.clue.elementary": "Элементарно...",
   "gonzotech.configuration.cosmeticFluidParticles": "Косметические частицы жидкостей",
   "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Пенка на поверхности жидкостей Gonzo Tech. Только визуальный эффект; не влияет на радиационные частицы и свойства жидкостей.",
-  "gui.gonzotech.faint.get_up": "Встать"
+  "gui.gonzotech.faint.get_up": "Встать",
+  "entity.gonzotech.alt": "Альт-житель",
+  "item.gonzotech.alt_spawn_egg": "Яйцо призыва альт-жителя"
 }

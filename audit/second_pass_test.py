@@ -48,6 +48,43 @@ for lang in ['ru_ru','en_us']:
     langjson=json.loads((ROOT/f'src/main/resources/assets/gonzotech/lang/{lang}.json').read_text(encoding='utf-8'))
     assert 'gui.gonzotech.distillate.name' in langjson and 'gui.gonzotech.wort.name' in langjson
     assert 'gui.gonzotech.distillate.title' not in langjson and 'gui.gonzotech.wort.title' not in langjson
+# ── 0.3.33: альт-житель — копия вилладжера без АИ + яйцо призыва ──
+ent=read('core/registry/ModEntities.java')
+assert 'MobCategory.MISC' in ent and 'sized(0.6F, 1.95F)' in ent and 'eyeHeight(1.62F)' in ent \
+    and 'clientTrackingRange(10)' in ent, 'dimensions exactly like vanilla villager'
+assert 'AltVillagerEntity::new' in ent and 'build(ResourceKey.create(Registries.ENTITY_TYPE' in ent
+alt=read('core/entity/AltVillagerEntity.java')
+assert 'extends PathfinderMob' in alt and 'removeWhenFarAway' in alt
+alt_code=re.sub(r'/\*.*?\*/|//[^\n]*','',alt,flags=re.S)
+for banned in ['Goal', 'Brain', 'goalSelector', 'registerGoals', 'SpawnPlacements']:
+    assert banned not in alt_code, 'no AI by design: ' + banned
+model=read('core/client/AltVillagerModel.java')
+for frag in ['head.yRot = state.yRot', 'head.xRot = state.xRot',
+             'Mth.cos(state.walkAnimationPos * 0.6662F)', '* 1.4F * state.walkAnimationSpeed * 0.5F',
+             '+ (float) Math.PI']:
+    assert frag in model, 'villager animation: ' + frag
+renderer=read('core/client/AltVillagerRenderer.java')
+assert 'ModelLayers.VILLAGER' in renderer and '0.5F' in renderer \
+    and 'textures/entity/alt_villager.png' in renderer, 'vanilla mesh + own texture'
+alt_client=read('core/client/AltVillagerClient.java')
+assert 'RegisterRenderers' in alt_client and 'AltVillagerRenderer::new' in alt_client
+alt_mod=read('GonzoTechMod.java')
+assert 'AltVillagerClient::onRegisterRenderers' in alt_mod and 'EntityAttributeCreationEvent' in alt_mod \
+    and 'Villager.createAttributes()' in alt_mod
+alt_items=read('core/registry/ModItems.java')
+assert 'SpawnEggItem(ModEntities.ALT.get(), props)' in alt_items
+eggdef=json.loads((ROOT/'src/main/resources/assets/gonzotech/items/alt_spawn_egg.json').read_text())
+assert eggdef['model']['model']=='minecraft:item/template_spawn_egg' and len(eggdef['model']['tints'])==2
+eggmodel=json.loads((ROOT/'src/main/resources/assets/gonzotech/models/item/alt_spawn_egg.json').read_text())
+assert eggmodel['parent']=='minecraft:item/template_spawn_egg'
+from PIL import Image
+alttex=Image.open(ROOT/'src/main/resources/assets/gonzotech/textures/entity/alt_villager.png')
+assert alttex.size==(64,64), 'standard 64x64 entity skin layout'
+tabs=read('core/registry/ModCreativeTabs.java')
+assert 'ALT_SPAWN_EGG.get()' in tabs
+for lang in ['ru_ru','en_us']:
+    langjson=json.loads((ROOT/f'src/main/resources/assets/gonzotech/lang/{lang}.json').read_text(encoding='utf-8'))
+    assert 'entity.gonzotech.alt' in langjson and 'item.gonzotech.alt_spawn_egg' in langjson
 # Лут слизи: все шансы самородков /7.
 loot=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/radioactive_slime_block.json').read_text())
 chances=[pool['conditions'][-1]['chance'] for pool in loot['pools'][1:]]

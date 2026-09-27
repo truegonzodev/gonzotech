@@ -48,6 +48,15 @@ public class GonzoTechMod {
         ModFluids.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
+        // Сущности (мобы): «альт-житель». Поставщик яйца призыва resolve'ит
+        // EntityType при регистрации предметов, а в ванильном порядке реестров
+        // ENTITY_TYPE замораживается РАНЬШЕ ITEM — поэтому порядок вызовов register()
+        // здесь не важен, обе DeferredRegister подпишутся на свои события.
+        com.gonzotech.core.registry.ModEntities.register(modEventBus);
+        // Атрибуты «альт-жителя» — точь-в-точь как у вилладжера (ход 0.5).
+        modEventBus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) -> event.put(
+            com.gonzotech.core.registry.ModEntities.ALT.get(),
+            net.minecraft.world.entity.npc.Villager.createAttributes().build()));
         com.gonzotech.core.registry.ModSounds.register(modEventBus);
         ModDataComponents.register(modEventBus);
         // Эффекты мода: радиация (некроз/очищение) + психика (тремор/сердечный приступ).
@@ -122,6 +131,8 @@ public class GonzoTechMod {
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             com.gonzotech.core.client.GateTooltips.registerConfigScreen(modContainer);
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
+            // Клиентский рендер «альт-жителя» (ванильная меша вилладжера).
+            modEventBus.addListener(com.gonzotech.core.client.AltVillagerClient::onRegisterRenderers);
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
             // Клиентские текстуры/тинт расплавленного кориума и жидкостей в мире.
             modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);

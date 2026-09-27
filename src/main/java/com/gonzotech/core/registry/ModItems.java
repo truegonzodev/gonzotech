@@ -161,6 +161,11 @@ public class ModItems {
     public static final DeferredItem<com.gonzotech.core.item.CanisterItem> CANISTER =
         ITEMS.registerItem("canister", props -> new com.gonzotech.core.item.CanisterItem(ModBlocks.CANISTER.get(), props.stacksTo(1)));
 
+    // ─────────────────────── Мобы ───────────────────────
+    /** Яйцо призыва «альт-жителя» ({@code gonzotech:alt}); цвета яйца — в item-определении (data-driven тинты 1.21.4). */
+    public static final DeferredItem<net.minecraft.world.item.SpawnEggItem> ALT_SPAWN_EGG =
+        ITEMS.registerItem("alt_spawn_egg", props -> new net.minecraft.world.item.SpawnEggItem(ModEntities.ALT.get(), props));
+
     /** Пустая ампула (2 стекла) — ёмкость под 128 mB жидкости. */
     public static final DeferredItem<Item> EMPTY_AMPOULE = ITEMS.registerSimpleItem("empty_ampoule");
     /** Стойкая ампула (2 борных стекла) — термо- и химстойкая ампула (128 mB). */
