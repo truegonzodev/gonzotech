@@ -25,6 +25,37 @@ assert 'extends ItemScavengerBlock' in second_scavenger
 assert 'scavenger.isPowered(level, npos)' in routing
 assert 'ClientPlayerNetworkEvent.LoggingOut' in client and 'PsycheCrisisClient.class' in read('GonzoTechMod.java')
 assert 'mouseHandler' not in method(client,'onLogout')
+
+# ── 0.3.31: слои кризисной дымки, тултипы филлера, лут слизи, тултип змеевика ──
+# Дымка: scissor-композиция вокруг защищённых зон, подписи/тексты — под ней.
+assert 'enableScissor' in client and 'paintEverywhereExcept' in client and 'canHurtPlayer' in client
+assert client.index('renderScreenEffect(g, width, height);') < client.index('renderFakeDeath(g, mc, width, height);'), 'haze before fake death'
+mod=read('GonzoTechMod.java')
+order=[mod.index(x) for x in ['PsycheTremorClient.class','WrenchHud.class','SpeedometerHud.class','SolarWatchHud.class','PsycheHudLabels.class','PsycheCrisisClient.class','register(com.gonzotech.core.psyche.client.PsycheHud.class)']]
+assert order==sorted(order), 'HUD text before haze, psyche bars after'
+psy=read('core/psyche/client/PsycheHud.java'); labels=read('core/psyche/client/PsycheHudLabels.java')
+assert 'drawString' not in psy and 'drawString' in labels, 'labels moved out of PsycheHud'
+assert 'specs(' in psy and 'PsycheHud.specs' in labels
+# Филлер: хитбокс по дыркам PNG + подавление тултипов над слотами.
+filler=read('machines/client/FillerScreen.java')
+assert 'NativeImage.read' in filler and 'getResourceManager' in filler and 'closeForegroundMask' in filler
+assert 'inGaugeHole' in filler and 'isOverSlot' in filler
+assert filler.count('inGaugeHole(mouseX, mouseY')==5, '4 gauges + arch use PNG holes'
+assert 'isOverSlot(mouseX, mouseY)' in filler and 'inRect(mouseX, mouseY, x + 80, y + 35, 16, 16)' in filler
+# Лут слизи: все шансы самородков /7.
+loot=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/radioactive_slime_block.json').read_text())
+chances=[pool['conditions'][-1]['chance'] for pool in loot['pools'][1:]]
+assert all(abs(c-e)<1e-12 for c,e in zip(chances,[0.5/7,0.5/7,0.3/7])), chances
+# Тултип змеевика: «Охлаждение: <цвет>N mB/t» + серые «- Блок X льда: +N mB/t».
+gtu=read('core/text/GtUnits.java'); snk=read('machines/client/SnaketypeCondenserScreen.java')
+assert 'cooling_rate", num(value, WATER)' in gtu
+for lang in ['ru_ru','en_us']:
+    langjson=json.loads((ROOT/f'src/main/resources/assets/gonzotech/lang/{lang}.json').read_text(encoding='utf-8'))
+    assert langjson['gui.gonzotech.condenser.cooling_rate'].count('%s')==1 and ' mB/t' in langjson['gui.gonzotech.condenser.cooling_rate']
+    for key,mult in [('regular',1),('packed',3),('europan',7),('blue',12),('superdense',29)]:
+        value=langjson[f'gui.gonzotech.condenser.ice_{key}']
+        assert value.startswith('- ') and value.count('%d')==1 and '+%d mB/t' in value, (lang,key,value)
+assert snk.count('.withStyle(ChatFormatting.GRAY)')>=6 and 'reg * 1)' in snk and 'sup * 29)' in snk
 assert not (SRC/'machines/client/GuiMask.java').exists()
 assert all(x not in gui for x in ['GuiMask','clipRect','NativeImage','getResourceManager'])
 assert gui.index('blitSheet(g, backgroundTexture()') < gui.index('drawMachine(g, x, y') < gui.index('blitSheet(g, foregroundTexture()')
@@ -68,7 +99,8 @@ for metal in ['radium','lithium','neodymium','rhenium','lead','bismuth']:
     assert recipe['result']['count']==9
 slime=json.loads((res/'loot_table/blocks/radioactive_slime_block.json').read_text())
 radium_pool=next(pool for pool in slime['pools'] if pool['entries'][0]['name']=='gonzotech:radium_nugget')
-assert any(c.get('chance')==0.5 for c in radium_pool['conditions'])
+# 0.3.31: шансы самородков /7 (Ra 1/14, U 1/14, Pu 3/70 до Fortune).
+assert any(c.get('chance')==0.5/7 for c in radium_pool['conditions'])
 
 harness='''
 import java.util.*;

@@ -3,6 +3,7 @@ package com.gonzotech.machines.client;
 import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.block.entity.SnaketypeCondenserBlockEntity;
 import com.gonzotech.machines.menu.SnaketypeCondenserMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -67,14 +68,15 @@ public class SnaketypeCondenserScreen extends MachineScreen<SnaketypeCondenserMe
             int blu = menu.blueIce();
             int sup = menu.superdenseIce();
 
-            if (reg > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_regular", reg, reg * 1));
-            if (pck > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_packed", pck, pck * 3));
-            if (eur > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_europan", eur, eur * 7));
-            if (blu > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_blue", blu, blu * 12));
-            if (sup > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_superdense", sup, sup * 29));
+            // Формат автора 27.09.2026: серые строки «- Блок X льда: +сумма mB/t».
+            if (reg > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_regular", reg * 1).withStyle(ChatFormatting.GRAY));
+            if (pck > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_packed", pck * 3).withStyle(ChatFormatting.GRAY));
+            if (eur > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_europan", eur * 7).withStyle(ChatFormatting.GRAY));
+            if (blu > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_blue", blu * 12).withStyle(ChatFormatting.GRAY));
+            if (sup > 0) tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_superdense", sup * 29).withStyle(ChatFormatting.GRAY));
 
             if (reg == 0 && pck == 0 && eur == 0 && blu == 0 && sup == 0) {
-                tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_none"));
+                tooltip.add(Component.translatable("gui.gonzotech.condenser.ice_none").withStyle(ChatFormatting.GRAY));
             }
 
             g.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);

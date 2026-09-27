@@ -19,6 +19,10 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -261,7 +265,16 @@ public final class PsycheCrisisClient {
         }
     }
 
-    /** Кризисный «налёт на экран»: анимированная текстура + дымка, растущая с процентами. */
+    /**
+     * Кризисный «налёт на экран»: анимированная текстура + дымка, растущая с процентами.
+     *
+     * <p>0.3.31 (автор 27.09.2026): дымка рисуется поверх ВСЕГО HUD, кроме двух
+     * защищённых зон — полосы статусов (сердца, голод, броня, воздух, XP-полоса,
+     * уровень; только в survival) и хотбара с оверхендом/индикатором атаки.
+     * Ванила рисует название выбранного предмета и наши текстовые строки (ключ,
+     * спидометр, часы, подписи шкал) ДО этого обработчика, поэтому они остаются
+     * ПОД дымкой; сами шкалы психики {@link PsycheHud} рисуется ПОСЛЕ — над ней.</p>
+     */
     private static void renderScreenEffect(GuiGraphics g, int width, int height) {
         PsycheNetwork.PsycheDataPayload data = PsycheNetwork.CLIENT_DATA;
         if (data == null) {
@@ -273,6 +286,7 @@ public final class PsycheCrisisClient {
         }
         float alpha = OVERLAY_BASE_ALPHA + (percent - OVERLAY_MIN_PERCENT) * OVERLAY_ALPHA_PER_PERCENT;
         alpha = Mth.clamp(alpha, 0.0F, 1.0F);
+        int tint = ((int) (alpha * 255.0F) << 24) | 0x1A0000;
 
         // GUI textures are not atlas animations: select a WHOLE 128×72 frame ourselves.
         // Source dimensions and strip height must match the PNG, not the screen or a
@@ -280,16 +294,72 @@ public final class PsycheCrisisClient {
         // through neighbouring frames. Keep destination bounds fixed at (0,0)..(width,height).
         int v = (frame / FRAME_TICKS) * FRAME_HEIGHT;
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+        int center = width / 2;
+        List<int[]> keep = new ArrayList<>(2);
+        if (Minecraft.getInstance().gameMode == null || Minecraft.getInstance().gameMode.canHurtPlayer()) {
+            // Полоса статусов: броня/воздух (H−49), сердца/голод (H−39), XP-полоса (H−29) и уровень (H−35).
+            keep.add(new int[]{center - 93, height - 51, center + 93, height - 23});
+        }
+        // Хотбар (H−22), рамка выбора (H−23), оверхенд (до ±121) и индикатор атаки (H−20).
+        keep.add(new int[]{center - 121, height - 25, center + 121, height});
+        paintEverywhereExcept(g, v, width, height, tint, keep);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    /** Красит эффект+дымку по всему экрану, кроме объединения защищённых прямоугольников {x1,y1,x2,y2}. */
+    private static void paintEverywhereExcept(GuiGraphics g, int v, int width, int height, int tint, List<int[]> keep) {
+        List<Integer> cuts = new ArrayList<>(2 + 2 * keep.size());
+        cuts.add(0);
+        cuts.add(height);
+        for (int[] r : keep) {
+            if (r[1] > 0 && r[1] < height) cuts.add(r[1]);
+            if (r[3] > 0 && r[3] < height) cuts.add(r[3]);
+        }
+        Collections.sort(cuts);
+        int prev = cuts.get(0);
+        for (int y : cuts) {
+            if (y > prev) {
+                paintBand(g, v, prev, y, width, height, tint, keep);
+            }
+            prev = y;
+        }
+    }
+
+    /** Одна горизонтальная полоса кадра: эффект везде, кроме x-диапазонов защищённых зон. */
+    private static void paintBand(GuiGraphics g, int v, int y1, int y2, int width, int height, int tint, List<int[]> keep) {
+        List<int[]> spans = new ArrayList<>(keep.size());
+        for (int[] r : keep) {
+            if (r[1] < y2 && r[3] > y1) {
+                spans.add(new int[]{r[0], r[2]});
+            }
+        }
+        spans.sort(Comparator.comparingInt(span -> span[0]));
+        int cursor = 0;
+        for (int[] span : spans) {
+            if (span[0] > cursor) {
+                paintSegment(g, v, cursor, y1, span[0], y2, width, height, tint);
+            }
+            cursor = Math.max(cursor, span[1]);
+        }
+        if (cursor < width) {
+            paintSegment(g, v, cursor, y1, width, y2, width, height, tint);
+        }
+    }
+
+    /** Эффект + дымка внутри одного scissor-прямоугольника (координаты GUI). */
+    private static void paintSegment(GuiGraphics g, int v, int x1, int y1, int x2, int y2, int width, int height, int tint) {
+        if (x2 <= x1 || y2 <= y1) {
+            return;
+        }
+        g.enableScissor(x1, y1, x2, y2);
         g.pose().pushPose();
         g.pose().scale(width / (float) FRAME_WIDTH, height / (float) FRAME_HEIGHT, 1.0F);
         g.blit(RenderType::guiTextured, TEX_SCREEN_EFFECT, 0, 0, 0.0F, (float) v,
                 FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT * FRAME_COUNT);
         g.pose().popPose();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-
         // Дымка поверх — та самая «непрозрачность 10 % (+2 % за процент)».
-        int tint = ((int) (alpha * 255.0F) << 24) | 0x1A0000;
         g.fill(0, 0, width, height, tint);
+        g.disableScissor();
     }
 
     /**

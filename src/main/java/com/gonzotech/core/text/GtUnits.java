@@ -461,8 +461,13 @@ public final class GtUnits {
     }
 
     /** «Охлаждение: §b[12 mB]§7/t» — змеевиковый конденсатор кипятка. */
+    /**
+     * Первая строка тултипа змеевика (формат автора 27.09.2026):
+     * «§fОхлаждение: <цвет>12§f mB/t» — число цветом воды, подпись и единица белые.
+     */
     public static MutableComponent condenserCoolingRate(Object value) {
-        return rateLine("gui.gonzotech.condenser.cooling_rate", value, U_MB, WATER);
+        return Component.translatable("gui.gonzotech.condenser.cooling_rate", num(value, WATER))
+            .withStyle(ChatFormatting.WHITE);
     }
 
     // ───────────────────── Радиация и токсичность (Zt / Tx) ─────────────────────
