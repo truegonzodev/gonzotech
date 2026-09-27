@@ -98,7 +98,10 @@ tasks.withType(ProcessResources).configureEach {
         mod_description        : mod_description,
     ]
     inputs.properties replaceProperties
+    // Без [project: project]: neoforge.mods.toml не использует ${project.*},
+    // а обращение к `project` из замыкания В МОМЕНТ ИСПОЛНЕНИЯ задачи запрещено
+    // configuration cache (0.3.38) — см. лог сборки `:processResources FAILED`.
     filesMatching(['META-INF/neoforge.mods.toml']) {
-        expand replaceProperties + [project: project]
+        expand replaceProperties
     }
 }
