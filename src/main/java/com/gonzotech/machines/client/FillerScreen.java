@@ -3,16 +3,12 @@ package com.gonzotech.machines.client;
 import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.block.entity.FillerBlockEntity;
 import com.gonzotech.machines.menu.FillerMenu;
-import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -26,32 +22,17 @@ import java.util.List;
  *   <li>Арочная шкала bar_smelting (59×16) в (99, 2) [холст 227, 130], растёт справа налево.</li>
  * </ul>
  *
- * <p>Хитбоксы тултипов шкал (0.3.31, автор 27.09.2026): объявленный прямоугольник
- * дополнительно проверяется по «дырке» переднего PNG — альфа-маска
- * {@code third_filler_gui.png} читается один раз при открытии экрана, и тултип
- * показывается только над реально видимым окном шкалы нестандартной формы.
- * Поверх слота тултипы шкал не выводятся вообще — иначе тултип шкалы и тултип
- * предмета накладываются друг на друга.</p>
+ * <p>Хитбоксы тултипов баков (0.3.32, автор 27.09.2026): окно шкалы нестандартной
+ * формы делится на два сектора, оба показывают один и тот же тултип —
+ * левый бак: канал [183..186]×[145..196] и «брюшко» [187..198]×[164..177];
+ * правый бак (зеркально): канал [245..248]×[145..196] и «брюшко» [233..244]×[164..177].
+ * Координаты — в листе 512×512 (см. SUPER_CRUCIAL_FILE.md), окно при
+ * {@code texOffset −128}.</p>
  */
 public class FillerScreen extends MachineScreen<FillerMenu> {
 
-    /** Альфа-маска переднего листа (дырки шкал), читается при {@link #init()}. */
-    private NativeImage foregroundMask;
-
     public FillerScreen(FillerMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
-    }
-
-    @Override
-    protected void init() {
-        super.init();
-        loadForegroundMask();
-    }
-
-    @Override
-    public void removed() {
-        closeForegroundMask();
-        super.removed();
     }
 
     @Override
@@ -103,81 +84,25 @@ public class FillerScreen extends MachineScreen<FillerMenu> {
             drawHBarTexRightToLeft(g, archX, archY, archW, archH, smeltFrac, BAR_CHEMICAL);
         }
 
-        // Тултипы: только когда курсор НЕ над слотом (иначе тултип шкалы и тултип
-        // предмета стакаются), и по «дыркам» переднего PNG — см. javadoc класса.
-        if (!isOverSlot(mouseX, mouseY)) {
-            if (inGaugeHole(mouseX, mouseY, gthX, barY, barW, barH)) {
-                g.renderComponentTooltip(this.font, List.of(GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
-            } else if (inGaugeHole(mouseX, mouseY, gtuX, barY, barW, barH)) {
-                g.renderComponentTooltip(this.font, List.of(GtUnits.gtuPair(menu.gtu(), menu.maxGtu())), mouseX, mouseY);
-            } else if (inGaugeHole(mouseX, mouseY, leftTankX, barY, barW, barH)) {
-                g.renderComponentTooltip(this.font, getFluidTooltip(menu.leftFluidType(), menu.leftFluidAmount(), menu.leftSaltMb()), mouseX, mouseY);
-            } else if (inGaugeHole(mouseX, mouseY, rightTankX, barY, barW, barH)) {
-                g.renderComponentTooltip(this.font, getFluidTooltip(menu.rightFluidType(), menu.rightFluidAmount(), menu.rightSaltMb()), mouseX, mouseY);
-            } else if (inRect(mouseX, mouseY, x + 80, y + 35, 16, 16)) {
-                // Кнопка нарисована в самом переднем PNG (дырки нет) — обычный прямоугольник.
-                g.renderComponentTooltip(this.font, List.of(
-                    Component.translatable("gui.gonzotech.filler.swap").withStyle(ChatFormatting.WHITE),
-                    Component.translatable("gui.gonzotech.filler.swap_cost").withStyle(ChatFormatting.GRAY)
-                ), mouseX, mouseY);
-            } else if (inGaugeHole(mouseX, mouseY, archX, archY, archW, archH)) {
-                g.renderComponentTooltip(this.font, getSmeltTooltip(), mouseX, mouseY);
-            }
-        }
-    }
-
-    /**
-     * Наведение на «дырку» шкалы: как минимум попадание в объявленный прямоугольник,
-     * плюс пиксельная проверка по альфа-каналу переднего PNG (окна шкал
-     * нестандартной формы). Если маска недоступна — прежнее поведение по прямоугольнику.
-     */
-    private boolean inGaugeHole(int mouseX, int mouseY, int x, int y, int w, int h) {
-        if (!inRect(mouseX, mouseY, x, y, w, h)) {
-            return false;
-        }
-        if (this.foregroundMask == null) {
-            return true;
-        }
-        int px = mouseX - (this.leftPos + texOffsetX());
-        int py = mouseY - (this.topPos + texOffsetY());
-        if (px < 0 || py < 0 || px >= this.foregroundMask.getWidth() || py >= this.foregroundMask.getHeight()) {
-            return false;
-        }
-        return (this.foregroundMask.getPixel(px, py) >>> 24) > 0;
-    }
-
-    /** Курсор над любым слотом меню (включая пустой): тултипы шкал там не выводим. */
-    private boolean isOverSlot(int mouseX, int mouseY) {
-        for (Slot slot : this.menu.slots) {
-            if (!slot.isActive()) {
-                continue;
-            }
-            int sx = this.leftPos + slot.x;
-            int sy = this.topPos + slot.y;
-            if (mouseX >= sx && mouseX < sx + 16 && mouseY >= sy && mouseY < sy + 16) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Читает альфа-маску переднего листа; при ошибке оставляет {@code null} (fallback на прямоугольник). */
-    private void loadForegroundMask() {
-        closeForegroundMask();
-        if (this.minecraft == null) {
-            return;
-        }
-        try (InputStream in = this.minecraft.getResourceManager().open(foregroundTexture())) {
-            this.foregroundMask = NativeImage.read(in);
-        } catch (IOException | RuntimeException e) {
-            this.foregroundMask = null;
-        }
-    }
-
-    private void closeForegroundMask() {
-        if (this.foregroundMask != null) {
-            this.foregroundMask.close();
-            this.foregroundMask = null;
+        // Тултипы. Баки: два сектора на бак (канал + «брюшко»), тултип одинаковый;
+        // сектора не пересекают слоты — с тултипом предмета не сталкиваются.
+        if (inRect(mouseX, mouseY, leftTankX, barY, 4, barH)
+                || inRect(mouseX, mouseY, leftTankX + 4, barY + 19, 12, 14)) {
+            g.renderComponentTooltip(this.font, getFluidTooltip(menu.leftFluidType(), menu.leftFluidAmount(), menu.leftSaltMb()), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, rightTankX + 12, barY, 4, barH)
+                || inRect(mouseX, mouseY, rightTankX, barY + 19, 12, 14)) {
+            g.renderComponentTooltip(this.font, getFluidTooltip(menu.rightFluidType(), menu.rightFluidAmount(), menu.rightSaltMb()), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
+            g.renderComponentTooltip(this.font, List.of(GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
+            g.renderComponentTooltip(this.font, List.of(GtUnits.gtuPair(menu.gtu(), menu.maxGtu())), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, x + 80, y + 35, 16, 16)) {
+            g.renderComponentTooltip(this.font, List.of(
+                Component.translatable("gui.gonzotech.filler.swap").withStyle(ChatFormatting.WHITE),
+                Component.translatable("gui.gonzotech.filler.swap_cost").withStyle(ChatFormatting.GRAY)
+            ), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, archX, archY, archW, archH)) {
+            g.renderComponentTooltip(this.font, getSmeltTooltip(), mouseX, mouseY);
         }
     }
 

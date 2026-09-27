@@ -131,24 +131,20 @@ public class GonzoTechMod {
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
             // Тряска камеры от эффекта «Тремор» — только на клиенте.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheTremorClient.class);
-            // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
-            NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
-            // Спидометр измеряет клиентскую скорость и выводит её над хотбаром.
-            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
-            // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
-            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
-            // 0.3.31: ПОРЯДОК ВАЖЕН. Текстовые строки (ключ, спидометр, часы, подписи
-            // шкал психики) — ДО дымки, чтобы кризисный налёт ложился ПОВЕРХ них;
-            // сами шкалы психики — ПОСЛЕ дымки, чтобы оставаться чёткими.
-            // Подписи шкал (>10 %) рисуются отдельно от шкал.
-            NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHudLabels.class);
-            // Эффекты кризиса на клиенте: дымка поверх HUD (кроме хотбара/статусов),
-            // фиксация камеры, ложная смерть.
+            // Эффекты кризиса на клиенте: экранный эффект, фиксация камеры, ложная смерть.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheCrisisClient.class);
             // Texture-only Smart CTM корпусной оболочки турбины.
             modEventBus.addListener(com.gonzotech.machines.client.ctm.SmartCtmModelLoader::register);
-            // Три HUD-шкалы «психики» слева и справа от хотбара (над дымкой).
+            // HUD-подсказка гаечного ключа (тип+режим трубы, на которую смотришь).
+            NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.WrenchHud.class);
+            // Три HUD-шкалы «психики» слева от хотбара.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheHud.class);
+            // Спидометр измеряет клиентскую скорость и выводит её над хотбаром.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
+            // Единый порядок lore, радиации, токсичности, экранирования и F3+H.
+            // Регистрируется через UniversalTooltip (@EventBusSubscriber).
+            // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
             modEventBus.addListener(com.gonzotech.space.client.SpaceClient::onRegisterDimensionEffects);
             // Фаза 4 — рендерер горизонта событий Чёрных Дыр.

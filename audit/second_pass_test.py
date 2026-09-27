@@ -26,22 +26,28 @@ assert 'scavenger.isPowered(level, npos)' in routing
 assert 'ClientPlayerNetworkEvent.LoggingOut' in client and 'PsycheCrisisClient.class' in read('GonzoTechMod.java')
 assert 'mouseHandler' not in method(client,'onLogout')
 
-# ── 0.3.31: слои кризисной дымки, тултипы филлера, лут слизи, тултип змеевика ──
-# Дымка: scissor-композиция вокруг защищённых зон, подписи/тексты — под ней.
-assert 'enableScissor' in client and 'paintEverywhereExcept' in client and 'canHurtPlayer' in client
+# ── 0.3.32: сектора хитбоксов баков, белые разделители крана, дымка = 0.3.30 ──
+# Дымка полностью откачена к 0.3.30: цельноэкранные текстура+дымка без scissor-зон,
+# подписи шкал снова внутри PsycheHud.
+assert 'enableScissor' not in client and 'paintEverywhereExcept' not in client
 assert client.index('renderScreenEffect(g, width, height);') < client.index('renderFakeDeath(g, mc, width, height);'), 'haze before fake death'
-mod=read('GonzoTechMod.java')
-order=[mod.index(x) for x in ['PsycheTremorClient.class','WrenchHud.class','SpeedometerHud.class','SolarWatchHud.class','PsycheHudLabels.class','PsycheCrisisClient.class','register(com.gonzotech.core.psyche.client.PsycheHud.class)']]
-assert order==sorted(order), 'HUD text before haze, psyche bars after'
-psy=read('core/psyche/client/PsycheHud.java'); labels=read('core/psyche/client/PsycheHudLabels.java')
-assert 'drawString' not in psy and 'drawString' in labels, 'labels moved out of PsycheHud'
-assert 'specs(' in psy and 'PsycheHud.specs' in labels
-# Филлер: хитбокс по дыркам PNG + подавление тултипов над слотами.
+psy=read('core/psyche/client/PsycheHud.java')
+assert 'drawString' in psy, 'labels back inside PsycheHud'
+assert not (SRC/'core/psyche/client/PsycheHudLabels.java').exists()
+# Филлер: у каждого бака ровно два сектора (канал 4×52 и «брюшко» 12×14), без пиксельных масок.
 filler=read('machines/client/FillerScreen.java')
-assert 'NativeImage.read' in filler and 'getResourceManager' in filler and 'closeForegroundMask' in filler
-assert 'inGaugeHole' in filler and 'isOverSlot' in filler
-assert filler.count('inGaugeHole(mouseX, mouseY')==5, '4 gauges + arch use PNG holes'
-assert 'isOverSlot(mouseX, mouseY)' in filler and 'inRect(mouseX, mouseY, x + 80, y + 35, 16, 16)' in filler
+assert 'NativeImage' not in filler and 'isOverSlot' not in filler and 'inGaugeHole' not in filler
+assert 'inRect(mouseX, mouseY, leftTankX, barY, 4, barH)' in filler \
+    and 'inRect(mouseX, mouseY, leftTankX + 4, barY + 19, 12, 14)' in filler \
+    and 'inRect(mouseX, mouseY, rightTankX + 12, barY, 4, barH)' in filler \
+    and 'inRect(mouseX, mouseY, rightTankX, barY + 19, 12, 14)' in filler
+# Кран: разделители «:» и «/» белые, остальное — цвет шкалы; lang-ключи .name.
+tap=read('machines/client/DispensingTapScreen.java')
+assert 'literal(":")' in tap and 'literal(" /")' in tap and tap.count('withStyle(ChatFormatting.WHITE)') == 2
+for lang in ['ru_ru','en_us']:
+    langjson=json.loads((ROOT/f'src/main/resources/assets/gonzotech/lang/{lang}.json').read_text(encoding='utf-8'))
+    assert 'gui.gonzotech.distillate.name' in langjson and 'gui.gonzotech.wort.name' in langjson
+    assert 'gui.gonzotech.distillate.title' not in langjson and 'gui.gonzotech.wort.title' not in langjson
 # Лут слизи: все шансы самородков /7.
 loot=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/radioactive_slime_block.json').read_text())
 chances=[pool['conditions'][-1]['chance'] for pool in loot['pools'][1:]]

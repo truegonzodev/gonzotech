@@ -30,22 +30,25 @@ def method(source, name):
     return source[start:end]
 
 
-# Existing title keys are reused; preserve units, values and approved colour/geometry.
-assert 'Component.literal(' not in tap
-assert 'withStyle(ChatFormatting.AQUA)' in tap and 'withStyle(ChatFormatting.GOLD)' in tap
+# Name/unit keys are reused; separators are white literals (author 27.09.2026),
+# numbers stay literal so the base colour can differ from the separators.
+assert 'literal(":")' in tap and 'literal(" /")' in tap
+assert 'ChatFormatting.AQUA)' in tap and 'ChatFormatting.GOLD)' in tap
 assert 'menu.distillate(),' in tap and 'menu.wort(),' in tap
-assert 'DispensingTapBlockEntity.DISTILLATE_CAPACITY)' in tap
-assert 'DispensingTapBlockEntity.WORT_CAPACITY)' in tap
+assert 'DispensingTapBlockEntity.DISTILLATE_CAPACITY,' in tap
+assert 'DispensingTapBlockEntity.WORT_CAPACITY,' in tap
 notes_code = re.sub(r'/\*.*?\*/|//[^\n]*', '', notes, flags=re.S)
 assert not re.search(r'"[^"\n]*[А-Яа-яЁё][^"\n]*"', notes_code)
 assert 'structureSubpage + 1, il.deckView().subpageCount()).getString()' in notes
 keys = ['gui.gonzotech.notes.' + x for x in ('assembly', 'layer.bottom', 'layer.middle', 'layer.top', 'layer')]
-keys += ['gui.gonzotech.distillate.title', 'gui.gonzotech.wort.title']
+# 0.3.32: tap lines use plain-name keys (no format args).
+keys += ['gui.gonzotech.distillate.name', 'gui.gonzotech.wort.name']
 for locale in ('ru_ru', 'en_us'):
     lang = json.loads((ROOT / f'src/main/resources/assets/gonzotech/lang/{locale}.json').read_text(encoding='utf-8'))
     for key in keys:
         assert key in lang
-        assert lang[key].count('%s') == (2 if key.endswith(('.layer', '.title')) else 1)
+        if key.startswith('gui.gonzotech.notes.'):
+            assert lang[key].count('%s') == (2 if key.endswith('.layer') else 1)
         if locale == 'en_us':
             assert not re.search('[А-Яа-яЁё]', lang[key])
 
