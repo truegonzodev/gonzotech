@@ -1,0 +1,79 @@
+{
+  "textures": {
+    "sheet": "gonzotech:block/third/silicon_factory_chip_1_formed",
+    "particle": "gonzotech:block/third/silicon_factory"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            0.0,
+            6.4,
+            2.6667,
+            9.6
+          ],
+          "texture": "#sheet",
+          "cullface": "down"
+        },
+        "up": {
+          "uv": [
+            8.0,
+            12.8,
+            10.6667,
+            16.0
+          ],
+          "texture": "#sheet"
+        },
+        "north": {
+          "uv": [
+            0.0,
+            9.6,
+            2.6667,
+            12.8
+          ],
+          "texture": "#sheet",
+          "cullface": "north"
+        },
+        "south": {
+          "uv": [
+            0.0,
+            9.6,
+            2.6667,
+            12.8
+          ],
+          "texture": "#sheet"
+        },
+        "west": {
+          "uv": [
+            5.3333,
+            9.6,
+            8.0,
+            12.8
+          ],
+          "texture": "#sheet"
+        },
+        "east": {
+          "uv": [
+            5.3333,
+            9.6,
+            8.0,
+            12.8
+          ],
+          "texture": "#sheet",
+          "cullface": "east"
+        }
+      }
+    }
+  ]
+}

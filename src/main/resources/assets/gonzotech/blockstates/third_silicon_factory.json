@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "gonzotech:block/third_silicon_factory"
+    },
+    "formed=true,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_13_chip_1"
+    },
+    "formed=true,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_13_chip_2"
+    },
+    "formed=true,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_13_chip_3"
+    }
+  }
+}

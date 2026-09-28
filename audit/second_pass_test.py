@@ -157,6 +157,92 @@ for item_id in NEW_ITEMS+['rubber_block']:
     model=idef['model']['model']
     assert (ROOT/f'src/main/resources/assets/gonzotech/models/item/{item_id}.json').is_file()
     assert model==f'gonzotech:item/{item_id}'
+
+# ── 0.3.41: многоблочная литография — структура 3×3×2, UV 96×80, GUI ──
+litho=ROOT/'src/main/java/com/gonzotech/machines/litho'
+litho_struct=(litho/'SiliconFactoryStructure.java').read_text()
+# Авторские матрицы: вариант 1 слой 1 DRD/RCR/DRD, слой 2 RBR/BSB/RBR; вариант 2 RD R/DCD/RDR + BRB/BSB/BRB;
+# вариант 3 DDD/DCD/DDD + RBR/BSB/RBR. Слот = x + 3z + 9слой, корень (верхний центр) = 13.
+assert "{'D', 'R', 'D', 'R', 'C', 'R', 'D', 'R', 'D', 'R', 'B', 'R', 'B', 'S', 'B', 'R', 'B', 'R'}" in litho_struct
+assert "{'R', 'D', 'R', 'D', 'C', 'D', 'R', 'D', 'R', 'B', 'R', 'B', 'B', 'S', 'B', 'B', 'R', 'B'}" in litho_struct
+assert "{'D', 'D', 'D', 'D', 'C', 'D', 'D', 'D', 'D', 'R', 'B', 'R', 'B', 'S', 'B', 'R', 'B', 'R'}" in litho_struct
+assert 'SLOT_ROOT = 13' in litho_struct
+litho_struct_code=re.sub(r'/\*.*?\*/|//[^\n]*','',litho_struct,flags=re.S)
+# Материалы раскладок: D — алюминий/нержавейка/корпус; R — фарфор; C — резина; B — боросиликат; S — фабрика.
+for marker in ('METAL_BLOCKS.get("aluminum_block")', 'METAL_BLOCKS.get("stainless_steel_block")',
+               'ALUMINUM_HOUSING.get()', 'PORCELAIN.get()', 'RUBBER_BLOCK.get()',
+               'BORE_STAINED_GLASS.get()', 'THIRD_SILICON_FACTORY.get()'):
+    assert marker in litho_struct_code, 'layout material: ' + marker
+# Оболочка — джокер (код != S) и участвует в EntityPlaceEvent-крюке.
+assert "code != 'S'" in litho_struct_code and 'onBlockPlace(EntityPlaceEvent' in litho_struct_code
+# Сломанная оболочка выпадает оригиналом через loot оригинала; skipPos не восстанавливается.
+assert 'shellBroken' in litho_struct_code and 'Block.dropResources(original, level, pos)' in litho_struct_code
+assert 'if (skipPos != null && p.equals(skipPos)) continue;' in litho_struct_code
+# Повторная form не переписывает оригиналы (guard на isFormed).
+assert re.search(r'if \(controller\.isFormed\(\)\) \{[^}]*return;', litho_struct_code, re.S)
+blocks_mods=(ROOT/'src/main/java/com/gonzotech/core/registry/ModBlocks.java').read_text()
+assert '"third_silicon_factory", com.gonzotech.machines.litho.SiliconFactoryBlock::new' in blocks_mods
+assert '"third_silicon_factory_shell"' in blocks_mods
+items_mods=(ROOT/'src/main/java/com/gonzotech/core/registry/ModItems.java').read_text()
+assert 'registerSimpleBlockItem("third_silicon_factory", ModBlocks.THIRD_SILICON_FACTORY)' in items_mods
+menus_mods=(ROOT/'src/main/java/com/gonzotech/machines/registry/ModMenus.java').read_text()
+assert 'MENUS.register("third_silicon_factory"' in menus_mods
+bes_mods=(ROOT/'src/main/java/com/gonzotech/machines/registry/ModBlockEntities.java').read_text()
+assert 'SiliconFactoryBlockEntity::new, false,' in bes_mods
+litho_client=(ROOT/'src/main/java/com/gonzotech/machines/client/MachineClient.java').read_text()
+assert 'ModMenus.SILICON_FACTORY.get(), SiliconFactoryScreen::new' in litho_client
+main_mod=(ROOT/'src/main/java/com/gonzotech/GonzoTechMod.java').read_text()
+assert 'SiliconFactoryStructure.clearAll()' in main_mod
+assert 'NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.litho.SiliconFactoryStructure::onBlockPlace)' in main_mod
+# BE: NBT-цикл formed→restorePending; процесс-заглушка суп-набор → chip_<вариант>.
+litho_be=(litho/'SiliconFactoryBlockEntity.java').read_text()
+litho_be_code=re.sub(r'/\*.*?\*/|//[^\n]*','',litho_be,flags=re.S)
+assert 'restorePending = true;' in litho_be_code and 'SiliconFactoryStructure.restoreController(server, be)' in litho_be_code
+assert 'PROGRESS_TOTAL = 100' in litho_be_code and 'ModItems.CHIP_SOUP.get()' in litho_be_code
+assert 'import com.gonzotech.core.registry.ModItems;' in litho_be
+litho_menu=(ROOT/'src/main/java/com/gonzotech/machines/menu/SiliconFactoryMenu.java').read_text()
+assert 'int x = 61 + i * 36;' in litho_menu and 'addSlot(new Slot(container, i, x, 17)' in litho_menu
+assert 'int x = 43 + i * 36;' in litho_menu and 'x, 53)' in litho_menu
+assert 'addPlayerInventory(inventory, 8, 84);' in litho_menu
+assert 'stillValid(access, player, ModBlocks.THIRD_SILICON_FACTORY.get())' in litho_menu
+litho_screen=(ROOT/'src/main/java/com/gonzotech/machines/client/SiliconFactoryScreen.java').read_text()
+assert 'silicon_factory_chip_" + variant + "_gui.png' in litho_screen
+assert 'silicon_factory_gui.png' in litho_screen
+assert 'drawVBarTex(graphics, x + 8, y + 17, 16, 52,' in litho_screen
+# Ресурсы: blockstate фабрики (4 ключа) и оболочки (54), 54 срез-модели, UV-листы 96×80.
+from PIL import Image as LithoImage
+factory_bs=json.loads((ROOT/'src/main/resources/assets/gonzotech/blockstates/third_silicon_factory.json').read_text())
+assert len(factory_bs['variants'])==4 and 'formed=true,variant=3' in factory_bs['variants']
+shell_bs=json.loads((ROOT/'src/main/resources/assets/gonzotech/blockstates/third_silicon_factory_shell.json').read_text())
+assert len(shell_bs['variants'])==54
+for slot in range(18):
+    for v in (1,2,3):
+        mp=ROOT/f'src/main/resources/assets/gonzotech/models/block/third_silicon_factory/slice_{slot}_chip_{v}.json'
+        mm=json.loads(mp.read_text())
+        assert mm['textures']['sheet']==f'gonzotech:block/third/silicon_factory_chip_{v}_formed'
+slice13=json.loads((ROOT/'src/main/resources/assets/gonzotech/models/block/third_silicon_factory/slice_13_chip_1.json').read_text())
+assert slice13['elements'][0]['faces']['up']['uv']==[10.6667, 9.6, 13.3333, 12.8]
+assert slice13['elements'][0]['faces']['down'].get('cullface')=='down'
+for v in (1,2,3):
+    tp=ROOT/f'src/main/resources/assets/gonzotech/textures/block/third/silicon_factory_chip_{v}_formed.png'
+    with LithoImage.open(tp) as im:
+        assert im.size==(96,80) and im.mode=='RGBA', tp.name
+# Loot: фабрика дропает себя, оболочка — пустой файл.
+factory_loot=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/third_silicon_factory.json').read_text())
+assert factory_loot['pools'][0]['entries'][0]['name']=='gonzotech:third_silicon_factory'
+shell_loot=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/third_silicon_factory_shell.json').read_text())
+assert 'pools' not in shell_loot
+# Чистая комната: размещаемые резина/нержавейка/алюминий; корпус уже был.
+interior=json.loads((ROOT/'src/main/resources/data/gonzotech/tags/block/clean_room_interior.json').read_text())
+for b in ('gonzotech:rubber_block','gonzotech:stainless_steel_block','gonzotech:aluminum_block','gonzotech:aluminum_housing'):
+    assert b in interior['values'], 'clean room interior: ' + b
+pickaxe_tag=json.loads((ROOT/'src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json').read_text())
+assert 'gonzotech:third_silicon_factory' in pickaxe_tag['values']
+# Lang: ключ фабрики переехал в block.*, ключ прогресса на месте, ru=en.
+lang_ru=json.loads((ROOT/'src/main/resources/assets/gonzotech/lang/ru_ru.json').read_text(encoding='utf-8'))
+assert 'block.gonzotech.third_silicon_factory' in lang_en and 'item.gonzotech.third_silicon_factory' not in lang_en
+assert 'block.gonzotech.third_silicon_factory' in lang_ru and 'gui.gonzotech.silicon_factory.progress' in lang_ru
+assert lang_en['gui.gonzotech.silicon_factory.progress'].endswith('%s%%') == lang_ru['gui.gonzotech.silicon_factory.progress'].endswith('%s%%')
 eggdef=json.loads((ROOT/'src/main/resources/assets/gonzotech/items/alt_spawn_egg.json').read_text())
 # 0.3.34: яйцо без тинтов — обычная полноцветная PNG-текстура.
 assert eggdef['model']['model']=='gonzotech:item/alt_spawn_egg' and 'tints' not in eggdef['model']

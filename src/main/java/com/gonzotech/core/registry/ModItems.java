@@ -132,8 +132,9 @@ public class ModItems {
     public static final DeferredItem<Item> CHIP_2 = ITEMS.registerSimpleItem("chip_2");
     /** Микроконтроллер (chip_3) — выход литографии; рецепт будет у литографической фабрики. */
     public static final DeferredItem<Item> CHIP_3 = ITEMS.registerSimpleItem("chip_3");
-    /** Литографическая фабрика — предмет Эпохи III; блок/машина с GUI подключаются следующим шагом. */
-    public static final DeferredItem<Item> THIRD_SILICON_FACTORY = ITEMS.registerSimpleItem("third_silicon_factory");
+    /** Литографическая фабрика — BlockItem контроллера многоблока 3×3×2 (автор 28.09.2026). */
+    public static final DeferredItem<BlockItem> THIRD_SILICON_FACTORY =
+        ITEMS.registerSimpleBlockItem("third_silicon_factory", ModBlocks.THIRD_SILICON_FACTORY);
 
     // ─────────────────────── Прессованные компоненты ───────────────────────
     // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».

@@ -105,6 +105,9 @@ public final class ModMenus {
     public static final Supplier<MenuType<com.gonzotech.machines.menu.AirFilterMenu>> AIR_FILTER =
         MENUS.register("third_air_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.AirFilterMenu::new));
 
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.SiliconFactoryMenu>> SILICON_FACTORY =
+        MENUS.register("third_silicon_factory", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.SiliconFactoryMenu::new));
+
     public static final Supplier<MenuType<FermentationVatMenu>> THIRD_FERMENTATION_VAT =
         MENUS.register("third_fermentation_vat", () -> IMenuTypeExtension.create(FermentationVatMenu::new));
 

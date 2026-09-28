@@ -928,6 +928,8 @@
   "item.gonzotech.photoresist": "Photoresist",
   "item.gonzotech.chip_blanky": "Chip Base",
   "item.gonzotech.chip_soup": "Chip Soup Set",
-  "item.gonzotech.third_silicon_factory": "Lithography Factory",
-  "block.gonzotech.rubber_block": "Rubber Block"
+  "block.gonzotech.rubber_block": "Rubber Block",
+  "block.gonzotech.third_silicon_factory": "Lithography Factory",
+  "gui.gonzotech.silicon_factory.progress": "Progress: %s%%",
+  "block.gonzotech.third_silicon_factory_shell": "Lithography Shell"
 }

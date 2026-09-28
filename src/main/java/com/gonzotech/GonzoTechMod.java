@@ -81,7 +81,11 @@ public class GonzoTechMod {
             com.gonzotech.machines.network.PipeFlowLedger.clearAll();
             com.gonzotech.machines.turbine.TurbineStructure.clearAll();
             com.gonzotech.machines.steamgen.SteamGenStructure.clearAll();
+            com.gonzotech.machines.litho.SiliconFactoryStructure.clearAll();
         });
+
+        // Литография: постановка игроком любого блока-участника может достроить структуру 3×3×2.
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.litho.SiliconFactoryStructure::onBlockPlace);
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
         // Радиационная диагностика: /gonzotech debug purge|getdose.

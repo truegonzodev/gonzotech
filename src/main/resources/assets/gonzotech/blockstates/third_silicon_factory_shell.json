@@ -1,0 +1,166 @@
+{
+  "variants": {
+    "slice=0,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_0_chip_1"
+    },
+    "slice=0,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_0_chip_2"
+    },
+    "slice=0,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_0_chip_3"
+    },
+    "slice=1,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_1_chip_1"
+    },
+    "slice=1,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_1_chip_2"
+    },
+    "slice=1,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_1_chip_3"
+    },
+    "slice=2,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_2_chip_1"
+    },
+    "slice=2,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_2_chip_2"
+    },
+    "slice=2,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_2_chip_3"
+    },
+    "slice=3,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_3_chip_1"
+    },
+    "slice=3,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_3_chip_2"
+    },
+    "slice=3,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_3_chip_3"
+    },
+    "slice=4,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_4_chip_1"
+    },
+    "slice=4,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_4_chip_2"
+    },
+    "slice=4,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_4_chip_3"
+    },
+    "slice=5,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_5_chip_1"
+    },
+    "slice=5,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_5_chip_2"
+    },
+    "slice=5,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_5_chip_3"
+    },
+    "slice=6,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_6_chip_1"
+    },
+    "slice=6,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_6_chip_2"
+    },
+    "slice=6,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_6_chip_3"
+    },
+    "slice=7,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_7_chip_1"
+    },
+    "slice=7,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_7_chip_2"
+    },
+    "slice=7,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_7_chip_3"
+    },
+    "slice=8,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_8_chip_1"
+    },
+    "slice=8,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_8_chip_2"
+    },
+    "slice=8,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_8_chip_3"
+    },
+    "slice=9,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_9_chip_1"
+    },
+    "slice=9,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_9_chip_2"
+    },
+    "slice=9,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_9_chip_3"
+    },
+    "slice=10,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_10_chip_1"
+    },
+    "slice=10,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_10_chip_2"
+    },
+    "slice=10,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_10_chip_3"
+    },
+    "slice=11,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_11_chip_1"
+    },
+    "slice=11,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_11_chip_2"
+    },
+    "slice=11,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_11_chip_3"
+    },
+    "slice=12,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_12_chip_1"
+    },
+    "slice=12,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_12_chip_2"
+    },
+    "slice=12,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_12_chip_3"
+    },
+    "slice=13,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_13_chip_1"
+    },
+    "slice=13,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_13_chip_2"
+    },
+    "slice=13,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_13_chip_3"
+    },
+    "slice=14,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_14_chip_1"
+    },
+    "slice=14,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_14_chip_2"
+    },
+    "slice=14,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_14_chip_3"
+    },
+    "slice=15,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_15_chip_1"
+    },
+    "slice=15,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_15_chip_2"
+    },
+    "slice=15,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_15_chip_3"
+    },
+    "slice=16,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_16_chip_1"
+    },
+    "slice=16,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_16_chip_2"
+    },
+    "slice=16,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_16_chip_3"
+    },
+    "slice=17,variant=1": {
+      "model": "gonzotech:block/third_silicon_factory/slice_17_chip_1"
+    },
+    "slice=17,variant=2": {
+      "model": "gonzotech:block/third_silicon_factory/slice_17_chip_2"
+    },
+    "slice=17,variant=3": {
+      "model": "gonzotech:block/third_silicon_factory/slice_17_chip_3"
+    }
+  }
+}

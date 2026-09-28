@@ -71,7 +71,9 @@ for registry, const in re.findall(r'(ModItems|ModMachines)\.(\w+)\.get\(\)', t3_
 
 # пакеты труб (composite_pipe / second_composite_pipe) не крафтятся вовсе —
 # они формируются в мире гаечным ключом из труб своего поколения
-WORLD_FORMED = {"composite_pipe", "second_composite_pipe"}
+WORLD_FORMED = {"composite_pipe", "second_composite_pipe",
+    # техническая оболочка сформированной литографии: ставится только структурой,
+    "third_silicon_factory_shell"}  # не добывается и не крафтится
 
 lang = json.load(open(LANG, encoding="utf-8"))
 name = lambda i: lang.get(f"block.gonzotech.{i}") or lang.get(f"item.gonzotech.{i}") or "(нет ключа)"

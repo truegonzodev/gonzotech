@@ -928,6 +928,8 @@
   "item.gonzotech.photoresist": "Фоторезист",
   "item.gonzotech.chip_blanky": "Основа чипа",
   "item.gonzotech.chip_soup": "Суп-набор для чипа",
-  "item.gonzotech.third_silicon_factory": "Литографическая фабрика",
-  "block.gonzotech.rubber_block": "Резиновый блок"
+  "block.gonzotech.rubber_block": "Резиновый блок",
+  "block.gonzotech.third_silicon_factory": "Литографическая фабрика",
+  "gui.gonzotech.silicon_factory.progress": "Готовность: %s%%",
+  "block.gonzotech.third_silicon_factory_shell": "Оболочка литографии"
 }

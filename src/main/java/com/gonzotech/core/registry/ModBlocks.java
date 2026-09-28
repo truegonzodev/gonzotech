@@ -111,6 +111,18 @@ public class ModBlocks {
     /** Литография (автор 28.09.2026): резиновый блок — упаковка 9 резины. */
     public static final DeferredBlock<Block> RUBBER_BLOCK = BLOCKS.registerSimpleBlock(
         "rubber_block", componentBlockProperties());
+    /** Литография (автор 28.09.2026): фабрика — контроллер многоблока 3×3×2 (верхний центр). */
+    public static final DeferredBlock<com.gonzotech.machines.litho.SiliconFactoryBlock> THIRD_SILICON_FACTORY =
+        BLOCKS.registerBlock("third_silicon_factory", com.gonzotech.machines.litho.SiliconFactoryBlock::new,
+            componentBlockProperties());
+    /**
+     * Техническая оболочка сформированной литографии: 18 срезов × 3 варианта.
+     * Не добывается — распад структуры возвращает оригинальные блоки.
+     */
+    public static final DeferredBlock<com.gonzotech.machines.litho.SiliconFactoryShellBlock>
+        THIRD_SILICON_FACTORY_SHELL = BLOCKS.registerBlock("third_silicon_factory_shell",
+            com.gonzotech.machines.litho.SiliconFactoryShellBlock::new,
+            BlockBehaviour.Properties.of().strength(0.3f, 3.0f).sound(SoundType.STONE));
 
     /** Эпоха III: вертикальный редстоун-очиститель воздуха. */
     public static final DeferredBlock<com.gonzotech.cleanroom.AirCleanerBlock> AIR_CLEANER = BLOCKS.registerBlock(

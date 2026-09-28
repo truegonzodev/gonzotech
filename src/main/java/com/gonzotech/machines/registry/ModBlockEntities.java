@@ -164,6 +164,11 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("third_air_filter", () -> new BlockEntityType<>(
             com.gonzotech.cleanroom.AirFilterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.AIR_FILTER.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.litho.SiliconFactoryBlockEntity>> SILICON_FACTORY =
+        BLOCK_ENTITIES.register("third_silicon_factory", () -> new BlockEntityType<>(
+            com.gonzotech.machines.litho.SiliconFactoryBlockEntity::new, false,
+            com.gonzotech.core.registry.ModBlocks.THIRD_SILICON_FACTORY.get()));
+
     public static final Supplier<BlockEntityType<FermentationVatBlockEntity>> THIRD_FERMENTATION_VAT =
         BLOCK_ENTITIES.register("third_fermentation_vat", () -> new BlockEntityType<>(
             FermentationVatBlockEntity::new, false, ModMachines.THIRD_FERMENTATION_VAT.get()));
