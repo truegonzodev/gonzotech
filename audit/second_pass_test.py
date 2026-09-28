@@ -180,6 +180,10 @@ assert 'shellBroken' in litho_struct_code and 'Block.dropResources(original, lev
 assert 'if (skipPos != null && p.equals(skipPos)) continue;' in litho_struct_code
 # Повторная form не переписывает оригиналы (guard на isFormed).
 assert re.search(r'if \(controller\.isFormed\(\)\) \{[^}]*return;', litho_struct_code, re.S)
+# Поворот на 90° принимается (вариант 2 неинвариантен: колонки B вдоль Z и вдоль X).
+assert 'private static int rotatedSlot(int slot)' in litho_struct_code
+assert 'for (int rotation = 0; rotation < 2; rotation++)' in litho_struct_code
+assert 'int expected = rotation == 0 ? slot : rotatedSlot(slot);' in litho_struct_code
 blocks_mods=(ROOT/'src/main/java/com/gonzotech/core/registry/ModBlocks.java').read_text()
 assert '"third_silicon_factory", com.gonzotech.machines.litho.SiliconFactoryBlock::new' in blocks_mods
 assert '"third_silicon_factory_shell"' in blocks_mods
@@ -271,10 +275,25 @@ for slot in range(18):
         assert mm['textures']['sheet']==f'gonzotech:block/third/silicon_factory_chip_{v}_formed'
 # UV от кадра 96×96 (формат .mcmeta-анимации: кадр = ширина×ширина, 0.3.43):
 # v = px_y/6 (как и u). Контроль: верхний центр — пиксели (64,48); низ — (16,16).
+# UV сторон по градиентным фото автора (0.3.45): west ✓ as-is, east — зеркальные окна,
+# north/south — развёрнутые окна (u1>u2 в JSON — легальный флип). Сверяем ВСЕ 54 модели.
+def exp_side_u(face, sx, sz):
+    return {'west': (sz*16, sz*16+16), 'east': ((2-sz)*16, (3-sz)*16),
+            'north': ((sx+1)*16, sx*16), 'south': ((3-sx)*16, (2-sx)*16)}[face]
+def r6(x): return round(x/6, 4)
+for v in (1,2,3):
+    for slot in range(18):
+        sx, sy, sz = slot%3, slot//9, (slot//3)%3
+        mm=json.loads((ROOT/f'src/main/resources/assets/gonzotech/models/block/third_silicon_factory/slice_{slot}_chip_{v}.json').read_text())
+        faces=mm['elements'][0]['faces']
+        for face in ('north','south','west','east'):
+            u1,u2=exp_side_u(face,sx,sz); v1,v2=48+(1-sy)*16, 64+(1-sy)*16
+            assert faces[face]['uv']==[r6(u1),r6(v1),r6(u2),r6(v2)], (slot,v,face,faces[face]['uv'])
+        assert faces['down']['uv']==[r6(sx*16),r6(sz*16),r6(sx*16+16),r6(sz*16+16)]
+        assert faces['up']['uv']==[r6(48+sx*16),r6(32+sz*16),r6(64+sx*16),r6(48+sz*16)]
+        assert faces['down'].get('cullface')==('down' if sy!=0 else None)
 slice13=json.loads((ROOT/'src/main/resources/assets/gonzotech/models/block/third_silicon_factory/slice_13_chip_1.json').read_text())
 assert slice13['elements'][0]['faces']['up']['uv']==[10.6667, 8.0, 13.3333, 10.6667]
-assert slice13['elements'][0]['faces']['down']['uv']==[2.6667, 2.6667, 5.3333, 5.3333]
-assert slice13['elements'][0]['faces']['down'].get('cullface')=='down'
 for v in (1,2,3):
     tp=ROOT/f'src/main/resources/assets/gonzotech/textures/block/third/silicon_factory_chip_{v}_formed.png'
     with LithoImage.open(tp) as im:

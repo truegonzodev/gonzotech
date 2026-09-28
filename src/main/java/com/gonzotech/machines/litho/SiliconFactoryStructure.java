@@ -171,17 +171,33 @@ public final class SiliconFactoryStructure {
     private record Build(BlockPos origin, int variant) {
     }
 
+    /**
+     * Поворот раскладки на 90°: блок, стоящий в (x, z), сверяется с ожиданием из
+     * (z, 2−x). Вариант 2 (слой 2 B-R-B / B-S-B / B-R-B) НЕ инвариантен к
+     * повороту: колонки боросиликата вдоль Z дают одну форму, вдоль X — другую
+     * (B-B-B / R-S-R / B-B-B). Автор собирает в обеих — валидируем обе.
+     */
+    private static int rotatedSlot(int slot) {
+        int x = slot % 3;
+        int layer = slot / 9;
+        int z = (slot / 3) % 3;
+        return z + 3 * (2 - x) + 9 * layer;
+    }
+
     /** Полная проверка коробки; origin — угол (minX, minY, minZ). */
     private static Build validateBox(ServerLevel level, BlockPos origin) {
         if (!allChunksLoaded(level, origin, origin.offset(2, 1, 2))) return null;
         for (int variant = 1; variant <= 3; variant++) {
             char[] layout = LAYOUTS[variant - 1];
-            boolean ok = true;
-            for (int slot = 0; slot < SLOTS && ok; slot++) {
-                Block block = level.getBlockState(origin.offset(offsetOf(slot))).getBlock();
-                if (!matches(layout[slot], block)) ok = false;
+            for (int rotation = 0; rotation < 2; rotation++) {
+                boolean ok = true;
+                for (int slot = 0; slot < SLOTS && ok; slot++) {
+                    int expected = rotation == 0 ? slot : rotatedSlot(slot);
+                    Block block = level.getBlockState(origin.offset(offsetOf(slot))).getBlock();
+                    if (!matches(layout[expected], block)) ok = false;
+                }
+                if (ok) return new Build(origin, variant);
             }
-            if (ok) return new Build(origin, variant);
         }
         return null;
     }
