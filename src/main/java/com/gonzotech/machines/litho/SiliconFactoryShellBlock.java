@@ -7,6 +7,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -18,8 +20,12 @@ import net.minecraft.world.phys.BlockHitResult;
  * x + 3*z + 9*слой, {@code variant} — вид чипа). Не добывается и не крафтится:
  * сломанная оболочка распадает структуру и выпадает оригинальным блоком через
  * его loot-таблицу ({@link SiliconFactoryStructure#shellBroken}).
+ *
+ * <p>С 0.3.46 оболочка несёт прокси-контейнер
+ * ({@link SiliconFactoryShellBlockEntity}): трубы и воронки могут
+ * подключаться к любой части структуры и работают с контроллером.</p>
  */
-public final class SiliconFactoryShellBlock extends Block {
+public final class SiliconFactoryShellBlock extends Block implements EntityBlock {
 
     public static final IntegerProperty SLICE = IntegerProperty.create("slice", 0, 17);
     public static final IntegerProperty VARIANT = IntegerProperty.create("variant", 1, 3);
@@ -40,6 +46,11 @@ public final class SiliconFactoryShellBlock extends Block {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(SLICE, VARIANT);
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new SiliconFactoryShellBlockEntity(pos, state);
     }
 
     @Override

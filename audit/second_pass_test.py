@@ -204,6 +204,26 @@ litho_be_code=re.sub(r'/\*.*?\*/|//[^\n]*','',litho_be,flags=re.S)
 assert 'restorePending = true;' in litho_be_code and 'SiliconFactoryStructure.restoreController(server, be)' in litho_be_code
 assert 'ModItems.CHIP_SOUP.get()' in litho_be_code
 assert 'import com.gonzotech.core.registry.ModItems;' in litho_be
+# 0.3.46: суп расходуется по одному (было set(EMPTY) — съедало стак); один чип в полёте.
+assert 'be.items.get(INPUT_SLOT).shrink(1);' in litho_be_code
+assert 'be.items.set(INPUT_SLOT, ItemStack.EMPTY)' not in litho_be_code
+assert 'be.items.get(TRANSIT_FIRST).isEmpty()' in litho_be_code and 'be.items.get(TRANSIT_LAST).isEmpty()' in litho_be_code
+# Автоматизация: WorldlyContainer — вставка только суп в слот 0, извлечение только чипы+кремень.
+assert 'implements WorldlyContainer, MenuProvider, GtuSink' in litho_be_code
+assert 'public boolean canPlaceItem(int slot, ItemStack stack)' in litho_be_code
+assert 'slot == OUTPUT_SLOT || slot >= SLAG_BASE' in litho_be_code
+assert 'import net.minecraft.core.Direction;' in litho_be
+# Прокси-контейнер оболочки: трубы/воронки цепляются к любой части структуры.
+litho_shell_be=(ROOT/'src/main/java/com/gonzotech/machines/litho/SiliconFactoryShellBlockEntity.java')
+assert litho_shell_be.is_file()
+shell_be_code=re.sub(r'/\*.*?\*/|//[^\n]*','',litho_shell_be.read_text(),flags=re.S)
+assert 'implements WorldlyContainer' in shell_be_code
+assert 'SiliconFactoryStructure.controllerAt(server, worldPosition)' in shell_be_code
+assert 'be.canTakeItemThroughFace(slot, stack, side)' in shell_be_code
+litho_shell_block=(ROOT/'src/main/java/com/gonzotech/machines/litho/SiliconFactoryShellBlock.java').read_text()
+assert 'implements EntityBlock' in litho_shell_block
+assert 'new SiliconFactoryShellBlockEntity(pos, state)' in litho_shell_block
+assert 'SiliconFactoryShellBlockEntity::new, false,' in bes_mods
 # Цифры автора: хранение 29086, приём 322 GTU/сек, течение 3.8 GTU/t, скачки 28 GTU/9т, потеря 0.003 GTU/t.
 assert 'CAPACITY_MILLI = 29_086_000L' in litho_be_code
 assert 'INTAKE_MILLI_PER_TICK = 16_100L' in litho_be_code
@@ -229,7 +249,7 @@ assert litho_be.count('be.step = -1; // заготовка пропала') == 2
 assert 'CleanRoomSystem.filterRoom(server, pos)' in litho_be_code
 assert 'import com.gonzotech.cleanroom.CleanRoomSystem;' in litho_be
 assert 'import com.gonzotech.machines.energy.Sinks.GtuSink;' in litho_be
-assert 'implements Container, MenuProvider, GtuSink' in litho_be
+assert 'implements WorldlyContainer, MenuProvider, GtuSink' in litho_be
 litho_menu=(ROOT/'src/main/java/com/gonzotech/machines/menu/SiliconFactoryMenu.java').read_text()
 # Раскладка автора (лист −128): конвейер y53 (44/80/116/152), шлак y17 (62/98/134), ГТУ (8,17), бары (62/98/134,35).
 assert 'INPUT_SLOT, 44, 53)' in litho_menu

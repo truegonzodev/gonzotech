@@ -8,6 +8,7 @@ import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.SiliconFactoryMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -22,6 +23,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -52,7 +54,8 @@ import net.minecraft.world.level.block.state.BlockState;
  * <p>Энергия: хранение 29086 GTU, приём 322 GTU/сек (16.1 GTU/t), течение бара
  * 3.8 GTU/t, паразитная потеря 0.003 GTU/t.</p>
  */
-public final class SiliconFactoryBlockEntity extends BlockEntity implements Container, MenuProvider, GtuSink {
+public final class SiliconFactoryBlockEntity extends BlockEntity
+    implements WorldlyContainer, MenuProvider, GtuSink {
 
     public static final int SLOT_COUNT = 7;
     public static final int DATA_COUNT = 6;
@@ -225,7 +228,12 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
                 // ретраим каждый тик до успеха либо до распада структуры.
                 SiliconFactoryStructure.restoreController(server, be);
             }
-            if (be.step < 0 && be.items.get(INPUT_SLOT).is(ModItems.CHIP_SOUP.get())) {
+            // Один чип в полёте за раз (конвейер автора): новый цикл — только когда
+            // в транзите никого нет.
+            if (be.step < 0
+                && be.items.get(INPUT_SLOT).is(ModItems.CHIP_SOUP.get())
+                && be.items.get(TRANSIT_FIRST).isEmpty()
+                && be.items.get(TRANSIT_LAST).isEmpty()) {
                 be.step = STEP_ETCHING;
                 be.progress = 0;
                 be.setChanged();
@@ -260,12 +268,12 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
     private static void completeStep(ServerLevel server, SiliconFactoryBlockEntity be) {
         switch (be.step) {
             case STEP_ETCHING -> {
+                // Из стака супов расходуется ровно ОДИН (0.3.46: было set(EMPTY) — съедало стак).
+                be.items.get(INPUT_SLOT).shrink(1);
                 if (reject(server, be)) {
-                    be.items.set(INPUT_SLOT, ItemStack.EMPTY);
                     dropFlint(be, STEP_ETCHING);
                     be.step = -1; // заготовка пропала — конвейер простаивает
                 } else {
-                    be.items.set(INPUT_SLOT, ItemStack.EMPTY);
                     be.items.set(TRANSIT_FIRST, new ItemStack(ModItems.CHIP_BLANKY.get()));
                     be.step = STEP_PHOTOLITHOGRAPHY;
                 }
@@ -469,6 +477,34 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
     @Override
     public void clearContent() {
         items.clear();
+    }
+
+    // ─────────── Автоматизация (автор 28.09.2026): трубы и воронки ───────────
+    // Вставка — только «суп-набор» в слот 0; извлечение — только готовые чипы
+    // (слот 3) и кремень брака (4..6). Транзит заготовки (1..2) закрыт в обе
+    // стороны; все стороны машины равноправны.
+
+    /** Все слоты открыты для обхода автоматикой, правила решают canPlace/canTake. */
+    private static final int[] ALL_SLOTS = {0, 1, 2, 3, 4, 5, 6};
+
+    @Override
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        return slot == INPUT_SLOT && stack.is(ModItems.CHIP_SOUP.get());
+    }
+
+    @Override
+    public int[] getSlotsForFace(Direction side) {
+        return ALL_SLOTS;
+    }
+
+    @Override
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction side) {
+        return canPlaceItem(slot, stack);
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
+        return slot == OUTPUT_SLOT || slot >= SLAG_BASE;
     }
 
     @Override
