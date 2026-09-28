@@ -930,6 +930,10 @@
   "item.gonzotech.chip_soup": "Chip Soup Set",
   "block.gonzotech.rubber_block": "Rubber Block",
   "block.gonzotech.third_silicon_factory": "Lithography Factory",
-  "gui.gonzotech.silicon_factory.progress": "Progress: %s%%",
-  "block.gonzotech.third_silicon_factory_shell": "Lithography Shell"
+  "block.gonzotech.third_silicon_factory_shell": "Lithography Shell",
+  "gui.gonzotech.silicon_factory.etching": "§fEtching: %s%%",
+  "gui.gonzotech.silicon_factory.photolithography": "§fPhotolithography: %s%%",
+  "gui.gonzotech.silicon_factory.vulcanization": "§fVulcanization: %s%%",
+  "gui.gonzotech.silicon_factory.quality": "§7Air quality: %s%% - reject chance: %s%%",
+  "gui.gonzotech.silicon_factory.quality_ambient": "§7Air quality: normal - reject chance: %s%%"
 }

@@ -930,6 +930,10 @@
   "item.gonzotech.chip_soup": "Суп-набор для чипа",
   "block.gonzotech.rubber_block": "Резиновый блок",
   "block.gonzotech.third_silicon_factory": "Литографическая фабрика",
-  "gui.gonzotech.silicon_factory.progress": "Готовность: %s%%",
-  "block.gonzotech.third_silicon_factory_shell": "Оболочка литографии"
+  "block.gonzotech.third_silicon_factory_shell": "Оболочка литографии",
+  "gui.gonzotech.silicon_factory.etching": "§fТравление: %s%%",
+  "gui.gonzotech.silicon_factory.photolithography": "§fФотолитография: %s%%",
+  "gui.gonzotech.silicon_factory.vulcanization": "§fВулканизация: %s%%",
+  "gui.gonzotech.silicon_factory.quality": "§7Качетсво воздуха: %s%% - шанс брака: %s%%",
+  "gui.gonzotech.silicon_factory.quality_ambient": "§7Качетсво воздуха: обычный - шанс брака: %s%%"
 }

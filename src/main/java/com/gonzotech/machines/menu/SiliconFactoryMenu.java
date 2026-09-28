@@ -17,9 +17,10 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Раскладка по PNG автора (лист 512×512 @ −128, панель 176×166):
- * 3 входа (x 61/97/133, y 17), 4 выхода (x 43/79/115/151, y 53),
- * вертикальная шкала прогресса (8, 17) 16×52, инвентарь игрока (8, 84).
+ * Раскладка по PNG автора (лист 512×512 @ −128, панель 176×166), канва 176×166:
+ * ГТУ-шкала (136,145) 16×52; три бара 16×34 (190/226/262, y163); нижний
+ * конвейер (y181): вход 172 → транзит 208 → транзит 244 → выход 280;
+ * шлак-слоты (y145): 190/226/262. Инвентарь игрока (8, 84).
  */
 public final class SiliconFactoryMenu extends BaseMachineMenu {
     private final ContainerLevelAccess access;
@@ -36,18 +37,38 @@ public final class SiliconFactoryMenu extends BaseMachineMenu {
     private SiliconFactoryMenu(int id, Inventory inventory, Container container, ContainerData data, BlockPos pos) {
         super(ModMenus.SILICON_FACTORY.get(), id, container, data, SiliconFactoryBlockEntity.SLOT_COUNT);
         access = ContainerLevelAccess.create(inventory.player.level(), pos);
-        for (int i = 0; i < SiliconFactoryBlockEntity.INPUT_SLOTS; i++) {
-            int x = 61 + i * 36;
-            addSlot(new Slot(container, i, x, 17) {
+        // Конвейер (y=181): вход — «суп-набор», класть и брать.
+        addSlot(new Slot(container, SiliconFactoryBlockEntity.INPUT_SLOT, 172, 181) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.is(ModItems.CHIP_SOUP.get());
+            }
+        });
+        // Транзит заготовки: нельзя ни положить, ни достать.
+        for (int i = SiliconFactoryBlockEntity.TRANSIT_FIRST; i <= SiliconFactoryBlockEntity.TRANSIT_LAST; i++) {
+            int index = i;
+            addSlot(new Slot(container, index, 172 + index * 36, 181) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    return stack.is(ModItems.CHIP_SOUP.get());
+                    return false;
+                }
+
+                @Override
+                public boolean mayPickup(Player player) {
+                    return false;
                 }
             });
         }
-        for (int i = 0; i < SiliconFactoryBlockEntity.OUTPUT_SLOTS; i++) {
-            int x = 43 + i * 36;
-            addSlot(new Slot(container, SiliconFactoryBlockEntity.INPUT_SLOTS + i, x, 53) {
+        // Выход: только достать.
+        addSlot(new Slot(container, SiliconFactoryBlockEntity.OUTPUT_SLOT, 280, 181) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return false;
+            }
+        });
+        // Шлак шагов 0..2 (y=145): только достать.
+        for (int i = 0; i < 3; i++) {
+            addSlot(new Slot(container, SiliconFactoryBlockEntity.SLAG_BASE + i, 190 + i * 36, 145) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;
@@ -57,17 +78,36 @@ public final class SiliconFactoryMenu extends BaseMachineMenu {
         addPlayerInventory(inventory, 8, 84);
     }
 
-    public int progress() {
-        return data.get(0);
+    /** Слоты 1/2 — транзит заготовки: Shift-щелчок тоже запрещён. */
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        if (index == SiliconFactoryBlockEntity.TRANSIT_FIRST || index == SiliconFactoryBlockEntity.TRANSIT_LAST) {
+            return ItemStack.EMPTY;
+        }
+        return super.quickMoveStack(player, index);
     }
 
-    public int progressTotal() {
-        return SiliconFactoryBlockEntity.PROGRESS_TOTAL;
+    public long gtuMilli() {
+        return ((long) data.get(1) << 16) | (data.get(0) & 0xffffL);
+    }
+
+    /** -1 — простой; 0..2 — активный шаг. */
+    public int step() {
+        return data.get(2);
+    }
+
+    public int progressTicks() {
+        return data.get(3);
+    }
+
+    /** Чистота воздуха в сотых долях процента; -1 — вне контура («обычный»). */
+    public int qualityHundredths() {
+        return data.get(4);
     }
 
     /** 0 — вариант ещё не синхронизирован; 1..3 — вид чипа структуры. */
     public int variant() {
-        return data.get(1);
+        return data.get(5);
     }
 
     @Override

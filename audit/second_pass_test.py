@@ -194,21 +194,62 @@ assert 'ModMenus.SILICON_FACTORY.get(), SiliconFactoryScreen::new' in litho_clie
 main_mod=(ROOT/'src/main/java/com/gonzotech/GonzoTechMod.java').read_text()
 assert 'SiliconFactoryStructure.clearAll()' in main_mod
 assert 'NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.litho.SiliconFactoryStructure::onBlockPlace)' in main_mod
-# BE: NBT-цикл formed→restorePending; процесс-заглушка суп-набор → chip_<вариант>.
+# BE: NBT-цикл formed→restorePending; конвейер чипа по ТЗ автора (28.09.2026, 0.3.42).
 litho_be=(litho/'SiliconFactoryBlockEntity.java').read_text()
 litho_be_code=re.sub(r'/\*.*?\*/|//[^\n]*','',litho_be,flags=re.S)
 assert 'restorePending = true;' in litho_be_code and 'SiliconFactoryStructure.restoreController(server, be)' in litho_be_code
-assert 'PROGRESS_TOTAL = 100' in litho_be_code and 'ModItems.CHIP_SOUP.get()' in litho_be_code
+assert 'ModItems.CHIP_SOUP.get()' in litho_be_code
 assert 'import com.gonzotech.core.registry.ModItems;' in litho_be
+# Цифры автора: хранение 29086, приём 322 GTU/сек, течение 3.8 GTU/t, скачки 28 GTU/9т, потеря 0.003 GTU/t.
+assert 'CAPACITY_MILLI = 29_086_000L' in litho_be_code
+assert 'INTAKE_MILLI_PER_TICK = 16_100L' in litho_be_code
+assert 'RUN_MILLI_PER_TICK = 3_800L' in litho_be_code
+assert 'SPIKE_MILLI = 28_000L' in litho_be_code and 'SPIKE_INTERVAL_TICKS = 9' in litho_be_code
+assert 'IDLE_MILLI_PER_TICK = 3L' in litho_be_code
+assert 'STEP_TICKS = {180, 320, 90}' in litho_be_code
+# Конвейер: вход только суп, транзит 1/2, выход; брак → flint в шлак-слот шага.
+assert 'INPUT_SLOT = 0' in litho_be_code and 'TRANSIT_FIRST = 1' in litho_be_code
+assert 'OUTPUT_SLOT = 3' in litho_be_code and 'SLAG_BASE = 4' in litho_be_code
+assert 'new ItemStack(Items.FLINT)' in litho_be_code and 'import net.minecraft.world.item.Items;' in litho_be
+# Шанс брака: 100→1, 50→9, 10→24, 0→36, вне контура → 26 (линейно между точками).
+assert 'if (qualityPercent < 0) return 26.0;' in litho_be_code
+assert 'if (qualityPercent >= 100) return 1.0;' in litho_be_code
+assert 'return 9.0 + (qualityPercent - 50) * (1.0 - 9.0) / 50.0;' in litho_be_code
+assert 'return 24.0 + (qualityPercent - 10) * (9.0 - 24.0) / 40.0;' in litho_be_code
+assert 'return 36.0 + qualityPercent * (24.0 - 36.0) / 10.0;' in litho_be_code
+# Энергия списывается только при наличии запаса; скачок — на каждом 9-м тике третьего бара.
+assert 'if (!be.gtu.has(need)) return;' in litho_be_code
+assert '(be.progress + 1) % SPIKE_INTERVAL_TICKS == 0' in litho_be_code
+# Брак на шагах 0/1 завершает цепочку (step=-1) — иначе фабрика фармила бы flint на пустом шаге.
+assert litho_be.count('be.step = -1; // заготовка пропала') == 2
+assert 'CleanRoomSystem.filterRoom(server, pos)' in litho_be_code
+assert 'import com.gonzotech.cleanroom.CleanRoomSystem;' in litho_be
+assert 'import com.gonzotech.machines.energy.Sinks.GtuSink;' in litho_be
+assert 'implements Container, MenuProvider, GtuSink' in litho_be
 litho_menu=(ROOT/'src/main/java/com/gonzotech/machines/menu/SiliconFactoryMenu.java').read_text()
-assert 'int x = 61 + i * 36;' in litho_menu and 'addSlot(new Slot(container, i, x, 17)' in litho_menu
-assert 'int x = 43 + i * 36;' in litho_menu and 'x, 53)' in litho_menu
+# Раскладка автора: конвейер y181 (172/208/244/280), шлак y145 (190/226/262), инвентарь (8,84).
+assert 'INPUT_SLOT, 172, 181)' in litho_menu
+assert 'index, 172 + index * 36, 181)' in litho_menu
+assert 'OUTPUT_SLOT, 280, 181)' in litho_menu
+assert 'SLAG_BASE + i, 190 + i * 36, 145)' in litho_menu
 assert 'addPlayerInventory(inventory, 8, 84);' in litho_menu
+# Правила слотов: транзит — ни класть ни брать (включая Shift), выход и шлак — только брать.
+assert 'mayPickup(Player player) {' in litho_menu
+assert 'stack.is(ModItems.CHIP_SOUP.get())' in litho_menu
+assert 'if (index == SiliconFactoryBlockEntity.TRANSIT_FIRST || index == SiliconFactoryBlockEntity.TRANSIT_LAST)' in litho_menu
 assert 'stillValid(access, player, ModBlocks.THIRD_SILICON_FACTORY.get())' in litho_menu
 litho_screen=(ROOT/'src/main/java/com/gonzotech/machines/client/SiliconFactoryScreen.java').read_text()
 assert 'silicon_factory_chip_" + variant + "_gui.png' in litho_screen
 assert 'silicon_factory_gui.png' in litho_screen
-assert 'drawVBarTex(graphics, x + 8, y + 17, 16, 52,' in litho_screen
+# ГТУ (136,145) 16×52; бары (190/226/262,163) 16×34 слева-направо bar_smelting.
+assert 'drawVBarTex(graphics, x + 136, y + 145, 16, 52,' in litho_screen
+assert 'drawHBarTex(graphics, x + 190 + i * 36, y + 163, 16, 34, fraction, BAR_SMELTING)' in litho_screen
+assert 'GtUnits.gtuPair(' in litho_screen and 'BigDecimal.valueOf(menu.gtuMilli(), 3)' in litho_screen
+# Тултипы: имена шагов + строка качества (вне контура — «обычный»).
+assert 'gui.gonzotech.silicon_factory.etching' in litho_screen
+assert 'gui.gonzotech.silicon_factory.photolithography' in litho_screen
+assert 'gui.gonzotech.silicon_factory.vulcanization' in litho_screen
+assert 'gui.gonzotech.silicon_factory.quality_ambient' in litho_screen
 # Кросс-пакетные/событийные импорты фиксируем явно: ECJ без classpath их не ловит (0.3.41 hotfix).
 assert 'import net.neoforged.neoforge.event.level.BlockEvent;' in litho_struct
 assert 'import com.gonzotech.machines.menu.SiliconFactoryMenu;' in litho_be
@@ -246,8 +287,11 @@ assert 'gonzotech:third_silicon_factory' in pickaxe_tag['values']
 # Lang: ключ фабрики переехал в block.*, ключ прогресса на месте, ru=en.
 lang_ru=json.loads((ROOT/'src/main/resources/assets/gonzotech/lang/ru_ru.json').read_text(encoding='utf-8'))
 assert 'block.gonzotech.third_silicon_factory' in lang_en and 'item.gonzotech.third_silicon_factory' not in lang_en
-assert 'block.gonzotech.third_silicon_factory' in lang_ru and 'gui.gonzotech.silicon_factory.progress' in lang_ru
-assert lang_en['gui.gonzotech.silicon_factory.progress'].endswith('%s%%') == lang_ru['gui.gonzotech.silicon_factory.progress'].endswith('%s%%')
+assert 'block.gonzotech.third_silicon_factory' in lang_ru
+for k in ('etching','photolithography','vulcanization','quality','quality_ambient'):
+    assert f'gui.gonzotech.silicon_factory.{k}' in lang_ru and f'gui.gonzotech.silicon_factory.{k}' in lang_en, k
+assert 'gui.gonzotech.silicon_factory.progress' not in lang_ru and 'gui.gonzotech.silicon_factory.progress' not in lang_en
+assert lang_ru['gui.gonzotech.silicon_factory.quality'].startswith('§7') and lang_en['gui.gonzotech.silicon_factory.etching'].startswith('§f')
 eggdef=json.loads((ROOT/'src/main/resources/assets/gonzotech/items/alt_spawn_egg.json').read_text())
 # 0.3.34: яйцо без тинтов — обычная полноцветная PNG-текстура.
 assert eggdef['model']['model']=='gonzotech:item/alt_spawn_egg' and 'tints' not in eggdef['model']

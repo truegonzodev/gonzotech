@@ -1,6 +1,11 @@
 package com.gonzotech.machines.litho;
 
+import com.gonzotech.cleanroom.CleanRoomSystem;
+import com.gonzotech.cleanroom.RoomLedger;
 import com.gonzotech.core.registry.ModItems;
+import com.gonzotech.machines.energy.GtBuffer;
+import com.gonzotech.machines.energy.Sinks.GtuSink;
+import com.gonzotech.machines.menu.SiliconFactoryMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -22,31 +27,73 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import com.gonzotech.machines.menu.SiliconFactoryMenu;
 
 /**
- * BE литографической фабрики: состояние многоблока (origin, вариант,
- * оригиналы блоков-участников) и контейнер — 3 входа + 4 выхода.
+ * BE литографической фабрики (автор 28.09.2026): состояние многоблока
+ * (origin, вариант, оригиналы блоков-участников) и конвейер чипа.
  *
- * <p>Процесс (ПРЕДВАРИТЕЛЬНЫЙ, до ТЗ начинки от автора): 1 «суп-набор» →
- * 1 чип вида, соответствующего варианту структуры, за {@link #PROGRESS_TOTAL}
- * тиков; энергия не требуется. Слоты 0..2 — входы, 3..6 — выходы.</p>
+ * <p>Слоты 0..3 — нижний ряд-конвейер: 0 — вход (только «суп-набор», класть и
+ * брать), 1 и 2 — транзит заготовки (нельзя ни класть, ни брать), 3 — выход
+ * (только брать). Слоты 4..6 — шлак (flint при браке, только брать).</p>
+ *
+ * <p>Процесс: суп-набор в слот 0 → «Травление» (180 тиков) → заготовка в слот 1
+ * → «Фотолитография» (320 тиков) → слот 2 → «Вулканизация» (90 тиков, каждые
+ * 9 тиков скачок 28 GTU) → чип варианта структуры в слот 3. На каждом из трёх
+ * шагов заготовка может забраковаться: шанс зависит от чистоты воздуха контура
+ * ({@link #rejectPercent}); при браке заготовка пропадает, в шлак-слот шага
+ * падает 1× minecraft:flint.</p>
+ *
+ * <p>Энергия: хранение 29086 GTU, приём 322 GTU/сек (16.1 GTU/t), течение бара
+ * 3.8 GTU/t, паразитная потеря 0.003 GTU/t.</p>
  */
-public final class SiliconFactoryBlockEntity extends BlockEntity implements Container, MenuProvider {
+public final class SiliconFactoryBlockEntity extends BlockEntity implements Container, MenuProvider, GtuSink {
 
     public static final int SLOT_COUNT = 7;
-    public static final int DATA_COUNT = 2;
-    public static final int PROGRESS_TOTAL = 100;
-    public static final int INPUT_SLOTS = 3;
-    public static final int OUTPUT_SLOTS = 4;
+    public static final int DATA_COUNT = 6;
+    /** Слоты-конвейер: 0 вход, 1..2 транзит, 3 выход. */
+    public static final int INPUT_SLOT = 0;
+    public static final int TRANSIT_FIRST = 1;
+    public static final int TRANSIT_LAST = 2;
+    public static final int OUTPUT_SLOT = 3;
+    /** Шлак-слоты шагов 0..2 → контейнерные индексы 4..6. */
+    public static final int SLAG_BASE = 4;
+
+    public static final int STEP_ETCHING = 0;
+    public static final int STEP_PHOTOLITHOGRAPHY = 1;
+    public static final int STEP_VULCANIZATION = 2;
+    /** Длительности шагов: Травление 180, Фотолитография 320, Вулканизация 90. */
+    public static final int[] STEP_TICKS = {180, 320, 90};
+
+    /** Максимальное хранение: 29086 GTU (в милли). */
+    public static final long CAPACITY_MILLI = 29_086_000L;
+    public static final int CAPACITY_GTU = 29_086;
+    /** Максимальный приём: 322 GTU/сек = 16.1 GTU/t = 16100 милли. */
+    public static final long INTAKE_MILLI_PER_TICK = 16_100L;
+    /** Течение бара: 3.8 GTU/t. */
+    public static final long RUN_MILLI_PER_TICK = 3_800L;
+    /** Скачок напряжения в третьем баре: 28 GTU каждые 9 тиков. */
+    public static final long SPIKE_MILLI = 28_000L;
+    public static final int SPIKE_INTERVAL_TICKS = 9;
+    /** Паразитная потеря: 0.003 GTU/t. */
+    public static final long IDLE_MILLI_PER_TICK = 3L;
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
+    private final GtBuffer gtu = new GtBuffer(CAPACITY_MILLI);
+    /** -1 — простой; 0..2 — активный шаг (бар). */
+    private int step = -1;
     private int progress;
+    /** Чистота воздуха в сотых доля процента; -1 — вне контура («обычный»). */
+    private int qualityHundredths = -1;
+    private RoomLedger.Room room;
+    /** Разовый бюджет приёма GTU за игровой тик (все отправители вместе). */
+    private long intakeTick = Long.MIN_VALUE;
+    private long intakeReceived;
 
     private boolean formed;
     private int variant;
@@ -60,8 +107,12 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
         @Override
         public int get(int index) {
             return switch (index) {
-                case 0 -> progress;
-                case 1 -> formed ? variant : 0;
+                case 0 -> (int) gtu.amountAsLong() & 0xffff;
+                case 1 -> (int) gtu.amountAsLong() >>> 16;
+                case 2 -> step;
+                case 3 -> progress;
+                case 4 -> qualityHundredths;
+                case 5 -> formed ? variant : 0;
                 default -> 0;
             };
         }
@@ -111,7 +162,6 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
         this.origin = null;
         this.memberPos = null;
         this.originalStates = null;
-        this.progress = 0;
         this.restorePending = false;
         setChanged();
     }
@@ -141,27 +191,128 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
         return null;
     }
 
+    // ─────────────────── Брак по чистоте воздуха (автор 28.09.2026) ───────────────────
+
+    /**
+     * Шанс брака на каждом шаге, %: 100% чистоты → 1, 50% → 9, 10% → 24, 0% → 36
+     * (между точками — линейно). Вне контура («обычный» воздух) — 26.
+     */
+    public static double rejectPercent(double qualityPercent) {
+        if (qualityPercent < 0) return 26.0;
+        if (qualityPercent >= 100) return 1.0;
+        if (qualityPercent >= 50) return 9.0 + (qualityPercent - 50) * (1.0 - 9.0) / 50.0;
+        if (qualityPercent >= 10) return 24.0 + (qualityPercent - 10) * (9.0 - 24.0) / 40.0;
+        return 36.0 + qualityPercent * (24.0 - 36.0) / 10.0;
+    }
+
     // ─────────────────── Тик ───────────────────
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SiliconFactoryBlockEntity be) {
         if (!(level instanceof ServerLevel server)) return;
-        if (!be.formed) {
+        // Чистота воздуха: известная комната проверяется каждый тик (пролом/выгрузка
+        // останавливают работу), поиск вне комнаты — раз в секунду, как у фильтра.
+        if (be.room != null || server.getGameTime() % 20 == 0) {
+            be.room = CleanRoomSystem.filterRoom(server, pos);
+        }
+        be.qualityHundredths = be.room == null ? -1 : (int) Math.round(be.room.quality() * 100);
+        // Паразитная потеря 0.003 GTU/t — всегда, пока есть запас.
+        if (be.gtu.has(IDLE_MILLI_PER_TICK)) {
+            be.gtu.extract(IDLE_MILLI_PER_TICK, false);
+        }
+        if (be.formed) {
             if (be.restorePending) {
-                be.restorePending = false;
+                // Не гасим флаг при неудаче: чанк части может быть ещё не загружен —
+                // ретраим каждый тик до успеха либо до распада структуры.
                 SiliconFactoryStructure.restoreController(server, be);
             }
+            if (be.step < 0 && be.items.get(INPUT_SLOT).is(ModItems.CHIP_SOUP.get())) {
+                be.step = STEP_ETCHING;
+                be.progress = 0;
+                be.setChanged();
+            }
+            if (be.step >= 0) {
+                tickStep(server, be);
+            }
+        }
+    }
+
+    private static void tickStep(ServerLevel server, SiliconFactoryBlockEntity be) {
+        int duration = STEP_TICKS[be.step];
+        if (be.progress >= duration) {
+            // Шаг завершён, но перенос держится (например, нет места под чип).
+            completeStep(server, be);
             return;
         }
-        if (be.canProcess()) {
-            be.progress++;
-            if (be.progress >= PROGRESS_TOTAL) {
+        long need = RUN_MILLI_PER_TICK;
+        if (be.step == STEP_VULCANIZATION && (be.progress + 1) % SPIKE_INTERVAL_TICKS == 0) {
+            need += SPIKE_MILLI;
+        }
+        if (!be.gtu.has(need)) return; // нет энергии — пауза
+        be.gtu.extract(need, false);
+        be.progress++;
+        if (be.progress >= duration) {
+            completeStep(server, be);
+        } else {
+            be.setChanged();
+        }
+    }
+
+    private static void completeStep(ServerLevel server, SiliconFactoryBlockEntity be) {
+        switch (be.step) {
+            case STEP_ETCHING -> {
+                if (reject(server, be)) {
+                    be.items.set(INPUT_SLOT, ItemStack.EMPTY);
+                    dropFlint(be, STEP_ETCHING);
+                    be.step = -1; // заготовка пропала — конвейер простаивает
+                } else {
+                    be.items.set(INPUT_SLOT, ItemStack.EMPTY);
+                    be.items.set(TRANSIT_FIRST, new ItemStack(ModItems.CHIP_BLANKY.get()));
+                    be.step = STEP_PHOTOLITHOGRAPHY;
+                }
                 be.progress = 0;
-                be.processOne();
             }
-            be.setChanged();
-        } else if (be.progress != 0) {
-            be.progress = 0;
-            be.setChanged();
+            case STEP_PHOTOLITHOGRAPHY -> {
+                if (reject(server, be)) {
+                    be.items.set(TRANSIT_FIRST, ItemStack.EMPTY);
+                    dropFlint(be, STEP_PHOTOLITHOGRAPHY);
+                    be.step = -1; // заготовка пропала — конвейер простаивает
+                } else {
+                    be.items.set(TRANSIT_FIRST, ItemStack.EMPTY);
+                    be.items.set(TRANSIT_LAST, new ItemStack(ModItems.CHIP_BLANKY.get()));
+                    be.step = STEP_VULCANIZATION;
+                }
+                be.progress = 0;
+            }
+            case STEP_VULCANIZATION -> {
+                ItemStack out = be.outputItem();
+                if (!fits(be, OUTPUT_SLOT, out)) return; // держим бар полным до появления места
+                if (reject(server, be)) {
+                    be.items.set(TRANSIT_LAST, ItemStack.EMPTY);
+                    dropFlint(be, STEP_VULCANIZATION);
+                } else {
+                    be.items.set(TRANSIT_LAST, ItemStack.EMPTY);
+                    insert(be, OUTPUT_SLOT, out);
+                }
+                be.step = -1;
+                be.progress = 0;
+            }
+            default -> be.step = -1;
+        }
+        be.setChanged();
+    }
+
+    private static boolean reject(ServerLevel server, SiliconFactoryBlockEntity be) {
+        return server.random.nextDouble() * 100.0 < rejectPercent(be.qualityHundredths);
+    }
+
+    /** Брак: в шлак-слот шага падает 1× minecraft:flint. */
+    private static void dropFlint(SiliconFactoryBlockEntity be, int step) {
+        int slot = SLAG_BASE + step;
+        ItemStack slag = be.items.get(slot);
+        if (slag.isEmpty()) {
+            be.items.set(slot, new ItemStack(Items.FLINT));
+        } else if (slag.is(Items.FLINT) && slag.getCount() < slag.getMaxStackSize()) {
+            slag.grow(1);
         }
     }
 
@@ -174,47 +325,36 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
         };
     }
 
-    private boolean canProcess() {
-        ItemStack out = outputItem();
-        if (out.isEmpty()) return false;
-        boolean hasSoup = false;
-        for (int i = 0; i < INPUT_SLOTS; i++) {
-            if (items.get(i).is(ModItems.CHIP_SOUP.get())) {
-                hasSoup = true;
-                break;
-            }
-        }
-        if (!hasSoup) return false;
-        for (int i = INPUT_SLOTS; i < SLOT_COUNT; i++) {
-            ItemStack slot = items.get(i);
-            if (slot.isEmpty()) return true;
-            if (ItemStack.isSameItemSameComponents(slot, out) && slot.getCount() < slot.getMaxStackSize()) {
-                return true;
-            }
-        }
-        return false;
+    private static boolean fits(SiliconFactoryBlockEntity be, int slot, ItemStack stack) {
+        ItemStack current = be.items.get(slot);
+        return current.isEmpty() || (ItemStack.isSameItemSameComponents(current, stack)
+            && current.getCount() < current.getMaxStackSize());
     }
 
-    private void processOne() {
-        for (int i = 0; i < INPUT_SLOTS; i++) {
-            ItemStack in = items.get(i);
-            if (in.is(ModItems.CHIP_SOUP.get())) {
-                in.shrink(1);
-                break;
-            }
+    private static void insert(SiliconFactoryBlockEntity be, int slot, ItemStack stack) {
+        ItemStack current = be.items.get(slot);
+        if (current.isEmpty()) {
+            be.items.set(slot, stack);
+        } else {
+            current.grow(stack.getCount());
         }
-        ItemStack out = outputItem();
-        for (int i = INPUT_SLOTS; i < SLOT_COUNT; i++) {
-            ItemStack slot = items.get(i);
-            if (slot.isEmpty()) {
-                items.set(i, out);
-                return;
-            }
-            if (ItemStack.isSameItemSameComponents(slot, out) && slot.getCount() < slot.getMaxStackSize()) {
-                slot.grow(1);
-                return;
-            }
+    }
+
+    // ─────────────────── Приём GTU: 322 GTU/сек на все лица разом ───────────────────
+
+    @Override
+    public long receiveGtu(long amount, boolean simulate) {
+        long now = level == null ? 0 : level.getGameTime();
+        long used = now == intakeTick ? intakeReceived : 0;
+        long accepted = Math.max(0, Math.min(Math.min(amount,
+            CAPACITY_MILLI - gtu.amountAsLong()), INTAKE_MILLI_PER_TICK - used));
+        if (!simulate && accepted > 0) {
+            intakeTick = now;
+            intakeReceived = used + accepted;
+            gtu.receive(accepted, false);
+            setChanged();
         }
+        return accepted;
     }
 
     // ─────────────────── NBT ───────────────────
@@ -223,6 +363,8 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
+        tag.putLong("Gtu", gtu.amountAsLong());
+        tag.putInt("Step", step);
         tag.putInt("Progress", progress);
         if (formed && origin != null && memberPos != null && originalStates != null) {
             tag.putBoolean("Formed", true);
@@ -246,6 +388,8 @@ public final class SiliconFactoryBlockEntity extends BlockEntity implements Cont
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         ContainerHelper.loadAllItems(tag, items, registries);
+        gtu.receive(Math.min(tag.getLong("Gtu"), CAPACITY_MILLI), false);
+        step = tag.contains("Step") ? tag.getInt("Step") : -1;
         progress = tag.getInt("Progress");
         formed = false;
         restorePending = false;
