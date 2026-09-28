@@ -268,13 +268,17 @@ for slot in range(18):
         mp=ROOT/f'src/main/resources/assets/gonzotech/models/block/third_silicon_factory/slice_{slot}_chip_{v}.json'
         mm=json.loads(mp.read_text())
         assert mm['textures']['sheet']==f'gonzotech:block/third/silicon_factory_chip_{v}_formed'
+# UV от кадра 96×96 (формат .mcmeta-анимации: кадр = ширина×ширина, 0.3.43):
+# v = px_y/6 (как и u). Контроль: верхний центр — пиксели (64,48); низ — (16,16).
 slice13=json.loads((ROOT/'src/main/resources/assets/gonzotech/models/block/third_silicon_factory/slice_13_chip_1.json').read_text())
-assert slice13['elements'][0]['faces']['up']['uv']==[10.6667, 9.6, 13.3333, 12.8]
+assert slice13['elements'][0]['faces']['up']['uv']==[10.6667, 8.0, 13.3333, 10.6667]
+assert slice13['elements'][0]['faces']['down']['uv']==[2.6667, 2.6667, 5.3333, 5.3333]
 assert slice13['elements'][0]['faces']['down'].get('cullface')=='down'
 for v in (1,2,3):
     tp=ROOT/f'src/main/resources/assets/gonzotech/textures/block/third/silicon_factory_chip_{v}_formed.png'
     with LithoImage.open(tp) as im:
-        assert im.size==(96,80) and im.mode=='RGBA', tp.name
+        assert im.size==(96,96) and im.mode=='RGBA', tp.name
+    assert not (ROOT/f'src/main/resources/assets/gonzotech/textures/block/third/silicon_factory_chip_{v}_formed.png.mcmeta').exists()
 # Loot: фабрика дропает себя, оболочка — пустой файл.
 factory_loot=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/third_silicon_factory.json').read_text())
 assert factory_loot['pools'][0]['entries'][0]['name']=='gonzotech:third_silicon_factory'
