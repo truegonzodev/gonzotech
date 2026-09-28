@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.litho.SiliconFactoryBlockEntity;
 import com.gonzotech.machines.menu.SiliconFactoryMenu;
 import net.minecraft.client.Minecraft;

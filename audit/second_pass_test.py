@@ -255,6 +255,8 @@ assert 'import net.neoforged.neoforge.event.level.BlockEvent;' in litho_struct
 assert 'import com.gonzotech.machines.menu.SiliconFactoryMenu;' in litho_be
 assert 'import net.minecraft.world.level.block.Block;' in litho_be
 assert 'renderComponentTooltip(font,' in litho_screen
+# 0.3.42 hotfix: GtUnits — кросс-пакетный импорт, ECJ без classpath не ловит.
+assert 'import com.gonzotech.core.text.GtUnits;' in litho_screen
 # Ресурсы: blockstate фабрики (4 ключа) и оболочки (54), 54 срез-модели, UV-листы 96×80.
 from PIL import Image as LithoImage
 factory_bs=json.loads((ROOT/'src/main/resources/assets/gonzotech/blockstates/third_silicon_factory.json').read_text())
