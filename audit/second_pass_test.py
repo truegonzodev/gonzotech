@@ -178,6 +178,9 @@ assert "code != 'S'" in litho_struct_code and 'onBlockPlace(BlockEvent.EntityPla
 # Сломанная оболочка выпадает оригиналом через loot оригинала; skipPos не восстанавливается.
 assert 'shellBroken' in litho_struct_code and 'Block.dropResources(original, level, pos)' in litho_struct_code
 assert 'if (skipPos != null && p.equals(skipPos)) continue;' in litho_struct_code
+# ── 0.3.48: страж ре-ентерабельности — свапы form/invalidate не ломают структуру ──
+assert 'if (SUPPRESSED.contains(brokenPos.asLong())) return;' in litho_struct_code
+assert 'if (SUPPRESSED.contains(pos.asLong())) return; // программная перестановка, см. partRemoved' in litho_struct
 # Повторная form не переписывает оригиналы (guard на isFormed).
 assert re.search(r'if \(controller\.isFormed\(\)\) \{[^}]*return;', litho_struct_code, re.S)
 # Поворот на 90° принимается (вариант 2 неинвариантен: колонки B вдоль Z и вдоль X).

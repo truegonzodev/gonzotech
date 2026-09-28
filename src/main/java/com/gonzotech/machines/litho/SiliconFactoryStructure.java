@@ -112,6 +112,12 @@ public final class SiliconFactoryStructure {
 
     /** Удаляется фабрика или оболочка (skip = удалённая позиция: её не восстанавливаем). */
     static void partRemoved(ServerLevel level, BlockPos brokenPos) {
+        // Страж ре-ентерабельности (0.3.48): setBlock внутри form()/invalidate()
+        // дёргает onRemove у оболочек — без стража первый же свап вызывал
+        // вложенный invalidate (распад при сборке) и каскад dropResources
+        // («все блоки выпадают, структура стоит»). Программные перестановки
+        // держат позиции в SUPPRESSED — они не сломаны.
+        if (SUPPRESSED.contains(brokenPos.asLong())) return;
         BlockPos root = controllerAt(level, brokenPos);
         if (root == null) return;
         if (level.getBlockEntity(root) instanceof SiliconFactoryBlockEntity controller) {
@@ -121,6 +127,7 @@ public final class SiliconFactoryStructure {
 
     /** Сломана оболочка: структура распадается, оригинал позиции выпадает лутом. */
     static void shellBroken(ServerLevel level, BlockPos pos) {
+        if (SUPPRESSED.contains(pos.asLong())) return; // программная перестановка, см. partRemoved
         BlockPos root = controllerAt(level, pos);
         if (root == null) return;
         BlockState original = null;
