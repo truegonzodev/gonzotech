@@ -42,13 +42,27 @@ public final class CleanRoomDetector {
      * Класс с учётом контекста (0.3.47): shell-блок литографии классифицируется
      * как его ОРИГИНАЛ (контроллер структуры → NBT оболочки) — подмена участника
      * при сборке/распаде не меняет класс ячейки, и комната не теряет качество.
+     *
+     * <p>0.3.49 (деинициализация): программные свапы invalidate() происходят при
+     * уже удалённом BE старой оболочки и под стражей структурного индекса, а
+     * внешний blockChanged слома приходит после распуска структуры — поэтому
+     * shell-состояние без живого прокси смотрит в карту оригиналов структуры, а
+     * позиция из окна деинициализации (мгновение воздуха между сломом оболочки и
+     * восстановлением оригинала) классифицируется по последнему оригиналу.</p>
      */
     public static RoomTopology.Kind kindAt(ServerLevel level, BlockPos pos, BlockState state) {
-        if (state.getBlock() instanceof com.gonzotech.machines.litho.SiliconFactoryShellBlock
-            && level.getBlockEntity(pos) instanceof com.gonzotech.machines.litho.SiliconFactoryShellBlockEntity proxy) {
-            RoomTopology.Kind preserved = proxy.preservedKind();
-            if (preserved != null) return preserved;
+        if (state.getBlock() instanceof com.gonzotech.machines.litho.SiliconFactoryShellBlock) {
+            if (level.getBlockEntity(pos) instanceof com.gonzotech.machines.litho.SiliconFactoryShellBlockEntity proxy) {
+                RoomTopology.Kind preserved = proxy.preservedKind();
+                if (preserved != null) return preserved;
+            }
+            RoomTopology.Kind withoutProxy =
+                com.gonzotech.machines.litho.SiliconFactoryStructure.shellKindWithoutProxy(pos);
+            if (withoutProxy != null) return withoutProxy;
         }
+        RoomTopology.Kind deinit =
+            com.gonzotech.machines.litho.SiliconFactoryStructure.deinitKindOverrideAt(level, pos);
+        if (deinit != null) return deinit;
         return kind(state);
     }
 

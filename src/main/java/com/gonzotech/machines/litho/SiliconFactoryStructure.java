@@ -60,6 +60,23 @@ public final class SiliconFactoryStructure {
     /** Гашение tryForm во время программной перестановки блоков (form/restore). */
     private static final Set<Long> SUPPRESSED = new HashSet<>();
 
+    /**
+     * Позиции, чей класс ячейки держится по ОРИГИНАЛУ на всё окно деинициализации
+     * (0.3.49): сломанная оболочка восстанавливается своим оригиналом (дыры нет),
+     * но между реальным setBlock(AIR) и восстановлением классификатор комнаты
+     * обязан видеть исходный класс (SEAL), иначе честно фиксирует пролом и
+     * пересоздаёт комнату с качеством 0.
+     */
+    private static final Set<Long> DEINIT_KIND_PRESERVED = new HashSet<>();
+
+    /**
+     * Последний оригинальный класс ячейки по позициям машин литографии.
+     * Переживает саму структуру: внешний blockChanged слома приходит ПОСЛЕ
+     * invalidate (индекс и formed уже сняты), а BE оболочки удалён —
+     * классификатору нужен источник класса, независимый от BE и контроллера.
+     */
+    private static final Map<Long, RoomTopology.Kind> LAST_ORIGINAL_KIND = new HashMap<>();
+
     private SiliconFactoryStructure() {
     }
 
@@ -67,6 +84,26 @@ public final class SiliconFactoryStructure {
     public static void clearAll() {
         MEMBER_INDEX.clear();
         SUPPRESSED.clear();
+        DEINIT_KIND_PRESERVED.clear();
+        LAST_ORIGINAL_KIND.clear();
+    }
+
+    /**
+     * Класс ячейки под охраной деинициализации (0.3.49): позиция из
+     * {@link #DEINIT_KIND_PRESERVED} классифицируется по последнему
+     * оригинальному классу, даже если в мире там уже воздух (мгновение
+     * между сломом и восстановлением оригинала).
+     */
+    public static RoomTopology.Kind deinitKindOverrideAt(ServerLevel level, BlockPos pos) {
+        if (DEINIT_KIND_PRESERVED.contains(pos.asLong())) {
+            return LAST_ORIGINAL_KIND.get(pos.asLong());
+        }
+        return null;
+    }
+
+    /** Класс оболочки по карте оригиналов (BE уже удалён, контроллер распущен). */
+    public static RoomTopology.Kind shellKindWithoutProxy(BlockPos pos) {
+        return LAST_ORIGINAL_KIND.get(pos.asLong());
     }
 
     /** Смещение слота внутри коробки: x + 3*z + 9*слой (слой 0 — нижний). */
@@ -125,19 +162,24 @@ public final class SiliconFactoryStructure {
         }
     }
 
-    /** Сломана оболочка: структура распадается, оригинал позиции выпадает лутом. */
+    /**
+     * Сломана оболочка (0.3.49): структура распадается, но оригинал возвращается
+     * И НА СЛОМАННУЮ позицию — дыры нет, комната не видит прелома и сохраняет
+     * качество воздуха. Лут сломанного куска не выпадает (он же стоит на месте —
+     * иначе дюп «блок + предмет»); добыть блок можно обычным способом после
+     * распада. Ранее лут выпадал, но дыра честно убивала комнату.
+     */
     static void shellBroken(ServerLevel level, BlockPos pos) {
         if (SUPPRESSED.contains(pos.asLong())) return; // программная перестановка, см. partRemoved
         BlockPos root = controllerAt(level, pos);
         if (root == null) return;
-        BlockState original = null;
-        if (level.getBlockEntity(root) instanceof SiliconFactoryBlockEntity controller) {
-            original = controller.originalAt(pos);
-        }
-        partRemoved(level, pos);
-        if (original != null) {
-            // Через loot-таблицу оригинала: стекло без шёлка не выпадает, фарфор — выпадает.
-            Block.dropResources(original, level, pos);
+        if (!(level.getBlockEntity(root) instanceof SiliconFactoryBlockEntity controller)) return;
+        DEINIT_KIND_PRESERVED.add(pos.asLong());
+        try {
+            // skipPos = null: сломанная позиция тоже восстанавливается оригиналом.
+            invalidate(level, controller, null);
+        } finally {
+            DEINIT_KIND_PRESERVED.remove(pos.asLong());
         }
     }
 
@@ -262,6 +304,9 @@ public final class SiliconFactoryStructure {
         controller.setFormed(build.origin(), build.variant(), memberPos, originalStates);
         index(level, build.origin(), root);
         for (int i = 0; i < memberPos.length; i++) {
+            LAST_ORIGINAL_KIND.put(memberPos[i].asLong(), CleanRoomDetector.kind(originalStates[i]));
+        }
+        for (int i = 0; i < memberPos.length; i++) {
             BlockState shell = ModBlocks.THIRD_SILICON_FACTORY_SHELL.get().defaultBlockState()
                 .setValue(SiliconFactoryShellBlock.SLICE, slotOf(memberPos[i], build.origin()))
                 .setValue(SiliconFactoryShellBlock.VARIANT, build.variant());
@@ -312,6 +357,10 @@ public final class SiliconFactoryStructure {
         // Восстановление оригиналов — при живом индексе и formed-контроллере
         // (0.3.47): классификатор комнаты сохраняет класс ячейки, качество
         // воздуха комнаты не сбрасывается. unindex/clearFormed — в конце.
+        for (int i = 0; i < controller.memberCount(); i++) {
+            LAST_ORIGINAL_KIND.put(controller.memberPos(i).asLong(),
+                CleanRoomDetector.kind(controller.originalState(i)));
+        }
         for (int i = 0; i < controller.memberCount(); i++) {
             BlockPos p = controller.memberPos(i);
             if (skipPos != null && p.equals(skipPos)) continue;

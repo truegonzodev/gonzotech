@@ -175,9 +175,21 @@ for marker in ('METAL_BLOCKS.get("aluminum_block")', 'METAL_BLOCKS.get("stainles
     assert marker in litho_struct_code, 'layout material: ' + marker
 # Оболочка — джокер (код != S) и участвует в EntityPlaceEvent-крюке.
 assert "code != 'S'" in litho_struct_code and 'onBlockPlace(BlockEvent.EntityPlaceEvent' in litho_struct_code
-# Сломанная оболочка выпадает оригиналом через loot оригинала; skipPos не восстанавливается.
-assert 'shellBroken' in litho_struct_code and 'Block.dropResources(original, level, pos)' in litho_struct_code
+# Сломанная оболочка (0.3.49): лут НЕ выпадает, сломанная позиция восстанавливается
+# оригиналом (skipPos=null) — комнаты не теряют качество при деинициализации.
+assert 'shellBroken' in litho_struct_code and 'Block.dropResources' not in litho_struct_code
+assert '// skipPos = null: сломанная позиция тоже восстанавливается оригиналом.' in litho_struct
 assert 'if (skipPos != null && p.equals(skipPos)) continue;' in litho_struct_code
+# ── 0.3.49: сохранение класса ячеек при деинициализации ──
+assert 'DEINIT_KIND_PRESERVED' in litho_struct_code
+assert 'private static final Map<Long, RoomTopology.Kind> LAST_ORIGINAL_KIND = new HashMap<>();' in litho_struct
+assert 'LAST_ORIGINAL_KIND.put(controller.memberPos(i).asLong(),' in litho_struct_code
+assert 'LAST_ORIGINAL_KIND.put(memberPos[i].asLong(), CleanRoomDetector.kind(originalStates[i]));' in litho_struct_code
+assert 'public static RoomTopology.Kind deinitKindOverrideAt(ServerLevel level, BlockPos pos)' in litho_struct_code
+assert 'public static RoomTopology.Kind shellKindWithoutProxy(BlockPos pos)' in litho_struct_code
+litho_detector=(ROOT/'src/main/java/com/gonzotech/cleanroom/CleanRoomDetector.java').read_text()
+assert 'SiliconFactoryStructure.shellKindWithoutProxy(pos)' in litho_detector
+assert 'SiliconFactoryStructure.deinitKindOverrideAt(level, pos)' in litho_detector
 # ── 0.3.48: страж ре-ентерабельности — свапы form/invalidate не ломают структуру ──
 assert 'if (SUPPRESSED.contains(brokenPos.asLong())) return;' in litho_struct_code
 assert 'if (SUPPRESSED.contains(pos.asLong())) return; // программная перестановка, см. partRemoved' in litho_struct
