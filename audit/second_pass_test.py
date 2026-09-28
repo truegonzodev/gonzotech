@@ -129,12 +129,19 @@ for recipe_id in EXPECTED_RECIPES:
     rd=json.loads(rp.read_text())
     # lang-существование выводов/ингредиентов проверяется ниже по словарю en_us.json.
 tier3=read('machines/crafting/TierThreeCrafting.java')
-for recipe_id in EXPECTED_RECIPES:
-    assert f'"gonzotech:{recipe_id}"' in tier3, 'book list: ' + recipe_id
 tier3_code=re.sub(r'/\*.*?\*/|//[^\n]*','',tier3,flags=re.S)
+# Список книги: все 15 id обязаны лежать внутри ОДНОГО List.of(...) до его ");" —
+# разрыв списка посреди выражения делает файл некомпилируемым (0.3.40 hotfix).
+blocks=re.findall(r'List\.of\(([^;]*?)\);', tier3_code, re.S)
+assert any(all(f'"gonzotech:{rid}"' in b for rid in EXPECTED_RECIPES) for b in blocks), 'book list entries in one List.of'
 GATED={**{i: i.upper() for i in NEW_ITEMS}, 'rubber_block': 'RUBBER_BLOCK_ITEM'}
+chain=re.search(r'return item ==[^;]*;', tier3_code, re.S)
+assert chain, 'isGatedOutput return chain'
 for item_id, const in GATED.items():
-    assert const + '.get()' in tier3_code, 'craft gate: ' + item_id
+    assert const + '.get()' in chain.group(0), 'craft gate: ' + item_id
+# Цепочка — одно выражение: до закрывающей "}" метода не должно остаться висячих "|| item ==".
+method_end=tier3_code.find('}', chain.end())
+assert method_end != -1 and '|| item ==' not in tier3_code[chain.end():method_end], 'orphan || after return chain'
 # Ингредиенты/выводы рецептов существуют как зарегистрированные предметы (по lang-ключам, не substring).
 lang_en=json.loads((ROOT/'src/main/resources/assets/gonzotech/lang/en_us.json').read_text(encoding='utf-8'))
 for recipe_id in EXPECTED_RECIPES:

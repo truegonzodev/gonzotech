@@ -172,6 +172,14 @@ public final class TierThreeCrafting {
         || item == ModItems.UV_METER.get()
         || item == ModItems.DUST_METER.get()
         || item == ModItems.CANISTER.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get()
         // Литография (автор 28.09.2026): вся цепочка — полный гейт «Открытия 3».
         // Чипы chip_1/2/3 пока без JSON-рецептов (их выдаст машина литографии) —
         // крафт-гейт уже стоит, в книгу рецептов они попадут вместе с рецептами машины.
@@ -185,13 +193,5 @@ public final class TierThreeCrafting {
         || item == ModItems.CHIP_3.get()
         || item == ModItems.RUBBER_BLOCK_ITEM.get()
         || item == ModItems.THIRD_SILICON_FACTORY.get();
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_RECTIFIER_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get()
-            || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get();
     }
 }
