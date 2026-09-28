@@ -174,7 +174,7 @@ for marker in ('METAL_BLOCKS.get("aluminum_block")', 'METAL_BLOCKS.get("stainles
                'BORE_STAINED_GLASS.get()', 'THIRD_SILICON_FACTORY.get()'):
     assert marker in litho_struct_code, 'layout material: ' + marker
 # Оболочка — джокер (код != S) и участвует в EntityPlaceEvent-крюке.
-assert "code != 'S'" in litho_struct_code and 'onBlockPlace(EntityPlaceEvent' in litho_struct_code
+assert "code != 'S'" in litho_struct_code and 'onBlockPlace(BlockEvent.EntityPlaceEvent' in litho_struct_code
 # Сломанная оболочка выпадает оригиналом через loot оригинала; skipPos не восстанавливается.
 assert 'shellBroken' in litho_struct_code and 'Block.dropResources(original, level, pos)' in litho_struct_code
 assert 'if (skipPos != null && p.equals(skipPos)) continue;' in litho_struct_code
@@ -209,6 +209,11 @@ litho_screen=(ROOT/'src/main/java/com/gonzotech/machines/client/SiliconFactorySc
 assert 'silicon_factory_chip_" + variant + "_gui.png' in litho_screen
 assert 'silicon_factory_gui.png' in litho_screen
 assert 'drawVBarTex(graphics, x + 8, y + 17, 16, 52,' in litho_screen
+# Кросс-пакетные/событийные импорты фиксируем явно: ECJ без classpath их не ловит (0.3.41 hotfix).
+assert 'import net.neoforged.neoforge.event.level.BlockEvent;' in litho_struct
+assert 'import com.gonzotech.machines.menu.SiliconFactoryMenu;' in litho_be
+assert 'import net.minecraft.world.level.block.Block;' in litho_be
+assert 'renderComponentTooltip(font,' in litho_screen
 # Ресурсы: blockstate фабрики (4 ключа) и оболочки (54), 54 срез-модели, UV-листы 96×80.
 from PIL import Image as LithoImage
 factory_bs=json.loads((ROOT/'src/main/resources/assets/gonzotech/blockstates/third_silicon_factory.json').read_text())

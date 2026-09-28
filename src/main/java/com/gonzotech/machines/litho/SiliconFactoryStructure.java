@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.event.level.block.EntityPlaceEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -98,7 +98,7 @@ public final class SiliconFactoryStructure {
     }
 
     /** Игрок поставил блок-участник — попытка достроить структуру. */
-    public static void onBlockPlace(EntityPlaceEvent event) {
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
         if (!(event.getLevel() instanceof ServerLevel server)) return;
         if (isMember(event.getPlacedBlock().getBlock())) tryFormFrom(server, event.getPos());
     }

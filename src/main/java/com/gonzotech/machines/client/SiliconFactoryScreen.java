@@ -65,7 +65,7 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
         int y = topPos;
         if (inRect(mouseX, mouseY, x + 8, y + 17, 16, 52)) {
             int percent = Math.round(menu.progress() * 100f / menu.progressTotal());
-            graphics.renderComponentTooltip(graphics, List.of(Component.translatable(
+            graphics.renderComponentTooltip(font, List.of(Component.translatable(
                 "gui.gonzotech.silicon_factory.progress", percent)), mouseX, mouseY);
         }
     }
