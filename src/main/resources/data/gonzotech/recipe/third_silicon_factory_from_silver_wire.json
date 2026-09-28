@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ABC",
+    "DEF",
+    "ABA"
+  ],
+  "key": {
+    "A": "gonzotech:silver_wire",
+    "B": "gonzotech:aluminum_housing",
+    "C": "gonzotech:silicon",
+    "D": "gonzotech:transistor",
+    "E": "gonzotech:uv_lamp",
+    "F": "gonzotech:energy_module"
+  },
+  "result": {
+    "id": "gonzotech:third_silicon_factory",
+    "count": 1
+  },
+  "group": "tier3_silicon_factory"
+}

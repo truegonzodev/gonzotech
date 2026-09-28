@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:chromium_dust",
+    "gonzotech:sodium_cyanate",
+    "minecraft:bone_meal"
+  ],
+  "result": {
+    "id": "gonzotech:photoresist",
+    "count": 1
+  },
+  "group": "tier3_photoresist"
+}

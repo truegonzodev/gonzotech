@@ -919,5 +919,15 @@
   "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Пенка на поверхности жидкостей Gonzo Tech. Только визуальный эффект; не влияет на радиационные частицы и свойства жидкостей.",
   "gui.gonzotech.faint.get_up": "Встать",
   "entity.gonzotech.alt": "Альт-житель",
-  "item.gonzotech.alt_spawn_egg": "Яйцо призыва альт-жителя"
+  "item.gonzotech.alt_spawn_egg": "Яйцо призыва альт-жителя",
+  "item.gonzotech.chip_1": "Чип питания",
+  "item.gonzotech.chip_2": "Преобразователь",
+  "item.gonzotech.chip_3": "Микроконтроллер",
+  "item.gonzotech.uv_lamp": "Ультрафиолетовая лампа",
+  "item.gonzotech.chip_blank": "Заготовка чипа",
+  "item.gonzotech.photoresist": "Фоторезист",
+  "item.gonzotech.chip_blanky": "Основа чипа",
+  "item.gonzotech.chip_soup": "Суп-набор для чипа",
+  "item.gonzotech.third_silicon_factory": "Литографическая фабрика",
+  "block.gonzotech.rubber_block": "Резиновый блок"
 }

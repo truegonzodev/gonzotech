@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:chip_blank",
+    "gonzotech:photoresist"
+  ],
+  "result": {
+    "id": "gonzotech:chip_blanky",
+    "count": 1
+  },
+  "group": "tier3_chip_blanky"
+}

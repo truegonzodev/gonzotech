@@ -134,6 +134,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.AIR_CLEANER_ITEM.get());
                 output.accept(ModItems.AIR_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
+                // Литографическая фабрика (эпоха 3) — блок/машина подключаются следующим шагом.
+                output.accept(ModItems.THIRD_SILICON_FACTORY.get());
                 // Солнечная панель (открытие 4, тир 1) — строго в конце «функционала» (автор).
                 output.accept(com.gonzotech.machines.registry.ModMachines.SOLAR_PANEL_ITEM.get());
             })
@@ -179,6 +181,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.REINFORCED_ARMOR_CONCRETE_ITEM.get());
                 output.accept(ModItems.DURABLE_CONCRETE_ITEM.get());
                 output.accept(ModItems.PORCELAIN_ITEM.get());
+                // Резиновый блок — упаковка 9 резины (автор 28.09.2026).
+                output.accept(ModItems.RUBBER_BLOCK_ITEM.get());
                 output.accept(ModItems.SLAG_CONCRETE_ITEM.get());
                 output.accept(ModItems.INDUSTRIAL_CONCRETE_ITEM.get());
                 output.accept(ModItems.REINFORCED_INDUSTRIAL_CONCRETE_ITEM.get());
@@ -277,6 +281,15 @@ public class ModCreativeTabs {
                 output.accept(ModItems.FLUID_MODULE.get());
                 output.accept(ModItems.SHEATHING_ITEM.get());
                 output.accept(ModItems.ALUMINUM_HOUSING_ITEM.get());
+                // Литографическая линия (автор 28.09.2026).
+                output.accept(ModItems.UV_LAMP.get());
+                output.accept(ModItems.CHIP_BLANK.get());
+                output.accept(ModItems.PHOTORESIST.get());
+                output.accept(ModItems.CHIP_BLANKY.get());
+                output.accept(ModItems.CHIP_SOUP.get());
+                output.accept(ModItems.CHIP_1.get());
+                output.accept(ModItems.CHIP_2.get());
+                output.accept(ModItems.CHIP_3.get());
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());
                 output.accept(ModItems.DIORITE_GRIT.get());

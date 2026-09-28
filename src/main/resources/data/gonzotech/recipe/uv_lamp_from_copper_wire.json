@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CPW",
+    "DMD"
+  ],
+  "key": {
+    "C": "gonzotech:coil",
+    "P": "gonzotech:redstone_plate",
+    "W": "gonzotech:copper_wire",
+    "D": "gonzotech:durable_ampoule",
+    "M": "gonzotech:mercury_ingot"
+  },
+  "result": {
+    "id": "gonzotech:uv_lamp",
+    "count": 1
+  },
+  "group": "tier3_uv_lamp"
+}

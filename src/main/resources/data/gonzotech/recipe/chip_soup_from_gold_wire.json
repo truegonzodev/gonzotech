@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:chip_blanky",
+    "gonzotech:rubber",
+    "gonzotech:gold_wire"
+  ],
+  "result": {
+    "id": "gonzotech:chip_soup",
+    "count": 1
+  },
+  "group": "tier3_chip_soup"
+}

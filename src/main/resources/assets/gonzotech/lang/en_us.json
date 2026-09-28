@@ -919,5 +919,15 @@
   "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Foam on Gonzo Tech fluid surfaces. Visual only; does not affect radiation particles or fluid gameplay.",
   "gui.gonzotech.faint.get_up": "Get up",
   "entity.gonzotech.alt": "Alt Villager",
-  "item.gonzotech.alt_spawn_egg": "Alt Villager Spawn Egg"
+  "item.gonzotech.alt_spawn_egg": "Alt Villager Spawn Egg",
+  "item.gonzotech.chip_1": "Power Chip",
+  "item.gonzotech.chip_2": "Converter Chip",
+  "item.gonzotech.chip_3": "Microcontroller",
+  "item.gonzotech.uv_lamp": "Ultraviolet Lamp",
+  "item.gonzotech.chip_blank": "Chip Blank",
+  "item.gonzotech.photoresist": "Photoresist",
+  "item.gonzotech.chip_blanky": "Chip Base",
+  "item.gonzotech.chip_soup": "Chip Soup Set",
+  "item.gonzotech.third_silicon_factory": "Lithography Factory",
+  "block.gonzotech.rubber_block": "Rubber Block"
 }

@@ -93,6 +93,63 @@ assert 'AltVillagerClient::onRegisterRenderers' in alt_mod and 'EntityAttributeC
     and 'Villager.createAttributes()' in alt_mod
 alt_items=read('core/registry/ModItems.java')
 assert 'SpawnEggItem(ModEntities.ALT.get(), props)' in alt_items
+
+# ── 0.3.40: литографическая линия — defs, рецепты, полный гейт тира 3 ──
+NEW_ITEMS=['chip_1','chip_2','chip_3','uv_lamp','chip_blank','photoresist','chip_blanky','chip_soup','third_silicon_factory']
+for item_id in NEW_ITEMS:
+    assert f'"{item_id}"' in alt_items, 'item def: ' + item_id
+assert 'RUBBER_BLOCK_ITEM =\n        ITEMS.registerSimpleBlockItem("rubber_block", ModBlocks.RUBBER_BLOCK)' in alt_items
+blocks_src=read('core/registry/ModBlocks.java')
+assert '"rubber_block", componentBlockProperties()' in blocks_src
+tabs_src=read('core/registry/ModCreativeTabs.java')
+for item_id in NEW_ITEMS:
+    assert f'ModItems.{item_id.upper()}.get()' in tabs_src, 'tab wiring: ' + item_id
+assert 'RUBBER_BLOCK_ITEM.get()' in tabs_src
+# Ресурсы: item-модели существуют, ссылаются на существующие текстуры.
+for item_id in NEW_ITEMS:
+    m=json.loads((ROOT/f'src/main/resources/assets/gonzotech/models/item/{item_id}.json').read_text())
+    tex=m['textures']['layer0']
+    assert (ROOT/f'src/main/resources/assets/gonzotech/textures/{tex.split("gonzotech:",1)[1]}.png').is_file(), 'texture for ' + item_id
+# Блок резины: blockstate+model+loot+тег кирки.
+assert json.loads((ROOT/'src/main/resources/assets/gonzotech/blockstates/rubber_block.json').read_text())
+bm=json.loads((ROOT/'src/main/resources/assets/gonzotech/models/block/rubber_block.json').read_text())
+assert bm['textures']['all']=='gonzotech:block/industry/rubber_block'
+loot_rubber=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/rubber_block.json').read_text())
+assert loot_rubber['pools'][0]['entries'][0]['name']=='gonzotech:rubber_block'
+assert '"gonzotech:rubber_block"' in (ROOT/'src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json').read_text()
+# Рецепты: 14 файлов, все выводы/ингредиенты существуют как item-дефиниции.
+EXPECTED_RECIPES=['uv_lamp','uv_lamp_from_gold_wire','uv_lamp_from_copper_wire','uv_lamp_from_aluminum_wire',
+ 'chip_blank','photoresist','chip_blanky','chip_soup','chip_soup_from_gold_wire','chip_soup_from_silver_wire',
+ 'rubber_block','third_silicon_factory','third_silicon_factory_from_gold_wire',
+ 'third_silicon_factory_from_silver_wire','third_silicon_factory_from_copper_wire']
+recipe_dir=ROOT/'src/main/resources/data/gonzotech/recipe'
+for recipe_id in EXPECTED_RECIPES:
+    rp=recipe_dir/f'{recipe_id}.json'
+    assert rp.is_file(), 'recipe: ' + recipe_id
+    rd=json.loads(rp.read_text())
+    # lang-существование выводов/ингредиентов проверяется ниже по словарю en_us.json.
+tier3=read('machines/crafting/TierThreeCrafting.java')
+for recipe_id in EXPECTED_RECIPES:
+    assert f'"gonzotech:{recipe_id}"' in tier3, 'book list: ' + recipe_id
+tier3_code=re.sub(r'/\*.*?\*/|//[^\n]*','',tier3,flags=re.S)
+GATED={**{i: i.upper() for i in NEW_ITEMS}, 'rubber_block': 'RUBBER_BLOCK_ITEM'}
+for item_id, const in GATED.items():
+    assert const + '.get()' in tier3_code, 'craft gate: ' + item_id
+# Ингредиенты/выводы рецептов существуют как зарегистрированные предметы (по lang-ключам, не substring).
+lang_en=json.loads((ROOT/'src/main/resources/assets/gonzotech/lang/en_us.json').read_text(encoding='utf-8'))
+for recipe_id in EXPECTED_RECIPES:
+    rd=json.loads((recipe_dir/f'{recipe_id}.json').read_text())
+    outs=rd['result']['id'] if isinstance(rd['result'],dict) else rd['result']
+    assert f'item.gonzotech.{outs.split(":")[1]}' in lang_en         or f'block.gonzotech.{outs.split(":")[1]}' in lang_en, 'lang for output: ' + outs
+    ing=rd.get('ingredients') or list(rd['key'].values())
+    for ing_id in ing:
+        assert ing_id.startswith('minecraft:') or f'item.gonzotech.{ing_id.split(":")[1]}' in lang_en, 'lang for ingredient: ' + ing_id
+# Item-дефиниции 1.21.4 обязаны существовать и указывать на модель.
+for item_id in NEW_ITEMS+['rubber_block']:
+    idef=json.loads((ROOT/f'src/main/resources/assets/gonzotech/items/{item_id}.json').read_text())
+    model=idef['model']['model']
+    assert (ROOT/f'src/main/resources/assets/gonzotech/models/item/{item_id}.json').is_file()
+    assert model==f'gonzotech:item/{item_id}'
 eggdef=json.loads((ROOT/'src/main/resources/assets/gonzotech/items/alt_spawn_egg.json').read_text())
 # 0.3.34: яйцо без тинтов — обычная полноцветная PNG-текстура.
 assert eggdef['model']['model']=='gonzotech:item/alt_spawn_egg' and 'tints' not in eggdef['model']

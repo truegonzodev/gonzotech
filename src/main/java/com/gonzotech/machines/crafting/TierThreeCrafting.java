@@ -38,10 +38,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>Быстрый крафт (Shift-клик) закрыт отдельно — {@code CraftingMenuMixin} берёт тир из
  * {@code Phase3Events.requiredTierFor}, который теперь знает и про третий тир.</p>
  *
- * <p>Состав тира (27.09.2026): три тяжёлые двери, линия брожения/разлива
+ * <p>Состав тира (28.09.2026): три тяжёлые двери, линия брожения/разлива
  * (чан, сусловарочный котёл, дистиллятор, ректификатор, змеевиковый конденсатор,
  * разливной кран), наполнитель, химический завод, фильтр и очиститель воздуха,
- * дозиметр, УФ-радиометр, пылемер и канистра (два рецепта).</p>
+ * дозиметр, УФ-радиометр, пылемер, канистра (два рецепта) и литографическая
+ * линия (лампа, заготовка/фоторезист/основа/суп-набор, резиновый блок, фабрика).</p>
  */
 @EventBusSubscriber(modid = GonzoTechMod.MOD_ID)
 public final class TierThreeCrafting {
@@ -82,7 +83,26 @@ public final class TierThreeCrafting {
         "gonzotech:uv_meter",
         "gonzotech:dust_meter",
         "gonzotech:canister",
-        "gonzotech:canister_from_stainless_steel"
+        "gonzotech:canister_from_stainless_steel",
+        // Литографическая линия (автор 28.09.2026): полный гейт «Открытия 3».
+        // Лампа — первичный провод серебро; альтернативы золото/медь/алюминий.
+        "gonzotech:uv_lamp",
+        "gonzotech:uv_lamp_from_gold_wire",
+        "gonzotech:uv_lamp_from_copper_wire",
+        "gonzotech:uv_lamp_from_aluminum_wire",
+        "gonzotech:chip_blank",
+        "gonzotech:photoresist",
+        "gonzotech:chip_blanky",
+        // Суп-набор — первичный провод медь; альтернативы золото/серебро.
+        "gonzotech:chip_soup",
+        "gonzotech:chip_soup_from_gold_wire",
+        "gonzotech:chip_soup_from_silver_wire",
+        "gonzotech:rubber_block",
+        // Фабрика — первичный провод алюминий; альтернативы золото/серебро/медь.
+        "gonzotech:third_silicon_factory",
+        "gonzotech:third_silicon_factory_from_gold_wire",
+        "gonzotech:third_silicon_factory_from_silver_wire",
+        "gonzotech:third_silicon_factory_from_copper_wire"
     );
 
     /** Одна выдача книги на сессию (не каждый тик). Сбрасывается на выходе игрока. */
@@ -152,6 +172,19 @@ public final class TierThreeCrafting {
         || item == ModItems.UV_METER.get()
         || item == ModItems.DUST_METER.get()
         || item == ModItems.CANISTER.get()
+        // Литография (автор 28.09.2026): вся цепочка — полный гейт «Открытия 3».
+        // Чипы chip_1/2/3 пока без JSON-рецептов (их выдаст машина литографии) —
+        // крафт-гейт уже стоит, в книгу рецептов они попадут вместе с рецептами машины.
+        || item == ModItems.UV_LAMP.get()
+        || item == ModItems.CHIP_BLANK.get()
+        || item == ModItems.PHOTORESIST.get()
+        || item == ModItems.CHIP_BLANKY.get()
+        || item == ModItems.CHIP_SOUP.get()
+        || item == ModItems.CHIP_1.get()
+        || item == ModItems.CHIP_2.get()
+        || item == ModItems.CHIP_3.get()
+        || item == ModItems.RUBBER_BLOCK_ITEM.get()
+        || item == ModItems.THIRD_SILICON_FACTORY.get();
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get()
             || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISTILLER_ITEM.get()

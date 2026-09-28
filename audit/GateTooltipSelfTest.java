@@ -46,6 +46,16 @@ public final class GateTooltipSelfTest {
                 && result.get("gonzotech:dosimeter").equals(List.of(GateRequirement.discovery(3)))
                 && result.get("gonzotech:uv_meter").equals(List.of(GateRequirement.discovery(3))),
                 "instrument gates 3 follow their real recipes");
+        // 0.3.40: lithography line — alternates aggregate into one distinct gate 3.
+        check(result.get("gonzotech:uv_lamp").equals(List.of(GateRequirement.discovery(3))), "uv lamp gate 3");
+        check(result.get("gonzotech:chip_soup").equals(List.of(GateRequirement.discovery(3))), "chip soup gate 3");
+        check(result.get("gonzotech:rubber_block").equals(List.of(GateRequirement.discovery(3))), "rubber block gate 3");
+        check(result.get("gonzotech:third_silicon_factory").equals(List.of(GateRequirement.discovery(3))),
+                "silicon factory gate 3");
+        // Chips have NO JSON recipes yet (lithography machine will provide them):
+        // the craft gate must NOT invent tooltip payloads for recipe-less outputs.
+        check(!result.containsKey("gonzotech:chip_1") && !result.containsKey("gonzotech:chip_2")
+                && !result.containsKey("gonzotech:chip_3"), "no invented gates for recipe-less chips");
 
         // Alternate recipes: an ungated route must not disappear, nor duplicate lines proliferate.
         RecipeGateIndex<String> alternatives = new RecipeGateIndex<>();

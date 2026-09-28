@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:silicon",
+    "gonzotech:logic_module",
+    "gonzotech:transistor",
+    "gonzotech:semiconductor_plate"
+  ],
+  "result": {
+    "id": "gonzotech:chip_blank",
+    "count": 1
+  },
+  "group": "tier3_chip_blank"
+}

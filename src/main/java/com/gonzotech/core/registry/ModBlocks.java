@@ -108,6 +108,9 @@ public class ModBlocks {
         "sheathing", componentBlockProperties());
     public static final DeferredBlock<Block> ALUMINUM_HOUSING = BLOCKS.registerSimpleBlock(
         "aluminum_housing", componentBlockProperties());
+    /** Литография (автор 28.09.2026): резиновый блок — упаковка 9 резины. */
+    public static final DeferredBlock<Block> RUBBER_BLOCK = BLOCKS.registerSimpleBlock(
+        "rubber_block", componentBlockProperties());
 
     /** Эпоха III: вертикальный редстоун-очиститель воздуха. */
     public static final DeferredBlock<com.gonzotech.cleanroom.AirCleanerBlock> AIR_CLEANER = BLOCKS.registerBlock(

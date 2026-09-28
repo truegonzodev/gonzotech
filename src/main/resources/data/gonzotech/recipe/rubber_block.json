@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:rubber",
+    "gonzotech:rubber",
+    "gonzotech:rubber",
+    "gonzotech:rubber",
+    "gonzotech:rubber",
+    "gonzotech:rubber",
+    "gonzotech:rubber",
+    "gonzotech:rubber",
+    "gonzotech:rubber"
+  ],
+  "result": {
+    "id": "gonzotech:rubber_block",
+    "count": 1
+  },
+  "group": "tier3_rubber_block"
+}

@@ -115,6 +115,26 @@ public class ModItems {
     public static final DeferredItem<Item> DUST_METER = ITEMS.registerItem("dust_meter",
         props -> new com.gonzotech.cleanroom.DustMeterItem(props));
 
+    // ─────────────────────── Литография (автор 28.09.2026) ───────────────────────
+    /** Ультрафиолетовая лампа — засвечивает фоторезист на заготовке чипа. */
+    public static final DeferredItem<Item> UV_LAMP = ITEMS.registerSimpleItem("uv_lamp");
+    /** Заготовка чипа: кремний + логический модуль + транзистор + полупроводниковая пластина. */
+    public static final DeferredItem<Item> CHIP_BLANK = ITEMS.registerSimpleItem("chip_blank");
+    /** Фоторезист: хром + цианат натрия + костная мука. */
+    public static final DeferredItem<Item> PHOTORESIST = ITEMS.registerSimpleItem("photoresist");
+    /** Основа чипа: заготовка, засвеченная через фоторезист. */
+    public static final DeferredItem<Item> CHIP_BLANKY = ITEMS.registerSimpleItem("chip_blanky");
+    /** «Суп-набор»: основа чипа + резина + провод (медь/золото/серебро). */
+    public static final DeferredItem<Item> CHIP_SOUP = ITEMS.registerSimpleItem("chip_soup");
+    /** Чип питания (chip_1) — выход литографии; рецепт будет у литографической фабрики. */
+    public static final DeferredItem<Item> CHIP_1 = ITEMS.registerSimpleItem("chip_1");
+    /** Преобразователь (chip_2) — выход литографии; рецепт будет у литографической фабрики. */
+    public static final DeferredItem<Item> CHIP_2 = ITEMS.registerSimpleItem("chip_2");
+    /** Микроконтроллер (chip_3) — выход литографии; рецепт будет у литографической фабрики. */
+    public static final DeferredItem<Item> CHIP_3 = ITEMS.registerSimpleItem("chip_3");
+    /** Литографическая фабрика — предмет Эпохи III; блок/машина с GUI подключаются следующим шагом. */
+    public static final DeferredItem<Item> THIRD_SILICON_FACTORY = ITEMS.registerSimpleItem("third_silicon_factory");
+
     // ─────────────────────── Прессованные компоненты ───────────────────────
     // Порядок намеренно совпадает с утверждённым порядком вкладки «Компоненты».
     public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
@@ -487,6 +507,10 @@ public class ModItems {
     /** BlockItem тестового блока «лунный грунт» — см. ModBlocks.LUNAR_DIRT. Вкладка «Блоки». */
     public static final DeferredItem<BlockItem> LUNAR_DIRT_ITEM =
         ITEMS.registerSimpleBlockItem("lunar_dirt", ModBlocks.LUNAR_DIRT);
+
+    /** BlockItem «резиновый блок» (9 резины) — см. ModBlocks.RUBBER_BLOCK. Вкладка «Блоки». */
+    public static final DeferredItem<BlockItem> RUBBER_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("rubber_block", ModBlocks.RUBBER_BLOCK);
 
     // ─────────────────────── Материалы переработки: строительные блоки ───────────────────────
     // Бетоны и фарфор из грит-цепочки: собственные рецепты + прочностные статы,
