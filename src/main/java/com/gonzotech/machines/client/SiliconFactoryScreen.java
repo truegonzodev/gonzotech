@@ -95,7 +95,7 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
                     ? Math.round(menu.progressTicks() * 100f / SiliconFactoryBlockEntity.STEP_TICKS[i])
                     : 0;
                 int quality = menu.qualityHundredths();
-                double chance = SiliconFactoryBlockEntity.rejectPercent(quality);
+                double chance = SiliconFactoryBlockEntity.rejectPercent(quality / 100.0);
                 Component line2 = quality < 0
                     ? Component.translatable("gui.gonzotech.silicon_factory.quality_ambient",
                         Math.round(chance))

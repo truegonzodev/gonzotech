@@ -1,7 +1,9 @@
 package com.gonzotech.machines.litho;
 
+import com.gonzotech.cleanroom.CleanRoomDetector;
 import com.gonzotech.cleanroom.CleanRoomSystem;
 import com.gonzotech.cleanroom.RoomLedger;
+import com.gonzotech.cleanroom.RoomTopology;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
@@ -194,6 +196,19 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
         return null;
     }
 
+    /**
+     * Класс оригинального блока-участника для чистой комнаты (0.3.47): подмена
+     * участника оболочкой не должна менять класс ячейки (SEAL/INTERIOR), иначе
+     * комната перезаполняется и качество воздуха сбрасывается в ноль.
+     */
+    public RoomTopology.Kind preservedKindAt(BlockPos pos) {
+        if (!formed || memberPos == null) return null;
+        for (int i = 0; i < memberPos.length; i++) {
+            if (memberPos[i].equals(pos)) return CleanRoomDetector.kind(originalStates[i]);
+        }
+        return null;
+    }
+
     // ─────────────────── Брак по чистоте воздуха (автор 28.09.2026) ───────────────────
 
     /**
@@ -310,7 +325,8 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
     }
 
     private static boolean reject(ServerLevel server, SiliconFactoryBlockEntity be) {
-        return server.random.nextDouble() * 100.0 < rejectPercent(be.qualityHundredths);
+        // qualityHundredths — СОТЫЕ доли процента (0..10000); rejectPercent ждёт проценты.
+        return server.random.nextDouble() * 100.0 < rejectPercent(be.qualityHundredths / 100.0);
     }
 
     /** Брак: в шлак-слот шага падает 1× minecraft:flint. */

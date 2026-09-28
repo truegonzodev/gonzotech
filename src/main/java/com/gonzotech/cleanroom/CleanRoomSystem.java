@@ -56,7 +56,8 @@ public final class CleanRoomSystem {
         }
         CleanRoomData data = LOADED.get(level);
         if (data != null) {
-            data.ledger.blockChanged(p -> CleanRoomDetector.read(level, p), CleanRoomDetector.pos(pos), CleanRoomDetector.kind(before), CleanRoomDetector.kind(after));
+            data.ledger.blockChanged(p -> CleanRoomDetector.read(level, p), CleanRoomDetector.pos(pos),
+                CleanRoomDetector.kindAt(level, pos, before), CleanRoomDetector.kindAt(level, pos, after));
         }
     }
 

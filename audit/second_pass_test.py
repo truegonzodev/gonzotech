@@ -275,6 +275,29 @@ assert 'gui.gonzotech.silicon_factory.etching' in litho_screen
 assert 'gui.gonzotech.silicon_factory.photolithography' in litho_screen
 assert 'gui.gonzotech.silicon_factory.vulcanization' in litho_screen
 assert 'gui.gonzotech.silicon_factory.quality_ambient' in litho_screen
+# ── 0.3.47: юнит-фикс шанса брака + прозрачность оболочки для чистой комнаты ──
+# Сотые доли процента (0..10000) НЕ передаются в rejectPercent напрямую — только /100.
+assert 'rejectPercent(be.qualityHundredths / 100.0)' in litho_be_code
+litho_screen_code=re.sub(r'/\*.*?\*/|//[^\n]*','',litho_screen,flags=re.S)
+assert 'rejectPercent(quality / 100.0)' in litho_screen_code
+# Классификатор комнаты: kindAt отдаёт класс ОРИГИНАЛА для shell-блоков.
+detector=(ROOT/'src/main/java/com/gonzotech/cleanroom/CleanRoomDetector.java').read_text()
+assert 'public static RoomTopology.Kind kindAt(ServerLevel level, BlockPos pos, BlockState state)' in detector
+assert 'SiliconFactoryShellBlock' in detector and 'preservedKind()' in detector
+assert 'return kindAt(level, blockPos, level.getBlockState(blockPos));' in detector
+system=(ROOT/'src/main/java/com/gonzotech/cleanroom/CleanRoomSystem.java').read_text()
+assert 'CleanRoomDetector.kindAt(level, pos, before), CleanRoomDetector.kindAt(level, pos, after)' in system
+# Оболочка: NBT-поле PreservedKind + контроллер-первичный preservedKind.
+assert 'PreservedKind' in shell_be_code and 'RoomTopology.Kind.valueOf' in shell_be_code
+assert 'SiliconFactoryStructure.originalKindAt(server, worldPosition)' in shell_be_code
+assert 'public static RoomTopology.Kind originalKindAt(ServerLevel level, BlockPos pos)' in litho_struct_code
+assert 'proxy.setPreserved(CleanRoomDetector.kind(originalStates[i]))' in litho_struct_code
+# Контроллер: preservedKindAt по оригиналам.
+assert 'public RoomTopology.Kind preservedKindAt(BlockPos pos)' in litho_be_code
+assert 'CleanRoomDetector.kind(originalStates[i])' in litho_be_code
+# Порядок: setFormed+index ДО цикла перестановки; восстановление ДО unindex.
+assert litho_struct.index('controller.setFormed') < litho_struct.index('level.setBlock(memberPos[i]')
+assert litho_struct.index('controller.originalState(i)') < litho_struct.index('unindex(level, origin)')
 # Кросс-пакетные/событийные импорты фиксируем явно: ECJ без classpath их не ловит (0.3.41 hotfix).
 assert 'import net.neoforged.neoforge.event.level.BlockEvent;' in litho_struct
 assert 'import com.gonzotech.machines.menu.SiliconFactoryMenu;' in litho_be

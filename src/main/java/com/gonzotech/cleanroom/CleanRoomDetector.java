@@ -38,11 +38,25 @@ public final class CleanRoomDetector {
         return RoomTopology.Kind.FORBIDDEN;
     }
 
+    /**
+     * Класс с учётом контекста (0.3.47): shell-блок литографии классифицируется
+     * как его ОРИГИНАЛ (контроллер структуры → NBT оболочки) — подмена участника
+     * при сборке/распаде не меняет класс ячейки, и комната не теряет качество.
+     */
+    public static RoomTopology.Kind kindAt(ServerLevel level, BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof com.gonzotech.machines.litho.SiliconFactoryShellBlock
+            && level.getBlockEntity(pos) instanceof com.gonzotech.machines.litho.SiliconFactoryShellBlockEntity proxy) {
+            RoomTopology.Kind preserved = proxy.preservedKind();
+            if (preserved != null) return preserved;
+        }
+        return kind(state);
+    }
+
     public static RoomTopology.Kind read(ServerLevel level, RoomTopology.Pos pos) {
         BlockPos blockPos = blockPos(pos);
         if (level.isOutsideBuildHeight(blockPos)) return RoomTopology.Kind.FORBIDDEN;
         if (!level.hasChunkAt(blockPos)) return RoomTopology.Kind.UNLOADED;
-        return kind(level.getBlockState(blockPos));
+        return kindAt(level, blockPos, level.getBlockState(blockPos));
     }
 
     public static RoomTopology.Pos pos(BlockPos pos) { return new RoomTopology.Pos(pos.getX(), pos.getY(), pos.getZ()); }

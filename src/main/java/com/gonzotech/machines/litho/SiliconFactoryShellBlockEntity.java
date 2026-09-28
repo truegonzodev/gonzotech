@@ -1,8 +1,12 @@
 package com.gonzotech.machines.litho;
 
+import com.gonzotech.cleanroom.CleanRoomDetector;
+import com.gonzotech.cleanroom.RoomTopology;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Player;
@@ -19,8 +23,45 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public final class SiliconFactoryShellBlockEntity extends BlockEntity implements WorldlyContainer {
 
+    /**
+     * Класс оригинала (SEAL/INTERIOR), сохранённый при формировании: работает
+     * до восстановления контроллера после загрузки мира (слой 2 после
+     * контроллерного {@link SiliconFactoryStructure#originalKindAt}).
+     */
+    private RoomTopology.Kind preserved;
+
     public SiliconFactoryShellBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SILICON_FACTORY_SHELL.get(), pos, state);
+    }
+
+    /** Класс оригинала ячейки: сначала контроллер, затем собственное NBT-поле. */
+    public RoomTopology.Kind preservedKind() {
+        if (level instanceof ServerLevel server) {
+            RoomTopology.Kind viaController = SiliconFactoryStructure.originalKindAt(server, worldPosition);
+            if (viaController != null) return viaController;
+        }
+        return preserved;
+    }
+
+    void setPreserved(RoomTopology.Kind kind) {
+        this.preserved = kind;
+        setChanged();
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (preserved != null) {
+            tag.putString("PreservedKind", preserved.name());
+        }
+    }
+
+    @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        preserved = tag.contains("PreservedKind")
+            ? RoomTopology.Kind.valueOf(tag.getString("PreservedKind"))
+            : null;
     }
 
     private SiliconFactoryBlockEntity controller() {

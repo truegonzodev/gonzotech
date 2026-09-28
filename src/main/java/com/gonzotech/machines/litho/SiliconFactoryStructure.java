@@ -1,6 +1,8 @@
 package com.gonzotech.machines.litho;
 
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.cleanroom.CleanRoomDetector;
+import com.gonzotech.cleanroom.RoomTopology;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -152,6 +154,18 @@ public final class SiliconFactoryStructure {
         return idx.get(pos.asLong());
     }
 
+    /**
+     * Класс оригинального блока-участника в позиции (0.3.47, для чистой комнаты):
+     * позволяет классификатору комнаты видеть shell-блок как его оригинал.
+     */
+    public static RoomTopology.Kind originalKindAt(ServerLevel level, BlockPos pos) {
+        BlockPos root = controllerAt(level, pos);
+        if (root != null && level.getBlockEntity(root) instanceof SiliconFactoryBlockEntity be) {
+            return be.preservedKindAt(pos);
+        }
+        return null;
+    }
+
     private static boolean anyIndexed(ServerLevel level, BlockPos origin) {
         Map<Long, BlockPos> idx = MEMBER_INDEX.get(level);
         if (idx == null) return false;
@@ -234,20 +248,26 @@ public final class SiliconFactoryStructure {
 
         SUPPRESSED.add(root.asLong());
         for (BlockPos p : memberPos) SUPPRESSED.add(p.asLong());
+        // Состояние и индекс — ДО перестановки (0.3.47): классификатор чистой
+        // комнаты во время каждого setBlock видит контроллер и сохраняет класс
+        // ячейки (SEAL/INTERIOR оригинала) — комната не «дырявится», качество
+        // воздуха не сбрасывается.
+        controller.setFormed(build.origin(), build.variant(), memberPos, originalStates);
+        index(level, build.origin(), root);
         for (int i = 0; i < memberPos.length; i++) {
             BlockState shell = ModBlocks.THIRD_SILICON_FACTORY_SHELL.get().defaultBlockState()
                 .setValue(SiliconFactoryShellBlock.SLICE, slotOf(memberPos[i], build.origin()))
                 .setValue(SiliconFactoryShellBlock.VARIANT, build.variant());
             level.setBlock(memberPos[i], shell, Block.UPDATE_CLIENTS);
+            if (level.getBlockEntity(memberPos[i]) instanceof SiliconFactoryShellBlockEntity proxy) {
+                proxy.setPreserved(CleanRoomDetector.kind(originalStates[i]));
+            }
         }
         BlockState factoryState = level.getBlockState(root)
             .setValue(SiliconFactoryBlock.FORMED, true)
             .setValue(SiliconFactoryBlock.VARIANT, build.variant());
         level.setBlock(root, factoryState, Block.UPDATE_CLIENTS);
         SUPPRESSED.clear();
-
-        controller.setFormed(build.origin(), build.variant(), memberPos, originalStates);
-        index(level, build.origin(), root);
     }
 
     private static int slotOf(BlockPos pos, BlockPos origin) {
@@ -278,11 +298,13 @@ public final class SiliconFactoryStructure {
             return;
         }
         BlockPos root = origin.offset(offsetOf(SLOT_ROOT));
-        unindex(level, origin);
         SUPPRESSED.add(root.asLong());
         for (int i = 0; i < controller.memberCount(); i++) {
             SUPPRESSED.add(controller.memberPos(i).asLong());
         }
+        // Восстановление оригиналов — при живом индексе и formed-контроллере
+        // (0.3.47): классификатор комнаты сохраняет класс ячейки, качество
+        // воздуха комнаты не сбрасывается. unindex/clearFormed — в конце.
         for (int i = 0; i < controller.memberCount(); i++) {
             BlockPos p = controller.memberPos(i);
             if (skipPos != null && p.equals(skipPos)) continue;
@@ -295,6 +317,7 @@ public final class SiliconFactoryStructure {
                 level.setBlock(root, st.setValue(SiliconFactoryBlock.FORMED, false), Block.UPDATE_CLIENTS);
             }
         }
+        unindex(level, origin);
         SUPPRESSED.clear();
         controller.clearFormed();
     }
