@@ -261,7 +261,9 @@ assert 'if (!be.gtu.has(need)) return;' in litho_be_code
 assert '(be.progress + 1) % SPIKE_INTERVAL_TICKS == 0' in litho_be_code
 # Брак на шагах 0/1 завершает цепочку (step=-1) — иначе фабрика фармила бы flint на пустом шаге.
 assert litho_be.count('be.step = -1; // заготовка пропала') == 2
-assert 'CleanRoomSystem.filterRoom(server, pos)' in litho_be_code
+assert 'be.room = roomAround(server, be);' in litho_be_code
+# 0.3.51: комната машины — внешний воздух коробки (фикс «шкафа» 0%).
+assert 'private static RoomLedger.Room roomAround(ServerLevel server, SiliconFactoryBlockEntity be)' in litho_be_code
 assert 'import com.gonzotech.cleanroom.CleanRoomSystem;' in litho_be
 assert 'import com.gonzotech.machines.energy.Sinks.GtuSink;' in litho_be
 assert 'implements WorldlyContainer, MenuProvider, GtuSink' in litho_be

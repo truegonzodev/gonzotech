@@ -225,12 +225,51 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
 
     // ─────────────────── Тик ───────────────────
 
+    /**
+     * Комната, в которой стоит машина (0.3.51). Раньше — filterRoom от позиции
+     * контроллера: его соседи — стекло оболочки (SEAL) и резина снизу, и если
+     * сверху машина накрыта потолком/полкой, заливка видела только замкнутый
+     * «шкаф» из 2 клеток {резина, контроллер} внутри собственной оболочки —
+     * отдельную комнату с качеством 0, недостижимую для фильтров (они улучшают
+     * большую комнату, которую видят игрок и телифон). Теперь сформированная
+     * машина резолвит комнату по внешнему воздуху вокруг ВСЕЙ коробки: каждая
+     * не-членская соседняя клетка класса INTERIOR заливается отдельно, все
+     * заливки обязаны сойтись в одну комнату. Машина, наглухо замурованная в
+     * герметичные стены (нет ни одной открытой INTERIOR-грани), честно показывает
+     * «обычный» (26%). Одиночный блок резолвится как настенный фильтр.
+     */
+    private static RoomLedger.Room roomAround(ServerLevel server, SiliconFactoryBlockEntity be) {
+        if (!be.isFormed()) {
+            return CleanRoomSystem.filterRoom(server, be.getBlockPos());
+        }
+        Set<BlockPos> members = new HashSet<>();
+        for (int i = 0; i < be.memberCount(); i++) {
+            members.add(be.memberPos(i));
+        }
+        RoomLedger.Room found = null;
+        for (int i = 0; i < be.memberCount(); i++) {
+            BlockPos cell = be.memberPos(i);
+            for (Direction direction : Direction.values()) {
+                BlockPos next = cell.relative(direction);
+                if (members.contains(next)) continue;
+                if (CleanRoomDetector.read(server, CleanRoomDetector.pos(next)) != RoomTopology.Kind.INTERIOR) {
+                    continue;
+                }
+                RoomLedger.Room candidate = CleanRoomSystem.room(server, next);
+                if (candidate == null) continue;
+                if (found != null && found != candidate) return null;
+                found = candidate;
+            }
+        }
+        return found;
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, SiliconFactoryBlockEntity be) {
         if (!(level instanceof ServerLevel server)) return;
         // Чистота воздуха: известная комната проверяется каждый тик (пролом/выгрузка
         // останавливают работу), поиск вне комнаты — раз в секунду, как у фильтра.
         if (be.room != null || server.getGameTime() % 20 == 0) {
-            be.room = CleanRoomSystem.filterRoom(server, pos);
+            be.room = roomAround(server, be);
         }
         be.qualityHundredths = be.room == null ? -1 : (int) Math.round(be.room.quality() * 100);
         // Паразитная потеря 0.003 GTU/t — всегда, пока есть запас.

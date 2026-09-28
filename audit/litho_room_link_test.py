@@ -47,8 +47,14 @@ assert "CleanRoomSystem.improve(server, be.room, FilterCycle.QUALITY_PER_TICK);"
 assert "data(level).ledger.adjust(room, -(before - dirt.dirt()) * 3.0);" in system_code
 assert "dirt.setDirt(dirt.dirt() - 11.5);" in system_code
 assert "dirt.setDirt(dirt.dirt() + 5.0);" in system_code
-# Машина и фильтр резолвят одну и ту же комнату (одни соседи-INTERIOR).
-assert "be.room = CleanRoomSystem.filterRoom(server, pos);" in litho_be
+# Машина резолвит комнату по внешнему воздуху коробки (0.3.51, фикс «шкафа»),
+# одиночный блок — как настенный фильтр.
+assert "be.room = roomAround(server, be);" in litho_be
+assert "private static RoomLedger.Room roomAround(ServerLevel server, SiliconFactoryBlockEntity be)" in litho_be
+assert "return CleanRoomSystem.filterRoom(server, be.getBlockPos());" in litho_be
+assert "if (members.contains(next)) continue;" in litho_be
+assert "CleanRoomDetector.read(server, CleanRoomDetector.pos(next)) != RoomTopology.Kind.INTERIOR" in litho_be
+assert "if (found != null && found != candidate) return null;" in litho_be
 assert "be.qualityHundredths = be.room == null ? -1 : (int) Math.round(be.room.quality() * 100);" in litho_be
 # Тултип и бросок брака используют одни сотые (/100 ровно один раз).
 assert "nextDouble() * 100.0 < rejectPercent(be.qualityHundredths / 100.0)" in litho_be
