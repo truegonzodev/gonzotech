@@ -13,11 +13,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * GUI литографии (автор 28.09.2026): ГТУ-шкала (136,145) 16×52 классическая
- * вертикальная; три бара 16×34 (190/226/262, y163) растут слева направо
- * (bar_smelting); конвейер (y181): вход 172 → 208 → 244 → выход 280; шлак
- * (y145): 190/226/262. Каждый вариант структуры имеет СВОЮ пару
- * silicon_factory_chip_N_gui*.png; пока автора нет — общие silicon_factory_gui*.
+ * GUI литографии (автор 28.09.2026). Координаты автора — ЛИСТОВЫЕ (512×512,
+ * блит @ −128), в канве 176×166 всё со сдвигом −128: ГТУ-шкала (8,17) 16×52;
+ * три бара 16×34 (62/98/134, 35) растут слева направо (bar_smelting); конвейер
+ * (y53): вход 44 → 80 → 116 → выход 152; шлак (y17): 62/98/134. Каждый вариант
+ * структуры имеет СВОЮ пару silicon_factory_chip_N_gui*.png; пока автора нет —
+ * общие silicon_factory_gui*.
  */
 public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu> {
     private static final String[] STEP_KEYS = {
@@ -63,14 +64,16 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
 
     @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
-        drawVBarTex(graphics, x + 136, y + 145, 16, 52,
+        // Координаты автора — листовые (512×512 @ −128): (136,145)→(8,17),
+        // бары (190/226/262,163)→(62/98/134,35) 16×34.
+        drawVBarTex(graphics, x + 8, y + 17, 16, 52,
             menu.gtuMilli() / (float) SiliconFactoryBlockEntity.CAPACITY_MILLI, BAR_GTU);
         int step = menu.step();
         for (int i = 0; i < 3; i++) {
             float fraction = step > i ? 1.0f
                 : step == i ? menu.progressTicks() / (float) SiliconFactoryBlockEntity.STEP_TICKS[i]
                 : 0.0f;
-            drawHBarTex(graphics, x + 190 + i * 36, y + 163, 16, 34, fraction, BAR_SMELTING);
+            drawHBarTex(graphics, x + 62 + i * 36, y + 35, 16, 34, fraction, BAR_SMELTING);
         }
     }
 
@@ -79,14 +82,14 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
         super.render(graphics, mouseX, mouseY, partialTick);
         int x = leftPos;
         int y = topPos;
-        if (inRect(mouseX, mouseY, x + 136, y + 145, 16, 52)) {
+        if (inRect(mouseX, mouseY, x + 8, y + 17, 16, 52)) {
             graphics.renderComponentTooltip(font, List.of(GtUnits.gtuPair(
                 BigDecimal.valueOf(menu.gtuMilli(), 3).stripTrailingZeros().toPlainString(),
                 SiliconFactoryBlockEntity.CAPACITY_GTU)), mouseX, mouseY);
             return;
         }
         for (int i = 0; i < 3; i++) {
-            if (inRect(mouseX, mouseY, x + 190 + i * 36, y + 163, 16, 34)) {
+            if (inRect(mouseX, mouseY, x + 62 + i * 36, y + 35, 16, 34)) {
                 int percent = menu.step() > i ? 100
                     : menu.step() == i
                     ? Math.round(menu.progressTicks() * 100f / SiliconFactoryBlockEntity.STEP_TICKS[i])

@@ -17,10 +17,12 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Раскладка по PNG автора (лист 512×512 @ −128, панель 176×166), канва 176×166:
- * ГТУ-шкала (136,145) 16×52; три бара 16×34 (190/226/262, y163); нижний
- * конвейер (y181): вход 172 → транзит 208 → транзит 244 → выход 280;
- * шлак-слоты (y145): 190/226/262. Инвентарь игрока (8, 84).
+ * Раскладка по PNG автора (лист 512×512 @ −128, панель 176×166). Координаты
+ * автора — ЛИСТОВЫЕ, все слоты/шкалы берутся со сдвигом −128: ГТУ-шкала
+ * (136,145)→(8,17) 16×52; три бара 16×34 (190/226/262,163)→(62/98/134,35);
+ * нижний конвейер (181-й ряд листа)→y53: вход 172→44, транзит 208/244→80/116,
+ * выход 280→152; шлак (145-й ряд)→y17: 190/226/262→62/98/134.
+ * Инвентарь игрока (8, 84).
  */
 public final class SiliconFactoryMenu extends BaseMachineMenu {
     private final ContainerLevelAccess access;
@@ -37,17 +39,18 @@ public final class SiliconFactoryMenu extends BaseMachineMenu {
     private SiliconFactoryMenu(int id, Inventory inventory, Container container, ContainerData data, BlockPos pos) {
         super(ModMenus.SILICON_FACTORY.get(), id, container, data, SiliconFactoryBlockEntity.SLOT_COUNT);
         access = ContainerLevelAccess.create(inventory.player.level(), pos);
-        // Конвейер (y=181): вход — «суп-набор», класть и брать.
-        addSlot(new Slot(container, SiliconFactoryBlockEntity.INPUT_SLOT, 172, 181) {
+        // Конвейер (лист y181 → панель y53): вход — «суп-набор», класть и брать.
+        addSlot(new Slot(container, SiliconFactoryBlockEntity.INPUT_SLOT, 44, 53) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.is(ModItems.CHIP_SOUP.get());
             }
         });
-        // Транзит заготовки: нельзя ни положить, ни достать.
+        // Транзит заготовки: нельзя ни положить, ни достать (лист 208/244 → 80/116).
         for (int i = SiliconFactoryBlockEntity.TRANSIT_FIRST; i <= SiliconFactoryBlockEntity.TRANSIT_LAST; i++) {
             int index = i;
-            addSlot(new Slot(container, index, 172 + index * 36, 181) {
+            int x = 80 + (index - SiliconFactoryBlockEntity.TRANSIT_FIRST) * 36;
+            addSlot(new Slot(container, index, x, 53) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;
@@ -59,16 +62,16 @@ public final class SiliconFactoryMenu extends BaseMachineMenu {
                 }
             });
         }
-        // Выход: только достать.
-        addSlot(new Slot(container, SiliconFactoryBlockEntity.OUTPUT_SLOT, 280, 181) {
+        // Выход (лист 280 → 152): только достать.
+        addSlot(new Slot(container, SiliconFactoryBlockEntity.OUTPUT_SLOT, 152, 53) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return false;
             }
         });
-        // Шлак шагов 0..2 (y=145): только достать.
+        // Шлак шагов 0..2 (лист 190/226/262,145 → 62/98/134,17): только достать.
         for (int i = 0; i < 3; i++) {
-            addSlot(new Slot(container, SiliconFactoryBlockEntity.SLAG_BASE + i, 190 + i * 36, 145) {
+            addSlot(new Slot(container, SiliconFactoryBlockEntity.SLAG_BASE + i, 62 + i * 36, 17) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return false;

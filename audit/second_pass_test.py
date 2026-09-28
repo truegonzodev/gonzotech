@@ -227,11 +227,12 @@ assert 'import com.gonzotech.cleanroom.CleanRoomSystem;' in litho_be
 assert 'import com.gonzotech.machines.energy.Sinks.GtuSink;' in litho_be
 assert 'implements Container, MenuProvider, GtuSink' in litho_be
 litho_menu=(ROOT/'src/main/java/com/gonzotech/machines/menu/SiliconFactoryMenu.java').read_text()
-# Раскладка автора: конвейер y181 (172/208/244/280), шлак y145 (190/226/262), инвентарь (8,84).
-assert 'INPUT_SLOT, 172, 181)' in litho_menu
-assert 'index, 172 + index * 36, 181)' in litho_menu
-assert 'OUTPUT_SLOT, 280, 181)' in litho_menu
-assert 'SLAG_BASE + i, 190 + i * 36, 145)' in litho_menu
+# Раскладка автора (лист −128): конвейер y53 (44/80/116/152), шлак y17 (62/98/134), ГТУ (8,17), бары (62/98/134,35).
+assert 'INPUT_SLOT, 44, 53)' in litho_menu
+assert 'int x = 80 + (index - SiliconFactoryBlockEntity.TRANSIT_FIRST) * 36;' in litho_menu
+assert 'addSlot(new Slot(container, index, x, 53)' in litho_menu
+assert 'OUTPUT_SLOT, 152, 53)' in litho_menu
+assert 'SLAG_BASE + i, 62 + i * 36, 17)' in litho_menu
 assert 'addPlayerInventory(inventory, 8, 84);' in litho_menu
 # Правила слотов: транзит — ни класть ни брать (включая Shift), выход и шлак — только брать.
 assert 'mayPickup(Player player) {' in litho_menu
@@ -242,8 +243,8 @@ litho_screen=(ROOT/'src/main/java/com/gonzotech/machines/client/SiliconFactorySc
 assert 'silicon_factory_chip_" + variant + "_gui.png' in litho_screen
 assert 'silicon_factory_gui.png' in litho_screen
 # ГТУ (136,145) 16×52; бары (190/226/262,163) 16×34 слева-направо bar_smelting.
-assert 'drawVBarTex(graphics, x + 136, y + 145, 16, 52,' in litho_screen
-assert 'drawHBarTex(graphics, x + 190 + i * 36, y + 163, 16, 34, fraction, BAR_SMELTING)' in litho_screen
+assert 'drawVBarTex(graphics, x + 8, y + 17, 16, 52,' in litho_screen
+assert 'drawHBarTex(graphics, x + 62 + i * 36, y + 35, 16, 34, fraction, BAR_SMELTING)' in litho_screen
 assert 'GtUnits.gtuPair(' in litho_screen and 'BigDecimal.valueOf(menu.gtuMilli(), 3)' in litho_screen
 # Тултипы: имена шагов + строка качества (вне контура — «обычный»).
 assert 'gui.gonzotech.silicon_factory.etching' in litho_screen
