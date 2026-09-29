@@ -256,42 +256,52 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
     // ─────────────────── Тик ───────────────────
 
     /**
-     * Комната, в которой стоит машина (0.3.51). Раньше — filterRoom от позиции
-     * контроллера: его соседи — стекло оболочки (SEAL) и резина снизу, и если
-     * сверху машина накрыта потолком/полкой, заливка видела только замкнутый
-     * «шкаф» из 2 клеток {резина, контроллер} внутри собственной оболочки —
-     * отдельную комнату с качеством 0, недостижимую для фильтров (они улучшают
-     * большую комнату, которую видят игрок и телифон). Теперь сформированная
-     * машина резолвит комнату по внешнему воздуху вокруг ВСЕЙ коробки: каждая
-     * не-членская соседняя клетка класса INTERIOR заливается отдельно, все
-     * заливки обязаны сойтись в одну комнату. Машина, наглухо замурованная в
-     * герметичные стены (нет ни одной открытой INTERIOR-грани), честно показывает
-     * «обычный» (26%). Одиночный блок резолвится как настенный фильтр.
+     * Комната, в которой стоит машина (0.3.55). Многоисточниковая заливка из
+     * всех INTERIOR-членов коробки (углы D, резина C, контроллер S — внутренность
+     * коробки НЕ связна: кольцо фарфор/стекло изолирует {C, S} от углов):
+     * герметичные клетки блокируют, первое касание ОТКРЫТОГО воздуха — честный
+     * «обычный» (машина на улице не подхватывает чужие помещения через грань),
+     * выход в воздух комнаты — её ledger-комната (та же, что у игрока и
+     * телифона). Блок/узел/полка над контроллером машине не мешает. Заливка, не
+     * покинувшая коробку (станок наглухо замурован), — тоже «обычный».
+     * Одиночный блок резолвится как настенный фильтр.
+     *
+     * <p>История: 0.3.50 — грани контроллера, «шкаф» из 2 клеток (вечные 0%);
+     * 0.3.51–0.3.54 — заливка каждой внешней INTERIOR-грани отдельно: блок на
+     * крыше ослеплял машину, уличный станок у окна контура показывал 0% чужого
+     * помещения.</p>
      */
     private static RoomLedger.Room roomAround(ServerLevel server, SiliconFactoryBlockEntity be) {
         if (!be.isFormed()) {
             return CleanRoomSystem.filterRoom(server, be.getBlockPos());
         }
         Set<BlockPos> members = new HashSet<>();
+        java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
+        Set<BlockPos> seen = new HashSet<>();
         for (int i = 0; i < be.memberCount(); i++) {
-            members.add(be.memberPos(i));
+            BlockPos m = be.memberPos(i);
+            if (CleanRoomDetector.read(server, CleanRoomDetector.pos(m)) != RoomTopology.Kind.INTERIOR) continue;
+            seen.add(m);
+            queue.add(m);
         }
-        RoomLedger.Room found = null;
-        for (int i = 0; i < be.memberCount(); i++) {
-            BlockPos cell = be.memberPos(i);
+        // Полный обход до исчерпания: ранний выход на первой же клетке воздуха
+        // вернул бы машине «карман»/щель рядом с ней на улице.
+        BlockPos entry = null;
+        while (!queue.isEmpty()) {
+            if (seen.size() > 4096) return null; // защита от гигантских полостей
+            BlockPos cur = queue.poll();
             for (Direction direction : Direction.values()) {
-                BlockPos next = cell.relative(direction);
-                if (members.contains(next)) continue;
-                if (CleanRoomDetector.read(server, CleanRoomDetector.pos(next)) != RoomTopology.Kind.INTERIOR) {
-                    continue;
-                }
-                RoomLedger.Room candidate = CleanRoomSystem.room(server, next);
-                if (candidate == null) continue;
-                if (found != null && found != candidate) return null;
-                found = candidate;
+                BlockPos next = cur.relative(direction);
+                if (!seen.add(next)) continue;
+                RoomTopology.Kind kind = CleanRoomDetector.read(server, CleanRoomDetector.pos(next));
+                if (kind == RoomTopology.Kind.FORBIDDEN) return null; // открытый воздух
+                if (kind != RoomTopology.Kind.INTERIOR) continue;     // герметичная стена/оболочка
+                if (!members.contains(next) && entry == null) entry = next; // воздух комнаты
+                queue.add(next);
             }
         }
-        return found;
+        if (entry == null) return null; // заливка не покинула коробку — станок замурован
+        return CleanRoomSystem.room(server, entry);
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SiliconFactoryBlockEntity be) {

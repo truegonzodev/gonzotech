@@ -72,12 +72,42 @@ public class LithoRoomLinkSelfTest {
         return found;
     }
 
-    /** Реплика SiliconFactoryBlockEntity.roomAround (0.3.51): внешний воздух коробки. */
+    /**
+     * Реплика SiliconFactoryBlockEntity.roomAround (0.3.55): заливка из клетки
+     * контроллера; объём, не покинувший коробку, = замурован (ambient).
+     */
+    static RoomLedger.Room roomAround(long tick, java.util.Set<RoomTopology.Pos> members) {
+        java.util.ArrayDeque<RoomTopology.Pos> queue = new java.util.ArrayDeque<>();
+        java.util.HashSet<RoomTopology.Pos> seen = new java.util.HashSet<>();
+        for (RoomTopology.Pos m : members) {
+            if (read(m) == RoomTopology.Kind.INTERIOR) { seen.add(m); queue.add(m); }
+        }
+        RoomTopology.Pos entry = null;
+        while (!queue.isEmpty()) {
+            RoomTopology.Pos cur = queue.poll();
+            for (RoomTopology.Pos next : neighborsOf(cur)) {
+                if (!seen.add(next)) continue;
+                RoomTopology.Kind kind = read(next);
+                if (kind == RoomTopology.Kind.FORBIDDEN) return null; // открытый воздух
+                if (kind != RoomTopology.Kind.INTERIOR) continue;
+                if (!members.contains(next) && entry == null) entry = next;
+                queue.add(next);
+            }
+        }
+        if (entry == null) return null;
+        return LEDGER.find(LithoRoomLinkSelfTest::read, entry, tick);
+    }
+
     static RoomLedger.Room roomAround(long tick) {
+        return roomAround(tick, MEMBERS);
+    }
+
+    /** Реплика 0.3.51-0.3.54: по-фасадная заливка всех внешних INTERIOR-граней. */
+    static RoomLedger.Room oldFacesRoomOf(java.util.Set<RoomTopology.Pos> members, long tick) {
         RoomLedger.Room found = null;
-        for (RoomTopology.Pos cell : MEMBERS) {
+        for (RoomTopology.Pos cell : members) {
             for (RoomTopology.Pos next : neighborsOf(cell)) {
-                if (MEMBERS.contains(next)) continue;
+                if (members.contains(next)) continue;
                 if (read(next) != RoomTopology.Kind.INTERIOR) continue;
                 RoomLedger.Room candidate = LEDGER.find(LithoRoomLinkSelfTest::read, next, tick);
                 if (candidate == null) continue;
@@ -167,12 +197,26 @@ public class LithoRoomLinkSelfTest {
                 "старый резолвер обязан находить отдельный «шкаф» с качеством 0 — "
                         + "вот почему машина показывала 0% при 100% у телифона");
 
-        // ── 1. ФИКС 0.3.51: roomAround видит ту же комнату, что игрок и фильтры ──
+        // ── 1. ФИКС: roomAround видит ту же комнату, что игрок и фильтры ──
         simulate(20);
         check("100%/1%".equals(tooltip()),
                 "после фикса: тултип " + tooltip() + ", ожидался 100%/1%");
         check(Math.abs(rejectPercent(beHundredths / 100.0) - 1.0) < 1e-9,
                 "брак по качеству 100 должен быть 1%");
+
+        // ── 1б. Узел прямо на крыше станка (билд автора): комната сбрасывается
+        // правилом чистых комнат (SEAL в воздухе), но машина ОБЯЗАНА видеть её же
+        // и показывать рост качества, а не «обычный» (баг 0.3.54). ──
+        RoomTopology.Pos nodeCell = machineCtrl.offset(0, 1, 0);
+        WORLD.put(nodeCell, RoomTopology.Kind.SEAL);
+        LEDGER.invalidate(nodeCell);
+        simulate(3_000); // фильтры заново поднимают комнату (~55%)
+        int mid = beHundredths;
+        check(mid > 2_000 && mid < 9_000,
+                "узел на крыше: машина обязана видеть растущую комнату, сотые " + mid);
+        simulate(8_000);
+        check("100%/1%".equals(tooltip()),
+                "после восстановления: тултип " + tooltip() + ", ожидался 100%/1%");
 
         // ── 2. Игрок входит с уличной грязью 100: машина и комната падают ВМЕСТЕ ──
         feet = new RoomTopology.Pos(1, 2, 1);
@@ -201,15 +245,72 @@ public class LithoRoomLinkSelfTest {
         check(beHundredths > 9_000,
                 "вход через очиститель сохраняет воздух: сотые " + beHundredths);
 
-        // ── 5. Замурованная машина: нет открытых INTERIOR-граней — честный «обычный» ──
+        // ── 4б. Станок замурован в стену: одна грань — в герметичный погреб 0%,
+        // другая — на открытый воздух (баг 0.3.54: пофасадный резолвер показывал
+        // 0% погреба; новый обязан сказать «обычный» — улица важнее кармана). ──
+        java.util.Set<RoomTopology.Pos> streetMembers = new java.util.HashSet<>();
+        String[] low = {"D", "R", "D", "R", "C", "R", "D", "R", "D"};
+        String[] up = {"R", "B", "R", "B", "S", "B", "R", "B", "R"};
+        for (int i = 0; i < 9; i++) {
+            int dx = i % 3, dz = i / 3;
+            putStreet(streetMembers, 20 + dx, 1, 2 + dz, low[i]);
+            putStreet(streetMembers, 20 + dx, 2, 2 + dz, up[i]);
+        }
+        // Погреб: 2 клетки западнее угла D(20,1,2), стены явные (боковые стены
+        // не прилегают к коробке — общий цикл стен их не достаёт).
+        WORLD.put(new RoomTopology.Pos(19, 1, 2), RoomTopology.Kind.INTERIOR);
+        WORLD.put(new RoomTopology.Pos(18, 1, 2), RoomTopology.Kind.INTERIOR);
+        int[][] pocketWalls = {{18,0,2},{18,2,2},{18,1,1},{18,1,3},{19,0,2},{19,2,2},{19,1,1},{19,1,3},{17,1,2}};
+        for (int[] w : pocketWalls) WORLD.put(new RoomTopology.Pos(w[0], w[1], w[2]), RoomTopology.Kind.SEAL);
+        // Все не-членские клетки вокруг коробки — SEAL, КРОМЕ погреба (19,1,2)
+        // и улицы (23,1,2) восточнее угла D(22,1,2).
+        for (RoomTopology.Pos m : streetMembers) {
+            for (RoomTopology.Pos n : neighborsOf(m)) {
+                if (streetMembers.contains(n)) continue;
+                if (n.equals(new RoomTopology.Pos(19, 1, 2))) continue;
+                if (n.equals(new RoomTopology.Pos(23, 1, 2))) continue;
+                if (read(n) == RoomTopology.Kind.FORBIDDEN) WORLD.put(n, RoomTopology.Kind.SEAL);
+            }
+        }
+        RoomTopology.Pos p1 = new RoomTopology.Pos(19, 1, 2);
+        for (RoomTopology.Pos n : neighborsOf(p1)) {
+            System.out.println("DBG P1 neighbor " + n + " = " + read(n));
+        }
+        for (RoomTopology.Pos n : neighborsOf(new RoomTopology.Pos(18, 1, 2))) {
+            System.out.println("DBG P2 neighbor " + n + " = " + read(n));
+        }
+        for (RoomTopology.Pos n : neighborsOf(new RoomTopology.Pos(20, 1, 2))) {
+            System.out.println("DBG D20 neighbor " + n + " = " + read(n));
+        }
+        RoomLedger.Room probeP1 = LEDGER.find(LithoRoomLinkSelfTest::read, p1, 1);
+        System.out.println("DBG find(P1)=" + (probeP1 == null ? "null" : ("q=" + probeP1.quality() + " cells=" + probeP1.cells().size())));
+        for (RoomTopology.Pos m : streetMembers) {
+            for (RoomTopology.Pos n : neighborsOf(m)) {
+                if (streetMembers.contains(n)) continue;
+                if (read(n) == RoomTopology.Kind.INTERIOR) {
+                    RoomLedger.Room c = LEDGER.find(LithoRoomLinkSelfTest::read, n, 1);
+                    System.out.println("DBG face " + n + " -> " + (c == null ? "null" : ("q=" + c.quality() + " cells=" + c.cells().size())));
+                }
+            }
+        }
+        RoomLedger.Room junk = oldFacesRoomOf(streetMembers, 1);
+        check(junk != null && Math.round(junk.quality() * 100) == 0,
+                "по-фасадный резолвер 0.3.54 обязан был показывать погреб 0% (баг), факт: "
+                        + (junk == null ? "null" : junk.quality()));
+        RoomLedger.Room streetRoom = roomAround(1, streetMembers);
+        check(streetRoom == null,
+                "станок улица+погреб обязан быть «обычный», а не "
+                        + (streetRoom == null ? "null" : streetRoom.quality()));
+
+        // ── 5. Замурованная машина: заливка не покинула коробку — честный «обычный» ──
         feet = null;
         sealAroundBox();
         simulate(20);
         check("ambient/26%".equals(tooltip()),
                 "замурованная машина: тултип " + tooltip() + ", ожидался ambient/26%");
 
-        System.out.println("LithoRoomLink: " + checks + " проверок: шкаф-баг воспроизведён "
-                + "(машина 0% при комнате 100%), roomAround=комната игрока, "
+        System.out.println("LithoRoomLink: " + checks + " проверок: шкаф-баг воспроизведён, "
+                + "узел на крыше не слепит машину, уличный станок у кармана = обычный, "
                 + "замурованная машина = обычный; тултип=ledger=бросок брака");
     }
 
@@ -268,6 +369,14 @@ public class LithoRoomLinkSelfTest {
         WORLD.put(filterWall, RoomTopology.Kind.SEAL);
         // Клетка потока очистителя в боковом проходе.
         cleanerCell = new RoomTopology.Pos(1, 1, 1);
+    }
+
+    static void putStreet(java.util.Set<RoomTopology.Pos> members, int x, int y, int z, String code) {
+        RoomTopology.Pos pos = new RoomTopology.Pos(x, y, z);
+        members.add(pos);
+        WORLD.put(pos, "R".equals(code) || "B".equals(code)
+                ? RoomTopology.Kind.SEAL
+                : RoomTopology.Kind.INTERIOR);
     }
 
     static void place(int x, int y, int z, String code) {

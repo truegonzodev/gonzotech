@@ -7,6 +7,7 @@ machine's room read and the tooltip/reject math. Needs JDK 21 (JAVA_HOME/PATH)
 or a Java 21 runtime + ECJ_JAR.
 """
 from pathlib import Path
+import json
 import os
 import re
 import shutil
@@ -35,9 +36,8 @@ with tempfile.TemporaryDirectory(prefix="gonzotech-litho-room-") as output:
 # ── Строковые пины: симуляция не должна разойтись с продакшеном ──
 system_code = re.sub(r"/\*.*?\*/|//[^\n]*", "", (src / "CleanRoomSystem.java").read_text(), flags=re.S)
 filter_be = re.sub(r"/\*.*?\*/|//[^\n]*", "", (src / "AirFilterBlockEntity.java").read_text(), flags=re.S)
-litho_be = re.sub(r"/\*.*?\*/|//[^\n]*", "",
-                  (ROOT / "src/main/java/com/gonzotech/machines/litho/SiliconFactoryBlockEntity.java").read_text(),
-                  flags=re.S)
+litho_be_src = (ROOT / "src/main/java/com/gonzotech/machines/litho/SiliconFactoryBlockEntity.java").read_text()
+litho_be = re.sub(r"/\*.*?\*/|//[^\n]*", "", litho_be_src, flags=re.S)
 litho_screen = re.sub(r"/\*.*?\*/|//[^\n]*", "",
                       (ROOT / "src/main/java/com/gonzotech/machines/client/SiliconFactoryScreen.java").read_text(),
                       flags=re.S)
@@ -47,14 +47,20 @@ assert "CleanRoomSystem.improve(server, be.room, FilterCycle.QUALITY_PER_TICK);"
 assert "data(level).ledger.adjust(room, -(before - dirt.dirt()) * 3.0);" in system_code
 assert "dirt.setDirt(dirt.dirt() - 11.5);" in system_code
 assert "dirt.setDirt(dirt.dirt() + 5.0);" in system_code
-# Машина резолвит комнату по внешнему воздуху коробки (0.3.51, фикс «шкафа»),
-# одиночный блок — как настенный фильтр.
+# Машина резолвит комнату заливкой ИЗ клетки контроллера (0.3.55): узел на крыше
+# не слепит, уличный станок не подхватывает чужие помещения через одну грань.
 assert "be.room = roomAround(server, be);" in litho_be
 assert "private static RoomLedger.Room roomAround(ServerLevel server, SiliconFactoryBlockEntity be)" in litho_be
 assert "return CleanRoomSystem.filterRoom(server, be.getBlockPos());" in litho_be
-assert "if (members.contains(next)) continue;" in litho_be
-assert "CleanRoomDetector.read(server, CleanRoomDetector.pos(next)) != RoomTopology.Kind.INTERIOR" in litho_be
-assert "if (found != null && found != candidate) return null;" in litho_be
+assert "java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();" in litho_be
+assert "if (kind == RoomTopology.Kind.FORBIDDEN) return null; // открытый воздух" in litho_be_src
+assert "if (seen.size() > 4096) return null; // защита от гигантских полостей" in litho_be_src
+assert "if (entry == null) return null; // заливка не покинула коробку — станок замурован" in litho_be_src
+assert "return CleanRoomSystem.room(server, entry);" in litho_be
+# 0.3.55: предмет станка — 3D-блоковая модель, а не плоская item/generated.
+items_def = json.loads((ROOT / "src/main/resources/assets/gonzotech/items/third_silicon_factory.json").read_text())
+assert items_def["model"]["model"] == "gonzotech:block/third_silicon_factory", items_def
+assert not (ROOT / "src/main/resources/assets/gonzotech/models/item/third_silicon_factory.json").exists()
 assert "be.qualityHundredths = be.room == null ? -1 : (int) Math.round(be.room.quality() * 100);" in litho_be
 # Тултип и бросок брака используют одни сотые (/100 ровно один раз).
 assert "nextDouble() * 100.0 < rejectPercent(be.qualityHundredths / 100.0)" in litho_be

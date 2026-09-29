@@ -107,6 +107,7 @@ for item_id in NEW_ITEMS:
 assert 'RUBBER_BLOCK_ITEM.get()' in tabs_src
 # Ресурсы: item-модели существуют, ссылаются на существующие текстуры.
 for item_id in NEW_ITEMS:
+    if item_id == 'third_silicon_factory': continue  # 0.3.55: блоковая модель, пин ниже
     m=json.loads((ROOT/f'src/main/resources/assets/gonzotech/models/item/{item_id}.json').read_text())
     tex=m['textures']['layer0']
     assert (ROOT/f'src/main/resources/assets/gonzotech/textures/{tex.split("gonzotech:",1)[1]}.png').is_file(), 'texture for ' + item_id
@@ -155,6 +156,9 @@ for recipe_id in EXPECTED_RECIPES:
 for item_id in NEW_ITEMS+['rubber_block']:
     idef=json.loads((ROOT/f'src/main/resources/assets/gonzotech/items/{item_id}.json').read_text())
     model=idef['model']['model']
+    if item_id == 'third_silicon_factory':  # 0.3.55: указывает на блоковую модель (3D)
+        assert model=='gonzotech:block/third_silicon_factory'
+        continue
     assert (ROOT/f'src/main/resources/assets/gonzotech/models/item/{item_id}.json').is_file()
     assert model==f'gonzotech:item/{item_id}'
 
@@ -279,8 +283,16 @@ assert "gtu.set(0L);" in litho_be_code
 # перезаписи окружения (реальный фейл javac «cannot find symbol: Set/HashSet»).
 assert 'import java.util.HashSet;' in litho_be
 assert 'import java.util.Set;' in litho_be
-# 0.3.51: комната машины — внешний воздух коробки (фикс «шкафа» 0%).
-assert 'private static RoomLedger.Room roomAround(ServerLevel server, SiliconFactoryBlockEntity be)' in litho_be_code
+# 0.3.55: заливка из клетки контроллера + проверка «покинула ли коробку».
+assert 'java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();' in litho_be_code
+assert 'if (kind == RoomTopology.Kind.FORBIDDEN) return null; // открытый воздух' in litho_be
+assert 'if (seen.size() > 4096) return null; // защита от гигантских полостей' in litho_be
+assert 'if (entry == null) return null; // заливка не покинула коробку — станок замурован' in litho_be
+assert 'return CleanRoomSystem.room(server, entry);' in litho_be_code
+# 0.3.55: предмет станка — блоковая модель (3D), плоской item-модели больше нет.
+items_json = json.loads((ROOT / 'src/main/resources/assets/gonzotech/items/third_silicon_factory.json').read_text())
+assert items_json['model']['model'] == 'gonzotech:block/third_silicon_factory'
+assert not (ROOT / 'src/main/resources/assets/gonzotech/models/item/third_silicon_factory.json').exists()
 assert 'import com.gonzotech.cleanroom.CleanRoomSystem;' in litho_be
 assert 'import com.gonzotech.machines.energy.Sinks.GtuSink;' in litho_be
 assert 'implements WorldlyContainer, MenuProvider, GtuSink' in litho_be
