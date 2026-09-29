@@ -262,6 +262,13 @@ assert '(be.progress + 1) % SPIKE_INTERVAL_TICKS == 0' in litho_be_code
 # Брак на шагах 0/1 завершает цепочку (step=-1) — иначе фабрика фармила бы flint на пустом шаге.
 assert litho_be.count('be.step = -1; // заготовка пропала') == 2
 assert 'be.room = roomAround(server, be);' in litho_be_code
+# 0.3.53: распад обнуляет контроллер по образцу турбины/парогена — начинка,
+# энергия и прогресс не выживают «призрачно»; структура не зовёт clearFormed напрямую.
+assert 'public void clearStructure()' in litho_be_code
+assert 'items.clear();' in litho_be_code and 'gtu.set(0L);' in litho_be_code
+assert 'step = -1;' in litho_be_code and 'clearFormed();' in litho_be_code
+assert 'controller.clearStructure();' in litho_struct_code
+assert 'controller.clearFormed();' not in litho_struct_code
 # 0.3.52 hotfix: java.util-импорты roomAround — один раз уже потеряны при
 # перезаписи окружения (реальный фейл javac «cannot find symbol: Set/HashSet»).
 assert 'import java.util.HashSet;' in litho_be

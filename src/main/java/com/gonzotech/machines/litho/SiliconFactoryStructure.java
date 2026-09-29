@@ -346,7 +346,7 @@ public final class SiliconFactoryStructure {
     private static void invalidate(ServerLevel level, SiliconFactoryBlockEntity controller, BlockPos skipPos) {
         BlockPos origin = controller.origin();
         if (origin == null) {
-            controller.clearFormed();
+            controller.clearStructure();
             return;
         }
         BlockPos root = origin.offset(offsetOf(SLOT_ROOT));
@@ -356,7 +356,7 @@ public final class SiliconFactoryStructure {
         }
         // Восстановление оригиналов — при живом индексе и formed-контроллере
         // (0.3.47): классификатор комнаты сохраняет класс ячейки, качество
-        // воздуха комнаты не сбрасывается. unindex/clearFormed — в конце.
+        // воздуха комнаты не сбрасывается. unindex/clearStructure — в конце.
         for (int i = 0; i < controller.memberCount(); i++) {
             LAST_ORIGINAL_KIND.put(controller.memberPos(i).asLong(),
                 CleanRoomDetector.kind(controller.originalState(i)));
@@ -375,7 +375,9 @@ public final class SiliconFactoryStructure {
         }
         unindex(level, origin);
         SUPPRESSED.clear();
-        controller.clearFormed();
+        // 0.3.53: полный сброс по образцу турбины/парогена — начинка, энергия и
+        // прогресс не переживают распад «призрачно» в выжившем контроллере.
+        controller.clearStructure();
     }
 
     /**

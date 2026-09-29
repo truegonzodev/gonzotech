@@ -174,6 +174,25 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
         setChanged();
     }
 
+    /**
+     * Полный сброс при распаде структуры (0.3.53) — по образцу турбины/парогена
+     * ({@code TurbineRotorBlockEntity.clearStructure}): начинка и энергия не
+     * выживают распад «призрачно» в выжившем контроллере, а исчезают вместе со
+     * структурой. Сознательный трейдофф: предметы начинки и запас GTU при сломе
+     * НЕ выпадают (как и лут блоков, 0.3.49) — машина обнуляется; повторная
+     * сборка на том же месте начинает с чистого BE. Раньше содержимое
+     * переживало распад внутри контроллера и всплывало при ре-формировании.
+     */
+    public void clearStructure() {
+        items.clear();
+        gtu.set(0L);
+        step = -1;
+        progress = 0;
+        room = null;
+        qualityHundredths = -1;
+        clearFormed();
+    }
+
     /** Индекс восстановлен по миру — ретраи больше не нужны. */
     void onIndexRestored() {
         this.restorePending = false;
