@@ -386,8 +386,15 @@ assert slice13['elements'][0]['faces']['up']['uv']==[10.6667, 8.0, 13.3333, 10.6
 for v in (1,2,3):
     tp=ROOT/f'src/main/resources/assets/gonzotech/textures/block/third/silicon_factory_chip_{v}_formed.png'
     with LithoImage.open(tp) as im:
-        assert im.size==(96,96) and im.mode=='RGBA', tp.name
-    assert not (ROOT/f'src/main/resources/assets/gonzotech/textures/block/third/silicon_factory_chip_{v}_formed.png.mcmeta').exists()
+        # 0.3.55 (автор, e796232): лист анимирован — вертикальная лента кадров
+        # 96×96 (высота кратна 96) + .mcmeta с явным списком кадров.
+        assert im.mode=='RGBA' and im.width==96 and im.height % 96 == 0, tp.name
+    mc=json.loads((ROOT/f'src/main/resources/assets/gonzotech/textures/block/third/silicon_factory_chip_{v}_formed.png.mcmeta').read_text())
+    anim=mc['animation']
+    assert anim['frametime']>=1 and len(anim['frames'])>=2
+    for fr in anim['frames']:
+        idx = fr if isinstance(fr,int) else fr['index']
+        assert 0 <= idx < im.height//96
 # Loot: фабрика дропает себя, оболочка — пустой файл.
 factory_loot=json.loads((ROOT/'src/main/resources/data/gonzotech/loot_table/blocks/third_silicon_factory.json').read_text())
 assert factory_loot['pools'][0]['entries'][0]['name']=='gonzotech:third_silicon_factory'
