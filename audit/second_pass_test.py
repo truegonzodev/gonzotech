@@ -289,6 +289,28 @@ assert 'if (kind == RoomTopology.Kind.FORBIDDEN) return null; // открыты�
 assert 'if (seen.size() > 4096) return null; // защита от гигантских полостей' in litho_be
 assert 'if (entry == null) return null; // заливка не покинула коробку — станок замурован' in litho_be
 assert 'return CleanRoomSystem.room(server, entry);' in litho_be_code
+# ── 0.3.59: лор «Потери: N GTU/блок» у проводов/теплотруб (импорты закреплены
+# строкой — кросс-пакетные импорты уже терялись молча) ──
+pipe_loss_tooltip=(ROOT/'src/main/java/com/gonzotech/core/client/PipeLossTooltip.java').read_text()
+for pin in ('import com.gonzotech.machines.network.PipeBlock;',
+            'import com.gonzotech.machines.network.PipeLoss;',
+            'import com.gonzotech.machines.network.PipeType;',
+            'import com.gonzotech.machines.network.SecondTierPipe;',
+            'if (!(block instanceof PipeBlock pipe)) return;',
+            'if (type != PipeType.WIRE && type != PipeType.HEAT) return;',
+            'long milli = PipeLoss.perCell(block instanceof SecondTierPipe, type == PipeType.HEAT);',
+            '"tooltip.gonzotech.pipe_loss_heat" : "tooltip.gonzotech.pipe_loss",'):
+    assert pin in pipe_loss_tooltip, 'pipe loss tooltip pin: '+pin
+universal_tooltip=(ROOT/'src/main/java/com/gonzotech/core/client/UniversalTooltip.java').read_text()
+assert 'PipeLossTooltip.append(event);' in universal_tooltip
+lang_ru=json.loads((ROOT/'src/main/resources/assets/gonzotech/lang/ru_ru.json').read_text())
+lang_en=json.loads((ROOT/'src/main/resources/assets/gonzotech/lang/en_us.json').read_text())
+assert lang_ru['tooltip.gonzotech.pipe_loss']=='Потери: %s GTU/блок'
+assert lang_ru['tooltip.gonzotech.pipe_loss_heat']=='Потери: %s GTH/блок'
+assert lang_en['tooltip.gonzotech.pipe_loss']=='Loss: %s GTU/block'
+assert lang_en['tooltip.gonzotech.pipe_loss_heat']=='Loss: %s GTH/block'
+assert len(lang_ru)==len(lang_en)
+
 # ── 0.3.58: потери GTU/GTH за блок проноса (числа автора 28.09.2026) ──
 pipe_loss=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeLoss.java').read_text()
 pipe_loss_code=re.sub(r'/\*.*?\*/|//[^\n]*','',pipe_loss,flags=re.S)
