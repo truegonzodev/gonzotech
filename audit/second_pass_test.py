@@ -289,6 +289,21 @@ assert 'if (kind == RoomTopology.Kind.FORBIDDEN) return null; // открыты�
 assert 'if (seen.size() > 4096) return null; // защита от гигантских полостей' in litho_be
 assert 'if (entry == null) return null; // заливка не покинула коробку — станок замурован' in litho_be
 assert 'return CleanRoomSystem.room(server, entry);' in litho_be_code
+# ── 0.3.58: потери GTU/GTH за блок проноса (числа автора 28.09.2026) ──
+pipe_loss=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeLoss.java').read_text()
+pipe_loss_code=re.sub(r'/\*.*?\*/|//[^\n]*','',pipe_loss,flags=re.S)
+for const in ('WIRE_T1 = 80;','WIRE_T2 = 90;','HEAT_T1 = 220;','HEAT_T2 = 180;'):
+    assert const in pipe_loss_code, 'pipe loss const: '+const
+pipe_routing=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeRouting.java').read_text()
+pipe_routing_code=re.sub(r'/\*.*?\*/|//[^\n]*','',pipe_routing,flags=re.S)
+for pin in ('PipeLoss.delivered(amount, lossMilli);','PipeLoss.flow(accepted, lossMilli);',
+            'private static long pathLoss(Level level, List<PathStep> path, PipeType type)',
+            'if (st.getBlock() instanceof UniversalNodeBlock) continue;',
+            'PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT)',
+            'lanes.add(new Lane(raw, null, 0));'):
+    assert pin in pipe_routing_code, 'routing loss pin: '+pin
+assert pipe_routing_code.count('pathLoss(level, path,') == 4
+
 # 0.3.55: предмет станка — блоковая модель (3D), плоской item-модели больше нет.
 items_json = json.loads((ROOT / 'src/main/resources/assets/gonzotech/items/third_silicon_factory.json').read_text())
 assert items_json['model']['model'] == 'gonzotech:block/third_silicon_factory'

@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""Per-block GTU/GTH losses (0.3.58, author's numbers): pure math + wiring pins.
+
+Compiles the dependency-free PipeLoss class plus a scenario harness (author's
+battery example) and pins the routing wiring strings. Needs JDK 21 in
+JAVA_HOME/PATH or a Java 21 runtime + ECJ_JAR.
+"""
+from pathlib import Path
+import os
+import shutil
+import subprocess
+import tempfile
+
+ROOT = Path(__file__).resolve().parent.parent
+JAVA_HOME = os.environ.get("JAVA_HOME")
+java = str(Path(JAVA_HOME) / "bin/java") if JAVA_HOME else shutil.which("java")
+javac = str(Path(JAVA_HOME) / "bin/javac") if JAVA_HOME else shutil.which("javac")
+if not java or not Path(java).is_file():
+    raise SystemExit("Java 21 required: set JAVA_HOME or PATH")
+loss_src = ROOT / "src/main/java/com/gonzotech/machines/network/PipeLoss.java"
+sources = [loss_src, ROOT / "audit/PipeLossSelfTest.java"]
+with tempfile.TemporaryDirectory(prefix="gonzotech-pipe-loss-") as output:
+    if os.environ.get("ECJ_JAR"):
+        compiler = [java, "-jar", os.environ["ECJ_JAR"], "-21", "-proc:none"]
+    elif javac and Path(javac).is_file():
+        compiler = [javac, "--release", "21"]
+    else:
+        raise SystemExit("javac required (or supply ECJ_JAR with a Java 21 runtime)")
+    subprocess.run(compiler + ["-d", output] + [str(p) for p in sources], check=True)
+    subprocess.run([java, "-cp", output, "PipeLossSelfTest"], check=True)
+
+# ── Пины продакшен-проводки (PipeRouting) ──
+routing = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeRouting.java").read_text()
+for pin in (
+    "private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path,\n"
+    "                                               long lossMilli) {",
+    "long delivered = PipeLoss.delivered(amount, lossMilli);",
+    "long flow = PipeLoss.flow(accepted, lossMilli);",
+    "private static long pathLoss(Level level, List<PathStep> path, PipeType type) {",
+    "if (st.getBlock() instanceof UniversalNodeBlock) continue;",
+    "perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT);",
+    "lanes.add(new Lane(raw, null, 0));",
+    "long loss = pathLoss(level, path, type);",
+    "recording(level, raw, type, path, loss)",
+):
+    assert pin in routing, "routing pin: " + pin.splitlines()[0]
+# все четыре вида дорожек считают потерю; прямые соседи — без потерь
+assert routing.count("pathLoss(level, path,") == 4, routing.count("pathLoss(level, path,")
+# числа автора — единственный источник констант
+for const in ("WIRE_T1 = 80;", "WIRE_T2 = 90;", "HEAT_T1 = 220;", "HEAT_T2 = 180;"):
+    assert const in loss_src.read_text(), const
+print("Pipe losses wiring passed (0.08/0.09 GTU, 0.22/0.18 GTH; universal node exempt)")

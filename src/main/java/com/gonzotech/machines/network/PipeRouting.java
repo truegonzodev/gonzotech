@@ -104,8 +104,10 @@ public final class PipeRouting {
      * Дорожка: конкретный маршрут ресурса к приёмнику. Приёмник, достижимый из
      * нескольких entry-труб, имеет несколько дорожек (честные паралели); суммарно
      * он ограничен собственным intake — «лишние» дорожки просто получают меньше.
+     * {@code lossMilli} — суммарная потеря маршрута за блок проноса
+     * ({@link PipeLoss}); у прямых соседей (без сегментов) — 0.
      */
-    private record Lane(Transfer.Receiver wrapped, List<PathStep> path) {
+    private record Lane(Transfer.Receiver wrapped, List<PathStep> path, long lossMilli) {
     }
 
     /**
@@ -121,7 +123,9 @@ public final class PipeRouting {
      * @param budget     сколько единиц машина готова слить за этот тик
      * @param rotation   сдвиг ротации остатка (обычно {@code level.getGameTime()})
      * @param receiverOf для BlockEntity-приёмника → {@link Transfer.Receiver} (или null)
-     * @return сколько единиц суммарно принято (столько же списать из машины)
+     * @return сколько единиц списать с источника: принятое приёмниками + потери
+     *         проноса ({@link PipeLoss}); прямая передача (без сегментов) потерь
+     *         не несёт
      */
     public static long drain(Level level, BlockPos fromPos, PipeType type, long budget, long rotation,
                              BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
@@ -265,7 +269,7 @@ public final class PipeRouting {
         if (raw == null) return;
         rawByPos.put(pos.asLong(), raw);
         direct.add(pos.asLong());
-        lanes.add(new Lane(raw, null));
+        lanes.add(new Lane(raw, null, 0));
     }
 
     /**
@@ -342,7 +346,8 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        lanes.add(new Lane(recording(level, raw, type, path), path));
+        long loss = pathLoss(level, path, type);
+        lanes.add(new Lane(recording(level, raw, type, path, loss), path, loss));
     }
 
     /** Дорожка виртуального SteamSink встроенного turbine port-а (без BE у ноды). */
@@ -356,7 +361,8 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        lanes.add(new Lane(recording(level, raw, PipeType.STEAM, path), path));
+        long loss = pathLoss(level, path, PipeType.STEAM);
+        lanes.add(new Lane(recording(level, raw, PipeType.STEAM, path, loss), path, loss));
     }
 
     /**
@@ -373,7 +379,8 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        lanes.add(new Lane(recording(level, raw, PipeType.WATER, path), path));
+        long loss = pathLoss(level, path, PipeType.WATER);
+        lanes.add(new Lane(recording(level, raw, PipeType.WATER, path, loss), path, loss));
     }
 
     /**
@@ -390,7 +397,8 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        lanes.add(new Lane(recording(level, raw, PipeType.HEAT, path), path));
+        long loss = pathLoss(level, path, PipeType.HEAT);
+        lanes.add(new Lane(recording(level, raw, PipeType.HEAT, path, loss), path, loss));
     }
 
     /**
@@ -418,7 +426,7 @@ public final class PipeRouting {
      *
      * @param lanes дорожки (обёртки с биллингом маршрута; path = null — прямой
      *              сосед без сегментов)
-     * @return сколько единиц суммарно принято (столько же списать из источника)
+     * @return сколько единиц списать с источника (принятое + потери проноса)
      */
     private static long distributeLanes(Level level, PipeType type, List<Lane> lanes, long budget, long rotation) {
         int n = lanes.size();
@@ -553,23 +561,47 @@ public final class PipeRouting {
     }
 
     /**
-     * Обёртка-приёмник: сколько реально принято — столько же
-     * <b>платят</b> все трубы на маршруте: {@link FlowTracker} (HUD, по сторонам)
-     * и {@link PipeFlowLedger} (закон на трубе, по позициям). Биллинг фактического
-     * принятого объёма, а не предложенного — если приёмник взял меньше (свой
-     * intake), трубы за это не платят.
+     * Обёртка-приёмник с потерями за блок проноса ({@link PipeLoss}, 0.3.58):
+     * приёмник получает {@code amount - loss}; источник же списывает
+     * <b>пронос</b> — принятое + потерю (потерянная энергия рассеивается в
+     * проводах как тепло). Сколько прошло — столько же <b>платят</b> все трубы
+     * на маршруте: {@link FlowTracker} (HUD, по сторонам) и
+     * {@link PipeFlowLedger} (закон на трубе, по позициям). Если приёмник не
+     * взял ничего — поток нулевой: трубы не платят и потерь не несут.
      */
-    private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path) {
+    private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path,
+                                               long lossMilli) {
         return (amount, simulate) -> {
-            long accepted = real.receive(amount, simulate);
-            if (!simulate && accepted > 0) {
+            long delivered = PipeLoss.delivered(amount, lossMilli);
+            long accepted = delivered > 0 ? real.receive(delivered, simulate) : 0;
+            long flow = PipeLoss.flow(accepted, lossMilli);
+            if (!simulate && flow > 0) {
                 for (PathStep s : path) {
-                    FlowTracker.record(level, s.pipe(), type, s.out(), accepted);
-                    PipeFlowLedger.add(level, s.pipe(), type, accepted);
+                    FlowTracker.record(level, s.pipe(), type, s.out(), flow);
+                    PipeFlowLedger.add(level, s.pipe(), type, flow);
                 }
             }
-            return accepted;
+            return flow;
         };
+    }
+
+    /**
+     * Суммарная потеря маршрута (milli): каждая клетка-носитель провода/узла
+     * провода/теплотрубы ест свою долю проноса; универсальный узел потерь НЕ
+     * имеет (дорогое удовольствие, и так понёрфлен throughputFactor 0.9).
+     * Жидкости и предметы не теряются; у маршрута без сегментов потерь нет.
+     */
+    private static long pathLoss(Level level, List<PathStep> path, PipeType type) {
+        if (path == null || path.isEmpty()) return 0;
+        if (type != PipeType.WIRE && type != PipeType.HEAT) return 0;
+        long[] perCell = new long[path.size()];
+        for (int i = 0; i < path.size(); i++) {
+            BlockState st = level.getBlockState(path.get(i).pipe());
+            if (!(st.getBlock() instanceof PipeCarrier c) || !c.carries(st, type)) continue;
+            if (st.getBlock() instanceof UniversalNodeBlock) continue;
+            perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT);
+        }
+        return PipeLoss.sum(perCell);
     }
 
     private static Direction dirFromTo(BlockPos from, BlockPos to) {
