@@ -24,6 +24,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -176,14 +177,21 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
 
     /**
      * Полный сброс при распаде структуры (0.3.53) — по образцу турбины/парогена
-     * ({@code TurbineRotorBlockEntity.clearStructure}): начинка и энергия не
-     * выживают распад «призрачно» в выжившем контроллере, а исчезают вместе со
-     * структурой. Сознательный трейдофф: предметы начинки и запас GTU при сломе
-     * НЕ выпадают (как и лут блоков, 0.3.49) — машина обнуляется; повторная
-     * сборка на том же месте начинает с чистого BE. Раньше содержимое
-     * переживало распад внутри контроллера и всплывало при ре-формировании.
+     * ({@code TurbineRotorBlockEntity.clearStructure}), с одним отличием по
+     * решению автора (0.3.54): предметы начинки ВЫПАДАЮТ у контроллера, а не
+     * исчезают. Энергия и шаг/прогресс пропадают вместе со структурой (как
+     * шкалы турбины); повторная сборка на том же месте начинается с чистого BE.
      */
     public void clearStructure() {
+        if (level instanceof ServerLevel server && !isRemoved()) {
+            for (int i = 0; i < items.size(); i++) {
+                ItemStack stack = items.get(i);
+                if (!stack.isEmpty()) {
+                    Containers.dropItemStack(server, worldPosition.getX() + 0.5,
+                        worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5, stack);
+                }
+            }
+        }
         items.clear();
         gtu.set(0L);
         step = -1;
