@@ -19,6 +19,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -514,7 +515,7 @@ public final class WrenchHud {
         String value = part.isFluid() ? Long.toString(total) : GtFormat.formatRate(total);
         Component amount = Component.translatable("hud.gonzotech.flow_amount",
             GtUnits.rate(value, GtUnits.key(part.unitKey(), color), color));
-        Component line = Component.empty().append(name).append(sep).append(amount);
+        MutableComponent line = Component.empty().append(name).append(sep).append(amount);
         // Потери проноса на участке цепи от источника до этой трубы (0.3.60):
         // серый хвост «(+4.0)» — сколько единиц рассеялось в проводах выше по течению.
         if (e.lossMilli > 0 && !part.isFluid()) {

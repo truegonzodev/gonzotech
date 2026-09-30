@@ -350,6 +350,12 @@ clean_detector=(ROOT/'src/main/java/com/gonzotech/cleanroom/CleanRoomDetector.ja
 assert 'public static boolean isOpenHermeticDoor(BlockState state)' in clean_detector
 assert 'HeavyDoorBlock.OPEN' in clean_detector
 
+# ── 0.3.62: компиляция HUD-хвоста — append есть только у MutableComponent ──
+hud=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()
+assert 'import net.minecraft.network.chat.MutableComponent;' in hud
+assert 'MutableComponent line = Component.empty().append(name).append(sep).append(amount);' in hud
+assert '\n        Component line = Component.empty().append' not in hud  # точная форма бага (однострочник с последующим line.append); многострочная цепочка канистры — легальна
+
 # ── 0.3.60: фикс «19 вместо 38» + кумулятивные потери в HUD ключа ──
 assert 'budget = Math.min(budget, entrySum);' not in pipe_routing_code, \
     'регрессия 0.3.59: прямой приёмник снова делит проводную ёмкость'
