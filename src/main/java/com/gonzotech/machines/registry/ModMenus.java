@@ -48,6 +48,9 @@ public final class ModMenus {
     public static final Supplier<MenuType<NuclearFireboxMenu>> SECOND_NUCLEAR_FIREBOX =
         MENUS.register("second_nuclear_firebox", () -> IMenuTypeExtension.create(NuclearFireboxMenu::new));
 
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.BlastFurnaceMenu>> BLAST_FURNACE =
+        MENUS.register("blast_furnace", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.BlastFurnaceMenu::new));
+
     public static final Supplier<MenuType<BoilerMenu>> BOILER =
         MENUS.register("boiler", () -> IMenuTypeExtension.create(BoilerMenu::new));
 

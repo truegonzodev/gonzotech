@@ -429,6 +429,13 @@ public final class ModMachines {
     public static final DeferredItem<BlockItem> SECOND_STEAMGEN_CORE_ITEM =
         ITEMS.registerSimpleBlockItem("second_steamgen_core", SECOND_STEAMGEN_CORE);
 
+    /** Шамотный кирпич — строительный блок доменной печи (0.3.65). */
+    public static final DeferredBlock<com.gonzotech.machines.block.FireclayBlock> FIRECLAY =
+        BLOCKS.registerBlock("fireclay", com.gonzotech.machines.block.FireclayBlock::new, machineMetal());
+
+    public static final DeferredItem<BlockItem> FIRECLAY_ITEM =
+        ITEMS.registerSimpleBlockItem("fireclay", FIRECLAY);
+
     public static final DeferredItem<BlockItem> WIRE_ITEM =
         ITEMS.registerSimpleBlockItem("first_wire", WIRE);
 

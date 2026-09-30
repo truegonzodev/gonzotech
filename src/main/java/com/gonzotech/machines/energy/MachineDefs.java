@@ -113,6 +113,29 @@ public final class MachineDefs {
             + (long) (FIREBOX_SPEED_MAX_PERMILLE - FIREBOX_SPEED_MID_PERMILLE) * (g - FIREBOX_GTH_MID) / span);
     }
 
+    // ═══════════════════════════ ДОМЕННАЯ ПЕЧЬ (мультиблок 3×3×3) ═══════════════════════════
+    // Промежуточное звено между топкой и ядерной топкой (0.3.65): топливо горит
+    // ×4 быстрее ванили, даёт 34 GTH/t. Структура: шамотный кирпич + топка +
+    // котёл + 4 узла теплотруб (вывод GTH). Контроллер — топка в центре.
+
+    /** Максимум GTH в доменной печи (mGTH: 34 016 GTH). */
+    public static final int BLAST_FURNACE_GTH_CAPACITY = 34_016 * MILLI;
+
+    /** GTH за тик горения топлива (mGTH: 34 GTH/t). */
+    public static final int BLAST_FURNACE_GTH_PER_TICK = 34 * MILLI;
+
+    /** Скорость сгорания топлива: ванильная длительность, делённая на 4 (уголь 80 с → 20 с). */
+    public static final int BLAST_FURNACE_BURN_SPEED_DIVISOR = 4;
+
+    /**
+     * Макс. отдача GTH через узлы структуры за тик (mGTH: 320 GTH/t = 4× топки).
+     * TODO: подтвердить баланс у автора (в спеке указана только выработка 34 GTH/t).
+     */
+    public static final int BLAST_FURNACE_GTH_OUTPUT = 320 * MILLI;
+
+    /** Слотов под топливо в доменном режиме. */
+    public static final int BLAST_FURNACE_FUEL_SLOTS = 5;
+
     // ═══════════════════════════ ПАРОВОЙ КОТЁЛ (Boiler) ═══════════════════════════
     // Water → Steam, тратя GTH. Работает ТОЛЬКО при примыкающей топке.
 

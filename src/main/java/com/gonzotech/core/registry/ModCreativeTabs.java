@@ -290,6 +290,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.CHIP_1.get());
                 output.accept(ModItems.CHIP_2.get());
                 output.accept(ModItems.CHIP_3.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRECLAY_ITEM.get()); // шамот — до всех крошек
                 output.accept(ModItems.GRANITE_GRIT.get());
                 output.accept(ModItems.ANDESITE_GRIT.get());
                 output.accept(ModItems.DIORITE_GRIT.get());

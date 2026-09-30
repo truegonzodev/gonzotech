@@ -130,7 +130,9 @@ public final class Phase3Events {
                 Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_ITEM_SCAVENGER_ITEM.get(), 1),
                 // Части многоблочной паровой турбины.
                 Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_CASING_ITEM.get(), 1),
-                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_ROTOR_ITEM.get(), 1)
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRST_TURBINE_ROTOR_ITEM.get(), 1),
+                // Шамотный кирпич (доменная печь) — фулл-гейт «Открытие 1».
+                Map.entry(com.gonzotech.machines.registry.ModMachines.FIRECLAY_ITEM.get(), 1)
             );
         }
         return craftGate;

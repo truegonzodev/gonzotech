@@ -68,6 +68,7 @@ public final class RecipeUnlocks {
             "gonzotech:first_item_scavenger",
             // Строительные материалы II. Рецепты физически доступны всегда,
             // но в книге появляются вместе с Открытием 1.
+            "gonzotech:fireclay",
             "gonzotech:trio_grit",
             "gonzotech:clinker_grit_from_trio_grit_smelting",
             "gonzotech:armor_mix",

@@ -1,5 +1,6 @@
 package com.gonzotech.machines.block.entity;
 
+import com.gonzotech.machines.blastfurnace.BlastFurnaceStructure;
 import com.gonzotech.machines.energy.ComparatorOutput;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.MachineDefs;
@@ -27,7 +28,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Топка — печка на 3 слота (вход-нагрузка, топливо, выход) + шкала GTH.
+ * Топка — печка (вход-нагрузка, топливо, выход) + шкала GTH. С 0.3.65 топка —
+ * ещё и контроллер ДОМЕННОЙ ПЕЧИ: в структуре 3×3×3 (шамот + узлы + котёл)
+ * она получает 5 топливных слотов, 34 GTH/t, жжение топлива ×4 и вывод GTH
+ * через узлы; см. {@link com.gonzotech.machines.blastfurnace.BlastFurnaceStructure}.
  * <p>
  * <ul>
  *   <li>Топливо горит «ванильную» длительность (уголь 80с и т.д.) и наполняет
@@ -47,6 +51,14 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_FUEL = 1;
     public static final int SLOT_OUTPUT = 2;
+    /** Доменный режим: слоты 3..6 — дополнительное топливо (слот 1 общий). */
+    public static final int SLOT_FUEL_2 = 3;
+    public static final int SLOT_FUEL_3 = 4;
+    public static final int SLOT_FUEL_4 = 5;
+    public static final int SLOT_FUEL_5 = 6;
+
+    /** Все топливные слоты (доменный режим: 5; слот 1 — общий с обычной топкой). */
+    public static final int[] FUEL_SLOTS = {SLOT_FUEL, SLOT_FUEL_2, SLOT_FUEL_3, SLOT_FUEL_4, SLOT_FUEL_5};
 
     // Грани для автоматизации. Слот топлива стоит ПЕРВЫМ везде, где принимаем
     // вставку — чтобы воронка пыталась положить топливо туда раньше, чем в сырьё
@@ -54,10 +66,47 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     private static final int[] SLOTS_TOP = {SLOT_FUEL, SLOT_INPUT};
     private static final int[] SLOTS_SIDE = {SLOT_FUEL, SLOT_INPUT};
     private static final int[] SLOTS_BOTTOM = {SLOT_OUTPUT, SLOT_FUEL};
+    // Доменная печь: трубы и воронки могут ТОЛЬКО закладывать топливо (любая сторона).
+    private static final int[] SLOTS_BLAST = FUEL_SLOTS;
 
     // GTH хранится в GtBuffer (BigInteger, милли): у топки капа мала, но единый
     // тип буфера с эндгейм-машинами и отсутствие int-потолка того стоят.
-    private final GtBuffer gth = new GtBuffer((long) MachineDefs.FIREBOX_GTH_CAPACITY);
+    // Ёмкость буфера — доменная (34 016); в обычном режиме приём клампится до топки.
+    private final GtBuffer gth = new GtBuffer((long) MachineDefs.BLAST_FURNACE_GTH_CAPACITY);
+
+    /** Доменный режим: печь собрана в структуру 3×3×3 (проверка раз в 20 тиков). */
+    private boolean blastFormed;
+    /** Тик последней проверки структуры; Long.MIN_VALUE — кэш сброшен. */
+    private long blastCheckTick = Long.MIN_VALUE;
+
+    /** Эффективная ёмкость буфера в текущем режиме, mGTH. */
+    public long gthCapacityMilli() {
+        return blastFormed
+            ? (long) MachineDefs.BLAST_FURNACE_GTH_CAPACITY
+            : (long) MachineDefs.FIREBOX_GTH_CAPACITY;
+    }
+
+    /** Сбросить кэш структуры (часть изменена) — перепроверка в ближайший тик. */
+    public void invalidateBlastCache() {
+        blastCheckTick = Long.MIN_VALUE;
+    }
+
+    /** Собрана ли доменная печь вокруг этой топки. */
+    public boolean isBlastFormed() {
+        return blastFormed;
+    }
+
+    private void revalidateBlast(ServerLevel server) {
+        long tick = server.getGameTime();
+        if (blastCheckTick != Long.MIN_VALUE && tick - blastCheckTick < 20) return;
+        blastCheckTick = tick;
+        boolean formed = BlastFurnaceStructure.isFormed(server, worldPosition);
+        if (formed != blastFormed) {
+            blastFormed = formed;
+            BlastFurnaceStructure.applyFormedFlags(server, worldPosition, formed);
+            setChanged();
+        }
+    }
 
     /** Последнее опубликованное значение компаратора; вычисляется заново после загрузки. */
     private int lastComparatorOutput;
@@ -90,7 +139,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
                 // милли (до 24млн) в него не влезли бы. У этой машины капа мала, так
                 // что единицы точны; эндгейм-машины пойдут через мантиссу+exp.
                 case 0 -> gth.amountUnitsInt();
-                case 1 -> gth.capacityUnitsInt();
+                case 1 -> (int) (gthCapacityMilli() / MachineDefs.MILLI);
                 case 2 -> litTime;
                 case 3 -> litDuration;
                 case 4 -> cookProgress;
@@ -118,7 +167,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     };
 
     public FireboxBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.FIREBOX.get(), pos, state, 3);
+        super(ModBlockEntities.FIREBOX.get(), pos, state, 3 + MachineDefs.BLAST_FURNACE_FUEL_SLOTS);
     }
 
     public GtBuffer gth() {
@@ -158,7 +207,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveGth(long amount, boolean simulate) {
-        long accepted = gth.receive(amount, simulate);
+        long space = gthCapacityMilli() - gth.amountAsLong();
+        long accepted = gth.receive(Math.min(amount, Math.max(0, space)), simulate);
         if (!simulate && accepted > 0) {
             setChanged();
             updateComparatorOutput();
@@ -172,10 +222,17 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         if (!(level instanceof ServerLevel server)) return;
         boolean changed = false;
 
+        // 0. Доменная печь: перепроверка структуры раз в 20 тиков (или сразу после
+        // сброса кэша из BlastFurnaceStructure.partChanged).
+
         // 1. Горение топлива → наполняем GTH.
         if (be.litTime > 0) {
             be.litTime--;
-            be.gth.receive(MachineDefs.FIREBOX_GTH_PER_TICK, false);
+            long perTick = be.blastFormed
+                ? (long) MachineDefs.BLAST_FURNACE_GTH_PER_TICK
+                : (long) MachineDefs.FIREBOX_GTH_PER_TICK;
+            long space = be.gthCapacityMilli() - be.gth.amountAsLong();
+            be.gth.receive(Math.min(perTick, Math.max(0, space)), false);
             changed = true;
 
             // Звук горящих угольков, пока топка горит — периодически, чтобы не спамить.
@@ -193,19 +250,24 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         // Разжечь новую единицу топлива, если погасло. ВАЖНО: разжигаем даже при
         // полной шкале GTH — топка обязана плавить всегда (лишний GTH просто
         // не влезает в буфер).
-        if (be.litTime <= 0) {
-            ItemStack fuel = be.items.get(SLOT_FUEL);
-            int burn = fuel.getBurnTime(RecipeType.SMELTING, server.fuelValues());
-            boolean hasWork = FireboxBlockEntity.wantsToBurn(server, be);
-            if (burn > 0 && hasWork) {
+        if (be.litTime <= 0 && be.wantsToBurn(server)) {
+            for (int slot : FUEL_SLOTS) {
+                ItemStack fuel = be.items.get(slot);
+                int burn = fuel.getBurnTime(RecipeType.SMELTING, server.fuelValues());
+                if (burn <= 0) continue;
+                if (be.blastFormed) {
+                    // Доменная печь: топливо горит в 4 раза быстрее ванили.
+                    burn = Math.max(1, burn / MachineDefs.BLAST_FURNACE_BURN_SPEED_DIVISOR);
+                }
                 be.litTime = burn;
                 be.litDuration = burn;
                 ItemStack container = fuel.getCraftingRemainder();
                 fuel.shrink(1);
                 if (fuel.isEmpty() && !container.isEmpty()) {
-                    be.items.set(SLOT_FUEL, container);
+                    be.items.set(slot, container);
                 }
                 changed = true;
+                break;
             }
         }
 
@@ -217,7 +279,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
         // 3. Плавка нагрузки — идёт, пока горит топка (GTH не тратится).
         //    Скорость зависит от запаса GTH.
-        if (be.isLit() && SmeltHelper.canOutput(server, be.items.get(SLOT_INPUT), be.items.get(SLOT_OUTPUT))) {
+        if (be.isLit() && !be.blastFormed && SmeltHelper.canOutput(server, be.items.get(SLOT_INPUT), be.items.get(SLOT_OUTPUT))) {
             if (be.cookTotal == 0) {
                 be.cookTotal = SmeltHelper.cookTime(server, be.items.get(SLOT_INPUT), MachineDefs.FIREBOX_BASE_COOK_TIME);
             }
@@ -262,14 +324,40 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
      * нагрузку ИЛИ есть куда девать GTH (буфер не полон, либо рядом приёмник).
      * На практике достаточно проверить «есть работа по плавке или буфер не полон».
      */
-    private static boolean wantsToBurn(ServerLevel server, FireboxBlockEntity be) {
-        boolean canSmelt = SmeltHelper.canOutput(server, be.items.get(SLOT_INPUT), be.items.get(SLOT_OUTPUT));
-        return canSmelt || !be.gth.isFull();
+    private boolean wantsToBurn(ServerLevel server) {
+        if (blastFormed) {
+            // Доменная печь плавит только воздух: смысл гореть есть, пока буфер не полон.
+            return gth.amountAsLong() < gthCapacityMilli();
+        }
+        boolean canSmelt = SmeltHelper.canOutput(server, items.get(SLOT_INPUT), items.get(SLOT_OUTPUT));
+        return canSmelt || gth.amountAsLong() < gthCapacityMilli();
     }
 
     /** Равномерно раздать GTH соседям-приёмникам (котлам). */
     private boolean pushGth(Level level, BlockPos pos) {
         if (gth.isEmpty()) return false;
+        if (level instanceof ServerLevel server && blastFormed) {
+            // Доменная печь: GTH выходит через узлы теплотруб структуры (4 маршрута).
+            long budget = Math.min((long) MachineDefs.BLAST_FURNACE_GTH_OUTPUT, gth.amountAsLong());
+            long remaining = budget;
+            long movedTotal = 0;
+            for (BlockPos node : BlastFurnaceStructure.nodePositions(server, worldPosition)) {
+                if (remaining <= 0) break;
+                long moved = PipeRouting.drain(server, node, PipeType.HEAT, remaining,
+                    server.getGameTime(), (be, p) -> {
+                        if (be instanceof FireboxBlockEntity) return null;
+                        if (be instanceof GthSink sink) return sink::receiveGth;
+                        return null;
+                    });
+                remaining -= moved;
+                movedTotal += moved;
+            }
+            if (movedTotal > 0) {
+                gth.extract(movedTotal, false);
+                return true;
+            }
+            return false;
+        }
         long budget = Math.min((long) MachineDefs.FIREBOX_GTH_OUTPUT, gth.amountAsLong());
         // Слив тепла: прямым соседям-котлам ИЛИ через теплотрубы дальше по цепи.
         long moved = PipeRouting.drain(level, pos, PipeType.HEAT, budget, level.getGameTime(), (be, p) -> {
@@ -302,6 +390,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public int[] getSlotsForFace(Direction side) {
+        if (blastFormed) return SLOTS_BLAST; // доменная печь: топливо с любой стороны
         return switch (side) {
             case DOWN -> SLOTS_BOTTOM;
             case UP -> SLOTS_TOP;
@@ -322,6 +411,13 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
      */
     @Override
     public boolean canPlaceItemThroughFace(int slot, ItemStack stack, Direction side) {
+        if (blastFormed) {
+            // Трубы/воронки только ЗАКЛАДЫВАЮТ топливо; забирать нельзя.
+            for (int fuel : FUEL_SLOTS) {
+                if (slot == fuel) return isFuel(stack);
+            }
+            return false;
+        }
         if (slot == SLOT_OUTPUT) return false;
         if (slot == SLOT_FUEL) {
             return isFuel(stack);
@@ -341,6 +437,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
+        if (blastFormed) return false; // доменная печь: только закладка
         // Результат забираем всегда. Из слота ТОПЛИВА можно вытащить только
         // «отработанную тару» — то, что уже не является топливом (пустое ведро от
         // лавы, ведро с водой). Настоящее топливо (уголь, брёвна) труба НЕ
@@ -384,6 +481,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        // Сохранения до 0.3.65 несут 3 слота — дополняем до 8 (5 топливных).
+        while (items.size() < 3 + MachineDefs.BLAST_FURNACE_FUEL_SLOTS) items.add(ItemStack.EMPTY);
         gth.load(tag, "Gth");
         litTime = tag.getInt("LitTime");
         litDuration = tag.getInt("LitDuration");
@@ -397,11 +496,45 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.firebox");
+        return Component.translatable(blastFormed
+            ? "block.gonzotech.blast_furnace"
+            : "block.gonzotech.firebox");
     }
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
+        if (blastFormed) {
+            return new com.gonzotech.machines.menu.BlastFurnaceMenu(id, inv, this, blastData);
+        }
         return new FireboxMenu(id, inv, this, data);
     }
+
+    /**
+     * Доменные данные (0.3.65): GTH и горение двухпартно (units + milli),
+     * ёмкость 34 016 не влезает в один int-слот клиентского отображения надёжно.
+     */
+    private final ContainerData blastData = new ContainerData() {
+        @Override
+        public int get(int i) {
+            return switch (i) {
+                case 0 -> (int) (gth.amountAsLong() % MachineDefs.MILLI);
+                case 1 -> (int) (gth.amountAsLong() / MachineDefs.MILLI);
+                case 2 -> litTime % MachineDefs.MILLI;
+                case 3 -> litTime / MachineDefs.MILLI;
+                case 4 -> litDuration % MachineDefs.MILLI;
+                case 5 -> litDuration / MachineDefs.MILLI;
+                default -> 0;
+            };
+        }
+
+        @Override
+        public void set(int i, int v) {
+            // только чтение: сервер — источник истины
+        }
+
+        @Override
+        public int getCount() {
+            return 6;
+        }
+    };
 }

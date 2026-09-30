@@ -1,0 +1,7 @@
+{
+  "__comment": "Smart CTM: сформированная обшивка доменной печи — отдельная модель; стыки собираются клиентом по флагам formed (как у турбины/парогена).",
+  "variants": {
+    "formed=false": { "model": "gonzotech:block/fireclay" },
+    "formed=true": { "model": "gonzotech:block/fireclay_ctm" }
+  }
+}

@@ -1,0 +1,129 @@
+package com.gonzotech.machines.blastfurnace;
+
+import com.gonzotech.machines.block.FireclayBlock;
+import com.gonzotech.machines.block.entity.FireboxBlockEntity;
+import com.gonzotech.machines.registry.ModMachines;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Доменная печь (0.3.65): событийная сборка/проверка структуры 3×3×3.
+ * <p>
+ * Геометрия — {@link BlastFurnaceLayout}: фундамент 9× шамот, в середине —
+ * топка (контроллер) с узлами теплотруб по серединам рёбер, сверху — котёл.
+ * Узлы принимаются любого тепло-типа: T1/T2 или универсальные T1/T2.
+ * <p>
+ * При сборке шамотные блоки получают флаг {@code FORMED} — клиентский
+ * Smart CTM рисует бесшовную обшивку (как у турбины и парогена). Контроллер —
+ * сама топка: её BlockEntity в сформированном режиме работает как доменная
+ * печь (5 слотов топлива, 34 GTH/t, жжение ×4, вывод GTH через узлы).
+ */
+public final class BlastFurnaceStructure {
+
+    private BlastFurnaceStructure() {
+    }
+
+    /** Совпадает ли блок в ячейке с ожидаемой ролью раскладки. */
+    private static boolean matches(BlockState state, BlastFurnaceLayout.Role role) {
+        return switch (role) {
+            case FIRECLAY -> state.getBlock() instanceof FireclayBlock;
+            case HEAT_NODE -> state.is(ModMachines.HEAT_NODE.get())
+                || state.is(ModMachines.SECOND_HEAT_NODE.get())
+                || state.is(ModMachines.UNIVERSAL_NODE.get())
+                || state.is(ModMachines.SECOND_UNIVERSAL_NODE.get());
+            case FIREBOX -> state.is(ModMachines.FIREBOX.get());
+            case CAULDRON -> state.is(Blocks.CAULDRON);
+            case OUTSIDE -> false;
+        };
+    }
+
+    /** Полная проверка структуры вокруг топки. */
+    public static boolean isFormed(ServerLevel level, BlockPos fireboxPos) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlastFurnaceLayout.Role role = BlastFurnaceLayout.roleAt(dx, dy, dz);
+                    BlockState state = level.getBlockState(fireboxPos.offset(dx, dy, dz));
+                    if (!matches(state, role)) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /** Позиции 4 узлов вывода GTH (середины рёбер среднего слоя). */
+    public static List<BlockPos> nodePositions(ServerLevel level, BlockPos fireboxPos) {
+        List<BlockPos> nodes = new ArrayList<>(4);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (BlastFurnaceLayout.isNodeCell(dx, 0, dz)) {
+                    nodes.add(fireboxPos.offset(dx, 0, dz));
+                }
+            }
+        }
+        return nodes;
+    }
+
+    /** Выставить/снять флаг FORMED на всех шамотных блоках структуры. */
+    public static void applyFormedFlags(ServerLevel level, BlockPos fireboxPos, boolean formed) {
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (!BlastFurnaceLayout.isFireclayCell(dx, dy, dz)) continue;
+                    BlockPos pos = fireboxPos.offset(dx, dy, dz);
+                    BlockState state = level.getBlockState(pos);
+                    if (!(state.getBlock() instanceof FireclayBlock)) continue;
+                    BlockState next = state.setValue(FireclayBlock.FORMED, formed);
+                    if (!next.equals(state)) level.setBlock(pos, next, Block.UPDATE_CLIENTS);
+                }
+            }
+        }
+    }
+
+    /**
+     * Открыть меню доменной печи кликом по любой части структуры: ищет топку
+     * в кубе ±1 от места клика и открывает её меню (топка сама раздаёт
+     * обычное/доменное меню по сформированности).
+     */
+    public static boolean openMenu(Level level, BlockPos clicked, net.minecraft.world.entity.player.Player player) {
+        if (level.isClientSide()) return false;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos pos = clicked.offset(dx, dy, dz);
+                    if (level.getBlockEntity(pos) instanceof FireboxBlockEntity firebox) {
+                        player.openMenu(firebox);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Изменилась потенциальная часть структуры (шамот поставлен/сломан и т.п.):
+     * сбрасывает кэш сформированности всех топок в кубе ±1 — они перепроверятся
+     * в ближайший тик и соберут/разберут структуру (флаги FORMED, режим работы).
+     */
+    public static void partChanged(Level level, BlockPos changed) {
+        if (level.isClientSide() || !(level instanceof ServerLevel)) return;
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos pos = changed.offset(dx, dy, dz);
+                    if (level.getBlockEntity(pos) instanceof FireboxBlockEntity firebox) {
+                        firebox.invalidateBlastCache();
+                    }
+                }
+            }
+        }
+    }
+}

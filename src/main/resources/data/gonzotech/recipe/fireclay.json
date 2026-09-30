@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:bricks",
+    "minecraft:clay_ball",
+    "minecraft:bone_meal",
+    "minecraft:wheat",
+    "minecraft:calcite"
+  ],
+  "result": {
+    "id": "gonzotech:fireclay",
+    "count": 4
+  }
+}
