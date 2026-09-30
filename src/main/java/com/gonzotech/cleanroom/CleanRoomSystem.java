@@ -113,10 +113,13 @@ public final class CleanRoomSystem {
 
     /**
      * Открытые гермодвери (0.3.61): утечка в улицу / выравнивание двух контуров.
-     * Стороны двери — её горизонтальные соседи: INTERIOR ведёт в объём комнаты
-     * (та же или другая), FORBIDDEN — в открытый воздух; герметичные стены
-     * стороной не считаются. Дверь обрабатывается один раз даже когда она в
-     * оболочке двух комнат (см. скрин автора: одна дверь делит K1 и K2).
+     * Стороны двери — её горизонтальные соседи: воздух INTERIOR, входящий в
+     * контур, даёт комнату (та же или другая); воздух INTERIOR ВНЕ контуров —
+     * это улица (0.3.63: уличный воздух тоже INTERIOR — иначе утечка наружу
+     * не срабатывала никогда). Стены/жидкости (FORBIDDEN) и герметичные блоки
+     * (SEAL) стороной не считаются — дверь «в стену» не течёт. Дверь
+     * обрабатывается один раз даже когда она в оболочке двух комнат
+     * (см. скрин автора: одна дверь делит K1 и K2).
      */
     private static void processDoorLeaks(ServerLevel level) {
         RoomLedger ledger = data(level).ledger;
@@ -137,12 +140,10 @@ public final class CleanRoomSystem {
                     if (kind == RoomTopology.Kind.INTERIOR) {
                         RoomLedger.Room side = ledger.find(l -> CleanRoomDetector.read(level, l),
                                 CleanRoomDetector.pos(next), tick);
-                        if (side == null) continue;
+                        if (side == null) { outside = true; continue; } // воздух вне контуров = улица
                         if (first == null) first = side;
                         else if (second == null && side != first) second = side;
-                    } else if (kind == RoomTopology.Kind.FORBIDDEN) {
-                        outside = true;
-                    }
+                    } // FORBIDDEN (стены/жидкости) и SEAL: сторону не дают
                 }
                 if (first == null) continue; // обе стороны — улица/стены: терять нечему
                 if (second != null) {

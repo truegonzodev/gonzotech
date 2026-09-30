@@ -35,6 +35,8 @@ assert "state.is(SEALS)" in detector and "HeavyDoorBlock.OPEN" in detector
 system = (src / "CleanRoomSystem.java").read_text()
 system_code = re.sub(r"/\*.*?\*/|//[^\n]*", "", system, flags=re.S)
 assert "processDoorLeaks(level);" in system_code
+assert "if (side == null) { outside = true; continue; }" in system_code  # 0.3.63: уличный воздух INTERIOR вне контуров
+assert "RoomTopology.Kind.FORBIDDEN" not in system_code  # стены больше не «улица»
 assert "DoorLeaks.settle(ledger, doors);" in system_code
 assert "doors.add(new DoorLeaks.Door(first, second));   // дверь между двумя контурами" in system
 loss = (src / "DoorLeaks.java").read_text()

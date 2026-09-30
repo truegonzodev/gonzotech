@@ -348,6 +348,8 @@ for pin in ('processDoorLeaks(level);','DoorLeaks.settle(ledger, doors);',
     assert pin in clean_system, 'door leak pin: '+pin  # пины с // — по сырому тексту
 clean_detector=(ROOT/'src/main/java/com/gonzotech/cleanroom/CleanRoomDetector.java').read_text()
 assert 'public static boolean isOpenHermeticDoor(BlockState state)' in clean_detector
+assert 'if (side == null) { outside = true; continue; }' in clean_system_code  # 0.3.63: воздух вне контуров = улица
+assert 'RoomTopology.Kind.FORBIDDEN' not in clean_system_code  # стены/жидкости стороной не считаются
 assert 'HeavyDoorBlock.OPEN' in clean_detector
 
 # ── 0.3.62: компиляция HUD-хвоста — append есть только у MutableComponent ──
