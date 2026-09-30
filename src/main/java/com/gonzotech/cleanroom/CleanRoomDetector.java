@@ -66,6 +66,18 @@ public final class CleanRoomDetector {
         return kind(state);
     }
 
+    /**
+     * Открытая гермодверь (0.3.61): герметик топологии, чей проём сейчас открыт.
+     * Топология комнаты НЕ рвётся (класс ячейки остаётся SEAL — качество не
+     * стирается в ноль), утечка считается динамически ({@link DoorLeaks}).
+     * Только двери из тега герметиков: свинцовая/вольфрамовая комнату не держат.
+     */
+    public static boolean isOpenHermeticDoor(BlockState state) {
+        return state.is(SEALS)
+            && state.getBlock() instanceof com.gonzotech.core.block.HeavyDoorBlock
+            && state.getValue(com.gonzotech.core.block.HeavyDoorBlock.OPEN);
+    }
+
     public static RoomTopology.Kind read(ServerLevel level, RoomTopology.Pos pos) {
         BlockPos blockPos = blockPos(pos);
         if (level.isOutsideBuildHeight(blockPos)) return RoomTopology.Kind.FORBIDDEN;

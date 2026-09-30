@@ -108,6 +108,52 @@ public final class CleanRoomSystem {
             }
             player.setData(ModAttachments.CLEANLINESS, dirt);
         }
+        processDoorLeaks(level);
+    }
+
+    /**
+     * Открытые гермодвери (0.3.61): утечка в улицу / выравнивание двух контуров.
+     * Стороны двери — её горизонтальные соседи: INTERIOR ведёт в объём комнаты
+     * (та же или другая), FORBIDDEN — в открытый воздух; герметичные стены
+     * стороной не считаются. Дверь обрабатывается один раз даже когда она в
+     * оболочке двух комнат (см. скрин автора: одна дверь делит K1 и K2).
+     */
+    private static void processDoorLeaks(ServerLevel level) {
+        RoomLedger ledger = data(level).ledger;
+        long tick = level.getGameTime();
+        java.util.List<DoorLeaks.Door> doors = new java.util.ArrayList<>();
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        for (RoomLedger.Room room : ledger.rooms()) {
+            for (RoomTopology.Pos p : room.shell()) {
+                BlockPos bp = CleanRoomDetector.blockPos(p);
+                if (!seen.add(bp.asLong()) || !level.hasChunkAt(bp)) continue;
+                if (!CleanRoomDetector.isOpenHermeticDoor(level.getBlockState(bp))) continue;
+                RoomLedger.Room first = null, second = null;
+                boolean outside = false;
+                for (Direction dir : new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST}) {
+                    BlockPos next = bp.relative(dir);
+                    if (!level.hasChunkAt(next)) continue;
+                    RoomTopology.Kind kind = CleanRoomDetector.read(level, CleanRoomDetector.pos(next));
+                    if (kind == RoomTopology.Kind.INTERIOR) {
+                        RoomLedger.Room side = ledger.find(l -> CleanRoomDetector.read(level, l),
+                                CleanRoomDetector.pos(next), tick);
+                        if (side == null) continue;
+                        if (first == null) first = side;
+                        else if (second == null && side != first) second = side;
+                    } else if (kind == RoomTopology.Kind.FORBIDDEN) {
+                        outside = true;
+                    }
+                }
+                if (first == null) continue; // обе стороны — улица/стены: терять нечему
+                if (second != null) {
+                    doors.add(new DoorLeaks.Door(first, second));   // дверь между двумя контурами
+                } else {
+                    // одна комната: улица по ту сторону — потеря, та же комната — нет-оп
+                    doors.add(new DoorLeaks.Door(first, outside ? null : first));
+                }
+            }
+        }
+        DoorLeaks.settle(ledger, doors);
     }
 
     public static boolean isInCleanerStream(ServerLevel level, double x, double y, double z) {

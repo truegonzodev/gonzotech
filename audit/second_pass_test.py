@@ -326,6 +326,30 @@ for pin in ('PipeLoss.delivered(amount, lossMilli);','PipeLoss.flow(accepted, lo
     assert pin in pipe_routing_code, 'routing loss pin: '+pin
 assert pipe_routing_code.count('pathLossCells(level, path,') == 5  # 4 дорожки + обёртка pathLoss
 
+# ── 0.3.61: дюп дверей закрыт; открытая гермодверь = динамическая утечка ──
+heavy=(ROOT/'src/main/java/com/gonzotech/core/block/HeavyDoorBlock.java').read_text()
+heavy_code=re.sub(r'/\*.*?\*/|//[^\n]*','',heavy,flags=re.S)
+# дюп: вторая половина снимается молча ВСЕГДА (не только креатив/без инструмента)
+assert 'BlockState twin = twinState(level, pos, state);' in heavy_code
+assert 'Block.dropResources(twin, level, pos);' in heavy_code
+assert 'protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params)' in heavy_code
+assert 'return List.of();' in heavy_code
+# симметричное снятие пары (верх↔низ)
+assert 'BlockPos otherPos = upper ? pos.below() : pos.above();' in heavy_code
+# утечка: чистый класс + проводка; топология НЕ рвётся (дверь остаётся герметиком)
+door_leaks=(ROOT/'src/main/java/com/gonzotech/cleanroom/DoorLeaks.java').read_text()
+assert 'OUTSIDE_LOSS_PER_SECOND = 8.0;' in door_leaks
+assert 'EQUALIZE_PER_SECOND = 0.08;' in door_leaks
+clean_system=(ROOT/'src/main/java/com/gonzotech/cleanroom/CleanRoomSystem.java').read_text()
+clean_system_code=re.sub(r'/\*.*?\*/|//[^\n]*','',clean_system,flags=re.S)
+for pin in ('processDoorLeaks(level);','DoorLeaks.settle(ledger, doors);',
+            'doors.add(new DoorLeaks.Door(first, second));   // дверь между двумя контурами',
+            'doors.add(new DoorLeaks.Door(first, outside ? null : first));'):
+    assert pin in clean_system, 'door leak pin: '+pin  # пины с // — по сырому тексту
+clean_detector=(ROOT/'src/main/java/com/gonzotech/cleanroom/CleanRoomDetector.java').read_text()
+assert 'public static boolean isOpenHermeticDoor(BlockState state)' in clean_detector
+assert 'HeavyDoorBlock.OPEN' in clean_detector
+
 # ── 0.3.60: фикс «19 вместо 38» + кумулятивные потери в HUD ключа ──
 assert 'budget = Math.min(budget, entrySum);' not in pipe_routing_code, \
     'регрессия 0.3.59: прямой приёмник снова делит проводную ёмкость'

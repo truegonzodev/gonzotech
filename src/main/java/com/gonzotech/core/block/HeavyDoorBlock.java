@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -34,6 +35,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Тяжёлая свинцовая дверь (автор 22.09.2026) — 1 блок в ширину и 2 в высоту, раздвижная,
@@ -239,10 +242,29 @@ public class HeavyDoorBlock extends Block {
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide && (player.isCreative() || !player.hasCorrectToolForDrops(state))) {
+        if (!level.isClientSide) {
+            // Вторая половина снимается молча ВСЕГДА (0.3.61, фикс дюпа): раньше
+            // в выживании с правильным инструментом она оставалась/ломалась со
+            // своим лутом — дверь выпадала двумя предметами.
+            BlockState twin = twinState(level, pos, state);
             removeOtherHalfSilently(level, pos, state, player);
+            // Слом ВЕРХНЕЙ половины в выживании: предмет двери выдаёт нижняя
+            // (см. {@link #getDrops}) — компенсируем вручную на позиции слома.
+            if (!player.isCreative() && player.hasCorrectToolForDrops(state)
+                    && state.getValue(HALF) == DoubleBlockHalf.UPPER && twin != null) {
+                Block.dropResources(twin, level, pos);
+            }
         }
         return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    /** Нижняя половина этой двери (для лута при сломе верха), null если пары нет. */
+    @Nullable
+    private static BlockState twinState(Level level, BlockPos pos, BlockState state) {
+        if (state.getValue(HALF) != DoubleBlockHalf.UPPER) return null;
+        BlockPos below = pos.below();
+        BlockState lower = level.getBlockState(below);
+        return lower.is(state.getBlock()) && lower.getValue(HALF) == DoubleBlockHalf.LOWER ? lower : null;
     }
 
     /**
@@ -251,18 +273,29 @@ public class HeavyDoorBlock extends Block {
      * молча (флаг 32 = без дропа), иначе дверь выпадала бы двумя предметами.
      */
     private static void removeOtherHalfSilently(Level level, BlockPos pos, BlockState state, Player player) {
-        if (state.getValue(HALF) != DoubleBlockHalf.UPPER) {
-            return;
-        }
-        BlockPos below = pos.below();
-        BlockState lower = level.getBlockState(below);
-        if (lower.is(state.getBlock()) && lower.getValue(HALF) == DoubleBlockHalf.LOWER) {
-            BlockState replacement = lower.getFluidState().is(Fluids.WATER)
+        boolean upper = state.getValue(HALF) == DoubleBlockHalf.UPPER;
+        BlockPos otherPos = upper ? pos.below() : pos.above();
+        BlockState other = level.getBlockState(otherPos);
+        if (other.is(state.getBlock()) && other.getValue(HALF) != state.getValue(HALF)) {
+            BlockState replacement = other.getFluidState().is(Fluids.WATER)
                     ? Blocks.WATER.defaultBlockState()
                     : Blocks.AIR.defaultBlockState();
-            level.setBlock(below, replacement, 35);              // 1 | 2 | 32: соседи + клиенты, без дропа
-            level.levelEvent(player, 2001, below, Block.getId(lower));
+            level.setBlock(otherPos, replacement, 35);           // 1 | 2 | 32: соседи + клиенты, без дропа
+            level.levelEvent(player, 2001, otherPos, Block.getId(other));
         }
+    }
+
+    /**
+     * Лут: только НИЖНЯЯ половина выдаёт предмет. Верхняя молчит — иначе взрыв
+     * (обе половины лутаются независимо) и слом «низ+верх» давали две двери.
+     * Игроку, сломавшему верх, предмет компенсируется в {@link #playerWillDestroy}.
+     */
+    @Override
+    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        if (state.getValue(HALF) == DoubleBlockHalf.UPPER) {
+            return List.of();
+        }
+        return super.getDrops(state, params);
     }
 
     // ─────────────────────────── мелочи ───────────────────────────
