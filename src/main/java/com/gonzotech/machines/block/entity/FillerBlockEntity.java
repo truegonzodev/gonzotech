@@ -32,7 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * Блок-сущность Наполнителя («Открытие 3»).
  * <ul>
  *   <li>2 бака по 9000 mB (левый и правый);</li>
- *   <li>Шкалы GTH (2000) и GTU (2000);</li>
+ *   <li>Шкалы GTH (2000) и GTU (8 808);</li>
  *   <li>10 слотов инвентаря: 4 слота тары + 6 слотов сетки реагентов 2×3;</li>
  *   <li>7 рецептов химического синтеза и растворения;</li>
  *   <li>Кнопка смены баков местами за 32 GTU.</li>
@@ -46,7 +46,9 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
 
     public static final int TANK_CAPACITY = 9_000;
     public static final int GTH_CAPACITY = 2_000;
-    public static final int GTU_CAPACITY = 2_000;
+    public static final int GTU_CAPACITY = 8_808;
+    /** 0.3.64: канистра опустошается в бак по 128 mB/т, а не мгновенно. */
+    public static final int CANISTER_DRAIN_PER_TICK = 128;
 
     public static final int FLUID_EMPTY = 0;
     public static final int FLUID_WATER = 1;
@@ -202,7 +204,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     @Override
     public long receiveGtu(long amount, boolean simulate) {
         long space = (long) GTU_CAPACITY * MachineDefs.MILLI - currentGtuMilli;
-        long allowed = Math.min(amount, 66L * MachineDefs.MILLI);
+        long allowed = Math.min(amount, 96L * MachineDefs.MILLI); // 0.3.64: приём GTU 96
         long accepted = Math.min(allowed, Math.max(0, space));
         if (!simulate && accepted > 0) {
             currentGtuMilli += accepted;
@@ -506,7 +508,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             int canFluidId = fluidIdByName(canFluid);
 
             if (canAmount > 0 && canFluidId != FLUID_EMPTY && (tankType == FLUID_EMPTY || tankType == canFluidId)) {
-                int transfer = Math.min(canAmount, tankSpace);
+                int transfer = Math.min(Math.min(canAmount, tankSpace), CANISTER_DRAIN_PER_TICK);
                 if (transfer > 0 && out.isEmpty()) {
                     if (tankType == FLUID_EMPTY) tankType = canFluidId;
                     tankAmount += transfer;
@@ -735,7 +737,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         currentGthMilli -= 11L * MachineDefs.MILLI;
         evapProgress++;
 
-        if (evapProgress >= 80) {
+        if (evapProgress >= 120) {
             evapProgress = 0;
             if (leftHasSalt) {
                 leftSaltMb -= 128;
@@ -772,7 +774,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 activeRecipe = 7;
                 targetTankIsRight = targetIsRight;
                 smeltProgress = 0;
-                smeltTotal = 50;
+                smeltTotal = 75;
                 return true;
             }
 
@@ -791,7 +793,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 }
                 activeRecipe = 6;
                 smeltProgress = 0;
-                smeltTotal = 110;
+                smeltTotal = 165;
                 return true;
             }
 
@@ -803,7 +805,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 consumeFromGrid(Items.BLAZE_POWDER, 2);
                 activeRecipe = 5;
                 smeltProgress = 0;
-                smeltTotal = 180;
+                smeltTotal = 270;
                 return true;
             }
 
@@ -812,7 +814,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 consumeFromGrid(Items.CALCITE, 1);
                 activeRecipe = 3;
                 smeltProgress = 0;
-                smeltTotal = 20;
+                smeltTotal = 30;
                 return true;
             }
 
@@ -826,7 +828,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 consumeAluminumDust(1);
                 activeRecipe = 2;
                 smeltProgress = 0;
-                smeltTotal = 100;
+                smeltTotal = 150;
                 return true;
             }
 
@@ -838,7 +840,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 consumeSulfur(1);
                 activeRecipe = 1;
                 smeltProgress = 0;
-                smeltTotal = 60;
+                smeltTotal = 90;
                 return true;
             }
 

@@ -38,17 +38,17 @@ import org.jetbrains.annotations.Nullable;
 public class RectifierBlockEntity extends BaseMachineBlockEntity
     implements GthSink, GtuSink, DistillateSink, WorldlyContainer {
 
-    public static final int DISTILLATE_CAPACITY = 10_012;
-    public static final int RECTIFICATE_CAPACITY = 7_200;
+    public static final int DISTILLATE_CAPACITY = 9_984;
+    public static final int RECTIFICATE_CAPACITY = 7_168;
     public static final int GTH_CAPACITY = 6_912;
-    public static final int GTU_CAPACITY = 8_490;
+    public static final int GTU_CAPACITY = 10_368;
 
     public static final int PROCESS_DISTILLATE_COST = 2;
     public static final int PROCESS_RECTIFICATE_YIELD = 1;
     public static final int PROCESS_GTH_COST = 6;
     public static final int PROCESS_GTU_COST = 9;
-    public static final int MAX_DRAIN_PER_TICK = 492;
-    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
+    public static final int MAX_DRAIN_PER_TICK = 392;
+    public static final long MAX_GTH_INPUT_PER_TICK = 128L * MachineDefs.MILLI;
     public static final long MAX_GTU_INPUT_PER_TICK = 66L * MachineDefs.MILLI;
 
     private static final int PACKET_BASE = 10_000;

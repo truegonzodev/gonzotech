@@ -45,14 +45,14 @@ public class WortKettleBlockEntity extends BaseMachineBlockEntity implements Gth
 
     public static final int MASH_CAPACITY = 12_288;
     public static final int WORT_CAPACITY = 12_288;
-    public static final int GTH_CAPACITY = 24_301;
+    public static final int GTH_CAPACITY = 18_302;
 
     public static final int BOIL_RATE = 26;
     public static final int BOIL_GTH_COST = 42;
     public static final int EVAPORATE_RATE = 2;
     public static final int EVAPORATE_GTH_COST = 16;
-    public static final int MAX_DRAIN_PER_TICK = 492;
-    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
+    public static final int MAX_DRAIN_PER_TICK = 392;
+    public static final long MAX_GTH_INPUT_PER_TICK = 128L * MachineDefs.MILLI;
     public static final double MAX_WORT_ALCOHOL = 30.0;
 
     private static final int GTH_PACKET_BASE = 10_000;

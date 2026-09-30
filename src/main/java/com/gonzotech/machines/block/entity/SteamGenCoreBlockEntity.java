@@ -320,7 +320,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     }
 
     /**
-     * Цикл варки: {@code 15 mB воды + 11 GTH → 12 mB пара × M} за событие.
+     * Цикл варки: {@code 16 mB воды + 12 GTH → 12 mB пара × M} за событие.
      * За тик машина делает максимум событий, позволяемых потолком выработки,
      * запасом воды/GTH и местом в баке пара.
      *

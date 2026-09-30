@@ -11,9 +11,9 @@ public final class NuclearDefs {
     /** Nuclear Firebox internal heat buffer, in mGTH (68,408 displayed GTH). */
     public static final int NUCLEAR_FIREBOX_GTH_CAPACITY = 68_408 * MachineDefs.MILLI;
     /** Constant heat generation while one accepted nuclear fuel item burns, in mGTH/t. */
-    public static final int NUCLEAR_FIREBOX_GTH_PER_TICK = 262 * MachineDefs.MILLI;
+    public static final int NUCLEAR_FIREBOX_GTH_PER_TICK = 116 * MachineDefs.MILLI;
     /** Max GTH output from the firebox's buffer, in mGTH/t. */
-    public static final int NUCLEAR_FIREBOX_GTH_OUTPUT = 488 * MachineDefs.MILLI;
+    public static final int NUCLEAR_FIREBOX_GTH_OUTPUT = 282 * MachineDefs.MILLI;
     /** Passive heat loss, 0.2 GTH/t, in mGTH/t. */
     public static final int NUCLEAR_FIREBOX_GTH_LOSS = 200;
 

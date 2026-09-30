@@ -9,7 +9,7 @@ public final class AirFilterSelfTest {
     }
     public static void main(String[] args) {
         int capacity = FilterCycle.CAPACITY_GTU;
-        check(capacity == 2040, "2040 GTU capacity");
+        check(capacity == 2202, "2202 GTU capacity (0.3.64)");
         FilterCycle cycle = new FilterCycle(0, 0);
         check(cycle.coalUsedHundredths() == 0 && cycle.catalystUsedHundredths() == 0, "unused != exhausted");
         int coal = 0, catalyst = 0;
@@ -52,13 +52,13 @@ public final class AirFilterSelfTest {
         check(cycle.tick(2619, true, false, false).working(), "paid fuel does not require another item in slot");
 
         FilterIntake intake = new FilterIntake();
-        check(intake.offer(1, 100_000, 2_040_000, true) == 32_000, "simulate limit");
-        check(intake.offer(1, 100_000, 2_040_000, true) == 32_000, "simulation does not spend quota");
-        check(intake.offer(1, 10_000, 2_040_000, false) == 10_000, "first sender");
-        check(intake.offer(1, 100_000, 2_030_000, false) == 22_000, "second sender shares quota");
-        check(intake.offer(1, 100_000, 2_008_000, false) == 0, "six faces cannot exceed 32 GTU/t");
+        check(intake.offer(1, 100_000, 2_202_000, true) == 52_000, "simulate limit (0.3.64: 52 GTU/t)");
+        check(intake.offer(1, 100_000, 2_202_000, true) == 52_000, "simulation does not spend quota");
+        check(intake.offer(1, 10_000, 2_202_000, false) == 10_000, "first sender");
+        check(intake.offer(1, 100_000, 2_192_000, false) == 42_000, "second sender shares quota");
+        check(intake.offer(1, 100_000, 2_150_000, false) == 0, "six faces cannot exceed 52 GTU/t");
         check(intake.offer(2, 100_000, 500, true) == 500, "capacity limits simulation");
-        check(intake.offer(1, 100_000, 2_008_000, true) == 0, "future simulation does not reset ledger");
+        check(intake.offer(1, 100_000, 2_150_000, true) == 0, "future simulation does not reset ledger");
         check(intake.offer(2, 100_000, 500, false) == 500, "new tick and near-full capacity");
         check(intake.offer(2, -1, 500, false) == 0, "negative request");
         check(intake.offer(2, 50, 0, false) == 0, "full buffer");

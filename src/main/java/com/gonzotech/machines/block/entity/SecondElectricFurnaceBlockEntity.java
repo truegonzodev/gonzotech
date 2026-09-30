@@ -105,7 +105,7 @@ public final class SecondElectricFurnaceBlockEntity extends BaseMachineBlockEnti
     @Override
     public long receiveGtu(long amount, boolean simulate) {
         // Неуказанный входной лимит остаётся как у печи I.
-        return gtu.receive(Math.min(amount, (long) MachineDefs.ELECTRIC_GTU_INTAKE), simulate);
+        return gtu.receive(Math.min(amount, (long) SecondTierDefs.ELECTRIC_GTU_INTAKE), simulate);
     }
 
     public static void serverTick(Level level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state,

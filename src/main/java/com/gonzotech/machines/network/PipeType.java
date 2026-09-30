@@ -27,13 +27,13 @@ public enum PipeType {
      * Теплотруба: переносит GTH (тепло), отдаёт в {@code GthSink}. Угол HEAT.
      * Макс. проводимость 388 GTH/t (в milli: 388000 mGTH/t).
      */
-    HEAT("first_heat_pipe", false, GtUnits.GTH, 388 * 1000, GtUnits.U_GTH),
+    HEAT("first_heat_pipe", false, GtUnits.GTH, 256 * 1000, GtUnits.U_GTH),
 
     /** Водная труба: переносит воду (mB), отдаёт в {@code WaterSink}. Угол FLUID. Макс. 1000 mB/t. */
-    WATER("first_water_pipe", true, GtUnits.WATER, 1000, GtUnits.U_MB),
+    WATER("first_water_pipe", true, GtUnits.WATER, 392, GtUnits.U_MB),
 
     /** Паровая труба: переносит пар (mB), отдаёт в {@code SteamSink}. Угол FLUID. Макс. 1000 mB/t. */
-    STEAM("first_steam_pipe", true, GtUnits.STEAM, 1000, GtUnits.U_MB),
+    STEAM("first_steam_pipe", true, GtUnits.STEAM, 392, GtUnits.U_MB),
 
     /**
      * Предметная труба: переносит ПРЕДМЕТЫ (не mB/GTU), угол ITEM (низ-право).

@@ -14,31 +14,33 @@ public final class SecondTierDefs {
     // ─────────────────────────── логистика ───────────────────────────
 
     /** Провод II: 96 GTU/t, во внутренней milli-точности. */
-    public static final long WIRE_THROUGHPUT = 96L * MachineDefs.MILLI;
+    public static final long WIRE_THROUGHPUT = 89L * MachineDefs.MILLI;
     /** Теплотруба II: 696 GTH/t, во внутренней milli-точности. */
-    public static final long HEAT_THROUGHPUT = 696L * MachineDefs.MILLI;
+    public static final long HEAT_THROUGHPUT = 562L * MachineDefs.MILLI;
     /** Водная труба II: 1900 mB/t. */
-    public static final long WATER_THROUGHPUT = 1_900L;
+    public static final long WATER_THROUGHPUT = 852L;
     /** Паровая труба II: 1900 mB/t. */
-    public static final long STEAM_THROUGHPUT = 1_900L;
+    public static final long STEAM_THROUGHPUT = 852L;
     /** Предметная труба II: пять типов по две штуки = десять предметов за тик. */
     public static final long ITEM_THROUGHPUT = 10L;
     /** Предельный поток одного точного Item через предметную трубу II. */
     public static final int ITEM_PER_TYPE_THROUGHPUT = 2;
     /** Общий Water + Steam бюджет универсальной жидкостной трубы/узла II. */
-    public static final long UNIVERSAL_FLUID_THROUGHPUT = 1_500L;
+    public static final long UNIVERSAL_FLUID_THROUGHPUT = 682L;
 
     // ─────────────────────────── аккумулятор II ───────────────────────────
 
-    public static final int ACCUMULATOR_GTU_CAPACITY = 48_900 * MachineDefs.MILLI;
+    public static final int ACCUMULATOR_GTU_CAPACITY = 32_608 * MachineDefs.MILLI;
     public static final int ACCUMULATOR_GTU_INTAKE = 144 * MachineDefs.MILLI;
-    public static final int ACCUMULATOR_GTU_OUTPUT = 144 * MachineDefs.MILLI;
+    public static final int ACCUMULATOR_GTU_OUTPUT = 122 * MachineDefs.MILLI;
     /** 0.01 GTU/t, во внутренней milli-точности. */
     public static final int ACCUMULATOR_GTU_LOSS = 10;
 
     // ─────────────────────────── электропечь II ───────────────────────────
 
-    public static final int ELECTRIC_GTU_CAPACITY = 8_400 * MachineDefs.MILLI;
+    public static final int ELECTRIC_GTU_CAPACITY = 5_202 * MachineDefs.MILLI;
+    /** Совокупный максимум приёма GTU за тик (0.3.64: 48; раньше T2-печь делила 64 с T1). */
+    public static final int ELECTRIC_GTU_INTAKE = 48 * MachineDefs.MILLI;
     public static final int ELECTRIC_COOK_TIME = 90;
     public static final int ELECTRIC_GTU_PER_ITEM = 220 * MachineDefs.MILLI;
     /** 220 GTU / 90 т = 2.444… GTU/t; остаток распределяется без округления. */
@@ -50,9 +52,9 @@ public final class SecondTierDefs {
     // ─────────────────────────── завод сплавов ───────────────────────────
 
     /** Максимум GTU в заводе сплавов (mGTU: 1640 GTU). */
-    public static final int ALLOY_FOUNDRY_GTU_CAPACITY = 1_640 * MachineDefs.MILLI;
+    public static final int ALLOY_FOUNDRY_GTU_CAPACITY = 2_202 * MachineDefs.MILLI;
     /** Совокупный максимум приёма GTU от всех сетей за тик (mGTU: 220 GTU/t). */
-    public static final int ALLOY_FOUNDRY_GTU_INTAKE = 220 * MachineDefs.MILLI;
+    public static final int ALLOY_FOUNDRY_GTU_INTAKE = 52 * MachineDefs.MILLI;
     /** Базовая продолжительность одной плавки. */
     public static final int ALLOY_FOUNDRY_BASE_TICKS = 80;
     /** Дополнительная продолжительность на каждый предмет в исходной сетке 5×5. */
@@ -69,24 +71,24 @@ public final class SecondTierDefs {
     // ─────────────────────────── измельчитель ───────────────────────────
 
     /** Буфер измельчителя (mGTU: 96 GTU). */
-    public static final int GRINDER_GTU_CAPACITY = 96 * MachineDefs.MILLI;
+    public static final int GRINDER_GTU_CAPACITY = 644 * MachineDefs.MILLI;
     /** Совокупный максимум приёма GTU за тик (mGTU: 96 GTU/t). */
-    public static final int GRINDER_GTU_INTAKE = 96 * MachineDefs.MILLI;
+    public static final int GRINDER_GTU_INTAKE = 48 * MachineDefs.MILLI;
     /** Ровная стоимость одного рабочего тика (mGTU: 2.6 GTU/t). */
-    public static final int GRINDER_GTU_MILLI_PER_TICK = 2_600;
+    public static final int GRINDER_GTU_MILLI_PER_TICK = 900;
     /** Одна операция измельчения занимает ровно 35 оплачиваемых тиков. */
-    public static final int GRINDER_TICKS = 35;
+    public static final int GRINDER_TICKS = 160;
 
     // ─────────────────────────── пресс ───────────────────────────
 
     /** Буфер пресса (mGTU: 2482 GTU). */
-    public static final int PRESS_GTU_CAPACITY = 2_482 * MachineDefs.MILLI;
+    public static final int PRESS_GTU_CAPACITY = 1_876 * MachineDefs.MILLI;
     /** Совокупный максимум приёма GTU за тик (mGTU: 128 GTU/t). */
-    public static final int PRESS_GTU_INTAKE = 128 * MachineDefs.MILLI;
+    public static final int PRESS_GTU_INTAKE = 48 * MachineDefs.MILLI;
     /** Стоимость мгновенного рабочего хода (mGTU: 126 GTU). */
     public static final int PRESS_GTU_PER_STAMP = 126 * MachineDefs.MILLI;
     /** КД возврата пуансона/шкала «Усталость», тиков. */
-    public static final int PRESS_FATIGUE_TICKS = 60;
+    public static final int PRESS_FATIGUE_TICKS = 140;
 
     // ─────────────────────────── фильтр II ───────────────────────────
 
@@ -94,22 +96,22 @@ public final class SecondTierDefs {
 
     // ─────────────────────────── помпа II ───────────────────────────
 
-    public static final int PUMP_GTU_CAPACITY = 1_200 * MachineDefs.MILLI;
-    public static final int PUMP_WATER_CAPACITY = 24_000;
-    public static final int PUMP_GTU_INTAKE = 96 * MachineDefs.MILLI;
+    public static final int PUMP_GTU_CAPACITY = 644 * MachineDefs.MILLI;
+    public static final int PUMP_WATER_CAPACITY = 21_000;
+    public static final int PUMP_GTU_INTAKE = 48 * MachineDefs.MILLI;
     public static final int PUMP_GTU_MILLI_PER_TICK = 3_000;
-    public static final int PUMP_WATER_OUTPUT = 612;
+    public static final int PUMP_WATER_OUTPUT = 396;
     public static final int PUMP_SUCK_INTERVAL = 4;
 
     // ─────────────────────── генератор булыжника II ───────────────────────
 
     public static final int COBBLE_GTU_CAPACITY = 644 * MachineDefs.MILLI;
-    public static final int COBBLE_WATER_CAPACITY = 12_000;
-    public static final int COBBLE_GTU_INTAKE = 64 * MachineDefs.MILLI;
-    public static final int COBBLE_WATER_INTAKE = 1_000;
+    public static final int COBBLE_WATER_CAPACITY = 9_000;
+    public static final int COBBLE_GTU_INTAKE = 48 * MachineDefs.MILLI;
+    public static final int COBBLE_WATER_INTAKE = 368;
     public static final int COBBLE_WATER_PER_ROCK = 1_000;
-    public static final int COBBLE_GTU_MILLI_PER_TICK = 1_400;
-    public static final int COBBLE_TICKS = 60;
+    public static final int COBBLE_GTU_MILLI_PER_TICK = 1_050;
+    public static final int COBBLE_TICKS = 80;
     /** Шанс угольной руды у генератора булыжника II (тир-1 — 2%, см. MachineDefs). */
     public static final double COBBLE_CHANCE_COAL_ORE = 0.03;
 }

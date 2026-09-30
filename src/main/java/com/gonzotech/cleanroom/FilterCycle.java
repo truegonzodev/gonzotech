@@ -4,10 +4,10 @@ package com.gonzotech.cleanroom;
 public final class FilterCycle {
     public static final int COAL_SECONDS = 60;
     public static final int CATALYST_SECONDS = 180;
-    public static final int CAPACITY_GTU = 2040;
+    public static final int CAPACITY_GTU = 2202;
     public static final int WORK_MILLI_PER_TICK = 2600;
     public static final int LEAK_MILLI_PER_TICK = 19;
-    public static final int INTAKE_MILLI_PER_TICK = 32000;
+    public static final int INTAKE_MILLI_PER_TICK = 52000;
     public static final double QUALITY_PER_TICK = 0.2 / 20;
     private int coalTicks;
     private int catalystTicks;

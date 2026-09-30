@@ -80,10 +80,10 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
     public static final int[] STEP_TICKS = {180, 320, 90};
 
     /** Максимальное хранение: 29086 GTU (в милли). */
-    public static final long CAPACITY_MILLI = 29_086_000L;
-    public static final int CAPACITY_GTU = 29_086;
+    public static final long CAPACITY_MILLI = 6_204_000L;
+    public static final int CAPACITY_GTU = 6_204;
     /** Максимальный приём: 322 GTU/сек = 16.1 GTU/t = 16100 милли. */
-    public static final long INTAKE_MILLI_PER_TICK = 16_100L;
+    public static final long INTAKE_MILLI_PER_TICK = 96_000L;
     /** Течение бара: 3.8 GTU/t. */
     public static final long RUN_MILLI_PER_TICK = 3_800L;
     /** Скачок напряжения в третьем баре: 28 GTU каждые 9 тиков. */

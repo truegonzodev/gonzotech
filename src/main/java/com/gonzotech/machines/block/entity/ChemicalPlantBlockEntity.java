@@ -43,11 +43,11 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     public static final int GRID_COUNT = 9;
     public static final int SLOT_OUTPUT = 12;
 
-    public static final long GTU_CAPACITY = 2600L;
+    public static final long GTU_CAPACITY = 10_840L;
     public static final long GTU_CAPACITY_MILLI = GTU_CAPACITY * MachineDefs.MILLI;
-    public static final long MAX_GTU_INTAKE_MILLI = 66L * MachineDefs.MILLI;
+    public static final long MAX_GTU_INTAKE_MILLI = 96L * MachineDefs.MILLI;
     public static final long GTU_PER_TICK_MILLI = 1900L; // 1.9 GTU/t
-    public static final int REACTION_TICKS = 160;
+    public static final int REACTION_TICKS = 240;
 
     private static final int[] SLOTS_TOP = { 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     private static final int[] SLOTS_BOTTOM = { SLOT_OUTPUT };

@@ -35,11 +35,11 @@ import net.minecraft.world.level.block.state.BlockState;
 public class SnaketypeCondenserBlockEntity extends BaseMachineBlockEntity
     implements HotWaterSink, net.minecraft.world.WorldlyContainer {
 
-    public static final int BOILING_WATER_CAPACITY = 8_000;
-    public static final int WATER_CAPACITY = 8_000;
-    public static final int MAX_INLET_PER_TICK = 492;
+    public static final int BOILING_WATER_CAPACITY = 8_064;
+    public static final int WATER_CAPACITY = 8_064;
+    public static final int MAX_INLET_PER_TICK = 392;
     public static final int BASE_COOLING_RATE = 2;
-    public static final int MAX_WATER_DRAIN = 492;
+    public static final int MAX_WATER_DRAIN = 392;
 
     private int boilingWaterAmount = 0;
     private int waterAmount = 0;

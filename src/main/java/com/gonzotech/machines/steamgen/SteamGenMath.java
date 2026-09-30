@@ -10,10 +10,10 @@ import com.gonzotech.machines.energy.MachineDefs;
  * теплообменников и восстанавливает ровно те же ёмкости и темпы, что и сервер.</p>
  *
  * <h2>Формула</h2>
- * Цикл варки: {@code 15 mB воды + 11 GTH → 12 mB пара × M}, где
+ * Цикл варки: {@code 16 mB воды + 12 GTH → 12 mB пара × M}, где
  * <pre>
  *   M        = 1 + E_avg × (1 + 0.1 × (n − 1))
- *   E_avg    = (C+H)_{avg} / 200        (средняя по n теплообменникам)
+ *   E_avg    = (C+H)_{avg} / 200 × 0.93  (средняя по n теплообменникам, -7% с 0.3.64)
  * </pre>
  * Ядра задают базовый throughput: {@code 34 mB/т × M} на ядро (34 — предел
  * ДО модификатора; множитель теплообменников умножает и потолок). Теплообменники
@@ -33,7 +33,8 @@ public final class SteamGenMath {
      */
     public static double multiplier(int sumCH, int count) {
         if (count <= 0 || sumCH <= 0) return 1.0D;
-        double eAvg = sumCH / (MachineDefs.STEAMGEN_EXCHANGER_DIVISOR * (double) count);
+        double eAvg = (sumCH / (MachineDefs.STEAMGEN_EXCHANGER_DIVISOR * (double) count))
+            * MachineDefs.STEAMGEN_EXCHANGER_EFFICIENCY; // 0.3.64: -7% к E обменников
         double growth = 1.0D
             + (count - 1) / (double) MachineDefs.STEAMGEN_EXCHANGER_STEP;
         return 1.0D + eAvg * growth;

@@ -52,8 +52,8 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
     public static final int BASE_GTH_CAPACITY = 5_040;
     public static final int TUNGSTEN_GTH_BONUS = 30_000;
     public static final int GTH_CONSUMPTION_PER_TICK = 68;
-    public static final int MAX_DRAIN_PER_TICK = 288;
-    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
+    public static final int MAX_DRAIN_PER_TICK = 392;
+    public static final long MAX_GTH_INPUT_PER_TICK = 128L * MachineDefs.MILLI;
 
     public static final double MAX_ALCOHOL = 13.0;
     public static final double MAX_ROT = 98.0;

@@ -45,17 +45,17 @@ import org.jetbrains.annotations.Nullable;
 public class DistillerBlockEntity extends BaseMachineBlockEntity
     implements GthSink, WaterSink, MashSink, WortSink, WorldlyContainer {
 
-    public static final int INPUT_CAPACITY = 8_040;
-    public static final int WATER_CAPACITY = 2_006;
+    public static final int INPUT_CAPACITY = 8_064;
+    public static final int WATER_CAPACITY = 2_048;
     public static final int GTH_CAPACITY = 12_096;
-    public static final int OUTPUT_CAPACITY = 6_096;
+    public static final int OUTPUT_CAPACITY = 8_064;
     public static final int HOT_WATER_CAPACITY = 512;
 
     public static final int PROCESS_RAW_RATE = 11;
     public static final int PROCESS_WATER_RATE = 20;
     public static final int PROCESS_GTH_COST = 64;
-    public static final int MAX_DRAIN_PER_TICK = 492;
-    public static final long MAX_GTH_INPUT_PER_TICK = 156L * MachineDefs.MILLI;
+    public static final int MAX_DRAIN_PER_TICK = 392;
+    public static final long MAX_GTH_INPUT_PER_TICK = 128L * MachineDefs.MILLI;
 
     private static final int GTH_PACKET_BASE = 10_000;
     private static final int[] NO_SLOTS = new int[0];

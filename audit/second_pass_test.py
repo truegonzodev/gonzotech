@@ -244,8 +244,8 @@ assert 'implements EntityBlock' in litho_shell_block
 assert 'new SiliconFactoryShellBlockEntity(pos, state)' in litho_shell_block
 assert 'SiliconFactoryShellBlockEntity::new, false,' in bes_mods
 # Цифры автора: хранение 29086, приём 322 GTU/сек, течение 3.8 GTU/t, скачки 28 GTU/9т, потеря 0.003 GTU/t.
-assert 'CAPACITY_MILLI = 29_086_000L' in litho_be_code
-assert 'INTAKE_MILLI_PER_TICK = 16_100L' in litho_be_code
+assert 'CAPACITY_MILLI = 6_204_000L' in litho_be_code  # 0.3.64 ребаланс
+assert 'INTAKE_MILLI_PER_TICK = 96_000L' in litho_be_code  # 0.3.64 ребаланс
 assert 'RUN_MILLI_PER_TICK = 3_800L' in litho_be_code
 assert 'SPIKE_MILLI = 28_000L' in litho_be_code and 'SPIKE_INTERVAL_TICKS = 9' in litho_be_code
 assert 'IDLE_MILLI_PER_TICK = 3L' in litho_be_code
@@ -351,6 +351,61 @@ assert 'public static boolean isOpenHermeticDoor(BlockState state)' in clean_det
 assert 'if (side == null) { outside = true; continue; }' in clean_system_code  # 0.3.63: воздух вне контуров = улица
 assert 'RoomTopology.Kind.FORBIDDEN' not in clean_system_code  # стены/жидкости стороной не считаются
 assert 'HeavyDoorBlock.OPEN' in clean_detector
+
+# ── 0.3.64: ВЕЛИКИЙ РЕБАЛАНС — авторские числа (всё ненаписанное не тронуто) ──
+mdefs=(ROOT/'src/main/java/com/gonzotech/machines/energy/MachineDefs.java').read_text()
+s2defs=(ROOT/'src/main/java/com/gonzotech/machines/energy/SecondTierDefs.java').read_text()
+nuke=(ROOT/'src/main/java/com/gonzotech/machines/energy/NuclearDefs.java').read_text()
+ptype=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeType.java').read_text()
+for pin in ("FIREBOX_GTH_CAPACITY = 16_004 * MILLI;","BOILER_GTH_CAPACITY = 16_004 * MILLI;",
+    "BOILER_GTH_INTAKE = 58 * MILLI;","BOILER_WATER_INTAKE = 82;","BOILER_WATER_CAPACITY = 8_000;",
+    "BOILER_STEAM_OUTPUT = 82;","STIRLING_GTU_CAPACITY = 122 * MILLI;","STIRLING_GTU_OUTPUT = 32 * MILLI;",
+    "STIRLING_STEAM_CAPACITY = 6_000;","ELECTRIC_GTU_CAPACITY = 3_648 * MILLI;","ELECTRIC_GTU_INTAKE = 24 * MILLI;",
+    "ACCUMULATOR_GTU_INTAKE = 32 * MILLI;","ACCUMULATOR_GTU_OUTPUT = 32 * MILLI;",
+    "PUMP_GTU_CAPACITY = 362 * MILLI;","PUMP_GTU_INTAKE = 24 * MILLI;",
+    "COBBLE_GTU_CAPACITY = 362 * MILLI;","COBBLE_GTU_INTAKE = 24 * MILLI;",
+    "CRUSHER_GTU_CAPACITY = 5_202 * MILLI;","CRUSHER_GTU_INTAKE = 48 * MILLI;",
+    "CRUSHER_BASE_TICKS = 410;","CRUSHER_FULL_TICKS = 280;",
+    "CRUSHER_GTU_MILLI_PER_TICK_MIN = 976;","CRUSHER_GTU_MILLI_PER_TICK_MAX = 1_571;",
+    "CENTRIFUGE_GTU_CAPACITY = 2_202 * MILLI;","CENTRIFUGE_GTU_INTAKE = 52 * MILLI;",
+    "CENTRIFUGE_HOT_WATER_CAPACITY = 8_000;","CENTRIFUGE_WATER_CAPACITY = 6_000;",
+    "CENTRIFUGE_WATER_INTAKE = 256;","CENTRIFUGE_STEAM_INTAKE = 256;","CENTRIFUGE_WASH_TICKS = 310;",
+    "UNIVERSAL_FLUID_OUTPUT = 316;","STEAMGEN_WATER_PER_UNIT = 16;","STEAMGEN_GTH_PER_UNIT_MILLI = 12 * MILLI;",
+    "STEAMGEN_EXCHANGER_EFFICIENCY = 0.93D;"):
+    assert pin in mdefs, 'mdefs: '+pin
+for pin in ("WIRE_THROUGHPUT = 89L * MachineDefs.MILLI;","HEAT_THROUGHPUT = 562L * MachineDefs.MILLI;",
+    "WATER_THROUGHPUT = 852L;","STEAM_THROUGHPUT = 852L;","UNIVERSAL_FLUID_THROUGHPUT = 682L;",
+    "ACCUMULATOR_GTU_CAPACITY = 32_608 * MachineDefs.MILLI;","ACCUMULATOR_GTU_OUTPUT = 122 * MachineDefs.MILLI;",
+    "ELECTRIC_GTU_CAPACITY = 5_202 * MachineDefs.MILLI;","ELECTRIC_GTU_INTAKE = 48 * MachineDefs.MILLI;",
+    "ALLOY_FOUNDRY_GTU_CAPACITY = 2_202 * MachineDefs.MILLI;","ALLOY_FOUNDRY_GTU_INTAKE = 52 * MachineDefs.MILLI;",
+    "GRINDER_GTU_CAPACITY = 644 * MachineDefs.MILLI;","GRINDER_GTU_INTAKE = 48 * MachineDefs.MILLI;",
+    "GRINDER_GTU_MILLI_PER_TICK = 900;","GRINDER_TICKS = 160;",
+    "PRESS_GTU_CAPACITY = 1_876 * MachineDefs.MILLI;","PRESS_GTU_INTAKE = 48 * MachineDefs.MILLI;",
+    "PRESS_FATIGUE_TICKS = 140;","PUMP_GTU_CAPACITY = 644 * MachineDefs.MILLI;","PUMP_GTU_INTAKE = 48 * MachineDefs.MILLI;",
+    "PUMP_WATER_CAPACITY = 21_000;","PUMP_WATER_OUTPUT = 396;",
+    "COBBLE_GTU_INTAKE = 48 * MachineDefs.MILLI;","COBBLE_WATER_INTAKE = 368;","COBBLE_WATER_CAPACITY = 9_000;",
+    "COBBLE_GTU_MILLI_PER_TICK = 1_050;","COBBLE_TICKS = 80;"):
+    assert pin in s2defs, 's2: '+pin
+assert 'NUCLEAR_FIREBOX_GTH_PER_TICK = 116 * MachineDefs.MILLI;' in nuke
+assert 'NUCLEAR_FIREBOX_GTH_OUTPUT = 282 * MachineDefs.MILLI;' in nuke
+assert 'GtUnits.GTH, 256 * 1000,' in ptype and 'GtUnits.WATER, 392,' in ptype and 'GtUnits.STEAM, 392,' in ptype
+litho=(ROOT/'src/main/java/com/gonzotech/machines/litho/SiliconFactoryBlockEntity.java').read_text()
+assert 'CAPACITY_MILLI = 6_204_000L;' in litho and 'INTAKE_MILLI_PER_TICK = 96_000L;' in litho
+fcycle=(ROOT/'src/main/java/com/gonzotech/cleanroom/FilterCycle.java').read_text()
+assert 'CAPACITY_GTU = 2202;' in fcycle and 'INTAKE_MILLI_PER_TICK = 52000;' in fcycle
+chem=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/ChemicalPlantBlockEntity.java').read_text()
+assert 'GTU_CAPACITY = 10_840L;' in chem and 'MAX_GTU_INTAKE_MILLI = 96L * MachineDefs.MILLI;' in chem
+assert 'REACTION_TICKS = 240;' in chem  # ×1.5 время, расход/тик прежний → 456 GTU за реакцию
+filler=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/FillerBlockEntity.java').read_text()
+assert 'GTU_CAPACITY = 8_808;' in filler and 'CANISTER_DRAIN_PER_TICK = 128;' in filler
+assert 'Math.min(amount, 96L * MachineDefs.MILLI)' in filler  # приём GTU 96
+assert 'smeltTotal = 270;' in filler and 'evapProgress >= 120' in filler  # операции ×1.5
+u2=(ROOT/'src/main/java/com/gonzotech/machines/network/SecondUniversalNodeBlock.java').read_text()
+assert 'THROUGHPUT_FACTOR = 0.91D;' in u2 and 'return THROUGHPUT_FACTOR;' in u2
+furn2=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/SecondElectricFurnaceBlockEntity.java').read_text()
+assert '(long) SecondTierDefs.ELECTRIC_GTU_INTAKE' in furn2  # свой приём 48, не общий 24 с T1
+sgm=(ROOT/'src/main/java/com/gonzotech/machines/steamgen/SteamGenMath.java').read_text()
+assert 'STEAMGEN_EXCHANGER_EFFICIENCY' in sgm  # E ×0.93
 
 # ── 0.3.62: компиляция HUD-хвоста — append есть только у MutableComponent ──
 hud=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()

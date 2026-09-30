@@ -11,6 +11,16 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public final class SecondUniversalNodeBlock extends UniversalNodeBlock implements SecondTierPipe {
 
+    /** 0.3.64: T2-универсальный узел сохраняет чуть больше пропускности, чем T1 (0.9). */
+    public static final double THROUGHPUT_FACTOR = 0.91D;
+
+    @Override
+    public double throughputFactor(net.minecraft.world.level.block.state.BlockState state,
+                                   PipeType type) {
+        return THROUGHPUT_FACTOR;
+    }
+
+
     public static final MapCodec<SecondUniversalNodeBlock> CODEC = simpleCodec(SecondUniversalNodeBlock::new);
 
     public SecondUniversalNodeBlock(Properties properties) {
