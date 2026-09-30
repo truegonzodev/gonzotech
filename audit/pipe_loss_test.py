@@ -33,19 +33,20 @@ with tempfile.TemporaryDirectory(prefix="gonzotech-pipe-loss-") as output:
 routing = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeRouting.java").read_text()
 for pin in (
     "private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path,\n"
-    "                                               long lossMilli) {",
+    "                                               long[] lossCells) {",
     "long delivered = PipeLoss.delivered(amount, lossMilli);",
     "long flow = PipeLoss.flow(accepted, lossMilli);",
     "private static long pathLoss(Level level, List<PathStep> path, PipeType type) {",
     "if (st.getBlock() instanceof UniversalNodeBlock) continue;",
     "perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT);",
     "lanes.add(new Lane(raw, null, 0));",
-    "long loss = pathLoss(level, path, type);",
-    "recording(level, raw, type, path, loss)",
+    "long[] lossCells = pathLossCells(level, path, type);",
+    "return PipeLoss.sum(pathLossCells(level, path, type));",
+    "recording(level, raw, type, path, lossCells)",
 ):
     assert pin in routing, "routing pin: " + pin.splitlines()[0]
 # все четыре вида дорожек считают потерю; прямые соседи — без потерь
-assert routing.count("pathLoss(level, path,") == 4, routing.count("pathLoss(level, path,")
+assert routing.count("pathLossCells(level, path,") == 5, routing.count("pathLossCells(level, path,")
 # числа автора — единственный источник констант
 for const in ("WIRE_T1 = 80;", "WIRE_T2 = 90;", "HEAT_T1 = 220;", "HEAT_T2 = 180;"):
     assert const in loss_src.read_text(), const

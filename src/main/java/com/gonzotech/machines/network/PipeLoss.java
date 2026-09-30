@@ -31,6 +31,13 @@ public final class PipeLoss {
         return secondTier ? WIRE_T2 : WIRE_T1;
     }
 
+    /** Кумулятивная потеря от начала маршрута до клетки {@code inclusive} включительно (milli). */
+    public static long prefix(long[] perCell, int inclusive) {
+        long total = 0;
+        for (int i = 0; i <= inclusive && i < perCell.length; i++) total += perCell[i];
+        return total;
+    }
+
     /** Суммарная потеря маршрута по клеткам (milli). */
     public static long sum(long[] perCell) {
         long total = 0;

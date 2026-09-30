@@ -62,6 +62,7 @@ public final class WrenchHud {
         int axis;
         long pos3d;
         long neg3d;
+        long lossMilli;
         long clientTick;
     }
 
@@ -155,6 +156,7 @@ public final class WrenchHud {
         e.axis = payload.axis3d();
         e.pos3d = payload.posAmount();
         e.neg3d = payload.negAmount();
+        e.lossMilli = payload.lossMilli();
         e.clientTick = clientTick;
     }
 
@@ -488,6 +490,12 @@ public final class WrenchHud {
      * оси сложены), и для узла (сумма 6 граней). Так удобно взглядом бежать по
      * трубам и видеть, где сколько течёт, не думая про направление.
      */
+    /** Формат хвоста потерь: одна десятая до 100 единиц, дальше — крупные тиры. */
+    private static String lossText(long milli) {
+        if (milli < 100_000) return String.format(java.util.Locale.ROOT, "%.1f", milli / 1000.0);
+        return GtFormat.formatRate(milli);
+    }
+
     private static Component flowLine(BlockPos pos, PipeType part) {
         if (flowPos == null || !flowPos.equals(pos)) return null;
         FlowEntry e = flowByType.get(part.ordinal());
@@ -506,6 +514,13 @@ public final class WrenchHud {
         String value = part.isFluid() ? Long.toString(total) : GtFormat.formatRate(total);
         Component amount = Component.translatable("hud.gonzotech.flow_amount",
             GtUnits.rate(value, GtUnits.key(part.unitKey(), color), color));
-        return Component.empty().append(name).append(sep).append(amount);
+        Component line = Component.empty().append(name).append(sep).append(amount);
+        // Потери проноса на участке цепи от источника до этой трубы (0.3.60):
+        // серый хвост «(+4.0)» — сколько единиц рассеялось в проводах выше по течению.
+        if (e.lossMilli > 0 && !part.isFluid()) {
+            line = line.append(Component.literal("(+" + lossText(e.lossMilli) + ")")
+                .withStyle(ChatFormatting.GRAY));
+        }
+        return line;
     }
 }

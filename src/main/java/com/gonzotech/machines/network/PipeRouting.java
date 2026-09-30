@@ -132,13 +132,15 @@ public final class PipeRouting {
         if (budget <= 0) return 0;
 
         // Entry-трубы — прилегающие трубы этого типа, чья грань принимает слив из
-        // машины (AUTO/PULL). Параллельные entry-трубы — независимые каналы: бюджет
-        // бьётся СУММОЙ их остатков (2 провода тир-1 = 76 GTU/t у источника), и каждая
-        // становится стартом своих дорожек. Остатки, а не полные лимиты: всё, что уже
-        // прошло через эти трубы в этом тике (другие источники), вычтено
+        // машины (AUTO/PULL); каждая становится стартом своих дорожек. Бюджет
+        // источника НЕ режется суммой остатков входов (0.3.60): прямой приёмник
+        // не должен делить проводную ёмкость — иначе [приём][источник][провод]
+        // [приём] давал обоим по 19 GTU/t (капа 38/2). Проводные лимиты держит
+        // закон на трубе: каждый entry — отдельная позиция со своей капой
+        // (2 параллельных провода тир-1 по-прежнему дают источнику 2×38=76).
+        // Остатки, а не полные лимиты: уже прошедшее за тик вычтено
         // ({@link PipeFlowLedger}).
         List<BlockPos> entries = new ArrayList<>();
-        long entrySum = 0;
         for (Direction dir : Direction.values()) {
             BlockPos ppos = fromPos.relative(dir);
             BlockState pstate = level.getBlockState(ppos);
@@ -146,11 +148,6 @@ public final class PipeRouting {
             if (!machineConnects(pstate, type, dir)) continue;
             if (!modeOf(pstate, type).acceptsFromMachine()) continue;
             entries.add(ppos);
-            entrySum += PipeFlowLedger.remaining(level, ppos, pstate, type);
-        }
-        if (!entries.isEmpty()) {
-            budget = Math.min(budget, entrySum);
-            if (budget <= 0) return 0;
         }
 
         // Сырой sink приёмника — ОДИН на позицию и делится всеми дорожками к нему
@@ -346,8 +343,9 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        long loss = pathLoss(level, path, type);
-        lanes.add(new Lane(recording(level, raw, type, path, loss), path, loss));
+        long[] lossCells = pathLossCells(level, path, type);
+        long loss = PipeLoss.sum(lossCells);
+        lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));
     }
 
     /** Дорожка виртуального SteamSink встроенного turbine port-а (без BE у ноды). */
@@ -361,8 +359,9 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        long loss = pathLoss(level, path, PipeType.STEAM);
-        lanes.add(new Lane(recording(level, raw, PipeType.STEAM, path, loss), path, loss));
+        long[] lossCells = pathLossCells(level, path, PipeType.STEAM);
+        long loss = PipeLoss.sum(lossCells);
+        lanes.add(new Lane(recording(level, raw, PipeType.STEAM, path, lossCells), path, loss));
     }
 
     /**
@@ -379,8 +378,9 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        long loss = pathLoss(level, path, PipeType.WATER);
-        lanes.add(new Lane(recording(level, raw, PipeType.WATER, path, loss), path, loss));
+        long[] lossCells = pathLossCells(level, path, PipeType.WATER);
+        long loss = PipeLoss.sum(lossCells);
+        lanes.add(new Lane(recording(level, raw, PipeType.WATER, path, lossCells), path, loss));
     }
 
     /**
@@ -397,8 +397,9 @@ public final class PipeRouting {
             if (raw == null) return;
             rawByPos.put(key, raw);
         }
-        long loss = pathLoss(level, path, PipeType.HEAT);
-        lanes.add(new Lane(recording(level, raw, PipeType.HEAT, path, loss), path, loss));
+        long[] lossCells = pathLossCells(level, path, PipeType.HEAT);
+        long loss = PipeLoss.sum(lossCells);
+        lanes.add(new Lane(recording(level, raw, PipeType.HEAT, path, lossCells), path, loss));
     }
 
     /**
@@ -570,14 +571,21 @@ public final class PipeRouting {
      * взял ничего — поток нулевой: трубы не платят и потерь не несут.
      */
     private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path,
-                                               long lossMilli) {
+                                               long[] lossCells) {
+        long lossMilli = PipeLoss.sum(lossCells);
         return (amount, simulate) -> {
             long delivered = PipeLoss.delivered(amount, lossMilli);
             long accepted = delivered > 0 ? real.receive(delivered, simulate) : 0;
             long flow = PipeLoss.flow(accepted, lossMilli);
             if (!simulate && flow > 0) {
-                for (PathStep s : path) {
+                long cumulative = 0;
+                for (int i = 0; i < path.size(); i++) {
+                    PathStep s = path.get(i);
+                    // Кумулятивная потеря от источника ДО этой клетки включительно —
+                    // для подсказки «(+N)» на HUD ключа (0.3.60).
+                    cumulative = PipeLoss.prefix(lossCells, i);
                     FlowTracker.record(level, s.pipe(), type, s.out(), flow);
+                    FlowTracker.recordLoss(level, s.pipe(), type, cumulative);
                     PipeFlowLedger.add(level, s.pipe(), type, flow);
                 }
             }
@@ -591,9 +599,18 @@ public final class PipeRouting {
      * имеет (дорогое удовольствие, и так понёрфлен throughputFactor 0.9).
      * Жидкости и предметы не теряются; у маршрута без сегментов потерь нет.
      */
+    /** Суммарная потеря маршрута (milli). */
     private static long pathLoss(Level level, List<PathStep> path, PipeType type) {
-        if (path == null || path.isEmpty()) return 0;
-        if (type != PipeType.WIRE && type != PipeType.HEAT) return 0;
+        return PipeLoss.sum(pathLossCells(level, path, type));
+    }
+
+    /**
+     * Потеря каждой клетки маршрута (milli, порядок от источника к приёмнику) —
+     * для кумулятивной подсказки «(+N)» на HUD ключа.
+     */
+    private static long[] pathLossCells(Level level, List<PathStep> path, PipeType type) {
+        if (path == null || path.isEmpty()) return new long[0];
+        if (type != PipeType.WIRE && type != PipeType.HEAT) return new long[0];
         long[] perCell = new long[path.size()];
         for (int i = 0; i < path.size(); i++) {
             BlockState st = level.getBlockState(path.get(i).pipe());
@@ -601,7 +618,7 @@ public final class PipeRouting {
             if (st.getBlock() instanceof UniversalNodeBlock) continue;
             perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT);
         }
-        return PipeLoss.sum(perCell);
+        return perCell;
     }
 
     private static Direction dirFromTo(BlockPos from, BlockPos to) {

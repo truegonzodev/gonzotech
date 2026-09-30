@@ -36,6 +36,8 @@ public final class FlowTracker {
         // Ключ — позиция трубы. Значение — [тип][сторона]: типы связки делят
         // позицию, но учитываются раздельно. long: GTU/GTH идут в милли.
         final Map<Long, long[][]> flow = new HashMap<>();
+        // Кумулятивная потеря проноса от источника до этой трубы (по типам), milli.
+        final Map<Long, long[]> loss = new HashMap<>();
     }
 
     /**
@@ -54,6 +56,34 @@ public final class FlowTracker {
         }
         long[][] byType = h.flow.computeIfAbsent(pipe.asLong(), k -> new long[TYPES][DIRS]);
         byType[type.ordinal()][out.get3DDataValue()] += amount;
+    }
+
+    /**
+     * Записать кумулятивную потерю маршрута (milli) от источника до трубы
+     * {@code pipe} типа {@code type} (0.3.60, подсказка «(+N)» на HUD ключа).
+     */
+    public static void recordLoss(Level level, BlockPos pipe, PipeType type, long lossMilli) {
+        if (lossMilli <= 0) return;
+        Holder h = LEVELS.computeIfAbsent(level, k -> new Holder());
+        long t = level.getGameTime();
+        if (h.tick != t) {
+            h.flow.clear();
+            h.loss.clear();
+            h.tick = t;
+        }
+        h.loss.computeIfAbsent(pipe.asLong(), k -> new long[TYPES])[type.ordinal()] += lossMilli;
+    }
+
+    /**
+     * Кумулятивная потеря трубы типа {@code type} за последний актуальный тик
+     * (milli); 0, если данных нет или они устарели.
+     */
+    public static long getLoss(Level level, BlockPos pipe, PipeType type) {
+        Holder h = LEVELS.get(level);
+        if (h == null) return 0;
+        if (level.getGameTime() - h.tick > 1) return 0;
+        long[] byType = h.loss.get(pipe.asLong());
+        return byType == null ? 0 : byType[type.ordinal()];
     }
 
     /**

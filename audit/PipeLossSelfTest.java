@@ -49,6 +49,15 @@ public class PipeLossSelfTest {
         // ── Теплотруба тир1: 388 GTH/t через 2 блока ──
         eq(387_560, PipeLoss.delivered(388_000, PipeLoss.HEAT_T1 * 2), "388 GTH через 2 блока");
 
+        // ── Кумулятивные потери для HUD «(+N)» (0.3.60) ──
+        long[] chain = {80, 80, 80, 80};
+        eq(80, PipeLoss.prefix(chain, 0), "префикс: первая клетка");
+        eq(160, PipeLoss.prefix(chain, 1), "префикс: середина цепи (+2.0)");
+        eq(320, PipeLoss.prefix(chain, 3), "префикс: конец цепи (+4.0)");
+        eq(320, PipeLoss.prefix(chain, 99), "префикс за пределами = вся сумма");
+        long[] mixed = {80, 180, 220};
+        eq(260, PipeLoss.prefix(mixed, 1), "префикс смешанных тиров");
+
         // ── Края: меньше потери — не едет; приёмник отказал — потерь нет ──
         eq(0, PipeLoss.delivered(50, PipeLoss.WIRE_T1), "offered < loss: доезжает 0");
         eq(0, PipeLoss.flow(0, PipeLoss.WIRE_T1), "приёмник не взял — поток 0");

@@ -324,7 +324,31 @@ for pin in ('PipeLoss.delivered(amount, lossMilli);','PipeLoss.flow(accepted, lo
             'PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT)',
             'lanes.add(new Lane(raw, null, 0));'):
     assert pin in pipe_routing_code, 'routing loss pin: '+pin
-assert pipe_routing_code.count('pathLoss(level, path,') == 4
+assert pipe_routing_code.count('pathLossCells(level, path,') == 5  # 4 дорожки + обёртка pathLoss
+
+# ── 0.3.60: фикс «19 вместо 38» + кумулятивные потери в HUD ключа ──
+assert 'budget = Math.min(budget, entrySum);' not in pipe_routing_code, \
+    'регрессия 0.3.59: прямой приёмник снова делит проводную ёмкость'
+assert 'entrySum' not in pipe_routing_code
+flow_tracker=(ROOT/'src/main/java/com/gonzotech/machines/network/FlowTracker.java').read_text()
+assert 'public static void recordLoss(Level level, BlockPos pipe, PipeType type, long lossMilli)' in flow_tracker
+assert 'public static long getLoss(Level level, BlockPos pipe, PipeType type)' in flow_tracker
+pipe_flow=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeFlowNetwork.java').read_text()
+assert 'long lossMilli) implements CustomPacketPayload' in pipe_flow
+assert 'ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,' in pipe_flow
+assert pipe_flow.count('FlowTracker.getLoss(level, pos, pipeType)') == 2
+wrench=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()
+for pin in ('e.lossMilli = payload.lossMilli();',
+            'Component.literal("(+" + lossText(e.lossMilli) + ")")',
+            'private static String lossText(long milli)'):
+    assert pin in wrench, 'wrench loss pin: '+pin
+for pin in ('private static long[] pathLossCells(Level level, List<PathStep> path, PipeType type)',
+            'FlowTracker.recordLoss(level, s.pipe(), type, cumulative);',
+            'cumulative = PipeLoss.prefix(lossCells, i);',
+            'lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));'):
+    assert pin in pipe_routing_code, 'routing 0.3.60 pin: '+pin
+assert pipe_routing_code.count('pathLossCells(level, path,') == 5
+
 
 # 0.3.55: предмет станка — блоковая модель (3D), плоской item-модели больше нет.
 items_json = json.loads((ROOT / 'src/main/resources/assets/gonzotech/items/third_silicon_factory.json').read_text())

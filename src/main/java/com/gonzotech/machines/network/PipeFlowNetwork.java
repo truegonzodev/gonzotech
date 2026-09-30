@@ -61,7 +61,8 @@ public final class PipeFlowNetwork {
      * +Z=юг), {@code negAmount} — в отрицательный. Для узла ({@link #AXIS_NODE_SUM})
      * {@code posAmount} — суммарный поток через все грани, {@code negAmount}=0.
      */
-    public record FlowPayload(BlockPos pos, int typeId, int axis3d, long posAmount, long negAmount) implements CustomPacketPayload {
+    public record FlowPayload(BlockPos pos, int typeId, int axis3d, long posAmount, long negAmount,
+                              long lossMilli) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<FlowPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_flow"));
 
@@ -72,6 +73,7 @@ public final class PipeFlowNetwork {
                 ByteBufCodecs.VAR_INT, FlowPayload::axis3d,
                 ByteBufCodecs.VAR_LONG, FlowPayload::posAmount,
                 ByteBufCodecs.VAR_LONG, FlowPayload::negAmount,
+                ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,
                 FlowPayload::new);
 
         @Override
@@ -268,7 +270,8 @@ public final class PipeFlowNetwork {
             || state.getBlock() instanceof UniversalNodeBlock) {
             long sum = 0;
             for (long v : flow) sum += v;
-            PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0));
+            PacketDistributor.sendToPlayer(player,
+                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType)));
             return;
         }
 
@@ -283,7 +286,8 @@ public final class PipeFlowNetwork {
         long posAmount = flow[posDir.get3DDataValue()];
         long negAmount = flow[negDir.get3DDataValue()];
 
-        PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, axis.ordinal(), posAmount, negAmount));
+        PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, axis.ordinal(), posAmount, negAmount,
+            FlowTracker.getLoss(level, pos, pipeType)));
     }
 
     /** Отвечает на запрос потока ПРЕДМЕТОВ в предметной трубе (топ по количеству). */
