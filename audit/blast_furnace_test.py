@@ -83,6 +83,15 @@ assert "state.is(ModMachines.SECOND_UNIVERSAL_NODE.get())" in struct
 assert "state.is(Blocks.CAULDRON);" in struct
 assert "FireclayBlock.FORMED, formed" in struct
 assert "isFormed(ServerLevel level, BlockPos fireboxPos)" in struct
+# 0.3.66: openMenu только formed-топки и строго с BlockPos (иначе клиент получает null-буфер → NPE)
+assert "player.openMenu(firebox, firebox.getBlockPos());" in struct
+assert "&& firebox.isBlastFormed())" in struct
+# 0.3.66: чанки куба не догружаем силой — иначе загрузка мира виснет на 100%
+assert "public static boolean chunksLoaded(ServerLevel level, BlockPos fireboxPos)" in struct
+assert "if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;" in be
+# предметная модель 1.21.4 (assets/gonzotech/items/)
+item_model = (ROOT / "src/main/resources/assets/gonzotech/items/fireclay.json").read_text()
+assert '"model": "gonzotech:block/fireclay"' in item_model
 assert "nodePositions(ServerLevel level, BlockPos fireboxPos)" in struct
 # лэйаут: слой1 котёл в центре, слой2 узлы на рёбрах, слой3 фундамент
 assert "if (dx == 0 && dz == 0) return Role.CAULDRON;" in layout

@@ -99,6 +99,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     private void revalidateBlast(ServerLevel server) {
         long tick = server.getGameTime();
         if (blastCheckTick != Long.MIN_VALUE && tick - blastCheckTick < 20) return;
+        // Ждём загрузки чанков куба: не заставляем генерировать мир при входе (0.3.66).
+        if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;
         blastCheckTick = tick;
         boolean formed = BlastFurnaceStructure.isFormed(server, worldPosition);
         if (formed != blastFormed) {

@@ -44,7 +44,19 @@ public final class BlastFurnaceStructure {
         };
     }
 
-    /** Полная проверка структуры вокруг топки. */
+    /**
+     * Все чанки под кубом структуры загружены? Без этой проверки
+     * {@code getBlockState} силой генерирует соседние чанки — на входе в мир
+     * это встаёт в очередь генерации и подвешивает загрузку мира.
+     */
+    public static boolean chunksLoaded(ServerLevel level, BlockPos fireboxPos) {
+        for (int[] c : new int[][]{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}) {
+            if (!level.hasChunkAt((fireboxPos.getX() + c[0]) >> 4, (fireboxPos.getZ() + c[1]) >> 4)) return false;
+        }
+        return level.hasChunkAt(fireboxPos);
+    }
+
+    /** Полная проверка структуры вокруг топки (вызывать только при загруженных чанках). */
     public static boolean isFormed(ServerLevel level, BlockPos fireboxPos) {
         for (int dy = -1; dy <= 1; dy++) {
             for (int dx = -1; dx <= 1; dx++) {
@@ -88,9 +100,11 @@ public final class BlastFurnaceStructure {
     }
 
     /**
-     * Открыть меню доменной печи кликом по любой части структуры: ищет топку
-     * в кубе ±1 от места клика и открывает её меню (топка сама раздаёт
-     * обычное/доменное меню по сформированности).
+     * Открыть меню доменной печи кликом по любой шамотной части СОБРАННОЙ
+     * структуры: ищет топку в кубе ±1 от места клика. Открытие — строго
+     * перегрузкой с BlockPos: она пишет позицию в extra-data буфер, без неё
+     * клиентский конструктор меню получает null и роняет соединение
+     * (0.3.66: fix ClientboundOpenScreenPacket NPE).
      */
     public static boolean openMenu(Level level, BlockPos clicked, net.minecraft.world.entity.player.Player player) {
         if (level.isClientSide()) return false;
@@ -98,8 +112,9 @@ public final class BlastFurnaceStructure {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
                     BlockPos pos = clicked.offset(dx, dy, dz);
-                    if (level.getBlockEntity(pos) instanceof FireboxBlockEntity firebox) {
-                        player.openMenu(firebox);
+                    if (level.getBlockEntity(pos) instanceof FireboxBlockEntity firebox
+                        && firebox.isBlastFormed()) {
+                        player.openMenu(firebox, firebox.getBlockPos());
                         return true;
                     }
                 }
