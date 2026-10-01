@@ -9,20 +9,20 @@ import java.util.List;
  * Статичное оглавление «Заметок учёного»: линейный массив страниц в порядке
  * буклета. Боковые вкладки — лишь навигация по главам.
  *
- * <p>Глава I ({@link ScholarChapter#ERA_1}) — дневник Гонзо: 30 страниц
- * (1..30): стартовые 14 + турбина и редстоун («Открытие 1») + атомный пласт
+ * <p>Глава I ({@link ScholarChapter#ERA_1}) — дневник Гонзо: 43 страницы
+ * (1..43): стартовые 14 + шамот и доменная печь + турбина и редстоун («Открытие 1») + атомный пласт
  * (дробилка, измельчитель, металлургия, пресс, завод сплавов, центрифуга,
  * тир-2, логистика II — трубы/узел/предметы — и пароген, ядерная топка —
- * «Открытие 2»). Страницы 16, 21, 27 — иллюстрационные: структура турбины,
+ * «Открытие 2»). Страницы 18, 23, 29 — иллюстрационные: структура турбины,
  * сетки сплавов и цикл рецептов логистики соответственно.
  *
  * <p>Иллюстрации — не личные PNG на страницу, а ШАБЛОНЫ
  * ({@link NoteIllustrationKind}): прозрачный оверлей (сетка крафта / панель
  * структуры / пары брожения) поверх фона главы; предметы в слотах и подписи
- * рендерит GUI (локализуемо, hover-тултипы). Привязаны страницы 1–30:
+ * рендерит GUI (локализуемо, hover-тултипы). Привязаны страницы 1–43:
  * крафты машин/труб/узлов (реальные рецепты из data/gonzotech/recipe),
  * брожение (стр. 3, гибрид крафт+пара), структуры из StructureModel и плоских
- * представлений; стр. 27 — цикл кадров
+ * представлений; стр. 29 — цикл кадров
  * (правое окно «остальные трубы тир-2» тикает и меняется).
  *
  * <p>Книга делится на две ЧАСТИ:
@@ -44,7 +44,7 @@ public final class ScholarNotesContent {
     private ScholarNotesContent() {
     }
 
-    /** Полный список страниц в порядке буклета (41). Иллюстрации — шаблоны;
+    /** Полный список страниц в порядке буклета (43). Иллюстрации — шаблоны;
      *  сетки крафта — реальные рецепты из data/gonzotech/recipe (теги — конкретным
      *  предметом: плахи → дубовые доски; shapeless-рецепты — по порядку слотов). */
     public static final List<ScholarPage> PAGES = List.of(
@@ -182,32 +182,50 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:first_wire_node", "", "gonzotech:first_universal_fluid_pipe", "minecraft:copper_ingot", "minecraft:chest", "minecraft:copper_ingot", "gonzotech:first_heat_pipe", "", "gonzotech:first_item_pipe"), "gonzotech:first_universal_node")),
 
+            // 15 — «Шамотный кирпич» (после «Открытия 1») — справа крафт шамота (0.3.76)
+            new ScholarPage(15, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p42.title",
+                    "gui.gonzotech.notes.p42.body",
+                    List.of("gonzotech:fireclay", "minecraft:bricks", "minecraft:clay_ball",
+                            "minecraft:bone_meal", "minecraft:wheat", "minecraft:calcite"),
+                    Layout.TEXT_LEFT,
+                    NoteIllustration.craftingRight(List.of("minecraft:bricks", "minecraft:clay_ball", "minecraft:bone_meal", "minecraft:wheat", "minecraft:calcite", "", "", "", ""), "gonzotech:fireclay")),
+
+            // 16 — «Доменная печь» (после «Открытия 1») — справа структура: 3 слоя
+            // (низ 9× шамот; середина топка+4 узла+4 шамота; верх 8× шамот + котёл)
+            new ScholarPage(16, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+                    "gui.gonzotech.notes.p43.title",
+                    "gui.gonzotech.notes.p43.body",
+                    List.of("gonzotech:fireclay", "gonzotech:firebox", "minecraft:cauldron"),
+                    Layout.TEXT_LEFT,
+                    NoteIllustration.structureRight(StructureModel.blastFurnace())),
+
             // ─────────── продолжение эпохи I ───────────
 
-            // 15 — «Паровая турбина» (после «Открытия 1») — справа крафт корпуса
-            new ScholarPage(15, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+            // 17 — «Паровая турбина» (после «Открытия 1») — справа крафт корпуса
+            new ScholarPage(17, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p15.title",
                     "gui.gonzotech.notes.p15.body",
                     List.of("gonzotech:first_turbine_casing", "gonzotech:first_turbine_rotor"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("minecraft:iron_bars", "gonzotech:cast_iron_ingot", "gonzotech:calcium_ingot", "minecraft:iron_bars", "minecraft:iron_ingot", "minecraft:iron_bars", "gonzotech:calcium_ingot", "gonzotech:cast_iron_ingot", "minecraft:iron_bars"), "gonzotech:first_turbine_casing")),
 
-            // 16 — страница иллюстраций после турбины — слева крафт ротора,
+            // 18 — страница иллюстраций после турбины — слева крафт ротора,
             // справа структура: МИНИМАЛЬНАЯ турбина 3×3×3 (24 корпуса, ротор
             // в центре, паровой узел слева и узел провода справа в среднем ряду
             // передней грани) — 3 подстраницы-СЛОЯ: Нижний/Средний/Верхний слой
-            // Заголовок = продублированный «Паровая турбина» (стр. 15) —
+            // Заголовок = продублированный «Паровая турбина» (стр. 17) —
             // страница-продолжение про турбину (автор 2026-09-18)
-            new ScholarPage(16, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+            new ScholarPage(18, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p15.title", null,
                     List.of("gonzotech:first_turbine_rotor"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingStructure(List.of("minecraft:iron_nugget", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "gonzotech:pseudo_coil", "gonzotech:cast_iron_ingot", "gonzotech:calcium_nugget", "gonzotech:cast_iron_ingot", "minecraft:iron_nugget"), "gonzotech:first_turbine_rotor",
                             StructureModel.turbineMinimum())),
 
-            // 17 — «Механизмы и редстоун» (после «Открытия 1») — справа плоская
+            // 19 — «Механизмы и редстоун» (после «Открытия 1») — справа плоская
             // структура «Вид сверху»: [энергохранилище][компаратор][редстоун-пыль]
-            new ScholarPage(17, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
+            new ScholarPage(19, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p17.title",
                     "gui.gonzotech.notes.p17.body",
                     List.of("minecraft:comparator", "gonzotech:firebox",
@@ -217,8 +235,8 @@ public final class ScholarNotesContent {
                             List.of("gonzotech:first_accumulator", "minecraft:comparator", "minecraft:redstone"),
                             NoteIllustration.CAPTION_VIEW_TOP)),
 
-            // 18 — «Дробилка руды» (первая запись после «Открытия 2») — справа дробилка
-            new ScholarPage(18, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 20 — «Дробилка руды» (первая запись после «Открытия 2») — справа дробилка
+            new ScholarPage(20, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p18.title",
                     "gui.gonzotech.notes.p18.body",
                     List.of("gonzotech:second_crusher", "minecraft:stone", "minecraft:iron_ore",
@@ -228,27 +246,27 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("minecraft:iron_ingot", "minecraft:flint", "minecraft:iron_ingot", "minecraft:piston", "minecraft:hopper", "minecraft:piston", "minecraft:iron_ingot", "minecraft:redstone", "minecraft:iron_ingot"), "gonzotech:second_crusher")),
 
-            // 19 — «Измельчитель» (после «Открытия 2») — справа измельчитель
-            new ScholarPage(19, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 21 — «Измельчитель» (после «Открытия 2») — справа измельчитель
+            new ScholarPage(21, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p19.title",
                     "gui.gonzotech.notes.p19.body",
                     List.of("gonzotech:second_grinder", "gonzotech:iron_dust", "gonzotech:copper_dust"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("minecraft:iron_ingot", "gonzotech:cast_iron_block", "minecraft:iron_trapdoor", "minecraft:flint", "minecraft:bucket", "minecraft:diamond", "gonzotech:first_wire_node", "minecraft:iron_block", "gonzotech:pseudo_coil"), "gonzotech:second_grinder")),
 
-            // 20 — «Простая металлургия» (после «Открытия 2») — справа стальная пыль
-            new ScholarPage(20, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 22 — «Простая металлургия» (после «Открытия 2») — справа стальная пыль
+            new ScholarPage(22, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p20.title",
                     "gui.gonzotech.notes.p20.body",
                     List.of("gonzotech:iron_dust", "minecraft:coal", "gonzotech:steel_dust"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:iron_dust", "gonzotech:iron_dust", "gonzotech:iron_dust", "minecraft:coal", "", "", "", "", ""), "gonzotech:steel_dust")),
 
-            // 21 — страница иллюстраций после металлургии — слева ферро-пыль, справа нержавейка;
+            // 23 — страница иллюстраций после металлургии — слева ферро-пыль, справа нержавейка;
             // витрина — пыли сплавов
-            // Заголовок = продублированный «Простая металлургия» (стр. 20) —
+            // Заголовок = продублированный «Простая металлургия» (стр. 22) —
             // страница-продолжение про сплавы (автор 2026-09-18)
-            new ScholarPage(21, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            new ScholarPage(23, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p20.title", null,
                     List.of("gonzotech:cantor_dust", "gonzotech:ferromagnetic_dust",
                             "gonzotech:stainless_steel_dust", "gonzotech:nitinol_dust",
@@ -258,8 +276,8 @@ public final class ScholarNotesContent {
                     NoteIllustration.craftingFull(List.of("gonzotech:iron_dust", "gonzotech:iron_dust", "gonzotech:iron_dust", "gonzotech:cobalt_dust", "gonzotech:nickel_dust", "", "", "", ""), "gonzotech:ferromagnetic_dust",
                             List.of("gonzotech:steel_dust", "gonzotech:steel_dust", "gonzotech:steel_dust", "gonzotech:steel_dust", "gonzotech:chromium_dust", "gonzotech:chromium_dust", "gonzotech:nickel_dust", "", ""), "gonzotech:stainless_steel_dust")),
 
-            // 22 — «Пресс» (после «Открытия 2») — справа пресс
-            new ScholarPage(22, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 24 — «Пресс» (после «Открытия 2») — справа пресс
+            new ScholarPage(24, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p22.title",
                     "gui.gonzotech.notes.p22.body",
                     List.of("gonzotech:second_press", "gonzotech:plate_form",
@@ -268,16 +286,16 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:cast_iron_ingot", "minecraft:minecart", "gonzotech:pseudo_coil", "minecraft:piston", "gonzotech:boiler", "minecraft:piston", "gonzotech:cast_iron_block", "gonzotech:cast_iron_block", "gonzotech:cast_iron_block"), "gonzotech:second_press")),
 
-            // 23 — «Завод сплавов» (после «Открытия 2») — справа завод сплавов
-            new ScholarPage(23, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 25 — «Завод сплавов» (после «Открытия 2») — справа завод сплавов
+            new ScholarPage(25, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p23.title",
                     "gui.gonzotech.notes.p23.body",
                     List.of("gonzotech:second_alloy_foundry", "gonzotech:custom_alloy"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:steel_plate", "gonzotech:tungsten_ingot", "gonzotech:steel_plate", "gonzotech:inductive_module", "gonzotech:boiler", "gonzotech:inductive_module", "gonzotech:first_wire_node", "gonzotech:steel_plate", "gonzotech:iron_plate"), "gonzotech:second_alloy_foundry")),
 
-            // 24 — «Центрифуга ЦФ1УР» (после «Открытия 2») — справа центрифуга
-            new ScholarPage(24, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 26 — «Центрифуга ЦФ1УР» (после «Открытия 2») — справа центрифуга
+            new ScholarPage(26, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p24.title",
                     "gui.gonzotech.notes.p24.body",
                     List.of("gonzotech:second_centrifuge", "gonzotech:lead_nugget",
@@ -287,8 +305,8 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("minecraft:bucket", "gonzotech:first_turbine_rotor", "gonzotech:steel_plate", "gonzotech:inductive_module", "minecraft:bucket", "gonzotech:inductive_module", "gonzotech:first_wire_node", "gonzotech:steel_plate", "gonzotech:iron_plate"), "gonzotech:second_centrifuge")),
 
-            // 25 — «Машины второго поколения» (после «Открытия 2») — справа индуктивный модуль
-            new ScholarPage(25, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 27 — «Машины второго поколения» (после «Открытия 2») — справа индуктивный модуль
+            new ScholarPage(27, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p25.title",
                     "gui.gonzotech.notes.p25.body",
                     List.of("gonzotech:second_accumulator", "gonzotech:second_electric_furnace",
@@ -297,9 +315,9 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:condenser", "gonzotech:ferromagnetic_ingot", "gonzotech:copper_wire", "gonzotech:coil", "gonzotech:ferromagnetic_ingot", "gonzotech:coil", "gonzotech:copper_wire", "gonzotech:ferromagnetic_ingot", "gonzotech:condenser"), "gonzotech:inductive_module")),
 
-            // 26 — «Логистика второго уровня» (после «Машины второго поколения»)
+            // 28 — «Логистика второго уровня» (после «Машины второго поколения»)
             // — справа универсальный узел 2
-            new ScholarPage(26, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            new ScholarPage(28, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p26.title",
                     "gui.gonzotech.notes.p26.body",
                     List.of("gonzotech:second_wire", "gonzotech:second_heat_pipe",
@@ -311,11 +329,11 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:second_wire_node", "", "gonzotech:second_universal_fluid_pipe", "gonzotech:nickel_plate", "minecraft:hopper", "gonzotech:nickel_plate", "gonzotech:second_heat_pipe", "", "gonzotech:second_item_pipe"), "gonzotech:second_universal_node")),
 
-            // 27 — страница иллюстраций после логистики 2 — ЦИКЛ: слева провод 2 (4 варианта:
+            // 29 — страница иллюстраций после логистики 2 — ЦИКЛ: слева провод 2 (4 варианта:
             // медь/алюминий/золото/серебро), справа остальные трубы тир-2 (3 с на рецепт)
-            // Заголовок = продублированный «Логистика второго поколения» (стр. 26)
+            // Заголовок = продублированный «Логистика второго поколения» (стр. 28)
             // — страница-продолжение про логистику тир-2 (автор 2026-09-18)
-            new ScholarPage(27, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            new ScholarPage(29, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p26.title", null, List.of(), Layout.TEXT_LEFT,
                     NoteIllustration.craftingFullCycling(60,
                             List.of(
@@ -330,9 +348,9 @@ public final class ScholarNotesContent {
                                     new NoteIllustration.Craft(List.of("", "gonzotech:steel_ingot", "", "minecraft:hopper", "gonzotech:cast_iron_ingot", "minecraft:chest", "", "gonzotech:steel_ingot", ""), "gonzotech:second_item_pipe"),
                                     new NoteIllustration.Craft(List.of("", "minecraft:iron_trapdoor", "gonzotech:steel_ingot", "gonzotech:cast_iron_ingot", "minecraft:bucket", "gonzotech:cast_iron_ingot", "gonzotech:steel_ingot", "", ""), "gonzotech:second_universal_fluid_pipe")))),
 
-            // 28 — «Логистика предметов 2» (после страницы иллюстраций логистики)
+            // 30 — «Логистика предметов 2» (после страницы иллюстраций логистики)
             // — справа отсеиватель 2
-            new ScholarPage(28, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            new ScholarPage(30, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p28.title",
                     "gui.gonzotech.notes.p28.body",
                     List.of("gonzotech:second_item_pipe", "gonzotech:second_item_node",
@@ -340,21 +358,21 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("", "gonzotech:cast_iron_ingot", "", "minecraft:chest", "minecraft:iron_trapdoor", "minecraft:hopper", "", "gonzotech:cast_iron_ingot", ""), "gonzotech:second_item_scavenger")),
 
-            // 29 — «Продвинутый парогенератор» (после «Открытия 2») — справа ядро парогена
-            new ScholarPage(29, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 31 — «Продвинутый парогенератор» (после «Открытия 2») — справа ядро парогена
+            new ScholarPage(31, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p29.title",
                     "gui.gonzotech.notes.p29.body",
                     List.of("gonzotech:second_steamgen_casing", "gonzotech:second_steamgen_core"),
                     Layout.TEXT_LEFT,
                     NoteIllustration.craftingRight(List.of("gonzotech:cast_iron_ingot", "minecraft:iron_trapdoor", "minecraft:iron_bars", "gonzotech:steel_plate", "gonzotech:boiler", "gonzotech:steel_plate", "gonzotech:condenser", "minecraft:iron_trapdoor", "gonzotech:cast_iron_ingot"), "gonzotech:second_steamgen_core")),
 
-            // 30 — «Сердце парогенератора» (после «Продвинутого парогенератора»,
+            // 32 — «Сердце парогенератора» (после «Продвинутого парогенератора»,
             // перед «Ядерной топкой») — текст слева; справа «колода»: 5 слоёв
             // 5×5×5 (снизу вверх): низ/верх — чистые корпуса; три средних
             // «тикают» (случайно: ядро/драгоценный блок/пустота); в самом
             // среднем три порта вместо корпусов: пар (спереди), вода (слева),
             // GTH (справа)
-            new ScholarPage(30, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            new ScholarPage(32, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p30.title",
                     "gui.gonzotech.notes.p30.body",
                     List.of("gonzotech:second_steamgen_casing", "gonzotech:second_steamgen_core",
@@ -363,8 +381,8 @@ public final class ScholarNotesContent {
                     Layout.TEXT_LEFT,
                     structureSteamGen()),
 
-            // 31 — «Ядерная топка» (после «Открытия 2») — справа ядерная топка
-            new ScholarPage(31, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
+            // 33 — «Ядерная топка» (после «Открытия 2») — справа ядерная топка
+            new ScholarPage(33, ScholarChapter.ERA_1, ScholarUnlock.DISCOVERY_2,
                     "gui.gonzotech.notes.p31.title",
                     "gui.gonzotech.notes.p31.body",
                     List.of("gonzotech:second_nuclear_firebox", "gonzotech:uranium_ingot"),
@@ -373,11 +391,11 @@ public final class ScholarNotesContent {
 
             // ─────────── глава II «Познание мира» (по действиям) ───────────
 
-            // 32 — «Редстоун и лава» (по «Открытию 1» — базовое знание о мире);
+            // 34 — «Редстоун и лава» (по «Открытию 1» — базовое знание о мире);
             // реакция — с БЛОКОМ редстоуна (не с пылью/проводом); справа «Вид сверху»
             // (тикает, 2 кадра): ведро лавы+блок редстоуна+поршень → багряный
             // обсидиан (гонзotech — ванильный без предметной формы)+головка поршня
-            new ScholarPage(32, ScholarChapter.ERA_2, ScholarUnlock.DISCOVERY_1,
+            new ScholarPage(34, ScholarChapter.ERA_2, ScholarUnlock.DISCOVERY_1,
                     "gui.gonzotech.notes.p32.title",
                     "gui.gonzotech.notes.p32.body",
                     List.of("gonzotech:crimson_obsidian", "minecraft:redstone_block",
@@ -389,11 +407,11 @@ public final class ScholarNotesContent {
                                     List.of("gonzotech:crimson_obsidian", "minecraft:redstone_block", "gonzotech:crimson_obsidian", "", "minecraft:piston_head", "", "", "minecraft:piston", "")),
                             NoteIllustration.CAPTION_VIEW_TOP)),
 
-            // 33 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок);
+            // 35 — «Вольфрам, большой абсорбер» (впервые добыт вольфрамовый блок);
             // справа «Вид сбоку» (тикает, 4 кадра): теплотруба 1 → узел 1 →
             // теплотруба 2 → узел 2; вольфрам посередине; сверхплотный лёд
             // появляется/исчезает
-            new ScholarPage(33, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
+            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_WOLFRAM,
                     "gui.gonzotech.notes.p33.title",
                     "gui.gonzotech.notes.p33.body",
                     List.of("gonzotech:tungsten_block", "gonzotech:superdense_ice"),
@@ -406,9 +424,9 @@ public final class ScholarNotesContent {
                                     List.of("gonzotech:second_heat_node", "gonzotech:tungsten_block", "")),
                             NoteIllustration.CAPTION_VIEW_SIDE)),
 
-            // 34 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
+            // 36 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
             // текст на ВСЮ страницу, в витрине — все формы цезия
-            new ScholarPage(34, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
+            new ScholarPage(36, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
                     "gui.gonzotech.notes.p34.title",
                     "gui.gonzotech.notes.p34.body",
                     List.of("gonzotech:raw_cesium", "gonzotech:cesium_nugget",
@@ -418,21 +436,21 @@ public final class ScholarNotesContent {
                     Layout.TEXT_FULL,
                     null),
 
-            // 35 — «Ослабевшее солнце» (автор 2026-09-18: открывает ПЕРВЫЙ
+            // 37 — «Ослабевшее солнце» (автор 2026-09-18: открывает ПЕРВЫЙ
             // суневент — багровый день; текст под GONE заменён; страницы под
             // GONE пока не планируется)
-            new ScholarPage(35, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_EVENT,
+            new ScholarPage(37, ScholarChapter.ERA_2, ScholarUnlock.FLAG_SUN_EVENT,
                     "gui.gonzotech.notes.p35.title",
                     "gui.gonzotech.notes.p35.body",
                     List.of(),
                     Layout.TEXT_FULL,
                     null),
 
-            // 36 — «Угасание солнца» (вторая страница с тем же заголовком, автор
+            // 38 — «Угасание солнца» (вторая страница с тем же заголовком, автор
             // 22.09.2026): уже не запись, а ПРИБОР. Гейт составной по «И» —
             // багровый день + «Открытие 2» (SUN_EVENT_AND_DISCOVERY_2), ровно тот же,
             // что стоит на крафте солнечных часов. Справа — их крафт.
-            new ScholarPage(36, ScholarChapter.ERA_2, ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2,
+            new ScholarPage(38, ScholarChapter.ERA_2, ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2,
                     "gui.gonzotech.notes.p36.title",
                     "gui.gonzotech.notes.p36.body",
                     List.of("gonzotech:solar_watch"),
@@ -445,18 +463,18 @@ public final class ScholarNotesContent {
 
             // 37–41 — раздел «Глубокая металлургия» (автор 2026-09-18):
             // открывается аттачментом «Открытие 3» (предмет discovery_3).
-            // 37 — введение: что такое статы материалов, где их видно;
+            // 39 — введение: что такое статы материалов, где их видно;
             // 38–41 — «несмешиваемые» пресеты завода (есть только там,
             // пыли/самородков у них нет в каталоге крафта): кортен, стеллит,
             // витрелой, полупроводник. Иллюстраций нет — TEXT_FULL + витрина.
-            new ScholarPage(37, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(39, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p37.title",
                     "gui.gonzotech.notes.p37.body",
                     List.of("gonzotech:second_alloy_foundry", "gonzotech:custom_alloy",
                             "gonzotech:steel_ingot", "gonzotech:corten_steel_ingot"),
                     Layout.TEXT_FULL,
                     null),
-            new ScholarPage(38, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(40, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p38.title",
                     "gui.gonzotech.notes.p38.body",
                     List.of("gonzotech:corten_steel_ingot", "minecraft:iron_ingot",
@@ -469,7 +487,7 @@ public final class ScholarNotesContent {
                                     "", "", "", "", ""),
                             "gonzotech:corten_steel_ingot:25",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(39, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(41, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p39.title",
                     "gui.gonzotech.notes.p39.body",
                     List.of("gonzotech:stellite_ingot", "gonzotech:cobalt_ingot",
@@ -482,7 +500,7 @@ public final class ScholarNotesContent {
                                     "gonzotech:neodymium_ingot:1", "", "", "", ""),
                             "gonzotech:stellite_ingot:11",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(40, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(42, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p40.title",
                     "gui.gonzotech.notes.p40.body",
                     List.of("gonzotech:vitreloy_ingot", "minecraft:diamond",
@@ -495,7 +513,7 @@ public final class ScholarNotesContent {
                                     "", "", "", "", ""),
                             "gonzotech:vitreloy_ingot:9",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(41, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(43, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p41.title",
                     "gui.gonzotech.notes.p41.body",
                     List.of("gonzotech:semiconductor_ingot", "gonzotech:silicon",
@@ -529,7 +547,7 @@ public final class ScholarNotesContent {
     }
 
     /**
-     * «Колода» продвинутого парогенератора 5×5×5 (стр. 30): 5 слоёв снизу
+     * «Колода» продвинутого парогенератора 5×5×5 (стр. 32): 5 слоёв снизу
      * вверх. Низ и верх — чистые корпуса; три средних — «сердце»: середина
      * 3×3 тикает (случайно: ядро / драгоценный блок-теплообменник / пустота),
      * кольцо — корпус; в самом среднем кольце три порта вместо корпусов:

@@ -148,6 +148,33 @@ for lang in ("en_us", "ru_ru"):
     lt = (ROOT / f"src/main/resources/assets/gonzotech/lang/{lang}.json").read_text()
     assert "blast_furnace.burning" not in lt
 assert "be.revalidateBlast(server);" in be  # 0.3.69: вызов ревалидации в тике (был потерян — печь не собиралась)
+# 0.3.76: дым горящей топки — campfire-дым и пыль 0x78726B, по одной частице за тик
+assert "ParticleTypes.CAMPFIRE_COSY_SMOKE" in be
+assert "new DustParticleOptions(0x78726B, 1.0F)" in be
+assert "worldPosition.getY() + 1.05," in be
+# 0.3.76: страницы заметок 15/16 — крафт шамота справа и структура печи (3 слоя)
+content = (ROOT / "src/main/java/com/gonzotech/chalkboard/notes/ScholarNotesContent.java").read_text()
+assert 'NoteIllustration.craftingRight(List.of("minecraft:bricks", "minecraft:clay_ball", "minecraft:bone_meal", "minecraft:wheat", "minecraft:calcite", "", "", "", ""), "gonzotech:fireclay")' in content
+assert 'NoteIllustration.structureRight(StructureModel.blastFurnace())' in content
+assert '"gui.gonzotech.notes.p42.title"' in content and '"gui.gonzotech.notes.p43.body"' in content
+smodel = (ROOT / "src/main/java/com/gonzotech/chalkboard/notes/StructureModel.java").read_text()
+assert "public static StructureModel blastFurnace()" in smodel
+for sid in ('"gonzotech:fireclay"', '"gonzotech:first_heat_node"', '"gonzotech:firebox"', '"minecraft:cauldron"'):
+    assert sid in smodel, sid
+# нумерация страниц 1..43 без дыр; витрины новых страниц
+import re as _re
+_pagenums = [int(m) for m in _re.findall(r'new ScholarPage\((\d+),', content)]
+assert _pagenums == list(range(1, 44)), _pagenums
+_i15 = content.index('new ScholarPage(15,')
+assert 'p42.title' in content[_i15:_i15 + 200]
+_i16 = content.index('new ScholarPage(16,')
+assert 'p43.title' in content[_i16:_i16 + 200]
+for _lang in ("en_us", "ru_ru"):
+    import json as _json
+    _data = _json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{_lang}.json").read_text())
+    assert _data["gui.gonzotech.notes.p42.title"]
+    assert "шамотный кирпич" in _data["gui.gonzotech.notes.p42.body"] or "fireclay brick" in _data["gui.gonzotech.notes.p42.body"]
+    assert "GTH" in _data["gui.gonzotech.notes.p43.body"]
 assert "if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;" in be
 # предметная модель 1.21.4 (assets/gonzotech/items/)
 item_model = (ROOT / "src/main/resources/assets/gonzotech/items/fireclay.json").read_text()

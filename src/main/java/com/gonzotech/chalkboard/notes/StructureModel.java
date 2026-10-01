@@ -100,4 +100,37 @@ public record StructureModel(int sizeX, int sizeY, int sizeZ, boolean assembly, 
         }
         return new StructureModel(3, 3, 3, false, List.copyOf(out));
     }
+
+    /**
+     * Доменная печь 3×3×3 (0.3.76) — 3 подстраницы-СЛОЯ (снизу вверх), ровно
+     * по валидации {@code BlastFurnaceStructure}:
+     * <pre>
+     *   Нижний слой (1):  9× шамотный кирпич
+     *   Средний слой (2): [Ш][узел][Ш]
+     *                     [узел][топка][узел]
+     *                     [Ш][узел][Ш]
+     *   Верхний слой (3): 8× шамотный кирпич + котёл в центре
+     * </pre>
+     */
+    public static StructureModel blastFurnace() {
+        List<StructureBlock> out = new ArrayList<>();
+        for (int y = 0; y < 3; y++) {
+            for (int x = 0; x < 3; x++) {
+                for (int z = 0; z < 3; z++) {
+                    String id;
+                    if (y == 1 && x == 1 && z == 1) {
+                        id = "gonzotech:firebox";
+                    } else if (y == 1 && (Math.abs(x - 1) + Math.abs(z - 1)) == 1) {
+                        id = "gonzotech:first_heat_node";
+                    } else if (y == 2 && x == 1 && z == 1) {
+                        id = "minecraft:cauldron";
+                    } else {
+                        id = "gonzotech:fireclay";
+                    }
+                    out.add(new StructureBlock(x, y, z, id));
+                }
+            }
+        }
+        return new StructureModel(3, 3, 3, false, List.copyOf(out));
+    }
 }

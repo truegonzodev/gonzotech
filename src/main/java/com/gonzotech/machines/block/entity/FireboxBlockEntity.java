@@ -12,6 +12,8 @@ import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -318,6 +320,17 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
         // 1. Горение топлива → наполняем GTH.
         if (be.litTime > 0) {
+            // 0.3.76: дым горения — вверх над топкой (у собранной печи — прямо
+            // из котла), как у очистителя воздуха, но в 3–4 раза реже: одна
+            // частица за тик, тип чередуется (campfire-дым / пыль цвета тлеющих
+            // углей). Счёт 0 = точная скорость, а не гауссов разброс.
+            boolean smoke = (server.getGameTime() & 1L) == 0L;
+            server.sendParticles(smoke ? ParticleTypes.CAMPFIRE_COSY_SMOKE
+                    : new DustParticleOptions(0x78726B, 1.0F),
+                worldPosition.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4,
+                worldPosition.getY() + 1.05,
+                worldPosition.getZ() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4,
+                0, 0.0, 0.18, 0.0, 1.0);
             be.litTime--;
             long perTick = be.blastFormed
                 ? (long) MachineDefs.BLAST_FURNACE_GTH_PER_TICK
