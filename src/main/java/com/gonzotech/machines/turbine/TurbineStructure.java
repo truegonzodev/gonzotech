@@ -40,6 +40,13 @@ public final class TurbineStructure {
     /** При N<100 максимальный допустимый объём заполненного параллелепипеда — 909. */
     private static final int MAX_CANDIDATE_COMPONENT = 1_024;
 
+    /**
+     * Авторский лимит (0.3.71): максимум 8 узлов на структуру. Узлы дешевле
+     * корпуса — без лимита всю обшивку выгодно собрать из узлов (универсальный
+     * узел закрывает и пар, и провод).
+     */
+    private static final int MAX_NODES_PER_STRUCTURE = 8;
+
     /** Level -> позиция любой части -> детерминированный ротор-контроллер. */
     private static final Map<Level, Map<Long, BlockPos>> MEMBER_INDEX =
         Collections.synchronizedMap(new WeakHashMap<>());
@@ -291,6 +298,7 @@ public final class TurbineStructure {
         List<BlockPos> all = new ArrayList<>((int) volume);
         List<BlockPos> steam = new ArrayList<>();
         List<BlockPos> wire = new ArrayList<>();
+        int nodes = 0;
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int y = min.getY(); y <= max.getY(); y++) {
                 for (int z = min.getZ(); z <= max.getZ(); z++) {
@@ -303,6 +311,9 @@ public final class TurbineStructure {
                         if (!isShellBlock(state)) return null;
                         if (isSteamPort(state)) steam.add(pos.immutable());
                         if (isWirePort(state)) wire.add(pos.immutable());
+                        // Любая позиция с узлом считается один раз, даже если
+                        // универсальный узел — сразу пар и провод.
+                        if (isSteamPort(state) || isWirePort(state)) nodes++;
                     } else if (!state.is(ModMachines.FIRST_TURBINE_ROTOR.get())) {
                         return null;
                     }
@@ -311,6 +322,7 @@ public final class TurbineStructure {
             }
         }
         if (steam.isEmpty() || wire.isEmpty()) return null;
+        if (nodes > MAX_NODES_PER_STRUCTURE) return null; // 0.3.71: обшивка не из одних узлов
         BlockPos root = new BlockPos(min.getX() + 1, min.getY() + 1, min.getZ() + 1);
         if (!level.getBlockState(root).is(ModMachines.FIRST_TURBINE_ROTOR.get())) return null;
         return new Build(min.immutable(), max.immutable(), root, (int) rotorLong, all, steam, wire);

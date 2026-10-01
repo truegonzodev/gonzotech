@@ -39,6 +39,9 @@ import java.util.WeakHashMap;
  */
 public final class SteamGenStructure {
 
+    /** Авторский лимит (0.3.71): максимум 10 узлов на структуру парогенератора. */
+    private static final int MAX_NODES_PER_STRUCTURE = 10;
+
     /** Защита от случайной стены корпусов: максимум блоков в связной компоненте. */
     private static final int MAX_CANDIDATE_COMPONENT = 1_024;
 
@@ -290,6 +293,7 @@ public final class SteamGenStructure {
         int cores = 0;
         int sumCH = 0;
         int precious = 0;
+        int nodes = 0;
         List<BlockPos> all = new ArrayList<>(size * size * size);
         List<BlockPos> steam = new ArrayList<>();
         List<BlockPos> water = new ArrayList<>();
@@ -307,6 +311,9 @@ public final class SteamGenStructure {
                         if (isSteamPort(state)) steam.add(pos.immutable());
                         if (isWaterPort(state)) water.add(pos.immutable());
                         if (isHeatPort(state)) heat.add(pos.immutable());
+                        // Любая позиция с узлом считается один раз, даже если
+                        // универсальный узел — сразу пар, вода и тепло.
+                        if (isSteamPort(state) || isWaterPort(state) || isHeatPort(state)) nodes++;
                     } else {
                         Block block = state.getBlock();
                         if (block == ModMachines.SECOND_STEAMGEN_CORE.get()) {
@@ -323,6 +330,10 @@ public final class SteamGenStructure {
             }
         }
         if (cores < 1 || steam.isEmpty() || water.isEmpty() || heat.isEmpty()) return null;
+        // Авторский лимит (0.3.71): узлы дешевле корпуса — без лимита всю
+        // обшивку выгодно собрать из узлов (универсальный узел закрывает
+        // пар, воду и тепло).
+        if (nodes > MAX_NODES_PER_STRUCTURE) return null;
         BlockPos root = new BlockPos(min.getX() + 1, min.getY() + 1, min.getZ() + 1);
         if (!level.getBlockState(root).is(ModMachines.SECOND_STEAMGEN_CORE.get())) return null;
         return new Build(min.immutable(), max.immutable(), root, cores, sumCH, precious,
