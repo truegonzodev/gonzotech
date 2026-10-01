@@ -36,6 +36,10 @@ public enum NoteIllustrationKind {
      *  (стр. «Брожение»: фруктовый сусло + ферментация). */
     CRAFTING_FERMENTATION("page_crafting_fermentation.png");
 
+    /** Чистая иллюстрация в правой половине (без сеток и слотов) — «Зарисовка»
+     *  книги «Познание мира»: арт автора в самом шаблоне. */
+    PAGE_GONZO("page_gonzo.png");
+
     private final String textureName;
 
     NoteIllustrationKind(String textureName) {

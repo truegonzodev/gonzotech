@@ -364,7 +364,7 @@ public class ScholarNotesScreen extends Screen {
 
     /**
      * Собирает тело из lang-строки, поддерживая простую разметку
-     * {@code **жирный**} и {@code *курсив*}.
+     * {@code **жирный**}, {@code *курсив*} и {@code ~~зачёркнутый~~}.
      */
     private MutableComponent bodyComponent(String key) {
         String raw = Component.translatable(key).getString();
@@ -372,15 +372,20 @@ public class ScholarNotesScreen extends Screen {
         int i = 0;
         boolean bold = false;
         boolean italic = false;
+        boolean strike = false;
         StringBuilder buf = new StringBuilder();
         while (i < raw.length()) {
             char c = raw.charAt(i);
             if (c == '*' && i + 1 < raw.length() && raw.charAt(i + 1) == '*') {
-                flush(out, buf, bold, italic);
+                flush(out, buf, bold, italic, strike);
                 bold = !bold;
                 i += 2;
+            } else if (c == '~' && i + 1 < raw.length() && raw.charAt(i + 1) == '~') {
+                flush(out, buf, bold, italic, strike);
+                strike = !strike;
+                i += 2;
             } else if (c == '*') {
-                flush(out, buf, bold, italic);
+                flush(out, buf, bold, italic, strike);
                 italic = !italic;
                 i += 1;
             } else {
@@ -388,13 +393,13 @@ public class ScholarNotesScreen extends Screen {
                 i++;
             }
         }
-        flush(out, buf, bold, italic);
+        flush(out, buf, bold, italic, strike);
         return out;
     }
 
-    private void flush(MutableComponent out, StringBuilder buf, boolean bold, boolean italic) {
+    private void flush(MutableComponent out, StringBuilder buf, boolean bold, boolean italic, boolean strike) {
         if (buf.length() == 0) return;
-        Style style = Style.EMPTY.withBold(bold).withItalic(italic);
+        Style style = Style.EMPTY.withBold(bold).withItalic(italic).withStrikethrough(strike);
         out.append(Component.literal(buf.toString()).withStyle(style));
         buf.setLength(0);
     }
@@ -484,6 +489,9 @@ public class ScholarNotesScreen extends Screen {
                     drawCaption(g, "gui.gonzotech.notes.illustration.crafting", CAPTION_CRAFT_LEFT_X);
             case FERMENTATION -> {
                 // Подписи — в самом шаблоне (уникальная иллюстрация).
+            }
+            case PAGE_GONZO -> {
+                // Чистая иллюстрация: арт в шаблоне, подписей и слотов нет.
             }
         }
 
@@ -837,6 +845,9 @@ public class ScholarNotesScreen extends Screen {
                 gridSlots(out, GRID_LEFT_X, il.leftGrid());
                 addResultSlot(out, 68, il.leftResult());
                 addFermentation(out, il);
+            }
+            case PAGE_GONZO -> {
+                // Арт в шаблоне — предметов нет.
             }
         }
         return out;

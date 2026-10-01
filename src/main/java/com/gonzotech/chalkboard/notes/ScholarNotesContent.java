@@ -9,8 +9,8 @@ import java.util.List;
  * Статичное оглавление «Заметок учёного»: линейный массив страниц в порядке
  * буклета. Боковые вкладки — лишь навигация по главам.
  *
- * <p>Глава I ({@link ScholarChapter#ERA_1}) — дневник Гонзо: 43 страницы
- * (1..43): стартовые 14 + шамот и доменная печь + турбина и редстоун («Открытие 1») + атомный пласт
+ * <p>Глава I ({@link ScholarChapter#ERA_1}) — дневник Гонзо: 44 страницы
+ * (1..44): стартовые 14 + шамот и доменная печь + турбина и редстоун («Открытие 1») + атомный пласт
  * (дробилка, измельчитель, металлургия, пресс, завод сплавов, центрифуга,
  * тир-2, логистика II — трубы/узел/предметы — и пароген, ядерная топка —
  * «Открытие 2»). Страницы 18, 23, 29 — иллюстрационные: структура турбины,
@@ -44,7 +44,7 @@ public final class ScholarNotesContent {
     private ScholarNotesContent() {
     }
 
-    /** Полный список страниц в порядке буклета (43). Иллюстрации — шаблоны;
+    /** Полный список страниц в порядке буклета (44). Иллюстрации — шаблоны;
      *  сетки крафта — реальные рецепты из data/gonzotech/recipe (теги — конкретным
      *  предметом: плахи → дубовые доски; shapeless-рецепты — по порядку слотов). */
     public static final List<ScholarPage> PAGES = List.of(
@@ -446,11 +446,22 @@ public final class ScholarNotesContent {
                     Layout.TEXT_FULL,
                     null),
 
-            // 38 — «Угасание солнца» (вторая страница с тем же заголовком, автор
+            // 38 — «Зарисовка» (0.3.77): книга «Познание мира», сразу после
+            // «Угасания солнца». Гейта открытия пока нет (ALWAYS) — автор
+            // прикрутит его позже. Справа — чистая иллюстрация page_gonzo
+            // (арт в шаблоне), текст слева.
+            new ScholarPage(38, ScholarChapter.ERA_2, ScholarUnlock.ALWAYS,
+                    "gui.gonzotech.notes.p44.title",
+                    "gui.gonzotech.notes.p44.body",
+                    List.of(),
+                    Layout.TEXT_LEFT,
+                    NoteIllustration.gonzoRight()),
+
+            // 39 — «Угасание солнца» (вторая страница с тем же заголовком, автор
             // 22.09.2026): уже не запись, а ПРИБОР. Гейт составной по «И» —
             // багровый день + «Открытие 2» (SUN_EVENT_AND_DISCOVERY_2), ровно тот же,
             // что стоит на крафте солнечных часов. Справа — их крафт.
-            new ScholarPage(38, ScholarChapter.ERA_2, ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2,
+            new ScholarPage(39, ScholarChapter.ERA_2, ScholarUnlock.SUN_EVENT_AND_DISCOVERY_2,
                     "gui.gonzotech.notes.p36.title",
                     "gui.gonzotech.notes.p36.body",
                     List.of("gonzotech:solar_watch"),
@@ -463,18 +474,18 @@ public final class ScholarNotesContent {
 
             // 37–41 — раздел «Глубокая металлургия» (автор 2026-09-18):
             // открывается аттачментом «Открытие 3» (предмет discovery_3).
-            // 39 — введение: что такое статы материалов, где их видно;
+            // 40 — введение: что такое статы материалов, где их видно;
             // 38–41 — «несмешиваемые» пресеты завода (есть только там,
             // пыли/самородков у них нет в каталоге крафта): кортен, стеллит,
             // витрелой, полупроводник. Иллюстраций нет — TEXT_FULL + витрина.
-            new ScholarPage(39, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(40, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p37.title",
                     "gui.gonzotech.notes.p37.body",
                     List.of("gonzotech:second_alloy_foundry", "gonzotech:custom_alloy",
                             "gonzotech:steel_ingot", "gonzotech:corten_steel_ingot"),
                     Layout.TEXT_FULL,
                     null),
-            new ScholarPage(40, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(41, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p38.title",
                     "gui.gonzotech.notes.p38.body",
                     List.of("gonzotech:corten_steel_ingot", "minecraft:iron_ingot",
@@ -487,7 +498,7 @@ public final class ScholarNotesContent {
                                     "", "", "", "", ""),
                             "gonzotech:corten_steel_ingot:25",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(41, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(42, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p39.title",
                     "gui.gonzotech.notes.p39.body",
                     List.of("gonzotech:stellite_ingot", "gonzotech:cobalt_ingot",
@@ -500,7 +511,7 @@ public final class ScholarNotesContent {
                                     "gonzotech:neodymium_ingot:1", "", "", "", ""),
                             "gonzotech:stellite_ingot:11",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(42, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(43, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p40.title",
                     "gui.gonzotech.notes.p40.body",
                     List.of("gonzotech:vitreloy_ingot", "minecraft:diamond",
@@ -513,7 +524,7 @@ public final class ScholarNotesContent {
                                     "", "", "", "", ""),
                             "gonzotech:vitreloy_ingot:9",
                             NoteIllustration.CAPTION_FOUNDRY)),
-            new ScholarPage(43, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
+            new ScholarPage(44, ScholarChapter.ERA_2, ScholarUnlock.FLAG_DISCOVERY_3,
                     "gui.gonzotech.notes.p41.title",
                     "gui.gonzotech.notes.p41.body",
                     List.of("gonzotech:semiconductor_ingot", "gonzotech:silicon",

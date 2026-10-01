@@ -164,17 +164,34 @@ for sid in ('"gonzotech:fireclay"', '"gonzotech:first_heat_node"', '"gonzotech:f
 # нумерация страниц 1..43 без дыр; витрины новых страниц
 import re as _re
 _pagenums = [int(m) for m in _re.findall(r'new ScholarPage\((\d+),', content)]
-assert _pagenums == list(range(1, 44)), _pagenums
+assert _pagenums == list(range(1, 45)), _pagenums  # 0.3.77: +страница «Зарисовка»
 _i15 = content.index('new ScholarPage(15,')
 assert 'p42.title' in content[_i15:_i15 + 200]
 _i16 = content.index('new ScholarPage(16,')
 assert 'p43.title' in content[_i16:_i16 + 200]
+# 0.3.77: страница 38 «Зарисовка» (ERA_2, без гейта) — чистая иллюстрация page_gonzo
+kind = (ROOT / "src/main/java/com/gonzotech/chalkboard/notes/NoteIllustrationKind.java").read_text()
+assert 'PAGE_GONZO("page_gonzo.png")' in kind
+ill = (ROOT / "src/main/java/com/gonzotech/chalkboard/notes/NoteIllustration.java").read_text()
+assert "public static NoteIllustration gonzoRight()" in ill
+assert (ROOT / "src/main/resources/assets/gonzotech/textures/gui/notes/page_gonzo.png").exists()
+notes_screen = (ROOT / "src/main/java/com/gonzotech/chalkboard/client/ScholarNotesScreen.java").read_text()
+assert "withStrikethrough(strike)" in notes_screen
+assert "case PAGE_GONZO ->" in notes_screen
+_i38 = content.index('new ScholarPage(38,')
+assert 'ERA_2' in content[_i38:_i38 + 120] and 'ScholarUnlock.ALWAYS' in content[_i38:_i38 + 160]
+assert 'NoteIllustration.gonzoRight()' in content[_i38:_i38 + 500]
+_isun = content.index('FLAG_SUN_EVENT')
+assert _isun < _i38 < content.index('new ScholarPage(39,')
 for _lang in ("en_us", "ru_ru"):
     import json as _json
     _data = _json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{_lang}.json").read_text())
     assert _data["gui.gonzotech.notes.p42.title"]
     assert "шамотный кирпич" in _data["gui.gonzotech.notes.p42.body"] or "fireclay brick" in _data["gui.gonzotech.notes.p42.body"]
     assert "GTH" in _data["gui.gonzotech.notes.p43.body"]
+    assert _data["gui.gonzotech.notes.p44.title"]
+    assert "~~Я~~" in _data["gui.gonzotech.notes.p44.body"] or "~~I~~" in _data["gui.gonzotech.notes.p44.body"]
+    assert "**кто сейчас смотрит**" in _data["gui.gonzotech.notes.p44.body"] or "**who is looking**" in _data["gui.gonzotech.notes.p44.body"]
 assert "if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;" in be
 # предметная модель 1.21.4 (assets/gonzotech/items/)
 item_model = (ROOT / "src/main/resources/assets/gonzotech/items/fireclay.json").read_text()

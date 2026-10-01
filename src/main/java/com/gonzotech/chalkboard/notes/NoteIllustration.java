@@ -193,6 +193,12 @@ public record NoteIllustration(
                 new DeckView(cols, layers, captionKey, guaranteedId, minGuaranteed), null);
     }
 
+    /** Чистая иллюстрация справа (PAGE_GONZO): арт в шаблоне, слотов и подписей нет. */
+    public static NoteIllustration gonzoRight() {
+        return new NoteIllustration(NoteIllustrationKind.PAGE_GONZO,
+                null, null, null, null, null, null, 0, null, null, null, null, null, null);
+    }
+
     /** Брожение: 4 пары «вход → выход». */
     public static NoteIllustration fermentation(List<String> inputs, List<String> outputs) {
         return new NoteIllustration(NoteIllustrationKind.FERMENTATION,
