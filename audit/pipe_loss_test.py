@@ -50,4 +50,16 @@ assert routing.count("pathLossCells(level, path,") == 5, routing.count("pathLoss
 # числа автора — единственный источник констант
 for const in ("WIRE_T1 = 80;", "WIRE_T2 = 90;", "HEAT_T1 = 220;", "HEAT_T2 = 180;"):
     assert const in loss_src.read_text(), const
+# 0.3.73: тик-барьер FlowTracker чистит ОБЕ карты в обоих методах записи —
+# иначе потери «(+N)» на HUD ключа накапливаются через тики и растут вечно.
+tracker = (ROOT / "src/main/java/com/gonzotech/machines/network/FlowTracker.java").read_text()
+assert tracker.count("h.loss.clear();") == 2, tracker.count("h.loss.clear();")
+assert tracker.count("h.tick = t;") == 2
+hud = (ROOT / "src/main/java/com/gonzotech/machines/client/WrenchHud.java").read_text()
+# Простые единицы вместо «К»-тиров: 0.44 вместо «0.4К», «33.3» вместо «33.3К».
+assert '"%.2f", milli / 1000.0' in hud
+assert '"%.1f", total / 1000.0' in hud
+assert "GtFormat.formatRate" not in hud
+# Пробел между «GTH/т» и хвостом потерь.
+assert 'Component.literal(" (+" + lossText(e.lossMilli) + ")")' in hud
 print("Pipe losses wiring passed (0.08/0.09 GTU, 0.22/0.18 GTH; universal node exempt)")

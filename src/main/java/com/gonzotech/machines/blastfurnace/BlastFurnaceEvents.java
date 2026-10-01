@@ -1,6 +1,5 @@
 package com.gonzotech.machines.blastfurnace;
 
-import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.server.level.ServerLevel;
@@ -8,10 +7,11 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /**
- * Клик по «вырезанным» частям собранной доменной печи (0.3.70): котёл и узлы
- * теплотруб/универсальные — обычные блоки, которые ничего не знают о структуре,
- * поэтому правый клик перехватывается событием: если в кубе ±1 есть
- * сформированная топка — открываем меню доменной печи (как у турбины/парогена).
+ * Клик по котлу собранной доменной печи (0.3.70; 0.3.73 — только котёл):
+ * ванильный котёл не знает о структуре, поэтому правый клик по нему
+ * перехватывается событием. Узлы обслуживаются хуками сетевых блоков через
+ * FormedMenus — там поведение шифта ровно как у турбины: ПКМ открывает меню,
+ * Shift+ПКМ ставит блок.
  */
 public final class BlastFurnaceEvents {
 
@@ -21,17 +21,16 @@ public final class BlastFurnaceEvents {
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!(event.getLevel() instanceof ServerLevel server)) return;
-        if (!isCutoutPart(server.getBlockState(event.getPos()))) return;
+        // Шифт+ПКМ — ставить блоки (паритет с турбиной/парогеном).
+        if (event.getEntity().isShiftKeyDown()) return;
+        // Только котёл: у ванильного котла нет хука на меню печи. Узлы ловятся
+        // в хуках самих сетевых блоков (FormedMenus.open) — там ваниль сама
+        // разруливает шифт.
+        var state = server.getBlockState(event.getPos());
+        if (!state.is(Blocks.CAULDRON) && !state.is(Blocks.WATER_CAULDRON)) return;
         if (BlastFurnaceStructure.openMenu(server, event.getPos(), event.getEntity())) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.SUCCESS);
         }
-    }
-
-    /** «Вырезанная» часть собранной печи: котёл (пустой/с водой) или тепло-узел. */
-    private static boolean isCutoutPart(net.minecraft.world.level.block.state.BlockState state) {
-        return state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON)
-            || state.is(ModMachines.HEAT_NODE.get()) || state.is(ModMachines.SECOND_HEAT_NODE.get())
-            || state.is(ModMachines.UNIVERSAL_NODE.get()) || state.is(ModMachines.SECOND_UNIVERSAL_NODE.get());
     }
 }

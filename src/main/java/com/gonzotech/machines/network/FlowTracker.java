@@ -52,6 +52,11 @@ public final class FlowTracker {
         long t = level.getGameTime();
         if (h.tick != t) {
             h.flow.clear();
+            // 0.3.73: loss тоже обязан сбрасываться здесь. Раньше чистился только
+            // flow, а первый record() тика продвигал барьер h.tick — recordLoss
+            // видел «тик актуален» и прибавлял потери к ВЧЕРАШНЕМУ значению:
+            // «(+N)» на HUD ключа росло бесконечно (~+0.44 GTH за тик).
+            h.loss.clear();
             h.tick = t;
         }
         long[][] byType = h.flow.computeIfAbsent(pipe.asLong(), k -> new long[TYPES][DIRS]);

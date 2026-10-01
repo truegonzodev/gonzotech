@@ -106,8 +106,20 @@ assert "FireclayBlock.FORMED);" in ctm
 events = (ROOT / "src/main/java/com/gonzotech/machines/blastfurnace/BlastFurnaceEvents.java").read_text()
 assert "@SubscribeEvent" in events and "PlayerInteractEvent.RightClickBlock" in events
 assert "BlastFurnaceStructure.openMenu(server, event.getPos(), event.getEntity())" in events
-assert "isCutoutPart" in events  # 0.3.70: хелпер частей (каулдрон+4 класса узлов)
 assert "event.setCanceled(true);" in events
+# 0.3.73: ивент только для котла (у ванильного котла нет хука) и со сдвиг-гейтом;
+# узлы обслуживаются хуками сетевых блоков (FormedMenus), шифт там рулит ваниль.
+assert "isShiftKeyDown" in events
+assert "!state.is(Blocks.CAULDRON) && !state.is(Blocks.WATER_CAULDRON)" in events
+assert "ModMachines" not in events and "isCutoutPart" not in events
+formed = (ROOT / "src/main/java/com/gonzotech/machines/FormedMenus.java").read_text()
+assert "TurbineStructure.openMenu(level, pos, player)" in formed
+assert "SteamGenStructure.openMenu(level, pos, player)" in formed
+assert "BlastFurnaceStructure.openMenu(level, pos, player)" in formed
+for nb in ("PipeBlock", "UniversalNodeBlock", "UniversalFluidPipeBlock"):
+    nsrc = (ROOT / f"src/main/java/com/gonzotech/machines/network/{nb}.java").read_text()
+    assert "FormedMenus.open(level, pos, player)" in nsrc, nb
+    assert "TurbineStructure.openMenu(level, pos, player)" not in nsrc, nb
 gmod = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text()
 assert "NeoForge.EVENT_BUS.register(com.gonzotech.machines.blastfurnace.BlastFurnaceEvents.class);" in gmod
 # 0.3.70: burnout без тултипа; GTH-тултип в единицах (не милли)

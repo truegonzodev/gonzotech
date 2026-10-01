@@ -1,7 +1,6 @@
 package com.gonzotech.machines.client;
 
 import com.gonzotech.core.text.GtUnits;
-import com.gonzotech.machines.energy.GtFormat;
 import com.gonzotech.machines.energy.NuclearDefs;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.item.WrenchItem;
@@ -491,10 +490,13 @@ public final class WrenchHud {
      * оси сложены), и для узла (сумма 6 граней). Так удобно взглядом бежать по
      * трубам и видеть, где сколько течёт, не думая про направление.
      */
-    /** Формат хвоста потерь: одна десятая до 100 единиц, дальше — крупные тиры. */
+    /**
+     * Формат хвоста потерь (0.3.73): всегда простые ЕДИНИЦЫ с двумя знаками
+     * («0.44»), без тиров «К/M» — суффикс относился к милли (кило-милли =
+     * единица), а читался игроком как тысячи GTH.
+     */
     private static String lossText(long milli) {
-        if (milli < 100_000) return String.format(java.util.Locale.ROOT, "%.1f", milli / 1000.0);
-        return GtFormat.formatRate(milli);
+        return String.format(java.util.Locale.ROOT, "%.2f", milli / 1000.0);
     }
 
     private static Component flowLine(BlockPos pos, PipeType part) {
@@ -512,14 +514,18 @@ public final class WrenchHud {
         // GTU/GTH идут по проводам в МИЛЛИ (×1000) — показываем целые единицы с
         // суффиксом больших тиров и одной десятой (12.3M). Вода/пар в mB — как есть.
         // ГОСТ единиц: число и обозначение — цветом ресурса, «/t» — цветом строки.
-        String value = part.isFluid() ? Long.toString(total) : GtFormat.formatRate(total);
+        // 0.3.73: поток тоже простыми единицами с одной десятой («33.3»), без
+        // «К»-тиров: у форматирутора «К» означает кило-МИЛЛИ (=единица), игрок же
+        // читает его как тысячи GTH.
+        String value = part.isFluid() ? Long.toString(total)
+            : String.format(java.util.Locale.ROOT, "%.1f", total / 1000.0);
         Component amount = Component.translatable("hud.gonzotech.flow_amount",
             GtUnits.rate(value, GtUnits.key(part.unitKey(), color), color));
         MutableComponent line = Component.empty().append(name).append(sep).append(amount);
         // Потери проноса на участке цепи от источника до этой трубы (0.3.60):
         // серый хвост «(+4.0)» — сколько единиц рассеялось в проводах выше по течению.
         if (e.lossMilli > 0 && !part.isFluid()) {
-            line = line.append(Component.literal("(+" + lossText(e.lossMilli) + ")")
+            line = line.append(Component.literal(" (+" + lossText(e.lossMilli) + ")")
                 .withStyle(ChatFormatting.GRAY));
         }
         return line;

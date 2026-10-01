@@ -197,7 +197,7 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
-        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+        if (!level.isClientSide() && com.gonzotech.machines.FormedMenus.open(level, pos, player)) {
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
@@ -206,7 +206,7 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+        if (!level.isClientSide() && com.gonzotech.machines.FormedMenus.open(level, pos, player)) {
             return InteractionResult.SUCCESS;
         }
         if (stack.getItem() instanceof WrenchItem) {

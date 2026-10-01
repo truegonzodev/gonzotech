@@ -426,7 +426,8 @@ assert 'ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,' in pipe_flow
 assert pipe_flow.count('FlowTracker.getLoss(level, pos, pipeType)') == 2
 wrench=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()
 for pin in ('e.lossMilli = payload.lossMilli();',
-            'Component.literal("(+" + lossText(e.lossMilli) + ")")',
+            # 0.3.73: пробел перед потерями внутри литерала ниже
+            'Component.literal(" (+" + lossText(e.lossMilli) + ")")',
             'private static String lossText(long milli)'):
     assert pin in wrench, 'wrench loss pin: '+pin
 for pin in ('private static long[] pathLossCells(Level level, List<PathStep> path, PipeType type)',

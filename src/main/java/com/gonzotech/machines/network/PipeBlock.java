@@ -189,7 +189,7 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
-        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+        if (!level.isClientSide() && com.gonzotech.machines.FormedMenus.open(level, pos, player)) {
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
@@ -200,7 +200,7 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
                                           Player player, InteractionHand hand, BlockHitResult hit) {
         // В составе турбины даже ПКМ ключом принадлежит общему интерфейсу,
         // иначе «ПКМ по любому блоку» имел бы неожиданное исключение.
-        if (!level.isClientSide() && TurbineStructure.openMenu(level, pos, player)) {
+        if (!level.isClientSide() && com.gonzotech.machines.FormedMenus.open(level, pos, player)) {
             return InteractionResult.SUCCESS;
         }
         // Ключ — прокрутить режим этой трубы. Никаких сообщений в action-bar:
