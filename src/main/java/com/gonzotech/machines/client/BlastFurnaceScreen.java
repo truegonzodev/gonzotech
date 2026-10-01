@@ -46,7 +46,9 @@ public final class BlastFurnaceScreen extends MachineScreen<BlastFurnaceMenu> {
         int barY = y + 17;
         int barW = 16;
         int barH = 52;
-        float gth = (float) menu.gth() / (float) (MachineDefs.BLAST_FURNACE_GTH_CAPACITY / 1_000);
+        // Обе величины в милли (0.3.72): раньше числитель был в милли, а
+        // знаменатель в единицах — дробь зажималась в 100% за первый тик.
+        float gth = (float) menu.gth() / (float) MachineDefs.BLAST_FURNACE_GTH_CAPACITY;
         drawVBarTex(graphics, barX, barY, barW, barH, gth, BAR_GTH);
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(

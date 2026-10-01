@@ -113,6 +113,9 @@ assert "NeoForge.EVENT_BUS.register(com.gonzotech.machines.blastfurnace.BlastFur
 # 0.3.70: burnout без тултипа; GTH-тултип в единицах (не милли)
 assert 'gui.gonzotech.blast_furnace.burning' not in screen
 assert "GtUnits.gthPair(menu.gth() / 1000, MachineDefs.BLAST_FURNACE_GTH_CAPACITY / 1_000)" in screen
+# 0.3.72: заливка шкалы GTH — милли/милли (была милли/единицы => мгновенные 100%)
+assert "float gth = (float) menu.gth() / (float) MachineDefs.BLAST_FURNACE_GTH_CAPACITY;" in screen
+assert "(MachineDefs.BLAST_FURNACE_GTH_CAPACITY / 1_000);" not in screen
 for lang in ("en_us", "ru_ru"):
     lt = (ROOT / f"src/main/resources/assets/gonzotech/lang/{lang}.json").read_text()
     assert "blast_furnace.burning" not in lt
