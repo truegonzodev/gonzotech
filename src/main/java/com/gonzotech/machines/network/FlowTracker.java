@@ -66,6 +66,9 @@ public final class FlowTracker {
     /**
      * Записать кумулятивную потерю маршрута (milli) от источника до трубы
      * {@code pipe} типа {@code type} (0.3.60, подсказка «(+N)» на HUD ключа).
+     * Берётся МАКСИМУМ по дорожкам тика (0.3.74): «(+N)» — потеря маршрута ДО
+     * этой трубы, она не зависит ни от числа активных дорожек, ни от величины
+     * потока; суммирование давало «(+3.96)» на девяти дорожках вместо «(+0.44)».
      */
     public static void recordLoss(Level level, BlockPos pipe, PipeType type, long lossMilli) {
         if (lossMilli <= 0) return;
@@ -76,7 +79,8 @@ public final class FlowTracker {
             h.loss.clear();
             h.tick = t;
         }
-        h.loss.computeIfAbsent(pipe.asLong(), k -> new long[TYPES])[type.ordinal()] += lossMilli;
+        long[] byType = h.loss.computeIfAbsent(pipe.asLong(), k -> new long[TYPES]);
+        if (lossMilli > byType[type.ordinal()]) byType[type.ordinal()] = lossMilli;
     }
 
     /**

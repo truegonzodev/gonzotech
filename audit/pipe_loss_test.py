@@ -62,4 +62,10 @@ assert '"%.1f", total / 1000.0' in hud
 assert "GtFormat.formatRate" not in hud
 # Пробел между «GTH/т» и хвостом потерь.
 assert 'Component.literal(" (+" + lossText(e.lossMilli) + ")")' in hud
+# 0.3.74: «(+N)» — кумулятив РАСТЁТ вдоль потока (источник→приёмник) и не
+# умножается на число дорожек/величину потока.
+assert "java.util.Collections.reverse(steps);" in routing
+assert "next = cur;" in routing and "cur = parent.get(cur.asLong());" in routing
+assert "+= lossMilli" not in tracker
+assert "if (lossMilli > byType[type.ordinal()]) byType[type.ordinal()] = lossMilli;" in tracker
 print("Pipe losses wiring passed (0.08/0.09 GTU, 0.22/0.18 GTH; universal node exempt)")

@@ -544,8 +544,9 @@ public final class PipeRouting {
 
     /**
      * Путь от стартовой трубы до {@code viaPipe} и далее выход в {@code receiver}.
-     * Каждый шаг — какая труба в какую сторону выпускает ресурс. Порядок не важен
-     * для записи (пишем всем шагам одинаковый прошедший объём).
+     * Каждый шаг — какая труба в какую сторону выпускает ресурс. Порядок —
+     * ОТ ИСТОЧНИКА К ПРИЁМНИКУ (0.3.74): по индексу пути считается кумулятивная
+     * потеря проноса {@link PipeLoss#prefix}, хвост «(+N)» на HUD ключа.
      */
     private static List<PathStep> buildPath(Level level, BlockPos viaPipe, BlockPos receiver,
                                             Map<Long, BlockPos> parent) {
@@ -558,6 +559,9 @@ public final class PipeRouting {
             next = cur;
             cur = parent.get(cur.asLong());
         }
+        // Обход шёл от приёмника к источнику; разворачиваем — префикс потерь
+        // должен расти ВДОЛЬ потока: первый провод 0.22, второй 0.44 (0.3.74).
+        java.util.Collections.reverse(steps);
         return steps;
     }
 
