@@ -50,10 +50,12 @@ public final class BlastFurnaceStructure {
      * это встаёт в очередь генерации и подвешивает загрузку мира.
      */
     public static boolean chunksLoaded(ServerLevel level, BlockPos fireboxPos) {
-        for (int[] c : new int[][]{{-1, -1}, {-1, 1}, {1, -1}, {1, 1}}) {
-            if (!level.hasChunkAt((fireboxPos.getX() + c[0]) >> 4, (fireboxPos.getZ() + c[1]) >> 4)) return false;
-        }
-        return level.hasChunkAt(fireboxPos);
+        // Угловые BlockPos куба покрывают все 1-4 чанка под 3×3 структурой
+        // (как у турбины/парогена: hasChunkAt(BlockPos) с блок-координатами).
+        return level.hasChunkAt(fireboxPos.offset(-1, 0, -1))
+            && level.hasChunkAt(fireboxPos.offset(1, 0, -1))
+            && level.hasChunkAt(fireboxPos.offset(-1, 0, 1))
+            && level.hasChunkAt(fireboxPos.offset(1, 0, 1));
     }
 
     /** Полная проверка структуры вокруг топки (вызывать только при загруженных чанках). */

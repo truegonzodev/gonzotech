@@ -88,6 +88,7 @@ assert "player.openMenu(firebox, firebox.getBlockPos());" in struct
 assert "&& firebox.isBlastFormed())" in struct
 # 0.3.66: чанки куба не догружаем силой — иначе загрузка мира виснет на 100%
 assert "public static boolean chunksLoaded(ServerLevel level, BlockPos fireboxPos)" in struct
+assert "level.hasChunkAt(fireboxPos.offset(-1, 0, -1))" in struct  # 0.3.67: углы BlockPos (блок-координаты), не чанковые
 assert "if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;" in be
 # предметная модель 1.21.4 (assets/gonzotech/items/)
 item_model = (ROOT / "src/main/resources/assets/gonzotech/items/fireclay.json").read_text()
