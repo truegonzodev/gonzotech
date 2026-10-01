@@ -34,7 +34,7 @@ public enum NoteIllustrationKind {
 
     /** Гибрид: крафт 3×3 + результат СЛЕВА, справа — пары брожения
      *  (стр. «Брожение»: фруктовый сусло + ферментация). */
-    CRAFTING_FERMENTATION("page_crafting_fermentation.png");
+    CRAFTING_FERMENTATION("page_crafting_fermentation.png"),
 
     /** Чистая иллюстрация в правой половине (без сеток и слотов) — «Зарисовка»
      *  книги «Познание мира»: арт автора в самом шаблоне. */

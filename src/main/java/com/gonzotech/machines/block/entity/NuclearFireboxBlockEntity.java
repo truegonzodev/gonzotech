@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * A one-slot Discovery-2 nuclear firebox. Accepted uranium/thorium items burn at
- * a constant 262 GTH/t; a hotter internal GTH buffer shortens the next fuel burn
+ * a constant 116 GTH/t (confirmed by the author, 0.3.78); a hotter internal GTH buffer shortens the next fuel burn
  * by up to 25 percent. Its heat must be exported or absorbed before meltdown.
  */
 public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity implements WorldlyContainer {
