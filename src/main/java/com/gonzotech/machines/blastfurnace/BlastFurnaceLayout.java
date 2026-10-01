@@ -38,9 +38,18 @@ public final class BlastFurnaceLayout {
         return Role.FIRECLAY;
     }
 
-    /** Ячейка шва структуры (для флага FORMED): 17 шамотных блоков. */
+    /** Ячейка шва структуры (для флага FORMED): канонично 21 шамотных блоков. */
     public static boolean isFireclayCell(int dx, int dy, int dz) {
         return roleAt(dx, dy, dz) == Role.FIRECLAY;
+    }
+
+    /**
+     * Центр верхнего/нижнего слоя (над/под топкой). Валидатор принимает
+     * каулдрон в ЛЮБОМ из двух центров: чертёж автора читается сверху вниз
+     * и как «слой 1 = фундамент», конфликт снят перегруженной проверкой.
+     */
+    public static boolean isLayerCenter(int dx, int dy, int dz) {
+        return dx == 0 && dz == 0 && (dy == 1 || dy == -1);
     }
 
     /** Узлы вывода GTH: середины рёбер среднего слоя — 4 позиции. */

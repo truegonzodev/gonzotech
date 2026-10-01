@@ -58,18 +58,34 @@ public final class BlastFurnaceStructure {
             && level.hasChunkAt(fireboxPos.offset(1, 0, 1));
     }
 
-    /** Полная проверка структуры вокруг топки (вызывать только при загруженных чанках). */
+    /** Пустой ИЛИ заполненный (вода) котёл — заполнять его не обязательно. */
+    private static boolean isCauldronFamily(BlockState state) {
+        return state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON);
+    }
+
+    /**
+     * Полная проверка структуры вокруг топки (вызывать только при загруженных
+     * чанках). Каулдрон принимается в центре ЛЮБОГО из двух слоёв (чертёж
+     * автора: «слой 3 с каулдроном» — либо верх при чтении снизу вверх, либо
+     * низ при чтении сверху вниз; принимаем оба, шамот — в противоположном
+     * центре), минимум один каулдрон обязателен.
+     */
     public static boolean isFormed(ServerLevel level, BlockPos fireboxPos) {
+        boolean cauldronSeen = false;
         for (int dy = -1; dy <= 1; dy++) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
-                    BlastFurnaceLayout.Role role = BlastFurnaceLayout.roleAt(dx, dy, dz);
                     BlockState state = level.getBlockState(fireboxPos.offset(dx, dy, dz));
-                    if (!matches(state, role)) return false;
+                    if (BlastFurnaceLayout.isLayerCenter(dx, dy, dz)) {
+                        if (isCauldronFamily(state)) { cauldronSeen = true; continue; }
+                        if (state.getBlock() instanceof FireclayBlock) continue;
+                        return false;
+                    }
+                    if (!matches(state, BlastFurnaceLayout.roleAt(dx, dy, dz))) return false;
                 }
             }
         }
-        return true;
+        return cauldronSeen;
     }
 
     /** Позиции 4 узлов вывода GTH (середины рёбер среднего слоя). */
@@ -90,9 +106,10 @@ public final class BlastFurnaceStructure {
         for (int dy = -1; dy <= 1; dy++) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
-                    if (!BlastFurnaceLayout.isFireclayCell(dx, dy, dz)) continue;
                     BlockPos pos = fireboxPos.offset(dx, dy, dz);
                     BlockState state = level.getBlockState(pos);
+                    // Весь шамот куба, включая центр-слой без каулдрона
+                    // (ориентация чертежа не важна).
                     if (!(state.getBlock() instanceof FireclayBlock)) continue;
                     BlockState next = state.setValue(FireclayBlock.FORMED, formed);
                     if (!next.equals(state)) level.setBlock(pos, next, Block.UPDATE_CLIENTS);

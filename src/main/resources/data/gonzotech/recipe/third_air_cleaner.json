@@ -10,7 +10,8 @@
     "A": "gonzotech:aluminum_wire",
     "B": "gonzotech:electric_motor",
     "C": "gonzotech:aluminum_housing",
-    "D": "gonzotech:energy_module"
+    "D": "gonzotech:energy_module",
+    "E": "minecraft:coal_block"
   },
   "result": {
     "id": "gonzotech:third_air_cleaner",

@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix="gonzotech-blast-") as tmp:
     compiler = [java, "-jar", os.environ["ECJ_JAR"], "-21", "-proc:none"] if os.environ.get("ECJ_JAR") else [javac, "--release", "21"]
     subprocess.run(compiler + ["-encoding", "UTF-8", "-d", tmp] + [str(s) for s in sources], check=True)
     out = subprocess.run([java, "-cp", tmp, "BlastFurnaceSelfTest"], check=True, capture_output=True, text=True)
-    assert "33 checks passed" in out.stdout, out.stdout
+    assert "37 checks passed" in out.stdout, out.stdout
 
 # ── пины проводки ──
 def code(path):
@@ -89,6 +89,14 @@ assert "&& firebox.isBlastFormed())" in struct
 # 0.3.66: чанки куба не догружаем силой — иначе загрузка мира виснет на 100%
 assert "public static boolean chunksLoaded(ServerLevel level, BlockPos fireboxPos)" in struct
 assert "level.hasChunkAt(fireboxPos.offset(-1, 0, -1))" in struct  # 0.3.67: углы BlockPos (блок-координаты), не чанковые
+# 0.3.68: каулдрон в ЛЮБОМ центре слоя (чертёж читается в обе стороны), вода допустима
+assert "isCauldronFamily" in struct and "Blocks.WATER_CAULDRON" in struct
+assert "return cauldronSeen;" in struct
+assert "BlastFurnaceLayout.isLayerCenter(dx, dy, dz)" in struct
+assert "isLayerCenter" in layout
+# FORMED ставится всему шамоту куба (не по каноническим ролям)
+assert "Весь шамот куба" not in struct  # комментарий вычищается регэкспом — якорь ниже
+assert "if (!(state.getBlock() instanceof FireclayBlock)) continue;" in struct
 assert "if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;" in be
 # предметная модель 1.21.4 (assets/gonzotech/items/)
 item_model = (ROOT / "src/main/resources/assets/gonzotech/items/fireclay.json").read_text()
@@ -145,4 +153,4 @@ for lang in ("en_us", "ru_ru"):
     assert '"block.gonzotech.fireclay"' in lt and '"block.gonzotech.blast_furnace"' in lt
     assert '"gui.gonzotech.blast_furnace.burning"' in lt
 
-print("Blast furnace wiring passed (layout 33 checks + pins)")
+print("Blast furnace wiring passed (layout 37 checks + pins)")
