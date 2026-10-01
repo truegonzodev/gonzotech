@@ -97,6 +97,7 @@ assert "isLayerCenter" in layout
 # FORMED ставится всему шамоту куба (не по каноническим ролям)
 assert "Весь шамот куба" not in struct  # комментарий вычищается регэкспом — якорь ниже
 assert "if (!(state.getBlock() instanceof FireclayBlock)) continue;" in struct
+assert "be.revalidateBlast(server);" in be  # 0.3.69: вызов ревалидации в тике (был потерян — печь не собиралась)
 assert "if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;" in be
 # предметная модель 1.21.4 (assets/gonzotech/items/)
 item_model = (ROOT / "src/main/resources/assets/gonzotech/items/fireclay.json").read_text()

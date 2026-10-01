@@ -226,6 +226,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
 
         // 0. Доменная печь: перепроверка структуры раз в 20 тиков (или сразу после
         // сброса кэша из BlastFurnaceStructure.partChanged).
+        // 0.3.69: вызов был потерян при чистке троттлинга — печь не собиралась никогда.
+        be.revalidateBlast(server);
 
         // 1. Горение топлива → наполняем GTH.
         if (be.litTime > 0) {
