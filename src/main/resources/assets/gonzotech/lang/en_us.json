@@ -228,7 +228,6 @@
   "item.gonzotech.lithium_ingot": "Lithium Ingot",
   "block.gonzotech.fireclay": "Fireclay Brick",
   "block.gonzotech.blast_furnace": "Blast Furnace",
-  "gui.gonzotech.blast_furnace.burning": "Burning: %s%%",
   "block.gonzotech.firebox": "Firebox",
   "block.gonzotech.second_nuclear_firebox": "Nuclear Firebox",
   "block.gonzotech.boiler": "Steam Boiler",

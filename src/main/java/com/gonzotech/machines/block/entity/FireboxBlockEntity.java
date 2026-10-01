@@ -91,6 +91,17 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         blastCheckTick = Long.MIN_VALUE;
     }
 
+    /**
+     * Немедленная перепроверка структуры, БЕЗ троттлинга: вызывается из
+     * {@link BlastFurnaceStructure#partChanged} при постановке/ломании части —
+     * сборка и разбор происходят в тот же игровой тик (как у турбины/парогена).
+     */
+    public void revalidateNow() {
+        if (!(level instanceof ServerLevel server) || isRemoved()) return;
+        blastCheckTick = Long.MIN_VALUE;
+        revalidateBlast(server);
+    }
+
     /** Собрана ли доменная печь вокруг этой топки. */
     public boolean isBlastFormed() {
         return blastFormed;

@@ -34,12 +34,6 @@ public final class BlastFurnaceSelfTest {
                     check(BlastFurnaceLayout.roleAt(dx, 1, dz) == Role.FIRECLAY,
                         "top ring fireclay " + dx + "," + dz);
 
-        // Центры верхнего/нижнего слоёв — два особых места (каулдрон ИЛИ шамот).
-        check(BlastFurnaceLayout.isLayerCenter(0, 1, 0), "layer center top");
-        check(BlastFurnaceLayout.isLayerCenter(0, -1, 0), "layer center bottom");
-        check(!BlastFurnaceLayout.isLayerCenter(0, 0, 0), "middle center is not a layer center");
-        check(!BlastFurnaceLayout.isLayerCenter(1, 1, 0), "non-center is not a layer center");
-
         // Вне куба — OUTSIDE.
         check(BlastFurnaceLayout.roleAt(2, 0, 0) == Role.OUTSIDE, "outside x");
         check(BlastFurnaceLayout.roleAt(0, 2, 0) == Role.OUTSIDE, "outside y");

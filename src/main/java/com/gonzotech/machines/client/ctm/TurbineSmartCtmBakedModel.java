@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Texture-only Smart CTM for the formed turbine casing.
+ * Texture-only Smart CTM for formed shells (turbine casing, steamgen, fireclay).
  *
  * <p>At chunk mesh build time {@link #getModelData(BlockAndTintGetter,
  * BlockPos, BlockState, ModelData)} calculates the eight face-local neighbours
@@ -238,6 +238,10 @@ public final class TurbineSmartCtmBakedModel implements IDynamicBakedModel {
         }
         if (state.getBlock() instanceof SteamGenCasingBlock) {
             return state.getValue(SteamGenPartBlock.FORMED);
+        }
+        // 0.3.70: шамот доменной печи — третий член семьи Smart CTM.
+        if (state.getBlock() instanceof com.gonzotech.machines.block.FireclayBlock) {
+            return state.getValue(com.gonzotech.machines.block.FireclayBlock.FORMED);
         }
         return false;
     }

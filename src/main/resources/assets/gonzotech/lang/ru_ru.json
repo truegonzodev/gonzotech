@@ -228,7 +228,6 @@
   "item.gonzotech.lithium_ingot": "Литиевый слиток",
   "block.gonzotech.fireclay": "Шамотный кирпич",
   "block.gonzotech.blast_furnace": "Доменная печь",
-  "gui.gonzotech.blast_furnace.burning": "Горение: %s%%",
   "block.gonzotech.firebox": "Топка",
   "block.gonzotech.second_nuclear_firebox": "Ядерная топка",
   "block.gonzotech.boiler": "Паровой котёл",

@@ -38,13 +38,8 @@ public final class BlastFurnaceScreen extends MachineScreen<BlastFurnaceMenu> {
         int burnX = x + 80;
         int burnY = y + 35;
         float lit = menu.litDuration() > 0 ? (float) menu.litTime() / menu.litDuration() : 0.0F;
+        // Без тултипа — машина тир 1 (0.3.70).
         drawVBarTex(graphics, burnX, burnY, 16, 16, lit, BAR_BURNUP);
-        if (inRect(mouseX, mouseY, burnX, burnY, 16, 16)) {
-            int percent = menu.litDuration() <= 0 ? 0
-                : Math.min(100, (int) ((long) menu.litTime() * 100L / menu.litDuration()));
-            graphics.renderComponentTooltip(this.font, List.of(
-                Component.translatable("gui.gonzotech.blast_furnace.burning", percent)), mouseX, mouseY);
-        }
 
         // Шкала GTH: три ячейки (8, 17..69), растёт снизу вверх.
         int barX = x + 8;
@@ -55,7 +50,7 @@ public final class BlastFurnaceScreen extends MachineScreen<BlastFurnaceMenu> {
         drawVBarTex(graphics, barX, barY, barW, barH, gth, BAR_GTH);
         if (inRect(mouseX, mouseY, barX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                GtUnits.gthPair(menu.gth(), MachineDefs.BLAST_FURNACE_GTH_CAPACITY / 1_000)), mouseX, mouseY);
+                GtUnits.gthPair(menu.gth() / 1000, MachineDefs.BLAST_FURNACE_GTH_CAPACITY / 1_000)), mouseX, mouseY);
         }
     }
 }

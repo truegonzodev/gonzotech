@@ -39,7 +39,7 @@ public final class BlastFurnaceStructure {
                 || state.is(ModMachines.UNIVERSAL_NODE.get())
                 || state.is(ModMachines.SECOND_UNIVERSAL_NODE.get());
             case FIREBOX -> state.is(ModMachines.FIREBOX.get());
-            case CAULDRON -> state.is(Blocks.CAULDRON);
+            case CAULDRON -> state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON);
             case OUTSIDE -> false;
         };
     }
@@ -58,34 +58,21 @@ public final class BlastFurnaceStructure {
             && level.hasChunkAt(fireboxPos.offset(1, 0, 1));
     }
 
-    /** Пустой ИЛИ заполненный (вода) котёл — заполнять его не обязательно. */
-    private static boolean isCauldronFamily(BlockState state) {
-        return state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON);
-    }
-
     /**
      * Полная проверка структуры вокруг топки (вызывать только при загруженных
-     * чанках). Каулдрон принимается в центре ЛЮБОГО из двух слоёв (чертёж
-     * автора: «слой 3 с каулдроном» — либо верх при чтении снизу вверх, либо
-     * низ при чтении сверху вниз; принимаем оба, шамот — в противоположном
-     * центре), минимум один каулдрон обязателен.
+     * чанках). Чертёж автора: каулдрон — ТОЛЬКО в центре верхнего слоя,
+     * фундамент — шамот (0.3.70: вариант «каулдрон снизу» убран).
      */
     public static boolean isFormed(ServerLevel level, BlockPos fireboxPos) {
-        boolean cauldronSeen = false;
         for (int dy = -1; dy <= 1; dy++) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
                     BlockState state = level.getBlockState(fireboxPos.offset(dx, dy, dz));
-                    if (BlastFurnaceLayout.isLayerCenter(dx, dy, dz)) {
-                        if (isCauldronFamily(state)) { cauldronSeen = true; continue; }
-                        if (state.getBlock() instanceof FireclayBlock) continue;
-                        return false;
-                    }
                     if (!matches(state, BlastFurnaceLayout.roleAt(dx, dy, dz))) return false;
                 }
             }
         }
-        return cauldronSeen;
+        return true;
     }
 
     /** Позиции 4 узлов вывода GTH (середины рёбер среднего слоя). */
@@ -154,7 +141,7 @@ public final class BlastFurnaceStructure {
                 for (int dz = -1; dz <= 1; dz++) {
                     BlockPos pos = changed.offset(dx, dy, dz);
                     if (level.getBlockEntity(pos) instanceof FireboxBlockEntity firebox) {
-                        firebox.invalidateBlastCache();
+                        firebox.revalidateNow(); // 0.3.70: сборка/разбор в ТОТ ЖЕ тик
                     }
                 }
             }

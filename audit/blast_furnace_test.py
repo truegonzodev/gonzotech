@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix="gonzotech-blast-") as tmp:
     compiler = [java, "-jar", os.environ["ECJ_JAR"], "-21", "-proc:none"] if os.environ.get("ECJ_JAR") else [javac, "--release", "21"]
     subprocess.run(compiler + ["-encoding", "UTF-8", "-d", tmp] + [str(s) for s in sources], check=True)
     out = subprocess.run([java, "-cp", tmp, "BlastFurnaceSelfTest"], check=True, capture_output=True, text=True)
-    assert "37 checks passed" in out.stdout, out.stdout
+    assert "33 checks passed" in out.stdout, out.stdout
 
 # ── пины проводки ──
 def code(path):
@@ -80,7 +80,7 @@ assert "block.gonzotech.blast_furnace" in be
 assert "case FIREBOX -> state.is(ModMachines.FIREBOX.get());" in struct
 assert "state.is(ModMachines.SECOND_HEAT_NODE.get())" in struct
 assert "state.is(ModMachines.SECOND_UNIVERSAL_NODE.get())" in struct
-assert "state.is(Blocks.CAULDRON);" in struct
+assert "state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON);" in struct
 assert "FireclayBlock.FORMED, formed" in struct
 assert "isFormed(ServerLevel level, BlockPos fireboxPos)" in struct
 # 0.3.66: openMenu только formed-топки и строго с BlockPos (иначе клиент получает null-буфер → NPE)
@@ -89,14 +89,33 @@ assert "&& firebox.isBlastFormed())" in struct
 # 0.3.66: чанки куба не догружаем силой — иначе загрузка мира виснет на 100%
 assert "public static boolean chunksLoaded(ServerLevel level, BlockPos fireboxPos)" in struct
 assert "level.hasChunkAt(fireboxPos.offset(-1, 0, -1))" in struct  # 0.3.67: углы BlockPos (блок-координаты), не чанковые
-# 0.3.68: каулдрон в ЛЮБОМ центре слоя (чертёж читается в обе стороны), вода допустима
-assert "isCauldronFamily" in struct and "Blocks.WATER_CAULDRON" in struct
-assert "return cauldronSeen;" in struct
-assert "BlastFurnaceLayout.isLayerCenter(dx, dy, dz)" in struct
-assert "isLayerCenter" in layout
-# FORMED ставится всему шамоту куба (не по каноническим ролям)
-assert "Весь шамот куба" not in struct  # комментарий вычищается регэкспом — якорь ниже
+# 0.3.70: каулдрон СТРОГО в верхнем центре; вода допустима
+assert "case CAULDRON -> state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON);" in struct
+assert "isCauldronFamily" not in struct and "return cauldronSeen;" not in struct
+assert "isLayerCenter" not in struct and "isLayerCenter" not in layout
+# FORMED ставится всему шамоту куба
 assert "if (!(state.getBlock() instanceof FireclayBlock)) continue;" in struct
+# 0.3.70: сборка/разбор в тот же тик — partChanged зовёт revalidateNow без троттлинга
+assert "firebox.revalidateNow();" in struct  # 0.3.70: сборка/разбор в тот же тик
+assert "public void revalidateNow()" in be and "blastCheckTick = Long.MIN_VALUE;" in be
+# 0.3.70: formed-шамот рендерится — FireclayBlock в белом списке Smart CTM
+ctm = (ROOT / "src/main/java/com/gonzotech/machines/client/ctm/TurbineSmartCtmBakedModel.java").read_text()
+assert "instanceof com.gonzotech.machines.block.FireclayBlock" in ctm
+assert "FireclayBlock.FORMED);" in ctm
+# 0.3.70: клик по котлу/узлам открывает меню (RightClickBlock)
+events = (ROOT / "src/main/java/com/gonzotech/machines/blastfurnace/BlastFurnaceEvents.java").read_text()
+assert "@SubscribeEvent" in events and "PlayerInteractEvent.RightClickBlock" in events
+assert "BlastFurnaceStructure.openMenu(server, event.getPos(), event.getEntity())" in events
+assert "isCutoutPart" in events  # 0.3.70: хелпер частей (каулдрон+4 класса узлов)
+assert "event.setCanceled(true);" in events
+gmod = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text()
+assert "NeoForge.EVENT_BUS.register(com.gonzotech.machines.blastfurnace.BlastFurnaceEvents.class);" in gmod
+# 0.3.70: burnout без тултипа; GTH-тултип в единицах (не милли)
+assert 'gui.gonzotech.blast_furnace.burning' not in screen
+assert "GtUnits.gthPair(menu.gth() / 1000, MachineDefs.BLAST_FURNACE_GTH_CAPACITY / 1_000)" in screen
+for lang in ("en_us", "ru_ru"):
+    lt = (ROOT / f"src/main/resources/assets/gonzotech/lang/{lang}.json").read_text()
+    assert "blast_furnace.burning" not in lt
 assert "be.revalidateBlast(server);" in be  # 0.3.69: вызов ревалидации в тике (был потерян — печь не собиралась)
 assert "if (!BlastFurnaceStructure.chunksLoaded(server, worldPosition)) return;" in be
 # предметная модель 1.21.4 (assets/gonzotech/items/)
@@ -152,6 +171,6 @@ assert '"name": "gonzotech:fireclay"' in loot
 for lang in ("en_us", "ru_ru"):
     lt = (ROOT / f"src/main/resources/assets/gonzotech/lang/{lang}.json").read_text()
     assert '"block.gonzotech.fireclay"' in lt and '"block.gonzotech.blast_furnace"' in lt
-    assert '"gui.gonzotech.blast_furnace.burning"' in lt
+    assert "blast_furnace.burning" not in lt  # 0.3.70: burnout без тултипа, ключ удалён
 
-print("Blast furnace wiring passed (layout 37 checks + pins)")
+print("Blast furnace wiring passed (layout 33 checks + pins)")
