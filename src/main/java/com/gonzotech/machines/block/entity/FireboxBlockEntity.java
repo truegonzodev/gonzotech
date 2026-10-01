@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.Containers;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -116,9 +117,84 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         boolean formed = BlastFurnaceStructure.isFormed(server, worldPosition);
         if (formed != blastFormed) {
             blastFormed = formed;
+            if (formed) {
+                absorbIntoBlast(server); // 0.3.75: работавшая топка вошла в печь
+            } else {
+                dropAndResetAfterDeform(server); // 0.3.75: разбор — всё выпадает
+            }
             BlastFurnaceStructure.applyFormedFlags(server, worldPosition, formed);
             setChanged();
         }
+    }
+
+    /**
+     * Сборка печи вокруг РАБОТАВШЕЙ топки (0.3.75): содержимое штатных слотов
+     * топки (нагрузка/топливо/выход) переносится в доступные 5 топливных
+     * слотов печи, после чего шкала GTH, burnout и процессы обнуляются —
+     * печь всегда стартует чистой, состояние обычной топки не «утаскивается»
+     * в механизм.
+     */
+    private void absorbIntoBlast(ServerLevel server) {
+        for (int slot : new int[] {SLOT_INPUT, SLOT_OUTPUT}) {
+            ItemStack stack = items.get(slot);
+            if (stack.isEmpty()) continue;
+            ItemStack leftover = insertIntoFuelSlots(stack);
+            items.set(slot, leftover);
+            if (!leftover.isEmpty()) {
+                Containers.dropItemStack(server, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5,
+                    worldPosition.getZ() + 0.5, leftover);
+            }
+        }
+        gth.set(0);
+        litTime = 0;
+        litDuration = 0;
+        cookProgress = 0;
+        cookTotal = 0;
+        cookAccum = 0;
+    }
+
+    /** Доливает стопку в существующие топливные стопки, затем в пустые; возвращает остаток. */
+    private ItemStack insertIntoFuelSlots(ItemStack stack) {
+        for (int pass = 0; pass < 2; pass++) {
+            for (int slot : FUEL_SLOTS) {
+                ItemStack cur = items.get(slot);
+                if (pass == 0) {
+                    if (cur.isEmpty() || !ItemStack.isSameItemSameComponents(cur, stack)) continue;
+                    int room = Math.min(cur.getMaxStackSize(), getMaxStackSize()) - cur.getCount();
+                    int move = Math.min(stack.getCount(), room);
+                    if (move <= 0) continue;
+                    cur.grow(move);
+                    stack.shrink(move);
+                    if (stack.isEmpty()) return ItemStack.EMPTY;
+                } else if (cur.isEmpty()) {
+                    items.set(slot, stack.copy());
+                    return ItemStack.EMPTY;
+                }
+            }
+        }
+        return stack;
+    }
+
+    /**
+     * Разбор печи (0.3.75): ВСЁ содержимое выпадает наружу, шкала GTH,
+     * burnout и процессы обнуляются — освободившаяся топка абсолютно пуста,
+     * никакой привязки состояния механизма к блоку топки не остаётся.
+     */
+    private void dropAndResetAfterDeform(ServerLevel server) {
+        for (int slot = 0; slot < items.size(); slot++) {
+            ItemStack stack = items.get(slot);
+            if (!stack.isEmpty()) {
+                items.set(slot, ItemStack.EMPTY);
+                Containers.dropItemStack(server, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5,
+                    worldPosition.getZ() + 0.5, stack);
+            }
+        }
+        gth.set(0);
+        litTime = 0;
+        litDuration = 0;
+        cookProgress = 0;
+        cookTotal = 0;
+        cookAccum = 0;
     }
 
     /** Последнее опубликованное значение компаратора; вычисляется заново после загрузки. */
@@ -352,13 +428,16 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     private boolean pushGth(Level level, BlockPos pos) {
         if (gth.isEmpty()) return false;
         if (level instanceof ServerLevel server && blastFormed) {
-            // Доменная печь: GTH выходит через узлы теплотруб структуры (4 маршрута).
-            long budget = Math.min((long) MachineDefs.BLAST_FURNACE_GTH_OUTPUT, gth.amountAsLong());
-            long remaining = budget;
+            // Доменная печь: GTH выходит через узлы теплотруб структуры (4 маршрута),
+            // каждый узел — максимум BLAST_FURNACE_NODE_GTH_OUTPUT за тик (0.3.75:
+            // «через каждый из 4х узлов она может отдавать 144/т» — и никак не
+            // весь буфер в одну трубу).
+            long remaining = gth.amountAsLong();
             long movedTotal = 0;
             for (BlockPos node : BlastFurnaceStructure.nodePositions(server, worldPosition)) {
                 if (remaining <= 0) break;
-                long moved = PipeRouting.drain(server, node, PipeType.HEAT, remaining,
+                long budget = Math.min((long) MachineDefs.BLAST_FURNACE_NODE_GTH_OUTPUT, remaining);
+                long moved = PipeRouting.drain(server, node, PipeType.HEAT, budget,
                     server.getGameTime(), (be, p) -> {
                         if (be instanceof FireboxBlockEntity) return null;
                         if (be instanceof GthSink sink) return sink::receiveGth;
@@ -485,6 +564,9 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         gth.save(tag, "Gth");
+        // 0.3.75: сформированность хранится, чтобы восстановившаяся после
+        // загрузки печь НЕ проходила цикл «поглощения/сброса» заново.
+        tag.putBoolean("BlastFormed", blastFormed);
         tag.putInt("LitTime", litTime);
         tag.putInt("LitDuration", litDuration);
         tag.putInt("CookProgress", cookProgress);
@@ -499,6 +581,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         // Сохранения до 0.3.65 несут 3 слота — дополняем до 8 (5 топливных).
         while (items.size() < 3 + MachineDefs.BLAST_FURNACE_FUEL_SLOTS) items.add(ItemStack.EMPTY);
         gth.load(tag, "Gth");
+        blastFormed = tag.getBoolean("BlastFormed");
         litTime = tag.getInt("LitTime");
         litDuration = tag.getInt("LitDuration");
         cookProgress = tag.getInt("CookProgress");

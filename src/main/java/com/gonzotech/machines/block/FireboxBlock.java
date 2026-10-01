@@ -37,6 +37,25 @@ public class FireboxBlock extends MachineBlock {
     }
 
     @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!state.is(oldState.getBlock())) {
+            // 0.3.75: постановка топки — немедленная попытка сборки (same-tick).
+            com.gonzotech.machines.blastfurnace.BlastFurnaceStructure.partChanged(level, pos);
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            // 0.3.75: слом топки — немедленный разбор: дроп/сброс состояния в BE
+            // (пока он жив) и снятие FORMED-флагов с шамота куба.
+            com.gonzotech.machines.blastfurnace.BlastFurnaceStructure.partChanged(level, pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new FireboxBlockEntity(pos, state);
     }

@@ -59,6 +59,22 @@ assert "BLAST_FURNACE_GTH_CAPACITY = 34_016 * MILLI;" in defs
 assert "BLAST_FURNACE_GTH_PER_TICK = 34 * MILLI;" in defs
 assert "BLAST_FURNACE_BURN_SPEED_DIVISOR = 4;" in defs
 assert "BLAST_FURNACE_FUEL_SLOTS = 5;" in defs
+# 0.3.75: кап отдачи 144 GTH/т НА УЗЕЛ (авторские числа; 320-тотал отменён)
+assert "BLAST_FURNACE_NODE_GTH_OUTPUT = 144 * MILLI;" in defs
+assert "BLAST_FURNACE_GTH_OUTPUT" not in defs and "BLAST_FURNACE_GTH_OUTPUT" not in be
+assert "long budget = Math.min((long) MachineDefs.BLAST_FURNACE_NODE_GTH_OUTPUT, remaining);" in be
+# 0.3.75: lifecycle сборки/разбора — поглощение содержимого топки и полный дроп
+assert "absorbIntoBlast(server);" in be and "dropAndResetAfterDeform(server);" in be
+assert "private void absorbIntoBlast(ServerLevel server)" in be
+assert "private void dropAndResetAfterDeform(ServerLevel server)" in be
+assert "Containers.dropItemStack(server, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5," in be
+assert "gth.set(0);" in be
+# blastFormed персистится: восстановленная после загрузки печь не переочищается
+assert 'tag.putBoolean("BlastFormed", blastFormed);' in be
+assert 'blastFormed = tag.getBoolean("BlastFormed");' in be
+# 0.3.75: слом/постановка самой топки — partChanged (same-tick разбор, флаги)
+fbb = (ROOT / "src/main/java/com/gonzotech/machines/block/FireboxBlock.java").read_text()
+assert fbb.count("BlastFurnaceStructure.partChanged(level, pos);") == 2, fbb.count("BlastFurnaceStructure.partChanged(level, pos);")
 
 # топка = контроллер: 8 слотов, 5 топливных, ×4 жжение, 34 GTH/t, буфер с клампом
 assert "FUEL_SLOTS = {SLOT_FUEL, SLOT_FUEL_2, SLOT_FUEL_3, SLOT_FUEL_4, SLOT_FUEL_5};" in be
@@ -71,7 +87,7 @@ assert "if (be.isLit() && !be.blastFormed && SmeltHelper.canOutput" in be  # д�
 assert "if (blastFormed) return false;" in be  # доменная печь: забор трубами запрещён
 # вывод GTH через узлы структуры
 assert "BlastFurnaceStructure.nodePositions(server, worldPosition)" in be
-assert "PipeRouting.drain(server, node, PipeType.HEAT, remaining," in be
+assert "PipeRouting.drain(server, node, PipeType.HEAT, budget," in be  # 0.3.75: бюджет НА УЗЕЛ
 # меню по режиму
 assert "new com.gonzotech.machines.menu.BlastFurnaceMenu(id, inv, this, blastData);" in be
 assert "block.gonzotech.blast_furnace" in be

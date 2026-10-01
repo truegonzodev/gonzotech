@@ -131,7 +131,8 @@ public final class MachineDefs {
      * Макс. отдача GTH через узлы структуры за тик (mGTH: 320 GTH/t = 4× топки).
      * TODO: подтвердить баланс у автора (в спеке указана только выработка 34 GTH/t).
      */
-    public static final int BLAST_FURNACE_GTH_OUTPUT = 320 * MILLI;
+    /** Максимум GTH/т через ОДИН узел доменной печи (автор 01.10.2026: 144). */
+    public static final int BLAST_FURNACE_NODE_GTH_OUTPUT = 144 * MILLI;
 
     /** Слотов под топливо в доменном режиме. */
     public static final int BLAST_FURNACE_FUEL_SLOTS = 5;
