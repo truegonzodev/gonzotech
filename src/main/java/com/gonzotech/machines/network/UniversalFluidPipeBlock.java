@@ -101,14 +101,10 @@ public class UniversalFluidPipeBlock extends PipeBlock {
                         .setValue(CompositePipeBlock.MODE.get(adding), PipeMode.AUTO);
                     composite = CompositePipeBlock.withUniversalFluid(composite);
                     level.setBlock(pos, composite, Block.UPDATE_ALL);
-                    CompositePipeBlock.logBundleDone(player, "energy into universal-fluid bundle (" + adding + ")");
                     if (!player.getAbilities().instabuild) stack.shrink(1);
                 }
                 return InteractionResult.SUCCESS;
             }
-        }
-        if (!level.isClientSide()) {
-            CompositePipeBlock.logBundleSkip(level, player, this, stack);
         }
         return InteractionResult.PASS;
     }

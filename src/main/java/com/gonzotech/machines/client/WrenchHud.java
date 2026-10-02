@@ -401,7 +401,11 @@ public final class WrenchHud {
         }
         if (state.getBlock() instanceof CompositePipeBlock) {
             List<PipeType> present = new ArrayList<>();
-            for (PipeType t : PipeType.values()) {
+            // 0.3.95: перебор ТОЛЬКО типов пучка. Полный PipeType.values() тянет
+            // жидкости Эпохи III, у которых нет PRESENT-проперти: PRESENT.get(t)
+            // возвращал null и state.getValue(null) ронял клиент (краш автора
+            // 02.10: «Cannot get property null … Block{second_composite_pipe}»).
+            for (PipeType t : CompositePipeBlock.BUNDLE_TYPES) {
                 if (state.getValue(CompositePipeBlock.PRESENT.get(t))) present.add(t);
             }
             if (present.isEmpty()) return null;
@@ -448,7 +452,18 @@ public final class WrenchHud {
             return state.getValue(PipeBlock.MODE);
         }
         if (state.getBlock() instanceof CompositePipeBlock) {
-            return state.getValue(CompositePipeBlock.MODE.get(part));
+            var prop = CompositePipeBlock.MODE.get(part);
+            if (prop != null) return state.getValue(prop);
+            // Жидкости Эпохи III делят FLUID-угол: режим угла — вода, иначе пар.
+            if (CompositePipeBlock.MODE.get(PipeType.WATER) != null
+                && state.getValue(CompositePipeBlock.PRESENT.get(PipeType.WATER))) {
+                return state.getValue(CompositePipeBlock.MODE.get(PipeType.WATER));
+            }
+            if (CompositePipeBlock.MODE.get(PipeType.STEAM) != null
+                && state.getValue(CompositePipeBlock.PRESENT.get(PipeType.STEAM))) {
+                return state.getValue(CompositePipeBlock.MODE.get(PipeType.STEAM));
+            }
+            return PipeMode.AUTO;
         }
         if (state.getBlock() instanceof com.gonzotech.machines.network.UniversalNodeBlock) {
             return state.getValue(com.gonzotech.machines.network.UniversalNodeBlock.MODE);

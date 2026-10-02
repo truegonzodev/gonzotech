@@ -33,10 +33,8 @@ import net.minecraft.world.level.ScheduledTickAccess;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Составной блок труб — несколько ТИПОВ труб в одном кубе, каждый в своём
@@ -86,44 +84,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             PRESENT.put(t, BooleanProperty.create("has_" + t.id()));
             MODE.put(t, EnumProperty.create("mode_" + t.id(), PipeMode.class));
         }
-    }
-
-    private static final org.slf4j.Logger BUNDLE_LOG = com.mojang.logging.LogUtils.getLogger();
-    /** Игрок → тик последнего диагностического сообщения (антиспам, ~2 с). */
-    private static final Map<UUID, Long> BUNDLE_LOG_AT = new HashMap<>();
-
-    /**
-     * ВРЕМЕННАЯ диагностика 0.3.94 (репорт автора: трубы перестали собираться
-     * в пучок; статически все гейты верны — снимаем показания с рантайма).
-     * Серверно, не чаще раза в 40 тиков на игрока: почему клик трубой по трубе
-     * НЕ собрал связку. Убирается после ответа автора.
-     */
-    public static void logBundleSkip(Level level, Player player, PipeBlock clicked, ItemStack held) {
-        if (level.isClientSide() || held.isEmpty()) return;
-        long now = level.getGameTime();
-        Long last = BUNDLE_LOG_AT.get(player.getUUID());
-        if (last != null && now - last < 40L) return;
-        // Метод записи — чистим просроченные/лишние ключи (static-гигиена).
-        if (BUNDLE_LOG_AT.size() > 64) BUNDLE_LOG_AT.clear();
-        BUNDLE_LOG_AT.put(player.getUUID(), now);
-        PipeType adding = pipeTypeOf(held);
-        String reason;
-        if (clicked.connectsAllSides()) reason = "CLICKED_IS_NODE (узлы не стакаются by design)";
-        else if (adding == null) reason = "HELD_NOT_BUNDLEABLE (в руке не одиночная труба пучка)";
-        else if (adding == clicked.pipeType()) reason = "SAME_TYPE";
-        else if (adding.isFluid() && clicked.pipeType().isFluid())
-            reason = "FLUID_CORNER_CLASH (вода+пар делят один угол; для обоих сразу — универсальная жидкостная труба)";
-        else if (ModCompositeAccess.getFor(clicked) == null) reason = "NO_COMPOSITE_REGISTERED (!!)";
-        else if (!ModCompositeAccess.sameTier(clicked, held)) reason = "TIER_MISMATCH";
-        else reason = "CONDITIONS_PASS_BUT_SKIPPED (ветка не должна была пропустить — искать перехват)";
-        BUNDLE_LOG.info("[PipeBundle] skip: clicked={} type={} tier2={}, held={}, adding={}, {}",
-            clicked.getClass().getSimpleName(), clicked.pipeType(),
-            clicked instanceof SecondTierPipe, held.getItem().getDescriptionId(), adding, reason);
-    }
-
-    /** Успешная сборка связки (0.3.94, временная диагностика). */
-    public static void logBundleDone(Player player, String kind) {
-        BUNDLE_LOG.info("[PipeBundle] OK: {} (player {})", kind, player.getName().getString());
     }
 
     private final MapCodec<CompositePipeBlock> codec;

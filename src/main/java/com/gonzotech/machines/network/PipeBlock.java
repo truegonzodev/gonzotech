@@ -228,7 +228,6 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
                     .setValue(CompositePipeBlock.MODE.get(this.pipeType), state.getValue(MODE));
                 composite = CompositePipeBlock.withUniversalFluid(composite);
                 level.setBlock(pos, composite, Block.UPDATE_ALL);
-                CompositePipeBlock.logBundleDone(player, "universal-fluid corner added");
                 if (!player.getAbilities().instabuild) stack.shrink(1);
             }
             return InteractionResult.SUCCESS;
@@ -252,7 +251,6 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
                         .setValue(CompositePipeBlock.MODE.get(this.pipeType), state.getValue(MODE))
                         .setValue(CompositePipeBlock.PRESENT.get(adding), true);
                     level.setBlock(pos, composite, Block.UPDATE_ALL);
-                    CompositePipeBlock.logBundleDone(player, "types " + this.pipeType + "+" + adding);
                     // Пучок с предметной трубой должен тикать (забор предметов).
                     if (this.pipeType == PipeType.ITEM || adding == PipeType.ITEM) {
                         level.scheduleTick(pos, composite.getBlock(), ItemPipeBlock.TICK_INTERVAL);
@@ -261,9 +259,6 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
                 }
                 return InteractionResult.SUCCESS;
             }
-        }
-        if (!level.isClientSide()) {
-            CompositePipeBlock.logBundleSkip(level, player, this, stack);
         }
         return InteractionResult.PASS;
     }
