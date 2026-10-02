@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "LBL",
+    "MPM",
+    "CRC"
+  ],
+  "key": {
+    "L": "gonzotech:lead_ingot",
+    "B": "gonzotech:lead_block",
+    "M": "gonzotech:logic_module",
+    "P": "minecraft:piston",
+    "C": "gonzotech:barium_concrete",
+    "R": "gonzotech:redstone_core"
+  },
+  "result": {
+    "id": "gonzotech:third_lead_piston",
+    "count": 1
+  }
+}

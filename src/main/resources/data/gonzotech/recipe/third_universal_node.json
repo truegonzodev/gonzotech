@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "gonzotech:second_universal_node"
+    },
+    {
+      "item": "gonzotech:lead_block"
+    },
+    {
+      "item": "gonzotech:zirconium_plate"
+    },
+    {
+      "item": "gonzotech:rubber"
+    }
+  ],
+  "result": {
+    "id": "gonzotech:third_universal_node",
+    "count": 1
+  }
+}

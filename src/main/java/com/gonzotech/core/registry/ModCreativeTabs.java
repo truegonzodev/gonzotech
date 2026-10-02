@@ -134,6 +134,19 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_SNAKETYPE_CONDENSER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FILLER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get());
+                // Экранированная семья эпохи 3 (0.3.110, автор: «возле химзавода»).
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WIRE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_HEAT_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_FLUID_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_ITEM_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_PIPE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WIRE_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_HEAT_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_FLUID_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_ITEM_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_NODE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_LEAD_PISTON_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_STICKY_LEAD_PISTON_ITEM.get());
                 // Эпоха III — оборудование чистой комнаты.
                 output.accept(ModItems.AIR_CLEANER_ITEM.get());
                 output.accept(ModItems.AIR_FILTER_ITEM.get());

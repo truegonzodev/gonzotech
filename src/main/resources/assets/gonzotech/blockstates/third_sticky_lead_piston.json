@@ -1,0 +1,48 @@
+{
+  "variants": {
+    "extended=false,facing=down": {
+      "model": "gonzotech:block/third_sticky_lead_piston",
+      "x": 90
+    },
+    "extended=false,facing=east": {
+      "model": "gonzotech:block/third_sticky_lead_piston"
+    },
+    "extended=false,facing=north": {
+      "model": "gonzotech:block/third_sticky_lead_piston",
+      "x": 270
+    },
+    "extended=false,facing=south": {
+      "model": "gonzotech:block/third_sticky_lead_piston",
+      "x": 90
+    },
+    "extended=false,facing=up": {
+      "model": "gonzotech:block/third_sticky_lead_piston"
+    },
+    "extended=false,facing=west": {
+      "model": "gonzotech:block/third_sticky_lead_piston",
+      "x": 180
+    },
+    "extended=true,facing=down": {
+      "model": "gonzotech:block/third_sticky_lead_piston_extended",
+      "x": 90
+    },
+    "extended=true,facing=east": {
+      "model": "gonzotech:block/third_sticky_lead_piston_extended"
+    },
+    "extended=true,facing=north": {
+      "model": "gonzotech:block/third_sticky_lead_piston_extended",
+      "x": 270
+    },
+    "extended=true,facing=south": {
+      "model": "gonzotech:block/third_sticky_lead_piston_extended",
+      "x": 90
+    },
+    "extended=true,facing=up": {
+      "model": "gonzotech:block/third_sticky_lead_piston_extended"
+    },
+    "extended=true,facing=west": {
+      "model": "gonzotech:block/third_sticky_lead_piston_extended",
+      "x": 180
+    }
+  }
+}

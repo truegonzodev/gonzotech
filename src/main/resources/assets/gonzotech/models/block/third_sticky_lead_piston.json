@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "gonzotech:block/third/piston_bottom",
+    "side": "gonzotech:block/third/piston_side",
+    "top": "gonzotech:block/third/piston_top_sticky"
+  }
+}

@@ -321,7 +321,8 @@ pipe_routing_code=re.sub(r'/\*.*?\*/|//[^\n]*','',pipe_routing,flags=re.S)
 for pin in ('PipeLoss.delivered(amount, lossMilli);','PipeLoss.flow(accepted, lossMilli);',
             'private static long pathLoss(Level level, List<PathStep> path, PipeType type)',
             'if (st.getBlock() instanceof UniversalNodeBlock) continue;',
-            'PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT)',
+            # 0.3.110: экранированная семья эпохи 3 — потери за клетку ×0.88
+            'Math.round(PipeLoss.perCell(true, heatType) * ThirdTierPipe.STAT_FACTOR)',
             'lanes.add(new Lane(raw, null, 0));'):
     assert pin in pipe_routing_code, 'routing loss pin: '+pin
 assert pipe_routing_code.count('pathLossCells(level, path,') == 3  # 0.3.90: 2 билдера дорожек + обёртка pathLoss

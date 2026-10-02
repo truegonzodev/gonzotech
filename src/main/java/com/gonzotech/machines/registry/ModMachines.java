@@ -312,6 +312,47 @@ public final class ModMachines {
     public static final DeferredBlock<SecondUniversalNodeBlock> SECOND_UNIVERSAL_NODE =
         BLOCKS.registerBlock("second_universal_node", SecondUniversalNodeBlock::new, pipe());
 
+    // ── 0.3.110: экранированная семья эпохи 3 (тир-II поведение, статы ×0.88,
+    // замыкание контура, «Экранирующее свойство: 89%», гейт Открытие 3) ──
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdPipeBlock> THIRD_WIRE =
+        BLOCKS.registerBlock("third_wire", props -> new com.gonzotech.machines.network.ThirdPipeBlock(props, PipeType.WIRE), powerLine());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdPipeBlock> THIRD_HEAT_PIPE =
+        BLOCKS.registerBlock("third_heat_pipe", props -> new com.gonzotech.machines.network.ThirdPipeBlock(props, PipeType.HEAT), pipe());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdUniversalFluidPipeBlock> THIRD_UNIVERSAL_FLUID_PIPE =
+        BLOCKS.registerBlock("third_universal_fluid_pipe", com.gonzotech.machines.network.ThirdUniversalFluidPipeBlock::new, pipe());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdItemPipeBlock> THIRD_ITEM_PIPE =
+        BLOCKS.registerBlock("third_item_pipe", com.gonzotech.machines.network.ThirdItemPipeBlock::new, pipe());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdUniversalPipeBlock> THIRD_UNIVERSAL_PIPE =
+        BLOCKS.registerBlock("third_universal_pipe", com.gonzotech.machines.network.ThirdUniversalPipeBlock::new, pipe());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdNodeBlock> THIRD_WIRE_NODE =
+        BLOCKS.registerBlock("third_wire_node", props -> new com.gonzotech.machines.network.ThirdNodeBlock(props, PipeType.WIRE), powerLine());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdNodeBlock> THIRD_HEAT_NODE =
+        BLOCKS.registerBlock("third_heat_node", props -> new com.gonzotech.machines.network.ThirdNodeBlock(props, PipeType.HEAT), pipe());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdUniversalFluidNodeBlock> THIRD_UNIVERSAL_FLUID_NODE =
+        BLOCKS.registerBlock("third_universal_fluid_node", com.gonzotech.machines.network.ThirdUniversalFluidNodeBlock::new, pipe());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdItemNodeBlock> THIRD_ITEM_NODE =
+        BLOCKS.registerBlock("third_item_node", com.gonzotech.machines.network.ThirdItemNodeBlock::new, pipe());
+
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdUniversalNodeBlock> THIRD_UNIVERSAL_NODE =
+        BLOCKS.registerBlock("third_universal_node", com.gonzotech.machines.network.ThirdUniversalNodeBlock::new, pipe());
+
+    // ── 0.3.110: свинцовые поршни (копия ванили, экран 81%, замыкание контура) ──
+    public static final DeferredBlock<com.gonzotech.machines.block.ThirdPistonBlock> THIRD_LEAD_PISTON =
+        BLOCKS.registerBlock("third_lead_piston", com.gonzotech.machines.block.ThirdPistonBlock::new,
+            material(net.minecraft.world.level.block.SoundType.METAL, 1.5F, 6.0F));
+
+    public static final DeferredBlock<com.gonzotech.machines.block.ThirdStickyPistonBlock> THIRD_STICKY_LEAD_PISTON =
+        BLOCKS.registerBlock("third_sticky_lead_piston", com.gonzotech.machines.block.ThirdStickyPistonBlock::new,
+            material(net.minecraft.world.level.block.SoundType.METAL, 1.5F, 6.0F));
+
     public static final DeferredBlock<SecondAccumulatorBlock> SECOND_ACCUMULATOR =
         BLOCKS.registerBlock("second_accumulator", SecondAccumulatorBlock::new, lightMetal());
 
@@ -529,6 +570,43 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_UNIVERSAL_NODE_ITEM =
         ITEMS.registerSimpleBlockItem("second_universal_node", SECOND_UNIVERSAL_NODE);
+
+    // ── 0.3.110: экранированная семья эпохи 3 + свинцовые поршни ──
+    public static final DeferredItem<BlockItem> THIRD_WIRE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_wire", THIRD_WIRE);
+
+    public static final DeferredItem<BlockItem> THIRD_HEAT_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_heat_pipe", THIRD_HEAT_PIPE);
+
+    public static final DeferredItem<BlockItem> THIRD_UNIVERSAL_FLUID_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_universal_fluid_pipe", THIRD_UNIVERSAL_FLUID_PIPE);
+
+    public static final DeferredItem<BlockItem> THIRD_ITEM_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_item_pipe", THIRD_ITEM_PIPE);
+
+    public static final DeferredItem<BlockItem> THIRD_UNIVERSAL_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_universal_pipe", THIRD_UNIVERSAL_PIPE);
+
+    public static final DeferredItem<BlockItem> THIRD_WIRE_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_wire_node", THIRD_WIRE_NODE);
+
+    public static final DeferredItem<BlockItem> THIRD_HEAT_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_heat_node", THIRD_HEAT_NODE);
+
+    public static final DeferredItem<BlockItem> THIRD_UNIVERSAL_FLUID_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_universal_fluid_node", THIRD_UNIVERSAL_FLUID_NODE);
+
+    public static final DeferredItem<BlockItem> THIRD_ITEM_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_item_node", THIRD_ITEM_NODE);
+
+    public static final DeferredItem<BlockItem> THIRD_UNIVERSAL_NODE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_universal_node", THIRD_UNIVERSAL_NODE);
+
+    public static final DeferredItem<BlockItem> THIRD_LEAD_PISTON_ITEM =
+        ITEMS.registerSimpleBlockItem("third_lead_piston", THIRD_LEAD_PISTON);
+
+    public static final DeferredItem<BlockItem> THIRD_STICKY_LEAD_PISTON_ITEM =
+        ITEMS.registerSimpleBlockItem("third_sticky_lead_piston", THIRD_STICKY_LEAD_PISTON);
 
     public static final DeferredItem<BlockItem> SECOND_ACCUMULATOR_ITEM =
         ITEMS.registerSimpleBlockItem("second_accumulator", SECOND_ACCUMULATOR);

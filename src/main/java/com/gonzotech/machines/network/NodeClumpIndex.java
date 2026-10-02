@@ -50,14 +50,19 @@ public final class NodeClumpIndex {
     private NodeClumpIndex() {
     }
 
-    /** Род клампа по блоку: «U1»/«U2» (универсальные), «N1:HEAT»/«N2:HEAT»/… или null. */
+    /**
+     * Род клампа по блоку: «U1»/«U2»/«U3» (универсальные), «N1:HEAT»/«N2:HEAT»/
+     * «N3:HEAT»/… или null. 0.3.110: экранированная семья (эпоха 3) — свой род
+     * «3»: сшивается только между собой (статы ×0.88, своя плоская потеря).
+     */
     private static String kindOfBlock(BlockState state) {
         Block b = state.getBlock();
+        String tier = b instanceof ThirdTierPipe ? "3" : b instanceof SecondTierPipe ? "2" : "1";
         if (b instanceof UniversalNodeBlock) {
-            return b instanceof SecondTierPipe ? "U2" : "U1";
+            return "U" + tier;
         }
         if (b instanceof NodeBlock node) {
-            return (b instanceof SecondTierPipe ? "N2:" : "N1:") + node.pipeType().name();
+            return "N" + tier + ":" + node.pipeType().name();
         }
         return null;
     }
@@ -76,11 +81,13 @@ public final class NodeClumpIndex {
     /** Плоская потеря транзита (milli) для рода/типа: только провода и теплотрубы теряют. */
     private static long lossMilliFor(String kind, int lossCells) {
         if (kind.startsWith("N")) {
+            boolean third = kind.startsWith("N3");
             boolean second = kind.startsWith("N2");
             boolean heat = kind.endsWith("HEAT");
             boolean wire = kind.endsWith("WIRE");
             if (heat || wire) {
-                return lossCells * PipeLoss.perCell(second, heat);
+                long per = PipeLoss.perCell(second || third, heat);
+                return lossCells * (third ? Math.round(per * ThirdTierPipe.STAT_FACTOR) : per);
             }
         }
         return 0L; // универсальные и жидкости/предметы не теряют

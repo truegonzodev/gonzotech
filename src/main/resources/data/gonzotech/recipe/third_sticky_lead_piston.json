@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "RRR",
+    " A "
+  ],
+  "key": {
+    "R": "gonzotech:rubber",
+    "A": "gonzotech:third_lead_piston"
+  },
+  "result": {
+    "id": "gonzotech:third_sticky_lead_piston",
+    "count": 1
+  }
+}

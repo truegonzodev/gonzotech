@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "gonzotech:second_item_pipe"
+    },
+    {
+      "item": "gonzotech:lead_ingot"
+    },
+    {
+      "item": "gonzotech:zirconium_plate"
+    },
+    {
+      "item": "gonzotech:rubber"
+    }
+  ],
+  "result": {
+    "id": "gonzotech:third_item_pipe",
+    "count": 1
+  }
+}

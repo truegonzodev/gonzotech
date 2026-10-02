@@ -15,4 +15,9 @@ public abstract class Level {
     public abstract BlockEntity getBlockEntity(BlockPos pos);
     public long getGameTime() { return 0L; }
     public ResourceKey<Level> dimension() { return null; }
+
+    /** Сигнализирует соседям об изменении силы редстоуна (стаб компилятора). */
+    public void updateNeighbourForOutputSignal(net.minecraft.core.BlockPos pos,
+            net.minecraft.world.level.block.Block block) {
+    }
 }

@@ -66,8 +66,10 @@ for lang in ("en_us.json", "ru_ru.json"):
 assert "MEMBER_ROOT = new IdentityHashMap<>()" in idx and "BY_ROOT = new IdentityHashMap<>()" in idx
 assert "public static void clearAll()" in idx
 # род: уни ("U1"/"U2") и узлы одного типа+тира ("N1:HEAT"/"N2:HEAT"), ничего больше
-assert 'b instanceof SecondTierPipe ? "U2" : "U1"' in idx
-assert '(b instanceof SecondTierPipe ? "N2:" : "N1:") + node.pipeType().name()' in idx
+# 0.3.110: экранированная семья — свой род «3» (сшивается только между собой)
+assert 'b instanceof ThirdTierPipe ? "3" : b instanceof SecondTierPipe ? "2" : "1"' in idx
+assert '"N" + tier + ":" + node.pipeType().name()' in idx
+assert 'Math.round(per * ThirdTierPipe.STAT_FACTOR)' in idx
 # потери: только провод/тепло, плоская формула габарита dx+dy+dz+1
 assert "lossMilliFor(kind, members.size())" in idx  # 0.3.99/101: потери × N всех членов (автор)
 assert 'kind.endsWith("HEAT")' in idx and 'kind.endsWith("WIRE")' in idx

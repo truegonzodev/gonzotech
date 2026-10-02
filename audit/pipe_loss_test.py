@@ -38,7 +38,8 @@ for pin in (
     "long flow = PipeLoss.flow(accepted, lossMilli);",
     "private static long pathLoss(Level level, List<PathStep> path, PipeType type) {",
     "if (st.getBlock() instanceof UniversalNodeBlock) continue;",
-    "perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT);",
+    # 0.3.110: экранированные (эпоха 3) — потери за клетку ×0.88
+    "perCell[i] = Math.round(PipeLoss.perCell(true, heatType) * ThirdTierPipe.STAT_FACTOR);",
     "lanes.add(new Lane(raw, null, 0));",
     "long[] lossCells = pathLossCells(level, path, type);",
     "return PipeLoss.sum(pathLossCells(level, path, type));",

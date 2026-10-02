@@ -643,7 +643,14 @@ public final class PipeRouting {
                 }
                 continue;
             }
-            perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT);
+            boolean heatType = type == PipeType.HEAT;
+            if (st.getBlock() instanceof ThirdTierPipe) {
+                // 0.3.110: экранированная семья (эпоха 3) — все статы ×0.88,
+                // потери за клетку тоже (90→79 mGTU, 180→158 mGTH).
+                perCell[i] = Math.round(PipeLoss.perCell(true, heatType) * ThirdTierPipe.STAT_FACTOR);
+            } else {
+                perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, heatType);
+            }
         }
         return perCell;
     }

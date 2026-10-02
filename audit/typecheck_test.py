@@ -53,6 +53,24 @@ real_files = [
     NET / "ItemPipeBlock.java",
     ROOT / "src/main/java/com/gonzotech/machines/item/WrenchItem.java",
     NET / "ModCompositeAccess.java",
+    # 0.3.110: экранированная семья эпохи 3 + их родители (стаб UniversalNodeBlock
+    # удалён как дубль реального класса)
+    NET / "ThirdTierPipe.java",
+    NET / "ThirdPipeBlock.java",
+    NET / "ThirdNodeBlock.java",
+    NET / "ThirdItemPipeBlock.java",
+    NET / "ThirdItemNodeBlock.java",
+    NET / "ThirdUniversalFluidPipeBlock.java",
+    NET / "ThirdUniversalFluidNodeBlock.java",
+    NET / "ThirdUniversalNodeBlock.java",
+    NET / "ThirdUniversalPipeBlock.java",
+    ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonBlock.java",
+    ROOT / "src/main/java/com/gonzotech/machines/block/ThirdStickyPistonBlock.java",
+    NET / "ItemNodeBlock.java",
+    NET / "UniversalFluidNodeBlock.java",
+    NET / "UniversalNodeBlock.java",
+    ROOT / "src/main/java/com/gonzotech/machines/energy/SecondTierDefs.java",
+    NET / "UniversalNodeComparator.java",
 ]
 for f in real_files:
     assert f.is_file(), f"нет файла сетевого пакета: {f}"

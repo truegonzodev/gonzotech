@@ -89,20 +89,48 @@ public final class RadMaterials {
             // гермодверь — 0.33 («защита от фона ×0.33», зато для чистого контура).
             Map.entry("third_heavy_door_lead", 0.02),
             Map.entry("third_heavy_door_tungsten", 0.003),
-            Map.entry("third_hermetic_door", 0.33)
+            Map.entry("third_hermetic_door", 0.33),
+            // 0.3.110: экранированная семья труб/узлов (эпоха 3) — «Экранирующее
+            // свойство: 89%»; свинцовые поршни — 81% (автор).
+            Map.entry("third_wire", 0.11),
+            Map.entry("third_heat_pipe", 0.11),
+            Map.entry("third_universal_fluid_pipe", 0.11),
+            Map.entry("third_item_pipe", 0.11),
+            Map.entry("third_universal_pipe", 0.11),
+            Map.entry("third_wire_node", 0.11),
+            Map.entry("third_heat_node", 0.11),
+            Map.entry("third_universal_fluid_node", 0.11),
+            Map.entry("third_item_node", 0.11),
+            Map.entry("third_universal_node", 0.11),
+            Map.entry("third_lead_piston", 0.19),
+            Map.entry("third_sticky_lead_piston", 0.19)
     );
 
     /**
      * Точечные факторы БЛОКА-стены (экранирование контура в чанке): те же
      * материалы как строительные блоки гасят дозу сильнее, чем в инвентаре.
      */
-    private static final Map<String, Double> BLOCK_EXACT = Map.of(
-            "barium_concrete", 0.10,
-            "bore_stained_glass", 0.008,
+    private static final Map<String, Double> BLOCK_EXACT = Map.ofEntries(
+            Map.entry("barium_concrete", 0.10),
+            Map.entry("bore_stained_glass", 0.008),
             // Двери как стены контура: тот же параметр, что и у предмета (автор 22.09).
-            "third_heavy_door_lead", 0.02,
-            "third_heavy_door_tungsten", 0.003,
-            "third_hermetic_door", 0.33
+            Map.entry("third_heavy_door_lead", 0.02),
+            Map.entry("third_heavy_door_tungsten", 0.003),
+            Map.entry("third_hermetic_door", 0.33),
+            // 0.3.110: экранированная семья замыкает контур (contour_seal-тег),
+            // стена-фактор = её экранированию.
+            Map.entry("third_wire", 0.11),
+            Map.entry("third_heat_pipe", 0.11),
+            Map.entry("third_universal_fluid_pipe", 0.11),
+            Map.entry("third_item_pipe", 0.11),
+            Map.entry("third_universal_pipe", 0.11),
+            Map.entry("third_wire_node", 0.11),
+            Map.entry("third_heat_node", 0.11),
+            Map.entry("third_universal_fluid_node", 0.11),
+            Map.entry("third_item_node", 0.11),
+            Map.entry("third_universal_node", 0.11),
+            Map.entry("third_lead_piston", 0.19),
+            Map.entry("third_sticky_lead_piston", 0.19)
     );
 
     /** Узнаваемые «прочие металлы и сплавы» (×0.72) — fallback после 60% reduction. */
