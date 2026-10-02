@@ -39,10 +39,12 @@ assert "if (oldRoot != null && oldRoot != root) byRoot.remove(oldRoot);" in idx
 # после любого разбила выкидывал и живые клампы: «ломаешь — ничего не показывает»)
 assert "self.longValue() != r.longValue();" in idx
 assert "self == null || self != r;" not in idx
-# 0.3.106: свип сравнивает ЗНАЧЕНИЯ (Long vs Long через != = ссылки — свип
-# после любого разбила выкидывал и живые клампы: «ломаешь — ничего не показывает»)
-assert "self.longValue() != r.longValue();" in idx
-assert "self == null || self != r;" not in idx
+# ── 0.3.107: «порт — не узел» = НЕСШИВАЕМОСТЬ, НЕ разрыв проводимости ──
+# перерезки 0.3.104 рубили легитимные пути (пароген → узлы → турбина) —
+# удалены; отрицательные пины, чтобы не вернулись
+assert "if (isNodeBlock(nextState)) continue;" not in routing
+assert "isFormedPort(level, pipe) && isNodeBlock(nstate)" not in routing
+assert "private static boolean isFormedPort" not in routing
 # 0.3.105: раскол не теряет клампы — два фикса по матсимуляции
 # (1) компонент = ТОЛЬКО члены: членство проверяется ДО seen.add
 assert "if (!allowed.contains(key) || !seen.add(key)) continue;" in idx
