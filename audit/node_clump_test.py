@@ -20,6 +20,11 @@ hud = HUD.read_text()
 flow = (NET / "PipeFlowNetwork.java").read_text()
 
 # ── Реестр ──
+# 0.3.100: слияние — флуд по СОСТОЯНИЯМ (индекс не видел одиночек → фича не работала)
+assert "public static void onNodeChanged(Level level, BlockPos pos, boolean movedByPiston)" in idx
+assert 'kind.equals(kindOf(level.getBlockState(next)))' in idx
+assert "!movedByPiston && members.size() > largestMerged" in idx   # поршень молчит
+assert "Deque<BlockPos> queue = new ArrayDeque<>();" in idx
 assert "record Clump(long root, int size, long lossMilli, BlockPos center, Set<Long> members)" in idx
 assert "MEMBER_ROOT = new IdentityHashMap<>()" in idx and "BY_ROOT = new IdentityHashMap<>()" in idx
 assert "public static void clearAll()" in idx
@@ -31,7 +36,7 @@ assert "int lossCells = members.size();" in idx  # 0.3.99: потери × N в�
 assert "lossCells * PipeLoss.perCell(second, heat)" in idx
 assert 'kind.endsWith("HEAT")' in idx and 'kind.endsWith("WIRE")' in idx
 # вспышка только на росте, ≤24 частиц
-assert "members.size() > oldTotal" in idx
+assert "members.size() > largestMerged" in idx
 assert "Math.min(24, members.size())" in idx
 # инвалидация по множеству: place = слияние по соседям, remove = раскол по флуду
 assert "Set<Long> union" in idx and "floodWithin" in idx
@@ -39,9 +44,9 @@ assert "component.size() >= 2" in idx
 assert "if (!level.isLoaded(next)) continue;" in idx  # флуд не грузит чанки
 
 # ── Хуки: оба блока узлов, тир-2 наследует ──
-assert node.count("NodeClumpIndex.onNodeChanged(level, pos)") == 1
+assert node.count("NodeClumpIndex.onNodeChanged(level, pos, movedByPiston)") == 1
 assert "NodeClumpIndex.onNodeRemoved(level, pos, state);" in node
-assert "NodeClumpIndex.onNodeChanged(level, pos);" in uni
+assert "NodeClumpIndex.onNodeChanged(level, pos, movedByPiston);" in uni
 assert "NodeClumpIndex.onNodeRemoved(level, pos, state);" in uni
 item_node = (NET / "ItemNodeBlock.java").read_text()
 assert "extends NodeBlock" in item_node  # предметные узлы наследуют хуки

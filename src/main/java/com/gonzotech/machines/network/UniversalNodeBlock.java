@@ -167,7 +167,7 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
         if (!state.is(oldState.getBlock())) {
             TurbineStructure.portPlaced(level, pos);
             SteamGenStructure.portPlaced(level, pos);
-            NodeClumpIndex.onNodeChanged(level, pos);
+            NodeClumpIndex.onNodeChanged(level, pos, movedByPiston);
         }
         if (!level.isClientSide()) {
             level.scheduleTick(pos, this, ItemPipeBlock.TICK_INTERVAL);

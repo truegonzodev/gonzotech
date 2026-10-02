@@ -59,7 +59,7 @@ public class NodeBlock extends PipeBlock {
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!state.is(oldState.getBlock())) {
-            NodeClumpIndex.onNodeChanged(level, pos);
+            NodeClumpIndex.onNodeChanged(level, pos, movedByPiston);
         }
     }
 

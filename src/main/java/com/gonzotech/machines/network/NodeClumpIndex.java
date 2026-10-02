@@ -108,27 +108,48 @@ public final class NodeClumpIndex {
 
     // ─────────────────────────── постановка/удаление узлов ───────────────────────────
 
-    /** Узел поставлен (в т.ч. поршнем): слияние с клампами смежных членов. */
-    public static void onNodeChanged(Level level, BlockPos pos) {
+    /**
+     * Узел поставлен (в т.ч. поршнем): слияние с окружением.
+     * <p>0.3.100: флуд по СОСТОЯНИЯМ мира (same-kind смежные узлы), а не по
+     * индексу — индекс не содержит одиночек, поэтому предыдущая версия
+     * (union только из проиндексированных клампов соседей) не могла сшить
+     * даже два первых узла: сосед-одиночка был невидим, union = 1, register
+     * выходил по size < 2. Фича не работала в принципе (автор 02.10).</p>
+     *
+     * @param movedByPiston поршневая перестановка НЕ даёт вспышку слияния
+     *                      (вспышка — только при реальном росте игроком)
+     */
+    public static void onNodeChanged(Level level, BlockPos pos, boolean movedByPiston) {
         if (!(level instanceof ServerLevel server)) return;
         String kind = kindOf(level.getBlockState(pos));
         if (kind == null) return;
 
-        Map<Long, Long> members = MEMBER_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>());
+        Map<Long, Long> members = MEMBER_ROOT.get(level);
+        Map<Long, Clump> byRoot = BY_ROOT.get(level);
         Set<Long> union = new HashSet<>();
         union.add(pos.asLong());
-        Set<Long> oldRoots = new HashSet<>();
-        int oldTotal = 0;
-        Map<Long, Clump> byRoot = BY_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>());
-        for (Direction dir : Direction.values()) {
-            Long root = members.get(pos.relative(dir).asLong());
-            if (root == null || !oldRoots.add(root)) continue;
-            Clump old = byRoot.get(root);
-            if (old == null) continue;
-            oldTotal += old.size();
-            union.addAll(old.members());
+        Deque<BlockPos> queue = new ArrayDeque<>();
+        queue.add(pos);
+        int largestMerged = 0;
+        while (!queue.isEmpty()) {
+            BlockPos cur = queue.poll();
+            for (Direction dir : Direction.values()) {
+                BlockPos next = cur.relative(dir);
+                long key = next.asLong();
+                if (union.contains(key) || !level.isLoaded(next)) continue;
+                if (!kind.equals(kindOf(level.getBlockState(next)))) continue;
+                union.add(key);
+                queue.add(next);
+                if (members != null && byRoot != null) {
+                    Long root = members.get(key);
+                    if (root != null) {
+                        Clump old = byRoot.get(root);
+                        if (old != null) largestMerged = Math.max(largestMerged, old.size());
+                    }
+                }
+            }
         }
-        register(server, union, kind, oldTotal);
+        register(server, union, kind, largestMerged, movedByPiston);
     }
 
     /** Узел удалён (в т.ч. поршнем): кламп без него может расколоться. */
@@ -154,7 +175,9 @@ public final class NodeClumpIndex {
             Set<Long> component = floodWithin(level, min, rest);
             rest.removeAll(component);
             if (component.size() >= 2) {
-                register(server, component, kind, component.size());
+                // Пересборка после раскола — всегда молча (вспышка только
+                // на росте игроком в onNodeChanged).
+                register(server, component, kind, component.size(), true);
             } else if (component.size() == 1) {
                 members.remove(component.iterator().next()); // одиночка не индексируется
             }
@@ -171,8 +194,9 @@ public final class NodeClumpIndex {
 
     // ─────────────────────────── формирование ───────────────────────────
 
-    /** Регистрирует кламп из множества членов; вспышка — только если он РОС. */
-    private static void register(ServerLevel level, Set<Long> members, String kind, int oldTotal) {
+    /** Регистрирует кламп из множества членов; вспышка — рост игроком (не поршнем). */
+    private static void register(ServerLevel level, Set<Long> members, String kind, int largestMerged,
+                                 boolean movedByPiston) {
         if (members.size() < 2) return;
 
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
@@ -197,9 +221,9 @@ public final class NodeClumpIndex {
         BY_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>())
             .put(root, new Clump(root, members.size(), lossMilli, center, members));
 
-        // Вспышка слияния — один раз, только когда кламп вырос (поршневые
-        // перефлуды с тем же размером молчат).
-        if (members.size() > oldTotal) {
+        // Вспышка слияния — только при реальном росте И не от поршня
+        // (поршневой перенос узла внутри клампа перестраивает его молча).
+        if (!movedByPiston && members.size() > largestMerged) {
             level.sendParticles(new DustParticleOptions(0xBFD8FF, 1.0F),
                 center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5,
                 Math.min(24, members.size()), 1.2, 0.6, 1.2, 0.01);
