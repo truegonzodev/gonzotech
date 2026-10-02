@@ -242,17 +242,30 @@ public final class SteamGenStructure {
         seen.add(seed.asLong());
         while (!queue.isEmpty()) {
             BlockPos current = queue.removeFirst();
-            result.add(current);
-            if (result.size() > MAX_CANDIDATE_COMPONENT) return null;
+            // 0.3.103: порты (пар/вода/тепло) НЕ часть компонента, флуд сквозь
+            // них не идёт — прислонённый снаружи узел/кламп раздувал компонент
+            // и ломал сборку (репорт автора 02.10). Порты в плоскости обшивки
+            // валидируются по координатам коробки в validateBox. Исключение —
+            // seed: с поставленного узла надо уметь найти структуру.
+            if (!isPortState(level.getBlockState(current))) {
+                result.add(current);
+                if (result.size() > MAX_CANDIDATE_COMPONENT) return null;
+            }
             for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
                 BlockPos next = current.relative(direction);
                 if (!seen.add(next.asLong()) || !isCandidateState(level.getBlockState(next))) continue;
                 // Уже собранная соседняя установка — самостоятельный объект.
                 if (!next.equals(seed) && controllerAt(level, next) != null) continue;
+                if (!next.equals(seed) && isPortState(level.getBlockState(next))) continue;
                 queue.addLast(next.immutable());
             }
         }
         return result;
+    }
+
+    /** Узел-порт (пар, вода или тепло) — в компонент не входит, флуд сквозь него не идёт. */
+    private static boolean isPortState(BlockState state) {
+        return isSteamPort(state) || isWaterPort(state) || isHeatPort(state);
     }
 
     private static Bounds boundsOf(List<BlockPos> positions) {

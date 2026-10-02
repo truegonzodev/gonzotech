@@ -235,11 +235,12 @@ public final class NuclearFireboxBlockEntity extends BaseMachineBlockEntity impl
     private boolean pushGth(Level level, BlockPos pos) {
         if (gth.isEmpty()) return false;
         long budget = Math.min((long) NuclearDefs.NUCLEAR_FIREBOX_GTH_OUTPUT, gth.amountAsLong());
-        long moved = PipeRouting.drain(level, pos, PipeType.HEAT, budget, level.getGameTime(), (target, ignored) -> {
-            if (target instanceof NuclearFireboxBlockEntity) return null;
-            if (target instanceof com.gonzotech.machines.energy.Sinks.GthSink sink) return sink::receiveGth;
-            return null;
-        });
+        // 0.3.103: топки — ТОЛЬКО источники тепла: FireboxBlockEntity больше не
+        // GthSink, поэтому сеть в принципе не может «напитывать» печи (репорт
+        // автора 02.10: доменная печь принимала ГТХ из узлов). Режимы труб
+        // (забор/отдача) при этом остаются честными на обычных приёмниках.
+        long moved = PipeRouting.drain(level, pos, PipeType.HEAT, budget, level.getGameTime(), (target, ignored) ->
+            target instanceof com.gonzotech.machines.energy.Sinks.GthSink sink ? sink::receiveGth : null);
         if (moved <= 0) return false;
         gth.extract(moved, false);
         return true;

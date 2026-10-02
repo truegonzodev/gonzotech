@@ -41,6 +41,13 @@ def code(path):
     return re.sub(r"/\*.*?\*/|//[^\n]*", "", Path(path).read_text(), flags=re.S)
 
 be = code(MM / "block/entity/FireboxBlockEntity.java")
+
+# 0.3.103: топки — ТОЛЬКО источники тепла (сеть не может «напитывать» печи).
+assert "implements WorldlyContainer, ExperienceOutput {" in be
+assert "implements GthSink" not in be and "public long receiveGth" not in be
+nfe = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/NuclearFireboxBlockEntity.java").read_text()
+assert "instanceof NuclearFireboxBlockEntity) return null" not in nfe  # мёртвый код убран
+assert "GthSink sink ? sink::receiveGth : null" in nfe
 layout = (MM / "blastfurnace/BlastFurnaceLayout.java").read_text()
 struct = code(MM / "blastfurnace/BlastFurnaceStructure.java")
 menu = code(MM / "menu/BlastFurnaceMenu.java")

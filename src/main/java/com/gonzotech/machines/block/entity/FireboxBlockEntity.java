@@ -49,7 +49,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * </ul>
  */
 public class FireboxBlockEntity extends BaseMachineBlockEntity
-    implements GthSink, WorldlyContainer, ExperienceOutput {
+    implements WorldlyContainer, ExperienceOutput {
 
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_FUEL = 1;
@@ -294,19 +294,6 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         return litTime > 0;
     }
 
-    // ─────────────────────────── GthSink ───────────────────────────
-
-    @Override
-    public long receiveGth(long amount, boolean simulate) {
-        long space = gthCapacityMilli() - gth.amountAsLong();
-        long accepted = gth.receive(Math.min(amount, Math.max(0, space)), simulate);
-        if (!simulate && accepted > 0) {
-            setChanged();
-            updateComparatorOutput();
-        }
-        return accepted;
-    }
-
     // ─────────────────────────── тик (сервер) ───────────────────────────
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FireboxBlockEntity be) {
@@ -457,11 +444,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
                 if (remaining <= 0) break;
                 long budget = Math.min((long) MachineDefs.BLAST_FURNACE_NODE_GTH_OUTPUT, remaining);
                 long moved = PipeRouting.drain(server, node, PipeType.HEAT, budget,
-                    server.getGameTime(), (be, p) -> {
-                        if (be instanceof FireboxBlockEntity) return null;
-                        if (be instanceof GthSink sink) return sink::receiveGth;
-                        return null;
-                    });
+                    server.getGameTime(), (be, p) ->
+                        be instanceof GthSink sink ? sink::receiveGth : null);
                 remaining -= moved;
                 movedTotal += moved;
             }
@@ -473,11 +457,8 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
         }
         long budget = Math.min((long) MachineDefs.FIREBOX_GTH_OUTPUT, gth.amountAsLong());
         // Слив тепла: прямым соседям-котлам ИЛИ через теплотрубы дальше по цепи.
-        long moved = PipeRouting.drain(level, pos, PipeType.HEAT, budget, level.getGameTime(), (be, p) -> {
-            if (be instanceof FireboxBlockEntity) return null;
-            if (be instanceof GthSink sink) return sink::receiveGth;
-            return null;
-        });
+        long moved = PipeRouting.drain(level, pos, PipeType.HEAT, budget, level.getGameTime(), (be, p) ->
+            be instanceof GthSink sink ? sink::receiveGth : null);
         if (moved > 0) {
             gth.extract(moved, false);
             return true;

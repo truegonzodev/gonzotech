@@ -242,8 +242,17 @@ public final class TurbineStructure {
         seen.add(seed.asLong());
         while (!queue.isEmpty()) {
             BlockPos current = queue.removeFirst();
-            result.add(current);
-            if (result.size() > MAX_CANDIDATE_COMPONENT) return null;
+            // 0.3.103: узлы-порты НЕ часть компонента, и флуд сквозь них не
+            // идёт: прислонённый снаружи к обшивке узел (тем более кламп)
+            // раздувал компонент, коробка росла, validateBox видел воздух в
+            // наружном слое — сборка ломалась (репорт автора 02.10). Порты В
+            // плоскости обшивки не теряются: validateBox сам сканирует коробку
+            // и собирает их по координатам. Исключение — seed: с поставленного
+            // узла надо уметь найти структуру.
+            if (!isPortState(level.getBlockState(current))) {
+                result.add(current);
+                if (result.size() > MAX_CANDIDATE_COMPONENT) return null;
+            }
             for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
                 BlockPos next = current.relative(direction);
                 if (!seen.add(next.asLong()) || !isCandidateState(level.getBlockState(next))) continue;
@@ -251,6 +260,7 @@ public final class TurbineStructure {
                 // продолжение строящейся формы. Так две турбины могут касаться
                 // корпусами без взаимной инвалидизации.
                 if (!next.equals(seed) && controllerAt(level, next) != null) continue;
+                if (!next.equals(seed) && isPortState(level.getBlockState(next))) continue;
                 queue.addLast(next.immutable());
             }
         }
@@ -328,6 +338,11 @@ public final class TurbineStructure {
         BlockPos root = new BlockPos(min.getX() + 1, min.getY() + 1, min.getZ() + 1);
         if (!level.getBlockState(root).is(ModMachines.FIRST_TURBINE_ROTOR.get())) return null;
         return new Build(min.immutable(), max.immutable(), root, (int) rotorLong, all, steam, wire);
+    }
+
+    /** Узел-порт (пар или провод) — в компонент не входит и флуд сквозь него не идёт. */
+    private static boolean isPortState(BlockState state) {
+        return isSteamPort(state) || isWirePort(state);
     }
 
     private static boolean isShellBlock(BlockState state) {

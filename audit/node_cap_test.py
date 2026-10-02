@@ -34,4 +34,15 @@ assert "if (cores < 1 || steam.isEmpty() || water.isEmpty() || heat.isEmpty()) r
 # Скоуп автора: доменная печь — лимит не нужен (ровно 4 узла по Layout).
 assert "MAX_NODES" not in blast
 
-print("node cap wiring passed (turbine<=8, steamgen<=10)")
+# ── 0.3.103: порты НЕ часть компонента, флуд сквозь них не идёт ──
+# (узел/кламп, прислонённый снаружи к обшивке, раздувал компонент — сборка
+# ломалась; порты в плоскости обшивки валидируются по коробке в validateBox)
+assert "if (!isPortState(level.getBlockState(current))) {" in turbine
+assert "if (!next.equals(seed) && isPortState(level.getBlockState(next))) continue;" in turbine
+assert "private static boolean isPortState(BlockState state) {" in turbine
+assert "return isSteamPort(state) || isWirePort(state);" in turbine
+assert "if (!isPortState(level.getBlockState(current))) {" in steamgen
+assert "if (!next.equals(seed) && isPortState(level.getBlockState(next))) continue;" in steamgen
+assert "return isSteamPort(state) || isWaterPort(state) || isHeatPort(state);" in steamgen
+
+print("node cap wiring passed (turbine<=8, steamgen<=10, ports out of flood)")
