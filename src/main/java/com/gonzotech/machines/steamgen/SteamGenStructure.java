@@ -72,10 +72,12 @@ public final class SteamGenStructure {
     /** Все портовые ноды зовут этот метод при постановке. */
     public static void portPlaced(Level level, BlockPos pos) {
         if (!(level instanceof ServerLevel server) || !isCandidateState(server.getBlockState(pos))) return;
+        // 0.3.97: только seed-позиция. Соседние seeds были избыточны: сосед-кандидат
+        // лежит в ТОМ ЖЕ компоненте, что и новый блок (связность), collectComponent
+        // и validateBox дают тот же Build — 7 одинаковых фладфилов на структуру.
+        // Ставка узла в клампе кандидатов была = до 14 фладфилов (×2 структуры),
+        // теперь 2; сформированные конструкции по-прежнему собираются с одного seed.
         tryFormFrom(server, pos);
-        for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
-            tryFormFrom(server, pos.relative(direction));
-        }
     }
 
     /** Точная позиция порта ещё индексирована во время onRemove, поэтому форма снимается сразу. */

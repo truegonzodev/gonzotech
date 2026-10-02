@@ -47,4 +47,10 @@ assert "RadSources.emissionDeep(drop.getItem())" in rad
 assert "RadSources.emissionDeep(frame.getItem())" in rad
 assert "level.getMinY(), cz << 4," in rad                            # AABB чанка
 
-print("node perf / ping-pong / hot-node mark / smoke gate / floor radiation pins passed")
+# ── 5) portPlaced: один seed вместо 7 (сборка узлов-кандидатов роняла сервер) ──
+for name in ("turbine/TurbineStructure.java", "steamgen/SteamGenStructure.java"):
+    src = (ROOT / "src/main/java/com/gonzotech/machines" / name).read_text()
+    assert "tryFormFrom(server, pos.relative(direction));" not in src, name
+    assert "tryFormFrom(server, pos);\n    }" in src, name
+
+print("node perf / ping-pong / hot-node mark / smoke gate / floor radiation / single-seed portPlaced pins passed")
