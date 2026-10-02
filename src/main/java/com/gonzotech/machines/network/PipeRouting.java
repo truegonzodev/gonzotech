@@ -482,6 +482,15 @@ public final class PipeRouting {
             }
         }
 
+        // 0.3.92 (автор 04.10): позиции-«узлы», через которые проходит ≥400
+        // дорожек за итерацию, помечаются горячими — красная пыль (см.
+        // PipeFlowWarnings): игрок видит, где роутинг дорогой.
+        for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
+            if (e.getValue().size() >= PipeFlowWarnings.HOT_LANE_THRESHOLD) {
+                PipeFlowWarnings.mark(level, BlockPos.of(e.getKey()), level.getGameTime() + PipeFlowWarnings.HOLD_TICKS);
+            }
+        }
+
         // Остаток (меньше числа активных): по 1 единице с ротацией, пока есть
         // комната на сегментах. Прямые соседи (без пути) комнаты не теряют.
         int start = (int) Math.floorMod(rotation, n);

@@ -48,4 +48,14 @@ assert "default -> null;" in r
 for api in ("public static long drain(", "drainFromTurbinePort(", "drainFromMultiblockPort("):
     assert api in r, api
 
-print("PipeRouting perf pins passed (crossing index, lazy paths, caps; law/leveling semantics unchanged)")
+# ── Пины 0.3.92: красная подсветка дорогих узлов (автор 04.10) ──
+w = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeFlowWarnings.java").read_text()
+assert "HOT_LANE_THRESHOLD = 400" in w                # число автора
+assert "LevelTickEvent.Post" in w and "@SubscribeEvent" in w
+assert "DustParticleOptions(0xCC2222, 1.0F)" in w     # красная пыль
+assert "MAX_MARKS_PER_TICK = 64" in w                 # граница пакетов
+assert "HOLD_TICKS = 60" in w
+assert "it.remove();" in w                            # чистка в тике (static-гигиена)
+assert "PipeFlowWarnings.mark(level, BlockPos.of(e.getKey())," in r  # маркер из раскладки
+
+print("PipeRouting perf pins passed (crossing index, lazy paths, caps, hot-pipe particles; law/leveling semantics unchanged)")
