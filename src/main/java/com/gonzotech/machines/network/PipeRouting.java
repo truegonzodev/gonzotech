@@ -225,7 +225,11 @@ public final class PipeRouting {
             // парогенератор не смог бы кормить турбину: для BFS чужая нода —
             // просто ещё одна труба.
             if (type == PipeType.STEAM) {
-                addTurbineLane(level, pipe, port, buildPath(level, pipe, pipe, parent), rawByPos, direct, lanes);
+                Transfer.Receiver portRaw = TurbineStructure.steamReceiverAt(level, pipe);
+                if (portRaw != null) {
+                    addPortLane(level, pipe, port, PipeType.STEAM, portRaw,
+                        buildPath(level, pipe, pipe, parent), direct, lanes);
+                }
             }
             PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
@@ -274,6 +278,10 @@ public final class PipeRouting {
      * entry→…→приёмник). Позиции с прямой дорожкой пропускаются (прямой поток
      * через трубу не идёт).
      */
+    /** 0.3.90: предохранители перегрева маршрутизатора (поле абсорберов убивало TPS). */
+    private static final int MAX_BFS_CELLS_PER_ENTRY = 2048;
+    private static final int MAX_LANES_PER_DRAIN = 256;
+
     private static void collectLanes(Level level, BlockPos fromPos, PipeType type, BlockPos entry,
                                      BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
                                      Map<Long, Transfer.Receiver> rawByPos,
@@ -286,19 +294,30 @@ public final class PipeRouting {
         queue.add(entry);
         visited.add(entry);
 
+        // 0.3.90: buildPath дорог (подъём по родителям до entry на каждый вызов),
+        // поэтому путь строится только после дешёвой проверки, что узел вообще
+        // приёмник; не-приёмники машин соседства путь не строят вовсе.
+        int cells = 0;
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
             BlockState pstate = level.getBlockState(pipe);
+            if (++cells > MAX_BFS_CELLS_PER_ENTRY) break;
+
             // Порты турбины/парогенератора — это сами ноды, а не BlockEntity за
             // нодой. Регистрируем их как дорожки-приёмники, но продолжаем BFS:
-            // та же нода остаётся нормальной частью ресурсной сети.
-            List<PathStep> selfPath = buildPath(level, pipe, pipe, parent);
-            if (type == PipeType.STEAM) {
-                addTurbineLane(level, pipe, fromPos, selfPath, rawByPos, direct, lanes);
-            } else if (type == PipeType.WATER) {
-                addSteamGenWaterLane(level, pipe, fromPos, selfPath, rawByPos, direct, lanes);
-            } else if (type == PipeType.HEAT) {
-                addSteamGenGthLane(level, pipe, fromPos, selfPath, rawByPos, direct, lanes);
+            // та же нода остаётся нормальной частью ресурсной сети. Сначала
+            // ДЕШЁВАЯ проверка порта, и только затем дорогой buildPath (0.3.90).
+            Transfer.Receiver portRaw = switch (type) {
+                case STEAM -> TurbineStructure.steamReceiverAt(level, pipe);
+                case WATER -> SteamGenStructure.waterReceiverAt(level, pipe);
+                case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);
+                // Виртуальные порты есть только у трёх типов выше; провода,
+                // жидкости и предметы принимают обычные BlockEntity-машины.
+                default -> null;
+            };
+            if (portRaw != null) {
+                List<PathStep> selfPath = buildPath(level, pipe, pipe, parent);
+                addPortLane(level, pipe, fromPos, type, portRaw, selfPath, direct, lanes);
             }
             PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
@@ -317,8 +336,7 @@ public final class PipeRouting {
                 // и ЭТА труба отдаёт в машину.
                 if (!machineConnects(pstate, type, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
-                List<PathStep> path = buildPath(level, pipe, npos, parent);
-                addMachineLane(level, npos, fromPos, type, receiverOf, path, rawByPos, direct, lanes);
+                addMachineLane(level, pipe, npos, fromPos, type, receiverOf, parent, direct, lanes);
             }
         }
     }
@@ -328,78 +346,36 @@ public final class PipeRouting {
      * машина — приёмник). Сырой sink кэшируется по позиции — несколько дорожек к
      * одному приёмнику делят его intake.
      */
-    private static void addMachineLane(Level level, BlockPos pos, BlockPos fromPos, PipeType type,
+    /** 0.3.90: путь строится только ПОСЛЕ того, как позиция подтверждена приёмником. */
+    private static void addMachineLane(Level level, BlockPos viaPipe, BlockPos pos, BlockPos fromPos, PipeType type,
                                        BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
-                                       List<PathStep> path,
-                                       Map<Long, Transfer.Receiver> rawByPos,
+                                       Map<Long, BlockPos> parent,
                                        Set<Long> direct, List<Lane> lanes) {
+        if (lanes.size() >= MAX_LANES_PER_DRAIN) return;
         if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
         long key = pos.asLong();
         BlockEntity be = level.getBlockEntity(pos);
         if (be == null) return;
-        Transfer.Receiver raw = rawByPos.get(key);
-        if (raw == null) {
-            raw = receiverOf.apply(be, pos);
-            if (raw == null) return;
-            rawByPos.put(key, raw);
-        }
+        Transfer.Receiver raw = receiverOf.apply(be, pos);
+        if (raw == null) return;
+        List<PathStep> path = buildPath(level, viaPipe, pos, parent);
         long[] lossCells = pathLossCells(level, path, type);
         long loss = PipeLoss.sum(lossCells);
         lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));
     }
 
-    /** Дорожка виртуального SteamSink встроенного turbine port-а (без BE у ноды). */
-    private static void addTurbineLane(Level level, BlockPos pos, BlockPos fromPos, List<PathStep> path,
-                                       Map<Long, Transfer.Receiver> rawByPos, Set<Long> direct, List<Lane> lanes) {
-        if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
-        long key = pos.asLong();
-        Transfer.Receiver raw = rawByPos.get(key);
-        if (raw == null) {
-            raw = TurbineStructure.steamReceiverAt(level, pos);
-            if (raw == null) return;
-            rawByPos.put(key, raw);
-        }
-        long[] lossCells = pathLossCells(level, path, PipeType.STEAM);
-        long loss = PipeLoss.sum(lossCells);
-        lanes.add(new Lane(recording(level, raw, PipeType.STEAM, path, lossCells), path, loss));
-    }
-
     /**
-     * Дорожка виртуального WaterSink водного порта продвинутого парогенератора:
-     * насос «видит» ноду как обычный приёмник за трубой.
+     * Дорожка виртуального порта турбины/парогенератора (0.3.90): приёмник уже
+     * разрешён дешёвой проверкой в BFS, здесь только путь и обёртка с биллингом.
      */
-    private static void addSteamGenWaterLane(Level level, BlockPos pos, BlockPos fromPos, List<PathStep> path,
-                                             Map<Long, Transfer.Receiver> rawByPos, Set<Long> direct, List<Lane> lanes) {
+    private static void addPortLane(Level level, BlockPos pos, BlockPos fromPos, PipeType type,
+                                    Transfer.Receiver raw, List<PathStep> path,
+                                    Set<Long> direct, List<Lane> lanes) {
+        if (lanes.size() >= MAX_LANES_PER_DRAIN) return;
         if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
-        long key = pos.asLong();
-        Transfer.Receiver raw = rawByPos.get(key);
-        if (raw == null) {
-            raw = SteamGenStructure.waterReceiverAt(level, pos);
-            if (raw == null) return;
-            rawByPos.put(key, raw);
-        }
-        long[] lossCells = pathLossCells(level, path, PipeType.WATER);
+        long[] lossCells = pathLossCells(level, path, type);
         long loss = PipeLoss.sum(lossCells);
-        lanes.add(new Lane(recording(level, raw, PipeType.WATER, path, lossCells), path, loss));
-    }
-
-    /**
-     * Дорожка виртуального GthSink теплового порта продвинутого парогенератора:
-     * топка «видит» ноду как обычный тепловой потребитель за трубой.
-     */
-    private static void addSteamGenGthLane(Level level, BlockPos pos, BlockPos fromPos, List<PathStep> path,
-                                           Map<Long, Transfer.Receiver> rawByPos, Set<Long> direct, List<Lane> lanes) {
-        if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
-        long key = pos.asLong();
-        Transfer.Receiver raw = rawByPos.get(key);
-        if (raw == null) {
-            raw = SteamGenStructure.gthReceiverAt(level, pos);
-            if (raw == null) return;
-            rawByPos.put(key, raw);
-        }
-        long[] lossCells = pathLossCells(level, path, PipeType.HEAT);
-        long loss = PipeLoss.sum(lossCells);
-        lanes.add(new Lane(recording(level, raw, PipeType.HEAT, path, lossCells), path, loss));
+        lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));
     }
 
     /**
@@ -442,15 +418,23 @@ public final class PipeRouting {
         // Остаток каждой позиции НА МОМЕНТ вызова: ledger не обновляется во время
         // раскладки (биллинг — в recording-обёртке, после). usage — сколько уже
         // разложено в этом вызове (для закона на общих сегментах).
+        //
+        // 0.3.90: сразу строится индекс пересечений «позиция → дорожки через неё».
+        // Раньше каждый раунд левелинга заново перебирал ВСЕ дорожки по каждой
+        // позиции: при поле абсорберов дорожки = приёмники × entry-трубы, раундов
+        // до 2n+1 — сотни миллионов операций за тик, TPS в ноль.
         Map<Long, Long> rem0 = new HashMap<>();
         Map<Long, Long> usage = new HashMap<>();
-        for (Lane lane : lanes) {
-            if (lane.path() == null) continue;
-            for (PathStep s : lane.path()) {
+        Map<Long, List<Integer>> crossers = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            List<PathStep> path = lanes.get(i).path();
+            if (path == null) continue;
+            for (PathStep s : path) {
                 long key = s.pipe().asLong();
                 rem0.putIfAbsent(key,
                     PipeFlowLedger.remaining(level, s.pipe(), level.getBlockState(s.pipe()), type));
                 usage.putIfAbsent(key, 0L);
+                crossers.computeIfAbsent(key, k -> new ArrayList<>()).add(i);
             }
         }
 
@@ -459,13 +443,13 @@ public final class PipeRouting {
             long x = remaining / activeCount;
             // Уровень не может поднять позицию выше её остатка, делённого на
             // число активных дорожек, идущих через неё.
-            for (Long key : rem0.keySet()) {
+            for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
                 int count = 0;
-                for (int i = 0; i < n; i++) {
-                    if (active[i] && laneHas(lanes.get(i), key)) count++;
+                for (int i : e.getValue()) {
+                    if (active[i]) count++;
                 }
                 if (count > 0) {
-                    long rem = rem0.get(key) - usage.get(key);
+                    long rem = rem0.get(e.getKey()) - usage.get(e.getKey());
                     long lim = rem / count;
                     if (lim < x) x = lim;
                 }
@@ -474,23 +458,20 @@ public final class PipeRouting {
             for (int i = 0; i < n; i++) {
                 if (!active[i]) continue;
                 given[i] += x;
+                remaining -= x;
                 List<PathStep> path = lanes.get(i).path();
                 if (path != null) {
                     for (PathStep s : path) usage.merge(s.pipe().asLong(), x, Long::sum);
                 }
             }
-            remaining -= x * activeCount;
-            // Заморозить дорожки, чей маршрут уперся в исчерпанную позицию.
-            for (int i = 0; i < n; i++) {
-                if (!active[i]) continue;
-                List<PathStep> path = lanes.get(i).path();
-                if (path == null) continue;
-                for (PathStep s : path) {
-                    long key = s.pipe().asLong();
-                    if (rem0.get(key) - usage.get(key) <= 0) {
+            // Заморозить дорожки, чей маршрут уперся в исчерпанную позицию:
+            // проходим только позиции, дорожки берём из индекса пересечений.
+            for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
+                if (rem0.get(e.getKey()) - usage.get(e.getKey()) > 0) continue;
+                for (int i : e.getValue()) {
+                    if (active[i]) {
                         active[i] = false;
                         activeCount--;
-                        break;
                     }
                 }
             }
@@ -531,15 +512,6 @@ public final class PipeRouting {
             if (given[i] > 0) moved += lanes.get(i).wrapped().receive(given[i], false);
         }
         return moved;
-    }
-
-    /** Проходит ли маршрут дорожки через позицию (asLong). */
-    private static boolean laneHas(Lane lane, long posKey) {
-        if (lane.path() == null) return false;
-        for (PathStep s : lane.path()) {
-            if (s.pipe().asLong() == posKey) return true;
-        }
-        return false;
     }
 
     /**

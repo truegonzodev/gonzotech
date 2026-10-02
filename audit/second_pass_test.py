@@ -324,7 +324,7 @@ for pin in ('PipeLoss.delivered(amount, lossMilli);','PipeLoss.flow(accepted, lo
             'PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT)',
             'lanes.add(new Lane(raw, null, 0));'):
     assert pin in pipe_routing_code, 'routing loss pin: '+pin
-assert pipe_routing_code.count('pathLossCells(level, path,') == 5  # 4 дорожки + обёртка pathLoss
+assert pipe_routing_code.count('pathLossCells(level, path,') == 3  # 0.3.90: 2 билдера дорожек + обёртка pathLoss
 
 # ── 0.3.61: дюп дверей закрыт; открытая гермодверь = динамическая утечка ──
 heavy=(ROOT/'src/main/java/com/gonzotech/core/block/HeavyDoorBlock.java').read_text()
@@ -435,7 +435,7 @@ for pin in ('private static long[] pathLossCells(Level level, List<PathStep> pat
             'cumulative = PipeLoss.prefix(lossCells, i);',
             'lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));'):
     assert pin in pipe_routing_code, 'routing 0.3.60 pin: '+pin
-assert pipe_routing_code.count('pathLossCells(level, path,') == 5
+assert pipe_routing_code.count('pathLossCells(level, path,') == 3
 
 
 # 0.3.55: предмет станка — блоковая модель (3D), плоской item-модели больше нет.

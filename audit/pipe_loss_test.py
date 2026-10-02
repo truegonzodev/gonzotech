@@ -46,7 +46,7 @@ for pin in (
 ):
     assert pin in routing, "routing pin: " + pin.splitlines()[0]
 # все четыре вида дорожек считают потерю; прямые соседи — без потерь
-assert routing.count("pathLossCells(level, path,") == 5, routing.count("pathLossCells(level, path,")
+assert routing.count("pathLossCells(level, path,") == 3, routing.count("pathLossCells(level, path,")  # 0.3.90: 2 билдера дорожек + обёртка pathLoss
 # числа автора — единственный источник констант
 for const in ("WIRE_T1 = 80;", "WIRE_T2 = 90;", "HEAT_T1 = 220;", "HEAT_T2 = 180;"):
     assert const in loss_src.read_text(), const
