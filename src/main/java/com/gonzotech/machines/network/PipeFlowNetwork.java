@@ -62,7 +62,7 @@ public final class PipeFlowNetwork {
      * {@code posAmount} — суммарный поток через все грани, {@code negAmount}=0.
      */
     public record FlowPayload(BlockPos pos, int typeId, int axis3d, long posAmount, long negAmount,
-                              long lossMilli, int clumpSize) implements CustomPacketPayload {
+                              long lossMilli) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<FlowPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_flow"));
 
@@ -74,7 +74,6 @@ public final class PipeFlowNetwork {
                 ByteBufCodecs.VAR_LONG, FlowPayload::posAmount,
                 ByteBufCodecs.VAR_LONG, FlowPayload::negAmount,
                 ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,
-                ByteBufCodecs.VAR_INT, FlowPayload::clumpSize,
                 FlowPayload::new);
 
         @Override
@@ -266,14 +265,31 @@ public final class PipeFlowNetwork {
 
         long[] flow = FlowTracker.get(level, pos, pipeType);
 
+        // 0.3.101: hover ЛЮБОГО члена клампа показывает потоки ВСЕГО клампа —
+        // члены сами ничего не капируют и FlowTracker на себе не держат.
+        // Считаем только граничные выходы (сосед вне клампа): внутренние грани
+        // не дюпают транзит. Потери — плоские клампа (perCell × N).
+        if (NodeClumpIndex.isMember(level, pos)) {
+            long clumpSum = 0;
+            for (BlockPos m : NodeClumpIndex.membersOf(level, pos)) {
+                long[] mf = FlowTracker.get(level, m, pipeType);
+                for (Direction d : Direction.values()) {
+                    if (NodeClumpIndex.isMember(level, m.relative(d))) continue;
+                    clumpSum += mf[d.get3DDataValue()];
+                }
+            }
+            PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, clumpSum, 0,
+                NodeClumpIndex.lossMilliOfRoot(level, NodeClumpIndex.rootOf(level, pos))));
+            return;
+        }
+
         // Узел ветвится во все стороны — «два конца оси» не имеют смысла, сумма.
         if ((state.getBlock() instanceof PipeBlock pb && pb.connectsAllSides())
             || state.getBlock() instanceof UniversalNodeBlock) {
             long sum = 0;
             for (long v : flow) sum += v;
             PacketDistributor.sendToPlayer(player,
-                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType),
-                    NodeClumpIndex.sizeAt(level, pos)));
+                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType)));
             return;
         }
 
@@ -289,7 +305,7 @@ public final class PipeFlowNetwork {
         long negAmount = flow[negDir.get3DDataValue()];
 
         PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, axis.ordinal(), posAmount, negAmount,
-            FlowTracker.getLoss(level, pos, pipeType), NodeClumpIndex.sizeAt(level, pos)));
+            FlowTracker.getLoss(level, pos, pipeType)));
     }
 
     /** Отвечает на запрос потока ПРЕДМЕТОВ в предметной трубе (топ по количеству). */

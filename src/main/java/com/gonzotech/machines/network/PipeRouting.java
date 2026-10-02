@@ -513,6 +513,10 @@ public final class PipeRouting {
                 }
                 boolean room = true;
                 for (PathStep s : path) {
+                    // 0.3.101: члены клампа не капируют (индекс безлимитен) —
+                    // и в rem0/usage их нет: NPE-крэш автора 02.10 (распаковка
+                    // null из Map.get в хвостовом цикле остатка).
+                    if (NodeClumpIndex.isMember(level, s.pipe())) continue;
                     long key = s.pipe().asLong();
                     if (rem0.get(key) - usage.get(key) <= 0) {
                         room = false;
@@ -520,7 +524,10 @@ public final class PipeRouting {
                     }
                 }
                 if (!room) continue;
-                for (PathStep s : path) usage.merge(s.pipe().asLong(), 1L, Long::sum);
+                for (PathStep s : path) {
+                    if (NodeClumpIndex.isMember(level, s.pipe())) continue;
+                    usage.merge(s.pipe().asLong(), 1L, Long::sum);
+                }
                 given[i]++;
                 remaining--;
             }

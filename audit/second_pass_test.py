@@ -421,7 +421,7 @@ flow_tracker=(ROOT/'src/main/java/com/gonzotech/machines/network/FlowTracker.jav
 assert 'public static void recordLoss(Level level, BlockPos pipe, PipeType type, long lossMilli)' in flow_tracker
 assert 'public static long getLoss(Level level, BlockPos pipe, PipeType type)' in flow_tracker
 pipe_flow=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeFlowNetwork.java').read_text()
-assert 'long lossMilli, int clumpSize) implements CustomPacketPayload' in pipe_flow  # 0.3.98: + размер клампа
+assert 'long lossMilli) implements CustomPacketPayload' in pipe_flow
 assert 'ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,' in pipe_flow
 assert pipe_flow.count('FlowTracker.getLoss(level, pos, pipeType)') == 2
 wrench=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()

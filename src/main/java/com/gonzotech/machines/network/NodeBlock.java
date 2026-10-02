@@ -55,17 +55,21 @@ public class NodeBlock extends PipeBlock {
     }
 
     // 0.3.98: смежные узлы одного рода/тира сшиваются в кламп (NodeClumpIndex).
+    // 0.3.101: оба хука только при СМЕНЕ блока — смена режима ключом больше не
+    // рвёт кламп (onRemove без гварда выкидывал узел из индекса).
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
         if (!state.is(oldState.getBlock())) {
-            NodeClumpIndex.onNodeChanged(level, pos, movedByPiston);
+            NodeClumpIndex.onNodeChanged(level, pos);
         }
     }
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        NodeClumpIndex.onNodeRemoved(level, pos, state);
+        if (!state.is(newState.getBlock())) {
+            NodeClumpIndex.onNodeRemoved(level, pos, state);
+        }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
 

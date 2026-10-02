@@ -2,7 +2,6 @@ package com.gonzotech.machines.network;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -41,8 +40,8 @@ public final class NodeClumpIndex {
     /** level → (корень → кламп). */
     private static final Map<Level, Map<Long, Clump>> BY_ROOT = new IdentityHashMap<>();
 
-    /** Кламп: множество членов, плоская потеря транзита, центр (для вспышки). */
-    public record Clump(long root, int size, long lossMilli, BlockPos center, Set<Long> members) {
+    /** Кламп: множество членов, плоская потеря транзита ({@code потери × N}). */
+    public record Clump(long root, long lossMilli, Set<Long> members) {
     }
 
     private NodeClumpIndex() {
@@ -89,6 +88,21 @@ public final class NodeClumpIndex {
         return root == null ? 0L : root;
     }
 
+    /**
+     * Члены клампа позиции (пусто — не член). Для hover ЛЮБОГО члена: клиент
+     * запрашивает поток позиции-члена, сервер отвечает агрегатом клампа.
+     */
+    public static Set<BlockPos> membersOf(Level level, BlockPos pos) {
+        Set<BlockPos> out = new HashSet<>();
+        long root = rootOf(level, pos);
+        if (root == 0L) return out;
+        Map<Long, Clump> byRoot = BY_ROOT.get(level);
+        Clump clump = byRoot == null ? null : byRoot.get(root);
+        if (clump == null) return out;
+        for (long key : clump.members) out.add(BlockPos.of(key));
+        return out;
+    }
+
     /** Плоская потеря транзита клампа-корня (0 для не-клампа/безпотерьных родов). */
     public static long lossMilliOfRoot(Level level, long root) {
         Map<Long, Clump> byRoot = BY_ROOT.get(level);
@@ -97,40 +111,25 @@ public final class NodeClumpIndex {
         return clump == null ? 0L : clump.lossMilli;
     }
 
-    /** Размер клампа позиции (0 — одиночка/не узел); для HUD «сшито узлов: N». */
-    public static int sizeAt(Level level, BlockPos pos) {
-        long root = rootOf(level, pos);
-        if (root == 0L) return 0;
-        Map<Long, Clump> byRoot = BY_ROOT.get(level);
-        Clump clump = byRoot == null ? null : byRoot.get(root);
-        return clump == null ? 0 : clump.size;
-    }
-
     // ─────────────────────────── постановка/удаление узлов ───────────────────────────
 
     /**
      * Узел поставлен (в т.ч. поршнем): слияние с окружением.
      * <p>0.3.100: флуд по СОСТОЯНИЯМ мира (same-kind смежные узлы), а не по
-     * индексу — индекс не содержит одиночек, поэтому предыдущая версия
-     * (union только из проиндексированных клампов соседей) не могла сшить
-     * даже два первых узла: сосед-одиночка был невидим, union = 1, register
-     * выходил по size < 2. Фича не работала в принципе (автор 02.10).</p>
-     *
-     * @param movedByPiston поршневая перестановка НЕ даёт вспышку слияния
-     *                      (вспышка — только при реальном росте игроком)
+     * индексу — индекс не содержит одиночек, поэтому версия 0.3.98 (union
+     * только из проиндексированных клампов соседей) не могла сшить даже два
+     * первых узла: сосед-одиночка был невидим, union = 1, register выходил
+     * по size < 2.</p>
      */
-    public static void onNodeChanged(Level level, BlockPos pos, boolean movedByPiston) {
+    public static void onNodeChanged(Level level, BlockPos pos) {
         if (!(level instanceof ServerLevel server)) return;
         String kind = kindOf(level.getBlockState(pos));
         if (kind == null) return;
 
-        Map<Long, Long> members = MEMBER_ROOT.get(level);
-        Map<Long, Clump> byRoot = BY_ROOT.get(level);
         Set<Long> union = new HashSet<>();
         union.add(pos.asLong());
         Deque<BlockPos> queue = new ArrayDeque<>();
         queue.add(pos);
-        int largestMerged = 0;
         while (!queue.isEmpty()) {
             BlockPos cur = queue.poll();
             for (Direction dir : Direction.values()) {
@@ -140,16 +139,9 @@ public final class NodeClumpIndex {
                 if (!kind.equals(kindOf(level.getBlockState(next)))) continue;
                 union.add(key);
                 queue.add(next);
-                if (members != null && byRoot != null) {
-                    Long root = members.get(key);
-                    if (root != null) {
-                        Clump old = byRoot.get(root);
-                        if (old != null) largestMerged = Math.max(largestMerged, old.size());
-                    }
-                }
             }
         }
-        register(server, union, kind, largestMerged, movedByPiston);
+        register(server, union, kind);
     }
 
     /** Узел удалён (в т.ч. поршнем): кламп без него может расколоться. */
@@ -175,12 +167,18 @@ public final class NodeClumpIndex {
             Set<Long> component = floodWithin(level, min, rest);
             rest.removeAll(component);
             if (component.size() >= 2) {
-                // Пересборка после раскола — всегда молча (вспышка только
-                // на росте игроком в onNodeChanged).
-                register(server, component, kind, component.size(), true);
+                register(server, component, kind);
             } else if (component.size() == 1) {
                 members.remove(component.iterator().next()); // одиночка не индексируется
             }
+        }
+        // 0.3.101: уборка устаревших корней (живой кламп отображает свой
+        // корень сам в себя; пере-корневки поршнем оставляли мусор в BY_ROOT).
+        if (byRoot != null && !byRoot.isEmpty()) {
+            byRoot.keySet().removeIf(r -> {
+                Long self = members.get(r);
+                return self == null || self != r;
+            });
         }
         if (byRoot != null && byRoot.isEmpty()) BY_ROOT.remove(level);
         if (members.isEmpty()) MEMBER_ROOT.remove(level);
@@ -194,40 +192,34 @@ public final class NodeClumpIndex {
 
     // ─────────────────────────── формирование ───────────────────────────
 
-    /** Регистрирует кламп из множества членов; вспышка — рост игроком (не поршнем). */
-    private static void register(ServerLevel level, Set<Long> members, String kind, int largestMerged,
-                                 boolean movedByPiston) {
+    /**
+     * Регистрирует кламп из множества членов.
+     * <p>0.3.101: ИНВАРИАНТ НЕПЕРЕСЕЧЕНИЯ — старые клампы, члены которых вошли
+     * в новый, удаляются из BY_ROOT, и каждый член отображается ровно в новый
+     * корень. Ранее при пере-корневках (поршень унёс min-узел) в BY_ROOT
+     * оставались устаревшие клампы с растущими множествами — HUD-счётчик у
+     * автора рос «экспоненциально» (492023 на 5×5×5). Визуал (вспышка/HUD-
+     * счётчик) убран по решению автора 02.10 — «главное чтобы не было
+     * мёртвого кода»; кламп виден по числам потерь на ключе.</p>
+     */
+    private static void register(ServerLevel level, Set<Long> members, String kind) {
         if (members.size() < 2) return;
 
-        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
         long root = Long.MAX_VALUE;
-        for (long key : members) {
-            root = Math.min(root, key);
-            BlockPos p = BlockPos.of(key);
-            minX = Math.min(minX, p.getX()); maxX = Math.max(maxX, p.getX());
-            minY = Math.min(minY, p.getY()); maxY = Math.max(maxY, p.getY());
-            minZ = Math.min(minZ, p.getZ()); maxZ = Math.max(maxZ, p.getZ());
-        }
-        // Плоская потеря = perCell × N ВСЕХ членов (уточнение автора 02.10:
-        // «кламп влияет на цепь как сумма членов»: 1×1×3 → 0.66 GTH,
-        // 5×5×5 → 125 × 0.22 = 27.5 GTH). Габарит остался только для центра вспышки.
-        int lossCells = members.size();
-        long lossMilli = lossMilliFor(kind, lossCells);
-        BlockPos center = new BlockPos((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+        for (long key : members) root = Math.min(root, key);
+        // Плоская потеря = perCell × N ВСЕХ членов (автор 02.10: «кламп влияет
+        // на цепь как сумма членов»: 1×1×3 → 0.66 GTH, 5×5×5 → 27.5 GTH).
+        long lossMilli = lossMilliFor(kind, members.size());
 
         Map<Long, Long> members2root = MEMBER_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>());
-        for (long key : members) members2root.put(key, root);
-        BY_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>())
-            .put(root, new Clump(root, members.size(), lossMilli, center, members));
-
-        // Вспышка слияния — только при реальном росте И не от поршня
-        // (поршневой перенос узла внутри клампа перестраивает его молча).
-        if (!movedByPiston && members.size() > largestMerged) {
-            level.sendParticles(new DustParticleOptions(0xBFD8FF, 1.0F),
-                center.getX() + 0.5, center.getY() + 0.5, center.getZ() + 0.5,
-                Math.min(24, members.size()), 1.2, 0.6, 1.2, 0.01);
+        Map<Long, Clump> byRoot = BY_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>());
+        // Инвариант: пересекаемые старые клампы съедены новым.
+        for (long key : members) {
+            Long oldRoot = members2root.get(key);
+            if (oldRoot != null && oldRoot != root) byRoot.remove(oldRoot);
         }
+        for (long key : members) members2root.put(key, root);
+        byRoot.put(root, new Clump(root, lossMilli, members));
     }
 
     /** Флуд по чужим/чужеродным блокам не идёт: шагаем только по членам набора. */
