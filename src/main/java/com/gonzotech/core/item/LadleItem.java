@@ -172,7 +172,7 @@ public final class LadleItem extends Item implements CarrierItem {
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
                                                 Slot slot, ClickAction action, Player player,
-                                                net.minecraft.world.inventory.SlotAccess cursor) {
+                                                net.minecraft.world.entity.SlotAccess cursor) {
         if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
             return false;
         }
