@@ -256,6 +256,7 @@
   "block.gonzotech.first_item_filter": "Item Filter",
   "block.gonzotech.first_item_scavenger": "Item Scavenger",
   "item.gonzotech.wrench": "Wrench",
+  "hud.gonzotech.wrench_clump": " · merged nodes: %s",
   "hud.gonzotech.wrench_pipe": "%s — mode: %s",
   "hud.gonzotech.wrench_pipe_flow": "%s: %s  %s: %s",
   "hud.gonzotech.wrench_node_flow": "flow: %s",

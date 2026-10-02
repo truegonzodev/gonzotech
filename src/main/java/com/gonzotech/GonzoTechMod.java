@@ -78,6 +78,7 @@ public class GonzoTechMod {
             com.gonzotech.machines.network.FlowTracker.clearAll();
             com.gonzotech.machines.network.ItemFlowTracker.clearAll();
             com.gonzotech.machines.network.UniversalNodeComparator.clearAll();
+            com.gonzotech.machines.network.NodeClumpIndex.clearAll();
             com.gonzotech.machines.network.PipeFlowLedger.clearAll();
             com.gonzotech.machines.turbine.TurbineStructure.clearAll();
             com.gonzotech.machines.steamgen.SteamGenStructure.clearAll();

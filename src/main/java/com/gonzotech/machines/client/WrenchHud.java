@@ -63,6 +63,7 @@ public final class WrenchHud {
         long pos3d;
         long neg3d;
         long lossMilli;
+        int clumpSize;
         long clientTick;
     }
 
@@ -157,6 +158,7 @@ public final class WrenchHud {
         e.pos3d = payload.posAmount();
         e.neg3d = payload.negAmount();
         e.lossMilli = payload.lossMilli();
+        e.clumpSize = payload.clumpSize();
         e.clientTick = clientTick;
     }
 
@@ -218,6 +220,17 @@ public final class WrenchHud {
         g.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
 
         int lineY = y + font.lineHeight + 1;
+
+        // 0.3.98: сшитый кламп — серверный размер в ответе потока. Визуальное
+        // подтверждение «узлы реально объединились» (второй сигнал — вспышка
+        // при слиянии).
+        FlowEntry entry = flowByType.get(part.ordinal());
+        if (entry != null && entry.clumpSize > 0 && clientTick - entry.clientTick <= FLOW_STALE_TICKS) {
+            Component merged = Component.translatable("hud.gonzotech.wrench_clump", entry.clumpSize)
+                .withStyle(ChatFormatting.GRAY);
+            g.drawString(font, merged, (screenW - font.width(merged)) / 2, lineY, 0xFFFFFF, true);
+            lineY += font.lineHeight + 1;
+        }
 
         // Предметная труба: показываем поток ПО ПРЕДМЕТАМ («Булыжник — 16/т»).
         if (part == PipeType.ITEM) {

@@ -41,6 +41,8 @@ real_files = [
     NET / "PipeFlowLedger.java",
     NET / "FlowTracker.java",
     ROOT / "src/main/java/com/gonzotech/core/registry/ModParticles.java",
+    NET / "NodeClumpIndex.java",
+    NET / "SecondTierPipe.java",
     NET / "ItemRouting.java",
     NET / "ItemFlowTracker.java",
 ]

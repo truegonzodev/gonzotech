@@ -438,6 +438,10 @@ public final class PipeRouting {
             if (path == null) continue;
             for (PathStep s : path) {
                 long key = s.pipe().asLong();
+                // 0.3.98: позиции сшитого клампа НЕ капируют закон (внутри
+                // безлимит ×N членов; границу капируют реальные трубы) —
+                // член просто не попадает в индекс пересечений.
+                if (NodeClumpIndex.isMember(level, s.pipe())) continue;
                 rem0.putIfAbsent(key,
                     PipeFlowLedger.remaining(level, s.pipe(), level.getBlockState(s.pipe()), type));
                 usage.putIfAbsent(key, 0L);
@@ -604,10 +608,23 @@ public final class PipeRouting {
         if (path == null || path.isEmpty()) return new long[0];
         if (type != PipeType.WIRE && type != PipeType.HEAT) return new long[0];
         long[] perCell = new long[path.size()];
+        Set<Long> clumpsSeen = null;
         for (int i = 0; i < path.size(); i++) {
             BlockState st = level.getBlockState(path.get(i).pipe());
             if (!(st.getBlock() instanceof PipeCarrier c) || !c.carries(st, type)) continue;
             if (st.getBlock() instanceof UniversalNodeBlock) continue;
+            // 0.3.98: клетка-член клампа сама не теряет; кламп платит ПЛОСКУЮ
+            // потерю максимум-направления ОДИН раз за проход — вписываем её в
+            // клетку первого входа дорожки в этот кламп (массив выровнен по
+            // пути, кумулятивная подсказка «(+N)» считается корректно).
+            long root = NodeClumpIndex.rootOf(level, path.get(i).pipe());
+            if (root != 0L) {
+                if (clumpsSeen == null) clumpsSeen = new HashSet<>();
+                if (clumpsSeen.add(root)) {
+                    perCell[i] = NodeClumpIndex.lossMilliOfRoot(level, root);
+                }
+                continue;
+            }
             perCell[i] = PipeLoss.perCell(st.getBlock() instanceof SecondTierPipe, type == PipeType.HEAT);
         }
         return perCell;

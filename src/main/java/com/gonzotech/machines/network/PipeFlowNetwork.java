@@ -62,7 +62,7 @@ public final class PipeFlowNetwork {
      * {@code posAmount} — суммарный поток через все грани, {@code negAmount}=0.
      */
     public record FlowPayload(BlockPos pos, int typeId, int axis3d, long posAmount, long negAmount,
-                              long lossMilli) implements CustomPacketPayload {
+                              long lossMilli, int clumpSize) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<FlowPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_flow"));
 
@@ -74,6 +74,7 @@ public final class PipeFlowNetwork {
                 ByteBufCodecs.VAR_LONG, FlowPayload::posAmount,
                 ByteBufCodecs.VAR_LONG, FlowPayload::negAmount,
                 ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,
+                ByteBufCodecs.VAR_INT, FlowPayload::clumpSize,
                 FlowPayload::new);
 
         @Override
@@ -271,7 +272,8 @@ public final class PipeFlowNetwork {
             long sum = 0;
             for (long v : flow) sum += v;
             PacketDistributor.sendToPlayer(player,
-                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType)));
+                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType),
+                    NodeClumpIndex.sizeAt(level, pos)));
             return;
         }
 
@@ -287,7 +289,7 @@ public final class PipeFlowNetwork {
         long negAmount = flow[negDir.get3DDataValue()];
 
         PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, axis.ordinal(), posAmount, negAmount,
-            FlowTracker.getLoss(level, pos, pipeType)));
+            FlowTracker.getLoss(level, pos, pipeType), NodeClumpIndex.sizeAt(level, pos)));
     }
 
     /** Отвечает на запрос потока ПРЕДМЕТОВ в предметной трубе (топ по количеству). */

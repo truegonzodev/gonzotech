@@ -53,6 +53,21 @@ public class NodeBlock extends PipeBlock {
             .setValue(WATERLOGGED, fluid.getType() == Fluids.WATER);
     }
 
+    // 0.3.98: смежные узлы одного рода/тира сшиваются в кламп (NodeClumpIndex).
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!state.is(oldState.getBlock())) {
+            NodeClumpIndex.onNodeChanged(level, pos);
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        NodeClumpIndex.onNodeRemoved(level, pos, state);
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
     // Полный куб (перебиваем тонкую форму трубы из PipeBlock).
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
