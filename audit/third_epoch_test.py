@@ -82,6 +82,14 @@ mm_t = (SRC / "machines/registry/ModMachines.java").read_text()  # матери�
 pin(mm_t.count("material(net.minecraft.world.level.block.SoundType.METAL, 1.5F, 6.0F)") == 2,
     "поршни: material(METAL,1.5,6.0) ×2")
 
+# 0.3.112: ванильный codec() поршня объявлен ТОЧНЫМ MapCodec<PistonBaseBlock> —
+# возврат «? extends» не компилируется у автора (лов сборки 0.3.110)
+stub_pb = Path("audit/stubs/net/minecraft/world/level/block/piston/PistonBaseBlock.java").read_text()
+pin("public MapCodec<PistonBaseBlock> codec()" in stub_pb, "стаб: точный тип codec()")
+for f, nm in ((SRC / "machines/block/ThirdPistonBlock.java", "обычный"),
+              (SRC / "machines/block/ThirdStickyPistonBlock.java", "липкий")):
+    pin("public MapCodec<PistonBaseBlock> codec()" in f.read_text(), f"codec() точный тип: {nm}")
+
 # ── 7. Универсальная труба: переносит все среды; узел 0.88 (0.91 тир-II не тронут) ──
 up = (SRC / "machines/network/ThirdUniversalPipeBlock.java").read_text()
 pin("return true" in up, "уни-труба carries() = true")
