@@ -100,6 +100,8 @@ public final class ItemToxicity {
 
     /** Токсичность стака: per-item × count (как у радиации, п.3). */
     public static double toxicityOfStack(ItemStack stack) {
+        // Носитель (щипцы/ковш, 0.3.79): токсичность содержимого −80 %.
+        if (stack.getItem() instanceof CarrierItem carrier) return carrier.carriedToxicity(stack);
         double per = toxicityPerItem(stack);
         return per <= 0.0 ? 0.0 : per * stack.getCount();
     }

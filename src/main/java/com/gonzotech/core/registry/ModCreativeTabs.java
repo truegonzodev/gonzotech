@@ -58,6 +58,10 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SOLAR_WATCH.get());
                 output.accept(ModItems.UV_METER.get());
                 output.accept(ModItems.SPEEDOMETER.get());
+                // Щипцы и ковш (0.3.79) — инструменты безопасного обращения с
+                // опасными предметами/жидкостями: рядом с приборами безопасности.
+                output.accept(ModItems.TONGS.get());
+                output.accept(ModItems.LADLE.get());
                 ModItems.DISCOVERY_ITEMS.forEach(item -> output.accept(item.get()));
 
                 // Фаза 2 — паровая ветка энергетики.

@@ -25,6 +25,11 @@ public class FuelSlot extends Slot {
 
     @Override
     public boolean mayPlace(ItemStack stack) {
+        // Щипцы/ковш проходят по содержимому (0.3.79).
+        if (stack.getItem() instanceof com.gonzotech.radiation.CarrierItem carrier
+                && carrier.hasCarried(stack)) {
+            return mayPlace(carrier.previewCarried(stack));
+        }
         Level level = playerInv.player.level();
         if (level instanceof ServerLevel server) {
             return stack.getBurnTime(RecipeType.SMELTING, server.fuelValues()) > 0;

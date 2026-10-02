@@ -1,5 +1,6 @@
 package com.gonzotech.machines.block.entity;
 
+import com.gonzotech.radiation.CarrierItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -67,6 +68,29 @@ public abstract class BaseMachineBlockEntity extends BlockEntity implements Cont
 
     @Override
     public void setItem(int slot, ItemStack stack) {
+        // Щипцы/ковш в слоте станка (0.3.79, EPOCH3-BASE §2.8): содержимое
+        // появляется В ЭТОМ слоте, носитель выпадает на землю возле блока.
+        if (level != null && !level.isClientSide()
+                && stack.getItem() instanceof CarrierItem carrier && carrier.hasCarried(stack)) {
+            ItemStack content = carrier.previewCarried(stack);
+            ItemStack current = items.get(slot);
+            boolean fits = current.isEmpty()
+                || (ItemStack.isSameItemSameComponents(current, content)
+                    && current.getCount() + content.getCount() <= current.getMaxStackSize());
+            if (fits) {
+                carrier.takeCarried(stack);
+                if (current.isEmpty()) {
+                    items.set(slot, content);
+                } else {
+                    current.grow(content.getCount());
+                }
+                net.minecraft.world.Containers.dropItemStack(level,
+                    worldPosition.getX() + 0.5, worldPosition.getY() + 0.5,
+                    worldPosition.getZ() + 0.5, stack);
+                setChanged();
+                return;
+            }
+        }
         items.set(slot, stack);
         if (stack.getCount() > getMaxStackSize()) {
             stack.setCount(getMaxStackSize());

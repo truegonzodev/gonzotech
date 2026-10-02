@@ -116,6 +116,9 @@ public final class RadSources {
 
     /** Суммарная пресетная эмиссия стака: per-item × count (автор п.3). */
     public static double emissionOfStack(ItemStack stack) {
+        // Носитель (щипцы/ковш, 0.3.79): эмиссия содержимого −40 % — все суммы
+        // доз и тултипы идут через этот метод, носитель «светится» меньше везде.
+        if (stack.getItem() instanceof CarrierItem carrier) return carrier.carriedEmission(stack);
         double per = emissionPerItem(stack);
         return per <= 0.0 ? 0.0 : per * stack.getCount();
     }

@@ -73,6 +73,11 @@ public final class AlloyFoundryMenu extends BaseMachineMenu {
 
         @Override
         public boolean mayPlace(ItemStack stack) {
+            // Щипцы/ковш проходят по содержимому (0.3.79).
+            if (stack.getItem() instanceof com.gonzotech.radiation.CarrierItem carrier
+                    && carrier.hasCarried(stack)) {
+                return mayPlace(carrier.previewCarried(stack));
+            }
             return backing.canPlaceItem(slotIndex, stack);
         }
     }

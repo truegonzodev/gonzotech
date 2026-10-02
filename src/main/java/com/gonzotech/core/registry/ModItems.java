@@ -30,6 +30,16 @@ public class ModItems {
     public static final DeferredItem<com.gonzotech.core.item.GonzoPaintingItem> GONZO_PAINTING =
         ITEMS.registerItem("gonzo_painting", com.gonzotech.core.item.GonzoPaintingItem::new);
 
+    /** Щипцы (0.3.79): контейнер 64×1, −40 % рад / −80 % токс содержимого. */
+    public static final DeferredItem<com.gonzotech.core.item.TongsItem> TONGS =
+        ITEMS.registerItem("tongs", props -> new com.gonzotech.core.item.TongsItem(
+            props.stacksTo(1)));
+
+    /** Ковш (0.3.79): порция 1000 mB жидкости или ртуть/цезий 64×1. */
+    public static final DeferredItem<com.gonzotech.core.item.LadleItem> LADLE =
+        ITEMS.registerItem("ladle", props -> new com.gonzotech.core.item.LadleItem(
+            props.stacksTo(1)));
+
     /** ore id -> (host -> BlockItem этого host-варианта). */
     public static final Map<String, Map<Host, DeferredItem<BlockItem>>> ORE_BLOCK_ITEMS = new LinkedHashMap<>();
 
