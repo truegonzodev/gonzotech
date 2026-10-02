@@ -19,6 +19,11 @@ public class ThirdLeadChestMenu extends BaseMachineMenu {
         this(id, inv, MenuHelper.readBlockEntity(inv, buf, ThirdLeadChestBlockEntity.class), new SimpleContainerData(0));
     }
 
+    /** Прямой конструктор для createMenu блок-сущности (пин гейта: пара конструкторов). */
+    public ThirdLeadChestMenu(int id, Inventory inv, ThirdLeadChestBlockEntity be) {
+        this(id, inv, be, new SimpleContainerData(0));
+    }
+
     public ThirdLeadChestMenu(int id, Inventory inv, ThirdLeadChestBlockEntity be, ContainerData data) {
         super(ModMenus.THIRD_LEAD_CHEST.get(), id, be, data, CHEST_SLOTS);
         for (int i = 0; i < CHEST_SLOTS; i++) {

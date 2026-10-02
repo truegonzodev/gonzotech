@@ -47,6 +47,13 @@ pin("new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8}" in be, "автоматизация: �
 # ── 3. Меню/экран/регистрации ──
 m = (SRC / "machines/menu/ThirdLeadChestMenu.java").read_text()
 pin("CHEST_SLOTS = 9" in m, "меню: один ряд")
+# 0.3.113 (лов сборки 0.3.111): createMenu зовёт ПРЯМОЙ конструктор (id, inv, be) —
+# сетевой (id, inv, buf) нужен только IMenuTypeExtension; пара должна существовать вся
+pin("new ThirdLeadChestMenu(id, inventory, this)" in be, "createMenu: прямой вызов")
+pin("public ThirdLeadChestMenu(int id, Inventory inv, ThirdLeadChestBlockEntity be)" in m,
+    "прямой конструктор (id, inv, be) существует")
+pin("public ThirdLeadChestMenu(int id, Inventory inv, RegistryFriendlyByteBuf buf)" in m,
+    "сетевой конструктор (id, inv, buf) существует")
 s = (SRC / "machines/client/LeadChestScreen.java").read_text()
 pin("lead_chest_gui_bg.png" in s and "lead_chest_gui.png" in s, "свои GUI-текстуры")
 mc = (SRC / "machines/client/MachineClient.java").read_text()
