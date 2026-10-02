@@ -5,6 +5,7 @@ import com.gonzotech.machines.block.TurbinePartBlock;
 import com.gonzotech.machines.block.TurbineRotorBlock;
 import com.gonzotech.machines.block.entity.TurbineRotorBlockEntity;
 import com.gonzotech.machines.energy.MachineDefs;
+import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.network.NodeClumpIndex;
 import com.gonzotech.machines.network.PipeCarrier;
@@ -126,13 +127,20 @@ public final class TurbineStructure {
         return level instanceof ServerLevel server && controllerAt(server, pos) != null;
     }
 
-    /** Реальный предел встроенного wire-порта (обычный wire=38, universal=34.2 GTU/t). */
+    /**
+     * Реальный предел встроенного wire-порта (обычный wire=38, universal=34.2 GTU/t).
+     * <p>0.3.108 (логика автора): кап порта — закон СТРУКТУРЫ, а не узла: порт
+     * не может отдать больше пропускной способности провода своего типа, какой
+     * бы «толстый» узел его ни изображал (будущий мега-узел не прокачает через
+     * порт больше трубы).</p>
+     */
     public static long outputPortLimit(Level level, BlockPos port) {
         BlockState state = level.getBlockState(port);
         if (!isWirePort(state) || !(state.getBlock() instanceof PipeCarrier carrier)) return 0;
         long base = carrier.throughputLimit(state, PipeType.WIRE);
         double factor = carrier.throughputFactor(state, PipeType.WIRE);
-        return factor < 1.0D ? Math.max(1L, (long) Math.floor(base * factor)) : base;
+        long nodeLimit = factor < 1.0D ? Math.max(1L, (long) Math.floor(base * factor)) : base;
+        return Math.min(nodeLimit, SecondTierDefs.WIRE_THROUGHPUT);
     }
 
     /** Восстановление transient-индекса после загрузки мира; вызывается единожды контроллером. */

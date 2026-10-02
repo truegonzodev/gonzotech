@@ -65,6 +65,8 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     private long intakeLedgerTick = Long.MIN_VALUE;
     private int acceptedWaterThisTick;
     private long acceptedGthMilliThisTick;
+    /** 0.3.108: приём GTH по портам за тик (кап порта = закон трубы). */
+    private final java.util.Map<Long, Long> acceptedGthPerPort = new java.util.HashMap<>();
     private long outputLedgerTick = Long.MIN_VALUE;
     private int sentSteamThisTick;
     private int outputPortCursor;
@@ -251,14 +253,24 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         return accepted;
     }
 
-    /** Приём GTH из виртуального endpoint-а конкретного встроенного теплового порта. */
+    /**
+     * Приём GTH из виртуального endpoint-а конкретного встроенного теплового порта.
+     * <p>0.3.108 (логика автора): кап НА ПОРТ — закон структуры (пропускная
+     * способность теплотрубы), не узла: будущий мега-узел не сможет влить в
+     * порт больше трубы. Вода/пар уже пулами структуры (fluidIOLimit /
+     * maxSteamIntake) — там закон и так машинный.</p>
+     */
     public long receiveGthFromPort(BlockPos port, long amount, boolean simulate) {
         if (!isFormedController() || !heatPortSet.contains(port.asLong()) || amount <= 0) return 0;
         resetIntakeLedger();
-        long remain = gth.space() == null ? Long.MAX_VALUE : gth.space().longValue();
+        long space = gth.space() == null ? Long.MAX_VALUE : gth.space().longValue();
+        long perPort = com.gonzotech.machines.energy.SecondTierDefs.HEAT_THROUGHPUT
+            - acceptedGthPerPort.getOrDefault(port.asLong(), 0L);
+        long remain = Math.min(space, Math.max(0, perPort));
         long accepted = gth.receive(Math.min(amount, remain), simulate);
         if (!simulate && accepted > 0) {
             acceptedGthMilliThisTick += accepted;
+            acceptedGthPerPort.merge(port.asLong(), accepted, Long::sum);
             setChanged();
         }
         return accepted;
@@ -270,6 +282,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
             intakeLedgerTick = tick;
             acceptedWaterThisTick = 0;
             acceptedGthMilliThisTick = 0L;
+            acceptedGthPerPort.clear(); // 0.3.108: пер-портовые капы — за тик
         }
     }
 

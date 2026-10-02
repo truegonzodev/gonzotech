@@ -355,7 +355,9 @@ public final class RadiationSystem {
     private static void scanContainersInto(ServerLevel level, long chunkKey, ChunkRadiationData data) {
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
         double found = 0.0;
-        found += scanDroppedItemsInto(level, chunkKey);
+        double[] drops = scanDroppedItemsInto(level, chunkKey); // [россыпь, блоки]
+        found += drops[0];
+        double placedLike = drops[1];
         for (BlockEntity be : chunk.getBlockEntities().values()) {
             if (be instanceof Container container) {
                 double mine = 0.0;
@@ -369,10 +371,14 @@ public final class RadiationSystem {
                 found += mine;
             }
         }
-        if (found > 0.0) {
+        // 0.3.108: блоки на полу/в рамках — полной ставкой (как поставленные),
+        // россыпь — ставкой CHEST_TO_CHUNK_RATE; корriesha (1 − contam/target)
+        // сохранена для обеих частей.
+        double target = found * CHEST_TO_CHUNK_RATE + placedLike;
+        if (target > 0.0) {
             double contam = data.contaminationOf(chunkKey);
-            if (contam < found) {
-                data.addContamination(chunkKey, found * CHEST_TO_CHUNK_RATE * (1.0 - contam / found));
+            if (contam < target) {
+                data.addContamination(chunkKey, target * (1.0 - contam / target));
             }
         }
     }
@@ -384,24 +390,42 @@ public final class RadiationSystem {
      * вместе со сканом контейнеров). Ставка та же, что у россыпи в сундуке
      * (CHEST_TO_CHUNK_RATE): экранирования у лежащего предмета нет.
      */
-    private static double scanDroppedItemsInto(ServerLevel level, long chunkKey) {
+    private static double[] scanDroppedItemsInto(ServerLevel level, long chunkKey) {
         int cx = ChunkPos.getX(chunkKey);
         int cz = ChunkPos.getZ(chunkKey);
         net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(
             cx << 4, level.getMinY(), cz << 4,
             (cx << 4) + 16, level.getMinY() + level.getHeight(), (cz << 4) + 16);
-        double mine = 0.0;
+        double[] mine = new double[2]; // [россыпь, блоки-как-поставленные]
         for (net.minecraft.world.entity.item.ItemEntity drop
                 : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box,
                     e -> !e.getItem().isEmpty())) {
-            mine += RadSources.emissionDeep(drop.getItem());
+            classifyFloorStack(drop.getItem(), mine);
         }
         for (net.minecraft.world.entity.decoration.ItemFrame frame
                 : level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box,
                     e -> !e.getItem().isEmpty())) {
-            mine += RadSources.emissionDeep(frame.getItem());
+            classifyFloorStack(frame.getItem(), mine);
         }
         return mine;
+    }
+
+    /**
+     * 0.3.108 (автор): блочный предмет радиоактивного блока (радий и т.п.),
+     * лежащий на полу или вставленный в рамку, фонит на чанк КАК ПОСТАВЛЕННЫЙ
+     * БЛОК — полной эмиссией блока, без ставки россыпи («нужно поведение
+     * именно второго варианта»). Неблочные предметы (пыль/слитки) — как
+     * раньше: emissionDeep и ставка россыпи у вызывающего.
+     */
+    private static void classifyFloorStack(net.minecraft.world.item.ItemStack stack, double[] out) {
+        if (stack.getItem() instanceof net.minecraft.world.item.BlockItem bi) {
+            double be = blockEmission(bi.getBlock());
+            if (be > 0.0) {
+                out[1] += be * stack.getCount();
+                return;
+            }
+        }
+        out[0] += RadSources.emissionDeep(stack);
     }
 
     // ═══════════════════════ выход из игры: чистим карты ═══════════════════════

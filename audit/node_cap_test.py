@@ -52,4 +52,13 @@ assert "ports.addAll(build.wirePorts);" in turbine
 assert "NodeClumpIndex.detachPorts(level, ports);" in steamgen
 assert "ports.addAll(build.heatPorts);" in steamgen
 
-print("node cap wiring passed (turbine<=8, steamgen<=10, ports out of flood, ports not nodes)")
+# ── 0.3.108: кап порта = закон СТРУКТУРЫ (труба), не узла ──
+# (будущий мега-узел не прокачает через порт больше трубы своего типа)
+assert "return Math.min(nodeLimit, SecondTierDefs.WIRE_THROUGHPUT);" in turbine
+assert "return Math.min(nodeLimit, SecondTierDefs.STEAM_THROUGHPUT);" in steamgen
+sgbe = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/SteamGenCoreBlockEntity.java").read_text()
+assert "com.gonzotech.machines.energy.SecondTierDefs.HEAT_THROUGHPUT" in sgbe
+assert "acceptedGthPerPort.getOrDefault(port.asLong(), 0L)" in sgbe
+assert "acceptedGthPerPort.clear(); // 0.3.108: пер-портовые капы — за тик" in sgbe
+
+print("node cap wiring passed (turbine<=8, steamgen<=10, ports out of flood, ports not nodes, port cap = pipe law)")

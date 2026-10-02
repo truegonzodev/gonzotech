@@ -4,6 +4,7 @@ import com.gonzotech.machines.block.SteamGenCasingBlock;
 import com.gonzotech.machines.block.SteamGenCoreBlock;
 import com.gonzotech.machines.block.entity.SteamGenCoreBlockEntity;
 import com.gonzotech.machines.energy.MachineDefs;
+import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.energy.Transfer;
 import com.gonzotech.machines.network.NodeClumpIndex;
 import com.gonzotech.machines.network.PipeCarrier;
@@ -129,12 +130,18 @@ public final class SteamGenStructure {
     }
 
     /** Реальный предел встроенного парового порта (норма 1000 mB/t, универсальный узел — ×0.9). */
+    /**
+     * Предел встроенного парового порта. 0.3.108 (логика автора): кап порта —
+     * закон СТРУКТУРЫ (пропускная способность паровой трубы), не узла —
+     * будущий мега-узел не прокачает через порт больше трубы.
+     */
     public static long steamPortLimit(Level level, BlockPos port) {
         BlockState state = level.getBlockState(port);
         if (!isSteamPort(state) || !(state.getBlock() instanceof PipeCarrier carrier)) return 0;
         long base = carrier.throughputLimit(state, PipeType.STEAM);
         double factor = carrier.throughputFactor(state, PipeType.STEAM);
-        return factor < 1.0D ? Math.max(1L, (long) Math.floor(base * factor)) : base;
+        long nodeLimit = factor < 1.0D ? Math.max(1L, (long) Math.floor(base * factor)) : base;
+        return Math.min(nodeLimit, SecondTierDefs.STEAM_THROUGHPUT);
     }
 
     /** Восстановление transient-индекса после загрузки мира; вызывается единожды контроллером. */

@@ -41,10 +41,18 @@ assert "be.litTime--;" in firebox
 
 # ── 4) радиация пола и рамок ──
 assert "scanDroppedItemsInto(level, chunkKey)" in rad
+# 0.3.108: блочные предметы на полу/в рамках фонят КАК ПОСТАВЛЕННЫЙ БЛОК
+# (полная эмиссия блока, без ставки россыпи) — по решению автора
+assert "private static double[] scanDroppedItemsInto(ServerLevel level, long chunkKey)" in rad
+assert "private static void classifyFloorStack(" in rad
+assert "double be = blockEmission(bi.getBlock());" in rad
+assert "out[1] += be * stack.getCount();" in rad
+assert "double target = found * CHEST_TO_CHUNK_RATE + placedLike;" in rad
 assert "ItemEntity.class, box," in rad
 assert "ItemFrame.class, box," in rad
-assert "RadSources.emissionDeep(drop.getItem())" in rad
-assert "RadSources.emissionDeep(frame.getItem())" in rad
+# 0.3.108: вызовы emissionDeep ушли в classifyFloorStack (пол/рамки: блоки —
+# полной ставкой, остальное — россыпью)
+assert "out[0] += RadSources.emissionDeep(stack);" in rad
 assert "level.getMinY(), cz << 4," in rad                            # AABB чанка
 
 # ── 5) portPlaced: один seed вместо 7 (сборка узлов-кандидатов роняла сервер) ──
