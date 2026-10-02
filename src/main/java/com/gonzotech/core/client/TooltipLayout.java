@@ -1,7 +1,6 @@
 package com.gonzotech.core.client;
 
 import com.gonzotech.core.registry.ModCreativeTabs;
-import com.gonzotech.radiation.ItemRadioactivity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
@@ -17,31 +16,33 @@ public final class TooltipLayout {
 
     private TooltipLayout() {}
 
-    /** Restore the creative-tab line when NBT makes vanilla's tab membership
-     * check miss the otherwise identical item stack. */
+    /** Restore the creative-tab line when drifted NBT (наведёнка, содержимое
+     * носителей) makes vanilla's component-sensitive tab membership check miss
+     * the otherwise identical item stack.
+     *
+     * <p>0.3.88 (автор 04.10): вмешиваемся ТОЛЬКО когда ваниль свою строку НЕ
+     * добавит — точное сравнение компонентов с витринным стаком. Раньше
+     * (гейты по наведёнке/носителям) свежие предметы получали дубль: ваниль
+     * добавляла свою строку, а мы ещё одну. Пустая строка-сепаратор после
+     * таба убрана: по ГОСТ лора лор идёт сразу под табом (её инжект и сдвигал
+     * лор на строку вниз при появлении дозы).</p> */
     public static void ensureCreativeCategory(List<Component> tooltip, ItemStack stack, boolean creative) {
-        // Before the first dose vanilla already supplies the category. Only
-        // restore it after gonzo_rad makes vanilla's component-sensitive tab
-        // membership check lose the line.
-        // 0.3.86: носители (щипцы/ковш) меняют NBT при каждом перекладывании —
-        // тот же компонентно-чувствительный промах ванильной проверки таба,
-        // поэтому фикс распространён и на них.
         if (!creative) return;
-        boolean stateful = stack.getItem() instanceof com.gonzotech.radiation.CarrierItem;
-        if (!stateful && ItemRadioactivity.getInduced(stack) <= 0.0) return;
         for (var holder : List.of(ModCreativeTabs.ORES_TAB, ModCreativeTabs.FUNCTIONAL_TAB,
                 ModCreativeTabs.EQUIPMENT_TAB, ModCreativeTabs.BLOCKS_TAB,
                 ModCreativeTabs.COMPONENTS_TAB, ModCreativeTabs.ADAPTATIONS_TAB,
                 ModCreativeTabs.GAGS_TAB)) {
             CreativeModeTab tab = holder.get();
-            if (!tab.getDisplayItems().stream().anyMatch(candidate ->
-                    ItemStack.isSameItem(candidate, stack))) continue;
+            var display = tab.getDisplayItems();
+            if (!display.stream().anyMatch(candidate -> ItemStack.isSameItem(candidate, stack))) continue;
+            // Компоненты совпадают с витринным стаком — ваниль справится сама.
+            if (display.stream().anyMatch(candidate ->
+                    ItemStack.isSameItemSameComponents(candidate, stack))) return;
             String title = tab.getDisplayName().getString();
-            // Remove any vanilla/previously-added copies, then insert exactly
-            // one canonical category line and its one separator.
+            // Убираем случайные копии и вставляем ровно одну каноничную строку
+            // таба; сепаратор не добавляем (ГОСТ: лор сразу под табом).
             tooltip.removeIf(line -> line.getString().equals(title));
             tooltip.add(1, tab.getDisplayName().copy().withStyle(net.minecraft.ChatFormatting.BLUE));
-            tooltip.add(2, Component.empty());
             return;
         }
     }

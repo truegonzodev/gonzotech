@@ -207,7 +207,8 @@ assert "HazmatTooltips" not in ut   # лор хазмата теперь в пр
 pipe = (ROOT / "src/main/java/com/gonzotech/core/client/PipeLossTooltip.java").read_text()
 assert "add(Component.empty())" not in pipe   # лор труб — прямо под именем
 layout = (ROOT / "src/main/java/com/gonzotech/core/client/TooltipLayout.java").read_text()
-assert "instanceof com.gonzotech.radiation.CarrierItem" in layout  # фикс таба и для носителей
+assert "isSameItemSameComponents" in layout          # 0.3.88: вмешиваемся только при расхождении
+assert 'tooltip.add(2, Component.empty())' not in layout  # сепаратора после таба больше нет (ГОСТ)
 
 # ── Пины 0.3.87: фулл-гейт Открытие 2, частицы ДП, фиксы компиляции ──
 import json as _json
@@ -225,8 +226,6 @@ assert '"gonzotech:tongs"' in ru and '"gonzotech:ladle"' in ru   # книга + 
 fb = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/FireboxBlockEntity.java").read_text()
 assert "(server.getGameTime() % 20L) < 14L" in fb                # 7/с вместо 10/с
 assert "* 0.48," in fb and "0.0, 0.144, 0.0, 1.0);" in fb        # хаос +20 %, скорость −20 %
-lay = (ROOT / "src/main/java/com/gonzotech/core/client/TooltipLayout.java").read_text()
-assert "com.gonzotech.radiation.CarrierItem" in lay              # правильный пакет (фикс сборки)
 ladle_src = (ROOT / "src/main/java/com/gonzotech/core/item/LadleItem.java").read_text()
 assert "GENERIC_DRINK.value()" in ladle_src                      # Holder.Reference (фикс сборки)
 
