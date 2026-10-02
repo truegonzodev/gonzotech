@@ -118,7 +118,8 @@ public final class TongsItem extends Item implements CarrierItem {
     /** Держат стопку и кликают по щипцам в слоте: положить стопку в щипцы. */
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
-                                                Slot slot, ClickAction action, Player player) {
+                                                Slot slot, ClickAction action, Player player,
+                                                net.minecraft.world.inventory.SlotAccess cursor) {
         if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
             return false;
         }

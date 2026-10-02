@@ -171,7 +171,8 @@ public final class LadleItem extends Item implements CarrierItem {
     /** Держат стопку и кликают по ковшу в слоте: предметы ртути/цезия — внутрь. */
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
-                                                Slot slot, ClickAction action, Player player) {
+                                                Slot slot, ClickAction action, Player player,
+                                                net.minecraft.world.inventory.SlotAccess cursor) {
         if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
             return false;
         }

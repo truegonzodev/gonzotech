@@ -117,6 +117,7 @@ for item in ("TongsItem", "LadleItem"):
     src = (ROOT / f"src/main/java/com/gonzotech/core/item/{item}.java").read_text()
     assert "public boolean overrideStackedOnOther(" in src, item          # boolean, не ClickAction
     assert "public boolean overrideOtherStackedOnMe(" in src, item
+    assert "Player player,\n                                                net.minecraft.world.inventory.SlotAccess cursor)" in src, item  # 6-я параметр SlotAccess (javadoc NF)
     assert "public InteractionResult use(" in src, item                   # 1.21.4: без InteractionResultHolder
     assert "InteractionResultHolder" not in src, item
     assert "import net.minecraft.world.item.component.CustomData;" in src, item
