@@ -69,6 +69,44 @@ public final class ItemRouting {
      *
      * @return сколько предметов суммарно перемещено за этот тик
      */
+    /**
+     * 0.3.96: щит пинг-понга — позиция контейнера → тик последней ВСТАВКИ.
+     * Из контейнера, в который в этом же тике что-то вставили, не тянем: два
+     * соседних узла иначе гоняют один предмет туда-обратно (топка A → топка B →
+     * топка A) с setChanged-штормом и бесконечно грязными чанками — это и были
+     * «лаг-вейвы» автора на куче узлов. Чистится при записи (правило статики).
+     */
+    private static final java.util.Map<Long, Long> LAST_INSERTED = new java.util.HashMap<>();
+
+    private static void noteInserted(long now, BlockPos containerPos) {
+        if (LAST_INSERTED.size() > 256) {
+            long oldest = now - 4L;
+            LAST_INSERTED.values().removeIf(t -> t < oldest);
+        }
+        LAST_INSERTED.put(containerPos.asLong(), now);
+    }
+
+    private static boolean insertedThisTick(long now, BlockPos containerPos) {
+        Long at = LAST_INSERTED.get(containerPos.asLong());
+        return at != null && at == now;
+    }
+
+    /**
+     * 0.3.96: есть ли в источнике хоть один извлекаемый предмет. Раньше BFS
+     * приёмников гонялся на каждую грань КАЖДОГО тика даже для пустых сундуков и
+     * топок — на куче универсальных узлов это тысячи чтений блокстейтов/BE за тик.
+     */
+    static boolean hasExtractableItem(Container src, Direction face) {
+        for (int slot : extractableSlots(src, face)) {
+            ItemStack stack = src.getItem(slot);
+            if (!stack.isEmpty() && canTake(src, slot, stack, face)) return true;
+        }
+        return false;
+    }
+
+    /** 0.3.96: после этого числа посещённых BFS-позиций узел помечается «горячим». */
+    public static final int HOT_NODE_BFS = 128;
+
     public static int tickExtract(Level level, BlockPos pos, BlockState state) {
         if (level.isClientSide()) return 0;
         if (!(state.getBlock() instanceof PipeCarrier carrier)) return 0;
@@ -81,23 +119,39 @@ public final class ItemRouting {
         int perItemCap = Math.max(1, carrier.perItemThroughputLimit(state, T));
         if (budget <= 0) return 0;
 
-        int moved = 0;
+        long now = level.getGameTime();
+
+        // Фаза 1 (0.3.96): собираем грани-источники, где ЕСТЬ что извлекать, и
+        // отсеиваем пинг-понг (вставлено в этот же тик — не тянем обратно).
+        List<Object[]> faces = new ArrayList<>(); // {BlockPos srcPos, Direction srcFace, Container src}
         for (Direction dir : Direction.values()) {
-            if (budget <= 0) break;
             if (!carrier.opensToward(state, T, dir)) continue;
             if (!carrier.modeFor(state, T).acceptsFromMachine()) continue;
 
             BlockPos srcPos = pos.relative(dir);
             // Сторона источника, обращённая к трубе (для WorldlyContainer-доступа).
             Direction srcFace = dir.getOpposite();
+            if (insertedThisTick(now, srcPos)) continue;
             Container src = containerAt(level, srcPos);
             if (src == null) continue;
+            if (!hasExtractableItem(src, srcFace)) continue;
+            faces.add(new Object[]{srcPos, srcFace, src});
+        }
+        if (faces.isEmpty()) return 0;
 
-            // Приёмники собираем один раз на грань (сеть та же на весь тик).
-            List<Sink> sinks = collectSinks(level, pos, srcPos);
-            if (sinks.isEmpty()) continue;
+        // Фаза 2 (0.3.96): ОДИН обход сети на узел за тик (раньше — до шести,
+        // по грани на каждую). Множество приёмников от грани не зависит: BFS
+        // стартует от узла, исключение источника делаем при вставке.
+        List<Sink> sinks = collectSinks(level, pos);
+        if (sinks.isEmpty()) return 0;
 
-            int done = pushItems(level, pos, src, srcFace, sinks, budget, perItemCap);
+        int moved = 0;
+        for (Object[] face : faces) {
+            if (budget <= 0) break;
+            BlockPos srcPos = (BlockPos) face[0];
+            Direction srcFace = (Direction) face[1];
+            Container src = (Container) face[2];
+            int done = pushItems(level, pos, src, srcFace, sinks, srcPos, budget, perItemCap, now);
             moved += done;
             budget -= done;
         }
@@ -115,7 +169,7 @@ public final class ItemRouting {
      * уголь»). Возвращает число перемещённых.
      */
     private static int pushItems(Level level, BlockPos pipePos, Container src, Direction srcFace,
-                                 List<Sink> sinks, int budget, int perItemCap) {
+                                 List<Sink> sinks, BlockPos excludeSrc, int budget, int perItemCap, long now) {
         int moved = 0;
         long rotation = level.getGameTime();
         int n = sinks.size();
@@ -140,9 +194,15 @@ public final class ItemRouting {
                 for (int k = 0; k < n; k++) {
                     int idx = (int) Math.floorMod(rotation + moved + k, n);
                     Sink sink = sinks.get(idx);
+                    // 0.3.96: не льём обратно в источник этой грани (как раньше,
+                    // только источник теперь один на весь BFS) и не вставляем в
+                    // контейнер-источник этой же сети в этом же тике (щит циклов).
+                    if (sink.containerPos().equals(excludeSrc)) continue;
+                    if (insertedThisTick(now, sink.containerPos())) continue;
                     if (insertOne(sink.container, sink.face, one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();
+                        noteInserted(now, sink.containerPos());
                         moved++;
                         perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
@@ -219,7 +279,7 @@ public final class ItemRouting {
     // ─────────────────────────── обход сети (BFS) ───────────────────────────
 
     /** Приёмник и точный маршрут труб, по которому предмет физически был передан. */
-    private record Sink(Container container, Direction face, List<BlockPos> path) {
+    private record Sink(Container container, Direction face, List<BlockPos> path, BlockPos containerPos) {
     }
 
     /**
@@ -228,7 +288,7 @@ public final class ItemRouting {
      * соединения — как в {@link PipeRouting}: труба↔труба по открытым навстречу
      * граням; труба→контейнер, если грань открыта к нему и режим = ОТДАЧА/АВТО.
      */
-    private static List<Sink> collectSinks(Level level, BlockPos startPipe, BlockPos srcPos) {
+    private static List<Sink> collectSinks(Level level, BlockPos startPipe) {
         List<Sink> sinks = new ArrayList<>();
         Set<BlockPos> visited = new HashSet<>();
         Map<Long, BlockPos> parents = new HashMap<>();
@@ -256,12 +316,17 @@ public final class ItemRouting {
                     continue;
                 }
                 // Контейнер за трубой — приёмник, если труба открыта к нему и отдаёт.
-                if (npos.equals(srcPos)) continue;               // не льём обратно в источник
                 if (!opensToward(pstate, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
                 Container c = containerAt(level, npos);
-                if (c != null) sinks.add(new Sink(c, dir.getOpposite(), pathTo(pipe, parents)));
+                if (c != null) sinks.add(new Sink(c, dir.getOpposite(), pathTo(pipe, parents), npos));
             }
+        }
+        // 0.3.96 (автор: предупреждение о дорогом роутинге): огромная сеть узлов
+        // подсвечивается частицей gonzo:hot_pipe даже без дорожек PipeRouting.
+        if (visited.size() >= HOT_NODE_BFS) {
+            PipeFlowWarnings.mark(level, startPipe,
+                level.getGameTime() + PipeFlowWarnings.HOLD_TICKS);
         }
         return sinks;
     }

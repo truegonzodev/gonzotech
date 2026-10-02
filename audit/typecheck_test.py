@@ -41,6 +41,8 @@ real_files = [
     NET / "PipeFlowLedger.java",
     NET / "FlowTracker.java",
     ROOT / "src/main/java/com/gonzotech/core/registry/ModParticles.java",
+    NET / "ItemRouting.java",
+    NET / "ItemFlowTracker.java",
 ]
 for f in real_files:
     assert f.is_file(), f"нет файла сетевого пакета: {f}"

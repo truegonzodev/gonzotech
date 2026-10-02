@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 public abstract class Level {
+    public boolean isClientSide() { return false; }
     public abstract BlockState getBlockState(BlockPos pos);
     public abstract BlockEntity getBlockEntity(BlockPos pos);
     public long getGameTime() { return 0L; }

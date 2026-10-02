@@ -355,6 +355,7 @@ public final class RadiationSystem {
     private static void scanContainersInto(ServerLevel level, long chunkKey, ChunkRadiationData data) {
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
         double found = 0.0;
+        found += scanDroppedItemsInto(level, chunkKey);
         for (BlockEntity be : chunk.getBlockEntities().values()) {
             if (be instanceof Container container) {
                 double mine = 0.0;
@@ -374,6 +375,33 @@ public final class RadiationSystem {
                 data.addContamination(chunkKey, found * CHEST_TO_CHUNK_RATE * (1.0 - contam / found));
             }
         }
+    }
+
+    /**
+     * 0.3.96 (автор): россыпь на полу и предметы в рамках тоже заражали чанк —
+     * сканировались только BlockEntity-контейнеры. ItemEntity и ItemFrame —
+     * сущности, поэтому добираем их отдельным проходом по чанку (раз в секунду,
+     * вместе со сканом контейнеров). Ставка та же, что у россыпи в сундуке
+     * (CHEST_TO_CHUNK_RATE): экранирования у лежащего предмета нет.
+     */
+    private static double scanDroppedItemsInto(ServerLevel level, long chunkKey) {
+        int cx = ChunkPos.getX(chunkKey);
+        int cz = ChunkPos.getZ(chunkKey);
+        net.minecraft.world.phys.AABB box = new net.minecraft.world.phys.AABB(
+            cx << 4, level.getMinY(), cz << 4,
+            (cx << 4) + 16, level.getMinY() + level.getHeight(), (cz << 4) + 16);
+        double mine = 0.0;
+        for (net.minecraft.world.entity.item.ItemEntity drop
+                : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box,
+                    e -> !e.getItem().isEmpty())) {
+            mine += RadSources.emissionDeep(drop.getItem());
+        }
+        for (net.minecraft.world.entity.decoration.ItemFrame frame
+                : level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box,
+                    e -> !e.getItem().isEmpty())) {
+            mine += RadSources.emissionDeep(frame.getItem());
+        }
+        return mine;
     }
 
     // ═══════════════════════ выход из игры: чистим карты ═══════════════════════

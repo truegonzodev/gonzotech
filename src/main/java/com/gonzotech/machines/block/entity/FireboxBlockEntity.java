@@ -326,13 +326,17 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
             // углей). Счёт 0 = точная скорость, а не гауссов разброс.
             // 0.3.87 (автор): частиц −30 % (ровно 7/с вместо 10/с), скорость
             // −20 % (0.18→0.144), хаотичность +20 % (джиттер позиции 0.4→0.48).
-            boolean smoke = (server.getGameTime() & 1L) == 0L && (server.getGameTime() % 20L) < 14L;
-            server.sendParticles(smoke ? ParticleTypes.CAMPFIRE_COSY_SMOKE
-                    : new DustParticleOptions(0x78726B, 1.0F),
-                pos.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.48,
-                pos.getY() + 1.05,
-                pos.getZ() + 0.5 + (server.random.nextDouble() - 0.5) * 0.48,
-                0, 0.0, 0.144, 0.0, 1.0);
+            // 0.3.96 (автор): столб дыма — ТОЛЬКО у доменной печи. Свободная
+            // топка горит без дымового столба (частицы тления убраны вместе с ним).
+            if (be.blastFormed) {
+                boolean smoke = (server.getGameTime() & 1L) == 0L && (server.getGameTime() % 20L) < 14L;
+                server.sendParticles(smoke ? ParticleTypes.CAMPFIRE_COSY_SMOKE
+                        : new DustParticleOptions(0x78726B, 1.0F),
+                    pos.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.48,
+                    pos.getY() + 1.05,
+                    pos.getZ() + 0.5 + (server.random.nextDouble() - 0.5) * 0.48,
+                    0, 0.0, 0.144, 0.0, 1.0);
+            }
             be.litTime--;
             long perTick = be.blastFormed
                 ? (long) MachineDefs.BLAST_FURNACE_GTH_PER_TICK
