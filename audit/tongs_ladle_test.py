@@ -195,4 +195,18 @@ for item in ("TongsItem", "LadleItem"):
     body = src[src.index("appendHoverText"):]
     assert "Component.empty()" in body and body.count("Component.empty()") >= 2, item
 
+# ── Пины 0.3.86: ГОСТ лора (трубы/хазмат) + строка таба для носителей ──
+hax = (ROOT / "src/main/java/com/gonzotech/radiation/HazmatArmorItem.java").read_text()
+assert "extends ArmorItem" in hax and "tooltip.gonzotech.hazmat.set" in hax
+assert "HazmatTooltips.java" not in str(list((ROOT / "src/main/java/com/gonzotech/radiation/client").glob("*.java")))
+moditems = (ROOT / "src/main/java/com/gonzotech/core/registry/ModItems.java").read_text()
+assert moditems.count("new com.gonzotech.radiation.HazmatArmorItem(") == 4
+assert "new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat" not in moditems
+ut = (ROOT / "src/main/java/com/gonzotech/core/client/UniversalTooltip.java").read_text()
+assert "HazmatTooltips" not in ut   # лор хазмата теперь в предмете (до «когда надето»)
+pipe = (ROOT / "src/main/java/com/gonzotech/core/client/PipeLossTooltip.java").read_text()
+assert "add(Component.empty())" not in pipe   # лор труб — прямо под именем
+layout = (ROOT / "src/main/java/com/gonzotech/core/client/TooltipLayout.java").read_text()
+assert "instanceof com.gonzotech.core.item.CarrierItem" in layout  # фикс таба и для носителей
+
 print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB, 1.21.4 signatures, deep scan)")

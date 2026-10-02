@@ -32,7 +32,9 @@ public final class PipeLossTooltip {
         if (type != PipeType.WIRE && type != PipeType.HEAT) return; // жидкости/предметы — без потерь
         long milli = PipeLoss.perCell(block instanceof SecondTierPipe, type == PipeType.HEAT);
         String value = String.format(Locale.ROOT, "%.2f", milli / 1000.0);
-        event.getToolTip().add(Component.empty());
+        // ГОСТ лора (03.10.2026): лор идёт ПРЯМО под именем/креатив-табом,
+        // без ведущего отступа; следующие блоки (экранирование/радиация) несут
+        // свои отступы сами.
         event.getToolTip().add(Component.translatable(
                 type == PipeType.HEAT ? "tooltip.gonzotech.pipe_loss_heat" : "tooltip.gonzotech.pipe_loss",
                 value).withStyle(ChatFormatting.GRAY));

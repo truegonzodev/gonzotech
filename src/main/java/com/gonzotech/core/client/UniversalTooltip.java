@@ -1,7 +1,6 @@
 package com.gonzotech.core.client;
 
 import com.gonzotech.GonzoTechMod;
-import com.gonzotech.radiation.client.HazmatTooltips;
 import com.gonzotech.radiation.client.RadTooltip;
 import com.gonzotech.radiation.client.ShieldingTooltip;
 import net.minecraft.network.chat.Component;
@@ -28,7 +27,6 @@ public final class UniversalTooltip {
         // at the first lore line and are deliberately ordered here.
         MaterialStatTooltips.append(event); // description + metal stats, gated by opening 2
         PipeLossTooltip.append(event);      // block: per-block GTU/GTH losses on wires/heat pipes (0.3.59)
-        HazmatTooltips.append(event);       // item description block
         ShieldingTooltip.append(event);     // block 13, only when factor < 1
         RadTooltip.append(event);           // blocks 14-15, only when present
         TooltipLayout.collapseEmptyRuns(event.getToolTip());

@@ -415,19 +415,19 @@ public class ModItems {
     // ── Хазмат I: маска, фартук, трико, шуфли (автор 22.09) ──
     public static final DeferredItem<Item> HAZMAT_HELMET =
         ITEMS.registerItem("hazmat_helmet", props ->
-            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+            new com.gonzotech.radiation.HazmatArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
                 net.minecraft.world.item.equipment.ArmorType.HELMET, props));
     public static final DeferredItem<Item> HAZMAT_CHESTPLATE =
         ITEMS.registerItem("hazmat_chestplate", props ->
-            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+            new com.gonzotech.radiation.HazmatArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
                 net.minecraft.world.item.equipment.ArmorType.CHESTPLATE, props));
     public static final DeferredItem<Item> HAZMAT_LEGGINGS =
         ITEMS.registerItem("hazmat_leggings", props ->
-            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+            new com.gonzotech.radiation.HazmatArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
                 net.minecraft.world.item.equipment.ArmorType.LEGGINGS, props));
     public static final DeferredItem<Item> HAZMAT_BOOTS =
         ITEMS.registerItem("hazmat_boots", props ->
-            new net.minecraft.world.item.ArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
+            new com.gonzotech.radiation.HazmatArmorItem(com.gonzotech.radiation.Hazmat.HAZMAT_MATERIAL,
                 net.minecraft.world.item.equipment.ArmorType.BOOTS, props));
 
     /** Части хазмата в порядке слотов HEAD, CHEST, LEGS, FEET — для подсчёта сета. */
