@@ -256,6 +256,7 @@
   "block.gonzotech.first_item_filter": "Фильтр предметов",
   "block.gonzotech.first_item_scavenger": "Отсеиватель",
   "item.gonzotech.wrench": "Гаечный ключ",
+  "hud.gonzotech.wrench_clump": " · сшито узлов: %s",
   "hud.gonzotech.wrench_pipe": "%s — режим: %s",
   "hud.gonzotech.wrench_pipe_flow": "%s: %s  %s: %s",
   "hud.gonzotech.wrench_node_flow": "поток: %s",

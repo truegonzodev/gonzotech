@@ -62,7 +62,7 @@ public final class PipeFlowNetwork {
      * {@code posAmount} — суммарный поток через все грани, {@code negAmount}=0.
      */
     public record FlowPayload(BlockPos pos, int typeId, int axis3d, long posAmount, long negAmount,
-                              long lossMilli) implements CustomPacketPayload {
+                              long lossMilli, int clumpSize) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<FlowPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_flow"));
 
@@ -74,6 +74,7 @@ public final class PipeFlowNetwork {
                 ByteBufCodecs.VAR_LONG, FlowPayload::posAmount,
                 ByteBufCodecs.VAR_LONG, FlowPayload::negAmount,
                 ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,
+                ByteBufCodecs.VAR_INT, FlowPayload::clumpSize,
                 FlowPayload::new);
 
         @Override
@@ -265,21 +266,23 @@ public final class PipeFlowNetwork {
 
         long[] flow = FlowTracker.get(level, pos, pipeType);
 
-        // 0.3.101: hover ЛЮБОГО члена клампа показывает потоки ВСЕГО клампа —
-        // члены сами ничего не капируют и FlowTracker на себе не держат.
-        // Считаем только граничные выходы (сосед вне клампа): внутренние грани
-        // не дюпают транзит. Потери — плоские клампа (perCell × N).
+        // 0.3.102: hover ЛЮБОГО члена клампа показывает поток ВСЕГО клампа.
+        // 0.3.101 считал сумму ГРАНИЧНЫХ граней — а в главном кейсе (порт
+        // парогенератора = сам узел клампа) путь заканчивается ВНУТРИ клампа,
+        // граничных записей нет вовсе, и поток «пропадал» (репорт автора
+        // 02.10). Сохранение потока: каждый член НА пути несёт весь транзит
+        // клампа своей суммой граней — берём максимум по членам (не сумму:
+        // внутренние грани задвоили бы транзит). Потери — плоские клампа.
         if (NodeClumpIndex.isMember(level, pos)) {
             long clumpSum = 0;
             for (BlockPos m : NodeClumpIndex.membersOf(level, pos)) {
-                long[] mf = FlowTracker.get(level, m, pipeType);
-                for (Direction d : Direction.values()) {
-                    if (NodeClumpIndex.isMember(level, m.relative(d))) continue;
-                    clumpSum += mf[d.get3DDataValue()];
-                }
+                long own = 0;
+                for (long v : FlowTracker.get(level, m, pipeType)) own += v;
+                if (own > clumpSum) clumpSum = own;
             }
             PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, clumpSum, 0,
-                NodeClumpIndex.lossMilliOfRoot(level, NodeClumpIndex.rootOf(level, pos))));
+                NodeClumpIndex.lossMilliOfRoot(level, NodeClumpIndex.rootOf(level, pos)),
+                NodeClumpIndex.sizeAt(level, pos)));
             return;
         }
 
@@ -289,7 +292,8 @@ public final class PipeFlowNetwork {
             long sum = 0;
             for (long v : flow) sum += v;
             PacketDistributor.sendToPlayer(player,
-                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType)));
+                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType),
+                    NodeClumpIndex.sizeAt(level, pos)));
             return;
         }
 
@@ -305,7 +309,7 @@ public final class PipeFlowNetwork {
         long negAmount = flow[negDir.get3DDataValue()];
 
         PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, axis.ordinal(), posAmount, negAmount,
-            FlowTracker.getLoss(level, pos, pipeType)));
+            FlowTracker.getLoss(level, pos, pipeType), 0));
     }
 
     /** Отвечает на запрос потока ПРЕДМЕТОВ в предметной трубе (топ по количеству). */

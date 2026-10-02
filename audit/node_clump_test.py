@@ -29,14 +29,17 @@ assert "record Clump(long root, long lossMilli, Set<Long> members)" in idx
 assert "if (oldRoot != null && oldRoot != root) byRoot.remove(oldRoot);" in idx
 # 0.3.101: уборка устаревших корней (живой кламп отображает корень в себя)
 assert "self == null || self != r" in idx
-# 0.3.101: визуал убран (вспышка + HUD-счётчик + sizeAt) — мёртвого кода нет
+# 0.3.101/102: вспышка убрана навсегда (автор: «партиклы тоже убираем»),
+# но строка HUD «сшито узлов: N» возвращена с ЧЕСТНЫМ счётчиком (sizeAt)
 assert "sendParticles" not in idx and "DustParticleOptions" not in idx
-assert "sizeAt" not in idx and "int size," not in idx
-assert "hud.gonzotech.wrench_clump" not in hud and "clumpSize" not in hud
-assert "clumpSize" not in flow
+assert "public static int sizeAt(Level level, BlockPos pos)" in idx
+assert "int size," not in idx  # поле рекорда не возвращаем — берём members.size()
+assert "e.clumpSize = payload.clumpSize();" in hud
+assert 'hud.gonzotech.wrench_clump' in hud
+assert "ByteBufCodecs.VAR_INT, FlowPayload::clumpSize" in flow
 for lang in ("en_us.json", "ru_ru.json"):
     lang_src = (ROOT / "src/main/resources/assets/gonzotech/lang" / lang).read_text()
-    assert "wrench_clump" not in lang_src, lang
+    assert "hud.gonzotech.wrench_clump" in lang_src, lang
 assert "MEMBER_ROOT = new IdentityHashMap<>()" in idx and "BY_ROOT = new IdentityHashMap<>()" in idx
 assert "public static void clearAll()" in idx
 # род: уни ("U1"/"U2") и узлы одного типа+тира ("N1:HEAT"/"N2:HEAT"), ничего больше
@@ -72,12 +75,14 @@ assert "long root = NodeClumpIndex.rootOf(level, path.get(i).pipe());" in routin
 assert "if (clumpsSeen.add(root)) {" in routing
 assert "NodeClumpIndex.lossMilliOfRoot(level, root);" in routing
 
-# ── 0.3.101: HUD-счётчик убран целиком (пейлоад/поле/строка/lang) ──
-assert "clumpSize" not in flow and "clumpSize" not in hud
-# ── 0.3.101: hover любого члена — сервер агрегирует граничные выходы клампа ──
+# ── 0.3.102: hover любого члена — агрегат МАКСОМ собственных сумм членов ──
+# (0.3.101 суммировал граничные грани — в главном кейсе автора порт парогена
+# сам узел клампа: путь кончается внутри, граничных записей нет → поток
+# «пропадал». Сохранение потока: член на пути несёт весь транзит.)
 assert "public static Set<BlockPos> membersOf(Level level, BlockPos pos)" in idx
 assert "if (NodeClumpIndex.isMember(level, pos)) {" in flow
-assert "if (NodeClumpIndex.isMember(level, m.relative(d))) continue;" in flow
+assert "if (own > clumpSum) clumpSum = own;" in flow
 assert "NodeClumpIndex.lossMilliOfRoot(level, NodeClumpIndex.rootOf(level, pos))" in flow
+assert "NodeClumpIndex.sizeAt(level, pos)" in flow
 
 print("node clump pins passed (index + hooks + router law/loss + HUD + lang)")

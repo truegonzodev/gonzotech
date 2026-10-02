@@ -103,6 +103,15 @@ public final class NodeClumpIndex {
         return out;
     }
 
+    /** Размер клампа позиции (0 — одиночка/не узел); для HUD «сшито узлов: N». */
+    public static int sizeAt(Level level, BlockPos pos) {
+        long root = rootOf(level, pos);
+        if (root == 0L) return 0;
+        Map<Long, Clump> byRoot = BY_ROOT.get(level);
+        Clump clump = byRoot == null ? null : byRoot.get(root);
+        return clump == null ? 0 : clump.members.size();
+    }
+
     /** Плоская потеря транзита клампа-корня (0 для не-клампа/безпотерьных родов). */
     public static long lossMilliOfRoot(Level level, long root) {
         Map<Long, Clump> byRoot = BY_ROOT.get(level);
