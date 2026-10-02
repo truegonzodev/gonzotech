@@ -20,6 +20,10 @@ public final class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RADIATION_MIST =
             PARTICLE_TYPES.register("radiation_mist", () -> new SimpleParticleType(true));
 
+    /** 0.3.93: «горячая труба» — предупреждение о дорогой маршрутизации (≥400 дорожек). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HOT_PIPE =
+            PARTICLE_TYPES.register("hot_pipe", () -> new SimpleParticleType(true));
+
     private ModParticles() {
     }
 }

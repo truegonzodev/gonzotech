@@ -52,7 +52,19 @@ for api in ("public static long drain(", "drainFromTurbinePort(", "drainFromMult
 w = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeFlowWarnings.java").read_text()
 assert "HOT_LANE_THRESHOLD = 400" in w                # число автора
 assert "LevelTickEvent.Post" in w and "@SubscribeEvent" in w
-assert "DustParticleOptions(0xCC2222, 1.0F)" in w     # красная пыль
+# 0.3.93: собственная частица вместо красной пыли (текстура автора warn.png)
+assert "DustParticleOptions" not in w
+assert "ModParticles.HOT_PIPE.get()" in w
+mp = (ROOT / "src/main/java/com/gonzotech/core/registry/ModParticles.java").read_text()
+assert 'register("hot_pipe"' in mp
+mc = (ROOT / "src/main/java/com/gonzotech/core/client/particle/ModParticleClient.java").read_text()
+assert "registerSpriteSet(ModParticles.HOT_PIPE.get(), HotPipeParticle.Provider::new)" in mc
+hp = (ROOT / "src/main/java/com/gonzotech/core/client/particle/HotPipeParticle.java").read_text()
+assert "SIZE_FACTOR = 1.1F" in hp            # размер ×1.1 от reddust (автор)
+assert "friction = 0.96F" in hp              # поведение DustParticleBase
+assert "PARTICLE_SHEET_OPAQUE" in hp
+assert (ROOT / "src/main/resources/assets/gonzotech/particles/hot_pipe.json").is_file()
+assert (ROOT / "src/main/resources/assets/gonzotech/textures/particle/warn.png").is_file()
 assert "MAX_MARKS_PER_TICK = 64" in w                 # граница пакетов
 assert "HOLD_TICKS = 60" in w
 assert "it.remove();" in w                            # чистка в тике (static-гигиена)

@@ -12,5 +12,6 @@ public final class ModParticleClient {
         event.registerSpriteSet(ModParticles.ETHYLEN_EXPLOSION.get(), EthylenExplosionParticle.Provider::new);
         event.registerSpecial(ModParticles.ETHYLEN_EXPLOSION_EMITTER.get(), new EthylenExplosionSeedParticle.Provider());
         event.registerSpriteSet(ModParticles.RADIATION_MIST.get(), RadiationMistParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.HOT_PIPE.get(), HotPipeParticle.Provider::new);
     }
 }

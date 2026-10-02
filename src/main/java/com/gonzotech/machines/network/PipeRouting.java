@@ -207,7 +207,6 @@ public final class PipeRouting {
                                                BiFunction<Level, BlockPos, Boolean> isMember) {
         if (budget <= 0 || !isPipe(level.getBlockState(port), type)) return 0;
 
-        Map<Long, Transfer.Receiver> rawByPos = new HashMap<>();
         Set<Long> direct = new HashSet<>();
         List<Lane> lanes = new ArrayList<>();
         Map<Long, BlockPos> parent = new HashMap<>();
@@ -247,8 +246,11 @@ public final class PipeRouting {
                     continue;
                 }
                 if (!machineConnects(pstate, type, dir) || !mode.deliversToMachine()) continue;
-                List<PathStep> path = buildPath(level, pipe, next, parent);
-                addMachineLane(level, next, port, type, receiverOf, path, rawByPos, direct, lanes);
+                // 0.3.93: приёмник разрешается ВНУТРИ addMachineLane; путь строится
+                // только когда приёмник подтверждён (ленивость 0.3.90). Старый вызов
+                // остался в до-рефакторочной расстановке аргументов (сборка автора
+                // упала: PipeType не конвертируется в BlockPos).
+                addMachineLane(level, pipe, next, port, type, receiverOf, parent, direct, lanes);
             }
         }
         if (lanes.isEmpty()) return 0;
