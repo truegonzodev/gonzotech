@@ -106,7 +106,7 @@ public final class TongsItem extends Item implements CarrierItem {
         int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
                 id, other.getCount());
         if (moved <= 0) return false;
-        store(magazine, path, itemCount(magazine) + moved);
+        store(magazine, id, itemCount(magazine) + moved);
         other.shrink(moved);
         slot.setChanged();
         if (player.level() instanceof net.minecraft.server.level.ServerLevel server) {
@@ -128,7 +128,7 @@ public final class TongsItem extends Item implements CarrierItem {
         int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
                 id, incoming.getCount());
         if (moved <= 0) return false;
-        store(magazine, path, itemCount(magazine) + moved);
+        store(magazine, id, itemCount(magazine) + moved);
         incoming.shrink(moved);
         slot.setChanged();
         if (player.level() instanceof net.minecraft.server.level.ServerLevel server) {

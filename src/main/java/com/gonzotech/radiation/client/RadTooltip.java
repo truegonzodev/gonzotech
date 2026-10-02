@@ -1,6 +1,7 @@
 package com.gonzotech.radiation.client;
 
 import com.gonzotech.radiation.ItemRadioactivity;
+import com.gonzotech.radiation.RadSources;
 import com.gonzotech.radiation.ItemToxicity;
 import com.gonzotech.core.text.GtUnits;
 import net.minecraft.ChatFormatting;
@@ -24,7 +25,10 @@ public final class RadTooltip {
     }
 
     public static void append(ItemTooltipEvent event) {
-        double total = ItemRadioactivity.totalEmission(event.getItemStack());
+        // 0.3.84: deep-сумма — загруженное хранилище показывает содержимое X
+        // плюс СВОЮ накопленную наведёнку Y (автор 03.10.2026: «X+1Zt»; после
+        // разгрузки остаётся чистый Y — он в компонентах самого предмета).
+        double total = RadSources.emissionDeep(event.getItemStack());
         double toxicity = ItemToxicity.toxicityOfStack(event.getItemStack());
         if (total < 1.0 && toxicity <= 0.0) {
             return;

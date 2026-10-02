@@ -172,4 +172,15 @@ for lang in ("en_us", "ru_ru"):
     data = json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{lang}.json").read_text())
     assert data["tooltip.gonzotech.carrier.hint"] and data["tooltip.gonzotech.carrier.full"]
 
+# ── Пины 0.3.84: переименование path→id доведено до конца + deep-тултип ──
+tongs = (ROOT / "src/main/java/com/gonzotech/core/item/TongsItem.java").read_text()
+assert "store(magazine, id, itemCount(magazine) + moved);" in tongs
+assert "store(magazine, path," not in tongs
+ladle = (ROOT / "src/main/java/com/gonzotech/core/item/LadleItem.java").read_text()
+assert "id.equals(BUCKET_ITEM)" in ladle
+assert "path.equals(BUCKET_ITEM)" not in ladle
+radtip = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadTooltip.java").read_text()
+assert "RadSources.emissionDeep(event.getItemStack())" in radtip   # X+Y в тултипе
+assert "ItemRadioactivity.totalEmission(event.getItemStack())" not in radtip
+
 print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB, 1.21.4 signatures, deep scan)")

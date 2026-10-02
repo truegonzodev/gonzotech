@@ -153,7 +153,7 @@ public final class LadleItem extends Item implements CarrierItem {
             }
 
             // Пустое ведро → отлить порцию из ковша (обратное направление).
-            if (path.equals(BUCKET_ITEM) && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
+            if (id.equals(BUCKET_ITEM) && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
                     && !fluidId(magazine).isEmpty()) {
                 Item filled = bucketOf(fluidId(magazine));
                 if (filled != null) {
@@ -186,7 +186,7 @@ public final class LadleItem extends Item implements CarrierItem {
             return true;
         }
         // Пустое ведро курсором → отлить порцию из ковша.
-        if (path.equals(BUCKET_ITEM) && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
+        if (id.equals(BUCKET_ITEM) && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
                 && !fluidId(magazine).isEmpty()) {
             Item filled = bucketOf(fluidId(magazine));
             if (filled != null) {
