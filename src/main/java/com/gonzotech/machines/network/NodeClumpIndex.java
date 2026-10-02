@@ -200,6 +200,11 @@ public final class NodeClumpIndex {
         Set<Long> rest = new HashSet<>();
         if (old != null) rest.addAll(old.members());
         rest.remove(pos.asLong());
+        // 0.3.105: протухшие маппинги остатка стираются ДО раскладки
+        // компонентов. Иначе инвариант register у ВТОРОЙ компоненты читает
+        // старый корень (общий с первой) и «съедает» только что
+        // зарегистрированный кламп первой — её члены остаются сиротами.
+        for (long key : rest) members.remove(key);
         while (!rest.isEmpty()) {
             long min = Long.MAX_VALUE;
             for (long key : rest) min = Math.min(min, key);
@@ -272,7 +277,14 @@ public final class NodeClumpIndex {
             for (Direction dir : Direction.values()) {
                 BlockPos next = cur.relative(dir);
                 long key = next.asLong();
-                if (!seen.add(key) || !allowed.contains(key)) continue;
+                // 0.3.105: порядок условий КРИТИЧЕН — сначала «это вообще
+                // член?». Прежний порядок (!seen.add первым) вталкивал в
+                // компонент ЛЮБОГО соседа (воздух, трубы, порты, только что
+                // сломанный узел): register раздавал членство мусору, корнями
+                // становились призраки, а живые клампы осиротевали — при
+                // разборе клампа ключ показывал «ни сшито, ни потока»
+                // (репорт автора 02.10).
+                if (!allowed.contains(key) || !seen.add(key)) continue;
                 if (!level.isLoaded(next)) continue; // не грузим чанки флудом
                 queue.add(next);
             }

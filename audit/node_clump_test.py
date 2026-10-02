@@ -35,6 +35,13 @@ assert "record Clump(long root, long lossMilli, Set<Long> members)" in idx
 assert "if (oldRoot != null && oldRoot != root) byRoot.remove(oldRoot);" in idx
 # 0.3.101: уборка устаревших корней (живой кламп отображает корень в себя)
 assert "self == null || self != r" in idx
+# 0.3.105: раскол не теряет клампы — два фикса по матсимуляции
+# (1) компонент = ТОЛЬКО члены: членство проверяется ДО seen.add
+assert "if (!allowed.contains(key) || !seen.add(key)) continue;" in idx
+assert "!seen.add(key) || !allowed.contains(key)" not in idx
+# (2) протухшие маппинги остатка стираются до раскладки (иначе инвариант
+#     register второй компоненты съедает свежий кламп первой)
+assert "for (long key : rest) members.remove(key);" in idx
 # 0.3.101/102: вспышка убрана навсегда (автор: «партиклы тоже убираем»),
 # но строка HUD «сшито узлов: N» возвращена с ЧЕСТНЫМ счётчиком (sizeAt)
 assert "sendParticles" not in idx and "DustParticleOptions" not in idx
