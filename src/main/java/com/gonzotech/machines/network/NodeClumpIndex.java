@@ -1,5 +1,7 @@
 package com.gonzotech.machines.network;
 
+import com.gonzotech.machines.steamgen.SteamGenStructure;
+import com.gonzotech.machines.turbine.TurbineStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -10,6 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -47,8 +50,8 @@ public final class NodeClumpIndex {
     private NodeClumpIndex() {
     }
 
-    /** Род клампа: «U1»/«U2» (универсальные), «N1:HEAT»/«N2:HEAT»/… или null. */
-    private static String kindOf(BlockState state) {
+    /** Род клампа по блоку: «U1»/«U2» (универсальные), «N1:HEAT»/«N2:HEAT»/… или null. */
+    private static String kindOfBlock(BlockState state) {
         Block b = state.getBlock();
         if (b instanceof UniversalNodeBlock) {
             return b instanceof SecondTierPipe ? "U2" : "U1";
@@ -57,6 +60,17 @@ public final class NodeClumpIndex {
             return (b instanceof SecondTierPipe ? "N2:" : "N1:") + node.pipeType().name();
         }
         return null;
+    }
+
+    /**
+     * Род клампа позиции. 0.3.104: порты СФОРМИРОВАННЫХ мультиблоков (турбина,
+     * парогенератор) — не узлы теплосети: не сшиваются ни с внешними узлами,
+     * ни между собой (автор: «они должны просто служить как порты приёма/выдачи
+     * для мультиблока и не взаимодействовать с внешними прикреплёнными узлами»).
+     */
+    private static String kindOf(Level level, BlockPos pos, BlockState state) {
+        if (TurbineStructure.isMember(level, pos) || SteamGenStructure.isMember(level, pos)) return null;
+        return kindOfBlock(state);
     }
 
     /** Плоская потеря транзита (milli) для рода/типа: только провода и теплотрубы теряют. */
@@ -132,7 +146,7 @@ public final class NodeClumpIndex {
      */
     public static void onNodeChanged(Level level, BlockPos pos) {
         if (!(level instanceof ServerLevel server)) return;
-        String kind = kindOf(level.getBlockState(pos));
+        String kind = kindOf(level, pos, level.getBlockState(pos));
         if (kind == null) return;
 
         Set<Long> union = new HashSet<>();
@@ -145,7 +159,7 @@ public final class NodeClumpIndex {
                 BlockPos next = cur.relative(dir);
                 long key = next.asLong();
                 if (union.contains(key) || !level.isLoaded(next)) continue;
-                if (!kind.equals(kindOf(level.getBlockState(next)))) continue;
+                if (!kind.equals(kindOf(level, next, level.getBlockState(next)))) continue;
                 union.add(key);
                 queue.add(next);
             }
@@ -156,9 +170,25 @@ public final class NodeClumpIndex {
     /** Узел удалён (в т.ч. поршнем): кламп без него может расколоться. */
     public static void onNodeRemoved(Level level, BlockPos pos, BlockState oldState) {
         if (!(level instanceof ServerLevel server)) return;
-        String kind = kindOf(oldState);
+        String kind = kindOf(level, pos, oldState);
         if (kind == null) return;
+        removeInternal(server, pos, kind);
+    }
 
+    /**
+     * 0.3.104: порты сформированной структуры выкидываются из реестра клампов
+     * (вызов из Turbine/SteamGenStructure.index ПОСЛЕ регистрации членов).
+     * Оставшиеся соседи-узлы пере-регистрируются расколом как раньше.
+     */
+    public static void detachPorts(ServerLevel level, List<BlockPos> ports) {
+        for (BlockPos pos : ports) {
+            String kind = kindOfBlock(level.getBlockState(pos));
+            if (kind == null) continue;
+            removeInternal(level, pos, kind);
+        }
+    }
+
+    private static void removeInternal(ServerLevel level, BlockPos pos, String kind) {
         Map<Long, Long> members = MEMBER_ROOT.get(level);
         if (members == null) return;
         Long root = members.remove(pos.asLong());
@@ -176,7 +206,7 @@ public final class NodeClumpIndex {
             Set<Long> component = floodWithin(level, min, rest);
             rest.removeAll(component);
             if (component.size() >= 2) {
-                register(server, component, kind);
+                register(level, component, kind);
             } else if (component.size() == 1) {
                 members.remove(component.iterator().next()); // одиночка не индексируется
             }

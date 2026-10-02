@@ -423,7 +423,7 @@ assert 'public static long getLoss(Level level, BlockPos pipe, PipeType type)' i
 pipe_flow=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeFlowNetwork.java').read_text()
 assert 'long lossMilli, int clumpSize) implements CustomPacketPayload' in pipe_flow  # 0.3.102: счётчик клампа вернулся
 assert 'ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,' in pipe_flow
-assert pipe_flow.count('FlowTracker.getLoss(level, pos, pipeType)') == 2
+assert pipe_flow.count('FlowTracker.getLoss(level, pos, pipeType)') == 1  # 0.3.104: осевых ответов больше нет
 wrench=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()
 for pin in ('e.lossMilli = payload.lossMilli();',
             # 0.3.73: пробел перед потерями внутри литерала ниже

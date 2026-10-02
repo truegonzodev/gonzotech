@@ -22,7 +22,13 @@ flow = (NET / "PipeFlowNetwork.java").read_text()
 # ── Реестр ──
 # 0.3.100: слияние — флуд по СОСТОЯНИЯМ (индекс не видел одиночек → фича не работала)
 assert "public static void onNodeChanged(Level level, BlockPos pos)" in idx
-assert 'kind.equals(kindOf(level.getBlockState(next)))' in idx
+assert 'kind.equals(kindOf(level, next, level.getBlockState(next)))' in idx
+# 0.3.104: порты сформированных мультиблоков — не узлы сети (не сшиваются)
+assert "if (TurbineStructure.isMember(level, pos) || SteamGenStructure.isMember(level, pos)) return null;" in idx
+assert "public static boolean isMember(Level level, BlockPos pos) { return false; }" in (
+    ROOT / "audit/stubs/com/gonzotech/machines/steamgen/SteamGenStructure.java").read_text()
+assert "public static void detachPorts(ServerLevel level, List<BlockPos> ports)" in idx
+assert "private static void removeInternal(ServerLevel level, BlockPos pos, String kind)" in idx
 assert "Deque<BlockPos> queue = new ArrayDeque<>();" in idx
 assert "record Clump(long root, long lossMilli, Set<Long> members)" in idx
 # 0.3.101: инвариант непересечения (лечит «экспоненциальный» HUD-счётчик автора)

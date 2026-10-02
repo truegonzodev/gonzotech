@@ -286,30 +286,15 @@ public final class PipeFlowNetwork {
             return;
         }
 
-        // Узел ветвится во все стороны — «два конца оси» не имеют смысла, сумма.
-        if ((state.getBlock() instanceof PipeBlock pb && pb.connectsAllSides())
-            || state.getBlock() instanceof UniversalNodeBlock) {
-            long sum = 0;
-            for (long v : flow) sum += v;
-            PacketDistributor.sendToPlayer(player,
-                new FlowPayload(pos, typeId, AXIS_NODE_SUM, sum, 0, FlowTracker.getLoss(level, pos, pipeType),
-                    NodeClumpIndex.sizeAt(level, pos)));
-            return;
-        }
-
-        // В пучке ось зависит от слоя наведённого типа (верх WIRE/FLUID = AXIS,
-        // низ HEAT/ITEM = AXIS_LOWER); у одиночной трубы — общая AXIS.
-        Direction.Axis axis = (state.getBlock() instanceof CompositePipeBlock)
-            ? CompositePipeBlock.axisOf(state, pipeType)
-            : state.getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS);
-        Direction posDir = positiveOf(axis);
-        Direction negDir = posDir.getOpposite();
-
-        long posAmount = flow[posDir.get3DDataValue()];
-        long negAmount = flow[negDir.get3DDataValue()];
-
-        PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, axis.ordinal(), posAmount, negAmount,
-            FlowTracker.getLoss(level, pos, pipeType), 0));
+        // 0.3.104: «влево/вправо» мертво с 0.3.73 (клиент всё равно суммирует
+        // концы) — отвечаем суммой ВСЕХ ШЕСТИ граней трубы. Это устраняет целый
+        // класс «нулевых» ответов, когда ось блока не совпала с направлением
+        // фактической записи потока (репорт автора: теплотруба II к парогену
+        // «по ней 100% есть ток», HUD молчал).
+        long total = 0;
+        for (long v : flow) total += v;
+        PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, total, 0,
+            FlowTracker.getLoss(level, pos, pipeType), NodeClumpIndex.sizeAt(level, pos)));
     }
 
     /** Отвечает на запрос потока ПРЕДМЕТОВ в предметной трубе (топ по количеству). */
@@ -369,12 +354,4 @@ public final class PipeFlowNetwork {
             pos, absorber.storedGth(), absorber.hasHeatCarrierConnection()));
     }
 
-    /** Положительная мировая сторона оси: +X=восток, +Y=верх, +Z=юг. */
-    private static Direction positiveOf(Direction.Axis axis) {
-        return switch (axis) {
-            case X -> Direction.EAST;
-            case Y -> Direction.UP;
-            case Z -> Direction.SOUTH;
-        };
     }
-}

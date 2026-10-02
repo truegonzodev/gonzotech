@@ -45,4 +45,11 @@ assert "if (!isPortState(level.getBlockState(current))) {" in steamgen
 assert "if (!next.equals(seed) && isPortState(level.getBlockState(next))) continue;" in steamgen
 assert "return isSteamPort(state) || isWaterPort(state) || isHeatPort(state);" in steamgen
 
-print("node cap wiring passed (turbine<=8, steamgen<=10, ports out of flood)")
+# ── 0.3.104: порты сформированной структуры выкидываются из клампов ──
+# (порты — только приём/выдача мультиблока, узлами сети не являются)
+assert "NodeClumpIndex.detachPorts(level, ports);" in turbine
+assert "ports.addAll(build.wirePorts);" in turbine
+assert "NodeClumpIndex.detachPorts(level, ports);" in steamgen
+assert "ports.addAll(build.heatPorts);" in steamgen
+
+print("node cap wiring passed (turbine<=8, steamgen<=10, ports out of flood, ports not nodes)")

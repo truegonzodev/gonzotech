@@ -6,6 +6,7 @@ import com.gonzotech.machines.block.TurbineRotorBlock;
 import com.gonzotech.machines.block.entity.TurbineRotorBlockEntity;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.network.NodeClumpIndex;
 import com.gonzotech.machines.network.PipeCarrier;
 import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.registry.ModMachines;
@@ -426,6 +427,11 @@ public final class TurbineStructure {
     private static void index(ServerLevel level, Build build) {
         Map<Long, BlockPos> index = MEMBER_INDEX.computeIfAbsent(level, ignored -> new HashMap<>());
         for (BlockPos pos : build.allParts) index.put(pos.asLong(), build.root);
+        // 0.3.104: порты сформированной турбины — только приём/выдача мультиблока,
+        // узлами сети (в т.ч. клампами с внешними узлами) не являются.
+        List<BlockPos> ports = new ArrayList<>(build.steamPorts);
+        ports.addAll(build.wirePorts);
+        NodeClumpIndex.detachPorts(level, ports);
     }
 
     private static BlockPos controllerAt(ServerLevel level, BlockPos pos) {

@@ -238,6 +238,9 @@ public final class PipeRouting {
                 if (!next.equals(port) && isMember.apply(level, next)) continue;
                 BlockState nextState = level.getBlockState(next);
                 if (isPipe(nextState, type)) {
+                    // 0.3.104: порт не пирается с внешними узлами (и другими
+                    // портами) — только обычные трубы (члены свои уже исключены).
+                    if (isNodeBlock(nextState)) continue;
                     if (!pipesConnect(pstate, nextState, type, dir)) continue;
                     if (visited.add(next)) {
                         parent.put(next.asLong(), pipe);
@@ -331,6 +334,12 @@ public final class PipeRouting {
                 BlockPos npos = pipe.relative(dir);
                 BlockState nstate = level.getBlockState(npos);
                 if (isPipe(nstate, type)) {
+                    // 0.3.104: порт сформированного мультиблока — не узел сети:
+                    // флуд не ходит порт↔внешний узел и порт↔порт (порт-блок сам
+                    // NodeBlock, поэтому одно условие режет все три случая).
+                    // ВНЕШНИЙ ИНТЕРФЕЙС порта — только обычные трубы.
+                    if ((isFormedPort(level, pipe) && isNodeBlock(nstate))
+                        || (isFormedPort(level, npos) && isNodeBlock(pstate))) continue;
                     // Соединяем, только если обе грани этого типа открыты навстречу.
                     if (!pipesConnect(pstate, nstate, type, dir)) continue;
                     if (visited.add(npos)) {
@@ -646,6 +655,16 @@ public final class PipeRouting {
 
     private static boolean isPipe(BlockState state, PipeType type) {
         return state.getBlock() instanceof PipeCarrier c && c.carries(state, type);
+    }
+
+    /** Узел сети (обычный/универсальный; порты мультиблоков — тоже блоки узлов). */
+    private static boolean isNodeBlock(BlockState state) {
+        return state.getBlock() instanceof NodeBlock || state.getBlock() instanceof UniversalNodeBlock;
+    }
+
+    /** 0.3.104: позиция — порт сформированного мультиблока (турбина/парогенератор). */
+    private static boolean isFormedPort(Level level, BlockPos pos) {
+        return TurbineStructure.isMember(level, pos) || SteamGenStructure.isMember(level, pos);
     }
 
     private static PipeMode modeOf(BlockState state, PipeType type) {
