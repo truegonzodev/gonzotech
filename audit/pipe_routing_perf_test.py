@@ -16,7 +16,8 @@ r = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeRouting.java").rea
 
 # caps
 assert "MAX_BFS_CELLS_PER_ENTRY = 2048" in r
-assert "MAX_LANES_PER_DRAIN = 256" in r
+assert "MAX_LANES_PER_DRAIN = 1024" in r  # 0.3.91: замер автора — 15 узлов > 256 дорожек
+assert "MAX_LANES_PER_DRAIN = 256" not in r
 assert "if (++cells > MAX_BFS_CELLS_PER_ENTRY) break;" in r
 assert "lanes.size() >= MAX_LANES_PER_DRAIN" in r
 

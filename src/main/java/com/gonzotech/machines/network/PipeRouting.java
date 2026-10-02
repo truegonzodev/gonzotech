@@ -278,9 +278,14 @@ public final class PipeRouting {
      * entry→…→приёмник). Позиции с прямой дорожкой пропускаются (прямой поток
      * через трубу не идёт).
      */
-    /** 0.3.90: предохранители перегрева маршрутизатора (поле абсорберов убивало TPS). */
+    /**
+     * 0.3.90/0.3.91: предохранители перегрева маршрутизатора (поле абсорберов
+     * убивало TPS). Замер автора 04.10: 3 узла ≈ 48 дорожек, 5 узлов ≈ 360,
+     * поле из 15 узлов — больше 256, поэтому кап дорожек 1024: легитимные
+     * сети (15 узлов) не отсекаются, бесконечные — по-прежнему ограничены.
+     */
     private static final int MAX_BFS_CELLS_PER_ENTRY = 2048;
-    private static final int MAX_LANES_PER_DRAIN = 256;
+    private static final int MAX_LANES_PER_DRAIN = 1024;
 
     private static void collectLanes(Level level, BlockPos fromPos, PipeType type, BlockPos entry,
                                      BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
