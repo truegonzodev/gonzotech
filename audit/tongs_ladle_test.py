@@ -125,7 +125,7 @@ for item in ("TongsItem", "LadleItem"):
     src = (ROOT / f"src/main/java/com/gonzotech/core/item/{item}.java").read_text()
     assert "public boolean overrideStackedOnOther(" in src, item          # boolean, не ClickAction
     assert "public boolean overrideOtherStackedOnMe(" in src, item
-    assert "Player player,\n                                                net.minecraft.world.entity.SlotAccess cursor)" in src, item  # 6-я параметр SlotAccess (javadoc NF)
+    assert "net.minecraft.world.entity.SlotAccess cursor) {" in src, item  # 6-й параметр SlotAccess
     assert "public InteractionResult use(" in src, item                   # 1.21.4: без InteractionResultHolder
     assert "InteractionResultHolder" not in src, item
     assert "import net.minecraft.world.item.component.CustomData;" in src, item
@@ -182,5 +182,17 @@ assert "path.equals(BUCKET_ITEM)" not in ladle
 radtip = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadTooltip.java").read_text()
 assert "RadSources.emissionDeep(event.getItemStack())" in radtip   # X+Y в тултипе
 assert "ItemRadioactivity.totalEmission(event.getItemStack())" not in radtip
+
+# ── Пины 0.3.85: ЛКМ-вставка / ПКМ-извлечение, update-merge, отступы лора ──
+for item in ("TongsItem", "LadleItem"):
+    src = (ROOT / f"src/main/java/com/gonzotech/core/item/{item}.java").read_text()
+    assert "stack.update(DataComponents.CUSTOM_DATA" in src, item   # merge-запись (фикс таба)
+    assert "stack.set(DataComponents.CUSTOM_DATA" not in src, item  # грубый set запрещён
+    assert "SoundEvents.BUNDLE_REMOVE_ONE" in src, item             # звук извлечения
+    assert "cursor.set(" in src, item                               # извлечение в курсор (SlotAccess)
+    assert "action != ClickAction.PRIMARY" in src or "action == ClickAction.PRIMARY" in src, item  # ЛКМ/ПКМ развилка
+    # отступы лора: пустая строка сразу после строки креатив-таба и перед экранированием
+    body = src[src.index("appendHoverText"):]
+    assert "Component.empty()" in body and body.count("Component.empty()") >= 2, item
 
 print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB, 1.21.4 signatures, deep scan)")

@@ -4,7 +4,6 @@ import com.gonzotech.radiation.CarrierItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -24,14 +23,15 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * Ковш (0.3.79, EPOCH3-BASE §2.8): брат щипцов для ЖИДКОСТЕЙ и для ртути/цезия
- * (те предметы, которые щипцы НЕ берут). Хранит порцию 1000 mB одного флюида
- * ИЛИ до 64 единиц ртути/цезия ({@link LadleLogic#canPickItem}).
+ * Ковш (0.3.85, EPOCH3-BASE §2.8): брат щипцов для ЖИДКОСТЕЙ и ртути/цезия.
+ * Кнопки — как у щипцов (автор 03.10.2026): ЛКМ — ПОЛОЖИТЬ (предметы ртути/
+ * цезия, ванильные контейнеры или зачерпнуть из заполненного ведра), ПКМ —
+ * ДОСТАТЬ (один предмет в курсор/слот или отлить порцию в пустое ведро).
  *
- * <p>Жидкость: держа ковш, клик по заполненному ведру — зачерпнуть (ведро
- * пустеет), клик по пустому ведру — отлить обратно в ведро. Предметное
- * содержимое и защитные множители — как у щипцов ({@code CarrierItem}).
- * Радиоактивность жидкостей появится вместе с параметром воды (шаг 2а).
+ * <p>Запись NBT — только через {@code stack.update} (merge; грубый {@code set}
+ * ломал строку креатив-таба), при смене типа содержимого чужие ключи чистятся.
+ * Доза: −40 % рад / −80 % токс на содержимое; строку «Радиоактивность: …»
+ * рисует общий RadTooltip по {@code RadSources.emissionDeep}.
  */
 public final class LadleItem extends Item implements CarrierItem {
 
@@ -48,32 +48,46 @@ public final class LadleItem extends Item implements CarrierItem {
 
     // ─────────────────────────── NBT ───────────────────────────
 
-    private static CompoundTag tag(ItemStack stack) {
-        return stack.get(DataComponents.CUSTOM_DATA) != null
-                ? stack.get(DataComponents.CUSTOM_DATA).copyTag() : new CompoundTag();
-    }
-
-    private static void storeItems(ItemStack stack, String itemId, int count) {
-        CompoundTag data = tag(stack);
-        data.putString(TAG_ITEM, itemId);
-        data.putInt(TAG_COUNT, count);
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
-    }
-
     private static String itemId(ItemStack stack) {
-        return tag(stack).getString(TAG_ITEM);
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null ? "" : data.copyTag().getString(TAG_ITEM);
     }
 
     private static int itemCount(ItemStack stack) {
-        return tag(stack).getInt(TAG_COUNT);
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null ? 0 : data.copyTag().getInt(TAG_COUNT);
     }
 
     private static String fluidId(ItemStack stack) {
-        return tag(stack).getString(TAG_FLUID);
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null ? "" : data.copyTag().getString(TAG_FLUID);
     }
 
     private static int fluidMb(ItemStack stack) {
-        return tag(stack).getInt(TAG_MB);
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null ? 0 : data.copyTag().getInt(TAG_MB);
+    }
+
+    /** Merge-запись предметов; жидкостные ключи чистятся. */
+    private static void storeItems(ItemStack stack, String id, int count) {
+        stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
+                data -> data.update(tag -> {
+                    tag.remove(TAG_FLUID);
+                    tag.remove(TAG_MB);
+                    tag.putString(TAG_ITEM, id);
+                    tag.putInt(TAG_COUNT, count);
+                }));
+    }
+
+    /** Merge-запись жидкости; предметные ключи чистятся. */
+    private static void storeFluid(ItemStack stack, String fluid, int mb) {
+        stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
+                data -> data.update(tag -> {
+                    tag.remove(TAG_ITEM);
+                    tag.remove(TAG_COUNT);
+                    tag.putString(TAG_FLUID, fluid);
+                    tag.putInt(TAG_MB, mb);
+                }));
     }
 
     private static ItemStack previewOf(String id, int count) {
@@ -87,17 +101,36 @@ public final class LadleItem extends Item implements CarrierItem {
     private static String fluidOfBucket(ItemStack bucket) {
         ResourceLocation key = BuiltInRegistries.ITEM.getKey(bucket.getItem());
         if (!key.getPath().endsWith(BUCKET_SUFFIX)) return "";
-        String ns = key.getNamespace();
-        String fluidPath = key.getPath().substring(0, key.getPath().length() - BUCKET_SUFFIX.length());
-        return ns + ":" + fluidPath;
+        return key.getNamespace() + ":"
+                + key.getPath().substring(0, key.getPath().length() - BUCKET_SUFFIX.length());
     }
 
     /** Обратное: предмет ведра для флюида (соглашение «путь_bucket»), null — нет. */
     private static Item bucketOf(String fluidId) {
         if (fluidId == null || !fluidId.contains(":")) return null;
-        ResourceLocation rl = ResourceLocation.parse(fluidId + BUCKET_SUFFIX);
-        Item item = BuiltInRegistries.ITEM.getValue(rl);
+        Item item = BuiltInRegistries.ITEM.getValue(ResourceLocation.parse(fluidId + BUCKET_SUFFIX));
         return (item == null || item == Items.AIR) ? null : item;
+    }
+
+    private static void playInsert(Player player) {
+        if (player.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            server.playSound(null, player.blockPosition(), SoundEvents.BUNDLE_INSERT,
+                    SoundSource.PLAYERS, 0.8F, 1.0F);
+        }
+    }
+
+    private static void playRemoveOne(Player player) {
+        if (player.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            server.playSound(null, player.blockPosition(), SoundEvents.BUNDLE_REMOVE_ONE,
+                    SoundSource.PLAYERS, 0.8F, 1.0F);
+        }
+    }
+
+    private static void playScoop(Player player) {
+        if (player.level() instanceof net.minecraft.server.level.ServerLevel server) {
+            server.playSound(null, player.blockPosition(), SoundEvents.GENERIC_DRINK,
+                    SoundSource.PLAYERS, 0.8F, 1.0F);
+        }
     }
 
     // ─────────────────────────── CarrierItem ───────────────────────────
@@ -119,17 +152,17 @@ public final class LadleItem extends Item implements CarrierItem {
         return content;
     }
 
-    // ─────────────────────────── перетаскивание ───────────────────────────
+    // ─────────────────────── ковш В РУКЕ, клик по слоту ───────────────────────
 
-    /** Держат ковш и кликают по слоту: ведро → зачерпнуть; пустое ведро → отлить. */
+    /** ЛКМ: предметы ртути/цезия или зачерпнуть из заполненного ведра в слоте. */
     @Override
     public boolean overrideStackedOnOther(ItemStack magazine, Slot slot,
-                                              ClickAction action, Player player) {
+                                          ClickAction action, Player player) {
         if (action != ClickAction.PRIMARY || !magazine.is(this)) return false;
         ItemStack other = slot.getItem();
         if (other.isEmpty()) return false;
 
-        // Ртуть/цезий предметами — профиль ковша. ПОЛНЫЙ id (0.3.83).
+        // ПКМ-эквивалент отменён: на ЛКМ только вставка/зачерпывание.
         String id = BuiltInRegistries.ITEM.getKey(other.getItem()).toString();
         int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
                 id, other.getCount());
@@ -137,64 +170,102 @@ public final class LadleItem extends Item implements CarrierItem {
             storeItems(magazine, id, itemCount(magazine) + moved);
             other.shrink(moved);
             slot.setChanged();
+            playInsert(player);
             return true;
         }
 
-        // Заполненное ведро → зачерпнуть порцию.
-        if (fluidMb(magazine) <= 0 || fluidId(magazine).isEmpty()) {
+        // Зачерпнуть из заполненного ведра (порция 1000 mB).
+        if (fluidMb(magazine) <= 0 && fluidId(magazine).isEmpty() && itemCount(magazine) == 0) {
             String fluid = fluidOfBucket(other);
-            if (!fluid.isEmpty() && itemCount(magazine) == 0) {
-                CompoundTag data = tag(magazine);
-                data.putString(TAG_FLUID, fluid);
-                data.putInt(TAG_MB, LadleLogic.CAPACITY_MB);
-                magazine.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
+            if (!fluid.isEmpty()) {
+                storeFluid(magazine, fluid, LadleLogic.CAPACITY_MB);
                 slot.set(new ItemStack(Items.BUCKET));
+                playScoop(player);
                 return true;
-            }
-
-            // Пустое ведро → отлить порцию из ковша (обратное направление).
-            if (id.equals(BUCKET_ITEM) && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
-                    && !fluidId(magazine).isEmpty()) {
-                Item filled = bucketOf(fluidId(magazine));
-                if (filled != null) {
-                    slot.set(new ItemStack(filled));
-                    CompoundTag data = tag(magazine);
-                    data.putInt(TAG_MB, fluidMb(magazine) - LadleLogic.CAPACITY_MB);
-                    magazine.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
-                    return true;
-                }
             }
         }
         return false;
     }
 
-    /** Держат стопку и кликают по ковшу в слоте: предметы ртути/цезия — внутрь. */
+    // ─────────────────────── предмет/ведро В РУКЕ, клик по ковшу ───────────────────────
+
+    /** ЛКМ: положить ртуть/цезий или зачерпнуть пустым ведром; ПКМ: достать/отлить. */
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
-                                                Slot slot, ClickAction action, Player player,
-                                                net.minecraft.world.entity.SlotAccess cursor) {
-        if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
+                                            Slot slot, ClickAction action, Player player,
+                                            net.minecraft.world.entity.SlotAccess cursor) {
+        if (!magazine.is(this)) return false;
+        String id = incoming.isEmpty()
+                ? "" : BuiltInRegistries.ITEM.getKey(incoming.getItem()).toString();
+
+        if (action == ClickAction.PRIMARY) {
+            // ЛКМ предметом: положить ртуть/цезий/ванильный контейнер.
+            if (!incoming.isEmpty()) {
+                int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
+                        id, incoming.getCount());
+                if (moved > 0) {
+                    storeItems(magazine, id, itemCount(magazine) + moved);
+                    incoming.shrink(moved);
+                    playInsert(player);
+                    return true;
+                }
+                // ЛКМ ОДИНОЧНЫМ пустым ведром: зачерпнуть порцию из ковша
+                // (курсор заменяется заполненным ведром; стопку вёдер не тратим).
+                if (id.equals(BUCKET_ITEM) && incoming.getCount() == 1
+                        && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
+                        && !fluidId(magazine).isEmpty()) {
+                    Item filled = bucketOf(fluidId(magazine));
+                    if (filled != null) {
+                        cursor.set(new ItemStack(filled));
+                        storeFluid(magazine, fluidId(magazine), fluidMb(magazine) - LadleLogic.CAPACITY_MB);
+                        playScoop(player);
+                        return true;
+                    }
+                }
+            }
             return false;
         }
-        String id = BuiltInRegistries.ITEM.getKey(incoming.getItem()).toString();
-        int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
-                id, incoming.getCount());
-        if (moved > 0) {
-            storeItems(magazine, id, itemCount(magazine) + moved);
-            incoming.shrink(moved);
-            slot.setChanged();
+
+        // ПКМ: достать один предмет или отлить порцию в пустое ведро.
+        if (incoming.isEmpty()) {
+            ItemStack content = previewCarried(magazine);
+            if (!content.isEmpty()) {
+                cursor.set(content.split(1));
+                storeItems(magazine, itemId(magazine), itemCount(magazine) - 1);
+                playRemoveOne(player);
+                return true;
+            }
+            // Пустой курсор: отлить порцию в новое заполненное ведро.
+            if (fluidMb(magazine) >= LadleLogic.CAPACITY_MB && !fluidId(magazine).isEmpty()) {
+                Item filled = bucketOf(fluidId(magazine));
+                if (filled != null) {
+                    cursor.set(new ItemStack(filled));
+                    storeFluid(magazine, fluidId(magazine), fluidMb(magazine) - LadleLogic.CAPACITY_MB);
+                    playScoop(player);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ПКМ стопкой того же вида: достать ещё один в стопку.
+        ItemStack content = previewCarried(magazine);
+        if (!content.isEmpty() && ItemStack.isSameItemSameComponents(incoming, content)
+                && incoming.getCount() < incoming.getMaxStackSize()) {
+            incoming.grow(1);
+            storeItems(magazine, itemId(magazine), itemCount(magazine) - 1);
+            playRemoveOne(player);
             return true;
         }
-        // Пустое ведро курсором → отлить порцию из ковша.
-        if (id.equals(BUCKET_ITEM) && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
+        // ПКМ одиночным пустым ведром в курсоре: отлить порцию в него.
+        if (id.equals(BUCKET_ITEM) && incoming.getCount() == 1
+                && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
                 && !fluidId(magazine).isEmpty()) {
             Item filled = bucketOf(fluidId(magazine));
             if (filled != null) {
-                incoming.shrink(1);
-                slot.set(new ItemStack(filled));
-                CompoundTag data = tag(magazine);
-                data.putInt(TAG_MB, fluidMb(magazine) - LadleLogic.CAPACITY_MB);
-                magazine.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
+                cursor.set(new ItemStack(filled));
+                storeFluid(magazine, fluidId(magazine), fluidMb(magazine) - LadleLogic.CAPACITY_MB);
+                playScoop(player);
                 return true;
             }
         }
@@ -223,10 +294,7 @@ public final class LadleItem extends Item implements CarrierItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context,
                                 List<Component> tooltip, TooltipFlag flag) {
-        // Экранирующее свойство — как у щипцов (формат хазмата); строку
-        // «Радиоактивность: …» добавляет общий RadTooltip (значение уменьшенное).
-        tooltip.add(Component.translatable("tooltip.gonzotech.shielding",
-                Component.literal("40%").withColor(0xFFFFFF)).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.empty());
         if (fluidMb(stack) > 0 && !fluidId(stack).isEmpty()) {
             String path = fluidId(stack).contains(":")
                     ? fluidId(stack).substring(fluidId(stack).indexOf(':') + 1) : fluidId(stack);
@@ -252,5 +320,8 @@ public final class LadleItem extends Item implements CarrierItem {
                 }
             }
         }
+        tooltip.add(Component.empty());
+        tooltip.add(Component.translatable("tooltip.gonzotech.shielding",
+                Component.literal("40%").withColor(0xFFFFFF)).withStyle(ChatFormatting.GRAY));
     }
 }
