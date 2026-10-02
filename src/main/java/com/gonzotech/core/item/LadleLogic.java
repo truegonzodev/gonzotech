@@ -1,12 +1,17 @@
 package com.gonzotech.core.item;
 
 /**
- * Чистая логика ковша (0.3.79) — БЕЗ зависимостей от Minecraft.
+ * Чистая логика ковша (0.3.80) — БЕЗ зависимостей от Minecraft.
  *
  * <p>Ковш — брат щипцов: хранит ПОРЦИЮ жидкости (1000 mB, один вид) ИЛИ
  * предметы ртути/цезия (те самые, что щипцы не берут — автор,
  * EPOCH3-BASE §2.4/§2.8). Защитные множители — те же, что у щипцов
  * ({@code CarrierItem}).
+ *
+ * <p>Правило носителей (автор, 02.10.2026): механика — как у ванильного
+ * мешочка/связки, ничего нового не изобретать; единственный запрет — СОБСТВЕННЫЕ
+ * носители не вкладываются друг в друга (щипцы↔щипцы, ковш↔ковш, щипцы↔ковш),
+ * а ванильные контейнеры (шалкеры, связка) ковш берёт как обычные предметы.
  */
 public final class LadleLogic {
 
@@ -19,9 +24,16 @@ public final class LadleLogic {
     private LadleLogic() {
     }
 
-    /** Ковш принимает предметы ровно наоборот: ТОЛЬКО ртуть/цезий. */
+    /** Ванильные контейнеры (шалкеры/связка) — обычные предметы для ковша. */
+    public static boolean isContainerItem(String itemIdPath) {
+        return itemIdPath.endsWith("shulker_box")
+                || itemIdPath.equals("bundle") || itemIdPath.endsWith("_bundle");
+    }
+
+    /** Ковш: ртуть/цезий + ванильные контейнеры; свои носители — НИКОГДА. */
     public static boolean canPickItem(String itemIdPath) {
-        return TongsLogic.isMercuryCesium(itemIdPath);
+        return (TongsLogic.isMercuryCesium(itemIdPath) || isContainerItem(itemIdPath))
+                && !TongsLogic.isCarrier(itemIdPath);
     }
 
     /** Сколько единиц ртути/цезия влезает в ковш (один вид). */

@@ -151,7 +151,7 @@ assert "be.revalidateBlast(server);" in be  # 0.3.69: вызов ревалид�
 # 0.3.76: дым горящей топки — campfire-дым и пыль 0x78726B, по одной частице за тик
 assert "ParticleTypes.CAMPFIRE_COSY_SMOKE" in be
 assert "new DustParticleOptions(0x78726B, 1.0F)" in be
-assert "worldPosition.getY() + 1.05," in be
+assert "pos.getY() + 1.05," in be
 # 0.3.76: страницы заметок 15/16 — крафт шамота справа и структура печи (3 слоя)
 content = (ROOT / "src/main/java/com/gonzotech/chalkboard/notes/ScholarNotesContent.java").read_text()
 assert 'NoteIllustration.craftingRight(List.of("minecraft:bricks", "minecraft:clay_ball", "minecraft:bone_meal", "minecraft:wheat", "minecraft:calcite", "", "", "", ""), "gonzotech:fireclay")' in content

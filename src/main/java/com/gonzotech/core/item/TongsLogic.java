@@ -13,6 +13,10 @@ import java.util.Set;
  *
  * <p>Запрет автора: щипцы НЕ берут ртуть и цезий ни в каком виде, кроме руды,
  * поллуцита и киновари (те идут в ковш).
+ *
+ * <p>Правило носителей (автор, 02.10.2026): механика — как у ванильного
+ * мешочка/связки; единственный запрет на вложение — СОБСТВЕННЫЕ носители
+ * (щипцы/ковш) не упаковываются друг в друга; шалкеры/связки — обычные предметы.
  */
 public final class TongsLogic {
 
@@ -33,6 +37,11 @@ public final class TongsLogic {
     /** Ртуть/цезий «чистого» вида? (их щипцы НЕ берут — это профиль ковша). */
     public static boolean isMercuryCesium(String itemIdPath) {
         return MERCURY_CESIUM.contains(itemIdPath);
+    }
+
+    /** Мой ли это носитель (щипцы/ковш)? Такие предметы не гнездятся. */
+    public static boolean isCarrier(String itemIdPath) {
+        return CARRIERS.contains(itemIdPath);
     }
 
     /** Может ли щипец принять предмет с таким путём id. */

@@ -10,8 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
@@ -19,6 +18,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 
 import java.util.List;
@@ -123,11 +123,11 @@ public final class LadleItem extends Item implements CarrierItem {
 
     /** Держат ковш и кликают по слоту: ведро → зачерпнуть; пустое ведро → отлить. */
     @Override
-    public ClickAction overrideStackedOnOther(ItemStack magazine, Slot slot,
+    public boolean overrideStackedOnOther(ItemStack magazine, Slot slot,
                                               ClickAction action, Player player) {
-        if (action != ClickAction.PRIMARY || !magazine.is(this)) return ClickAction.PASS;
+        if (action != ClickAction.PRIMARY || !magazine.is(this)) return false;
         ItemStack other = slot.getItem();
-        if (other.isEmpty()) return ClickAction.PASS;
+        if (other.isEmpty()) return false;
 
         // Ртуть/цезий предметами — профиль ковша.
         String path = BuiltInRegistries.ITEM.getKey(other.getItem()).getPath();
@@ -137,7 +137,7 @@ public final class LadleItem extends Item implements CarrierItem {
             storeItems(magazine, path, itemCount(magazine) + moved);
             other.shrink(moved);
             slot.setChanged();
-            return ClickAction.SUCCESS;
+            return true;
         }
 
         // Заполненное ведро → зачерпнуть порцию.
@@ -149,7 +149,7 @@ public final class LadleItem extends Item implements CarrierItem {
                 data.putInt(TAG_MB, LadleLogic.CAPACITY_MB);
                 magazine.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
                 slot.set(new ItemStack(Items.BUCKET));
-                return ClickAction.SUCCESS;
+                return true;
             }
 
             // Пустое ведро → отлить порцию из ковша (обратное направление).
@@ -161,19 +161,19 @@ public final class LadleItem extends Item implements CarrierItem {
                     CompoundTag data = tag(magazine);
                     data.putInt(TAG_MB, fluidMb(magazine) - LadleLogic.CAPACITY_MB);
                     magazine.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
-                    return ClickAction.SUCCESS;
+                    return true;
                 }
             }
         }
-        return ClickAction.PASS;
+        return false;
     }
 
     /** Держат стопку и кликают по ковшу в слоте: предметы ртути/цезия — внутрь. */
     @Override
-    public ClickAction overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
+    public boolean overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
                                                 Slot slot, ClickAction action, Player player) {
         if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
-            return ClickAction.PASS;
+            return false;
         }
         String path = BuiltInRegistries.ITEM.getKey(incoming.getItem()).getPath();
         int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
@@ -182,7 +182,7 @@ public final class LadleItem extends Item implements CarrierItem {
             storeItems(magazine, path, itemCount(magazine) + moved);
             incoming.shrink(moved);
             slot.setChanged();
-            return ClickAction.SUCCESS;
+            return true;
         }
         // Пустое ведро курсором → отлить порцию из ковша.
         if (path.equals(BUCKET_ITEM) && fluidMb(magazine) >= LadleLogic.CAPACITY_MB
@@ -194,27 +194,27 @@ public final class LadleItem extends Item implements CarrierItem {
                 CompoundTag data = tag(magazine);
                 data.putInt(TAG_MB, fluidMb(magazine) - LadleLogic.CAPACITY_MB);
                 magazine.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
-                return ClickAction.SUCCESS;
+                return true;
             }
         }
-        return ClickAction.PASS;
+        return false;
     }
 
     // ─────────────────────────── выгрузка вручную ───────────────────────────
 
-    /** ПКМ по воздуху: ртуть/цезий выкладываются; жидкость ковша не выливается. */
+    /** ПКМ по воздуху — мешочек: ртуть/цезий в инвентарь; жидкость не выливается. */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack magazine = player.getItemInHand(hand);
-        ItemStack content = takeCarried(magazine);
-        if (content.isEmpty()) {
-            return InteractionResultHolder.pass(magazine);
-        }
+        if (!hasCarried(magazine)) return InteractionResult.PASS;
         if (!level.isClientSide()) {
-            ItemEntity drop = new ItemEntity(level, player.getX(), player.getY() + 0.5, player.getZ(), content);
-            level.addFreshEntity(drop);
+            ItemStack content = takeCarried(magazine);
+            if (!content.isEmpty() && !player.getInventory().add(content)) {
+                net.minecraft.world.Containers.dropItemStack(level,
+                        player.getX(), player.getY() + 0.5, player.getZ(), content);
+            }
         }
-        return InteractionResultHolder.sidedSuccess(magazine, level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     // ─────────────────────────── тултип ───────────────────────────

@@ -36,10 +36,16 @@ HARNESS = '''public class TongsLadleSelfTest {
         check(com.gonzotech.core.item.TongsLogic.roomFor("uranium_ingot", 53, "uranium_ingot", 40) == 11, "top-up");
         check(com.gonzotech.core.item.TongsLogic.roomFor("uranium_ingot", 64, "uranium_ingot", 1) == 0, "full");
         check(com.gonzotech.core.item.TongsLogic.roomFor("uranium_ingot", 10, "iron_ingot", 5) == 0, "mixed");
-        // Ковш: ТОЛЬКО ртуть/цезий предметами.
+        // Ковш: ртуть/цезий + ванильные контейнеры (автор 02.10.2026).
         check(com.gonzotech.core.item.LadleLogic.canPickItem("mercury_ingot"), "ladle mercury");
         check(com.gonzotech.core.item.LadleLogic.canPickItem("cesium_nugget"), "ladle cesium");
+        check(com.gonzotech.core.item.LadleLogic.canPickItem("white_shulker_box"), "ladle shulker");
+        check(com.gonzotech.core.item.LadleLogic.canPickItem("bundle"), "ladle bundle");
         check(!com.gonzotech.core.item.LadleLogic.canPickItem("uranium_ingot"), "ladle not uranium");
+        // Носители НИКОГДА не гнездятся (щипцы↔щипцы, ковш↔ковш, щипцы↔ковш).
+        check(!com.gonzotech.core.item.LadleLogic.canPickItem("tongs"), "tongs in ladle");
+        check(!com.gonzotech.core.item.LadleLogic.canPickItem("ladle"), "ladle in ladle");
+        check(!com.gonzotech.core.item.TongsLogic.canPick("white_shulker_box") == false, "shulker in tongs ok");
         check(com.gonzotech.core.item.LadleLogic.roomForItem("", 0, "cesium_dust", 64) == 64, "ladle item cap");
         check(com.gonzotech.core.item.LadleLogic.roomForItem("cesium_dust", 64, "cesium_dust", 3) == 0, "ladle full");
         // Жидкость: порция 1000 mB, один вид.
@@ -106,4 +112,24 @@ for name in ("tongs", "ladle"):
     assert (ROOT / f"src/main/resources/assets/gonzotech/models/item/{name}.json").is_file()
     assert (ROOT / f"src/main/resources/assets/gonzotech/textures/item/{name}.png").is_file()
 
-print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB)")
+# ── Пины фиксов компиляции автора (0.3.80): точные сигнатуры 1.21.4 ──
+for item in ("TongsItem", "LadleItem"):
+    src = (ROOT / f"src/main/java/com/gonzotech/core/item/{item}.java").read_text()
+    assert "public boolean overrideStackedOnOther(" in src, item          # boolean, не ClickAction
+    assert "public boolean overrideOtherStackedOnMe(" in src, item
+    assert "public InteractionResult use(" in src, item                   # 1.21.4: без InteractionResultHolder
+    assert "InteractionResultHolder" not in src, item
+    assert "import net.minecraft.world.item.component.CustomData;" in src, item
+    assert "player.getInventory().add(content)" in src, item              # мешочек: содержимое в инвентарь
+    assert "ClickAction.PASS" not in src and "ClickAction.SUCCESS" not in src, item
+
+firebox = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/FireboxBlockEntity.java").read_text()
+# дым 0.3.76: параметр serverTick pos, а не статически недоступное поле worldPosition
+assert "pos.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4," in firebox
+assert "worldPosition.getX() + 0.5 + (server.random" not in firebox
+
+logic = (ROOT / "src/main/java/com/gonzotech/core/item/LadleLogic.java").read_text()
+assert 'itemIdPath.endsWith("shulker_box")' in logic
+assert "!TongsLogic.isCarrier(itemIdPath)" in logic
+
+print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB, 1.21.4 signatures)")

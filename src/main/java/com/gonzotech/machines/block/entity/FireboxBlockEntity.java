@@ -327,9 +327,9 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
             boolean smoke = (server.getGameTime() & 1L) == 0L;
             server.sendParticles(smoke ? ParticleTypes.CAMPFIRE_COSY_SMOKE
                     : new DustParticleOptions(0x78726B, 1.0F),
-                worldPosition.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4,
-                worldPosition.getY() + 1.05,
-                worldPosition.getZ() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4,
+                pos.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4,
+                pos.getY() + 1.05,
+                pos.getZ() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4,
                 0, 0.0, 0.18, 0.0, 1.0);
             be.litTime--;
             long perTick = be.blastFormed

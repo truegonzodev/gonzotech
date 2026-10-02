@@ -10,8 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
@@ -97,15 +96,15 @@ public final class TongsItem extends Item implements CarrierItem {
 
     /** Держат щипцы и кликают по стопке в слоте: забрать из слота в щипцы. */
     @Override
-    public ClickAction overrideStackedOnOther(ItemStack magazine, Slot slot,
+    public boolean overrideStackedOnOther(ItemStack magazine, Slot slot,
                                               ClickAction action, Player player) {
-        if (action != ClickAction.PRIMARY || !magazine.is(this)) return ClickAction.PASS;
+        if (action != ClickAction.PRIMARY || !magazine.is(this)) return false;
         ItemStack other = slot.getItem();
-        if (other.isEmpty()) return ClickAction.PASS;
+        if (other.isEmpty()) return false;
         String path = BuiltInRegistries.ITEM.getKey(other.getItem()).getPath();
         int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
                 path, other.getCount());
-        if (moved <= 0) return ClickAction.PASS;
+        if (moved <= 0) return false;
         store(magazine, path, itemCount(magazine) + moved);
         other.shrink(moved);
         slot.setChanged();
@@ -113,20 +112,20 @@ public final class TongsItem extends Item implements CarrierItem {
             server.playSound(null, player.blockPosition(), SoundEvents.BUNDLE_INSERT,
                     SoundSource.PLAYERS, 0.8F, 1.0F);
         }
-        return ClickAction.SUCCESS;
+        return true;
     }
 
     /** Держат стопку и кликают по щипцам в слоте: положить стопку в щипцы. */
     @Override
-    public ClickAction overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
+    public boolean overrideOtherStackedOnMe(ItemStack magazine, ItemStack incoming,
                                                 Slot slot, ClickAction action, Player player) {
         if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
-            return ClickAction.PASS;
+            return false;
         }
         String path = BuiltInRegistries.ITEM.getKey(incoming.getItem()).getPath();
         int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
                 path, incoming.getCount());
-        if (moved <= 0) return ClickAction.PASS;
+        if (moved <= 0) return false;
         store(magazine, path, itemCount(magazine) + moved);
         incoming.shrink(moved);
         slot.setChanged();
@@ -134,24 +133,24 @@ public final class TongsItem extends Item implements CarrierItem {
             server.playSound(null, player.blockPosition(), SoundEvents.BUNDLE_INSERT,
                     SoundSource.PLAYERS, 0.8F, 1.0F);
         }
-        return ClickAction.SUCCESS;
+        return true;
     }
 
     // ─────────────────────────── выгрузка вручную ───────────────────────────
 
-    /** ПКМ по воздуху — выложить содержимое рядом (аналог выгрузки свёртка). */
+    /** ПКМ по воздуху — мешочек: содержимое возвращается в инвентарь (излишек — дроп). */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack magazine = player.getItemInHand(hand);
-        ItemStack content = takeCarried(magazine);
-        if (content.isEmpty()) {
-            return InteractionResultHolder.pass(magazine);
-        }
+        if (!hasCarried(magazine)) return InteractionResult.PASS;
         if (!level.isClientSide()) {
-            ItemEntity drop = new ItemEntity(level, player.getX(), player.getY() + 0.5, player.getZ(), content);
-            level.addFreshEntity(drop);
+            ItemStack content = takeCarried(magazine);
+            if (!content.isEmpty() && !player.getInventory().add(content)) {
+                net.minecraft.world.Containers.dropItemStack(level,
+                        player.getX(), player.getY() + 0.5, player.getZ(), content);
+            }
         }
-        return InteractionResultHolder.sidedSuccess(magazine, level.isClientSide());
+        return InteractionResult.SUCCESS;
     }
 
     // ─────────────────────────── тултип ───────────────────────────
