@@ -320,7 +320,8 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     }
 
     /**
-     * Цикл варки: {@code 16 mB воды + 12 GTH → 12 mB пара × M} за событие.
+     * Цикл варки: {@code 1.14 mB воды + 1.93 GTH → 0.44 mB пара × M} за
+     * событие (нёрф конверсии автора 02.10; до множителя).
      * За тик машина делает максимум событий, позволяемых потолком выработки,
      * запасом воды/GTH и местом в баке пара.
      *
@@ -335,7 +336,8 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
             / MachineDefs.STEAMGEN_STEAM_PER_UNIT;
         long waterMilli = water.amount() * MachineDefs.MILLI / MachineDefs.STEAMGEN_WATER_PER_UNIT;
         long gthMilli = gth.amountAsLong() * MachineDefs.MILLI / MachineDefs.STEAMGEN_GTH_PER_UNIT_MILLI;
-        long spaceMilli = (long) Math.floor(steam.space() * MachineDefs.MILLI / (12.0D * mult));
+        long spaceMilli = (long) Math.floor(steam.space() * MachineDefs.MILLI
+            / (MachineDefs.STEAMGEN_STEAM_PER_UNIT * (double) mult));
         long availMilli = Math.min(Math.min(capMilli, waterMilli), Math.min(gthMilli, spaceMilli));
         if (availMilli <= 0) return false;
 
@@ -347,7 +349,8 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         long gthUsed = events * MachineDefs.STEAMGEN_GTH_PER_UNIT_MILLI;
         if (waterUsed > water.amount() || gthUsed > gth.amountAsLong()) return false;
 
-        long madeMilli = (long) Math.floor(12.0D * mult * events * MachineDefs.MILLI) + steamRemainderMilli;
+        long madeMilli = (long) Math.floor(MachineDefs.STEAMGEN_STEAM_PER_UNIT * (double) mult
+            * events * MachineDefs.MILLI) + steamRemainderMilli;
         long madeWhole = madeMilli / MachineDefs.MILLI;
         if (madeWhole > steam.space()) {
             madeWhole = steam.space();

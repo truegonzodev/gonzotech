@@ -334,11 +334,11 @@ public final class MachineDefs {
     public static final int STEAMGEN_GTH_CAPACITY_PER_CORE = 4_096;
 
     /** Цикл варки: mB воды на 12 mB базового пара. */
-    public static final int STEAMGEN_WATER_PER_UNIT = 16;
+    public static final int STEAMGEN_WATER_PER_UNIT = 114;
     /** Цикл варки: GTH на 12 mB базового пара (в milli). */
-    public static final int STEAMGEN_GTH_PER_UNIT_MILLI = 12 * MILLI;
+    public static final int STEAMGEN_GTH_PER_UNIT_MILLI = 193 * MILLI;
     /** Цикл варки: mB базового пара (до множителя теплообменников). */
-    public static final int STEAMGEN_STEAM_PER_UNIT = 12;
+    public static final int STEAMGEN_STEAM_PER_UNIT = 44;
 
     /** Делитель (C+H) одного теплообменника: E = (C+H)/200. */
     public static final int STEAMGEN_EXCHANGER_DIVISOR = 200;

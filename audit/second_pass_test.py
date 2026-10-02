@@ -370,7 +370,9 @@ for pin in ("FIREBOX_GTH_CAPACITY = 16_004 * MILLI;","BOILER_GTH_CAPACITY = 16_0
     "CENTRIFUGE_GTU_CAPACITY = 2_202 * MILLI;","CENTRIFUGE_GTU_INTAKE = 52 * MILLI;",
     "CENTRIFUGE_HOT_WATER_CAPACITY = 8_000;","CENTRIFUGE_WATER_CAPACITY = 6_000;",
     "CENTRIFUGE_WATER_INTAKE = 256;","CENTRIFUGE_STEAM_INTAKE = 256;","CENTRIFUGE_WASH_TICKS = 310;",
-    "UNIVERSAL_FLUID_OUTPUT = 316;","STEAMGEN_WATER_PER_UNIT = 16;","STEAMGEN_GTH_PER_UNIT_MILLI = 12 * MILLI;",
+    "UNIVERSAL_FLUID_OUTPUT = 316;",
+    # 0.3.106: нёрф конверсии парогена (автор 02.10): 1.93 GTH + 1.14 W → 0.44 пара
+    "STEAMGEN_WATER_PER_UNIT = 114;","STEAMGEN_GTH_PER_UNIT_MILLI = 193 * MILLI;","STEAMGEN_STEAM_PER_UNIT = 44;",
     "STEAMGEN_EXCHANGER_EFFICIENCY = 0.93D;"):
     assert pin in mdefs, 'mdefs: '+pin
 for pin in ("WIRE_THROUGHPUT = 89L * MachineDefs.MILLI;","HEAT_THROUGHPUT = 562L * MachineDefs.MILLI;",
@@ -422,6 +424,10 @@ assert 'public static void recordLoss(Level level, BlockPos pipe, PipeType type,
 assert 'public static long getLoss(Level level, BlockPos pipe, PipeType type)' in flow_tracker
 pipe_flow=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeFlowNetwork.java').read_text()
 assert 'long lossMilli, int clumpSize) implements CustomPacketPayload' in pipe_flow  # 0.3.102: счётчик клампа вернулся
+# 0.3.106: «12» цикла больше не хардкод — константа (нёрф конверсии автора)
+steam_be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/SteamGenCoreBlockEntity.java").read_text()
+assert "12.0D * mult" not in steam_be
+assert "MachineDefs.STEAMGEN_STEAM_PER_UNIT * (double) mult" in steam_be
 assert 'ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,' in pipe_flow
 assert pipe_flow.count('FlowTracker.getLoss(level, pos, pipeType)') == 1  # 0.3.104: осевых ответов больше нет
 wrench=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()

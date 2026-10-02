@@ -10,7 +10,8 @@ import com.gonzotech.machines.energy.MachineDefs;
  * теплообменников и восстанавливает ровно те же ёмкости и темпы, что и сервер.</p>
  *
  * <h2>Формула</h2>
- * Цикл варки: {@code 16 mB воды + 12 GTH → 12 mB пара × M}, где
+ * Цикл варки (нёрф конверсии автора 02.10, было {@code 16 W + 12 GTH → 12 пара}):
+ * {@code 1.14 mB воды + 1.93 GTH → 0.44 mB пара × M}, где
  * <pre>
  *   M        = 1 + E_avg × (1 + 0.1 × (n − 1))
  *   E_avg    = (C+H)_{avg} / 200 × 0.93  (средняя по n теплообменникам, -7% с 0.3.64)
@@ -18,7 +19,7 @@ import com.gonzotech.machines.energy.MachineDefs;
  * Ядра задают базовый throughput: {@code 34 mB/т × M} на ядро (34 — предел
  * ДО модификатора; множитель теплообменников умножает и потолок). Теплообменники
  * лишь повышают эффективность преобразования: на единицу пара тратится
- * 15/(12M) mB воды и 11/(12M) GTH.
+ * 114/(44M) mB воды и 193/(44M) GTH.
  */
 public final class SteamGenMath {
 
@@ -86,13 +87,13 @@ public final class SteamGenMath {
 
     /**
      * Сколько целых циклов варки даёт доступная вода, без перерасхода:
-     * floor(вода / 15).
+     * floor(вода / 114).
      */
     public static long unitsFromWater(long waterMb) {
         return waterMb / MachineDefs.STEAMGEN_WATER_PER_UNIT;
     }
 
-    /** Сколько целых циклов варки даёт доступный GTH: floor(milli / 11000). */
+    /** Сколько целых циклов варки даёт доступный GTH: floor(milli / 193000). */
     public static long unitsFromGth(long gthMilli) {
         return gthMilli / MachineDefs.STEAMGEN_GTH_PER_UNIT_MILLI;
     }

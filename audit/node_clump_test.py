@@ -34,7 +34,15 @@ assert "record Clump(long root, long lossMilli, Set<Long> members)" in idx
 # 0.3.101: инвариант непересечения (лечит «экспоненциальный» HUD-счётчик автора)
 assert "if (oldRoot != null && oldRoot != root) byRoot.remove(oldRoot);" in idx
 # 0.3.101: уборка устаревших корней (живой кламп отображает корень в себя)
-assert "self == null || self != r" in idx
+# 0.3.106: сравнение значений (фиксированный свип пинится ниже)
+# 0.3.106: свип сравнивает ЗНАЧЕНИЯ (Long vs Long через != = ссылки — свип
+# после любого разбила выкидывал и живые клампы: «ломаешь — ничего не показывает»)
+assert "self.longValue() != r.longValue();" in idx
+assert "self == null || self != r;" not in idx
+# 0.3.106: свип сравнивает ЗНАЧЕНИЯ (Long vs Long через != = ссылки — свип
+# после любого разбила выкидывал и живые клампы: «ломаешь — ничего не показывает»)
+assert "self.longValue() != r.longValue();" in idx
+assert "self == null || self != r;" not in idx
 # 0.3.105: раскол не теряет клампы — два фикса по матсимуляции
 # (1) компонент = ТОЛЬКО члены: членство проверяется ДО seen.add
 assert "if (!allowed.contains(key) || !seen.add(key)) continue;" in idx

@@ -221,7 +221,12 @@ public final class NodeClumpIndex {
         if (byRoot != null && !byRoot.isEmpty()) {
             byRoot.keySet().removeIf(r -> {
                 Long self = members.get(r);
-                return self == null || self != r;
+                // 0.3.106: Long vs Long через != — сравнение ССЫЛОК (обёртки не
+                // интернируются): свип после ЛЮБОГО разбила выкидывал из
+                // реестра и ЖИВЫЕ клампы → «собираешь — сшито 5/6, ломаешь —
+                // ни сшито ни потока» (репорт автора, фото 2). Только
+                // .longValue() даёт честное сравнение значений.
+                return self == null || self.longValue() != r.longValue();
             });
         }
         if (byRoot != null && byRoot.isEmpty()) BY_ROOT.remove(level);
