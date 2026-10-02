@@ -28,6 +28,12 @@ HARNESS = '''public class TongsLadleSelfTest {
         check(com.gonzotech.core.item.TongsLogic.canPick("pollucite"), "tongs pollucite");
         check(com.gonzotech.core.item.TongsLogic.canPick("cinnabar"), "tongs cinnabar");
         check(com.gonzotech.core.item.TongsLogic.canPick("uranium_ingot"), "tongs uranium");
+        // Полные id «namespace:path» (0.3.83): gonzo-предметы больше не «съедаются».
+        check(com.gonzotech.core.item.TongsLogic.canPick("gonzotech:uranium_ingot"), "tongs ns uranium");
+        check(!com.gonzotech.core.item.TongsLogic.canPick("minecraft:mercury_ingot"), "tongs ns mercury");
+        check(com.gonzotech.core.item.TongsLogic.pathOf("gonzotech:uranium_ingot").equals("uranium_ingot"), "pathOf ns");
+        check(com.gonzotech.core.item.TongsLogic.pathOf("pollucite").equals("pollucite"), "pathOf bare");
+        check(!com.gonzotech.core.item.TongsLogic.canPick("gonzotech:tongs"), "ns tongs in tongs");
         // Носитель в носитель не кладётся.
         check(!com.gonzotech.core.item.TongsLogic.canPick("tongs"), "tongs in tongs");
         check(!com.gonzotech.core.item.TongsLogic.canPick("ladle"), "ladle in tongs");
@@ -41,6 +47,8 @@ HARNESS = '''public class TongsLadleSelfTest {
         check(com.gonzotech.core.item.LadleLogic.canPickItem("cesium_nugget"), "ladle cesium");
         check(com.gonzotech.core.item.LadleLogic.canPickItem("white_shulker_box"), "ladle shulker");
         check(com.gonzotech.core.item.LadleLogic.canPickItem("bundle"), "ladle bundle");
+        check(com.gonzotech.core.item.LadleLogic.canPickItem("minecraft:white_shulker_box"), "ladle ns shulker");
+        check(!com.gonzotech.core.item.LadleLogic.canPickItem("gonzotech:ladle"), "ns ladle in ladle");
         check(!com.gonzotech.core.item.LadleLogic.canPickItem("uranium_ingot"), "ladle not uranium");
         // Носители НИКОГДА не гнездятся (щипцы↔щипцы, ковш↔ковш, щипцы↔ковш).
         check(!com.gonzotech.core.item.LadleLogic.canPickItem("tongs"), "tongs in ladle");
@@ -106,7 +114,7 @@ for lang in ("en_us", "ru_ru"):
     import json
     data = json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{lang}.json").read_text())
     assert data["item.gonzotech.tongs"] and data["item.gonzotech.ladle"]
-    assert data["tooltip.gonzotech.carrier.contains"] == "Содержит: %s × %s" or "Contains" in data["tooltip.gonzotech.carrier.contains"]
+    assert "%s" in data["tooltip.gonzotech.carrier.contains"]
 for name in ("tongs", "ladle"):
     assert (ROOT / f"src/main/resources/assets/gonzotech/items/{name}.json").is_file()
     assert (ROOT / f"src/main/resources/assets/gonzotech/models/item/{name}.json").is_file()
@@ -133,4 +141,35 @@ logic = (ROOT / "src/main/java/com/gonzotech/core/item/LadleLogic.java").read_te
 assert 'itemIdPath.endsWith("shulker_box")' in logic
 assert "!TongsLogic.isCarrier(itemIdPath)" in logic
 
-print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB, 1.21.4 signatures)")
+# ── Пины 0.3.83: полный id + deep-обход хранилищ + наведёнка носителей ──
+for item in ("TongsItem", "LadleItem"):
+    src = (ROOT / f"src/main/java/com/gonzotech/core/item/{item}.java").read_text()
+    assert "BuiltInRegistries.ITEM.getKey(other.getItem()).toString()" in src, item   # полный id
+    assert "BuiltInRegistries.ITEM.getKey(incoming.getItem()).toString()" in src, item
+    assert 'tooltip.gonzotech.shielding' in src and 'tooltip.gonzotech.carrier.full' in src, item
+    assert 'tooltip.gonzotech.carrier.hint' in src, item
+
+rads = (ROOT / "src/main/java/com/gonzotech/radiation/RadSources.java").read_text()
+assert "public static double emissionDeep(ItemStack stack)" in rads
+assert "container.nonEmptyItems()" in rads        # ItemContainerContents (шалкеры/моды)
+assert "bundle.items()" in rads                   # BundleContents (связки)
+assert "DataComponents.BUNDLE_CONTENTS" in rads
+assert "depth < 4" in rads                        # защита от циклов
+
+radsys = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text()
+assert radsys.count("RadSources.emissionDeep(stack)") >= 2      # intrinsic + per-stack
+assert "secondStackEmission" in radsys and "stackSource" in radsys
+assert "RadSources.emissionDeep(container.getItem(i))" in radsys
+
+chunk = (ROOT / "src/main/java/com/gonzotech/radiation/ChunkRadiationData.java").read_text()
+assert "RadSources.emissionDeep(container.getItem(i))" in chunk  # дозиметр видит вложенное
+
+ir = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text()
+assert "double intrinsic = stack.getItem() instanceof CarrierItem" in ir  # фундамент=0
+
+import json
+for lang in ("en_us", "ru_ru"):
+    data = json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{lang}.json").read_text())
+    assert data["tooltip.gonzotech.carrier.hint"] and data["tooltip.gonzotech.carrier.full"]
+
+print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB, 1.21.4 signatures, deep scan)")

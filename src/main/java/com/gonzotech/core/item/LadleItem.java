@@ -129,12 +129,12 @@ public final class LadleItem extends Item implements CarrierItem {
         ItemStack other = slot.getItem();
         if (other.isEmpty()) return false;
 
-        // Ртуть/цезий предметами — профиль ковша.
-        String path = BuiltInRegistries.ITEM.getKey(other.getItem()).getPath();
+        // Ртуть/цезий предметами — профиль ковша. ПОЛНЫЙ id (0.3.83).
+        String id = BuiltInRegistries.ITEM.getKey(other.getItem()).toString();
         int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
-                path, other.getCount());
+                id, other.getCount());
         if (moved > 0) {
-            storeItems(magazine, path, itemCount(magazine) + moved);
+            storeItems(magazine, id, itemCount(magazine) + moved);
             other.shrink(moved);
             slot.setChanged();
             return true;
@@ -176,11 +176,11 @@ public final class LadleItem extends Item implements CarrierItem {
         if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
             return false;
         }
-        String path = BuiltInRegistries.ITEM.getKey(incoming.getItem()).getPath();
+        String id = BuiltInRegistries.ITEM.getKey(incoming.getItem()).toString();
         int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
-                path, incoming.getCount());
+                id, incoming.getCount());
         if (moved > 0) {
-            storeItems(magazine, path, itemCount(magazine) + moved);
+            storeItems(magazine, id, itemCount(magazine) + moved);
             incoming.shrink(moved);
             slot.setChanged();
             return true;
@@ -223,6 +223,10 @@ public final class LadleItem extends Item implements CarrierItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context,
                                 List<Component> tooltip, TooltipFlag flag) {
+        // Экранирующее свойство — как у щипцов (формат хазмата); строку
+        // «Радиоактивность: …» добавляет общий RadTooltip (значение уменьшенное).
+        tooltip.add(Component.translatable("tooltip.gonzotech.shielding",
+                Component.literal("40%").withColor(0xFFFFFF)).withStyle(ChatFormatting.GRAY));
         if (fluidMb(stack) > 0 && !fluidId(stack).isEmpty()) {
             String path = fluidId(stack).contains(":")
                     ? fluidId(stack).substring(fluidId(stack).indexOf(':') + 1) : fluidId(stack);
@@ -233,13 +237,19 @@ public final class LadleItem extends Item implements CarrierItem {
         } else {
             ItemStack content = previewCarried(stack);
             if (content.isEmpty()) {
+                tooltip.add(Component.translatable("tooltip.gonzotech.carrier.hint")
+                        .withStyle(ChatFormatting.DARK_GRAY));
                 tooltip.add(Component.translatable("tooltip.gonzotech.carrier.empty")
                         .withStyle(ChatFormatting.GRAY));
             } else {
                 tooltip.add(Component.translatable("tooltip.gonzotech.carrier.contains",
+                        content.getHoverName(),
                         Component.literal(Integer.toString(content.getCount()))
-                                .withStyle(ChatFormatting.YELLOW),
-                        content.getHoverName()).withStyle(ChatFormatting.GRAY));
+                                .withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.GRAY));
+                if (itemCount(stack) >= LadleLogic.ITEM_CAPACITY) {
+                    tooltip.add(Component.translatable("tooltip.gonzotech.carrier.full")
+                            .withStyle(ChatFormatting.RED));
+                }
             }
         }
     }

@@ -122,4 +122,42 @@ public final class RadSources {
         double per = emissionPerItem(stack);
         return per <= 0.0 ? 0.0 : per * stack.getCount();
     }
+
+    /**
+     * Содержимое вложенных хранилищ (автор 03.10.2026): хранилище в инвентаре
+     * НЕ может «прятать» содержимое от дозы — шалкер/связка/мод-контейнер фонят
+     * наравне с россыпью; экран — ТОЛЬКО у наших носителей (CarrierItem).
+     * Общий обход через ванильные компоненты CONTAINER (шалкеры и большинство
+     * модов) и BUNDLE_CONTENTS (связки).
+     */
+    public static java.util.List<ItemStack> contentsOf(ItemStack stack) {
+        java.util.List<ItemStack> out = new java.util.ArrayList<>();
+        var container = stack.get(net.minecraft.core.component.DataComponents.CONTAINER);
+        if (container != null) {
+            for (ItemStack inner : container.nonEmptyItems()) {
+                if (!inner.isEmpty()) out.add(inner);
+            }
+        }
+        var bundle = stack.get(net.minecraft.core.component.DataComponents.BUNDLE_CONTENTS);
+        if (bundle != null) {
+            for (ItemStack inner : bundle.items()) {
+                if (!inner.isEmpty()) out.add(inner);
+            }
+        }
+        return out;
+    }
+
+    /** Эмиссия стака с рекурсивным обходом вложенных хранилищ (глубина ≤ 4). */
+    public static double emissionDeep(ItemStack stack) {
+        return emissionDeep(stack, 0);
+    }
+
+    private static double emissionDeep(ItemStack stack, int depth) {
+        // totalEmission = свой пресет (+ экран носителя) + накопленная наведёнка.
+        double sum = ItemRadioactivity.totalEmission(stack);
+        if (depth < 4) {
+            for (ItemStack inner : contentsOf(stack)) sum += emissionDeep(inner, depth + 1);
+        }
+        return sum;
+    }
 }

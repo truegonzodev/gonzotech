@@ -101,9 +101,10 @@ public final class TongsItem extends Item implements CarrierItem {
         if (action != ClickAction.PRIMARY || !magazine.is(this)) return false;
         ItemStack other = slot.getItem();
         if (other.isEmpty()) return false;
-        String path = BuiltInRegistries.ITEM.getKey(other.getItem()).getPath();
+        // ПОЛНЫЙ id «namespace:path» — голый путь ломал gonzo-предметы (0.3.83).
+        String id = BuiltInRegistries.ITEM.getKey(other.getItem()).toString();
         int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
-                path, other.getCount());
+                id, other.getCount());
         if (moved <= 0) return false;
         store(magazine, path, itemCount(magazine) + moved);
         other.shrink(moved);
@@ -123,9 +124,9 @@ public final class TongsItem extends Item implements CarrierItem {
         if (action != ClickAction.PRIMARY || !magazine.is(this) || incoming.isEmpty()) {
             return false;
         }
-        String path = BuiltInRegistries.ITEM.getKey(incoming.getItem()).getPath();
+        String id = BuiltInRegistries.ITEM.getKey(incoming.getItem()).toString();
         int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
-                path, incoming.getCount());
+                id, incoming.getCount());
         if (moved <= 0) return false;
         store(magazine, path, itemCount(magazine) + moved);
         incoming.shrink(moved);
@@ -159,15 +160,27 @@ public final class TongsItem extends Item implements CarrierItem {
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context,
                                 List<Component> tooltip, TooltipFlag flag) {
+        // Lore-формат по скринам автора (03.10.2026): «Экранирующее свойство» —
+        // всегда; дальше состояние занятости в стиле ванильной связки.
+        // Строку «Радиоактивность: …» добавляет общий RadTooltip (значение уже
+        // уменьшенное: содержимое × 0.6 + накопленная наведёнка).
+        tooltip.add(Component.translatable("tooltip.gonzotech.shielding",
+                Component.literal("40%").withColor(0xFFFFFF)).withStyle(ChatFormatting.GRAY));
         ItemStack content = previewCarried(stack);
         if (content.isEmpty()) {
+            tooltip.add(Component.translatable("tooltip.gonzotech.carrier.hint")
+                    .withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.translatable("tooltip.gonzotech.carrier.empty")
                     .withStyle(ChatFormatting.GRAY));
         } else {
             tooltip.add(Component.translatable("tooltip.gonzotech.carrier.contains",
+                    content.getHoverName(),
                     Component.literal(Integer.toString(content.getCount()))
-                            .withStyle(ChatFormatting.YELLOW),
-                    content.getHoverName()).withStyle(ChatFormatting.GRAY));
+                            .withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.GRAY));
+            if (itemCount(stack) >= TongsLogic.CAPACITY) {
+                tooltip.add(Component.translatable("tooltip.gonzotech.carrier.full")
+                        .withStyle(ChatFormatting.RED));
+            }
         }
     }
 }

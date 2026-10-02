@@ -167,7 +167,7 @@ public class ChunkRadiationData extends SavedData {
                 BlockPos pos = be.getBlockPos();
                 if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
                 double emission = 0.0;
-                for (int i = 0; i < container.getContainerSize(); i++) emission += RadSources.emissionOfStack(container.getItem(i));
+                for (int i = 0; i < container.getContainerSize(); i++) emission += RadSources.emissionDeep(container.getItem(i));
                 if (emission > 0.0) out.add(new VisualSource(pos, emission));
             }
         }

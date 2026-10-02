@@ -162,14 +162,20 @@ public final class RadiationSystem {
         // Скан инвентаря: пресетная эмиссия + самый горячий стак (цель логистики фона).
         List<List<ItemStack>> compartments = List.of(
                 player.getInventory().items, player.getInventory().armor, player.getInventory().offhand);
+        // 0.3.83: суммы — с рекурсивным обходом вложенных хранилищ (шалкер/
+        // связка/мод-контейнер фонят как россыпь; экран только у носителей).
         double intrinsic = 0.0;
-        double maxStackEmission = 0.0;
+        double maxStackEmission = 0.0;     // сильнейший стак…
+        double secondStackEmission = 0.0;  // …и сильнейший ДРУГОЙ (с кратностями)
         for (List<ItemStack> part : compartments) {
             for (ItemStack stack : part) {
-                double e = RadSources.emissionOfStack(stack);
+                double e = RadSources.emissionDeep(stack);
                 intrinsic += e;
                 if (e > maxStackEmission) {
+                    secondStackEmission = maxStackEmission;
                     maxStackEmission = e;
+                } else if (e > secondStackEmission) {
+                    secondStackEmission = e;
                 }
             }
         }
@@ -179,9 +185,9 @@ public final class RadiationSystem {
         boolean hasSourceContext = intrinsic > 0.0 || chunkNzt > ITEM_FROM_CHUNK_MIN;
         // Цель наведённого фона = эмиссия СИЛЬНЕЙШЕГО локального источника (100%,
         // автор 21.09: «предмет не может облучить другой сильнее, чем выдаёт сам»).
-        // Слабее источника — расти можно; сильнее — никогда.
-        double sourceLevel = Math.max(maxStackEmission,
-                chunkNzt > ITEM_FROM_CHUNK_MIN ? chunkNzt : 0.0);
+        // 0.3.83: уровень считается БЕЗ самого стака (иначе носитель наводился бы
+        // собственным содержимым, а empty-щипцы не росли бы от чужих источников).
+        double chunkSource = chunkNzt > ITEM_FROM_CHUNK_MIN ? chunkNzt : 0.0;
 
         double induced = 0.0;
         for (List<ItemStack> part : compartments) {
@@ -192,12 +198,18 @@ public final class RadiationSystem {
                 boolean activeHand = stack == player.getMainHandItem()
                         || stack == player.getOffhandItem();
                 boolean hardUse = activeHand && isHardUsing(player, stack);
+                // Пер-стековый уровень источника: эмиссия этого стака исключена
+                // (второй максимум), чанк-фон общий.
+                double ownEmission = RadSources.emissionDeep(stack);
+                double stackSource = Math.max(
+                        ownEmission >= maxStackEmission ? secondStackEmission : maxStackEmission,
+                        chunkSource);
                 double perItem;
                 if (activeHand) {
                     perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
-                            sourceLevel, RadMaterials.itemFactor(stack));
+                            stackSource, RadMaterials.itemFactor(stack));
                 } else {
-                    ItemRadioactivity.tickInduced(stack, hasSourceContext, sourceLevel,
+                    ItemRadioactivity.tickInduced(stack, hasSourceContext, stackSource,
                             RadMaterials.itemFactor(stack));
                     perItem = ItemRadioactivity.getInduced(stack);
                 }
@@ -347,7 +359,7 @@ public final class RadiationSystem {
             if (be instanceof Container container) {
                 double mine = 0.0;
                 for (int i = 0; i < container.getContainerSize(); i++) {
-                    mine += RadSources.emissionOfStack(container.getItem(i));
+                    mine += RadSources.emissionDeep(container.getItem(i));
                 }
                 BlockPos pos = be.getBlockPos();
                 if (mine > 0.0 && pos != null) {

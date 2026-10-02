@@ -17,6 +17,9 @@ import java.util.Set;
  * <p>Правило носителей (автор, 02.10.2026): механика — как у ванильного
  * мешочка/связки; единственный запрет на вложение — СОБСТВЕННЫЕ носители
  * (щипцы/ковш) не упаковываются друг в друга; шалкеры/связки — обычные предметы.
+ *
+ * <p>Фикс 0.3.83: в NBT хранится ПОЛНЫЙ id «namespace:path» — хранение голого
+ * пути ломало gonzo-предметы (парсились как minecraft:*, контент «съедался»).
  */
 public final class TongsLogic {
 
@@ -34,19 +37,26 @@ public final class TongsLogic {
     private TongsLogic() {
     }
 
+    /** Путь id из полного id «namespace:path» (без ':' — как есть). */
+    public static String pathOf(String id) {
+        if (id == null) return "";
+        int i = id.lastIndexOf(':');
+        return i < 0 ? id : id.substring(i + 1);
+    }
+
     /** Ртуть/цезий «чистого» вида? (их щипцы НЕ берут — это профиль ковша). */
     public static boolean isMercuryCesium(String itemIdPath) {
-        return MERCURY_CESIUM.contains(itemIdPath);
+        return MERCURY_CESIUM.contains(pathOf(itemIdPath));
     }
 
     /** Мой ли это носитель (щипцы/ковш)? Такие предметы не гнездятся. */
     public static boolean isCarrier(String itemIdPath) {
-        return CARRIERS.contains(itemIdPath);
+        return CARRIERS.contains(pathOf(itemIdPath));
     }
 
-    /** Может ли щипец принять предмет с таким путём id. */
+    /** Может ли щипец принять предмет с таким id (полным или путём). */
     public static boolean canPick(String itemIdPath) {
-        return !MERCURY_CESIUM.contains(itemIdPath) && !CARRIERS.contains(itemIdPath);
+        return !isMercuryCesium(itemIdPath) && !isCarrier(itemIdPath);
     }
 
     /**

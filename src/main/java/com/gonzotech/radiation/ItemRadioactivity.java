@@ -75,7 +75,11 @@ public final class ItemRadioactivity {
         int count = Math.max(1, stack.getCount());
         // Preset emission is a permanent floor, not an inducible part. A
         // source may only raise a target above its own intrinsic baseline.
-        double intrinsic = RadSources.emissionOfStack(stack);
+        // Носитель (щипцы/ковш, 0.3.83): собственного «фундамента» не имеет —
+        // наведёнка растёт от ЧУЖИХ источников инвентаря/чанка; содержимое
+        // свою тару не облучает (sourceLevel уже исключает сам стак).
+        double intrinsic = stack.getItem() instanceof CarrierItem
+                ? 0.0 : RadSources.emissionOfStack(stack);
         double target = Math.min(Math.max(0.0, sourceNzt - intrinsic) / count, INDUCED_CAP);
         if (hasSource && target >= 1.0 && factor > 0.0) {
             if (current > target) return current / GROWTH;
