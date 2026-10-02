@@ -27,7 +27,7 @@ assert "public static void clearAll()" in idx
 assert 'b instanceof SecondTierPipe ? "U2" : "U1"' in idx
 assert '(b instanceof SecondTierPipe ? "N2:" : "N1:") + node.pipeType().name()' in idx
 # потери: только провод/тепло, плоская формула габарита dx+dy+dz+1
-assert "(maxX - minX) + (maxY - minY) + (maxZ - minZ) + 1" in idx
+assert "int lossCells = members.size();" in idx  # 0.3.99: потери × N всех членов (автор)
 assert "lossCells * PipeLoss.perCell(second, heat)" in idx
 assert 'kind.endsWith("HEAT")' in idx and 'kind.endsWith("WIRE")' in idx
 # вспышка только на росте, ≤24 частиц

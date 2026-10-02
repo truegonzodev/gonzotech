@@ -9,5 +9,6 @@ public class ItemStack {
     public ItemStack copy() { return new ItemStack(); }
     public void setCount(int count) { }
     public void grow(int by) { }
+    public void shrink(int by) { }
     public static boolean isSameItemSameComponents(ItemStack a, ItemStack b) { return false; }
 }

@@ -6,5 +6,7 @@ import net.minecraft.world.level.Level;
 public final class TurbineStructure {
     public static Transfer.Receiver steamReceiverAt(Level level, BlockPos pos) { return null; }
     public static boolean isMember(Level level, BlockPos pos) { return false; }
+    public static void portPlaced(Level level, BlockPos pos) { }
+    public static void portRemoved(Level level, BlockPos pos) { }
     private TurbineStructure() { }
 }

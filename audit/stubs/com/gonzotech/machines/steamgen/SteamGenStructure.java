@@ -6,5 +6,7 @@ import net.minecraft.world.level.Level;
 public final class SteamGenStructure {
     public static Transfer.Receiver waterReceiverAt(Level level, BlockPos pos) { return null; }
     public static Transfer.Receiver gthReceiverAt(Level level, BlockPos pos) { return null; }
+    public static void portPlaced(Level level, BlockPos pos) { }
+    public static void portRemoved(Level level, BlockPos pos) { }
     private SteamGenStructure() { }
 }

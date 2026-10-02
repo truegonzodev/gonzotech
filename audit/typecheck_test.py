@@ -45,6 +45,14 @@ real_files = [
     NET / "SecondTierPipe.java",
     NET / "ItemRouting.java",
     NET / "ItemFlowTracker.java",
+    NET / "PipeBlock.java",
+    NET / "NodeBlock.java",
+    NET / "CompositePipeBlock.java",
+    NET / "PipeGeometry.java",
+    NET / "UniversalFluidPipeBlock.java",
+    NET / "ItemPipeBlock.java",
+    ROOT / "src/main/java/com/gonzotech/machines/item/WrenchItem.java",
+    NET / "ModCompositeAccess.java",
 ]
 for f in real_files:
     assert f.is_file(), f"нет файла сетевого пакета: {f}"
