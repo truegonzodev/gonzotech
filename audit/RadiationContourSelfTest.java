@@ -38,7 +38,7 @@ public final class RadiationContourSelfTest {
         World box = new World(); box.layer(1, LEAD);
         near(box.probe().factor(), .02, "one lead layer");
         box.cells.put(new Pos(2, 0, 0), BARIUM);
-        near(box.probe().factor(), (5 * .02 + .02 * .10) / 6, "one outside block only affects ONE of six wall rays");
+        near(box.probe().factor(), (13 * .02 + .02 * .10) / 14, "one outside block only affects ONE wall ray (14-ray boundary)");
         check(box.probe().factor() > .002, "one patch is not a complete second shell");
         box.layer(2, BARIUM);
         near(box.probe().factor(), .002, "complete contiguous lead+barium layers multiply");
@@ -50,7 +50,7 @@ public final class RadiationContourSelfTest {
             World patched = new World(); patched.layer(1, LEAD);
             for (int side = 0; side < 6; side++) if ((mask & (1 << side)) != 0) patched.cells.put(patches[side], BARIUM);
             int covered = Integer.bitCount(mask);
-            near(patched.probe().factor(), (.02 * (6-covered) + .002 * covered) / 6, "partial outer coverage mask " + mask);
+            near(patched.probe().factor(), (.02 * (14 - covered) + .002 * covered) / 14, "partial outer coverage mask " + mask);
             check(mask == 63 || patched.probe().factor() > .002, "only full coverage grants whole second-layer factor " + mask);
         }
         World gap = new World(); gap.layer(1, LEAD); gap.layer(3, BARIUM);
@@ -58,13 +58,33 @@ public final class RadiationContourSelfTest {
         World stone = new World(); stone.layer(1, STONE); stone.layer(2, BARIUM);
         near(stone.probe().factor(), .10, "solid neutral cladding allows subsequent layers");
         World mixed = new World(); mixed.layer(1, LEAD); mixed.cells.put(new Pos(1, 0, 0), BARIUM);
-        near(mixed.probe().factor(), (5 * .02 + .10) / 6, "mixed first-layer material is area averaged");
+        near(mixed.probe().factor(), (13 * .02 + .10) / 14, "mixed first-layer material is area averaged");
         mixed.cells.put(new Pos(1, 0, 0), PURE_SEAL);
         near(mixed.probe().factor(), .02, "one pure closed seal excluded");
         for (Pos p : new Pos[]{new Pos(-1,0,0), new Pos(0,1,0), new Pos(0,-1,0)}) mixed.cells.put(p, PURE_SEAL);
-        near(mixed.probe().factor(), (4 + 2 * .02) / 6, "majority-seal exploit prevented");
+        near(mixed.probe().factor(), .02, "majority-seal exploit prevented (4 seals of 14 rays are not majority)");
         mixed.cells.put(new Pos(1,0,0), RadiationContour.AIR);
         check(!mixed.probe().enclosed(), "open door makes enclosure open");
+
+        // 0.3.111: 14-связность (6 граней + 8 телесных диагоналей) — «звезда»
+        // из шести осевых стен больше не замыкает контур (автор, раунд 11).
+        World star6 = new World();
+        for (Pos p : new Pos[]{new Pos(1,0,0), new Pos(-1,0,0), new Pos(0,1,0),
+                new Pos(0,-1,0), new Pos(0,0,1), new Pos(0,0,-1)}) star6.cells.put(p, LEAD);
+        check(!star6.probe().enclosed(), "six-sided star seal no longer closes the contour");
+        World star14 = new World();
+        for (int dx=-1; dx<=1; dx++) for (int dy=-1; dy<=1; dy++) for (int dz=-1; dz<=1; dz++) {
+            int nz = (dx != 0 ? 1 : 0) + (dy != 0 ? 1 : 0) + (dz != 0 ? 1 : 0);
+            if (nz == 1 || nz == 3) star14.cells.put(new Pos(dx, dy, dz), LEAD);
+        }
+        check(star14.probe().enclosed(), "face+corner (14-ray) shell still encloses");
+        near(star14.probe().factor(), .02, "14-ray shell keeps the material factor");
+        World cornerHole = new World(); cornerHole.layer(1, LEAD);
+        cornerHole.cells.put(new Pos(1, 1, 1), RadiationContour.AIR);
+        check(!cornerHole.probe().enclosed(), "one missing corner block breaks enclosure");
+        World edgeSlit = new World(); edgeSlit.layer(1, LEAD);
+        edgeSlit.cells.put(new Pos(1, 1, 0), RadiationContour.AIR);
+        check(edgeSlit.probe().enclosed(), "edge-diagonal slit of a 1-cell cavity is the tolerated residual");
 
         World thickness = new World();
         Cell iron = new Cell(Kind.WALL, .90, 0);

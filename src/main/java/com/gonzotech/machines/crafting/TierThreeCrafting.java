@@ -90,6 +90,7 @@ public final class TierThreeCrafting {
         "gonzotech:third_universal_node",
         "gonzotech:third_lead_piston",
         "gonzotech:third_sticky_lead_piston",
+        "gonzotech:third_lead_chest",
         // Приборы и оборудование чистой комнаты/канистра (автор 27.09.2026):
         // полный гейт — и выдача книги, и подмена крафта до «Открытия 3».
         "gonzotech:third_air_filter",

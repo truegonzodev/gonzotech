@@ -147,6 +147,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_LEAD_PISTON_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_STICKY_LEAD_PISTON_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_LEAD_CHEST_ITEM.get());
                 // Эпоха III — оборудование чистой комнаты.
                 output.accept(ModItems.AIR_CLEANER_ITEM.get());
                 output.accept(ModItems.AIR_FILTER_ITEM.get());

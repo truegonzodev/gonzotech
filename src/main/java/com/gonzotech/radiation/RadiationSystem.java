@@ -365,6 +365,10 @@ public final class RadiationSystem {
                     mine += RadSources.emissionDeep(container.getItem(i));
                 }
                 BlockPos pos = be.getBlockPos();
+                // 0.3.111: содержимое свинцового ящика фонит на 80% слабее
+                if (be.getBlockState().getBlock() instanceof com.gonzotech.machines.block.ThirdLeadChestBlock) {
+                    mine *= com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR;
+                }
                 if (mine > 0.0 && pos != null) {
                     mine *= Containment.factor(level, pos); // экран контура контейнера
                 }

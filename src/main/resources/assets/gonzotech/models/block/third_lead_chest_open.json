@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "gonzotech:block/third/lead_chest_bottom",
+    "top": "gonzotech:block/third/lead_chest_open",
+    "side": "gonzotech:block/third/lead_chest_side"
+  }
+}

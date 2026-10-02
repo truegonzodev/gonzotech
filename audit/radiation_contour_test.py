@@ -43,5 +43,9 @@ assert "state.getValue(BlockStateProperties.OPEN)" in containment and "instanceo
 assert "DEPENDENCY_RANGE" in containment and "cache.entrySet().removeIf" in containment
 assert "for (var pos : result.interior())" in containment
 assert "Containment.cachedResult(level, pos)" in chunk and "probed++ < MAX_PROBES_PER_CHUNK" in chunk
+# 0.3.111 (автор): трассировка контура 14-связная — звезда-плюс больше не замыкает
+contour_src = (src / "radiation/RadiationContour.java").read_text()
+assert "{1, 1, 1}, {1, 1, -1}, {1, -1, 1}, {1, -1, -1}," in contour_src
+assert "six-sided star seal no longer closes the contour" in (ROOT / "audit/RadiationContourSelfTest.java").read_text()
 assert system.index("+ Containment.insideDose(level, BlockPos.containing(player.getEyePosition()))") < system.index("rawDose *= PsycheChemical.doseMultiplier(player)") < system.index("Hazmat.factor(player, rawDose)")
 print("Radiation cache/lifecycle/dose integration checks passed: 9 (static)")

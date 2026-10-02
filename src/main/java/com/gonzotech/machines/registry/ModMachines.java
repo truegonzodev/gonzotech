@@ -353,6 +353,11 @@ public final class ModMachines {
         BLOCKS.registerBlock("third_sticky_lead_piston", com.gonzotech.machines.block.ThirdStickyPistonBlock::new,
             material(net.minecraft.world.level.block.SoundType.METAL, 1.5F, 6.0F));
 
+    // ── 0.3.111: свинцовый ящик (копия бочки, 9 слотов, содержимое −80% рада) ──
+    public static final DeferredBlock<com.gonzotech.machines.block.ThirdLeadChestBlock> THIRD_LEAD_CHEST =
+        BLOCKS.registerBlock("third_lead_chest", com.gonzotech.machines.block.ThirdLeadChestBlock::new,
+            material(net.minecraft.world.level.block.SoundType.METAL, 2.0F, 6.0F));
+
     public static final DeferredBlock<SecondAccumulatorBlock> SECOND_ACCUMULATOR =
         BLOCKS.registerBlock("second_accumulator", SecondAccumulatorBlock::new, lightMetal());
 
@@ -607,6 +612,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_STICKY_LEAD_PISTON_ITEM =
         ITEMS.registerSimpleBlockItem("third_sticky_lead_piston", THIRD_STICKY_LEAD_PISTON);
+
+    public static final DeferredItem<BlockItem> THIRD_LEAD_CHEST_ITEM =
+        ITEMS.registerSimpleBlockItem("third_lead_chest", THIRD_LEAD_CHEST);
 
     public static final DeferredItem<BlockItem> SECOND_ACCUMULATOR_ITEM =
         ITEMS.registerSimpleBlockItem("second_accumulator", SECOND_ACCUMULATOR);

@@ -168,6 +168,10 @@ public class ChunkRadiationData extends SavedData {
                 if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
                 double emission = 0.0;
                 for (int i = 0; i < container.getContainerSize(); i++) emission += RadSources.emissionDeep(container.getItem(i));
+                // 0.3.111: свинцовый ящик — партиклы/визуал от содержимого на 80% слабее
+                if (be.getBlockState().getBlock() instanceof com.gonzotech.machines.block.ThirdLeadChestBlock) {
+                    emission *= com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR;
+                }
                 if (emission > 0.0) out.add(new VisualSource(pos, emission));
             }
         }

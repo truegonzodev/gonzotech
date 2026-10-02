@@ -139,6 +139,9 @@ public final class ModMenus {
     public static final Supplier<MenuType<com.gonzotech.machines.menu.DispensingTapMenu>> THIRD_DISPENSING_TAP =
         MENUS.register("third_dispensing_tap", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.DispensingTapMenu::new));
 
+    public static final Supplier<MenuType<com.gonzotech.machines.menu.ThirdLeadChestMenu>> THIRD_LEAD_CHEST =
+        MENUS.register("third_lead_chest", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ThirdLeadChestMenu::new));
+
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);
     }

@@ -26,7 +26,15 @@ public final class RadiationContour {
     }
     private record Step(Pos pos, int direction) {}
     private static final Result OPEN = new Result(false, 1, 0, Set.of());
-    private static final int[][] DIRECTIONS = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
+    // 0.3.111 (автор, раунд 11): 14-связность вместо 6-связной — 6 граней + 8
+    // телесных диагоналей. «Звезда» из шести осевых стен больше не замыкает
+    // контур: диагональные щели игрок обязан закрыть. Ребро-щели (соседи с
+    // ровно двумя ненулевыми координатами) — принятый остаток.
+    private static final int[][] DIRECTIONS = {
+        {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1},
+        {1, 1, 1}, {1, 1, -1}, {1, -1, 1}, {1, -1, -1},
+        {-1, 1, 1}, {-1, 1, -1}, {-1, -1, 1}, {-1, -1, -1}
+    };
     private RadiationContour() {}
 
     /** Each boundary cell contributes once; its first BFS arrival supplies the outward normal. */

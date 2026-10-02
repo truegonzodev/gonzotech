@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "LLL",
+    "L L",
+    "LLL"
+  ],
+  "key": {
+    "L": "gonzotech:lead_ingot"
+  },
+  "result": {
+    "id": "gonzotech:third_lead_chest",
+    "count": 1
+  }
+}

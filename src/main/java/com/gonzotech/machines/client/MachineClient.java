@@ -46,5 +46,6 @@ public final class MachineClient {
         // 0.3.109: ПЦФСОЗ — скрин не был зарегистрирован, GUI блока не открывался (автор).
         event.register(ModMenus.PCFSOZ.get(), PcfsozScreen::new);
         event.register(ModMenus.THIRD_DISPENSING_TAP.get(), DispensingTapScreen::new);
+        event.register(ModMenus.THIRD_LEAD_CHEST.get(), LeadChestScreen::new);
     }
 }
