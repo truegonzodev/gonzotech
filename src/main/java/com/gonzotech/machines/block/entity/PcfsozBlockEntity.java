@@ -361,7 +361,7 @@ public class PcfsozBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.gonzotech.pcfsoz");
+        return Component.translatable("block.gonzotech.third_pcfsoz");
     }
 
     @Override

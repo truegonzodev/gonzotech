@@ -75,6 +75,8 @@ public final class TierThreeCrafting {
         "gonzotech:third_filler",
         "gonzotech:third_chemical_plant",
         "gonzotech:third_dispensing_tap",
+        // ПЦФСОЗ (0.3.109, автор): крафт — полный гейт «Открытия 3».
+        "gonzotech:third_pcfsoz",
         // Приборы и оборудование чистой комнаты/канистра (автор 27.09.2026):
         // полный гейт — и выдача книги, и подмена крафта до «Открытия 3».
         "gonzotech:third_air_filter",

@@ -162,7 +162,7 @@ public final class ModMachines {
 
     /** ПЦФСОЗ (0.3.89) — изотопное разделение топливного цикла. */
     public static final DeferredBlock<com.gonzotech.machines.block.PcfsozBlock> PCFSOZ =
-        BLOCKS.registerBlock("pcfsoz", com.gonzotech.machines.block.PcfsozBlock::new, machineMetal());
+        BLOCKS.registerBlock("third_pcfsoz", com.gonzotech.machines.block.PcfsozBlock::new, machineMetal()); // 0.3.109: id по эпохе (автор)
 
     /** Creative-only GTH emitter without an internal storage or crafting recipe. */
     public static final DeferredBlock<SingularHeatSourceBlock> SINGULAR_HEAT_SOURCE =
@@ -414,7 +414,7 @@ public final class ModMachines {
         ITEMS.registerSimpleBlockItem("second_centrifuge", SECOND_CENTRIFUGE);
 
     public static final DeferredItem<BlockItem> PCFSOZ_ITEM =
-        ITEMS.registerSimpleBlockItem("pcfsoz", PCFSOZ);
+        ITEMS.registerSimpleBlockItem("third_pcfsoz", PCFSOZ);
 
     /** Админский источник: выдаётся только вкладкой «Приколы»/командой. */
     public static final DeferredItem<BlockItem> SINGULAR_HEAT_SOURCE_ITEM =

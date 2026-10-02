@@ -103,7 +103,7 @@ public final class ModMenus {
         MENUS.register("second_centrifuge", () -> IMenuTypeExtension.create(CentrifugeMenu::new));
 
     public static final Supplier<MenuType<com.gonzotech.machines.menu.PcfsozMenu>> PCFSOZ =
-        MENUS.register("pcfsoz", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.PcfsozMenu::new));
+        MENUS.register("third_pcfsoz", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.PcfsozMenu::new)); // 0.3.109: id по эпохе
 
     public static final Supplier<MenuType<com.gonzotech.machines.menu.ItemFilterMenu>> FIRST_ITEM_FILTER =
         MENUS.register("first_item_filter", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ItemFilterMenu::new));

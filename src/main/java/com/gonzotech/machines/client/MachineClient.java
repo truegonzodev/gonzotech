@@ -43,6 +43,8 @@ public final class MachineClient {
         event.register(ModMenus.THIRD_SNAKETYPE_CONDENSER.get(), SnaketypeCondenserScreen::new);
         event.register(ModMenus.THIRD_FILLER.get(), FillerScreen::new);
         event.register(ModMenus.THIRD_CHEMICAL_PLANT.get(), ChemicalPlantScreen::new);
+        // 0.3.109: ПЦФСОЗ — скрин не был зарегистрирован, GUI блока не открывался (автор).
+        event.register(ModMenus.PCFSOZ.get(), PcfsozScreen::new);
         event.register(ModMenus.THIRD_DISPENSING_TAP.get(), DispensingTapScreen::new);
     }
 }

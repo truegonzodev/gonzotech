@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "gonzotech:block/third_pcfsoz"
+    },
+    "facing=east": {
+      "model": "gonzotech:block/third_pcfsoz",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "gonzotech:block/third_pcfsoz",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "gonzotech:block/third_pcfsoz",
+      "y": 270
+    }
+  }
+}

@@ -36,22 +36,23 @@ assert "ModBlockEntities.PCFSOZ.get()" in be
 assert "PCFSOZRecipes.find(items.get(SLOT_INPUT))" in be
 assert "MachineDefs.PCFSOZ_SEPARATION_TICKS" in be
 assert '"PendingOutput" + i' in be                       # персист операций, как у ЦФ1УР
-assert 'Component.translatable("block.gonzotech.pcfsoz")' in be
+assert 'Component.translatable("block.gonzotech.third_pcfsoz")' in be
 blk = (MAIN / "com/gonzotech/machines/block/PcfsozBlock.java").read_text()
 assert "PcfsozBlockEntity::serverTick" in blk and "dropPendingOutputsForBreak" in blk
 mm = (MAIN / "com/gonzotech/machines/registry/ModMachines.java").read_text()
-assert 'BLOCKS.registerBlock("pcfsoz", com.gonzotech.machines.block.PcfsozBlock::new, machineMetal())' in mm
-assert 'ITEMS.registerSimpleBlockItem("pcfsoz", PCFSOZ)' in mm
+# 0.3.109: id по эпохе (автор) — third_pcfsoz
+assert 'BLOCKS.registerBlock("third_pcfsoz", com.gonzotech.machines.block.PcfsozBlock::new, machineMetal())' in mm
+assert 'ITEMS.registerSimpleBlockItem("third_pcfsoz", PCFSOZ)' in mm
 mbe = (MAIN / "com/gonzotech/machines/registry/ModBlockEntities.java").read_text()
-assert 'BLOCK_ENTITIES.register("pcfsoz"' in mbe
+assert 'BLOCK_ENTITIES.register("third_pcfsoz"' in mbe
 mmenu = (MAIN / "com/gonzotech/machines/registry/ModMenus.java").read_text()
-assert 'MENUS.register("pcfsoz"' in mmenu
+assert 'MENUS.register("third_pcfsoz"' in mmenu
 tabs = (MAIN / "com/gonzotech/core/registry/ModCreativeTabs.java").read_text()
 assert "ModMachines.PCFSOZ_ITEM.get()" in tabs
 menu = (MAIN / "com/gonzotech/machines/menu/PcfsozMenu.java").read_text()
 assert "ModMenus.PCFSOZ.get()" in menu and "OutputOnlySlot" in menu
 screen = (MAIN / "com/gonzotech/machines/client/PcfsozScreen.java").read_text()
-assert 'gui("pcfsoz_gui.png")' in screen and "gui.gonzotech.pcfsoz.separation_progress" in screen
+assert 'gui("pcfsoz_gui.png")' in screen and "gui.gonzotech.third_pcfsoz.separation_progress" in screen
 assert "PCFSOZ_HOT_WATER_CAPACITY" in screen and "PCFSOZ_GTU_CAPACITY" in screen
 
 # ── рецепты разделения: жёлтый кек -> U-238 + 10 % U-235 ──
@@ -75,19 +76,35 @@ assert 'INGOT_ITEMS.get("uranium_ingot")' in filler and 'DUST_ITEMS.get("uranium
 assert "addOutputItem(targetTankIsRight ? 3 : 1, new ItemStack(ModItems.YELLOW_CAKE.get()))" in filler
 
 # ── ассеты ──
-assert json.loads((RES / "assets/gonzotech/blockstates/pcfsoz.json").read_text())
-assert json.loads((RES / "data/gonzotech/loot_table/blocks/pcfsoz.json").read_text())["type"] == "minecraft:block"
-craft = json.loads((RES / "data/gonzotech/recipe/pcfsoz.json").read_text())
-assert craft["pattern"] == ["ECT", "AFS", "MNM"] and craft["result"]["id"] == "gonzotech:pcfsoz"
+assert json.loads((RES / "assets/gonzotech/blockstates/third_pcfsoz.json").read_text())
+assert json.loads((RES / "data/gonzotech/loot_table/blocks/third_pcfsoz.json").read_text())["type"] == "minecraft:block"
+craft = json.loads((RES / "data/gonzotech/recipe/third_pcfsoz.json").read_text())
+assert craft["pattern"] == ["ECT", "AFS", "MNM"] and craft["result"]["id"] == "gonzotech:third_pcfsoz"
 assert craft["key"]["E"] == "gonzotech:energy_module" and craft["key"]["N"] == "gonzotech:nickel_plate"
 assert (RES / "assets/gonzotech/items/yellow_cake.json").is_file()
 assert (RES / "assets/gonzotech/textures/item/yellow_cake.png").is_file()
 assert (RES / "assets/gonzotech/textures/block/pcfsoz/side.png").is_file()
 assert (RES / "assets/gonzotech/textures/gui/pcfsoz_gui.png").is_file()
 assert (RES / "assets/gonzotech/textures/gui/pcfsoz_gui_bg.png").is_file()
+# 0.3.109: текстуры СВОИ (не копии ЦФ1УР) — плейсхолдер-перекраска (автор)
+import hashlib
+def md5(path): return hashlib.md5(path.read_bytes()).hexdigest()
+assert md5(RES / "assets/gonzotech/textures/block/pcfsoz/side.png") != md5(RES / "assets/gonzotech/textures/block/second/second_centrifuge.png")
+assert md5(RES / "assets/gonzotech/textures/block/pcfsoz/top.png") != md5(RES / "assets/gonzotech/textures/block/second/centrifuge_top.png")
+assert md5(RES / "assets/gonzotech/textures/gui/pcfsoz_gui.png") != md5(RES / "assets/gonzotech/textures/gui/centrifuge_gui.png")
 for lang in ("ru_ru", "en_us"):
     data = json.loads((RES / f"assets/gonzotech/lang/{lang}.json").read_text())
-    assert data["block.gonzotech.pcfsoz"] and data["item.gonzotech.yellow_cake"]
-    assert data["gui.gonzotech.pcfsoz.separation_progress"]
+    assert data["block.gonzotech.third_pcfsoz"] and data["item.gonzotech.yellow_cake"]
+    assert data["gui.gonzotech.third_pcfsoz.separation_progress"]
+
+
+# ── 0.3.109: GUI открывается (скрин зарегистрирован), таб у литографа, гейт Открытие 3 ──
+mc = (ROOT / "src/main/java/com/gonzotech/machines/client/MachineClient.java").read_text()
+assert "event.register(ModMenus.PCFSOZ.get(), PcfsozScreen::new);" in mc
+tabs = (ROOT / "src/main/java/com/gonzotech/core/registry/ModCreativeTabs.java").read_text()
+assert tabs.find("PCFSOZ_ITEM.get()") > tabs.find("THIRD_SILICON_FACTORY.get()"), "ПЦФСОЗ после литографа"
+assert tabs.find("PCFSOZ_ITEM.get()") < tabs.find("SOLAR_PANEL_ITEM.get()")
+t3 = (ROOT / "src/main/java/com/gonzotech/machines/crafting/TierThreeCrafting.java").read_text()
+assert '"gonzotech:third_pcfsoz"' in t3  # полный гейт «Открытия 3»
 
 print("PCFSOZ pins passed (5202/64/388, 9000+8000, 32 mB/t @3.2 GTU, 480 t @5.32+32; cake -> U238 + 10% U235)")

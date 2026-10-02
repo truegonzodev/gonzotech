@@ -57,7 +57,9 @@ assert "ports.addAll(build.heatPorts);" in steamgen
 assert "return Math.min(nodeLimit, SecondTierDefs.WIRE_THROUGHPUT);" in turbine
 assert "return Math.min(nodeLimit, SecondTierDefs.STEAM_THROUGHPUT);" in steamgen
 sgbe = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/SteamGenCoreBlockEntity.java").read_text()
-assert "com.gonzotech.machines.energy.SecondTierDefs.HEAT_THROUGHPUT" in sgbe
+# 0.3.109: кап приёма GTH портом — МАШИННЫЙ 312 GTH/t (автор), не закон трубы
+assert "MachineDefs.STEAMGEN_GTH_PER_PORT_MILLI" in sgbe
+assert "SecondTierDefs.HEAT_THROUGHPUT" not in sgbe
 assert "acceptedGthPerPort.getOrDefault(port.asLong(), 0L)" in sgbe
 assert "acceptedGthPerPort.clear(); // 0.3.108: пер-портовые капы — за тик" in sgbe
 

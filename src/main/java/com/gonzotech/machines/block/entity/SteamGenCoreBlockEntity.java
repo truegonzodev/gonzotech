@@ -264,7 +264,9 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         if (!isFormedController() || !heatPortSet.contains(port.asLong()) || amount <= 0) return 0;
         resetIntakeLedger();
         long space = gth.space() == null ? Long.MAX_VALUE : gth.space().longValue();
-        long perPort = com.gonzotech.machines.energy.SecondTierDefs.HEAT_THROUGHPUT
+        // 0.3.109 (автор): кап порта — МАШИННЫЙ 312 GTH/t (не закон трубы:
+        // т1-теплоузел и так отдаёт 256, а т2 мог бы больше — зажимаем здесь).
+        long perPort = MachineDefs.STEAMGEN_GTH_PER_PORT_MILLI
             - acceptedGthPerPort.getOrDefault(port.asLong(), 0L);
         long remain = Math.min(space, Math.max(0, perPort));
         long accepted = gth.receive(Math.min(amount, remain), simulate);

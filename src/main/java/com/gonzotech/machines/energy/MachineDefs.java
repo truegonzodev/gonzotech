@@ -334,6 +334,9 @@ public final class MachineDefs {
     public static final int STEAMGEN_GTH_CAPACITY_PER_CORE = 4_096;
 
     /** Цикл варки: mB воды на 12 mB базового пара. */
+    /** 0.3.109 (автор): кап приёма GTH НА ПОРТ парогена, 312 GTH/t (т1-узел
+     * упирается в свои 256, т2 — в машинные 312; 2 порта → 624). */
+    public static final int STEAMGEN_GTH_PER_PORT_MILLI = 312 * MILLI;
     public static final int STEAMGEN_WATER_PER_UNIT = 114;
     /** Цикл варки: GTH на 12 mB базового пара (в milli). */
     public static final int STEAMGEN_GTH_PER_UNIT_MILLI = 193 * MILLI;
