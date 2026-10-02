@@ -96,6 +96,8 @@ public class ModCreativeTabs {
                 // Технологическая цепочка обработки руды завершает список машин.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CRUSHER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_CENTRIFUGE_ITEM.get());
+                // ПЦФСОЗ (0.3.89) — сразу после ЦФ1УР: следующий этап атомной эры.
+                output.accept(com.gonzotech.machines.registry.ModMachines.PCFSOZ_ITEM.get());
 
 
                 // Порядок фиксирует progression-витрину второго открытия.

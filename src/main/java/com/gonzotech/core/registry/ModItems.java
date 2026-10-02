@@ -282,6 +282,10 @@ public class ModItems {
      * {@code NuclearFireboxBlockEntity#burnTicks}). Изотопы и смеси —
      * заготовки под будущие продвинутые реакторы (обогащение, СО/ТСО/СНУП/УТ).
      */
+    /** Жёлтый кек (0.3.89): урановый концентрат, сырьё ПЦФСОЗ. */
+    public static final DeferredItem<Item> YELLOW_CAKE =
+        ITEMS.registerSimpleItem("yellow_cake");
+
     public static final DeferredItem<Item> URANIUM_238 =
         ITEMS.registerSimpleItem("uranium_238");
     public static final DeferredItem<Item> URANIUM_235 =

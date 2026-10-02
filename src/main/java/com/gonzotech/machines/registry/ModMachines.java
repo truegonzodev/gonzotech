@@ -160,6 +160,10 @@ public final class ModMachines {
     public static final DeferredBlock<CentrifugeBlock> SECOND_CENTRIFUGE =
         BLOCKS.registerBlock("second_centrifuge", CentrifugeBlock::new, machineMetal());
 
+    /** ПЦФСОЗ (0.3.89) — изотопное разделение топливного цикла. */
+    public static final DeferredBlock<com.gonzotech.machines.block.PcfsozBlock> PCFSOZ =
+        BLOCKS.registerBlock("pcfsoz", com.gonzotech.machines.block.PcfsozBlock::new, machineMetal());
+
     /** Creative-only GTH emitter without an internal storage or crafting recipe. */
     public static final DeferredBlock<SingularHeatSourceBlock> SINGULAR_HEAT_SOURCE =
         BLOCKS.registerBlock("singular_heat_source", SingularHeatSourceBlock::new, machineMetal());
@@ -408,6 +412,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_CENTRIFUGE_ITEM =
         ITEMS.registerSimpleBlockItem("second_centrifuge", SECOND_CENTRIFUGE);
+
+    public static final DeferredItem<BlockItem> PCFSOZ_ITEM =
+        ITEMS.registerSimpleBlockItem("pcfsoz", PCFSOZ);
 
     /** Админский источник: выдаётся только вкладкой «Приколы»/командой. */
     public static final DeferredItem<BlockItem> SINGULAR_HEAT_SOURCE_ITEM =

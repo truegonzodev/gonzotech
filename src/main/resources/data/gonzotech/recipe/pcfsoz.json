@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "ECT",
+    "AFS",
+    "MNM"
+  ],
+  "key": {
+    "E": "gonzotech:energy_module",
+    "C": "gonzotech:chip_2",
+    "T": "gonzotech:transistor",
+    "A": "gonzotech:alnico_block",
+    "F": "gonzotech:fluid_module",
+    "S": "gonzotech:sheathing",
+    "M": "gonzotech:electric_motor",
+    "N": "gonzotech:nickel_plate"
+  },
+  "result": {
+    "id": "gonzotech:pcfsoz",
+    "count": 1
+  }
+}

@@ -34,7 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
  *   <li>2 бака по 9000 mB (левый и правый);</li>
  *   <li>Шкалы GTH (2000) и GTU (8 808);</li>
  *   <li>10 слотов инвентаря: 4 слота тары + 6 слотов сетки реагентов 2×3;</li>
- *   <li>7 рецептов химического синтеза и растворения;</li>
+ *   <li>8 рецептов химического синтеза и растворения (с 0.3.89 — жёлтый кек);</li>
  *   <li>Кнопка смены баков местами за 32 GTU.</li>
  * </ul>
  */
@@ -49,6 +49,11 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     public static final int GTU_CAPACITY = 8_808;
     /** 0.3.64: канистра опустошается в бак по 128 mB/т, а не мгновенно. */
     public static final int CANISTER_DRAIN_PER_TICK = 128;
+
+    // 0.3.89 (автор 04.10): синтез жёлтого кека — уран + 512 mB серной кислоты
+    // суммарно за 240 тиков, 4 GTU/t + 12 GTH/t.
+    public static final int YELLOW_CAKE_TICKS = 240;
+    public static final int YELLOW_CAKE_ACID_TOTAL = 512;
 
     public static final int FLUID_EMPTY = 0;
     public static final int FLUID_WATER = 1;
@@ -832,6 +837,32 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 return true;
             }
 
+            // 8. Жёлтый кек (0.3.89): уран (уранит/слиток/пыль — поглощает из
+            // слотов сетки) + 512 mB серной кислоты суммарно -> жёлтый кек в
+            // нижний слот под шкалой кислотного бака.
+            net.minecraft.world.item.Item cakeUranium = findGridUranium();
+            boolean cakeAcidRight = false;
+            boolean cakeHasAcid = false;
+            if (cakeUranium != null) {
+                if (leftFluidType == FLUID_SULFURIC_ACID && leftFluidAmount >= YELLOW_CAKE_ACID_TOTAL
+                        && canAcceptItem(items.get(1), ModItems.YELLOW_CAKE.get(), 1)) {
+                    cakeHasAcid = true;
+                } else if (rightFluidType == FLUID_SULFURIC_ACID && rightFluidAmount >= YELLOW_CAKE_ACID_TOTAL
+                        && canAcceptItem(items.get(3), ModItems.YELLOW_CAKE.get(), 1)) {
+                    cakeHasAcid = true;
+                    cakeAcidRight = true;
+                }
+            }
+            if (cakeUranium != null && cakeHasAcid
+                    && currentGthMilli >= 12L * MachineDefs.MILLI && currentGtuMilli >= 4L * MachineDefs.MILLI) {
+                consumeFromGrid(cakeUranium, 1);
+                activeRecipe = 8;
+                targetTankIsRight = cakeAcidRight;
+                smeltProgress = 0;
+                smeltTotal = YELLOW_CAKE_TICKS;
+                return true;
+            }
+
             // 1. Серная кислота: Вода (>=23) + 1 сера -> серная кислота (17 mB/t)
             if (leftFluidType == FLUID_WATER && leftFluidAmount >= 23
                     && (rightFluidType == FLUID_EMPTY || (rightFluidType == FLUID_SULFURIC_ACID && rightFluidAmount + 17 <= TANK_CAPACITY))
@@ -1018,6 +1049,41 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                     addOutputItem(targetSlot, new ItemStack(ModItems.CALCIUM_CHLORIDE.get()));
                 }
             }
+            case 8 -> { // Жёлтый кек: 12 GTH/t, 4 GTU/t, кислота 2–3 mB/t (512 суммарно)
+                if (currentGthMilli < 12L * MachineDefs.MILLI || currentGtuMilli < 4L * MachineDefs.MILLI) {
+                    return false;
+                }
+                currentGthMilli -= 12L * MachineDefs.MILLI;
+                currentGtuMilli -= 4L * MachineDefs.MILLI;
+
+                // Распределение 512 mB по 240 тикам без округления «в никуда»
+                // (та же формула, что у кипятка ЦФ1УР).
+                int acidCost = ((smeltProgress + 1) * YELLOW_CAKE_ACID_TOTAL / YELLOW_CAKE_TICKS)
+                    - (smeltProgress * YELLOW_CAKE_ACID_TOTAL / YELLOW_CAKE_TICKS);
+                if (targetTankIsRight) {
+                    if (rightFluidType == FLUID_SULFURIC_ACID && rightFluidAmount > 0) {
+                        rightFluidAmount -= Math.min(acidCost, rightFluidAmount);
+                        if (rightFluidAmount <= 0) {
+                            rightFluidAmount = 0;
+                            rightFluidType = FLUID_EMPTY;
+                            rightSaltMb = 0;
+                        }
+                    }
+                } else {
+                    if (leftFluidType == FLUID_SULFURIC_ACID && leftFluidAmount > 0) {
+                        leftFluidAmount -= Math.min(acidCost, leftFluidAmount);
+                        if (leftFluidAmount <= 0) {
+                            leftFluidAmount = 0;
+                            leftFluidType = FLUID_EMPTY;
+                            leftSaltMb = 0;
+                        }
+                    }
+                }
+                smeltProgress++;
+                if (smeltProgress >= smeltTotal) {
+                    addOutputItem(targetTankIsRight ? 3 : 1, new ItemStack(ModItems.YELLOW_CAKE.get()));
+                }
+            }
         }
 
         if (smeltProgress >= smeltTotal) {
@@ -1027,6 +1093,24 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         }
 
         return true;
+    }
+
+    /** Любая урановая форма в сетке: уранит (raw), слиток или пыль. */
+    private net.minecraft.world.item.Item findGridUranium() {
+        for (int i = 4; i <= 9; i++) {
+            ItemStack stack = items.get(i);
+            if (!stack.isEmpty() && isUranium(stack)) {
+                return stack.getItem();
+            }
+        }
+        return null;
+    }
+
+    private boolean isUranium(ItemStack stack) {
+        net.minecraft.world.item.Item raw = ModItems.RAW_ORE_ITEMS.get("uranium") != null ? ModItems.RAW_ORE_ITEMS.get("uranium").get() : null;
+        net.minecraft.world.item.Item ingot = ModItems.INGOT_ITEMS.get("uranium_ingot") != null ? ModItems.INGOT_ITEMS.get("uranium_ingot").get() : null;
+        net.minecraft.world.item.Item dust = ModItems.DUST_ITEMS.get("uranium_dust") != null ? ModItems.DUST_ITEMS.get("uranium_dust").get() : null;
+        return (raw != null && stack.is(raw)) || (ingot != null && stack.is(ingot)) || (dust != null && stack.is(dust));
     }
 
     private boolean isSulfur(ItemStack stack) {

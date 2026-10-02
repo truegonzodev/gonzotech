@@ -52,6 +52,7 @@ public final class RadSources {
             Map.entry("plutonium_238", 12.0 * RadUnits.MILLI),
             Map.entry("plutonium_242", 0.30 * RadUnits.MILLI),
             Map.entry("thorium_229", 0.80 * RadUnits.MILLI),
+            Map.entry("yellow_cake", 0.02 * RadUnits.MILLI), // урановый концентрат; число НЕ утверждено автором (Д)
             Map.entry("uranium_fuel", 0.03 * RadUnits.MILLI),
             Map.entry("mox_fuel", 0.45 * RadUnits.MILLI),   // СО — смесь оксидов
             Map.entry("tmox_fuel", 0.35 * RadUnits.MILLI),  // ТСО — ториевая смесь оксидов

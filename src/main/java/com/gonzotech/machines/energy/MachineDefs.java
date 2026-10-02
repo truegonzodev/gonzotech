@@ -587,6 +587,43 @@ public final class MachineDefs {
      * {@code progress} (0..239). Формула распределяет 1000 mB без округления
      * «в никуда»: за всю операцию получится в точности 1000 mB (4 или 5 mB/t).
      */
+    // ═══════════════════ ПЦФСОЗ (0.3.89, автор 04.10.2026) ═══════════════════
+    // Изотопное разделение топливного цикла. Копия ЦФ1УР с числами автора:
+    // стор ГТУ 5202, приём 64/т, вода/пар 388 mB/т, кипяток 9000 + скрытая
+    // вода 8000, нагрев 32 mB/т за 3.2 GTU/т, разделение 480 т за
+    // (5.32 GTU + 32 mB кипятка)/тик — ровно, без кривой прогресса.
+    // Утечка/охлаждение не указаны — взяты как у ЦФ1УР (10 mGTU/т и 1 mB/т).
+
+    /** Максимум GTU в ПЦФСОЗ (mGTU: 5202 GTU). */
+    public static final int PCFSOZ_GTU_CAPACITY = 5_202 * MILLI;
+    /** Максимальный приём GTU за тик (mGTU: 64 GTU/t). */
+    public static final int PCFSOZ_GTU_INTAKE = 64 * MILLI;
+    /** Паразитная разрядка (mGTU): как у ЦФ1УР, автором не уточнялась. */
+    public static final int PCFSOZ_GTU_LOSS_PER_TICK = 10;
+
+    /** Максимум видимого буфера кипятка, mB. */
+    public static final int PCFSOZ_HOT_WATER_CAPACITY = 9_000;
+    /** Ёмкость скрытого буфера обычной воды, mB. */
+    public static final int PCFSOZ_WATER_CAPACITY = 8_000;
+    /** Максимальный приём обычной воды за тик, mB. */
+    public static final int PCFSOZ_WATER_INTAKE = 388;
+    /** Максимальный приём пара за тик; пар сразу становится кипятком 1:1, mB. */
+    public static final int PCFSOZ_STEAM_INTAKE = 388;
+
+    /** Обычная вода, превращаемая в кипяток за один тик, mB. */
+    public static final int PCFSOZ_WATER_TO_HOT_WATER_PER_TICK = 32;
+    /** Цена нагрева (mGTU: 3.2 GTU/t). */
+    public static final int PCFSOZ_WATER_HEAT_GTU_MILLI_PER_TICK = 3_200;
+    /** Паразитное охлаждение кипятка, mB/t: как у ЦФ1УР. */
+    public static final int PCFSOZ_HOT_WATER_COOLING_PER_TICK = 1;
+
+    /** Длительность одного разделения (480 тиков ≈ 24 с). */
+    public static final int PCFSOZ_SEPARATION_TICKS = 480;
+    /** Расход кипятка на тик разделения, mB (ровно; всего 15360 mB за цикл). */
+    public static final int PCFSOZ_HOT_WATER_PER_TICK = 32;
+    /** Расход GTU на тик разделения (mGTU: 5.32 GTU/t). */
+    public static final int PCFSOZ_GTU_MILLI_PER_TICK = 5_320;
+
     public static int centrifugeHotWaterCostForProgressTick(int progress) {
         int p = Math.max(0, Math.min(CENTRIFUGE_WASH_TICKS - 1, progress));
         return ((p + 1) * CENTRIFUGE_HOT_WATER_PER_WASH / CENTRIFUGE_WASH_TICKS)

@@ -131,6 +131,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("second_centrifuge", () -> new BlockEntityType<>(
             CentrifugeBlockEntity::new, false, ModMachines.SECOND_CENTRIFUGE.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.PcfsozBlockEntity>> PCFSOZ =
+        BLOCK_ENTITIES.register("pcfsoz", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.PcfsozBlockEntity::new, false, ModMachines.PCFSOZ.get()));
+
     public static final Supplier<BlockEntityType<SingularHeatSourceBlockEntity>> SINGULAR_HEAT_SOURCE =
         BLOCK_ENTITIES.register("singular_heat_source", () -> new BlockEntityType<>(
             SingularHeatSourceBlockEntity::new, false, ModMachines.SINGULAR_HEAT_SOURCE.get()));
