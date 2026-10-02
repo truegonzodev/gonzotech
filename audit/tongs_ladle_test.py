@@ -134,7 +134,7 @@ for item in ("TongsItem", "LadleItem"):
 
 firebox = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/FireboxBlockEntity.java").read_text()
 # дым 0.3.76: параметр serverTick pos, а не статически недоступное поле worldPosition
-assert "pos.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.4," in firebox
+assert "pos.getX() + 0.5 + (server.random.nextDouble() - 0.5) * 0.48," in firebox  # хаос 0.3.87
 assert "worldPosition.getX() + 0.5 + (server.random" not in firebox
 
 logic = (ROOT / "src/main/java/com/gonzotech/core/item/LadleLogic.java").read_text()
@@ -207,6 +207,27 @@ assert "HazmatTooltips" not in ut   # лор хазмата теперь в пр
 pipe = (ROOT / "src/main/java/com/gonzotech/core/client/PipeLossTooltip.java").read_text()
 assert "add(Component.empty())" not in pipe   # лор труб — прямо под именем
 layout = (ROOT / "src/main/java/com/gonzotech/core/client/TooltipLayout.java").read_text()
-assert "instanceof com.gonzotech.core.item.CarrierItem" in layout  # фикс таба и для носителей
+assert "instanceof com.gonzotech.radiation.CarrierItem" in layout  # фикс таба и для носителей
+
+# ── Пины 0.3.87: фулл-гейт Открытие 2, частицы ДП, фиксы компиляции ──
+import json as _json
+tongs_r = _json.loads((ROOT / "src/main/resources/data/gonzotech/recipe/tongs.json").read_text())
+ladle_r = _json.loads((ROOT / "src/main/resources/data/gonzotech/recipe/ladle.json").read_text())
+assert tongs_r["pattern"] == [" TS", "LLT", "SL "] and tongs_r["result"]["id"] == "gonzotech:tongs"
+assert tongs_r["key"]["T"] == "gonzotech:tungsten_ingot"
+assert tongs_r["key"]["S"] == "gonzotech:stainless_steel_plate"
+assert tongs_r["key"]["L"] == "gonzotech:lead_ingot"
+assert ladle_r["pattern"] == ["  L", "SSL", "SSL"] and ladle_r["result"]["id"] == "gonzotech:ladle"
+t2 = (ROOT / "src/main/java/com/gonzotech/machines/crafting/TierTwoCrafting.java").read_text()
+assert '"gonzotech:tongs"' in t2 and '"gonzotech:ladle"' in t2   # физический ботч-гейт
+ru = (ROOT / "src/main/java/com/gonzotech/chalkboard/advancement/RecipeUnlocks.java").read_text()
+assert '"gonzotech:tongs"' in ru and '"gonzotech:ladle"' in ru   # книга + тултип-гейт
+fb = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/FireboxBlockEntity.java").read_text()
+assert "(server.getGameTime() % 20L) < 14L" in fb                # 7/с вместо 10/с
+assert "* 0.48," in fb and "0.0, 0.144, 0.0, 1.0);" in fb        # хаос +20 %, скорость −20 %
+lay = (ROOT / "src/main/java/com/gonzotech/core/client/TooltipLayout.java").read_text()
+assert "com.gonzotech.radiation.CarrierItem" in lay              # правильный пакет (фикс сборки)
+ladle_src = (ROOT / "src/main/java/com/gonzotech/core/item/LadleItem.java").read_text()
+assert "GENERIC_DRINK.value()" in ladle_src                      # Holder.Reference (фикс сборки)
 
 print("Tongs & ladle wiring passed (-40% rad / -80% tox, 64x1 + 1000 mB, 1.21.4 signatures, deep scan)")

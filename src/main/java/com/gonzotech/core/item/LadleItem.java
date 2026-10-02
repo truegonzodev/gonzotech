@@ -128,7 +128,7 @@ public final class LadleItem extends Item implements CarrierItem {
 
     private static void playScoop(Player player) {
         if (player.level() instanceof net.minecraft.server.level.ServerLevel server) {
-            server.playSound(null, player.blockPosition(), SoundEvents.GENERIC_DRINK,
+            server.playSound(null, player.blockPosition(), SoundEvents.GENERIC_DRINK.value(),
                     SoundSource.PLAYERS, 0.8F, 1.0F);
         }
     }

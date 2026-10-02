@@ -111,7 +111,11 @@ public final class RecipeUnlocks {
             "gonzotech:hazmat_boots",
             // Ампулы (автор 24.09): крафт доступен всегда, показ в книге — с Открытия 2.
             "gonzotech:empty_ampoule",
-            "gonzotech:durable_ampoule"
+            "gonzotech:durable_ampoule",
+            // Щипцы и ковш (0.3.87, автор 03.10): фулл-гейт по Открытию 2
+            // (физический ботч — в TierTwoCrafting).
+            "gonzotech:tongs",
+            "gonzotech:ladle"
         ),
         6, List.of(
             // Физически крафтится всегда, в книге появляется с Открытием 6.

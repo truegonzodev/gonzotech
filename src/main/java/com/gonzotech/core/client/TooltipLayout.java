@@ -27,7 +27,7 @@ public final class TooltipLayout {
         // тот же компонентно-чувствительный промах ванильной проверки таба,
         // поэтому фикс распространён и на них.
         if (!creative) return;
-        boolean stateful = stack.getItem() instanceof com.gonzotech.core.item.CarrierItem;
+        boolean stateful = stack.getItem() instanceof com.gonzotech.radiation.CarrierItem;
         if (!stateful && ItemRadioactivity.getInduced(stack) <= 0.0) return;
         for (var holder : List.of(ModCreativeTabs.ORES_TAB, ModCreativeTabs.FUNCTIONAL_TAB,
                 ModCreativeTabs.EQUIPMENT_TAB, ModCreativeTabs.BLOCKS_TAB,

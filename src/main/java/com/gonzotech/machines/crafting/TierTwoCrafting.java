@@ -42,6 +42,9 @@ public final class TierTwoCrafting {
         "gonzotech:hazmat_chestplate",
         "gonzotech:hazmat_leggings",
         "gonzotech:hazmat_boots",
+        // Щипцы и ковш (0.3.87, автор 03.10): фулл-гейт по Открытию 2.
+        "gonzotech:tongs",
+        "gonzotech:ladle",
         "gonzotech:coil",
         "gonzotech:inductive_module",
         "gonzotech:wedge_punch",
