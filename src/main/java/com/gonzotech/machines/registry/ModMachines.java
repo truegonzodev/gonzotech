@@ -354,6 +354,12 @@ public final class ModMachines {
         BLOCKS.registerBlock("third_sticky_lead_piston", com.gonzotech.machines.block.ThirdStickyPistonBlock::new,
             material(net.minecraft.world.level.block.SoundType.METAL, 1.5F, 6.0F));
 
+    /** Головка свинцового поршня (0.3.115). Внутренняя: BlockItem нет, лута нет. */
+    public static final DeferredBlock<com.gonzotech.machines.block.ThirdPistonHeadBlock> THIRD_LEAD_PISTON_HEAD =
+        BLOCKS.registerBlock("third_lead_piston_head", com.gonzotech.machines.block.ThirdPistonHeadBlock::new,
+            material(net.minecraft.world.level.block.SoundType.METAL, 0.5F, 6.0F)
+                .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
+
     // ── 0.3.111: свинцовый ящик (копия бочки, 9 слотов, содержимое −80% рада) ──
     public static final DeferredBlock<com.gonzotech.machines.block.ThirdLeadChestBlock> THIRD_LEAD_CHEST =
         BLOCKS.registerBlock("third_lead_chest", com.gonzotech.machines.block.ThirdLeadChestBlock::new,

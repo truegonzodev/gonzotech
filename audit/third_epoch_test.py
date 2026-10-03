@@ -136,13 +136,13 @@ pin(bs["extended=false,facing=up"].get("x") == 270, "ротация up x=270")
 pin(bs["extended=false,facing=west"].get("y") == 270, "ротация west y=270")
 bs2 = _json.loads((ASSETS / "blockstates/third_sticky_lead_piston.json").read_text())["variants"]
 pin(bs2["extended=true,facing=down"] == {"model": "gonzotech:block/third_sticky_lead_piston_extended", "x": 90}, "липкий extended down x=90")
-# фронт-модель: непродвинутый = пластина (top/top_sticky), продвинутый = шток (inner)
+# фронт: непродвинутый = платформа-пластина, продвинутый = открытая морда (inside)
 m1 = _json.loads((ASSETS / "models/block/third_lead_piston.json").read_text())
-pin("piston_top" in m1["textures"]["north"] and "sticky" not in m1["textures"]["north"], "поршень: фронт = пластина")
+pin(m1["textures"]["platform"].endswith("piston_top"), "поршень: платформа = пластина")
 m2 = _json.loads((ASSETS / "models/block/third_sticky_lead_piston.json").read_text())
-pin("piston_top_sticky" in m2["textures"]["north"], "липкий: фронт = липкая пластина")
+pin(m2["textures"]["platform"].endswith("piston_top_sticky"), "липкий: платформа = липкая пластина")
 m3 = _json.loads((ASSETS / "models/block/third_lead_piston_extended.json").read_text())
-pin("piston_inner" in m3["textures"]["north"], "extended: фронт = шток")
+pin(m3["textures"]["inside"].endswith("piston_inner"), "extended: морда = inside")
 
 # ── 8. Регистрация: блоки + предметы + креатив-таб ──
 mm = (SRC / "machines/registry/ModMachines.java").read_text()
@@ -177,4 +177,35 @@ for ident in family:
         t = (ASSETS / f"textures/block/third/{ident}.png").is_file()
     pin(t, f"текстура {ident}")
 
+
+# ── 0.3.115: сжатое основание + своя головка (репорт автора: «блок остаётся полным»,
+# «головка — ванильная текстура», головка разрушалась — миксин 0.3.114) ──
+ext = _json.loads((ASSETS / "models/block/third_lead_piston_extended.json").read_text())
+pin(ext["elements"][0]["from"] == [0, 0, 4] and ext["elements"][0]["to"] == [16, 16, 16],
+    "extended-модель основания: коробка 16×16×12 (глубина 12 по оси Z)")
+pin(ext["elements"][0]["faces"]["north"]["texture"] == "#inside", "extended: открытая морда = inside")
+full = _json.loads((ASSETS / "models/block/third_lead_piston.json").read_text())
+pin(full["elements"][0]["from"] == [0, 0, 0], "непродвинутая модель = полный куб")
+hm = _json.loads((ASSETS / "models/block/third_lead_piston_head.json").read_text())
+pin(hm["elements"][0]["to"] == [16, 16, 4] and hm["elements"][1]["to"] == [10, 10, 20],
+    "головка: плита 4px + шток (long)")
+hs = _json.loads((ASSETS / "models/block/third_lead_piston_head_short.json").read_text())
+pin(hs["elements"][1]["to"] == [10, 10, 16], "головка short: шток без вылета")
+hbs = _json.loads((ASSETS / "blockstates/third_lead_piston_head.json").read_text())["variants"]
+pin(len(hbs) == 24, "головка: 6 facing × 2 short × 2 type")
+pin(hbs["facing=up,short=false,type=sticky"]["x"] == 270, "головка: ротации ванильные")
+head_src = (SRC / "machines/block/ThirdPistonHeadBlock.java").read_text()
+pin("extends PistonHeadBlock" in head_src, "головка: подкласс")
+pin("builder.add(FACING, TYPE, SHORT)" in head_src, "головка: свойства ванили")
+mm_t = (SRC / "machines/registry/ModMachines.java").read_text()
+pin('"third_lead_piston_head"' in mm_t and "PUSHREACTION" not in mm_t, "головка: зарегистрирована")
+pin(".pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)" in mm_t, "головка: DESTROY (не толкается)")
+bm = (SRC / "mixin/PistonBaseBlockMixin.java").read_text()
+pin('@Redirect(method = "moveBlocks"' in bm, "миксин: редирект создания головки в moveBlocks")
+pin("Lnet/minecraft/world/level/block/Blocks;PISTON_HEAD" in bm, "миксин: поле PISTON_HEAD в target")
+pin("ordinal = 1" in bm, "миксин: редирект только создания (ordinal 1)")
+pin("gonzotech$anyModdedHead" in bm and "instanceof net.minecraft.world.level.block.piston.PistonHeadBlock" in bm,
+    "миксин: своя головка = головка и в проверке is()")
+mixcfg = (ROOT / "src/main/resources/gonzotech.mixins.json").read_text()
+pin('"PistonBaseBlockMixin"' in mixcfg, "миксин: в конфиге")
 print(f"OK: {ok} пинов раунда 10")

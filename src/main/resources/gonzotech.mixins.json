@@ -23,7 +23,8 @@
     "ServerLevelSunEventSnowMixin",
     "WolfFatnessMixin",
     "GonzoPaintingMixin",
-    "PistonHeadBlockMixin"
+    "PistonHeadBlockMixin",
+    "PistonBaseBlockMixin"
   ],
   "client": [
     "client.InBedFaintingScreenMixin",

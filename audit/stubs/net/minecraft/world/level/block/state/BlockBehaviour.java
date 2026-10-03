@@ -62,5 +62,6 @@ public abstract class BlockBehaviour {
         public Properties requiresCorrectToolForDrops() { return this; }
         public Properties sound(net.minecraft.world.level.block.SoundType type) { return this; }
         public Properties randomTicks() { return this; }
+        public Properties pushReaction(net.minecraft.world.level.material.PushReaction reaction) { return this; }
     }
 }

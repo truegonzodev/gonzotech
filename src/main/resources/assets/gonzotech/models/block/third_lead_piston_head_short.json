@@ -1,9 +1,9 @@
 {
   "textures": {
-    "particle": "gonzotech:block/third/piston_side",
+    "particle": "gonzotech:block/third/piston_top",
     "platform": "gonzotech:block/third/piston_top",
-    "bottom": "gonzotech:block/third/piston_bottom",
-    "side": "gonzotech:block/third/piston_side"
+    "side": "gonzotech:block/third/piston_side",
+    "unsticky": "gonzotech:block/third/piston_inner"
   },
   "elements": [
     {
@@ -15,7 +15,7 @@
       "to": [
         16,
         16,
-        16
+        4
       ],
       "faces": {
         "down": {
@@ -23,18 +23,18 @@
             0,
             0,
             16,
-            16
+            4
           ],
           "texture": "#side",
-          "rotation": 180,
-          "cullface": "down"
+          "cullface": "down",
+          "rotation": 180
         },
         "up": {
           "uv": [
             0,
             0,
             16,
-            16
+            4
           ],
           "texture": "#side",
           "cullface": "up"
@@ -56,15 +56,14 @@
             16,
             16
           ],
-          "texture": "#bottom",
-          "cullface": "south"
+          "texture": "#unsticky"
         },
         "west": {
           "uv": [
             0,
             0,
             16,
-            16
+            4
           ],
           "texture": "#side",
           "rotation": 270,
@@ -75,11 +74,63 @@
             0,
             0,
             16,
-            16
+            4
           ],
           "texture": "#side",
           "rotation": 90,
           "cullface": "east"
+        }
+      }
+    },
+    {
+      "from": [
+        6,
+        6,
+        4
+      ],
+      "to": [
+        10,
+        10,
+        16
+      ],
+      "faces": {
+        "down": {
+          "uv": [
+            4,
+            0,
+            16,
+            4
+          ],
+          "texture": "#side",
+          "rotation": 90
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            16,
+            4
+          ],
+          "texture": "#side",
+          "rotation": 270
+        },
+        "west": {
+          "uv": [
+            16,
+            4,
+            0,
+            0
+          ],
+          "texture": "#side"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            4
+          ],
+          "texture": "#side"
         }
       }
     }
