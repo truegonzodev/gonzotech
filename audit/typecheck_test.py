@@ -60,6 +60,11 @@ real_files = [
     ROOT / "src/main/java/com/gonzotech/mixin/PistonHeadBlockMixin.java",
     ROOT / "src/main/java/com/gonzotech/mixin/PistonBaseBlockMixin.java",
     ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonHeadBlock.java",
+    # 0.3.118: RadMaterials правился только python'ом и НЕ был в гейте —
+    # хвостовая запятая уехала автору (0.3.117, сборка падала). УРОК (повтор
+    # 0.3.115): любой редактируемый файл — в список ДО гейта, grep имени
+    # проверять при каждом прогоне.
+    ROOT / "src/main/java/com/gonzotech/radiation/RadMaterials.java",
     NET / "NodeClumpSavedData.java",
     NET / "ThirdPipeBlock.java",
     NET / "ThirdNodeBlock.java",
@@ -123,4 +128,5 @@ assert "import net.minecraft.world.level.block.StateDefinition;" not in head_src
 _self = Path(__file__).read_text()
 assert 'ROOT / "src/main/java/com/gonzotech/mixin/PistonBaseBlockMixin.java"' in _self
 assert 'ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonHeadBlock.java"' in _self
+assert 'radiation/RadMaterials.java' in _self, "RadMaterials выпал из списка typecheck"
 print(f"typecheck ok: {len(real_files)} реальных файлов + {len(stub_files)} стабов, 0 ошибок")

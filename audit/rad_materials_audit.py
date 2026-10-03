@@ -68,11 +68,17 @@ def factor(path: str, item: bool) -> float:
             return FACTORS[p]
     if item:
         if path.startswith("raw_"):
+            # Автор (раунд 14): сырьё рыхлое — ×0.3 от ставки семьи;
+            # неметаллы без экрана (кальцит) остаются 1.0.
             base = path[4:]
+            fam = None
             for pr in PREFIXES:
                 if base == pr or base.startswith(pr + "_"):
-                    return FACTORS[pr]
-            return 0.72 if metal_word(base) else 1.0
+                    fam = FACTORS[pr]
+                    break
+            if fam is None and metal_word(base):
+                fam = 0.72
+            return fam * 0.3 if fam is not None and fam < 1.0 else 1.0
         if path.endswith("_ingot") or path.endswith("_nugget"):
             return 0.72
         if path.endswith("_dust") and metal_word(path):
@@ -105,21 +111,31 @@ for w in ("zirconium", "calcium", "cesium", "tellurium", "telluride", "palladium
           "ferromagnetic", "semiconductor"):
     pin(w in GENERIC, f"GENERIC_METALS без слова {w!r}")
 
-# пример автора: циркониевая пластина — блок/пыль больше не отстают
+# пример автора: циркониевая пластина — блок/пыль больше не отстают;
+# сырьё = ставка семьи × 0.3 (автор, раунд 14)
 pin(factor("zirconium_plate", True) == factor("zirconium_block", True) ==
-    factor("zirconium_ingot", True) == factor("zirconium_dust", True) ==
-    factor("raw_zirconium", True),
-    "семейство zirconium не согласовано")
-# уран: ВСЁ урансодержащее-материал — одинаковый экран, и он есть (<1.0)
-uranium_forms = ["uranium_ingot", "uranium_nugget", "uranium_dust", "uranium_block",
-                 "raw_uranium", "uranium_233", "uranium_235", "uranium_238"]
-uran_factors = {p: factor(p, p in items) for p in uranium_forms if p in items or p in blocks}
-pin(len(uran_factors) == len(uranium_forms), f"нет уран-форм в lang: {uran_factors}")
-pin(len(set(uran_factors.values())) == 1, f"уран-формы разошлись: {uran_factors}")
-pin(next(iter(uran_factors.values())) < 1.0, "уран без экранирования")
-# торий-229 (голый изотоп) — ставка семьи тория
-pin(factor("thorium_229", True) == factor("thorium_ingot", True),
-    "thorium_229 не согласован с семьёй тория")
+    factor("zirconium_ingot", True) == factor("zirconium_dust", True) == 0.72,
+    "семейство zirconium (плотные формы) не согласовано")
+pin(factor("raw_zirconium", True) == 0.72 * 0.3, "raw_zirconium != 0.72×0.3")
+# уран: ВСЁ урансодержащее экранирует (<1.0); плотные формы 0.72, сырьё/изотопы 0.216
+uran_dense = ["uranium_ingot", "uranium_nugget", "uranium_dust", "uranium_block"]
+uran_raw = ["raw_uranium", "uranium_233", "uranium_235", "uranium_238"]
+for pth in uran_dense + uran_raw:
+    pin(pth in items or pth in blocks, f"нет уран-формы в lang: {pth}")
+    pin(factor(pth, pth in items) < 1.0, f"уран без экранирования: {pth}")
+for pth in uran_dense:
+    pin(factor(pth, pth in items) == 0.72, f"{pth} != 0.72")
+for pth in uran_raw:
+    pin(factor(pth, pth in items) == 0.216, f"{pth} != 0.216 (0.72×0.3)")
+# торий-229 (голый изотоп) — ставка семьи тория ×0.3
+pin(factor("thorium_229", True) == factor("thorium_ingot", True) * 0.3,
+    "thorium_229 != семья тория ×0.3")
+# сера 12% / йод 18% (автор, раунд 14): всё что связано
+pin(FACTORS.get("sulfur") == 0.12, "сера != 0.12")
+pin(FACTORS.get("iodine") == 0.18, "йод != 0.18")
+pin(factor("sulfur_ingot", True) == 0.12, "sulfur_ingot != 0.12")
+pin(factor("iodine_block", True) == 0.18, "iodine_block != 0.18")
+pin(factor("raw_sulfur", True) == 0.036, "raw_sulfur != 0.036 (0.12×0.3)")
 # головка поршня = ставка поршня
 pin(ITEM_EXACT.get("third_lead_piston_head") == 0.19, "ITEM third_lead_piston_head != 0.19")
 pin(BLOCK_EXACT.get("third_lead_piston_head") == 0.19, "BLOCK third_lead_piston_head != 0.19")
@@ -137,17 +153,24 @@ MATERIAL_BASE = re.compile(r"^raw_(?P<base>.+)$")
 #  - sulfur/iodine: неметаллы со «слитками» по базовому правилу.
 WHITELIST_FAMILIES = {
     "third", "third_lead", "lead_chest",
-    "sulfur", "iodine", "redstone", "glowstone", "quartz",
+    "redstone", "glowstone", "quartz",
     "barium_concrete", "bore", "boron_concrete", "vr_20", "vr20",
 }
 SKIP_BASES = re.compile(
     r"(_fuel$|^mox_|^tmox_|^snup_|^ut_|^depleted_|^yellow_cake|_233$|_235$|_238$)")
 
 fams: dict = {}
+raws: dict = {}
 for path in set(items) | set(blocks):
     if is_ore(path) or is_equipment(path) or path.startswith("third_"):
         continue
-    mm = MATERIAL_ROLE.match(path) or MATERIAL_BASE.match(path)
+    if path.startswith("raw_"):
+        base = path[4:]
+        if SKIP_BASES.search(base) or base in WHITELIST_FAMILIES:
+            continue
+        raws.setdefault(base, []).append(factor(path, item=path in items))
+        continue
+    mm = MATERIAL_ROLE.match(path)
     if not mm:
         continue
     base = mm.group("base")
@@ -160,6 +183,13 @@ for base, members in sorted(fams.items()):
     if len(vals) > 1:
         failures.append(
             f"семейство {base}: разнобой {vals} — {members}")
+    if base in raws:
+        dense = vals[0] if len(vals) == 1 else None
+        for rv in raws[base]:
+            if dense is None or abs(rv - dense * 0.3) > 1e-9:
+                failures.append(
+                    f"сырьё {base}: {rv} != плотная ставка {dense} × 0.3")
+                break
 
 if failures:
     print("FAIL — экранирование не согласовано:")

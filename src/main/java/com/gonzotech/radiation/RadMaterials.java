@@ -43,7 +43,11 @@ public final class RadMaterials {
             Map.entry("barium", 0.10),           // 90% shielding
             Map.entry("osmium", 0.24),           // 76% shielding (20% reduction from 95%)
             Map.entry("iridium", 0.24),          // 76% shielding (20% reduction from 95%)
-            Map.entry("boron", 0.13),            // 87% shielding; boron glass is exact below
+            Map.entry("boron", 0.13),
+            // Раунд 14 (автор): «всё что связано с серой — экранирование 12%»,
+            // йод — 18%. Руды остаются 1.0 (правило руды).
+            Map.entry("sulfur", 0.12),           // 88% shielding
+            Map.entry("iodine", 0.18),           // 82% shielding            // 87% shielding; boron glass is exact below
             Map.entry("gold", 0.50),             // 50% shielding
             Map.entry("golden", 0.50),           // 50% shielding
             Map.entry("iron", 0.90),             // 10% shielding
@@ -106,12 +110,12 @@ public final class RadMaterials {
             // Раунд 14 (аудит экранирования): головка — часть свинцового
             // поршня, та же ставка, что у основания (family-consistency).
             Map.entry("third_lead_piston_head", 0.19),
-            // Раунд 14 (аудит): изотопные слитки без суффикса формы — ставка
-            // семьи урана/тория (принцип «всё урансодержащее экранирует»).
-            Map.entry("uranium_233", 0.72),
-            Map.entry("uranium_235", 0.72),
-            Map.entry("uranium_238", 0.72),
-            Map.entry("thorium_229", 0.72)
+            // Раунд 14 (аудит, автор): изотопы без суффикса формы — как сырьё,
+            // ×0.3 от ставки семьи урана/тория (0.72 × 0.3 = 0.216).
+            Map.entry("uranium_233", 0.216),
+            Map.entry("uranium_235", 0.216),
+            Map.entry("uranium_238", 0.216),
+            Map.entry("thorium_229", 0.216)
     );
 
     /**
@@ -140,7 +144,7 @@ public final class RadMaterials {
             Map.entry("third_sticky_lead_piston", 0.19),
             // Раунд 14 (аудит экранирования): головка — часть свинцового
             // поршня, та же ставка, что у основания (family-consistency).
-            Map.entry("third_lead_piston_head", 0.19),
+            Map.entry("third_lead_piston_head", 0.19)
     );
 
     /** Узнаваемые «прочие металлы и сплавы» (×0.72) — fallback после 60% reduction. */
@@ -210,18 +214,26 @@ public final class RadMaterials {
             }
         }
         if (item) {
-            // Сырая руда — та же материальная форма металла, что слиток (раунд 14,
-            // аудит: «уран хоть что — имеет экранирование»). Голое слово семьи
-            // (uranium) не матчится префиксами, поэтому металличность проверяем
-            // напрямую; raw_calcite и прочие неметаллы — 1.0.
+            // Сырая руда — та же материальная форма металла, что слиток, но
+            // сырьё рыхлое: ×0.3 от ставки семьи (автор, раунд 14). Голое слово
+            // семьи (uranium) не матчится префиксами, поэтому металличность
+            // проверяем напрямую; raw_calcite и прочие неметаллы без экрана — 1.0.
             if (path.startsWith("raw_")) {
                 String base = path.substring(4);
+                double family = 1.0;
+                boolean found = false;
                 for (String p2 : PREFIXES) {
                     if (base.equals(p2) || base.startsWith(p2 + "_")) {
-                        return FACTORS.get(p2);
+                        family = FACTORS.get(p2);
+                        found = true;
+                        break;
                     }
                 }
-                return hasMetalPrefix(base) ? 0.72 : 1.0;
+                if (!found && hasMetalPrefix(base)) {
+                    family = 0.72;
+                    found = true;
+                }
+                return found ? family * 0.3D : 1.0;
             }
             // «остальные металлы и сплавы ×0.72»: любой *_ingot/*_nugget,
             // плюс *_dust с металлическим префиксом (чтобы glowstone_dust не стал «металлом»).
