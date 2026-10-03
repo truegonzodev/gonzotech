@@ -4,7 +4,9 @@ public class BlockPos {
     public BlockPos(int x, int y, int z) { }
     public long asLong() { return 0L; }
     public static BlockPos of(long packed) { return new BlockPos(0, 0, 0); }
+    public static long asLong(int x, int y, int z) { return 0L; }
     public BlockPos relative(net.minecraft.core.Direction dir) { return new BlockPos(0, 0, 0); }
+    public BlockPos immutable() { return this; }
     public int getX() { return 0; }
     public int getY() { return 0; }
     public int getZ() { return 0; }

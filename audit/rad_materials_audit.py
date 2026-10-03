@@ -8,7 +8,9 @@
 конструкционные формы со своими точечными ставками, из правила исключены.
 
 Зеркало логики RadMaterials.itemFactor/blockFactor: java-карты парсятся
-из исходника, поэтому гейт не может протухнуть мимо правки.
+из исходника, поэтому гейт не может протухнуть мимо правки. Для raw и изотопов
+30% умножается на ПРОЦЕНТ ЭКРАНИРОВАНИЯ слитка: transmission = 1 -
+(1 - ingot_transmission) × 0.3. Это не то же самое, что ingot_transmission × 0.3.
 
 Запуск: python3 audit/rad_materials_audit.py
 """
@@ -68,17 +70,14 @@ def factor(path: str, item: bool) -> float:
             return FACTORS[p]
     if item:
         if path.startswith("raw_"):
-            # Автор (раунд 14): сырьё рыхлое — ×0.3 от ставки семьи;
-            # неметаллы без экрана (кальцит) остаются 1.0.
+            # Сырьё получает 30% shield-процента реального sibling-ingot,
+            # а карта хранит долю прохождения. Не умножать transmission на 0.3.
             base = path[4:]
-            fam = None
-            for pr in PREFIXES:
-                if base == pr or base.startswith(pr + "_"):
-                    fam = FACTORS[pr]
-                    break
-            if fam is None and metal_word(base):
-                fam = 0.72
-            return fam * 0.3 if fam is not None and fam < 1.0 else 1.0
+            ingot_path = base + "_ingot"
+            if ingot_path not in item_ids:
+                return 1.0
+            ingot = factor(ingot_path, True)
+            return 1.0 - (1.0 - ingot) * 0.3
         if path.endswith("_ingot") or path.endswith("_nugget"):
             return 0.72
         if path.endswith("_dust") and metal_word(path):
@@ -94,6 +93,7 @@ import json  # noqa: E402
 
 lang = json.loads(LANG.read_text(encoding="utf-8"))
 items = sorted(k[len("item.gonzotech."):] for k in lang if k.startswith("item.gonzotech."))
+item_ids = set(items)
 blocks = sorted(k[len("block.gonzotech."):] for k in lang if k.startswith("block.gonzotech."))
 
 # ── 4. Пины раунда 14 ────────────────────────────────────────────────────────
@@ -111,31 +111,65 @@ for w in ("zirconium", "calcium", "cesium", "tellurium", "telluride", "palladium
           "ferromagnetic", "semiconductor"):
     pin(w in GENERIC, f"GENERIC_METALS без слова {w!r}")
 
-# пример автора: циркониевая пластина — блок/пыль больше не отстают;
-# сырьё = ставка семьи × 0.3 (автор, раунд 14)
+# Пример автора: циркониевая пластина — блок/пыль согласованы; raw получает
+# 30% от shielding sibling-ingot, а не 30% его transmission.
 pin(factor("zirconium_plate", True) == factor("zirconium_block", True) ==
     factor("zirconium_ingot", True) == factor("zirconium_dust", True) == 0.72,
     "семейство zirconium (плотные формы) не согласовано")
-pin(factor("raw_zirconium", True) == 0.72 * 0.3, "raw_zirconium != 0.72×0.3")
-# уран: ВСЁ урансодержащее экранирует (<1.0); плотные формы 0.72, сырьё/изотопы 0.216
+pin(abs(factor("raw_zirconium", True) - 0.916) < 1e-9,
+    "raw_zirconium: ожидается .916 прохода / 8.4% защиты")
+# Проверочные числа автора: raw tungsten = 29.91% защиты, raw lead = 29.4%.
+for raw_example in ("raw_tungsten", "raw_calcite"):
+    pin(raw_example in item_ids, f"нет raw-формы в lang: {raw_example}")
+pin(abs(factor("raw_tungsten", True) - 0.7009) < 1e-9,
+    "raw_tungsten: ожидается .7009 прохода / 29.91% защиты")
+pin(abs(factor("raw_lead", True) - 0.706) < 1e-9,
+    "raw_lead: ожидается .706 прохода / 29.4% защиты")
+pin(factor("raw_calcite", True) == 1.0, "raw_calcite без экранирующего слитка должен остаться 1.0")
+raw_ids = sorted(path for path in item_ids if path.startswith("raw_"))
+for raw_path in raw_ids:
+    base = raw_path[4:]
+    sibling = base + "_ingot"
+    expected = 1.0 - (1.0 - factor(sibling, True)) * 0.3 if sibling in item_ids else 1.0
+    pin(abs(factor(raw_path, True) - expected) < 1e-9,
+        f"{raw_path}: ожидался 30% shield sibling-ingot; если его нет — 1.0")
+    if sibling not in item_ids:
+        pin(factor(raw_path, True) == 1.0,
+            f"{raw_path} без sibling-ingot внезапно получил shielding")
+# Текущие изотопы проверяются формулой именно от sibling-ingot, не только
+# отдельной числовой фиксацией .916.
+for parent, isotopes in {
+    "uranium": ("uranium_233", "uranium_235", "uranium_238"),
+    "thorium": ("thorium_229",),
+}.items():
+    ingot_transmission = factor(parent + "_ingot", True)
+    expected = 1.0 - (1.0 - ingot_transmission) * 0.3
+    for isotope in isotopes:
+        pin(abs(factor(isotope, True) - expected) < 1e-9,
+            f"{isotope}: transmission не соответствует 30% shield sibling-ingot")
+
+# Уран: плотные формы проходят 0.72 (28% защиты); сырьё и текущие компонентные
+# изотопы получают только 30% от этих 28% = 8.4% защиты, проход = .916.
 uran_dense = ["uranium_ingot", "uranium_nugget", "uranium_dust", "uranium_block"]
-uran_raw = ["raw_uranium", "uranium_233", "uranium_235", "uranium_238"]
-for pth in uran_dense + uran_raw:
+uran_reduced = ["raw_uranium", "uranium_233", "uranium_235", "uranium_238"]
+for pth in uran_dense + uran_reduced:
     pin(pth in items or pth in blocks, f"нет уран-формы в lang: {pth}")
     pin(factor(pth, pth in items) < 1.0, f"уран без экранирования: {pth}")
 for pth in uran_dense:
     pin(factor(pth, pth in items) == 0.72, f"{pth} != 0.72")
-for pth in uran_raw:
-    pin(factor(pth, pth in items) == 0.216, f"{pth} != 0.216 (0.72×0.3)")
-# торий-229 (голый изотоп) — ставка семьи тория ×0.3
-pin(factor("thorium_229", True) == factor("thorium_ingot", True) * 0.3,
-    "thorium_229 != семья тория ×0.3")
+for pth in uran_reduced:
+    pin(abs(factor(pth, pth in items) - 0.916) < 1e-9,
+        f"{pth} != .916 (8.4% защиты = 30% от 28%)")
+# Th-229: та же формула от thorium_ingot (слиток фактора .72).
+pin(abs(factor("thorium_229", True) - 0.916) < 1e-9,
+    "thorium_229 != .916 (8.4% защиты)")
 # сера 12% / йод 18% (автор, раунд 14): всё что связано
 pin(FACTORS.get("sulfur") == 0.12, "сера != 0.12")
 pin(FACTORS.get("iodine") == 0.18, "йод != 0.18")
 pin(factor("sulfur_ingot", True) == 0.12, "sulfur_ingot != 0.12")
 pin(factor("iodine_block", True) == 0.18, "iodine_block != 0.18")
-pin(factor("raw_sulfur", True) == 0.036, "raw_sulfur != 0.036 (0.12×0.3)")
+pin(abs(factor("raw_sulfur", True) - 0.736) < 1e-9,
+    "raw_sulfur != .736 (26.4% защиты = 30% от 88%)")
 # головка поршня = ставка поршня
 pin(ITEM_EXACT.get("third_lead_piston_head") == 0.19, "ITEM third_lead_piston_head != 0.19")
 pin(BLOCK_EXACT.get("third_lead_piston_head") == 0.19, "BLOCK third_lead_piston_head != 0.19")
@@ -184,11 +218,13 @@ for base, members in sorted(fams.items()):
         failures.append(
             f"семейство {base}: разнобой {vals} — {members}")
     if base in raws:
-        dense = vals[0] if len(vals) == 1 else None
+        ingot_path = base + "_ingot"
+        ingot = factor(ingot_path, True) if ingot_path in item_ids else None
+        expected = 1.0 - (1.0 - ingot) * 0.3 if ingot is not None else 1.0
         for rv in raws[base]:
-            if dense is None or abs(rv - dense * 0.3) > 1e-9:
+            if abs(rv - expected) > 1e-9:
                 failures.append(
-                    f"сырьё {base}: {rv} != плотная ставка {dense} × 0.3")
+                    f"сырьё {base}: {rv} != 30% защиты sibling-ingot ({expected} transmission from {ingot})")
                 break
 
 if failures:

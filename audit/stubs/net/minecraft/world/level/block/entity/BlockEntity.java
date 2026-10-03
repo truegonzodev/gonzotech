@@ -1,2 +1,7 @@
 package net.minecraft.world.level.block.entity;
-public class BlockEntity { }
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+public class BlockEntity {
+    public Level getLevel() { return null; }
+    public BlockPos getBlockPos() { return null; }
+}

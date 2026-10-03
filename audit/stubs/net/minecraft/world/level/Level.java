@@ -8,6 +8,7 @@ import net.minecraft.world.level.material.FluidState;
 public abstract class Level {
     public boolean isClientSide() { return false; }
     public boolean isLoaded(BlockPos pos) { return true; }
+    public boolean hasChunkAt(BlockPos pos) { return true; }
     public boolean setBlock(BlockPos pos, BlockState state, int flags) { return true; }
     public FluidState getFluidState(BlockPos pos) { return null; }
     public void scheduleTick(BlockPos pos, Block block, int delay) { }

@@ -186,6 +186,19 @@ pin(ext["elements"][0]["from"] == [0, 0, 4] and ext["elements"][0]["to"] == [16,
 pin(ext["elements"][0]["faces"]["north"]["texture"] == "#inside", "extended: открытая морда = inside")
 full = _json.loads((ASSETS / "models/block/third_lead_piston.json").read_text())
 pin(full["elements"][0]["from"] == [0, 0, 0], "непродвинутая модель = полный куб")
+for model_name in (
+    "third_lead_piston.json", "third_lead_piston_extended.json",
+    "third_sticky_lead_piston.json", "third_sticky_lead_piston_extended.json",
+):
+    piston_model = _json.loads((ASSETS / "models/block" / model_name).read_text())
+    pin(piston_model.get("parent") in ("minecraft:block/block", "block/block"),
+        f"{model_name}: стандартные 3D item display transforms")
+for item_name, block_model in (
+    ("third_lead_piston.json", "gonzotech:block/third_lead_piston"),
+    ("third_sticky_lead_piston.json", "gonzotech:block/third_sticky_lead_piston"),
+):
+    item_model = _json.loads((ASSETS / f"items/{item_name}").read_text())["model"]["model"]
+    pin(item_model == block_model, f"{item_name}: item использует модель блока с display transforms")
 hm = _json.loads((ASSETS / "models/block/third_lead_piston_head.json").read_text())
 pin(hm["elements"][0]["to"] == [16, 16, 4] and hm["elements"][1]["to"] == [10, 10, 20],
     "головка: плита 4px + шток (long)")
@@ -194,6 +207,13 @@ pin(hs["elements"][1]["to"] == [10, 10, 16], "головка short: шток б�
 hbs = _json.loads((ASSETS / "blockstates/third_lead_piston_head.json").read_text())["variants"]
 pin(len(hbs) == 24, "головка: 6 facing × 2 short × 2 type")
 pin(hbs["facing=up,short=false,type=sticky"]["x"] == 270, "головка: ротации ванильные")
+for model_name in (
+    "third_lead_piston_head.json", "third_lead_piston_head_sticky.json",
+    "third_lead_piston_head_short.json", "third_lead_piston_head_short_sticky.json",
+):
+    head_model = _json.loads((ASSETS / "models/block" / model_name).read_text())
+    pin(head_model["textures"]["inside"].endswith("/piston_top"),
+        f"{model_name}: внутренняя грань = общий piston_top")
 head_src = (SRC / "machines/block/ThirdPistonHeadBlock.java").read_text()
 pin("extends PistonHeadBlock" in head_src, "головка: подкласс")
 pin("builder.add(FACING, TYPE, SHORT)" in head_src, "головка: свойства ванили")
@@ -211,4 +231,22 @@ pin("gonzotech$anyModdedHead" in bm and "instanceof net.minecraft.world.level.bl
     "миксин: своя головка = головка и в проверке is()")
 mixcfg = (ROOT / "src/main/resources/gonzotech.mixins.json").read_text()
 pin('"PistonBaseBlockMixin"' in mixcfg, "миксин: в конфиге")
+moving_mix_path = SRC / "mixin/client/PistonHeadRendererMixin.java"
+pin(moving_mix_path.is_file(), "миксин: рендер анимируемой головки создан")
+moving_mix = moving_mix_path.read_text()
+pin('@Mixin(PistonHeadRenderer.class)' in moving_mix
+    and '@Redirect(method = "render(Lnet/minecraft/world/level/block/piston/PistonMovingBlockEntity;' in moving_mix,
+    "миксин: redirect головы в клиентском renderer")
+pin("PistonMovingBlockEntity moving" in moving_mix
+    and "ThirdPistonBlock" in moving_mix and "ThirdStickyPistonBlock" in moving_mix,
+    "миксин: тип основания берётся из moving piston")
+client_mixins = mixcfg.split('"client":', 1)[1]
+pin('"client.PistonHeadRendererMixin"' in client_mixins,
+    "миксин движущейся головы загружается только на клиенте")
+containment = (SRC / "radiation/Containment.java").read_text()
+pin("PistonMovingBlockEntity" in containment and "getMovedState()" in containment
+    and "isSourcePiston()" in containment,
+    "экранирование: распознаёт moving-piston head в течение анимации")
+pin("ModMachines.THIRD_LEAD_PISTON_HEAD.get().defaultBlockState()" in containment,
+    "экранирование: временная голова получает factor свинцовой головки")
 print(f"OK: {ok} пинов раунда 10")

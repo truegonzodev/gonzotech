@@ -65,6 +65,9 @@ real_files = [
     # 0.3.115): любой редактируемый файл — в список ДО гейта, grep имени
     # проверять при каждом прогоне.
     ROOT / "src/main/java/com/gonzotech/radiation/RadMaterials.java",
+    ROOT / "src/main/java/com/gonzotech/radiation/RadiationContour.java",
+    ROOT / "src/main/java/com/gonzotech/radiation/Containment.java",
+    ROOT / "src/main/java/com/gonzotech/mixin/client/PistonHeadRendererMixin.java",
     NET / "NodeClumpSavedData.java",
     NET / "ThirdPipeBlock.java",
     NET / "ThirdNodeBlock.java",
@@ -127,6 +130,8 @@ assert "import net.minecraft.world.level.block.state.StateDefinition;" in head_s
 assert "import net.minecraft.world.level.block.StateDefinition;" not in head_src
 _self = Path(__file__).read_text()
 assert 'ROOT / "src/main/java/com/gonzotech/mixin/PistonBaseBlockMixin.java"' in _self
+assert 'ROOT / "src/main/java/com/gonzotech/mixin/client/PistonHeadRendererMixin.java"' in _self
 assert 'ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonHeadBlock.java"' in _self
+assert 'radiation/Containment.java' in _self, "Containment выпал из списка typecheck"
 assert 'radiation/RadMaterials.java' in _self, "RadMaterials выпал из списка typecheck"
 print(f"typecheck ok: {len(real_files)} реальных файлов + {len(stub_files)} стабов, 0 ошибок")

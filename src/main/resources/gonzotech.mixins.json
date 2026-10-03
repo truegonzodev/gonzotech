@@ -33,6 +33,7 @@
     "client.ClientLevelSkyDarkenMixin",
     "client.FelineModelFatMixin",
     "client.ItemInHandRendererMixin",
+    "client.PistonHeadRendererMixin",
     "client.WolfModelFatMixin",
     "client.WolfRenderStateMixin",
     "client.WolfRendererMixin"

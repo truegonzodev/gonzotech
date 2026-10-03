@@ -110,12 +110,13 @@ public final class RadMaterials {
             // Раунд 14 (аудит экранирования): головка — часть свинцового
             // поршня, та же ставка, что у основания (family-consistency).
             Map.entry("third_lead_piston_head", 0.19),
-            // Раунд 14 (аудит, автор): изотопы без суффикса формы — как сырьё,
-            // ×0.3 от ставки семьи урана/тория (0.72 × 0.3 = 0.216).
-            Map.entry("uranium_233", 0.216),
-            Map.entry("uranium_235", 0.216),
-            Map.entry("uranium_238", 0.216),
-            Map.entry("thorium_229", 0.216)
+            // 0.3.140: у изотопов 30% ЭКРАНИРУЮЩЕГО ПРОЦЕНТА слитка,
+            // а не 30% доли прохождения. Для базовых 0.72 (28% защиты):
+            // проход = 1 - (1 - 0.72) × 0.3 = 0.916 (защита 8.4%).
+            Map.entry("uranium_233", 0.916),
+            Map.entry("uranium_235", 0.916),
+            Map.entry("uranium_238", 0.916),
+            Map.entry("thorium_229", 0.916)
     );
 
     /**
@@ -184,6 +185,17 @@ public final class RadMaterials {
         if (isOrePath(path) || isFinishedEquipment(path)) {
             return 1.0;
         }
+        // Не выводить экранирование для raw-формы из одного лишь слова
+        // «металл»: нужен реальный sibling-слиток в реестре. Иначе сырьё без
+        // экранирующей формы (например, raw_calcite) остаётся без защиты.
+        if (path.startsWith("raw_")) {
+            String ingotPath = path.substring(4) + "_ingot";
+            ResourceLocation ingotId = ResourceLocation.fromNamespaceAndPath(
+                    id.getNamespace(), ingotPath);
+            if (!BuiltInRegistries.ITEM.containsKey(ingotId)) {
+                return 1.0;
+            }
+        }
         return factorForPath(path, true);
     }
 
@@ -214,26 +226,15 @@ public final class RadMaterials {
             }
         }
         if (item) {
-            // Сырая руда — та же материальная форма металла, что слиток, но
-            // сырьё рыхлое: ×0.3 от ставки семьи (автор, раунд 14). Голое слово
-            // семьи (uranium) не матчится префиксами, поэтому металличность
-            // проверяем напрямую; raw_calcite и прочие неметаллы без экрана — 1.0.
+            // Сырое сырьё получает 30% ЭКРАНИРУЮЩЕГО ПРОЦЕНТА своего слитка.
+            // Таблица хранит долю ПРОХОЖДЕНИЯ, поэтому нельзя умножать фактор на
+            // 0.3: итоговый проход = 1 - (1 - ingotFactor) × 0.3.
+            // Например, вольфрам: 0.003 → 0.7009 (защита 29.91%), а не 0.0009.
+            // Для материала без экранирующего слитка (raw_calcite и т.п.) остаётся 1.0.
             if (path.startsWith("raw_")) {
                 String base = path.substring(4);
-                double family = 1.0;
-                boolean found = false;
-                for (String p2 : PREFIXES) {
-                    if (base.equals(p2) || base.startsWith(p2 + "_")) {
-                        family = FACTORS.get(p2);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found && hasMetalPrefix(base)) {
-                    family = 0.72;
-                    found = true;
-                }
-                return found ? family * 0.3D : 1.0;
+                double ingotFactor = factorForPath(base + "_ingot", true);
+                return 1.0D - (1.0D - ingotFactor) * 0.3D;
             }
             // «остальные металлы и сплавы ×0.72»: любой *_ingot/*_nugget,
             // плюс *_dust с металлическим префиксом (чтобы glowstone_dust не стал «металлом»).

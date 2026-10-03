@@ -1,4 +1,5 @@
 {
+  "parent": "minecraft:block/block",
   "textures": {
     "particle": "gonzotech:block/third/piston_side",
     "platform": "gonzotech:block/third/piston_top",

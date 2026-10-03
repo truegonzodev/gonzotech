@@ -3,7 +3,7 @@
     "particle": "gonzotech:block/third/piston_top",
     "platform": "gonzotech:block/third/piston_top",
     "side": "gonzotech:block/third/piston_side",
-    "unsticky": "gonzotech:block/third/piston_inner"
+    "inside": "gonzotech:block/third/piston_top"
   },
   "elements": [
     {
@@ -56,7 +56,7 @@
             16,
             16
           ],
-          "texture": "#unsticky"
+          "texture": "#inside"
         },
         "west": {
           "uv": [
