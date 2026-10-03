@@ -53,6 +53,8 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     private long[] heatPorts = new long[0];
     private long[] waterPorts = new long[0];
     private long[] steamPorts = new long[0];
+    /** Номинальный суммарный предел тепловых портов (кэшируется при выгрузке их чанков). */
+    private int maxGthIntakeMilli;
     private transient Set<Long> heatPortSet = Set.of();
     private transient Set<Long> waterPortSet = Set.of();
     private transient Set<Long> steamPortSet = Set.of();
@@ -74,11 +76,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     /** Не сканировать границы каждый тик, если дальний чанк структуры временно выгружен. */
     private long nextRestoreAttemptTick;
 
-    private int lastWaterIn;
-    private int lastGthInUnits;
-    private int lastSteamMade;
-    private int lastSteamOut;
-
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -93,10 +90,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
                 case 6 -> formed ? 1 : 0;
                 case 7 -> sumCH;
                 case 8 -> precious;
-                case 9 -> lastWaterIn;
-                case 10 -> lastGthInUnits;
-                case 11 -> lastSteamOut;
-                case 12 -> lastSteamMade;
+                case 9 -> maxGthIntakeMilli;
                 default -> 0;
             };
         }
@@ -109,7 +103,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
 
         @Override
         public int getCount() {
-            return 13;
+            return 10;
         }
     };
 
@@ -157,10 +151,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         return data;
     }
 
-    public int lastSteamMade() {
-        return lastSteamMade;
-    }
-
     public long[] heatPorts() {
         return heatPorts.clone();
     }
@@ -184,6 +174,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         this.steamPorts = steamPorts.clone();
         this.waterPorts = waterPorts.clone();
         this.heatPorts = heatPorts.clone();
+        this.maxGthIntakeMilli = SteamGenStructure.maxGthIntakeMilli(level, this.heatPorts);
         rebuildPortSets();
         this.water = new ResourceBuffer(SteamGenMath.waterCapacity(cores));
         this.steam = new ResourceBuffer(SteamGenMath.steamCapacity(cores));
@@ -197,10 +188,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         this.sentSteamThisTick = 0;
         this.outputLedgerTick = Long.MIN_VALUE;
         this.outputPortCursor = 0;
-        this.lastWaterIn = 0;
-        this.lastGthInUnits = 0;
-        this.lastSteamMade = 0;
-        this.lastSteamOut = 0;
         this.indexRegistered = true;
         this.nextRestoreAttemptTick = 0L;
         setChanged();
@@ -217,6 +204,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         steamPorts = new long[0];
         waterPorts = new long[0];
         heatPorts = new long[0];
+        maxGthIntakeMilli = 0;
         steamPortSet = Set.of();
         waterPortSet = Set.of();
         heatPortSet = Set.of();
@@ -231,10 +219,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         sentSteamThisTick = 0;
         outputLedgerTick = Long.MIN_VALUE;
         outputPortCursor = 0;
-        lastWaterIn = 0;
-        lastGthInUnits = 0;
-        lastSteamMade = 0;
-        lastSteamOut = 0;
         indexRegistered = false;
         nextRestoreAttemptTick = 0L;
         setChanged();
@@ -310,13 +294,9 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
             }
         }
 
-        // Счётчики приёма за предыдущий тик становятся показателями для GUI.
         boiler.resetIntakeLedger();
-        boiler.lastWaterIn = boiler.acceptedWaterThisTick;
-        boiler.lastGthInUnits = (int) (boiler.acceptedGthMilliThisTick / MachineDefs.MILLI);
         boiler.resetOutputLedger();
 
-        boiler.lastSteamMade = 0;
         boolean changed = boiler.burnSteam();
         if (boiler.pushSteam(server)) changed = true;
 
@@ -382,7 +362,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         water.extract(waterUsed, false);
         gth.extract(gthUsed, false);
         steam.receive(madeWhole, false);
-        this.lastSteamMade = (int) madeWhole;
         return true;
     }
 
@@ -416,7 +395,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
                 steam.extract(moved, false);
                 remaining -= moved;
                 sentSteamThisTick += (int) moved;
-                lastSteamOut = (int) moved;
                 movedAnything = true;
             }
         }
@@ -426,6 +404,11 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     /** Данные после загрузки уже есть в NBT, остаётся восстановить быстрые lookup set'ы. */
     public void markIndexRestored() {
         rebuildPortSets();
+        int restoredMaxGthIntake = SteamGenStructure.maxGthIntakeMilli(level, heatPorts);
+        if (maxGthIntakeMilli != restoredMaxGthIntake) {
+            maxGthIntakeMilli = restoredMaxGthIntake;
+            setChanged();
+        }
         indexRegistered = true;
         nextRestoreAttemptTick = 0L;
     }
@@ -467,6 +450,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         tag.putInt("Cores", cores);
         tag.putInt("SumCH", sumCH);
         tag.putInt("Precious", precious);
+        tag.putInt("MaxGthIntakeMilli", maxGthIntakeMilli);
         if (min != null) tag.putLong("Min", min.asLong());
         if (max != null) tag.putLong("Max", max.asLong());
         tag.putLongArray("HeatPorts", heatPorts);
@@ -486,6 +470,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         cores = tag.getInt("Cores");
         sumCH = tag.getInt("SumCH");
         precious = tag.getInt("Precious");
+        maxGthIntakeMilli = Math.max(0, tag.getInt("MaxGthIntakeMilli"));
         min = tag.contains("Min") ? BlockPos.of(tag.getLong("Min")) : null;
         max = tag.contains("Max") ? BlockPos.of(tag.getLong("Max")) : null;
         heatPorts = tag.getLongArray("HeatPorts");
@@ -498,6 +483,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
             cores = 0;
             sumCH = 0;
             precious = 0;
+            maxGthIntakeMilli = 0;
             min = null;
             max = null;
             heatPorts = new long[0];

@@ -53,6 +53,12 @@ public final class TurbineMath {
         return scaled(MachineDefs.TURBINE_STEAM_CONSUMPTION_PER_EFFECTIVE_ROTOR, rotors);
     }
 
+    /** Номинальная трата пара на 1 GTU по эталонной конверсии 56 mB → 1.5 GTU. */
+    public static double nominalSteamMbPerGtu() {
+        return (double) MachineDefs.TURBINE_REFERENCE_STEAM_MB * MachineDefs.MILLI
+            / MachineDefs.TURBINE_GTU_PER_REFERENCE_STEAM_MILLI;
+    }
+
     /**
      * Сколько mGTU получается из Steam. Остаток деления нужен контроллеру, чтобы
      * 1.5 GTU / 56 mB оставались точной долгосрочной конверсией.

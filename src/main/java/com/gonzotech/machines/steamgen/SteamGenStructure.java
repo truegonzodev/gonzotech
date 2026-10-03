@@ -124,6 +124,32 @@ public final class SteamGenStructure {
         return (amount, simulate) -> controller.receiveGthFromPort(pos, amount, simulate);
     }
 
+    /**
+     * Максимальный номинальный приём GTH за тик по всем текущим портам.
+     * Каждый узел ограничен собственной пропускной способностью и машинным
+     * пределом {@code STEAMGEN_GTH_PER_PORT_MILLI}; универсальный узел сохраняет
+     * тот же throughputFactor, что используется сетевым PipeFlowLedger.
+     */
+    public static int maxGthIntakeMilli(Level level, long[] heatPorts) {
+        if (level == null || heatPorts == null || heatPorts.length == 0) return 0;
+        long total = 0L;
+        for (long packed : heatPorts) {
+            BlockPos pos = BlockPos.of(packed);
+            if (!level.hasChunkAt(pos)) continue;
+            BlockState state = level.getBlockState(pos);
+            if (!(state.getBlock() instanceof PipeCarrier carrier)
+                || !carrier.carries(state, PipeType.HEAT)) continue;
+            long base = carrier.throughputLimit(state, PipeType.HEAT);
+            double factor = carrier.throughputFactor(state, PipeType.HEAT);
+            if (base <= 0) continue;
+            long nodeLimit = factor < 1.0D
+                ? Math.max(1L, (long) Math.floor(base * factor))
+                : base;
+            total += Math.min(nodeLimit, MachineDefs.STEAMGEN_GTH_PER_PORT_MILLI);
+        }
+        return (int) Math.min(Integer.MAX_VALUE, total);
+    }
+
     /** Принадлежит ли позиция любому валидному многоблоку: защита выхода от захода в себя. */
     public static boolean isMember(Level level, BlockPos pos) {
         return level instanceof ServerLevel server && controllerAt(server, pos) != null;

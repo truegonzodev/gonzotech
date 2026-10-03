@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
+import java.util.Locale;
 
 /** Экран турбины: две шкалы общего запаса Steam и GTU. */
 public final class TurbineScreen extends MachineScreen<TurbineMenu> {
@@ -45,7 +46,8 @@ public final class TurbineScreen extends MachineScreen<TurbineMenu> {
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.turbineSteamPair(menu.steam(), steamCapacity),
                 Component.translatable("gui.gonzotech.turbine.rotors", menu.rotors()),
-                GtUnits.turbineSteamRate(menu.steamConsumed())
+                GtUnits.turbineSteamPerGtu(String.format(Locale.ROOT, "%.0f",
+                    TurbineMath.nominalSteamMbPerGtu()))
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             long ratedMilli = TurbineMath.maxGtuOutputMilli(menu.rotors());

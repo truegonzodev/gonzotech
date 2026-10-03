@@ -94,6 +94,10 @@ public final class GtUnits {
     public static final String N_WATER = "resource.gonzotech.first_water_pipe";
     /** Имя ресурса: «Пар». */
     public static final String N_STEAM = "resource.gonzotech.first_steam_pipe";
+    /** Родительный падеж для подписей нормы расхода. */
+    public static final String N_WATER_GENITIVE = "gui.gonzotech.unit.water_genitive";
+    /** Родительный падеж для подписей нормы расхода. */
+    public static final String N_STEAM_GENITIVE = "gui.gonzotech.unit.steam_genitive";
     /** Имя ресурса: «Кипяток» (горячая вода центрифуги). */
     public static final String N_HOT_WATER = "resource.gonzotech.hot_water";
 
@@ -417,59 +421,48 @@ public final class GtUnits {
         return Component.translatable(langKey, rate(value, key(unitKey, color), color));
     }
 
-    /**
-     * «§6GTH§7 на входе: §6[12]§7/t» — обозначение стоит в ПОДПИСИ, поэтому
-     * хвост времени идёт сразу за числом («ticked»).
-     */
-    public static MutableComponent tickLine(String langKey, Object value, String unitKey, int color) {
-        return Component.translatable(langKey, key(unitKey, color), ticked(value, color));
-    }
-
-    /** «§bВода§7 на входе: §b[12 mB]§7/t» — имя ресурса + ГОСТ-поток. */
-    public static MutableComponent nameRateLine(String langKey, Object value, String nameKey,
-                                                String unitKey, int color) {
-        return Component.translatable(langKey,
-                key(nameKey, color), rate(value, key(unitKey, color), color));
-    }
-
     /** «Тёплый — §6[12 GTH]§7» — величина без времени (склад тепла абсорбера). */
     public static MutableComponent amountLine(String langKey, Object value, String unitKey, int color) {
         return Component.translatable(langKey, amount(value, key(unitKey, color), color));
     }
 
-    /** «Расход пара: §7[12 mB]§7/t» — турбина. */
-    public static MutableComponent turbineSteamRate(Object value) {
-        return rateLine("gui.gonzotech.turbine.steam_rate", value, U_MB, STEAM);
+    /** Максимальный суммарный приём GTH через все тепловые порты парогенератора. */
+    public static MutableComponent steamGenMaxGthIntake(Object value) {
+        return Component.translatable("gui.gonzotech.steamgen.max_gth_intake",
+                key(U_GTH, GTH), ticked(value, GTH))
+            .withStyle(ChatFormatting.WHITE);
+    }
+
+    /** Номинальная трата GTH на каждый mB пара с учётом множителя теплообменников. */
+    public static MutableComponent steamGenGthPerSteam(Object value) {
+        return Component.translatable("gui.gonzotech.steamgen.nominal_gth_per_steam",
+                key(U_GTH, GTH), key(N_STEAM_GENITIVE, STEAM), num(value, GTH))
+            .withStyle(ChatFormatting.WHITE);
+    }
+
+    /** Номинальная трата воды на каждый mB пара с учётом множителя теплообменников. */
+    public static MutableComponent steamGenWaterPerSteam(Object value) {
+        return Component.translatable("gui.gonzotech.steamgen.nominal_water_per_steam",
+                key(N_WATER_GENITIVE, WATER), key(N_STEAM_GENITIVE, STEAM),
+                num(value, WATER), mb(WATER))
+            .withStyle(ChatFormatting.WHITE);
+    }
+
+    /** «Номинальная выработка: X mB/t» — предельный выход парогенератора за тик. */
+    public static MutableComponent steamGenRated(Object value) {
+        return rateLine("gui.gonzotech.steamgen.rated", value, U_MB, STEAM);
+    }
+
+    /** «Номинальная трата пара на единицу GTU: X mB» — турбина. */
+    public static MutableComponent turbineSteamPerGtu(Object value) {
+        return Component.translatable("gui.gonzotech.turbine.nominal_steam_per_gtu",
+                key(N_STEAM_GENITIVE, STEAM), gtu(), num(value, STEAM), mb(STEAM))
+            .withStyle(ChatFormatting.WHITE);
     }
 
     /** «Номинальная мощность: §6[12.3 GTU]§7/t» — турбина. */
     public static MutableComponent turbineGtuRate(Object value) {
         return rateLine("gui.gonzotech.turbine.gtu_rate", value, U_GTU, GTU);
-    }
-
-    /** «§6GTH§7 на входе: §6[12]§7/t» — паровой генератор. */
-    public static MutableComponent steamGenGthIn(Object value) {
-        return tickLine("gui.gonzotech.steamgen.gth_in", value, U_GTH, GTH);
-    }
-
-    /** «§bВода§7 на входе: §b[12 mB]§7/t» — паровой генератор. */
-    public static MutableComponent steamGenWaterIn(Object value) {
-        return nameRateLine("gui.gonzotech.steamgen.water_in", value, N_WATER, U_MB, WATER);
-    }
-
-    /** «Произведено пара: §7[12 mB]§7/t» — паровой генератор. */
-    public static MutableComponent steamGenSteamMade(Object value) {
-        return rateLine("gui.gonzotech.steamgen.steam_made", value, U_MB, STEAM);
-    }
-
-    /** «Отдано пара: §7[12 mB]§7/t» — паровой генератор. */
-    public static MutableComponent steamGenSteamOut(Object value) {
-        return rateLine("gui.gonzotech.steamgen.steam_out", value, U_MB, STEAM);
-    }
-
-    /** «Номинальная выработка: §7[12 mB]§7/t» — паровой генератор. */
-    public static MutableComponent steamGenRated(Object value) {
-        return rateLine("gui.gonzotech.steamgen.rated", value, U_MB, STEAM);
     }
 
     /** «Охлаждение: §b[12 mB]§7/t» — змеевиковый конденсатор кипятка. */

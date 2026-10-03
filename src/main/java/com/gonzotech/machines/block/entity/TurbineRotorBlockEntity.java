@@ -55,7 +55,6 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
     private boolean indexRegistered;
     /** Не сканировать границы каждый тик, если дальний чанк структуры временно выгружен. */
     private long nextRestoreAttemptTick;
-    private int lastSteamConsumed;
     private long lastGtuGeneratedMilli;
 
     private final ContainerData data = new ContainerData() {
@@ -69,7 +68,6 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
                 case 2 -> gtu.amountUnitsInt();
                 case 3 -> rotors;
                 case 4 -> formed ? 1 : 0;
-                case 5 -> lastSteamConsumed;
                 default -> 0;
             };
         }
@@ -82,7 +80,7 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
 
         @Override
         public int getCount() {
-            return 6;
+            return 5;
         }
     };
 
@@ -118,10 +116,6 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
         return data;
     }
 
-    public int lastSteamConsumed() {
-        return lastSteamConsumed;
-    }
-
     public long lastGtuGeneratedMilli() {
         return lastGtuGeneratedMilli;
     }
@@ -150,7 +144,6 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
         this.acceptedSteamThisTick = 0;
         this.intakeBudgetTick = Long.MIN_VALUE;
         this.outputPortCursor = 0;
-        this.lastSteamConsumed = 0;
         this.lastGtuGeneratedMilli = 0;
         this.indexRegistered = true;
         this.nextRestoreAttemptTick = 0L;
@@ -172,7 +165,6 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
         acceptedSteamThisTick = 0;
         intakeBudgetTick = Long.MIN_VALUE;
         outputPortCursor = 0;
-        lastSteamConsumed = 0;
         lastGtuGeneratedMilli = 0;
         indexRegistered = false;
         nextRestoreAttemptTick = 0L;
@@ -215,7 +207,6 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
         }
 
         boolean changed = false;
-        turbine.lastSteamConsumed = 0;
         turbine.lastGtuGeneratedMilli = 0;
 
         int wantedSteam = Math.min(turbine.steam.amount(), TurbineMath.maxSteamConsumption(turbine.rotors));
@@ -231,7 +222,6 @@ public final class TurbineRotorBlockEntity extends BaseMachineBlockEntity {
                     turbine.steam.extract(consuming, false);
                     turbine.conversionRemainder = TurbineMath.conversionRemainderAfter(
                         consuming, turbine.conversionRemainder);
-                    turbine.lastSteamConsumed = consuming;
                     turbine.lastGtuGeneratedMilli = made;
                     changed = true;
                 }

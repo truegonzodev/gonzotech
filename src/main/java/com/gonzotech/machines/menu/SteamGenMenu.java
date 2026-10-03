@@ -17,7 +17,7 @@ public final class SteamGenMenu extends BaseMachineMenu {
     private final SteamGenCoreBlockEntity controller;
 
     public SteamGenMenu(int id, Inventory inv, RegistryFriendlyByteBuf buf) {
-        this(id, inv, MenuHelper.readBlockEntity(inv, buf, SteamGenCoreBlockEntity.class), new SimpleContainerData(13));
+        this(id, inv, MenuHelper.readBlockEntity(inv, buf, SteamGenCoreBlockEntity.class), new SimpleContainerData(10));
     }
 
     public SteamGenMenu(int id, Inventory inv, SteamGenCoreBlockEntity controller, ContainerData data) {
@@ -58,28 +58,17 @@ public final class SteamGenMenu extends BaseMachineMenu {
         return Math.max(0, data.get(8));
     }
 
-    public int waterIn() {
-        return Math.max(0, data.get(9));
-    }
-
-    public int gthIn() {
-        return Math.max(0, data.get(10));
-    }
-
-    public int steamOut() {
-        return Math.max(0, data.get(11));
-    }
-
-    public int steamMade() {
-        return Math.max(0, data.get(12));
-    }
-
     public int waterCapacity() {
         return SteamGenMath.waterCapacity(cores());
     }
 
     public int steamCapacity() {
         return SteamGenMath.steamCapacity(cores());
+    }
+
+    /** Максимальный приём GTH через все сформированные порты, в milli-GTH/t. */
+    public int maxGthIntakeMilli() {
+        return Math.max(0, data.get(9));
     }
 
     public int gthCapacity() {

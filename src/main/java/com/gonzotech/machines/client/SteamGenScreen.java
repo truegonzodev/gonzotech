@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
@@ -49,23 +50,28 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
         String bonus = String.format(Locale.ROOT, "%.1f",
             SteamGenMath.bonusFraction(menu.sumCH(), menu.precious()) * 100.0D);
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
+            String maxIntake = BigDecimal.valueOf(menu.maxGthIntakeMilli(), 3)
+                .stripTrailingZeros().toPlainString();
+            String gthPerSteam = String.format(Locale.ROOT, "%.0f",
+                SteamGenMath.nominalGthPerSteamMb(menu.sumCH(), menu.precious()));
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.gthPair(menu.gth(), gthCapacity),
-                GtUnits.steamGenGthIn(menu.gthIn()),
+                GtUnits.steamGenMaxGthIntake(maxIntake),
+                GtUnits.steamGenGthPerSteam(gthPerSteam),
                 Component.translatable("gui.gonzotech.steamgen.cores", menu.cores()),
                 Component.translatable("gui.gonzotech.steamgen.exchangers", menu.precious(), bonus)
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
+            String waterPerSteam = String.format(Locale.ROOT, "%.0f",
+                SteamGenMath.nominalWaterPerSteamMb(menu.sumCH(), menu.precious()));
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.waterPair(menu.water(), waterCapacity),
-                GtUnits.steamGenWaterIn(menu.waterIn())
+                GtUnits.steamGenWaterPerSteam(waterPerSteam)
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, steamX, barY, barW, barH)) {
-            long ratedMilli = SteamGenMath.maxSteamPerTickMilli(menu.cores(), menu.sumCH(), menu.precious());
+            long ratedMilli = SteamGenMath.maxSteamBurstPerTickMilli(menu.cores(), menu.sumCH(), menu.precious());
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.steamPair(menu.steam(), steamCapacity),
-                GtUnits.steamGenSteamMade(menu.steamMade()),
-                GtUnits.steamGenSteamOut(menu.steamOut()),
                 GtUnits.steamGenRated(
                     String.format(Locale.ROOT, "%.0f", ratedMilli / 1000.0D))
             ), mouseX, mouseY);

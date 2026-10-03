@@ -17,7 +17,7 @@ public final class TurbineMenu extends BaseMachineMenu {
     private final TurbineRotorBlockEntity controller;
 
     public TurbineMenu(int id, Inventory inv, RegistryFriendlyByteBuf buf) {
-        this(id, inv, MenuHelper.readBlockEntity(inv, buf, TurbineRotorBlockEntity.class), new SimpleContainerData(6));
+        this(id, inv, MenuHelper.readBlockEntity(inv, buf, TurbineRotorBlockEntity.class), new SimpleContainerData(5));
     }
 
     public TurbineMenu(int id, Inventory inv, TurbineRotorBlockEntity controller, ContainerData data) {
@@ -44,10 +44,6 @@ public final class TurbineMenu extends BaseMachineMenu {
 
     public boolean formed() {
         return data.get(4) != 0;
-    }
-
-    public int steamConsumed() {
-        return Math.max(0, data.get(5));
     }
 
     public int steamCapacity() {
