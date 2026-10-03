@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Форматы тултипов шкал (раунд 14, автор 03.10.2026).
 
-Эпохи 1–2: ТОЛЬКО целые («X GTU», «X mB/t» — без дроби).
-Эпоха 3: ровно один десятичный знак («X.Y») — никакой связи с
-тысячными/сотыми и целыми без дроби. Формат един для тултипов.
+Эпохи 1–2: throughput-шкалы целые («X GTU», «X mB/t» — без дроби).
+Исключение 0.3.142: номинальные расходы SteamGen и турбины показываются
+до сотых; это не throughput-шкалы. Эпоха 3: ровно один знак («X.Y»).
 
 Запуск: python3 audit/scale_format_test.py
 """
@@ -43,16 +43,24 @@ for name, wraps in THIRD.items():
 sf = rd("src/main/java/com/gonzotech/machines/client/SiliconFactoryScreen.java")
 pin("BigDecimal.valueOf" not in sf, "SiliconFactory: BigDecimal-тысячные вернулись")
 
-# Эпохи 1–2: номиналы целыми
+# Throughput-шкалы эпох 1–2 остаются целыми; номинальные расходы — X.XX.
 for name in ("TurbineScreen", "SteamGenScreen"):
     src = rd(f"src/main/java/com/gonzotech/machines/client/{name}.java")
-    pin('%.0f", ratedMilli / 1000.0D)' in src, f"{name}: номинал не целым")
+    pin('%.0f", ratedMilli / 1000.0D)' in src, f"{name}: rated throughput больше не целый")
+expected_nominal_two_decimals = {"SteamGenScreen.java": 2, "TurbineScreen.java": 1}
+for name, expected in expected_nominal_two_decimals.items():
+    src = rd(f"src/main/java/com/gonzotech/machines/client/{name}")
+    pin(src.count('String.format(Locale.ROOT, "%.2f"') == expected,
+        f"{name}: номинальные расходы должны показываться до сотых")
 
-# В клиенте машин не осталось %.2f/%.3f (потери трубы в WrenchHud — исключение)
+# Дробные форматы допустимы только в номинальных расходах и потерях трубы HUD.
 for f in Path(ROOT / "src/main/java/com/gonzotech/machines/client").glob("*.java"):
     hits = re.findall(r"%\.[234]f", f.read_text(encoding="utf-8"))
-    allowed = f.name == "WrenchHud.java"  # потери 0.08/0.09 GTU — не шкала
-    if not allowed:
+    if f.name in expected_nominal_two_decimals:
+        pin(len(hits) == expected_nominal_two_decimals[f.name]
+            and all(hit == "%.2f" for hit in hits),
+            f"{f.name}: unexpected fractional scale format {hits}")
+    elif f.name != "WrenchHud.java":  # потери трубы — не шкала
         pin(not hits, f"{f.name}: дробные форматы {hits}")
 
 if failures:
@@ -60,4 +68,4 @@ if failures:
     for m in failures:
         print("  -", m)
     sys.exit(1)
-print("OK: эпохи 1–2 целые, эпоха 3 X.Y, тысячных/сотых нет")
+print("OK: throughput эпох 1–2 целый, эпоха 3 X.Y, номинальные расходы X.XX")

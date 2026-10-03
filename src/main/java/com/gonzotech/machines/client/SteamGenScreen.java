@@ -47,23 +47,23 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
         drawVBarTex(graphics, waterX, barY, barW, barH, water, BAR_WATER);
         drawVBarTex(graphics, steamX, barY, barW, barH, steam, BAR_STEAM);
 
-        String bonus = String.format(Locale.ROOT, "%.1f",
-            SteamGenMath.bonusFraction(menu.sumCH(), menu.precious()) * 100.0D);
+        String efficiency = String.format(Locale.ROOT, "%.0f",
+            SteamGenMath.exchangerEfficiency(menu.sumCH(), menu.precious()) * 100.0D);
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             String maxIntake = BigDecimal.valueOf(menu.maxGthIntakeMilli(), 3)
                 .stripTrailingZeros().toPlainString();
-            String gthPerSteam = String.format(Locale.ROOT, "%.0f",
-                SteamGenMath.nominalGthPerSteamMb(menu.sumCH(), menu.precious()));
+            String gthPerSteam = String.format(Locale.ROOT, "%.2f",
+                SteamGenMath.nominalGthPerSteamMb(menu.cores(), menu.sumCH(), menu.precious()));
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.gthPair(menu.gth(), gthCapacity),
                 GtUnits.steamGenMaxGthIntake(maxIntake),
                 GtUnits.steamGenGthPerSteam(gthPerSteam),
                 Component.translatable("gui.gonzotech.steamgen.cores", menu.cores()),
-                Component.translatable("gui.gonzotech.steamgen.exchangers", menu.precious(), bonus)
+                Component.translatable("gui.gonzotech.steamgen.exchangers", menu.precious(), efficiency)
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
-            String waterPerSteam = String.format(Locale.ROOT, "%.0f",
-                SteamGenMath.nominalWaterPerSteamMb(menu.sumCH(), menu.precious()));
+            String waterPerSteam = String.format(Locale.ROOT, "%.2f",
+                SteamGenMath.nominalWaterPerSteamMb(menu.cores(), menu.sumCH(), menu.precious()));
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.waterPair(menu.water(), waterCapacity),
                 GtUnits.steamGenWaterPerSteam(waterPerSteam)

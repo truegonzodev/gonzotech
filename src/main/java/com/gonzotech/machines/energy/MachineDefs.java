@@ -305,16 +305,9 @@ public final class MachineDefs {
     public static final int TURBINE_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
 
     // ═══════════════ ПРОДВИНУТЫЙ ПАРОГЕНЕРАТОР (многоблок 5×5×5) ═══════════════
-    // Внешний слой — корпус (id {@code second_steamgen_casing}), внутренность 3×3×3 —
-    // ядра (id {@code second_steamgen_core}) и/или драгоценные блоки-теплообменники. Управление — у
-    // ядра-контроллера в углу (min+1, min+1, min+1).
-    //
-    // Конверсия одного «цикла варки»: 15 mB воды + 11 GTH → 12 mB пара,
-    // умноженного на множитель теплообменников M = 1 + E_avg·(1 + 0.1·(n−1)),
-    // где E_avg — средняя (C+H)/200 по всем n теплообменникам (реально 0..0.75:
-    // максимум C+H = 150 у платины; потолок M = 3.625 при 26 обменниках платины).
-    // Ядра задают throughput (34 mB пара/т базово на ядро, ДО множителя),
-    // теплообменники — только эффективность преобразования.
+    // Внутренность 3×3×3 делится между ядрами и теплообменниками. Цикл варки
+    // проходит не чаще одного раза за тик; целевые затраты/выход задаёт кривая
+    // SteamGenMath, откалиброванная по авторским точкам для платины.
 
     /** Размер стороны корпуса продвинутого парогенератора (фиксированный 5×5×5). */
     public static final int STEAMGEN_SIZE = 5;
@@ -322,40 +315,26 @@ public final class MachineDefs {
     /** Максимум теплообменников внутри: 27 внутренних слотов − хотя бы одно ядро. */
     public static final int STEAMGEN_MAX_EXCHANGERS = 26;
 
-    /** Вода: буфер на одно ядро, mB. */
-    public static final int STEAMGEN_WATER_CAPACITY_PER_CORE = 488;
-    /** Пар: буфер на одно ядро, mB. */
-    public static final int STEAMGEN_STEAM_CAPACITY_PER_CORE = 1_526;
-    /** Базовый потолок выработки пара на ядро, mB/т (ДО множителя теплообменников). */
-    public static final int STEAMGEN_STEAM_PER_TICK_PER_CORE = 34;
+    /** Вода: уменьшенный буфер на одно ядро, mB; минимум покрывает цикл 1/26 (233 mB). */
+    public static final int STEAMGEN_WATER_CAPACITY_PER_CORE = 256;
+    /** Пар: буфер на одно ядро, mB; примерно треть прежнего значения. */
+    public static final int STEAMGEN_STEAM_CAPACITY_PER_CORE = 512;
     /** Пропускная способность входов/выходов жидкости на ядро, mB/т. */
     public static final int STEAMGEN_FLUID_IO_PER_CORE = 128;
-    /** GTH: буфер на одно ядро, целых GTH (хранится в milli). */
-    public static final int STEAMGEN_GTH_CAPACITY_PER_CORE = 4_096;
+    /** Одноядерная установка должна пропускать целевой расход воды 233 mB/т. */
+    public static final int STEAMGEN_FLUID_IO_MINIMUM = 256;
+    /** GTH: уменьшенный буфер на одно ядро, целых GTH (хранится в milli). */
+    public static final int STEAMGEN_GTH_CAPACITY_PER_CORE = 1_536;
 
-    /** Цикл варки: mB воды на 12 mB базового пара. */
-    /** 0.3.109 (автор): кап приёма GTH НА ПОРТ парогена, 312 GTH/t (т1-узел
-     * упирается в свои 256, т2 — в машинные 312; 2 порта → 624). */
+    /** 0.3.109: машинный кап приёма GTH на каждый тепловой порт. */
     public static final int STEAMGEN_GTH_PER_PORT_MILLI = 312 * MILLI;
-    public static final int STEAMGEN_WATER_PER_UNIT = 114;
-    /** Цикл варки: GTH на 12 mB базового пара (в milli). */
-    public static final int STEAMGEN_GTH_PER_UNIT_MILLI = 193 * MILLI;
-    /** Цикл варки: mB базового пара (до множителя теплообменников). */
-    public static final int STEAMGEN_STEAM_PER_UNIT = 44;
-
-    /** Делитель (C+H) одного теплообменника: E = (C+H)/200. */
-    public static final int STEAMGEN_EXCHANGER_DIVISOR = 200;
-    /** Прирост бонуса за каждый следующий теплообменник: +0.1 к множителю (1/10). */
-    public static final int STEAMGEN_EXCHANGER_STEP = 10;
-    /** 0.3.64: -7% к эффективности E драгоценных теплообменников (M растёт медленнее). */
-    public static final double STEAMGEN_EXCHANGER_EFFICIENCY = 0.93D;
 
     /** Предохранитель: максимум маршрутов выдачи пара за тик (как у турбины). */
     public static final int STEAMGEN_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
 
-    /** Паразитное «остывание»: потеря GTH за тик, независимо от чего-либо. */
-    public static final int STEAMGEN_GTH_LOSS = 2 * MILLI;
-    /** Паразитная потеря пара: мB пара за тик, независимо от чего-либо. */
+    /** Паразитное «остывание»: потеря GTH за тик, milli-GTH (около 0.667 GTH/t). */
+    public static final int STEAMGEN_GTH_LOSS = 667;
+    /** Паразитная потеря пара: mB за тик, пока бак не пуст. */
     public static final int STEAMGEN_STEAM_LOSS = 1;
 
     // ═══════════════════════════ ЭЛЕКТРОПЕЧЬ (Electric Furnace) ═══════════════════════════

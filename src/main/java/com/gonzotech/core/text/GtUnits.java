@@ -433,14 +433,14 @@ public final class GtUnits {
             .withStyle(ChatFormatting.WHITE);
     }
 
-    /** Номинальная трата GTH на каждый mB пара с учётом множителя теплообменников. */
+    /** Номинальная трата GTH на 1 mB пара по платиновой кривой и эффективности материала. */
     public static MutableComponent steamGenGthPerSteam(Object value) {
         return Component.translatable("gui.gonzotech.steamgen.nominal_gth_per_steam",
                 key(U_GTH, GTH), key(N_STEAM_GENITIVE, STEAM), num(value, GTH))
             .withStyle(ChatFormatting.WHITE);
     }
 
-    /** Номинальная трата воды на каждый mB пара с учётом множителя теплообменников. */
+    /** Номинальная трата воды на 1 mB пара по платиновой кривой и эффективности материала. */
     public static MutableComponent steamGenWaterPerSteam(Object value) {
         return Component.translatable("gui.gonzotech.steamgen.nominal_water_per_steam",
                 key(N_WATER_GENITIVE, WATER), key(N_STEAM_GENITIVE, STEAM),

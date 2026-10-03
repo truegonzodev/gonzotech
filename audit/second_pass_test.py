@@ -372,9 +372,9 @@ for pin in ("FIREBOX_GTH_CAPACITY = 16_004 * MILLI;","BOILER_GTH_CAPACITY = 16_0
     "CENTRIFUGE_HOT_WATER_CAPACITY = 8_000;","CENTRIFUGE_WATER_CAPACITY = 6_000;",
     "CENTRIFUGE_WATER_INTAKE = 256;","CENTRIFUGE_STEAM_INTAKE = 256;","CENTRIFUGE_WASH_TICKS = 310;",
     "UNIVERSAL_FLUID_OUTPUT = 316;",
-    # 0.3.106: нёрф конверсии парогена (автор 02.10): 1.93 GTH + 1.14 W → 0.44 пара
-    "STEAMGEN_WATER_PER_UNIT = 114;","STEAMGEN_GTH_PER_UNIT_MILLI = 193 * MILLI;","STEAMGEN_STEAM_PER_UNIT = 44;",
-    "STEAMGEN_EXCHANGER_EFFICIENCY = 0.93D;"):
+    # 0.3.142: per-port cap preserved; SteamGen cycle targets moved to SteamGenMath.
+    "STEAMGEN_GTH_PER_PORT_MILLI = 312 * MILLI;","STEAMGEN_GTH_LOSS = 667;",
+    "STEAMGEN_STEAM_LOSS = 1;"):
     assert pin in mdefs, 'mdefs: '+pin
 for pin in ("WIRE_THROUGHPUT = 89L * MachineDefs.MILLI;","HEAT_THROUGHPUT = 562L * MachineDefs.MILLI;",
     "WATER_THROUGHPUT = 852L;","STEAM_THROUGHPUT = 852L;","UNIVERSAL_FLUID_THROUGHPUT = 682L;",
@@ -408,7 +408,7 @@ assert 'THROUGHPUT_FACTOR = 0.91D;' in u2 and 'return THROUGHPUT_FACTOR;' in u2
 furn2=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/SecondElectricFurnaceBlockEntity.java').read_text()
 assert '(long) SecondTierDefs.ELECTRIC_GTU_INTAKE' in furn2  # свой приём 48, не общий 24 с T1
 sgm=(ROOT/'src/main/java/com/gonzotech/machines/steamgen/SteamGenMath.java').read_text()
-assert 'STEAMGEN_EXCHANGER_EFFICIENCY' in sgm  # E ×0.93
+assert 'CURVE_EXCHANGERS = {0, 2, 5, 12, 22, 26};' in sgm  # 0.3.142: новая целевая кривая
 
 # ── 0.3.62: компиляция HUD-хвоста — append есть только у MutableComponent ──
 hud=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()
@@ -425,10 +425,12 @@ assert 'public static void recordLoss(Level level, BlockPos pipe, PipeType type,
 assert 'public static long getLoss(Level level, BlockPos pipe, PipeType type)' in flow_tracker
 pipe_flow=(ROOT/'src/main/java/com/gonzotech/machines/network/PipeFlowNetwork.java').read_text()
 assert 'long lossMilli, int clumpSize) implements CustomPacketPayload' in pipe_flow  # 0.3.102: счётчик клампа вернулся
-# 0.3.106: «12» цикла больше не хардкод — константа (нёрф конверсии автора)
+# 0.3.142: один профильный цикл/т, затраты и выход читаются из SteamGenMath.
 steam_be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/SteamGenCoreBlockEntity.java").read_text()
-assert "12.0D * mult" not in steam_be
-assert "MachineDefs.STEAMGEN_STEAM_PER_UNIT * (double) mult" in steam_be
+assert "SteamGenMath.waterPerCycle(cores, precious)" in steam_be
+assert "SteamGenMath.gthPerCycleMilli(cores, precious)" in steam_be
+assert "SteamGenMath.steamPerCycleMilli(cores, sumCH, precious)" in steam_be
+assert "eventRemainderMilli" not in steam_be
 assert 'ByteBufCodecs.VAR_LONG, FlowPayload::lossMilli,' in pipe_flow
 assert pipe_flow.count('FlowTracker.getLoss(level, pos, pipeType)') == 1  # 0.3.104: осевых ответов больше нет
 wrench=(ROOT/'src/main/java/com/gonzotech/machines/client/WrenchHud.java').read_text()

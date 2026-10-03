@@ -46,7 +46,7 @@ public final class TurbineScreen extends MachineScreen<TurbineMenu> {
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.turbineSteamPair(menu.steam(), steamCapacity),
                 Component.translatable("gui.gonzotech.turbine.rotors", menu.rotors()),
-                GtUnits.turbineSteamPerGtu(String.format(Locale.ROOT, "%.0f",
+                GtUnits.turbineSteamPerGtu(String.format(Locale.ROOT, "%.2f",
                     TurbineMath.nominalSteamMbPerGtu()))
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {

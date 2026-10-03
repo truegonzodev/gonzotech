@@ -33,8 +33,8 @@ import java.util.Set;
  *
  * <p>Вход — виртуальные приёмники на встроенных нодах (вода и GTH приходят
  * «из машин» через трубы, как пар к турбине). Выход — активный слив пара с
- * портов установки по тем же трубам. Пропускная способность входов и выхода
- * ограничена 128 mB/т на ядро.</p>
+ * портов установки по тем же трубам. Пропускная способность fluid-I/O —
+ * максимум из 256 mB/т и 128 mB/т на ядро.</p>
  */
 public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
 
@@ -59,8 +59,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     private transient Set<Long> waterPortSet = Set.of();
     private transient Set<Long> steamPortSet = Set.of();
 
-    /** Дробный остаток числа «циклов варки», milli-цикла, 0..999. */
-    private int eventRemainderMilli;
     /** Дробный остаток вырабатываемого пара, milli-mB, 0..999. */
     private int steamRemainderMilli;
 
@@ -180,7 +178,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         this.steam = new ResourceBuffer(SteamGenMath.steamCapacity(cores));
         this.gth = new GtBuffer(SteamGenMath.gthCapacityMilli(cores));
         this.formed = true;
-        this.eventRemainderMilli = 0;
         this.steamRemainderMilli = 0;
         this.acceptedWaterThisTick = 0;
         this.acceptedGthMilliThisTick = 0L;
@@ -211,7 +208,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         water = new ResourceBuffer(0);
         steam = new ResourceBuffer(0);
         gth = new GtBuffer(0);
-        eventRemainderMilli = 0;
         steamRemainderMilli = 0;
         acceptedWaterThisTick = 0;
         acceptedGthMilliThisTick = 0L;
@@ -300,9 +296,8 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         boolean changed = boiler.burnSteam();
         if (boiler.pushSteam(server)) changed = true;
 
-        // Паразитика: пассивное остывание 2 GTH/t (тепло рассеивается) и
-        // утечка 1 mB пара/т — независимо от нагрузки, но только если ресурс
-        // есть (ничего не создаётся из воздуха).
+        // Паразитика: пассивное остывание около 0.667 GTH/t и утечка
+        // 1 mB пара/т — только если ресурс есть (ничего не создаётся из воздуха).
         if (!boiler.gth.isEmpty()) {
             boiler.gth.extract(Math.min(MachineDefs.STEAMGEN_GTH_LOSS, boiler.gth.amountAsLong()), false);
             changed = true;
@@ -315,53 +310,30 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
     }
 
     /**
-     * Цикл варки: {@code 1.14 mB воды + 1.93 GTH → 0.44 mB пара × M} за
-     * событие (нёрф конверсии автора 02.10; до множителя).
-     * За тик машина делает максимум событий, позволяемых потолком выработки,
-     * запасом воды/GTH и местом в баке пара.
+     * Один профильный цикл варки за тик. Затраты воды/GTH соответствуют
+     * платиновой кривой для числа теплообменников; менее эффективные материалы
+     * сохраняют те же затраты, но дают меньший выход пара.
      *
      * @return true, если что-то изменилось
      */
     private boolean burnSteam() {
-        int cores = this.cores;
-        double mult = SteamGenMath.multiplier(sumCH, precious);
+        long waterUsed = SteamGenMath.waterPerCycle(cores, precious);
+        long gthUsed = SteamGenMath.gthPerCycleMilli(cores, precious);
+        long producedMilli = SteamGenMath.steamPerCycleMilli(cores, sumCH, precious)
+            + steamRemainderMilli;
+        int madeWhole = (int) (producedMilli / MachineDefs.MILLI);
+        int nextSteamRemainder = (int) (producedMilli % MachineDefs.MILLI);
 
-        // Доступное число событий, milli-цикла: минимум по четырём ограничениям.
-        long capMilli = (long) cores * MachineDefs.STEAMGEN_STEAM_PER_TICK_PER_CORE * MachineDefs.MILLI
-            / MachineDefs.STEAMGEN_STEAM_PER_UNIT;
-        long waterMilli = water.amount() * MachineDefs.MILLI / MachineDefs.STEAMGEN_WATER_PER_UNIT;
-        long gthMilli = gth.amountAsLong() * MachineDefs.MILLI / MachineDefs.STEAMGEN_GTH_PER_UNIT_MILLI;
-        long spaceMilli = (long) Math.floor(steam.space() * MachineDefs.MILLI
-            / (MachineDefs.STEAMGEN_STEAM_PER_UNIT * (double) mult));
-        long availMilli = Math.min(Math.min(capMilli, waterMilli), Math.min(gthMilli, spaceMilli));
-        if (availMilli <= 0) return false;
-
-        long events = (availMilli + eventRemainderMilli) / MachineDefs.MILLI;
-        eventRemainderMilli = (int) ((availMilli + eventRemainderMilli) % MachineDefs.MILLI);
-        if (events <= 0) return false;
-
-        long waterUsed = events * MachineDefs.STEAMGEN_WATER_PER_UNIT;
-        long gthUsed = events * MachineDefs.STEAMGEN_GTH_PER_UNIT_MILLI;
-        if (waterUsed > water.amount() || gthUsed > gth.amountAsLong()) return false;
-
-        long madeMilli = (long) Math.floor(MachineDefs.STEAMGEN_STEAM_PER_UNIT * (double) mult
-            * events * MachineDefs.MILLI) + steamRemainderMilli;
-        long madeWhole = madeMilli / MachineDefs.MILLI;
-        if (madeWhole > steam.space()) {
-            madeWhole = steam.space();
-            steamRemainderMilli = 0;
-        } else {
-            steamRemainderMilli = (int) (madeMilli % MachineDefs.MILLI);
-        }
-        if (madeWhole <= 0) {
-            // Место меньше 1 mB: остаток копит, ничего не теряем.
-            if (steamRemainderMilli >= MachineDefs.MILLI) steamRemainderMilli -= MachineDefs.MILLI;
+        if (waterUsed <= 0L || gthUsed <= 0L || madeWhole <= 0
+            || water.amount() < waterUsed || gth.amountAsLong() < gthUsed
+            || steam.space() < madeWhole) {
             return false;
         }
 
         water.extract(waterUsed, false);
         gth.extract(gthUsed, false);
         steam.receive(madeWhole, false);
+        steamRemainderMilli = nextSteamRemainder;
         return true;
     }
 
@@ -456,7 +428,6 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         tag.putLongArray("HeatPorts", heatPorts);
         tag.putLongArray("WaterPorts", waterPorts);
         tag.putLongArray("SteamPorts", steamPorts);
-        tag.putInt("EventRemainder", eventRemainderMilli);
         tag.putInt("SteamRemainder", steamRemainderMilli);
         water.save(tag, "Water");
         steam.save(tag, "Steam");
@@ -476,7 +447,7 @@ public final class SteamGenCoreBlockEntity extends BaseMachineBlockEntity {
         heatPorts = tag.getLongArray("HeatPorts");
         waterPorts = tag.getLongArray("WaterPorts");
         steamPorts = tag.getLongArray("SteamPorts");
-        eventRemainderMilli = Math.floorMod(tag.getInt("EventRemainder"), MachineDefs.MILLI);
+        // NBT EventRemainder от старой дробной модели больше не используется.
         steamRemainderMilli = Math.floorMod(tag.getInt("SteamRemainder"), MachineDefs.MILLI);
         if (!formed || cores <= 0 || sumCH < 0 || precious < 0) {
             formed = false;
