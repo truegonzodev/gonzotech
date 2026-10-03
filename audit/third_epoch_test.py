@@ -204,6 +204,9 @@ bm = (SRC / "mixin/PistonBaseBlockMixin.java").read_text()
 pin('@Redirect(method = "moveBlocks"' in bm, "миксин: редирект создания головки в moveBlocks")
 pin("Lnet/minecraft/world/level/block/Blocks;PISTON_HEAD" in bm, "миксин: поле PISTON_HEAD в target")
 pin("ordinal = 1" in bm, "миксин: редирект только создания (ordinal 1)")
+# GETSTATIC Blocks.PISTON_HEAD has no operands; the redirect must not take an owner arg.
+pin("private Block gonzotech$customHead()" in bm, "миксин: GETSTATIC handler без аргументов")
+pin("gonzotech$customHead(PistonBaseBlock" not in bm, "миксин: нет лишнего receiver-параметра")
 pin("gonzotech$anyModdedHead" in bm and "instanceof net.minecraft.world.level.block.piston.PistonHeadBlock" in bm,
     "миксин: своя головка = головка и в проверке is()")
 mixcfg = (ROOT / "src/main/resources/gonzotech.mixins.json").read_text()

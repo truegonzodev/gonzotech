@@ -30,7 +30,7 @@ public abstract class PistonBaseBlockMixin {
     @Redirect(method = "moveBlocks",
         at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/block/Blocks;PISTON_HEAD:Lnet/minecraft/world/level/block/Block;",
                  ordinal = 1))
-    private Block gonzotech$customHead(PistonBaseBlock piston) {
+    private Block gonzotech$customHead() {
         if ((Object) this instanceof ThirdPistonBlock || (Object) this instanceof ThirdStickyPistonBlock) {
             return ModMachines.THIRD_LEAD_PISTON_HEAD.get();
         }
