@@ -58,6 +58,8 @@ real_files = [
     NET / "ThirdTierPipe.java",
     NET / "ThirdCompositePipeBlock.java",
     ROOT / "src/main/java/com/gonzotech/mixin/PistonHeadBlockMixin.java",
+    ROOT / "src/main/java/com/gonzotech/mixin/PistonBaseBlockMixin.java",
+    ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonHeadBlock.java",
     NET / "NodeClumpSavedData.java",
     NET / "ThirdPipeBlock.java",
     NET / "ThirdNodeBlock.java",
@@ -112,4 +114,13 @@ assert "addMachineLane(level, next, port," not in routing
 # 2) mark принимает Level (distributeLanes работает с Level, не ServerLevel)
 assert "public static void mark(Level level, BlockPos pos, long untilTick)" in warnings
 
+
+# 0.3.116 (лов сборки автора): головка поршня обязана компилироваться локально;
+# импорт StateDefinition — из net.minecraft.world.level.block.state
+head_src = (ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonHeadBlock.java").read_text()
+assert "import net.minecraft.world.level.block.state.StateDefinition;" in head_src
+assert "import net.minecraft.world.level.block.StateDefinition;" not in head_src
+_self = Path(__file__).read_text()
+assert 'ROOT / "src/main/java/com/gonzotech/mixin/PistonBaseBlockMixin.java"' in _self
+assert 'ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonHeadBlock.java"' in _self
 print(f"typecheck ok: {len(real_files)} реальных файлов + {len(stub_files)} стабов, 0 ошибок")
