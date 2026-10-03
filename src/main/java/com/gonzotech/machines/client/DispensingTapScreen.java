@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.block.entity.DispensingTapBlockEntity;
 import com.gonzotech.machines.menu.DispensingTapMenu;
 import net.minecraft.ChatFormatting;

@@ -35,6 +35,8 @@ def method(source, name):
 assert 'literal(":")' in tap and 'literal(" /")' in tap
 assert 'ChatFormatting.AQUA)' in tap and 'ChatFormatting.GOLD)' in tap
 # Раунд 14: значения шкал крана — в формате эпохи 3 X.Y (GtUnits.x1).
+# Compile regression: this screen must explicitly import the cross-package formatter.
+assert 'import com.gonzotech.core.text.GtUnits;' in tap
 assert 'GtUnits.x1(menu.distillate()),' in tap and 'GtUnits.x1(menu.wort()),' in tap
 assert 'GtUnits.x1(DispensingTapBlockEntity.DISTILLATE_CAPACITY),' in tap
 assert 'GtUnits.x1(DispensingTapBlockEntity.WORT_CAPACITY),' in tap
