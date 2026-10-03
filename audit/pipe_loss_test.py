@@ -69,4 +69,9 @@ assert "java.util.Collections.reverse(steps);" in routing
 assert "next = cur;" in routing and "cur = parent.get(cur.asLong());" in routing
 assert "+= lossMilli" not in tracker
 assert "if (lossMilli > byType[type.ordinal()]) byType[type.ordinal()] = lossMilli;" in tracker
+
+# 0.3.114: тултип потерь на предмете экранированной трубы — ×0.88
+tt = (ROOT / "src/main/java/com/gonzotech/core/client/PipeLossTooltip.java").read_text()
+assert "instanceof ThirdTierPipe" in tt and "STAT_FACTOR" in tt, "тултип потерь: ветка ×0.88"
+print("pipe loss tooltip pin passed")
 print("Pipe losses wiring passed (0.08/0.09 GTU, 0.22/0.18 GTH; universal node exempt)")

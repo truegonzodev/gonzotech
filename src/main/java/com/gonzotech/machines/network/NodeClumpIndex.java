@@ -47,6 +47,53 @@ public final class NodeClumpIndex {
     public record Clump(long root, long lossMilli, Set<Long> members) {
     }
 
+    /**
+     * Сохраняемая форма клампа (0.3.114): {корень, род, члены}. Потеря не пишется —
+     * пересчитывается из рода при восстановлении, правила применяются к старым мирам.
+     */
+    public record ClumpSave(long root, String kind, long[] members) {
+    }
+
+    /** Снимок всех клампов уровня (для {@link NodeClumpSavedData}). */
+    static java.util.List<ClumpSave> clumpsOf(Level level) {
+        Map<Long, Clump> byRoot = BY_ROOT.get(level);
+        java.util.List<ClumpSave> out = new java.util.ArrayList<>();
+        if (byRoot == null) return out;
+        for (Clump clump : byRoot.values()) {
+            String kind = null;
+            BlockState state = level.getBlockState(BlockPos.of(clump.root()));
+            if (state.getBlock() instanceof NodeBlock) kind = kindOfBlock(state);
+            if (kind == null) continue; // блок под корнем перестал быть узлом — кламп не пишем
+            out.add(new ClumpSave(clump.root(), kind, clump.members().stream().mapToLong(Long::longValue).toArray()));
+        }
+        return out;
+    }
+
+    /**
+     * Восстановить клампы из сохранения (старт сервера). Санити: род блока под
+     * корнем обязан совпадать с записанным — иначе кламп пропускается (мир
+     * изменился, призрачных сшивок не создаём). Плоская потеря пересчитывается.
+     */
+    static void restoreAll(Level level, java.util.List<ClumpSave> saved) {
+        if (saved.isEmpty()) return;
+        Map<Long, Long> members2root = MEMBER_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>());
+        Map<Long, Clump> byRoot = BY_ROOT.computeIfAbsent(level, ignored -> new java.util.HashMap<>());
+        for (ClumpSave save : saved) {
+            BlockState state = level.getBlockState(BlockPos.of(save.root()));
+            if (!save.kind().equals(kindOfBlock(state))) continue;
+            Set<Long> members = new java.util.HashSet<>();
+            for (long key : save.members()) members.add(key);
+            if (!members.contains(save.root())) continue;
+            byRoot.put(save.root(), new Clump(save.root(), lossMilliFor(save.kind(), members.size()), members));
+            for (long key : members) members2root.put(key, save.root());
+        }
+    }
+
+    /** Write-through в {@link NodeClumpSavedData} (после мутаций индекса). */
+    private static void markDirty(ServerLevel level) {
+        NodeClumpSavedData.markDirty(level);
+    }
+
     private NodeClumpIndex() {
     }
 
@@ -238,12 +285,14 @@ public final class NodeClumpIndex {
         }
         if (byRoot != null && byRoot.isEmpty()) BY_ROOT.remove(level);
         if (members.isEmpty()) MEMBER_ROOT.remove(level);
+        markDirty(level); // 0.3.114: разбор/раскол клампа — сразу в SavedData
     }
 
     /** Сброс на остановке сервера (карты держат ссылки на Level). */
     public static void clearAll() {
         MEMBER_ROOT.clear();
         BY_ROOT.clear();
+        NodeClumpSavedData.forgetLoaded();
     }
 
     // ─────────────────────────── формирование ───────────────────────────
@@ -276,6 +325,7 @@ public final class NodeClumpIndex {
         }
         for (long key : members) members2root.put(key, root);
         byRoot.put(root, new Clump(root, lossMilli, members));
+        markDirty(level);
     }
 
     /** Флуд по чужим/чужеродным блокам не идёт: шагаем только по членам набора. */

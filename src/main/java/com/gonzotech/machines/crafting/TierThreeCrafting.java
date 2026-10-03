@@ -82,7 +82,6 @@ public final class TierThreeCrafting {
         "gonzotech:third_heat_pipe",
         "gonzotech:third_universal_fluid_pipe",
         "gonzotech:third_item_pipe",
-        "gonzotech:third_universal_pipe",
         "gonzotech:third_wire_node",
         "gonzotech:third_heat_node",
         "gonzotech:third_universal_fluid_node",
@@ -208,6 +207,22 @@ public final class TierThreeCrafting {
         || item == ModItems.CHIP_2.get()
         || item == ModItems.CHIP_3.get()
         || item == ModItems.RUBBER_BLOCK_ITEM.get()
-        || item == ModItems.THIRD_SILICON_FACTORY.get();
+        || item == ModItems.THIRD_SILICON_FACTORY.get()
+        // ПЦФСОЗ (0.3.109) и экранированная семья + поршни + ящик (0.3.110/0.3.111):
+        // полный гейт «Открытия 3» — и ботч, и строка гейта, и Shift-крафт
+        // (автор, раунд 12: у 12 новых предметов крафт И рецепт — по Открытию 3).
+        || item == com.gonzotech.machines.registry.ModMachines.PCFSOZ_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_WIRE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_HEAT_PIPE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_FLUID_PIPE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_ITEM_PIPE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_WIRE_NODE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_HEAT_NODE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_FLUID_NODE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_ITEM_NODE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_NODE_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_LEAD_PISTON_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_STICKY_LEAD_PISTON_ITEM.get()
+        || item == com.gonzotech.machines.registry.ModMachines.THIRD_LEAD_CHEST_ITEM.get();
     }
 }

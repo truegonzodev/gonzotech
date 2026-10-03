@@ -2,18 +2,10 @@
   "type": "minecraft:crafting_shapeless",
   "category": "redstone",
   "ingredients": [
-    {
-      "item": "gonzotech:second_wire_node"
-    },
-    {
-      "item": "gonzotech:lead_block"
-    },
-    {
-      "item": "gonzotech:zirconium_plate"
-    },
-    {
-      "item": "gonzotech:rubber"
-    }
+    "gonzotech:second_wire_node",
+    "gonzotech:lead_block",
+    "gonzotech:zirconium_plate",
+    "gonzotech:rubber"
   ],
   "result": {
     "id": "gonzotech:third_wire_node",

@@ -56,6 +56,9 @@ real_files = [
     # 0.3.110: экранированная семья эпохи 3 + их родители (стаб UniversalNodeBlock
     # удалён как дубль реального класса)
     NET / "ThirdTierPipe.java",
+    NET / "ThirdCompositePipeBlock.java",
+    ROOT / "src/main/java/com/gonzotech/mixin/PistonHeadBlockMixin.java",
+    NET / "NodeClumpSavedData.java",
     NET / "ThirdPipeBlock.java",
     NET / "ThirdNodeBlock.java",
     NET / "ThirdItemPipeBlock.java",
@@ -63,7 +66,6 @@ real_files = [
     NET / "ThirdUniversalFluidPipeBlock.java",
     NET / "ThirdUniversalFluidNodeBlock.java",
     NET / "ThirdUniversalNodeBlock.java",
-    NET / "ThirdUniversalPipeBlock.java",
     ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonBlock.java",
     ROOT / "src/main/java/com/gonzotech/machines/block/ThirdStickyPistonBlock.java",
     NET / "ItemNodeBlock.java",

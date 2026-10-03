@@ -73,6 +73,14 @@ public class GonzoTechMod {
         ModBlockEntities.register(modEventBus);
         ModMenus.register(modEventBus);
 
+        // 0.3.114: сшитые узлы восстанавливаются из dimension-data на старте сервера —
+        // после перезахода клампы больше не исчезают (репорт автора, раунд 12).
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStartedEvent e) -> {
+            for (net.minecraft.server.level.ServerLevel lvl : e.getServer().getAllLevels()) {
+                com.gonzotech.machines.network.NodeClumpSavedData.restore(lvl);
+            }
+        });
+
         // При остановке сервера сбросить транзитный учёт потока труб (держит ссылки на Level).
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
             com.gonzotech.machines.network.FlowTracker.clearAll();
@@ -228,6 +236,8 @@ public class GonzoTechMod {
             com.gonzotech.machines.registry.ModMachines.COMPOSITE_PIPE.get());
         com.gonzotech.machines.network.ModCompositeAccess.setSecond(
             com.gonzotech.machines.registry.ModMachines.SECOND_COMPOSITE_PIPE.get());
+        com.gonzotech.machines.network.ModCompositeAccess.setThird(
+            com.gonzotech.machines.registry.ModMachines.THIRD_COMPOSITE_PIPE.get());
         com.gonzotech.machines.network.ModCompositeAccess.registerSingle(
             com.gonzotech.machines.network.PipeType.WIRE,
             com.gonzotech.machines.registry.ModMachines.WIRE.get());

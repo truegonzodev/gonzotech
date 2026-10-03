@@ -239,7 +239,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
         // Добавление универсальной жидк.трубы: занимает весь FLUID-угол (вода+пар),
         // если он ещё свободен.
-        if (isUniversalPipeItem(stack) && isSecondTierPipeItem(stack) == (this instanceof SecondTierPipe)
+        if (isUniversalPipeItem(stack) && ModCompositeAccess.sameTier(this, stack)
             && fluidCornerFree(state)) {
             if (!level.isClientSide()) {
                 level.setBlock(pos, withUniversalFluid(state), Block.UPDATE_ALL);
@@ -250,7 +250,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
         // Добавление ещё одной трубы в связку: используем предмет-трубу другого типа.
         PipeType adding = pipeTypeOf(stack);
-        if (adding != null && isSecondTierPipeItem(stack) == (this instanceof SecondTierPipe)
+        if (adding != null && ModCompositeAccess.sameTier(this, stack)
             && !state.getValue(PRESENT.get(adding)) && canAdd(state, adding)) {
             if (!level.isClientSide()) {
                 level.setBlock(pos, state.setValue(PRESENT.get(adding), true), Block.UPDATE_ALL);
@@ -315,10 +315,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
         return stack.getItem() instanceof BlockItem bi
             && bi.getBlock() instanceof UniversalFluidPipeBlock u
             && !u.connectsAllSides();
-    }
-
-    static boolean isSecondTierPipeItem(ItemStack stack) {
-        return stack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof SecondTierPipe;
     }
 
     public static boolean carriesUniversalFluid(BlockState state) {

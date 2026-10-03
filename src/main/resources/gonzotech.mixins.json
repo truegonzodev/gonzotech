@@ -22,7 +22,8 @@
     "PathfinderMobSunEventRulesMixin",
     "ServerLevelSunEventSnowMixin",
     "WolfFatnessMixin",
-    "GonzoPaintingMixin"
+    "GonzoPaintingMixin",
+    "PistonHeadBlockMixin"
   ],
   "client": [
     "client.InBedFaintingScreenMixin",

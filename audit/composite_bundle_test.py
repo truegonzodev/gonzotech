@@ -48,7 +48,10 @@ assert "!connectsAllSides() && CompositePipeBlock.isUniversalPipeItem(stack)" in
 assert "adding != null && !adding.isFluid()" in ufp
 assert "ModCompositeAccess.sameTier(this, stack)" in pipe and "ModCompositeAccess.sameTier(this, stack)" in ufp
 assert "PipeType.WIRE, PipeType.HEAT, PipeType.WATER, PipeType.STEAM, PipeType.ITEM" in comp
-assert "getFor(PipeBlock pipe)" in access and "sameTier(PipeBlock existing" in access
-assert "instanceof SecondTierPipe ? secondComposite : composite" in access
+# 0.3.114: тиры — лестницей (ThirdTierPipe РАСШИРЯЕТ SecondTierPipe), сигнатуры на Block
+assert "getFor(net.minecraft.world.level.block.Block pipe)" in access and "sameTier(net.minecraft.world.level.block.Block existing" in access
+assert "if (block instanceof ThirdTierPipe) return 3;" in access, "tir 3 precedes 2"
+# getFor: свитч по трём тирам (композит тир-1 живёт в default)
+assert "case 3 -> thirdComposite;" in access and "case 2 -> secondComposite;" in access and "default -> composite;" in access
 
 print("composite bundle pins passed (crash fix + diagnostics removed + AXIS_LOWER + semantics)")

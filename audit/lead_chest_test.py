@@ -70,13 +70,13 @@ i_chest = tabs.find("THIRD_LEAD_CHEST_ITEM")
 i_sticky = tabs.find("THIRD_STICKY_LEAD_PISTON_ITEM")
 pin(0 < i_sticky < i_chest, "таб: после поршней, третья эпоха")
 
-# ── 4. Крафт: фулл-гейт Открытие 3, кольцо из 8 слитков (сетка не была задана — флаг) ──
+# ── 4. Крафт (автор, раунд 12): кольцо из слитков + свинцовый БЛОК в центре ──
 gate = (SRC / "machines/crafting/TierThreeCrafting.java").read_text()
 pin(f'"gonzotech:{ID}"' in gate, "фулл-гейт Открытие 3")
 r = (DATA / f"recipe/{ID}.json").read_text()
 pin('"minecraft:crafting_shaped"' in r, "форменный")
-pin('"LLL"' in r and '"L L"' in r, "кольцо бочки 3×3")
-pin('"gonzotech:lead_ingot"' in r, "свинцовые слитки")
+pin('"LLL"' in r and '"LBL"' in r, "кольцо 3×3 с блоком в центре")
+pin('"gonzotech:lead_ingot"' in r and '"gonzotech:lead_block"' in r, "слитки + блок")
 pin(f'"gonzotech:{ID}"' in r.split('"result"')[1], "результат")
 
 # ── 5. Рад-хуки: заражение чанка и визуальные источники ×0.2 ──

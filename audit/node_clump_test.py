@@ -110,4 +110,21 @@ assert "if (own > clumpSum) clumpSum = own;" in flow
 assert "NodeClumpIndex.lossMilliOfRoot(level, NodeClumpIndex.rootOf(level, pos))" in flow
 assert "NodeClumpIndex.sizeAt(level, pos)" in flow
 
+
+# ── 0.3.114: персист клампов (репорт автора: после перезахода «сшито» пропадало,
+# поршневые системы роняли TPS до перетыкания узла) ──
+NET = ROOT / "src/main/java/com/gonzotech/machines/network"
+saved = (NET / "NodeClumpSavedData.java").read_text()
+assert '"gonzotech_node_clumps"' in saved, "SavedData: имя"
+assert "NodeClumpIndex.restoreAll(level, data.clumps)" in saved, "SavedData: восстановление"
+assert "static void markDirty" in saved and "setDirty()" in saved, "SavedData: write-through"
+assert "clumps.addAll(snapshot(level))" in saved, "SavedData: снимок при сохранении"
+idx = (NET / "NodeClumpIndex.java").read_text()
+assert "record ClumpSave(long root, String kind, long[] members)" in idx, "ClumpSave: род + члены"
+assert "lossMilliFor(save.kind(), members.size())" in idx, "восстановление: потеря пересчитывается"
+assert "markDirty(level);" in idx, "индекс: мутации пишутся сразу"
+assert "NodeClumpSavedData.forgetLoaded();" in idx, "clearAll: живые ссылки сняты"
+mod = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text()
+assert "NodeClumpSavedData.restore(lvl)" in mod and "ServerStartedEvent" in mod, "старт сервера: восстановление"
+print("node clump persistence pins passed")
 print("node clump pins passed (index + hooks + router law/loss + HUD + lang)")

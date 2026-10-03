@@ -3,11 +3,12 @@
   "category": "redstone",
   "pattern": [
     "LLL",
-    "L L",
+    "LBL",
     "LLL"
   ],
   "key": {
-    "L": "gonzotech:lead_ingot"
+    "L": "gonzotech:lead_ingot",
+    "B": "gonzotech:lead_block"
   },
   "result": {
     "id": "gonzotech:third_lead_chest",

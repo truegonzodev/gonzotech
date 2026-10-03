@@ -12,6 +12,7 @@ public final class ModCompositeAccess {
 
     private static CompositePipeBlock composite;
     private static CompositePipeBlock secondComposite;
+    private static CompositePipeBlock thirdComposite;
     private static final Map<PipeType, PipeBlock> SINGLES = new EnumMap<>(PipeType.class);
 
     private ModCompositeAccess() {
@@ -31,14 +32,47 @@ public final class ModCompositeAccess {
         secondComposite = block;
     }
 
-    /** Связка того же уровня, что исходная одиночная труба. */
-    public static CompositePipeBlock getFor(PipeBlock pipe) {
-        return pipe instanceof SecondTierPipe ? secondComposite : composite;
+    /** Внутренняя связка экранированной семьи (эпоха 3). Он не является BlockItem. */
+    public static void setThird(CompositePipeBlock block) {
+        thirdComposite = block;
     }
 
-    /** Совпадает ли уровень существующей трубы с уровнем предмета-трубы в руке. */
-    public static boolean sameTier(PipeBlock existing, net.minecraft.world.item.ItemStack stack) {
-        return (existing instanceof SecondTierPipe) == CompositePipeBlock.isSecondTierPipeItem(stack);
+    /**
+     * Тир трубы: 3 — экранированная семья (эпоха 3), 2 — тир II, 1 — тир I.
+     * 0.3.114: ThirdTierPipe РАСШИРЯЕТ SecondTierPipe, поэтому булева проверка
+     * {@code instanceof SecondTierPipe} считала третью семью вторым тиром —
+     * пучки смешивали тиры и заменяли экранированные трубы трубами II
+     * (репорт автора, раунд 12). Только явная лестница тиров.
+     */
+    public static int tierOf(net.minecraft.world.level.block.Block block) {
+        if (block instanceof ThirdTierPipe) return 3;
+        if (block instanceof SecondTierPipe) return 2;
+        return 1;
+    }
+
+    /** Тир предмета-трубы (0 — не труба). */
+    public static int tierOfItem(net.minecraft.world.item.ItemStack stack) {
+        return stack.getItem() instanceof net.minecraft.world.item.BlockItem bi
+            && bi.getBlock() instanceof PipeBlock pipe ? tierOf(pipe) : 0;
+    }
+
+    /** Связка того же уровня, что исходная одиночная труба. */
+    public static CompositePipeBlock getFor(net.minecraft.world.level.block.Block pipe) {
+        return switch (tierOf(pipe)) {
+            case 3 -> thirdComposite;
+            case 2 -> secondComposite;
+            default -> composite;
+        };
+    }
+
+    /**
+     * Совпадает ли уровень существующей трубы/связки с уровнем предмета-трубы
+     * в руке: пучки собираются только внутри одного тира (тир-микс закрыт
+     * ещё в тир-II, автор).
+     */
+    public static boolean sameTier(net.minecraft.world.level.block.Block existing, net.minecraft.world.item.ItemStack stack) {
+        int tier = tierOfItem(stack);
+        return tier > 0 && tierOf(existing) == tier;
     }
 
     /** Зарегистрировать одиночную трубу под её тип (для «схлопывания» связки). */

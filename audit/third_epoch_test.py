@@ -40,10 +40,14 @@ pin("Math.round(per * ThirdTierPipe.STAT_FACTOR)" in idx, "lossMilliFor ×0.88")
 rad = (SRC / "radiation/RadMaterials.java").read_text()
 family = [
     "third_wire", "third_heat_pipe", "third_universal_fluid_pipe", "third_item_pipe",
-    "third_universal_pipe", "third_wire_node", "third_heat_node",
+    "third_wire_node", "third_heat_node",
     "third_universal_fluid_node", "third_item_node", "third_universal_node",
     "third_lead_piston", "third_sticky_lead_piston",
 ]
+# 0.3.114: универсальная труба удалена по автору («моя оговорка — удалить»);
+# связка тир-3 — внутренний блок без предмета
+assert (ROOT / "src/main/resources/data/gonzotech/recipe/third_universal_pipe.json").is_file() is False
+assert "THIRD_UNIVERSAL_PIPE_ITEM" not in (ROOT / "src/main/java/com/gonzotech/core/registry/ModCreativeTabs.java").read_text()
 for ident in family:
     factor = "0.19" if "piston" in ident else "0.11"
     pin(rad.count(f'Map.entry("{ident}", {factor})') >= 2, f"{ident}: {factor} в ITEM_EXACT и BLOCK_EXACT")
@@ -57,7 +61,7 @@ for ident in family:
     else:
         pin('"minecraft:crafting_shapeless"' in r, f"{ident}: shapeless")
         pin('"gonzotech:zirconium_plate"' in r and '"gonzotech:rubber"' in r, f"{ident}: Zr + резина")
-        host = "second_universal_node" if ident == "third_universal_pipe" else ident.replace("third_", "second_")
+        host = ident.replace("third_", "second_")
         pin(f'"gonzotech:{host}"' in r, f"{ident}: хост {host}")
         lead = "lead_block" if ident.endswith("node") else "lead_ingot"
         pin(f'"gonzotech:{lead}"' in r, f"{ident}: {lead}")
@@ -90,13 +94,55 @@ for f, nm in ((SRC / "machines/block/ThirdPistonBlock.java", "обычный"),
               (SRC / "machines/block/ThirdStickyPistonBlock.java", "липкий")):
     pin("public MapCodec<PistonBaseBlock> codec()" in f.read_text(), f"codec() точный тип: {nm}")
 
-# ── 7. Универсальная труба: переносит все среды; узел 0.88 (0.91 тир-II не тронут) ──
-up = (SRC / "machines/network/ThirdUniversalPipeBlock.java").read_text()
-pin("return true" in up, "уни-труба carries() = true")
+# ── 7. Узел 0.88 (0.91 тир-II не тронут) ──
 un = (SRC / "machines/network/ThirdUniversalNodeBlock.java").read_text()
 pin("0.88" in un, "уни-узел ×0.88")
 s2 = (SRC / "machines/network/SecondUniversalNodeBlock.java").read_text()
 pin("0.91" in s2, "тир-II 0.91 не тронут")
+
+# ── 7b. Связка тир-3 (0.3.114): пучки только внутри одного тира ──
+comp = (SRC / "machines/network/ThirdCompositePipeBlock.java").read_text()
+pin("extends CompositePipeBlock implements ThirdTierPipe" in comp, "связка тир-3: класс")
+pin("public double throughputFactor" in comp and "STAT_FACTOR" in comp, "связка тир-3: ×0.88")
+mm_t = (SRC / "machines/registry/ModMachines.java").read_text()
+pin('"third_composite_pipe"' in mm_t, "связка тир-3: зарегистрирована")
+gt = (SRC / "GonzoTechMod.java").read_text()
+pin("setThird(" in gt, "связка тир-3: commonSetup")
+acc = (SRC / "machines/network/ModCompositeAccess.java").read_text()
+pin("block instanceof ThirdTierPipe) return 3;" in acc, "лестница тиров: 3 раньше 2")
+pin("case 3 -> thirdComposite;" in acc, "getFor: тир-3 → своя связка")
+pin("return tier > 0 && tierOf(existing) == tier;" in acc, "sameTier: только один тир")
+cp = (SRC / "machines/network/CompositePipeBlock.java").read_text()
+pin("ModCompositeAccess.sameTier(this, stack)" in cp, "useItemOn: sameTier вместо булева тира")
+pin("static boolean isSecondTierPipeItem" not in cp, "мёртвого булева хелпера нет")
+import json as _json
+cl = _json.loads((ROOT / "src/main/resources/data/gonzotech/loot_table/blocks/third_composite_pipe.json").read_text())
+drops = {e["name"] for pool in cl["pools"] for e in pool["entries"]}
+pin("gonzotech:third_universal_fluid_pipe" in drops, "связка тир-3: угол жидкостей")
+pin(not any("third_water_pipe" in d or "third_steam_pipe" in d for d in drops), "связка тир-3: без несуществующих труб")
+
+# ── 7c. Поршневой миксин: голова выживает над модифицированным основанием ──
+mix = (SRC / "mixin/PistonHeadBlockMixin.java").read_text()
+pin('@Inject(method = "isFittingBase"' in mix, "миксин: перехват isFittingBase")
+pin("PistonBaseBlock.class.isAssignableFrom" in mix, "миксин: модифицированные основания")
+mixcfg = (ROOT / "src/main/resources/gonzotech.mixins.json").read_text()
+pin('"PistonHeadBlockMixin"' in mixcfg, "миксин: в конфиге")
+# ротации blockstate поршней — ТОЧНО ванильные (лов сборки: «смотрит вверх»)
+bs = _json.loads((ASSETS / "blockstates/third_lead_piston.json").read_text())["variants"]
+pin(bs["extended=false,facing=east"].get("y") == 90 and "x" not in bs["extended=false,facing=east"], "ротация east y=90")
+pin(bs["extended=false,facing=north"] == {"model": "gonzotech:block/third_lead_piston"}, "ротация north без поворота")
+pin(bs["extended=false,facing=south"].get("y") == 180, "ротация south y=180")
+pin(bs["extended=false,facing=up"].get("x") == 270, "ротация up x=270")
+pin(bs["extended=false,facing=west"].get("y") == 270, "ротация west y=270")
+bs2 = _json.loads((ASSETS / "blockstates/third_sticky_lead_piston.json").read_text())["variants"]
+pin(bs2["extended=true,facing=down"] == {"model": "gonzotech:block/third_sticky_lead_piston_extended", "x": 90}, "липкий extended down x=90")
+# фронт-модель: непродвинутый = пластина (top/top_sticky), продвинутый = шток (inner)
+m1 = _json.loads((ASSETS / "models/block/third_lead_piston.json").read_text())
+pin("piston_top" in m1["textures"]["north"] and "sticky" not in m1["textures"]["north"], "поршень: фронт = пластина")
+m2 = _json.loads((ASSETS / "models/block/third_sticky_lead_piston.json").read_text())
+pin("piston_top_sticky" in m2["textures"]["north"], "липкий: фронт = липкая пластина")
+m3 = _json.loads((ASSETS / "models/block/third_lead_piston_extended.json").read_text())
+pin("piston_inner" in m3["textures"]["north"], "extended: фронт = шток")
 
 # ── 8. Регистрация: блоки + предметы + креатив-таб ──
 mm = (SRC / "machines/registry/ModMachines.java").read_text()

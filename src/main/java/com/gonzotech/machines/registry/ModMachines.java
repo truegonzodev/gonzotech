@@ -259,6 +259,10 @@ public final class ModMachines {
     public static final DeferredBlock<SecondCompositePipeBlock> SECOND_COMPOSITE_PIPE =
         BLOCKS.registerBlock("second_composite_pipe", SecondCompositePipeBlock::new, pipe());
 
+    /** Внутренняя связка экранированной семьи (эпоха 3). Не является BlockItem. */
+    public static final DeferredBlock<com.gonzotech.machines.network.ThirdCompositePipeBlock> THIRD_COMPOSITE_PIPE =
+        BLOCKS.registerBlock("third_composite_pipe", com.gonzotech.machines.network.ThirdCompositePipeBlock::new, pipe());
+
     // ─────────────────────────── фильтр + отсеиватель ───────────────────────────
     // Фильтр — активный полный куб с меню: пропускает совпавшее в свою выходную
     // сеть, отсеянное — в reject-ветку Отсеивателя. Отсеиватель без меню: без
@@ -325,9 +329,6 @@ public final class ModMachines {
 
     public static final DeferredBlock<com.gonzotech.machines.network.ThirdItemPipeBlock> THIRD_ITEM_PIPE =
         BLOCKS.registerBlock("third_item_pipe", com.gonzotech.machines.network.ThirdItemPipeBlock::new, pipe());
-
-    public static final DeferredBlock<com.gonzotech.machines.network.ThirdUniversalPipeBlock> THIRD_UNIVERSAL_PIPE =
-        BLOCKS.registerBlock("third_universal_pipe", com.gonzotech.machines.network.ThirdUniversalPipeBlock::new, pipe());
 
     public static final DeferredBlock<com.gonzotech.machines.network.ThirdNodeBlock> THIRD_WIRE_NODE =
         BLOCKS.registerBlock("third_wire_node", props -> new com.gonzotech.machines.network.ThirdNodeBlock(props, PipeType.WIRE), powerLine());
@@ -588,9 +589,6 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_ITEM_PIPE_ITEM =
         ITEMS.registerSimpleBlockItem("third_item_pipe", THIRD_ITEM_PIPE);
-
-    public static final DeferredItem<BlockItem> THIRD_UNIVERSAL_PIPE_ITEM =
-        ITEMS.registerSimpleBlockItem("third_universal_pipe", THIRD_UNIVERSAL_PIPE);
 
     public static final DeferredItem<BlockItem> THIRD_WIRE_NODE_ITEM =
         ITEMS.registerSimpleBlockItem("third_wire_node", THIRD_WIRE_NODE);

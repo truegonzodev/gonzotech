@@ -1,8 +1,12 @@
 {
-  "parent": "minecraft:block/cube_bottom_top",
+  "parent": "minecraft:block/cube_directional",
   "textures": {
-    "bottom": "gonzotech:block/third/piston_bottom",
-    "side": "gonzotech:block/third/piston_side",
-    "top": "gonzotech:block/third/piston_top_sticky"
+    "north": "gonzotech:block/third/piston_top_sticky",
+    "south": "gonzotech:block/third/piston_side",
+    "east": "gonzotech:block/third/piston_side",
+    "west": "gonzotech:block/third/piston_side",
+    "up": "gonzotech:block/third/piston_side",
+    "down": "gonzotech:block/third/piston_bottom",
+    "particle": "gonzotech:block/third/piston_side"
   }
 }

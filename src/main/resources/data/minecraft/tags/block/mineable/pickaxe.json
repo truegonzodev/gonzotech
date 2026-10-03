@@ -202,7 +202,6 @@
     "gonzotech:third_heat_pipe",
     "gonzotech:third_universal_fluid_pipe",
     "gonzotech:third_item_pipe",
-    "gonzotech:third_universal_pipe",
     "gonzotech:third_wire_node",
     "gonzotech:third_heat_node",
     "gonzotech:third_universal_fluid_node",
@@ -210,6 +209,7 @@
     "gonzotech:third_universal_node",
     "gonzotech:third_lead_piston",
     "gonzotech:third_sticky_lead_piston",
-    "gonzotech:third_lead_chest"
+    "gonzotech:third_lead_chest",
+    "gonzotech:third_composite_pipe"
   ]
 }

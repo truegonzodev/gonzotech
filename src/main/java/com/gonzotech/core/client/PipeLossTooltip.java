@@ -4,6 +4,7 @@ import com.gonzotech.machines.network.PipeBlock;
 import com.gonzotech.machines.network.PipeLoss;
 import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.network.SecondTierPipe;
+import com.gonzotech.machines.network.ThirdTierPipe;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
@@ -30,7 +31,11 @@ public final class PipeLossTooltip {
         if (!(block instanceof PipeBlock pipe)) return; // узлы/трубы — простые носители
         PipeType type = pipe.pipeType();
         if (type != PipeType.WIRE && type != PipeType.HEAT) return; // жидкости/предметы — без потерь
+        // 0.3.114: экранированная семья — потери ×0.88 (тултип показывает 0.16/0.11)
         long milli = PipeLoss.perCell(block instanceof SecondTierPipe, type == PipeType.HEAT);
+        if (block instanceof ThirdTierPipe) {
+            milli = Math.round(PipeLoss.perCell(true, type == PipeType.HEAT) * ThirdTierPipe.STAT_FACTOR);
+        }
         String value = String.format(Locale.ROOT, "%.2f", milli / 1000.0);
         // ГОСТ лора (03.10.2026): лор идёт ПРЯМО под именем/креатив-табом,
         // без ведущего отступа; следующие блоки (экранирование/радиация) несут

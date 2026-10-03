@@ -139,7 +139,6 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_HEAT_PIPE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_FLUID_PIPE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_ITEM_PIPE_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_PIPE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WIRE_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_HEAT_NODE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_UNIVERSAL_FLUID_NODE_ITEM.get());
