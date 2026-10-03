@@ -83,9 +83,11 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
         int x = leftPos;
         int y = topPos;
         if (inRect(mouseX, mouseY, x + 8, y + 17, 16, 52)) {
+            // Раунд 14: единый формат третьей эпохи X.Y — тысячные/сотые доли
+            // (BigDecimal stripTrailingZeros) больше не просачиваются в тултип.
             graphics.renderComponentTooltip(font, List.of(GtUnits.gtuPair(
-                BigDecimal.valueOf(menu.gtuMilli(), 3).stripTrailingZeros().toPlainString(),
-                SiliconFactoryBlockEntity.CAPACITY_GTU)), mouseX, mouseY);
+                GtUnits.x1(menu.gtuMilli() / 1000.0D),
+                GtUnits.x1(SiliconFactoryBlockEntity.CAPACITY_GTU))), mouseX, mouseY);
             return;
         }
         for (int i = 0; i < 3; i++) {

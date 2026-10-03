@@ -52,7 +52,7 @@ public final class TurbineScreen extends MachineScreen<TurbineMenu> {
             graphics.renderComponentTooltip(this.font, List.of(
                 GtUnits.gtuPair(menu.gtu(), gtuCapacity),
                 GtUnits.turbineGtuRate(
-                    String.format(java.util.Locale.ROOT, "%.1f", ratedMilli / 1000.0D))
+                    String.format(java.util.Locale.ROOT, "%.0f", ratedMilli / 1000.0D))
             ), mouseX, mouseY);
         }
     }

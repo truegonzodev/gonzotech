@@ -51,13 +51,13 @@ public class DispensingTapScreen extends MachineScreen<DispensingTapMenu> {
 
         if (inRect(mouseX, mouseY, distX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(tapFluidLine(
-                    "gui.gonzotech.distillate.name", menu.distillate(),
-                    DispensingTapBlockEntity.DISTILLATE_CAPACITY, ChatFormatting.AQUA)
+                    "gui.gonzotech.distillate.name", GtUnits.x1(menu.distillate()),
+                    GtUnits.x1(DispensingTapBlockEntity.DISTILLATE_CAPACITY), ChatFormatting.AQUA)
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, wortX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(tapFluidLine(
-                    "gui.gonzotech.wort.name", menu.wort(),
-                    DispensingTapBlockEntity.WORT_CAPACITY, ChatFormatting.GOLD)
+                    "gui.gonzotech.wort.name", GtUnits.x1(menu.wort()),
+                    GtUnits.x1(DispensingTapBlockEntity.WORT_CAPACITY), ChatFormatting.GOLD)
             ), mouseX, mouseY);
         }
     }
@@ -66,7 +66,7 @@ public class DispensingTapScreen extends MachineScreen<DispensingTapMenu> {
      * Строка тултипа крана (автор 27.09.2026): «Дистиллят: 0 / 256 mB» —
      * имя/числа/единица цветом шкалы, разделители «:» и «/» БЕЛЫЕ.
      */
-    private static Component tapFluidLine(String nameKey, int amount, int capacity, ChatFormatting base) {
+    private static Component tapFluidLine(String nameKey, String amount, String capacity, ChatFormatting base) {
         return Component.empty().withStyle(base)
             .append(Component.translatable(nameKey))
             .append(Component.literal(":").withStyle(ChatFormatting.WHITE))

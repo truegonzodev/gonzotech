@@ -58,16 +58,16 @@ public class RectifierScreen extends MachineScreen<RectifierMenu> {
 
         if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                GtUnits.gtuPair(menu.gtu(), menu.maxGtu())), mouseX, mouseY);
+                GtUnits.gtuPair(GtUnits.x1(menu.gtu()), GtUnits.x1(menu.maxGtu()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
+                GtUnits.gthPair(GtUnits.x1(menu.gth()), GtUnits.x1(menu.maxGth()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, distX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font,
-                GtUnits.distillateTooltip(menu.distillate(), RectifierBlockEntity.DISTILLATE_CAPACITY), mouseX, mouseY);
+                GtUnits.distillateTooltip(GtUnits.x1(menu.distillate()), GtUnits.x1(RectifierBlockEntity.DISTILLATE_CAPACITY)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, rectX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font,
-                GtUnits.rectificateTooltip(menu.rectificate(), RectifierBlockEntity.RECTIFICATE_CAPACITY), mouseX, mouseY);
+                GtUnits.rectificateTooltip(GtUnits.x1(menu.rectificate()), GtUnits.x1(RectifierBlockEntity.RECTIFICATE_CAPACITY)), mouseX, mouseY);
         }
     }
 }

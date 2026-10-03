@@ -67,7 +67,7 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
                 GtUnits.steamGenSteamMade(menu.steamMade()),
                 GtUnits.steamGenSteamOut(menu.steamOut()),
                 GtUnits.steamGenRated(
-                    String.format(Locale.ROOT, "%.1f", ratedMilli / 1000.0D))
+                    String.format(Locale.ROOT, "%.0f", ratedMilli / 1000.0D))
             ), mouseX, mouseY);
         }
     }

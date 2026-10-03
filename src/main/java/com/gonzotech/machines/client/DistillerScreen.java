@@ -69,19 +69,19 @@ public class DistillerScreen extends MachineScreen<DistillerMenu> {
 
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
+                GtUnits.gthPair(GtUnits.x1(menu.gth()), GtUnits.x1(menu.maxGth()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                GtUnits.waterPair(menu.water(), DistillerBlockEntity.WATER_CAPACITY)), mouseX, mouseY);
+                GtUnits.waterPair(GtUnits.x1(menu.water()), GtUnits.x1(DistillerBlockEntity.WATER_CAPACITY))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, boilX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font,
-                GtUnits.boilingWaterTooltip(menu.boilingWater(), DistillerBlockEntity.HOT_WATER_CAPACITY), mouseX, mouseY);
+                GtUnits.boilingWaterTooltip(GtUnits.x1(menu.boilingWater()), GtUnits.x1(DistillerBlockEntity.HOT_WATER_CAPACITY)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, rawX, barY, barW, barH)) {
             String alcStr = String.format(Locale.ROOT, "%.1f", menu.rawAlcohol());
             String rotStr = String.format(Locale.ROOT, "%.1f", menu.rawRot());
             if (menu.rawRot() > 0) {
                 g.renderComponentTooltip(this.font,
-                    GtUnits.mashTooltip(menu.rawAmount(), DistillerBlockEntity.INPUT_CAPACITY, alcStr, rotStr), mouseX, mouseY);
+                    GtUnits.mashTooltip(GtUnits.x1(menu.rawAmount()), GtUnits.x1(DistillerBlockEntity.INPUT_CAPACITY), alcStr, rotStr), mouseX, mouseY);
             } else {
                 g.renderComponentTooltip(this.font,
                     GtUnits.wortTooltip(menu.rawAmount(), DistillerBlockEntity.INPUT_CAPACITY, alcStr), mouseX, mouseY);

@@ -52,11 +52,11 @@ public class PcfsozScreen extends MachineScreen<PcfsozMenu> {
 
         if (inRect(mouseX, mouseY, hotWaterX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                GtUnits.hotWaterPair(menu.hotWater(), MachineDefs.PCFSOZ_HOT_WATER_CAPACITY)),
+                GtUnits.hotWaterPair(GtUnits.x1(menu.hotWater()), GtUnits.x1(MachineDefs.PCFSOZ_HOT_WATER_CAPACITY))),
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                GtUnits.gtuPair(menu.gtu(), MachineDefs.toUnits(MachineDefs.PCFSOZ_GTU_CAPACITY))),
+                GtUnits.gtuPair(GtUnits.x1(menu.gtu()), GtUnits.x1(MachineDefs.toUnits(MachineDefs.PCFSOZ_GTU_CAPACITY)))),
                 mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, washX, washY, washW, washH)) {
             graphics.renderComponentTooltip(this.font, List.of(

@@ -471,7 +471,8 @@ assert 'silicon_factory_gui.png' in litho_screen
 # ГТУ (136,145) 16×52; бары (190/226/262,163) 16×34 слева-направо bar_smelting.
 assert 'drawVBarTex(graphics, x + 8, y + 17, 16, 52,' in litho_screen
 assert 'drawHBarTex(graphics, x + 62 + i * 36, y + 35, 16, 34, fraction, BAR_SMELTING)' in litho_screen
-assert 'GtUnits.gtuPair(' in litho_screen and 'BigDecimal.valueOf(menu.gtuMilli(), 3)' in litho_screen
+# Раунд 14: ГТУ — формат эпохи 3 X.Y (GtUnits.x1), тысячных больше нет.
+assert 'GtUnits.gtuPair(' in litho_screen and 'GtUnits.x1(menu.gtuMilli() / 1000.0D)' in litho_screen
 # Тултипы: имена шагов + строка качества (вне контура — «обычный»).
 assert 'gui.gonzotech.silicon_factory.etching' in litho_screen
 assert 'gui.gonzotech.silicon_factory.photolithography' in litho_screen

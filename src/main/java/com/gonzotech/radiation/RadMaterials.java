@@ -102,7 +102,16 @@ public final class RadMaterials {
             Map.entry("third_item_node", 0.11),
             Map.entry("third_universal_node", 0.11),
             Map.entry("third_lead_piston", 0.19),
-            Map.entry("third_sticky_lead_piston", 0.19)
+            Map.entry("third_sticky_lead_piston", 0.19),
+            // Раунд 14 (аудит экранирования): головка — часть свинцового
+            // поршня, та же ставка, что у основания (family-consistency).
+            Map.entry("third_lead_piston_head", 0.19),
+            // Раунд 14 (аудит): изотопные слитки без суффикса формы — ставка
+            // семьи урана/тория (принцип «всё урансодержащее экранирует»).
+            Map.entry("uranium_233", 0.72),
+            Map.entry("uranium_235", 0.72),
+            Map.entry("uranium_238", 0.72),
+            Map.entry("thorium_229", 0.72)
     );
 
     /**
@@ -128,7 +137,10 @@ public final class RadMaterials {
             Map.entry("third_item_node", 0.11),
             Map.entry("third_universal_node", 0.11),
             Map.entry("third_lead_piston", 0.19),
-            Map.entry("third_sticky_lead_piston", 0.19)
+            Map.entry("third_sticky_lead_piston", 0.19),
+            // Раунд 14 (аудит экранирования): головка — часть свинцового
+            // поршня, та же ставка, что у основания (family-consistency).
+            Map.entry("third_lead_piston_head", 0.19),
     );
 
     /** Узнаваемые «прочие металлы и сплавы» (×0.72) — fallback после 60% reduction. */
@@ -136,7 +148,13 @@ public final class RadMaterials {
             "gold", "silver", "platinum", "titanium", "aluminum", "aluminium",
             "steel", "bronze", "brass", "invar", "electrum", "constantan",
             "vanadium", "mercury", "cadmium", "bismuth", "antimony",
-            "uranium", "thorium", "radium", "plutonium");
+            "uranium", "thorium", "radium", "plutonium",
+            // Раунд 14 (аудит): 18 семей, у которых слиток/nugget экран 0.72,
+            // а пыль/блок был 1.0 — теперь всё семейство согласовано.
+            "zirconium", "calcium", "cesium", "tellurium", "telluride",
+            "palladium", "neodymium", "rhenium", "alnico", "cantor",
+            "nitinol", "vitreloy", "stellite", "cast_iron", "corten_steel",
+            "stainless_steel", "ferromagnetic", "semiconductor");
 
     private RadMaterials() {
     }
@@ -192,6 +210,19 @@ public final class RadMaterials {
             }
         }
         if (item) {
+            // Сырая руда — та же материальная форма металла, что слиток (раунд 14,
+            // аудит: «уран хоть что — имеет экранирование»). Голое слово семьи
+            // (uranium) не матчится префиксами, поэтому металличность проверяем
+            // напрямую; raw_calcite и прочие неметаллы — 1.0.
+            if (path.startsWith("raw_")) {
+                String base = path.substring(4);
+                for (String p2 : PREFIXES) {
+                    if (base.equals(p2) || base.startsWith(p2 + "_")) {
+                        return FACTORS.get(p2);
+                    }
+                }
+                return hasMetalPrefix(base) ? 0.72 : 1.0;
+            }
             // «остальные металлы и сплавы ×0.72»: любой *_ingot/*_nugget,
             // плюс *_dust с металлическим префиксом (чтобы glowstone_dust не стал «металлом»).
             if (path.endsWith("_ingot") || path.endsWith("_nugget")) {

@@ -34,9 +34,10 @@ def method(source, name):
 # numbers stay literal so the base colour can differ from the separators.
 assert 'literal(":")' in tap and 'literal(" /")' in tap
 assert 'ChatFormatting.AQUA)' in tap and 'ChatFormatting.GOLD)' in tap
-assert 'menu.distillate(),' in tap and 'menu.wort(),' in tap
-assert 'DispensingTapBlockEntity.DISTILLATE_CAPACITY,' in tap
-assert 'DispensingTapBlockEntity.WORT_CAPACITY,' in tap
+# Раунд 14: значения шкал крана — в формате эпохи 3 X.Y (GtUnits.x1).
+assert 'GtUnits.x1(menu.distillate()),' in tap and 'GtUnits.x1(menu.wort()),' in tap
+assert 'GtUnits.x1(DispensingTapBlockEntity.DISTILLATE_CAPACITY),' in tap
+assert 'GtUnits.x1(DispensingTapBlockEntity.WORT_CAPACITY),' in tap
 notes_code = re.sub(r'/\*.*?\*/|//[^\n]*', '', notes, flags=re.S)
 assert not re.search(r'"[^"\n]*[А-Яа-яЁё][^"\n]*"', notes_code)
 assert 'structureSubpage + 1, il.deckView().subpageCount()).getString()' in notes

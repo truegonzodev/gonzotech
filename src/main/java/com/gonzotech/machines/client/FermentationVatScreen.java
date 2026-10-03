@@ -53,12 +53,12 @@ public class FermentationVatScreen extends MachineScreen<FermentationVatMenu> {
 
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
+                GtUnits.gthPair(GtUnits.x1(menu.gth()), GtUnits.x1(menu.maxGth()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, mashX, barY, barW, barH)) {
             String alcStr = String.format(Locale.ROOT, "%.1f", menu.mashAlcohol());
             String rotStr = String.format(Locale.ROOT, "%.1f", menu.mashRot());
             g.renderComponentTooltip(this.font,
-                GtUnits.mashTooltip(menu.mashAmount(), FermentationVatBlockEntity.MASH_CAPACITY, alcStr, rotStr),
+                GtUnits.mashTooltip(GtUnits.x1(menu.mashAmount()), GtUnits.x1(FermentationVatBlockEntity.MASH_CAPACITY), alcStr, rotStr),
                 mouseX, mouseY);
         }
     }

@@ -54,10 +54,10 @@ public class SnaketypeCondenserScreen extends MachineScreen<SnaketypeCondenserMe
 
         if (inRect(mouseX, mouseY, boilX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font,
-                GtUnits.boilingWaterTooltip(menu.boilingWater(), menu.maxBoilingWater()), mouseX, mouseY);
+                GtUnits.boilingWaterTooltip(GtUnits.x1(menu.boilingWater()), GtUnits.x1(menu.maxBoilingWater())), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                GtUnits.waterPair(menu.water(), menu.maxWater())), mouseX, mouseY);
+                GtUnits.waterPair(GtUnits.x1(menu.water()), GtUnits.x1(menu.maxWater()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, midX, barY, barW, barH)) {
             List<Component> tooltip = new ArrayList<>();
             tooltip.add(GtUnits.condenserCoolingRate(menu.coolingRate()));

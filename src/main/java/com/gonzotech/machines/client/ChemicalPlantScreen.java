@@ -54,7 +54,7 @@ public class ChemicalPlantScreen extends MachineScreen<ChemicalPlantMenu> {
         // Тултипы
         if (inRect(mouseX, mouseY, gtuX, gtuY, gtuW, gtuH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                GtUnits.gtuPair(menu.gtu(), menu.maxGtu())), mouseX, mouseY);
+                GtUnits.gtuPair(GtUnits.x1(menu.gtu()), GtUnits.x1(menu.maxGtu()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, progX, progY, progW, progH)) {
             graphics.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.chemical_plant.reaction", menu.progressPercent())), mouseX, mouseY);

@@ -58,14 +58,14 @@ public class WortKettleScreen extends MachineScreen<WortKettleMenu> {
             String alcStr = String.format(Locale.ROOT, "%.1f", menu.mashAlcohol());
             String rotStr = String.format(Locale.ROOT, "%.1f", menu.mashRot());
             g.renderComponentTooltip(this.font,
-                GtUnits.mashTooltip(menu.mashAmount(), WortKettleBlockEntity.MASH_CAPACITY, alcStr, rotStr), mouseX, mouseY);
+                GtUnits.mashTooltip(GtUnits.x1(menu.mashAmount()), GtUnits.x1(WortKettleBlockEntity.MASH_CAPACITY), alcStr, rotStr), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, wortX, barY, barW, barH)) {
             String alcStr = String.format(Locale.ROOT, "%.1f", menu.wortAlcohol());
             g.renderComponentTooltip(this.font,
-                GtUnits.wortTooltip(menu.wortAmount(), WortKettleBlockEntity.WORT_CAPACITY, alcStr), mouseX, mouseY);
+                GtUnits.wortTooltip(GtUnits.x1(menu.wortAmount()), GtUnits.x1(WortKettleBlockEntity.WORT_CAPACITY), alcStr), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(
-                GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
+                GtUnits.gthPair(GtUnits.x1(menu.gth()), GtUnits.x1(menu.maxGth()))), mouseX, mouseY);
         }
     }
 }
