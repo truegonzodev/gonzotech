@@ -391,6 +391,15 @@ for pin in ("WIRE_THROUGHPUT = 89L * MachineDefs.MILLI;","HEAT_THROUGHPUT = 562L
     assert pin in s2defs, 's2: '+pin
 assert 'NUCLEAR_FIREBOX_GTH_PER_TICK = 116 * MachineDefs.MILLI;' in nuke
 assert 'NUCLEAR_FIREBOX_GTH_OUTPUT = 282 * MachineDefs.MILLI;' in nuke
+# 0.3.143: author-set natural fuel baselines with preserved form ratios.
+assert 'URANIUM_INGOT_BURN_TICKS = 130 * TICKS_PER_SECOND;' in nuke
+assert 'URANIUM_NUGGET_BURN_TICKS = (URANIUM_INGOT_BURN_TICKS + 4) / 9;' in nuke
+assert 'URANIUM_BLOCK_BURN_TICKS = 9 * URANIUM_INGOT_BURN_TICKS;' in nuke
+assert 'URANINITE_BURN_TICKS = (5 * URANIUM_INGOT_BURN_TICKS + 4) / 9;' in nuke
+assert 'THORIUM_INGOT_BURN_TICKS = 40 * TICKS_PER_SECOND;' in nuke
+assert 'THORIUM_NUGGET_BURN_TICKS = (7 * THORIUM_INGOT_BURN_TICKS + 30) / 60;' in nuke
+assert 'THORIUM_BLOCK_BURN_TICKS = 9 * THORIUM_INGOT_BURN_TICKS;' in nuke
+assert 'THORIANITE_BURN_TICKS = (7 * THORIUM_INGOT_BURN_TICKS + 6) / 12;' in nuke
 assert 'GtUnits.GTH, 256 * 1000,' in ptype and 'GtUnits.WATER, 392,' in ptype and 'GtUnits.STEAM, 392,' in ptype
 litho=(ROOT/'src/main/java/com/gonzotech/machines/litho/SiliconFactoryBlockEntity.java').read_text()
 assert 'CAPACITY_MILLI = 6_204_000L;' in litho and 'INTAKE_MILLI_PER_TICK = 96_000L;' in litho

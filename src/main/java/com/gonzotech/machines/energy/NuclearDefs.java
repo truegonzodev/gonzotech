@@ -39,18 +39,27 @@ public final class NuclearDefs {
      */
     public static final int NUCLEAR_FIREBOX_SELF_MELT_GRACE_TICKS = 20 * TICKS_PER_SECOND;
 
-    public static final int URANIUM_INGOT_BURN_TICKS = 900 * TICKS_PER_SECOND;
-    public static final int URANIUM_NUGGET_BURN_TICKS = 100 * TICKS_PER_SECOND;
-    public static final int URANIUM_BLOCK_BURN_TICKS = 8_100 * TICKS_PER_SECOND;
-    public static final int URANINITE_BURN_TICKS = 500 * TICKS_PER_SECOND;
+    // 0.3.143: новые исходные времена автора; остальные формы сохраняют прежние
+    // отношения к слитку. Дробные секунды округляются к ближайшему тику (0.05 с).
+    public static final int URANIUM_INGOT_BURN_TICKS = 130 * TICKS_PER_SECOND;
+    /** Старое отношение 100/900 = 1/9 от уранового слитка. */
+    public static final int URANIUM_NUGGET_BURN_TICKS = (URANIUM_INGOT_BURN_TICKS + 4) / 9;
+    /** Старое отношение 8100/900 = 9× от уранового слитка. */
+    public static final int URANIUM_BLOCK_BURN_TICKS = 9 * URANIUM_INGOT_BURN_TICKS;
+    /** Старое отношение 500/900 = 5/9 от уранового слитка. */
+    public static final int URANINITE_BURN_TICKS = (5 * URANIUM_INGOT_BURN_TICKS + 4) / 9;
     /** Пыль переплавляется в слиток 1:1, поэтому горит как слиток. */
-    public static final int URANIUM_DUST_BURN_TICKS = 900 * TICKS_PER_SECOND;
-    public static final int THORIUM_INGOT_BURN_TICKS = 300 * TICKS_PER_SECOND;
-    public static final int THORIUM_NUGGET_BURN_TICKS = 35 * TICKS_PER_SECOND;
-    public static final int THORIUM_BLOCK_BURN_TICKS = 2_700 * TICKS_PER_SECOND;
-    public static final int THORIANITE_BURN_TICKS = 175 * TICKS_PER_SECOND;
+    public static final int URANIUM_DUST_BURN_TICKS = URANIUM_INGOT_BURN_TICKS;
+
+    public static final int THORIUM_INGOT_BURN_TICKS = 40 * TICKS_PER_SECOND;
+    /** Старое отношение 35/300 = 7/60 от ториевого слитка. */
+    public static final int THORIUM_NUGGET_BURN_TICKS = (7 * THORIUM_INGOT_BURN_TICKS + 30) / 60;
+    /** Старое отношение 2700/300 = 9× от ториевого слитка. */
+    public static final int THORIUM_BLOCK_BURN_TICKS = 9 * THORIUM_INGOT_BURN_TICKS;
+    /** Старое отношение 175/300 = 7/12 от ториевого слитка. */
+    public static final int THORIANITE_BURN_TICKS = (7 * THORIUM_INGOT_BURN_TICKS + 6) / 12;
     /** Пыль переплавляется в слиток 1:1, поэтому горит как слиток. */
-    public static final int THORIUM_DUST_BURN_TICKS = 300 * TICKS_PER_SECOND;
+    public static final int THORIUM_DUST_BURN_TICKS = THORIUM_INGOT_BURN_TICKS;
 
     // ───────────────────────── Вольфрамовый абсорбер ─────────────────────────
 
