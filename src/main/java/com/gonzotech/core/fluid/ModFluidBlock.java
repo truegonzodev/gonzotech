@@ -80,8 +80,12 @@ public class ModFluidBlock extends LiquidBlock {
         }
         if (state.getFluidState().isEmpty()) return InteractionResult.FAIL;
         if (level.isClientSide) return InteractionResult.SUCCESS;
-        if (!(level instanceof ServerLevel serverLevel)
-                || !fire.ignite(serverLevel, pos, 0, level.random)) return InteractionResult.FAIL;
+        if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.FAIL;
+        if (!fire.ignite(serverLevel, pos, 0, level.random)) {
+            // Do not fall through to FlintAndSteelItem/FireChargeItem: that would
+            // place ordinary fire which expires without consuming this liquid cell.
+            return InteractionResult.CONSUME;
+        }
 
         if (!player.getAbilities().instabuild) {
             if (stack.is(Items.FLINT_AND_STEEL)) {

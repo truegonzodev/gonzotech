@@ -38,10 +38,9 @@ public final class LiquidFireBlockEntity extends BlockEntity {
             fire.setActive(level, worldPosition, delay == 0);
         }
         setChanged();
-        scheduleNext(level);
     }
 
-    void scheduledTick(ServerLevel level, BlockState state, RandomSource random) {
+    void tickServer(ServerLevel level, BlockState state, RandomSource random) {
         if (!(state.getBlock() instanceof LiquidFireBlock fire)) return;
         if (!initialized) {
             start(level, 0, random);
@@ -58,7 +57,6 @@ public final class LiquidFireBlockEntity extends BlockEntity {
         long now = level.getGameTime();
         if (now < activationAt) {
             fire.setActive(level, worldPosition, false);
-            scheduleNext(level);
             return;
         }
         fire.setActive(level, worldPosition, true);
@@ -79,17 +77,6 @@ public final class LiquidFireBlockEntity extends BlockEntity {
             nextSpreadAt = now + sampleSpreadTicks(random);
             setChanged();
         }
-        scheduleNext(level);
-    }
-
-    private void scheduleNext(ServerLevel level) {
-        if (!(getBlockState().getBlock() instanceof LiquidFireBlock fire)) return;
-        long now = level.getGameTime();
-        long next = initialized
-            ? (now < activationAt ? activationAt : Math.min(burnOutAt, nextSpreadAt))
-            : now + 1;
-        long delta = Math.max(1L, Math.min((long) Integer.MAX_VALUE, next - now));
-        level.scheduleTick(worldPosition, fire, (int) delta);
     }
 
     /** Triangular 8–17 second lifetime with an 11-second mode and 12-second mean. */
@@ -108,12 +95,6 @@ public final class LiquidFireBlockEntity extends BlockEntity {
     /** Uniform interval: 8–32 ticks, or 0.4–1.6 seconds at 20 TPS. */
     private static int sampleSpreadTicks(RandomSource random) {
         return MIN_SPREAD_TICKS + random.nextInt(MAX_SPREAD_TICKS - MIN_SPREAD_TICKS + 1);
-    }
-
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        if (level instanceof ServerLevel server && initialized) scheduleNext(server);
     }
 
     @Override

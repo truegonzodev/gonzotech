@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.153 corium radiation and per-cell liquid fire."""
+"""Static regression contract for 0.3.154 per-cell liquid fire and corium radiation."""
 import json
 import struct
 import zlib
@@ -70,8 +70,9 @@ fluid_block = read_java("core/fluid/ModFluidBlock.java")
 pin("Items.FLINT_AND_STEEL" in fluid_block and "Items.FIRE_CHARGE" in fluid_block,
     "both source and flowing cells accept flint and steel and fire charges")
 pin("state.getFluidState().isEmpty()" in fluid_block
-    and "fire.ignite(serverLevel, pos, 0, level.random)" in fluid_block,
-    "manual ignition supports all matching non-empty fluid states")
+    and "fire.ignite(serverLevel, pos, 0, level.random)" in fluid_block
+    and "return InteractionResult.CONSUME;" in fluid_block,
+    "manual ignition supports all matching cells and blocks fallback vanilla fire placement")
 pin("40 + level.random.nextInt(21)" in fluid_block
     and "serverLevel.scheduleTick(pos, this" in fluid_block
     and "Leave vanilla fire visible" in fluid_block,
@@ -92,6 +93,13 @@ pin("if (state.isEmpty() || state.isSource()) return 0" in fire
     and "if (amount >= 8) return 8" in fire
     and "8 - amount" in fire,
     "source, levels 1–7, and full-height falling states use distinct models")
+pin("ModBlockEntities.LIQUID_FIRE.get()" in fire
+    and "fire.tickServer(server, blockState, server.random)" in fire
+    and "scheduleTick(pos, this" not in fire,
+    "fire timers tick through the registered server BlockEntity ticker, not block scheduling")
+pin("Do not delegate to FireBlock.updateShape" in fire
+    and "return state.setValue(SURFACE, surfaceIndex(fuelState));" in fire,
+    "custom liquid overlay survives without vanilla solid-support checks")
 pin("candidates.add(neighborFuel.immutable())" in fire
     and "targetFire.ignite(level, target, 0, random)" in fire,
     "each liquid-fire pulse ignites no more than one neighboring liquid cell")
@@ -117,6 +125,9 @@ pin("sampleBurnTicks(random)" in fire_entity
     and "Math.sqrt" in fire_entity
     and "sampleSpreadTicks(random)" in fire_entity,
     "burn clocks are independently randomized and persisted as absolute game times")
+pin("scheduleNext" not in fire_entity and "level.scheduleTick" not in fire_entity
+    and "void tickServer(ServerLevel level" in fire_entity,
+    "per-cell fire lifecycle is not rescheduled through vanilla block ticks")
 pin('tag.putLong("BurnOutAt"' in fire_entity
     and 'tag.putLong("NextSpreadAt"' in fire_entity
     and 'tag.putLong("ActivationAt"' in fire_entity,
@@ -127,9 +138,9 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.153" in version, "micropatch version should be 0.3.153")
+pin("mod_version=0.3.154" in version, "micropatch version should be 0.3.154")
 
-# Surface heights supplied by the author are encoded as nine separate models per liquid.
+# Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]
 for block, model_stem, texture in (
     ("rectificate_fire", "rectificate_flame", "fire/rectificate_fire.png"),
@@ -137,22 +148,34 @@ for block, model_stem, texture in (
 ):
     blockstate = json.loads((RES / "blockstates" / f"{block}.json").read_text(encoding="utf-8"))
     parts = blockstate.get("multipart", [])
-    pin(len(parts) == 9, f"{block} has a model for every source/flow surface height")
+    pin(len(parts) == 45, f"{block} has a floor cross and four side faces for each surface height")
     for index, height in enumerate(heights):
-        part = parts[index]
-        pin(part.get("when") == {"active": "true", "surface": str(index)},
-            f"{block} model variant {index} is selected by its active/surface state")
-        model_name = model_stem if index == 0 else f"{model_stem}_{index}"
-        pin(part["apply"].get("model") == f"gonzotech:block/fire/{model_name}",
-            f"{block} surface {index} points to its own model")
-        model_path = RES / "models/block/fire" / f"{model_name}.json"
-        model_data = json.loads(model_path.read_text(encoding="utf-8"))
+        group = parts[index * 5:(index + 1) * 5]
+        condition = {"active": "true", "surface": str(index)}
+        pin(all(part.get("when") == condition for part in group),
+            f"{block} floor and side faces use active/surface state {index}")
+        floor_name = model_stem if index == 0 else f"{model_stem}_{index}"
+        pin(group[0]["apply"].get("model") == f"gonzotech:block/fire/{floor_name}",
+            f"{block} surface {index} retains its lowered crossed-plane floor flame")
+        floor_data = json.loads((RES / "models/block/fire" / f"{floor_name}.json").read_text(encoding="utf-8"))
         offset = round((height - 1.0) * 16.0, 5)
-        pin(all(round(element["from"][1], 5) == offset
-                and round(element["to"][1], 5) == round(22.4 + offset, 5)
-                and round(element["rotation"]["origin"][1], 5) == round(8.0 + offset, 5)
-                for element in model_data["elements"]),
-            f"{block} model {index} is shifted by exactly 1 minus fluid height")
+        pin(floor_data.get("render_type") == "minecraft:cutout"
+            and all(round(element["from"][1], 5) == offset
+                    and round(element["to"][1], 5) == round(22.4 + offset, 5)
+                    and round(element["rotation"]["origin"][1], 5) == round(8.0 + offset, 5)
+                    for element in floor_data["elements"]),
+            f"{block} floor model {index} uses alpha cutout and exact liquid-height offset")
+
+        side_name = f"{model_stem}_side_{index}"
+        side_data = json.loads((RES / "models/block/fire" / f"{side_name}.json").read_text(encoding="utf-8"))
+        side_element = side_data["elements"][0]
+        pin(group[1]["apply"].get("model") == f"gonzotech:block/fire/{side_name}"
+            and [part["apply"].get("y", 0) for part in group[1:]] == [0, 90, 180, 270]
+            and side_data.get("render_type") == "minecraft:cutout"
+            and round(side_element["from"][1], 5) == offset
+            and round(side_element["to"][1], 5) == round(22.4 + offset, 5)
+            and set(side_element["faces"]) == {"north", "south"},
+            f"{block} side model {index} has four vanilla-oriented faces, correct UV planes and alpha")
 
     texture_path = RES / "textures/block" / texture
     data = texture_path.read_bytes()

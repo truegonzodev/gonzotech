@@ -12,10 +12,88 @@
     {
       "when": {
         "active": "true",
+        "surface": "0"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_0"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "0"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_0",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "0"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_0",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "0"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_0",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "active": "true",
         "surface": "1"
       },
       "apply": {
         "model": "gonzotech:block/fire/rectificate_flame_1"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "1"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_1"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "1"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "1"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "1"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_1",
+        "y": 270
       }
     },
     {
@@ -30,10 +108,88 @@
     {
       "when": {
         "active": "true",
+        "surface": "2"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_2"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "2"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "2"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_2",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "2"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_2",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "active": "true",
         "surface": "3"
       },
       "apply": {
         "model": "gonzotech:block/fire/rectificate_flame_3"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "3"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_3"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "3"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "3"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_3",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "3"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_3",
+        "y": 270
       }
     },
     {
@@ -48,10 +204,88 @@
     {
       "when": {
         "active": "true",
+        "surface": "4"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_4"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "4"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_4",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "4"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_4",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "4"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_4",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "active": "true",
         "surface": "5"
       },
       "apply": {
         "model": "gonzotech:block/fire/rectificate_flame_5"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "5"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_5"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "5"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_5",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "5"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_5",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "5"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_5",
+        "y": 270
       }
     },
     {
@@ -66,6 +300,45 @@
     {
       "when": {
         "active": "true",
+        "surface": "6"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_6"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "6"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_6",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "6"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_6",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "6"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_6",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "active": "true",
         "surface": "7"
       },
       "apply": {
@@ -75,10 +348,88 @@
     {
       "when": {
         "active": "true",
+        "surface": "7"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_7"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "7"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_7",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "7"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_7",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "7"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_7",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "active": "true",
         "surface": "8"
       },
       "apply": {
         "model": "gonzotech:block/fire/rectificate_flame_8"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "8"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_8"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "8"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_8",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "8"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_8",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "8"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame_side_8",
+        "y": 270
       }
     }
   ]

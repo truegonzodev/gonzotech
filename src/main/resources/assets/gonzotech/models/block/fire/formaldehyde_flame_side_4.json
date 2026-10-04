@@ -1,0 +1,43 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "fire": "gonzotech:block/fire/formaldehyde_fire",
+    "particle": "gonzotech:block/fire/formaldehyde_fire"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        -9.8,
+        0.01
+      ],
+      "to": [
+        16,
+        12.6,
+        0.01
+      ],
+      "shade": false,
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#fire"
+        },
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#fire"
+        }
+      }
+    }
+  ]
+}

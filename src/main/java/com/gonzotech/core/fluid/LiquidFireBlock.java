@@ -1,6 +1,7 @@
 package com.gonzotech.core.fluid;
 
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -16,6 +17,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -64,6 +67,18 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new LiquidFireBlockEntity(pos, state);
+    }
+
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                  BlockEntityType<T> type) {
+        if (level.isClientSide() || type != ModBlockEntities.LIQUID_FIRE.get()) return null;
+        return (tickLevel, pos, blockState, blockEntity) -> {
+            if (tickLevel instanceof ServerLevel server
+                    && blockEntity instanceof LiquidFireBlockEntity fire) {
+                fire.tickServer(server, blockState, server.random);
+            }
+        };
     }
 
     /** The visual flame must not block interaction with the liquid below it. */
@@ -148,16 +163,14 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
                                      BlockState neighborState, RandomSource random) {
         FluidState fuelState = level.getFluidState(pos.below());
         if (!matchesFuel(fuelState)) return Blocks.AIR.defaultBlockState();
-        return super.updateShape(state.setValue(SURFACE, surfaceIndex(fuelState)), level, tickAccess,
-            pos, direction, neighborPos, neighborState, random);
+        // Do not delegate to FireBlock.updateShape: its vanilla support/schedule rules
+        // are for an ordinary fire resting on a combustible solid, not a liquid overlay.
+        return state.setValue(SURFACE, surfaceIndex(fuelState));
     }
 
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
-        if (!level.isClientSide && !state.is(oldState.getBlock())) {
-            // Allows an externally placed overlay to initialize on its first scheduled tick.
-            level.scheduleTick(pos, this, 1);
-        }
+        // Each overlay is advanced by its BlockEntity ticker; vanilla FireBlock ticks are disabled.
     }
 
     /** Vanilla random ticks must not shorten or spread the independently timed liquid flame. */
@@ -169,7 +182,7 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (level.getBlockEntity(pos) instanceof LiquidFireBlockEntity fire) {
-            fire.scheduledTick(level, state, random);
+            fire.tickServer(level, state, random);
         } else {
             level.removeBlock(pos, false);
         }
