@@ -47,6 +47,8 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
         drawVBarTex(graphics, waterX, barY, barW, barH, water, BAR_WATER);
         drawVBarTex(graphics, steamX, barY, barW, barH, steam, BAR_STEAM);
 
+        // Display the positive output percentage from zero: Redstone stays 50%,
+        // rather than becoming -50% by subtracting the platinum baseline.
         String efficiency = String.format(Locale.ROOT, "%.0f",
             SteamGenMath.exchangerEfficiency(menu.sumCH(), menu.precious()) * 100.0D);
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {

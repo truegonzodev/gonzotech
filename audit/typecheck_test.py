@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Локальный типчек (0.3.93): ECJ-компиляция сетевого пакета против MC-стабов.
+Локальный типчек (0.3.93): ECJ-компиляция сетевого пакета и явно выбранных
+регрессионных Java-классов против MC-стабов.
 
 Предыстория: 0.3.90/0.3.92 упали в сборке АВТОРА на внутренних несоответствиях
 типов (старая расстановка аргументов addMachineLane; Level vs ServerLevel в
@@ -67,6 +68,10 @@ real_files = [
     # 0.3.115): любой редактируемый файл — в список ДО гейта, grep имени
     # проверять при каждом прогоне.
     ROOT / "src/main/java/com/gonzotech/radiation/RadMaterials.java",
+    # 0.3.149: keep the new TVEL press selector and exchanger tooltip in the
+    # checked Java source set alongside their small API stubs.
+    ROOT / "src/main/java/com/gonzotech/machines/processing/PressRecipes.java",
+    ROOT / "src/main/java/com/gonzotech/machines/client/SteamGenScreen.java",
     ROOT / "src/main/java/com/gonzotech/radiation/RadiationContour.java",
     ROOT / "src/main/java/com/gonzotech/radiation/Containment.java",
     ROOT / "src/main/java/com/gonzotech/mixin/client/PistonHeadRendererMixin.java",
@@ -136,4 +141,6 @@ assert 'ROOT / "src/main/java/com/gonzotech/mixin/client/PistonHeadRendererMixin
 assert 'ROOT / "src/main/java/com/gonzotech/machines/block/ThirdPistonHeadBlock.java"' in _self
 assert 'radiation/Containment.java' in _self, "Containment выпал из списка typecheck"
 assert 'radiation/RadMaterials.java' in _self, "RadMaterials выпал из списка typecheck"
+assert 'machines/processing/PressRecipes.java' in _self, "PressRecipes выпал из списка typecheck"
+assert 'machines/client/SteamGenScreen.java' in _self, "SteamGenScreen выпал из списка typecheck"
 print(f"typecheck ok: {len(real_files)} реальных файлов + {len(stub_files)} стабов, 0 ошибок")

@@ -1,5 +1,6 @@
 package com.gonzotech.core.text;
-/** Только члены, которых касается PipeType; типы сверены с реальным GtUnits. */
+import net.minecraft.network.chat.Component;
+/** Только члены, которых касается PipeType и локальный SteamGenScreen typecheck. */
 public final class GtUnits {
     public static final int GTU = 0xFFD84A;
     public static final int GTH = 0xFF6A4A;
@@ -10,5 +11,12 @@ public final class GtUnits {
     public static final String U_GTH = "resource.gonzotech.first_heat_pipe.unit";
     public static final String U_MB = "resource.gonzotech.fluid.unit";
     public static final String U_ITEMS = "resource.gonzotech.first_item_pipe.unit";
+    public static Component gthPair(Object value, Object capacity) { return null; }
+    public static Component steamGenMaxGthIntake(Object value) { return null; }
+    public static Component steamGenGthPerSteam(Object value) { return null; }
+    public static Component steamGenWaterPerSteam(Object value) { return null; }
+    public static Component steamGenRated(Object value) { return null; }
+    public static Component waterPair(Object value, Object capacity) { return null; }
+    public static Component steamPair(Object value, Object capacity) { return null; }
     private GtUnits() { }
 }

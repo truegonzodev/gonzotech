@@ -163,6 +163,16 @@ for pth in uran_reduced:
 # Th-229: та же формула от thorium_ingot (слиток фактора .72).
 pin(abs(factor("thorium_229", True) - 0.916) < 1e-9,
     "thorium_229 != .916 (8.4% защиты)")
+# Оружейный плутоний, Pu-238 и Pu-242: явные исключения из общего
+# plutonium-коэффициента .72, каждый даёт ровно 8.4% экранирования.
+for plutonium_item in ("weapons_plutonium", "plutonium_238", "plutonium_242"):
+    pin(plutonium_item in item_ids, f"нет плутониевого компонента в lang: {plutonium_item}")
+    pin(ITEM_EXACT.get(plutonium_item) == 0.916,
+        f"ITEM_EXACT для {plutonium_item} != .916")
+    pin(abs(factor(plutonium_item, True) - 0.916) < 1e-9,
+        f"{plutonium_item} != .916 (8.4% защиты)")
+pin(factor("plutonium_ingot", True) == 0.72,
+    "общий plutonium ingot factor must remain .72; isotope overrides are exact")
 # сера 12% / йод 18% (автор, раунд 14): всё что связано
 pin(FACTORS.get("sulfur") == 0.12, "сера != 0.12")
 pin(FACTORS.get("iodine") == 0.18, "йод != 0.18")

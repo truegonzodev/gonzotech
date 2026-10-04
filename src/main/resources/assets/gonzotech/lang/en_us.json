@@ -752,7 +752,7 @@
   "gui.gonzotech.steamgen.nominal_gth_per_steam": "Nominal GTH consumption per unit of %s: %s",
   "gui.gonzotech.steamgen.nominal_water_per_steam": "Nominal water consumption per unit of %s: %s %s",
   "gui.gonzotech.steamgen.cores": "Cores: %s",
-  "gui.gonzotech.steamgen.exchangers": "Heat exchangers: %s (output vs platinum: %s %%)",
+  "gui.gonzotech.steamgen.exchangers": "Heat exchangers: %s (steam output bonus %s %%)",
   "gui.gonzotech.steamgen.rated": "Rated output: %s",
   "gui.gonzotech.unit.water_genitive": "water",
   "gui.gonzotech.unit.steam_genitive": "steam",

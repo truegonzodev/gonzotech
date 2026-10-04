@@ -11,9 +11,10 @@ import java.util.List;
  * Strict die/punch recipes for the tier-two Press.
  *
  * <p>The form and punch are mode selectors, not ingredients. A recipe is valid
- * only for one of the four combinations specified here; notably, the wedge
- * punch requires an empty form slot. No fallback conversion exists for another
- * tool combination.</p>
+ * only for a declared punch/form combination; notably, the wedge punch
+ * requires an empty form slot. The flat punch and TVEL form assemble uranium
+ * fuel into a fueled TVEL. No fallback conversion exists for another tool
+ * combination.</p>
  */
 public final class PressRecipes {
 
@@ -49,6 +50,10 @@ public final class PressRecipes {
         recipe(raw("iodine"), ingot("iodine_ingot"), 1)
     );
 
+    private static final List<Recipe> TVEL_ASSEMBLIES = List.of(
+        recipe(ModItems.URANIUM_FUEL.get(), ModItems.UF_TVEL.get(), 1)
+    );
+
     private PressRecipes() {
     }
 
@@ -70,12 +75,13 @@ public final class PressRecipes {
     /** A stack may enter the input slot when it appears in any declared recipe. */
     public static boolean acceptsInput(ItemStack input) {
         return hasInput(PLATES, input) || hasInput(WIRES, input)
-            || hasInput(CORES, input) || hasInput(RAW_INGOTS, input);
+            || hasInput(CORES, input) || hasInput(RAW_INGOTS, input)
+            || hasInput(TVEL_ASSEMBLIES, input);
     }
 
     public static boolean isForm(ItemStack stack) {
         return stack.is(ModItems.INGOT_FORM.get()) || stack.is(ModItems.PLATE_FORM.get())
-            || stack.is(ModItems.CORE_FORM.get());
+            || stack.is(ModItems.CORE_FORM.get()) || stack.is(ModItems.TVEL.get());
     }
 
     public static boolean isPunch(ItemStack stack) {
@@ -87,6 +93,7 @@ public final class PressRecipes {
             if (form.is(ModItems.PLATE_FORM.get())) return PLATES;
             if (form.is(ModItems.INGOT_FORM.get())) return RAW_INGOTS;
             if (form.is(ModItems.CORE_FORM.get())) return CORES;
+            if (form.is(ModItems.TVEL.get())) return TVEL_ASSEMBLIES;
             return null;
         }
         if (punch.is(ModItems.WEDGE_PUNCH.get()) && form.isEmpty()) return WIRES;

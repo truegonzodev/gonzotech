@@ -116,7 +116,11 @@ public final class RadMaterials {
             Map.entry("uranium_233", 0.916),
             Map.entry("uranium_235", 0.916),
             Map.entry("uranium_238", 0.916),
-            Map.entry("thorium_229", 0.916)
+            Map.entry("thorium_229", 0.916),
+            // Ранее не попавшие в isotope override формы плутония: 8.4% защиты.
+            Map.entry("weapons_plutonium", 0.916),
+            Map.entry("plutonium_238", 0.916),
+            Map.entry("plutonium_242", 0.916)
     );
 
     /**

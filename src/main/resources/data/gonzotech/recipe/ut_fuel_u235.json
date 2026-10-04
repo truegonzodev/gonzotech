@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:uranium_235",
+    "gonzotech:uranium_235"
+  ],
+  "result": {
+    "id": "gonzotech:ut_fuel",
+    "count": 1
+  },
+  "group": "ut_fuel"
+}

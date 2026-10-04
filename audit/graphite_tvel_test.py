@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Regression pins for graphite synthesis and the first TVEL content slice."""
+"""Regression pins for graphite synthesis and the first reactor-fuel content slice."""
+from collections import Counter
 from pathlib import Path
 import json
 
@@ -101,7 +102,71 @@ pin(tvel_recipe["key"] == {
 pin(tvel_recipe["result"] == {"id": "gonzotech:tvel", "count": 1}, "TVEL recipe outputs one TVEL")
 pin(not (DATA / "recipe/uf_tvel.json").exists()
     and not (DATA / "recipe/depressed_uf_tvel.json").exists(),
-    "fuelled and spent TVEL items have no unrequested recipes")
+    "fueled and spent TVEL items remain absent from crafting-table recipes")
+
+# Reactor fuels use shapeless recipes with exact ingredient multiplicities.
+fuel_recipe_specs = {
+    "uranium_fuel": (
+        ["gonzotech:uranium_238"] * 8 + ["gonzotech:uranium_235"],
+        "uranium_fuel", "gonzotech:uranium_238"),
+    "ut_fuel_u235": (
+        ["gonzotech:thorium_ingot"] * 7 + ["gonzotech:uranium_235"] * 2,
+        "ut_fuel", "gonzotech:thorium_ingot"),
+    "ut_fuel_u233": (
+        ["gonzotech:thorium_ingot"] * 7 + ["gonzotech:uranium_233"] * 2,
+        "ut_fuel", "gonzotech:thorium_ingot"),
+    "mox_fuel": (
+        ["gonzotech:uranium_238"] * 8 + ["gonzotech:plutonium_ingot"],
+        "mox_fuel", "gonzotech:uranium_238"),
+    "tmox_fuel_weapons_plutonium_u235": (
+        ["gonzotech:thorium_ingot"] * 4 + ["gonzotech:weapons_plutonium"] * 4
+        + ["gonzotech:uranium_235"],
+        "tmox_fuel", "gonzotech:thorium_ingot"),
+    "tmox_fuel_weapons_plutonium_u233": (
+        ["gonzotech:thorium_ingot"] * 4 + ["gonzotech:weapons_plutonium"] * 4
+        + ["gonzotech:uranium_233"],
+        "tmox_fuel", "gonzotech:thorium_ingot"),
+    "tmox_fuel_plutonium_ingots_u233": (
+        ["gonzotech:thorium_ingot"] * 4 + ["gonzotech:plutonium_ingot"] * 4
+        + ["gonzotech:uranium_233"],
+        "tmox_fuel", "gonzotech:thorium_ingot"),
+    "tmox_fuel_plutonium_ingots_u235": (
+        ["gonzotech:thorium_ingot"] * 4 + ["gonzotech:plutonium_ingot"] * 4
+        + ["gonzotech:uranium_235"],
+        "tmox_fuel", "gonzotech:thorium_ingot"),
+}
+pin(len(fuel_recipe_specs) == 8, "exactly eight fuel recipes are defined")
+for recipe_id, (ingredients, output, discovery_item) in fuel_recipe_specs.items():
+    recipe = load(DATA / f"recipe/{recipe_id}.json")
+    pin(recipe["type"] == "minecraft:crafting_shapeless",
+        f"{recipe_id} is shapeless")
+    pin(Counter(recipe["ingredients"]) == Counter(ingredients),
+        f"{recipe_id} has the exact requested ingredient counts")
+    pin(recipe["result"] == {"id": f"gonzotech:{output}", "count": 1},
+        f"{recipe_id} outputs one {output}")
+
+    advancement = load(DATA / f"advancement/recipes/{recipe_id}.json")
+    pin(advancement["rewards"]["recipes"] == [f"gonzotech:{recipe_id}"],
+        f"{recipe_id} advancement unlocks its recipe")
+    pin(advancement["criteria"]["has_item"]["conditions"]["items"]
+        == [{"items": discovery_item}],
+        f"{recipe_id} can be discovered from one of its ingredients")
+
+# Fuelled TVELs are assembled in the Second Press, not at the crafting table.
+press_recipes = (SRC / "machines/processing/PressRecipes.java").read_text()
+press_entity = (SRC / "machines/block/entity/SecondPressBlockEntity.java").read_text()
+pin("private static final List<Recipe> TVEL_ASSEMBLIES" in press_recipes
+    and "recipe(ModItems.URANIUM_FUEL.get(), ModItems.UF_TVEL.get(), 1)" in press_recipes,
+    "Second Press maps uranium fuel to one fueled TVEL")
+pin("hasInput(TVEL_ASSEMBLIES, input)" in press_recipes,
+    "uranium fuel is accepted by the press input slot")
+pin("stack.is(ModItems.TVEL.get())" in press_recipes
+    and "if (form.is(ModItems.TVEL.get())) return TVEL_ASSEMBLIES;" in press_recipes,
+    "TVEL is accepted as a form for the flat-punch assembly")
+pin("items.get(SLOT_INPUT).shrink(1);" in press_entity
+    and "items.get(SLOT_FORM).shrink" not in press_entity
+    and "items.get(SLOT_PUNCH).shrink" not in press_entity,
+    "press consumes one uranium-fuel input and keeps the selectors reusable")
 
 # Every new visual has its own existing RGBA PNG and a model reference.
 texture_paths = {

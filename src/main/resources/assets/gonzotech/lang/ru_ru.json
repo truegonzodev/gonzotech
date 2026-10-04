@@ -752,7 +752,7 @@
   "gui.gonzotech.steamgen.nominal_gth_per_steam": "Номинальная трата %s на единицу %s: %s",
   "gui.gonzotech.steamgen.nominal_water_per_steam": "Номинальная трата %s на единицу %s: %s %s",
   "gui.gonzotech.steamgen.cores": "Ядер: %s",
-  "gui.gonzotech.steamgen.exchangers": "Теплообменников: %s (выработка от платины: %s %%)",
+  "gui.gonzotech.steamgen.exchangers": "Теплообменников: %s (бонус выработки пара %s %%)",
   "gui.gonzotech.steamgen.rated": "Номинальная выработка: %s",
   "gui.gonzotech.unit.water_genitive": "воды",
   "gui.gonzotech.unit.steam_genitive": "пара",

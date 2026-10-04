@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:thorium_ingot",
+    "gonzotech:weapons_plutonium",
+    "gonzotech:weapons_plutonium",
+    "gonzotech:weapons_plutonium",
+    "gonzotech:weapons_plutonium",
+    "gonzotech:uranium_235"
+  ],
+  "result": {
+    "id": "gonzotech:tmox_fuel",
+    "count": 1
+  },
+  "group": "tmox_fuel"
+}

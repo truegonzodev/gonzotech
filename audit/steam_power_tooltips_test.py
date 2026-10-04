@@ -286,9 +286,18 @@ for key in (
     "gui.gonzotech.unit.steam_genitive",
 ):
     pin(key in ru and key in en, f"missing ru/en translation: {key}")
-pin("от платины" in ru.get("gui.gonzotech.steamgen.exchangers", "")
-    and "platinum" in en.get("gui.gonzotech.steamgen.exchangers", ""),
-    "exchanger tooltip should describe output relative to platinum")
+pin(ru["gui.gonzotech.steamgen.exchangers"]
+    == "Теплообменников: %s (бонус выработки пара %s %%)",
+    "Russian exchanger tooltip should use the steam-output-bonus wording")
+pin(en["gui.gonzotech.steamgen.exchangers"]
+    == "Heat exchangers: %s (steam output bonus %s %%)",
+    "English exchanger tooltip should use the steam-output-bonus wording")
+pin("platinum" not in en["gui.gonzotech.steamgen.exchangers"].lower()
+    and "платины" not in ru["gui.gonzotech.steamgen.exchangers"].lower(),
+    "exchanger tooltip must not describe the percentage as a platinum-relative delta")
+pin("SteamGenMath.exchangerEfficiency(menu.sumCH(), menu.precious()) * 100.0D" in steam_screen
+    and "- 100" not in steam_screen,
+    "displayed exchanger percentage stays positive from zero (e.g. Redstone 50%, not -50%)")
 
 if failures:
     print("FAIL — SteamGen balance/tooltip contract:")
