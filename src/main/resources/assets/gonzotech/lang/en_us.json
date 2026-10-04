@@ -871,6 +871,8 @@
   "block.gonzotech.canister": "Canister",
   "block.gonzotech.ethanol": "Ethanol",
   "block.gonzotech.formaldehyde": "Formaldehyde",
+  "block.gonzotech.rectificate_fire": "Rectificate Fire",
+  "block.gonzotech.formaldehyde_fire": "Formaldehyde Fire",
   "block.gonzotech.sulfuric_acid": "Sulfuric Acid",
   "block.gonzotech.distillate": "Distillate",
   "block.gonzotech.mash": "Mash",

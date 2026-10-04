@@ -871,6 +871,8 @@
   "block.gonzotech.canister": "Канистра",
   "block.gonzotech.ethanol": "Этанол",
   "block.gonzotech.formaldehyde": "Формальдегид",
+  "block.gonzotech.rectificate_fire": "Пламя ректификата",
+  "block.gonzotech.formaldehyde_fire": "Пламя формальдегида",
   "block.gonzotech.sulfuric_acid": "Серная кислота",
   "block.gonzotech.distillate": "Дистиллят",
   "block.gonzotech.mash": "Брага",

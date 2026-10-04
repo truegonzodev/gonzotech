@@ -7,7 +7,6 @@ import com.gonzotech.machines.block.ThirdStickyPistonBlock;
 import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -156,8 +155,7 @@ public final class Containment {
                 || state.getBlock() instanceof net.minecraft.world.level.block.TrapDoorBlock;
         if (aperture && state.hasProperty(BlockStateProperties.OPEN)
                 && state.getValue(BlockStateProperties.OPEN)) return RadiationContour.AIR;
-        var id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        double emission = id.getNamespace().equals(GonzoTechMod.MOD_ID) ? RadSources.blockEmission(id.getPath()) : 0;
+        double emission = RadSources.blockEmission(state);
         double factor = RadMaterials.blockFactor(state);
         var kind = state.is(CONTOUR_SEAL) ? RadiationContour.Kind.SEAL
                 : factor < 1 || state.canOcclude() ? RadiationContour.Kind.WALL : RadiationContour.Kind.OPEN;

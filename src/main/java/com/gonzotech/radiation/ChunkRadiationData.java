@@ -123,8 +123,7 @@ public class ChunkRadiationData extends SavedData {
                 for (int y = minY; y < maxY; y++) {
                     pos.set(x, y, z);
                     var state = level.getBlockState(pos);
-                    double emission = RadSources.blockEmission(
-                            BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath());
+                    double emission = RadSources.blockEmission(state);
                     if (emission > 0.0) out.add(new VisualSource(pos.immutable(), emission));
                 }
             }
@@ -153,8 +152,7 @@ public class ChunkRadiationData extends SavedData {
             for (long raw : entry.getValue()) {
                 BlockPos pos = BlockPos.of(raw);
                 if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
-                double emission = RadSources.blockEmission(
-                        BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+                double emission = RadSources.blockEmission(level.getBlockState(pos));
                 if (emission > 0.0) out.add(new VisualSource(pos, emission));
             }
         }
@@ -191,22 +189,21 @@ public class ChunkRadiationData extends SavedData {
 
     // ───────────────────────── поставленные блоки ─────────────────────────
 
-    /** Поставлен радио-блок (BlockEvent.EntityPlaceEvent): учитываем позицию и вклад в чанк. Живой помпы НЕТ — питание тянет чанк в {@link #maintain}. */
+    /** Поставлен радио-блок: индекс позиции идемпотентен для bucket-хуков и BlockEvent вместе. */
     public void onBlockPlaced(BlockPos pos, double emissionNzt) {
         long key = new ChunkPos(pos).toLong();
+        LongOpenHashSet set = placedPos.computeIfAbsent(key, k -> new LongOpenHashSet());
+        if (!set.add(pos.asLong())) return;
         placed.put(key, placed.get(key) + emissionNzt);
-        placedPos.computeIfAbsent(key, k -> new LongOpenHashSet()).add(pos.asLong());
         setDirty();
     }
 
-    /** Сломан радио-блок (BlockEvent.BreakEvent): вычитаем вклад; затухание догонит остаток (взрывы/поршни — апроксимация). */
+    /** Сломан радио-блок: вычитаем вклад только если позиция была учтена. */
     public void onBlockRemoved(BlockPos pos, double emissionNzt) {
         long key = new ChunkPos(pos).toLong();
-        placed.put(key, Math.max(0.0, placed.get(key) - emissionNzt));
         LongOpenHashSet set = placedPos.get(key);
-        if (set != null) {
-            set.remove(pos.asLong());
-        }
+        if (set == null || !set.remove(pos.asLong())) return;
+        placed.put(key, Math.max(0.0, placed.get(key) - emissionNzt));
         setDirty();
     }
 
@@ -299,21 +296,28 @@ public class ChunkRadiationData extends SavedData {
      */
     private void reconcilePlacedSources(ServerLevel level) {
         List<SourceRecord> known = new ArrayList<>();
+        List<BlockPos> missing = new ArrayList<>();
+        LongOpenHashSet claimed = new LongOpenHashSet();
+
+        // Preserve every still-present source before looking for piston moves;
+        // otherwise two stale positions could both claim the same nearby block.
         for (var entry : placedPos.long2ObjectEntrySet()) {
             for (long raw : entry.getValue()) {
                 BlockPos pos = BlockPos.of(raw);
-                double expected = RadSources.blockEmission(
-                        BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+                double expected = RadSources.blockEmission(level.getBlockState(pos));
                 if (expected > 0.0) {
-                    known.add(new SourceRecord(pos, expected));
-                    continue;
+                    if (claimed.add(raw)) known.add(new SourceRecord(pos, expected));
+                } else {
+                    missing.add(pos);
                 }
-                BlockPos moved = findNearbySource(level, pos);
-                if (moved != null) {
-                    double movedEmission = RadSources.blockEmission(BuiltInRegistries.BLOCK.getKey(
-                            level.getBlockState(moved).getBlock()).getPath());
-                    known.add(new SourceRecord(moved, movedEmission));
-                }
+            }
+        }
+        for (BlockPos origin : missing) {
+            BlockPos moved = findNearbySource(level, origin, claimed);
+            if (moved == null) continue;
+            double movedEmission = RadSources.blockEmission(level.getBlockState(moved));
+            if (movedEmission > 0.0 && claimed.add(moved.asLong())) {
+                known.add(new SourceRecord(moved, movedEmission));
             }
         }
 
@@ -330,15 +334,14 @@ public class ChunkRadiationData extends SavedData {
     private record SourceRecord(BlockPos pos, double emission) {}
 
     /** Vanilla pistons can move a block up to twelve positions. */
-    private BlockPos findNearbySource(ServerLevel level, BlockPos origin) {
+    private BlockPos findNearbySource(ServerLevel level, BlockPos origin, LongOpenHashSet claimed) {
         for (int dx = -12; dx <= 12; dx++) {
             for (int dy = -12; dy <= 12; dy++) {
                 for (int dz = -12; dz <= 12; dz++) {
                     if (dx == 0 && dy == 0 && dz == 0) continue;
                     BlockPos candidate = origin.offset(dx, dy, dz);
-                    if (!level.hasChunkAt(candidate)) continue;
-                    double actual = RadSources.blockEmission(BuiltInRegistries.BLOCK.getKey(
-                            level.getBlockState(candidate).getBlock()).getPath());
+                    if (!level.hasChunkAt(candidate) || claimed.contains(candidate.asLong())) continue;
+                    double actual = RadSources.blockEmission(level.getBlockState(candidate));
                     if (actual > 0.0) return candidate;
                 }
             }
@@ -361,8 +364,7 @@ public class ChunkRadiationData extends SavedData {
         List<Long> stale = null;
         for (long packed : set) {
             BlockPos pos = BlockPos.of(packed);
-            double e = RadSources.blockEmission(
-                    BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock()).getPath());
+            double e = RadSources.blockEmission(level.getBlockState(pos));
             if (e <= 0.0) {
                 // Блок исчез в обход событий (взрыв/поршень/setblock) — забываем позицию.
                 (stale == null ? stale = new ArrayList<>() : stale).add(packed);

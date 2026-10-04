@@ -1,6 +1,7 @@
 package com.gonzotech.machines.nuclear;
 
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.radiation.RadiationSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -88,7 +89,11 @@ public final class ThermalHazards {
             candidates.add(target);
         }
         if (candidates.isEmpty()) return;
-        level.setBlock(candidates.get(level.random.nextInt(candidates.size())), replacement, Block.UPDATE_ALL);
+        BlockPos melted = candidates.get(level.random.nextInt(candidates.size()));
+        BlockState oldState = level.getBlockState(melted);
+        if (level.setBlock(melted, replacement, Block.UPDATE_ALL)) {
+            RadiationSystem.trackReplacedBlock(level, melted, oldState, replacement);
+        }
     }
 
     /** 27 позиций куба 3×3×3, центрированного на машине. */

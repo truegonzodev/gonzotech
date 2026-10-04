@@ -8,7 +8,6 @@ import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModEffects;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -488,12 +487,8 @@ public final class RadiationSystem {
 
     @SubscribeEvent
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) {
-            return;
-        }
-        double emission = blockEmission(event.getPlacedBlock().getBlock());
-        if (emission > 0.0) {
-            ChunkRadiationData.get(level).onBlockPlaced(event.getPos(), emission);
+        if (event.getLevel() instanceof ServerLevel level) {
+            trackPlacedBlock(level, event.getPos(), event.getPlacedBlock());
         }
     }
 
@@ -502,14 +497,34 @@ public final class RadiationSystem {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
-        double emission = blockEmission(event.getState().getBlock());
+        double emission = RadSources.blockEmission(event.getState());
         if (emission > 0.0) {
             ChunkRadiationData.get(level).onBlockRemoved(event.getPos(), emission);
         }
     }
 
+    /** Track direct source placements that do not produce BlockEvent.EntityPlaceEvent (buckets, thermal hazards). */
+    public static void trackPlacedBlock(ServerLevel level, BlockPos pos,
+                                        net.minecraft.world.level.block.state.BlockState state) {
+        double emission = RadSources.blockEmission(state);
+        if (emission > 0.0) {
+            ChunkRadiationData.get(level).onBlockPlaced(pos, emission);
+        }
+    }
+
+    /** Keep the placed-source index accurate when a direct setBlock replaces an existing source. */
+    public static void trackReplacedBlock(ServerLevel level, BlockPos pos,
+                                          net.minecraft.world.level.block.state.BlockState oldState,
+                                          net.minecraft.world.level.block.state.BlockState newState) {
+        double oldEmission = RadSources.blockEmission(oldState);
+        double newEmission = RadSources.blockEmission(newState);
+        if (oldEmission <= 0.0 && newEmission <= 0.0) return;
+        ChunkRadiationData data = ChunkRadiationData.get(level);
+        if (oldEmission > 0.0) data.onBlockRemoved(pos, oldEmission);
+        if (newEmission > 0.0) data.onBlockPlaced(pos, newEmission);
+    }
+
     private static double blockEmission(net.minecraft.world.level.block.Block block) {
-        net.minecraft.resources.ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
-        return id.getNamespace().equals("gonzotech") ? RadSources.blockEmission(id.getPath()) : 0.0;
+        return RadSources.blockEmission(block.defaultBlockState());
     }
 }

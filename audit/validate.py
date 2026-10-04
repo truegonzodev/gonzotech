@@ -155,7 +155,7 @@ for p in glob.glob(f"{DATA}/recipe/**/*.json", recursive=True) + \
             warnings.append(f"{os.path.relpath(p, DATA)}: ссылка на неизвестный id {target}")
 
 # ── 6. лут-таблицы блоков ──────────────────────────────────────────────────
-LOOT_EXCEPTIONS = {"molten_corium", "ethanol", "formaldehyde", "sulfuric_acid", "distillate", "mash", "wort"}   # флюидные блоки, лут не положен
+LOOT_EXCEPTIONS = {"molten_corium", "ethanol", "formaldehyde", "sulfuric_acid", "distillate", "mash", "wort", "rectificate_fire", "formaldehyde_fire"}   # флюидные блоки и беспредметные пламена
 LOOT_EXCEPTIONS.add("third_lead_piston_head")   # головка поршня: без BlockItem, лут не положен (как minecraft:piston_head)
 loot = {os.path.basename(p)[:-5] for p in glob.glob(f"{DATA}/loot_table/blocks/*.json")}
 for b in sorted(blockstates - loot - LOOT_EXCEPTIONS):

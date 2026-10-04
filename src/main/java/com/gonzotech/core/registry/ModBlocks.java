@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.ChalkboardBlock;
 import com.gonzotech.core.block.HeavyDoorBlock;
 import com.gonzotech.core.block.TungstenAbsorberBlock;
+import com.gonzotech.core.fluid.LiquidFireBlock;
 import com.gonzotech.core.fluid.ModFluids;
 import com.gonzotech.core.fluid.MoltenCoriumBlock;
 import com.gonzotech.core.ore.CesiumOreBlock;
@@ -282,6 +283,14 @@ public class ModBlocks {
     public static final DeferredBlock<LiquidBlock> FORMALDEHYDE = BLOCKS.registerBlock(
         "formaldehyde", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.FORMALDEHYDE, com.gonzotech.core.fluid.ModFluidBlock.Kind.FORMALDEHYDE, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
+    /** Поверхностный огонь этанола/ректификата; не имеет предмета блока. */
+    public static final DeferredBlock<LiquidFireBlock> RECTIFICATE_FIRE = BLOCKS.registerBlock(
+        "rectificate_fire", properties -> new LiquidFireBlock(ModFluids.ETHANOL, 0x2D66FF, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE).lightLevel(state -> 12).noLootTable());
+    /** Поверхностный голубой огонь формальдегида; не имеет предмета блока. */
+    public static final DeferredBlock<LiquidFireBlock> FORMALDEHYDE_FIRE = BLOCKS.registerBlock(
+        "formaldehyde_fire", properties -> new LiquidFireBlock(ModFluids.FORMALDEHYDE, 0x55E9FF, properties),
+        BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE).lightLevel(state -> 11).noLootTable());
     /** Серная кислота — едкая кислота в мире. */
     public static final DeferredBlock<LiquidBlock> SULFURIC_ACID = BLOCKS.registerBlock(
         "sulfuric_acid", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.SULFURIC_ACID, com.gonzotech.core.fluid.ModFluidBlock.Kind.SULFURIC_ACID, properties),

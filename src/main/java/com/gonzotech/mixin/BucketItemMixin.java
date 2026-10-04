@@ -1,12 +1,14 @@
 package com.gonzotech.mixin;
 
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.radiation.RadiationSystem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
@@ -40,12 +42,16 @@ public abstract class BucketItemMixin {
         Player placer, Level ignoredLevel, BlockPos ignoredPos,
         BlockHitResult ignoredHit, ItemStack ignoredContainer
     ) {
-        if (!placedState.getFluidState().isSourceOfType(Fluids.LAVA)
-            || !touchesReactiveRedstone(level, lavaPos)) {
-            return level.setBlock(lavaPos, placedState, flags);
+        BlockState oldState = level.getBlockState(lavaPos);
+        BlockState finalState = placedState.getFluidState().isSourceOfType(Fluids.LAVA)
+            && touchesReactiveRedstone(level, lavaPos)
+                ? ModBlocks.CRIMSON_OBSIDIAN.get().defaultBlockState()
+                : placedState;
+        boolean placed = level.setBlock(lavaPos, finalState, flags);
+        if (placed && level instanceof ServerLevel serverLevel) {
+            RadiationSystem.trackReplacedBlock(serverLevel, lavaPos, oldState, finalState);
         }
-
-        return level.setBlock(lavaPos, ModBlocks.CRIMSON_OBSIDIAN.get().defaultBlockState(), flags);
+        return placed;
     }
 
     /**

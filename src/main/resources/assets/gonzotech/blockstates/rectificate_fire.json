@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "gonzotech:block/fire/rectificate_flame"
+      }
+    }
+  ]
+}

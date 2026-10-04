@@ -3,6 +3,7 @@ package com.gonzotech.radiation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Map;
 
@@ -58,8 +59,8 @@ public final class RadSources {
             Map.entry("tmox_fuel", 0.35 * RadUnits.MILLI),  // ТСО — ториевая смесь оксидов
             Map.entry("snup_fuel", 0.85 * RadUnits.MILLI),
             Map.entry("ut_fuel", 0.20 * RadUnits.MILLI),      // УТ — уран-ториевое топливо
-            // Кориум (автор 21.09): фонят все три формы — ведро (корм для топки),
-            // поставленный блок и сам флюидный блок (лужа), все по 3 mZt.
+            // Кориум (автор 21.09): ведро, застывший блок и источник molten_corium — по 3 mZt.
+            // Текучее состояние того же LiquidBlock id отсекается в blockEmission(BlockState).
             // Радиоактивный слизневый блок и мёртвая жижа (автор 22.09.2026):
             // слизень 5 mZt/с, жижа 0.2 mZt/с. Жижа — и блок, и ведро: id-путь один и
             // тот же, так что и поставленный блок, и предмет в руке фонят одинаково.
@@ -113,6 +114,23 @@ public final class RadSources {
     /** Эмиссия целого блока (посаженный в мир {@code uranium_block} и т.п.). */
     public static double blockEmission(String blockPath) {
         return emissionByPath(blockPath);
+    }
+
+    /**
+     * Эмиссия фактического состояния блока в мире. У исходного и текучего
+     * состояний кориума один LiquidBlock id ({@code gonzotech:molten_corium}),
+     * поэтому одного пути реестра недостаточно: излучает только источник,
+     * а не растёкшаяся форма.
+     */
+    public static double blockEmission(BlockState state) {
+        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        if (!id.getNamespace().equals("gonzotech")) {
+            return 0.0;
+        }
+        if (id.getPath().equals("molten_corium") && !state.getFluidState().isSource()) {
+            return 0.0;
+        }
+        return emissionByPath(id.getPath());
     }
 
     /** Суммарная пресетная эмиссия стака: per-item × count (автор п.3). */
