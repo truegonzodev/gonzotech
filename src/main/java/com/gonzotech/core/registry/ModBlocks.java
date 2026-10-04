@@ -286,11 +286,13 @@ public class ModBlocks {
     /** Поверхностный огонь этанола/ректификата; не имеет предмета блока. */
     public static final DeferredBlock<LiquidFireBlock> RECTIFICATE_FIRE = BLOCKS.registerBlock(
         "rectificate_fire", properties -> new LiquidFireBlock(ModFluids.ETHANOL, 0x2D66FF, properties),
-        BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE).lightLevel(state -> 12).noLootTable());
+        BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE)
+            .lightLevel(state -> state.getValue(LiquidFireBlock.ACTIVE) ? 12 : 0).noLootTable());
     /** Поверхностный голубой огонь формальдегида; не имеет предмета блока. */
     public static final DeferredBlock<LiquidFireBlock> FORMALDEHYDE_FIRE = BLOCKS.registerBlock(
         "formaldehyde_fire", properties -> new LiquidFireBlock(ModFluids.FORMALDEHYDE, 0x55E9FF, properties),
-        BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE).lightLevel(state -> 11).noLootTable());
+        BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE)
+            .lightLevel(state -> state.getValue(LiquidFireBlock.ACTIVE) ? 11 : 0).noLootTable());
     /** Серная кислота — едкая кислота в мире. */
     public static final DeferredBlock<LiquidBlock> SULFURIC_ACID = BLOCKS.registerBlock(
         "sulfuric_acid", properties -> new com.gonzotech.core.fluid.ModFluidBlock(ModFluids.SULFURIC_ACID, com.gonzotech.core.fluid.ModFluidBlock.Kind.SULFURIC_ACID, properties),

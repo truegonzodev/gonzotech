@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.151 corium-source radiation and liquid fire."""
+"""Static regression contract for 0.3.153 corium radiation and per-cell liquid fire."""
 import json
 import struct
 import zlib
@@ -57,43 +57,103 @@ pin("LongOpenHashSet claimed = new LongOpenHashSet();" in chunk
     and "claimed.contains(candidate.asLong())" in chunk,
     "source reconciliation cannot migrate multiple stale entries onto one live source")
 
-# Each liquid gets a separately registered fire and its own texture path/color.
+# Each liquid has a separately registered overlay; its timer entity supports both variants.
 blocks = read_java("core/registry/ModBlocks.java")
 pin('"rectificate_fire"' in blocks and "ModFluids.ETHANOL, 0x2D66FF" in blocks,
     "rectificate has its own blue fire block")
 pin('"formaldehyde_fire"' in blocks and "ModFluids.FORMALDEHYDE, 0x55E9FF" in blocks,
     "formaldehyde has its own cyan fire block")
+pin("state.getValue(LiquidFireBlock.ACTIVE) ? 12 : 0" in blocks
+    and "state.getValue(LiquidFireBlock.ACTIVE) ? 11 : 0" in blocks,
+    "hidden delayed overlay emits no light until ignition")
 fluid_block = read_java("core/fluid/ModFluidBlock.java")
 pin("Items.FLINT_AND_STEEL" in fluid_block and "Items.FIRE_CHARGE" in fluid_block,
-    "both source liquids accept flint and steel and fire charges")
-pin("instanceof BaseFireBlock" in fluid_block and "fire.ignite(level, pos)" in fluid_block,
-    "neighboring ordinary or custom fire can ignite an exposed source")
-pin("instanceof ServerLevel serverLevel" in fluid_block
-    and "serverLevel.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)" in fluid_block,
-    "fire-tick gamerule is read from ServerLevel rather than Level")
-fire = read_java("core/fluid/LiquidFireBlock.java")
-pin("private static final int BURN_STEPS = 15" in fire
-    and "MIN_STEP_DELAY = 7" in fire and "STEP_DELAY_RANGE = 7" in fire,
-    "AGE-based timer consumes the source after 106–196 ticks")
-pin("return state.isSource() && state.getType() == fuel.get();" in fire,
-    "flames only burn their matching source state")
-pin("level.setBlock(fuelPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL)" in fire,
-    "fuel source is removed only at burn-out")
-pin("BaseFireBlock.getState(level, vanillaFirePos)" in fire
-    and "combustible.ignitedByLava()" in fire,
-    "combustible blocks receive vanilla fire, never custom liquid fire")
-pin("fluid.getHeight(level, fuelPos)" in fire,
-    "colored sparks use the liquid surface height")
+    "both source and flowing cells accept flint and steel and fire charges")
+pin("state.getFluidState().isEmpty()" in fluid_block
+    and "fire.ignite(serverLevel, pos, 0, level.random)" in fluid_block,
+    "manual ignition supports all matching non-empty fluid states")
+pin("40 + level.random.nextInt(21)" in fluid_block
+    and "serverLevel.scheduleTick(pos, this" in fluid_block
+    and "Leave vanilla fire visible" in fluid_block,
+    "vanilla fire remains visible while liquid ignition waits 40–60 ticks")
+pin("instanceof BaseFireBlock" in fluid_block
+    and "!(neighbor.getBlock() instanceof LiquidFireBlock)" in fluid_block
+    and "40 + level.random.nextInt(21)" in fluid_block,
+    "only ordinary BaseFireBlock sources start the separate 2–3 second ignition delay")
 
-for block, model, texture in (
-    ("rectificate_fire", "fire/rectificate_flame.json", "fire/rectificate_fire.png"),
-    ("formaldehyde_fire", "fire/formaldehyde_flame.json", "fire/formaldehyde_fire.png"),
+fire = read_java("core/fluid/LiquidFireBlock.java")
+pin("BooleanProperty.create(\"active\")" in fire
+    and 'IntegerProperty.create("surface", 0, 8)' in fire,
+    "overlay has an independent visibility flag and nine surface variants")
+pin("fluid == ModFluids.FLOWING_ETHANOL.get()"
+    and "fluid == ModFluids.FLOWING_FORMALDEHYDE.get()" in fire,
+    "both flowing fluid IDs are recognized as burnable cells")
+pin("if (state.isEmpty() || state.isSource()) return 0" in fire
+    and "if (amount >= 8) return 8" in fire
+    and "8 - amount" in fire,
+    "source, levels 1–7, and full-height falling states use distinct models")
+pin("candidates.add(neighborFuel.immutable())" in fire
+    and "targetFire.ignite(level, target, 0, random)" in fire,
+    "each liquid-fire pulse ignites no more than one neighboring liquid cell")
+pin("MIN_SPREAD_TICKS = 8" in read_java("core/fluid/LiquidFireBlockEntity.java")
+    and "MAX_SPREAD_TICKS = 32" in read_java("core/fluid/LiquidFireBlockEntity.java"),
+    "custom propagation uses the specified 8–32 tick interval")
+pin("level.removeBlock(firePos, false)" in fire
+    and "level.setBlock(fuelPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL)" in fire,
+    "burnout removes only its overlay and matching supporting fluid cell")
+pin("support.ignitedByLava()" in fire
+    and "supportFire.ignite(level, supportPos, 0, random)" in fire
+    and "BaseFireBlock.getState(level, fuelPos)" in fire,
+    "post-burn attempts valid vanilla or custom fire on the support")
+pin("state.getAmount()" in fire and "surfaceHeight(fluid)" in fire,
+    "colored sparks follow the current source/flowing surface")
+
+fire_entity = read_java("core/fluid/LiquidFireBlockEntity.java")
+pin("MIN_BURN_TICKS = 8 * 20" in fire_entity
+    and "MAX_BURN_TICKS = 17 * 20" in fire_entity
+    and "BURN_MODE_TICKS = 11 * 20" in fire_entity,
+    "per-cell fire lifetime has an 8–17 second range and approximately 12 second mean")
+pin("sampleBurnTicks(random)" in fire_entity
+    and "Math.sqrt" in fire_entity
+    and "sampleSpreadTicks(random)" in fire_entity,
+    "burn clocks are independently randomized and persisted as absolute game times")
+pin('tag.putLong("BurnOutAt"' in fire_entity
+    and 'tag.putLong("NextSpreadAt"' in fire_entity
+    and 'tag.putLong("ActivationAt"' in fire_entity,
+    "ignition, spread, and burnout timers survive save/reload")
+block_entities = read_java("machines/registry/ModBlockEntities.java")
+pin('register("liquid_fire"' in block_entities
+    and "ModBlocks.RECTIFICATE_FIRE.get()" in block_entities
+    and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
+    "shared liquid-fire BlockEntity type is registered for both overlays")
+version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
+pin("mod_version=0.3.153" in version, "micropatch version should be 0.3.153")
+
+# Surface heights supplied by the author are encoded as nine separate models per liquid.
+heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]
+for block, model_stem, texture in (
+    ("rectificate_fire", "rectificate_flame", "fire/rectificate_fire.png"),
+    ("formaldehyde_fire", "formaldehyde_flame", "fire/formaldehyde_fire.png"),
 ):
     blockstate = json.loads((RES / "blockstates" / f"{block}.json").read_text(encoding="utf-8"))
-    model_data = json.loads((RES / "models/block" / model).read_text(encoding="utf-8"))
-    pin(bool(blockstate.get("multipart")), f"{block} has a blockstate model")
-    pin(any(element["from"][1] == -2 for element in model_data["elements"]),
-        f"{block} flame model is lowered to the fluid surface")
+    parts = blockstate.get("multipart", [])
+    pin(len(parts) == 9, f"{block} has a model for every source/flow surface height")
+    for index, height in enumerate(heights):
+        part = parts[index]
+        pin(part.get("when") == {"active": "true", "surface": str(index)},
+            f"{block} model variant {index} is selected by its active/surface state")
+        model_name = model_stem if index == 0 else f"{model_stem}_{index}"
+        pin(part["apply"].get("model") == f"gonzotech:block/fire/{model_name}",
+            f"{block} surface {index} points to its own model")
+        model_path = RES / "models/block/fire" / f"{model_name}.json"
+        model_data = json.loads(model_path.read_text(encoding="utf-8"))
+        offset = round((height - 1.0) * 16.0, 5)
+        pin(all(round(element["from"][1], 5) == offset
+                and round(element["to"][1], 5) == round(22.4 + offset, 5)
+                and round(element["rotation"]["origin"][1], 5) == round(8.0 + offset, 5)
+                for element in model_data["elements"]),
+            f"{block} model {index} is shifted by exactly 1 minus fluid height")
+
     texture_path = RES / "textures/block" / texture
     data = texture_path.read_bytes()
     pin(data.startswith(b"\x89PNG\r\n\x1a\n"), f"{texture} is a PNG placeholder")

@@ -55,7 +55,7 @@ def java_int_constant(source, name, known):
 nuclear = read("src/main/java/com/gonzotech/machines/energy/NuclearDefs.java")
 firebox = read("src/main/java/com/gonzotech/machines/block/entity/NuclearFireboxBlockEntity.java")
 version = read("gradle.properties")
-pin("mod_version=0.3.152" in version, "micropatch version should be 0.3.152")
+pin("mod_version=0.3.153" in version, "micropatch version should be 0.3.153")
 
 # User-selected ingot baselines and the old per-form ratios, rounded to the
 # nearest 20-Hz game tick when a ratio is not an integral tick count.

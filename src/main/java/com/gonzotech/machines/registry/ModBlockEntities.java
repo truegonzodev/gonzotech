@@ -1,6 +1,7 @@
 package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.core.fluid.LiquidFireBlockEntity;
 import com.gonzotech.machines.block.entity.AccumulatorBlockEntity;
 import com.gonzotech.machines.block.entity.AlloyFoundryBlockEntity;
 import com.gonzotech.machines.block.entity.BoilerBlockEntity;
@@ -52,6 +53,13 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<NuclearFireboxBlockEntity>> SECOND_NUCLEAR_FIREBOX =
         BLOCK_ENTITIES.register("second_nuclear_firebox", () -> new BlockEntityType<>(
             NuclearFireboxBlockEntity::new, false, ModMachines.SECOND_NUCLEAR_FIREBOX.get()));
+
+    /** One timer-bearing overlay entity type shared by both liquid-fire variants. */
+    public static final Supplier<BlockEntityType<LiquidFireBlockEntity>> LIQUID_FIRE =
+        BLOCK_ENTITIES.register("liquid_fire", () -> new BlockEntityType<>(
+            LiquidFireBlockEntity::new, false,
+            com.gonzotech.core.registry.ModBlocks.RECTIFICATE_FIRE.get(),
+            com.gonzotech.core.registry.ModBlocks.FORMALDEHYDE_FIRE.get()));
 
     public static final Supplier<BlockEntityType<TungstenAbsorberBlockEntity>> TUNGSTEN_ABSORBER =
         BLOCK_ENTITIES.register("tungsten_absorber", () -> new BlockEntityType<>(

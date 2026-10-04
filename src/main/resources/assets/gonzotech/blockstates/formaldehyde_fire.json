@@ -1,8 +1,84 @@
 {
   "multipart": [
     {
+      "when": {
+        "active": "true",
+        "surface": "0"
+      },
       "apply": {
         "model": "gonzotech:block/fire/formaldehyde_flame"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "1"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_1"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "2"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_2"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "3"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_3"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "4"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_4"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "5"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_5"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "6"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_6"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "7"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_7"
+      }
+    },
+    {
+      "when": {
+        "active": "true",
+        "surface": "8"
+      },
+      "apply": {
+        "model": "gonzotech:block/fire/formaldehyde_flame_8"
       }
     }
   ]

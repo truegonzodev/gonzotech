@@ -1,25 +1,25 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "fire": "gonzotech:block/fire/rectificate_fire",
-    "particle": "gonzotech:block/fire/rectificate_fire"
+    "fire": "gonzotech:block/fire/formaldehyde_fire",
+    "particle": "gonzotech:block/fire/formaldehyde_fire"
   },
   "elements": [
     {
       "from": [
         0,
-        -2.0,
+        0.0,
         8.8
       ],
       "to": [
         16,
-        20.4,
+        22.4,
         8.8
       ],
       "rotation": {
         "origin": [
           8,
-          6.0,
+          8.0,
           8
         ],
         "axis": "x",
@@ -42,18 +42,18 @@
     {
       "from": [
         0,
-        -2.0,
+        0.0,
         7.2
       ],
       "to": [
         16,
-        20.4,
+        22.4,
         7.2
       ],
       "rotation": {
         "origin": [
           8,
-          6.0,
+          8.0,
           8
         ],
         "axis": "x",
@@ -76,18 +76,18 @@
     {
       "from": [
         8.8,
-        -2.0,
+        0.0,
         0
       ],
       "to": [
         8.8,
-        20.4,
+        22.4,
         16
       ],
       "rotation": {
         "origin": [
           8,
-          6.0,
+          8.0,
           8
         ],
         "axis": "z",
@@ -110,18 +110,18 @@
     {
       "from": [
         7.2,
-        -2.0,
+        0.0,
         0
       ],
       "to": [
         7.2,
-        20.4,
+        22.4,
         16
       ],
       "rotation": {
         "origin": [
           8,
-          6.0,
+          8.0,
           8
         ],
         "axis": "z",

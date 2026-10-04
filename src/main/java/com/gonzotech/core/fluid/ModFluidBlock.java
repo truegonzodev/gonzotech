@@ -4,7 +4,9 @@ import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.radiation.RadUnits;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -67,7 +69,7 @@ public class ModFluidBlock extends LiquidBlock {
     /** Shared source/flowing-fluid colour; emission is scheduled by the client puddle controller. */
     public Kind foamKind() { return kind; }
 
-    /** Flint and steel (or a fire charge) lights exposed source cells without replacing the liquid. */
+    /** Flint and steel (or a fire charge) places an overlay over a source or flowing cell. */
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
@@ -76,11 +78,10 @@ public class ModFluidBlock extends LiquidBlock {
         if (fire == null || !ignitionTool) {
             return super.useItemOn(stack, state, level, pos, player, hand, hit);
         }
-        // Do not let vanilla FlintAndSteelItem place an ordinary fire on a
-        // flowing cell when this liquid has no source to sustain the custom flame.
-        if (!state.getFluidState().isSource()) return InteractionResult.FAIL;
+        if (state.getFluidState().isEmpty()) return InteractionResult.FAIL;
         if (level.isClientSide) return InteractionResult.SUCCESS;
-        if (!fire.ignite(level, pos)) return InteractionResult.FAIL;
+        if (!(level instanceof ServerLevel serverLevel)
+                || !fire.ignite(serverLevel, pos, 0, level.random)) return InteractionResult.FAIL;
 
         if (!player.getAbilities().instabuild) {
             if (stack.is(Items.FLINT_AND_STEEL)) {
@@ -111,16 +112,33 @@ public class ModFluidBlock extends LiquidBlock {
     }
 
     private void tryIgniteFromNearbyFire(BlockState state, Level level, BlockPos pos) {
-        LiquidFireBlock fire = fireForKind();
-        if (level.isClientSide || fire == null || !state.getFluidState().isSource()) return;
+        if (level.isClientSide || fireForKind() == null || state.getFluidState().isEmpty()) return;
         if (!(level instanceof ServerLevel serverLevel)
                 || !serverLevel.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) return;
-        for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
-            if (level.getBlockState(pos.relative(direction)).getBlock() instanceof BaseFireBlock) {
-                fire.ignite(level, pos);
-                return;
-            }
+        if (!hasNearbyVanillaFire(level, pos)) return;
+
+        // Leave vanilla fire visible during its 2–3 second liquid-ignition delay.
+        serverLevel.scheduleTick(pos, this, 40 + level.random.nextInt(21));
+    }
+
+    @Override
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        super.tick(state, level, pos, random);
+        if (state.getFluidState().isEmpty()
+                || !level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)
+                || !hasNearbyVanillaFire(level, pos)) return;
+
+        LiquidFireBlock fire = fireForKind();
+        if (fire != null) fire.ignite(level, pos, 0, random);
+    }
+
+    private static boolean hasNearbyVanillaFire(Level level, BlockPos pos) {
+        for (Direction direction : Direction.values()) {
+            BlockState neighbor = level.getBlockState(pos.relative(direction));
+            if (neighbor.getBlock() instanceof BaseFireBlock
+                    && !(neighbor.getBlock() instanceof LiquidFireBlock)) return true;
         }
+        return false;
     }
 
     private LiquidFireBlock fireForKind() {
