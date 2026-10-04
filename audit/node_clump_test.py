@@ -94,8 +94,10 @@ assert "NodeClumpIndex.clearAll();" in (ROOT / "src/main/java/com/gonzotech/Gonz
 
 # ── Маршрутизатор: кламп не капирует + плоская потеря при первом входе ──
 assert "if (NodeClumpIndex.isMember(level, s.pipe())) continue;" in routing
-# 0.3.101: трижды (индекс пересечений + оба цикла хвоста остатка — NPE-крэш автора)
-assert routing.count("if (NodeClumpIndex.isMember(level, s.pipe())) continue;") == 3
+# 0.3.144: клампы исключены из лимитного индекса и bounded zero-step раунда;
+# старые два хвостовых цикла больше не существуют.
+assert routing.count("if (NodeClumpIndex.isMember(level, s.pipe())) continue;") == 1
+assert routing.count("if (NodeClumpIndex.isMember(level, step.pipe())) continue;") == 2
 assert "long root = NodeClumpIndex.rootOf(level, path.get(i).pipe());" in routing
 assert "if (clumpsSeen.add(root)) {" in routing
 assert "NodeClumpIndex.lossMilliOfRoot(level, root);" in routing

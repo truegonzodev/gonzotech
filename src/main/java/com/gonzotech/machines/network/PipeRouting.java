@@ -443,10 +443,14 @@ public final class PipeRouting {
      * </ul>
      * Позиция, у которой остаток исчерпан, «замораживает» идущие через неё
      * дорожки (они не могут взять больше) — уровень продолжает расти у
-     * остальных. Рунд заканчивается исчерпанием бюджета либо полным
-     * замораживанием; рундов ≤ 2n+1 (каждый рунд либо замораживает ≥1 дорожку,
-     * либо добирает остаток), стоимость O(n × длина маршрутов) — для реальных
-     * сетей ничтожно.
+     * остальных. Положительный шаг обрабатывается пачкой. Если целочисленный
+     * шаг равен нулю, сначала исключаются дорожки полных сегментов, затем один
+     * ограниченный ротационный раунд раздаёт по одной минимальной целочисленной
+     * единице ресурса, если остаток меньше числа активных дорожек или узкой доли
+     * ёмкости. После него левелинг пересчитывается, поэтому время не растёт
+     * пропорционально численному бюджету. Каждый нулевой шаг либо расходует
+     * малый остаток, либо заполняет сегмент и исключает дорожки; поиск BFS для
+     * этого не нужен.
      * <p>
      * Порядок дорожек стабилен (порядок обхода), ротация остатка —
      * {@code rotation}. Выдача дорожкам последовательная: приёмник, чей intake
@@ -528,21 +532,42 @@ public final class PipeRouting {
             }
             if (x <= 0) {
                 if (diagnostics != null) {
-                    levelingStop = remaining / activeCount == 0 ? "budget-below-active-count" : "pipe-capacity";
-                    for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
-                        int count = 0;
-                        for (int i : e.getValue()) {
-                            if (active[i]) count++;
-                        }
-                        long residual = rem0.get(e.getKey()) - usage.get(e.getKey());
-                        if (count > 0 && residual / count <= 0) {
-                            diagnostics.addLimitingPipe(BlockPos.of(e.getKey()), residual, count);
-                        }
+                    recordZeroStepLimiters(crossers, rem0, usage, active, diagnostics);
+                }
+
+                // Нулевой шаг из-за заполненного сегмента не завершает левелинг:
+                // замораживаются только пересекающие его дорожки, затем уровень
+                // пересчитывается для маршрутов, у которых ещё есть пропускная способность.
+                int frozen = freezeSaturatedLanes(crossers, rem0, usage, active);
+                activeCount -= frozen;
+                if (frozen > 0) {
+                    if (diagnostics != null) {
+                        diagnostics.levelingRound(x, roundRemainingBefore, remaining,
+                            roundActiveBefore, activeCount);
                     }
-                    diagnostics.levelingRound(x, roundRemainingBefore, remaining,
+                    continue;
+                }
+
+                // Нулевой шаг возможен из-за малого бюджета на дорожку или из-за
+                // положительной, но слишком малой доли ёмкости трубы. В обоих случаях
+                // один ротационный раунд проверяет не более n дорожек; после него
+                // полные маршруты замораживаются, а левелинг повторяется. Работа не
+                // выполняется по одной минимальной единице всего бюджета ресурса.
+                long beforeRemainder = remaining;
+                remaining = distributeZeroStepUnitRound(
+                    level, lanes, active, given, rem0, usage, remaining, rotation);
+                int frozenAfterRemainder = freezeSaturatedLanes(crossers, rem0, usage, active);
+                activeCount -= frozenAfterRemainder;
+                if (diagnostics != null) {
+                    long step = remaining < beforeRemainder ? 1L : 0L;
+                    diagnostics.levelingRound(step, roundRemainingBefore, remaining,
                         roundActiveBefore, activeCount);
                 }
-                break;
+                if (remaining == beforeRemainder && frozenAfterRemainder == 0) {
+                    if (diagnostics != null) levelingStop = "capacity-stalled";
+                    break;
+                }
+                continue;
             }
             for (int i = 0; i < n; i++) {
                 if (!active[i]) continue;
@@ -553,17 +578,8 @@ public final class PipeRouting {
                     for (PathStep s : path) usage.merge(s.pipe().asLong(), x, Long::sum);
                 }
             }
-            // Заморозить дорожки, чей маршрут уперся в исчерпанную позицию:
-            // проходим только позиции, дорожки берём из индекса пересечений.
-            for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
-                if (rem0.get(e.getKey()) - usage.get(e.getKey()) > 0) continue;
-                for (int i : e.getValue()) {
-                    if (active[i]) {
-                        active[i] = false;
-                        activeCount--;
-                    }
-                }
-            }
+            // Заморозить дорожки, чей маршрут уперся в исчерпанную позицию.
+            activeCount -= freezeSaturatedLanes(crossers, rem0, usage, active);
             if (diagnostics != null) {
                 diagnostics.levelingRound(x, roundRemainingBefore, remaining,
                     roundActiveBefore, activeCount);
@@ -589,51 +605,11 @@ public final class PipeRouting {
         }
         long warningNanos = diagnostics == null ? 0L : System.nanoTime() - warningStarted;
 
-        // Остаток (меньше числа активных): по 1 единице с ротацией, пока есть
-        // комната на сегментах. Прямые соседи (без пути) комнаты не теряют.
-        int start = (int) Math.floorMod(rotation, n);
+        // 0.3.144: округление нулевого шага теперь выполняется внутри левелинга.
+        // Диагностическую фазу сохраняем для совместимости логов; нераспределённый
+        // бюджет остаётся у источника и не списывается.
         long tailStarted = diagnostics == null ? 0L : System.nanoTime();
-        boolean tailStalled = false;
-        while (remaining > 0) {
-            if (diagnostics != null) diagnostics.tailPass();
-            long before = remaining;
-            for (int k = 0; k < n && remaining > 0; k++) {
-                if (diagnostics != null) diagnostics.tailLaneCheck();
-                int i = Math.floorMod(start + k, n);
-                if (!active[i]) continue;
-                List<PathStep> path = lanes.get(i).path();
-                if (path == null) {
-                    given[i]++;
-                    remaining--;
-                    continue;
-                }
-                boolean room = true;
-                for (PathStep s : path) {
-                    if (diagnostics != null) diagnostics.tailPipeCheck();
-                    // 0.3.101: члены клампа не капируют (индекс безлимитен) —
-                    // и в rem0/usage их нет: NPE-крэш автора 02.10 (распаковка
-                    // null из Map.get в хвостовом цикле остатка).
-                    if (NodeClumpIndex.isMember(level, s.pipe())) continue;
-                    long key = s.pipe().asLong();
-                    if (rem0.get(key) - usage.get(key) <= 0) {
-                        room = false;
-                        if (diagnostics != null) diagnostics.tailBlockedBy(s.pipe());
-                        break;
-                    }
-                }
-                if (!room) continue;
-                for (PathStep s : path) {
-                    if (NodeClumpIndex.isMember(level, s.pipe())) continue;
-                    usage.merge(s.pipe().asLong(), 1L, Long::sum);
-                }
-                given[i]++;
-                remaining--;
-            }
-            if (remaining == before) {
-                tailStalled = true;
-                break;
-            }
-        }
+        boolean tailStalled = remaining > 0;
         long tailNanos = diagnostics == null ? 0L : System.nanoTime() - tailStarted;
         if (diagnostics != null) {
             diagnostics.tailFinished(remaining, tailStalled, tailNanos);
@@ -662,6 +638,89 @@ public final class PipeRouting {
             diagnostics.phaseTimes(crossingIndexNanos, levelingNanos, warningNanos, tailNanos, receiverNanos);
         }
         return moved;
+    }
+
+    /** Замораживает все дорожки, проходящие через сегменты без остаточной ёмкости. */
+    private static int freezeSaturatedLanes(Map<Long, List<Integer>> crossers,
+                                            Map<Long, Long> initialCapacity,
+                                            Map<Long, Long> usage,
+                                            boolean[] active) {
+        int frozen = 0;
+        for (Map.Entry<Long, List<Integer>> entry : crossers.entrySet()) {
+            long key = entry.getKey();
+            long available = initialCapacity.get(key) - usage.getOrDefault(key, 0L);
+            if (available > 0) continue;
+            for (int lane : entry.getValue()) {
+                if (active[lane]) {
+                    active[lane] = false;
+                    frozen++;
+                }
+            }
+        }
+        return frozen;
+    }
+
+    /** Записывает ограничители нулевого шага до удаления заполненных дорожек. */
+    private static void recordZeroStepLimiters(Map<Long, List<Integer>> crossers,
+                                               Map<Long, Long> initialCapacity,
+                                               Map<Long, Long> usage,
+                                               boolean[] active,
+                                               PipeRoutingDiagnostics.Trace diagnostics) {
+        for (Map.Entry<Long, List<Integer>> entry : crossers.entrySet()) {
+            int activeCrossers = 0;
+            for (int lane : entry.getValue()) {
+                if (active[lane]) activeCrossers++;
+            }
+            if (activeCrossers == 0) continue;
+            long available = initialCapacity.get(entry.getKey())
+                - usage.getOrDefault(entry.getKey(), 0L);
+            if (available / activeCrossers <= 0) {
+                diagnostics.addLimitingPipe(BlockPos.of(entry.getKey()), available, activeCrossers);
+            }
+        }
+    }
+
+    /**
+     * Один ротационный раунд по одной минимальной целочисленной единице ресурса
+     * для каждого нулевого шага: малого остатка бюджета либо положительной ёмкости,
+     * приходящейся менее чем на одну единицу на проходящую дорожку. Стоимость
+     * ограничена числом дорожек, а не величиной бюджета.
+     */
+    private static long distributeZeroStepUnitRound(
+            Level level, List<Lane> lanes, boolean[] active, long[] given,
+            Map<Long, Long> initialCapacity, Map<Long, Long> usage,
+            long remaining, long rotation) {
+        int n = lanes.size();
+        int start = (int) Math.floorMod(rotation, n);
+        for (int k = 0; k < n && remaining > 0; k++) {
+            int laneIndex = Math.floorMod(start + k, n);
+            if (!active[laneIndex]) continue;
+            List<PathStep> path = lanes.get(laneIndex).path();
+            if (path != null && !pathHasCapacityForUnit(level, path, initialCapacity, usage)) continue;
+
+            given[laneIndex]++;
+            remaining--;
+            if (path != null) {
+                for (PathStep step : path) {
+                    if (NodeClumpIndex.isMember(level, step.pipe())) continue;
+                    usage.merge(step.pipe().asLong(), 1L, Long::sum);
+                }
+            }
+        }
+        return remaining;
+    }
+
+    /** Проверяет, может ли ещё одна целочисленная единица ресурса пройти путь. */
+    private static boolean pathHasCapacityForUnit(Level level, List<PathStep> path,
+                                                  Map<Long, Long> initialCapacity,
+                                                  Map<Long, Long> usage) {
+        for (PathStep step : path) {
+            if (NodeClumpIndex.isMember(level, step.pipe())) continue;
+            long key = step.pipe().asLong();
+            Long initial = initialCapacity.get(key);
+            if (initial == null || initial - usage.getOrDefault(key, 0L) <= 0) return false;
+        }
+        return true;
     }
 
     private static String describeLane(Lane lane) {
