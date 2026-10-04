@@ -4,6 +4,7 @@ import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.radiation.RadUnits;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -111,8 +112,9 @@ public class ModFluidBlock extends LiquidBlock {
 
     private void tryIgniteFromNearbyFire(BlockState state, Level level, BlockPos pos) {
         LiquidFireBlock fire = fireForKind();
-        if (level.isClientSide || fire == null || !state.getFluidState().isSource()
-                || !level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) return;
+        if (level.isClientSide || fire == null || !state.getFluidState().isSource()) return;
+        if (!(level instanceof ServerLevel serverLevel)
+                || !serverLevel.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) return;
         for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
             if (level.getBlockState(pos.relative(direction)).getBlock() instanceof BaseFireBlock) {
                 fire.ignite(level, pos);

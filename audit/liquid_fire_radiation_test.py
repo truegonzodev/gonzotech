@@ -68,6 +68,9 @@ pin("Items.FLINT_AND_STEEL" in fluid_block and "Items.FIRE_CHARGE" in fluid_bloc
     "both source liquids accept flint and steel and fire charges")
 pin("instanceof BaseFireBlock" in fluid_block and "fire.ignite(level, pos)" in fluid_block,
     "neighboring ordinary or custom fire can ignite an exposed source")
+pin("instanceof ServerLevel serverLevel" in fluid_block
+    and "serverLevel.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)" in fluid_block,
+    "fire-tick gamerule is read from ServerLevel rather than Level")
 fire = read_java("core/fluid/LiquidFireBlock.java")
 pin("private static final int BURN_STEPS = 15" in fire
     and "MIN_STEP_DELAY = 7" in fire and "STEP_DELAY_RANGE = 7" in fire,
