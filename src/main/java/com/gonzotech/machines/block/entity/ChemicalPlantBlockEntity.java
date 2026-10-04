@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Блок-энтити Химического завода (тир 3):
  * <ul>
- *   <li>Приём и хранение GTU: максимум 2000 GTU, приём до 96 GTU/t;</li>
+ *   <li>Приём и хранение GTU: максимум 2560 GTU, приём до 96 GTU/t;</li>
  *   <li>Слоты катализаторов: 0, 1, 2 (платиновые и палладиевые самородки);
  *       обычным рецептам нужны заняты все 3 слота, опилочным — 1 самородок
  *       (правила автора 24.09.2026, см. {@link ChemicalPlantRecipes});</li>
@@ -43,7 +43,7 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     public static final int GRID_COUNT = 9;
     public static final int SLOT_OUTPUT = 12;
 
-    public static final long GTU_CAPACITY = 2_000L;
+    public static final long GTU_CAPACITY = 2_560L;
     public static final long GTU_CAPACITY_MILLI = GTU_CAPACITY * MachineDefs.MILLI;
     public static final long MAX_GTU_INTAKE_MILLI = 96L * MachineDefs.MILLI;
     public static final int REACTION_TICKS = ChemicalPlantRecipes.DEFAULT_REACTION_TICKS;

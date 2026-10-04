@@ -39,7 +39,7 @@ pin("int reactionTicks," in recipes_java and "long gtuPerTickMilli" in recipes_j
 pin("recipe.gtuPerTickMilli()" in plant and "recipe.reactionTicks()" in plant,
     "machine consumes recipe-specific energy and duration")
 pin("recipe.catalystRequired() > 0" in plant, "zero-catalyst recipe bypasses random catalyst consumption")
-pin("GTU_CAPACITY = 2_000L" in plant, "chemical plant buffer is capped at 2,000 GTU")
+pin("GTU_CAPACITY = 2_560L" in plant, "chemical plant buffer is capped at 2,560 GTU")
 pin("return (int) ChemicalPlantBlockEntity.GTU_CAPACITY;" in menu,
     "GTU gauge maximum uses the actual buffer capacity")
 pin('Math.min(tag.getLong("GtuMilli"), GTU_CAPACITY_MILLI)' in plant,

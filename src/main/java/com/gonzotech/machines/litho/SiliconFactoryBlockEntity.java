@@ -306,6 +306,11 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SiliconFactoryBlockEntity be) {
         if (!(level instanceof ServerLevel server)) return;
+        if (be.restorePending && !SiliconFactoryStructure.restoreController(server, be)) {
+            // Не тратим энергию и не запускаем конвейер, пока части структуры
+            // не загружены и transient-индекс не восстановлен.
+            return;
+        }
         // Чистота воздуха: известная комната проверяется каждый тик (пролом/выгрузка
         // останавливают работу), поиск вне комнаты — раз в секунду, как у фильтра.
         if (be.room != null || server.getGameTime() % 20 == 0) {
@@ -317,11 +322,6 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
             be.gtu.extract(IDLE_MILLI_PER_TICK, false);
         }
         if (be.formed) {
-            if (be.restorePending) {
-                // Не гасим флаг при неудаче: чанк части может быть ещё не загружен —
-                // ретраим каждый тик до успеха либо до распада структуры.
-                SiliconFactoryStructure.restoreController(server, be);
-            }
             // Один чип в полёте за раз (конвейер автора): новый цикл — только когда
             // в транзите никого нет.
             if (be.step < 0

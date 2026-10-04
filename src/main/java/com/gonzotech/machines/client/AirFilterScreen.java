@@ -43,10 +43,12 @@ public final class AirFilterScreen extends MachineScreen<AirFilterMenu> {
                     AirFilterBlockEntity.CAPACITY_GTU)), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, x + 62, y + 17, 52, 16)) {
             graphics.renderComponentTooltip(font, List.of(quality(), Component.translatable(
-                    "gui.gonzotech.air_filter.coal_used", Math.round(menu.coalUsedHundredths() / 100f))), mouseX, mouseY);
+                    "gui.gonzotech.air_filter.coal_used",
+                    GtUnits.x1(menu.coalUsedHundredths() / 100.0D))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, x + 62, y + 53, 52, 16)) {
             graphics.renderComponentTooltip(font, List.of(quality(), Component.translatable(
-                    "gui.gonzotech.air_filter.catalyst_used", Math.round(menu.catalystUsedHundredths() / 100f))), mouseX, mouseY);
+                    "gui.gonzotech.air_filter.catalyst_used",
+                    GtUnits.x1(menu.catalystUsedHundredths() / 100.0D))), mouseX, mouseY);
         }
     }
 
@@ -54,6 +56,6 @@ public final class AirFilterScreen extends MachineScreen<AirFilterMenu> {
         return menu.qualityHundredths() < 0
                 ? Component.translatable("gui.gonzotech.air_filter.no_room")
                 : Component.translatable("message.gonzotech.telifon.air_quality",
-                        Math.round(menu.qualityHundredths() / 100f) + "%");
+                        GtUnits.x1(menu.qualityHundredths() / 100.0D) + "%");
     }
 }

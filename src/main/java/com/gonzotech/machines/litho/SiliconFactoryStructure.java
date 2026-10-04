@@ -381,19 +381,92 @@ public final class SiliconFactoryStructure {
     }
 
     /**
-     * Восстановление transient-индекса после загрузки мира (вызывается тиком BE).
-     * Коробка обязана совпасть раскладкой; иначе структура распадается.
+     * Проверяет сохранённый вариант по оригинальным блокам, а не выводит его из
+     * оболочек. В сформированной структуре все оболочки являются джокерами для
+     * любого не-контроллерного слота, поэтому {@link #validateBox} всегда
+     * выбирал бы первый вариант и ошибочно распускал варианты 2 и 3 при входе в мир.
+     */
+    private static boolean hasValidSavedLayout(SiliconFactoryBlockEntity controller, BlockPos origin) {
+        int variant = controller.variant();
+        if (variant < 1 || variant > LAYOUTS.length || controller.memberCount() != SLOTS - 1) return false;
+
+        int member = 0;
+        for (int slot = 0; slot < SLOTS; slot++) {
+            if (slot == SLOT_ROOT) continue;
+            if (!controller.memberPos(member).equals(origin.offset(offsetOf(slot)))
+                || controller.originalState(member) == null) {
+                return false;
+            }
+            member++;
+        }
+
+        for (int rotation = 0; rotation < 2; rotation++) {
+            boolean matchesLayout = true;
+            member = 0;
+            for (int slot = 0; slot < SLOTS; slot++) {
+                if (slot == SLOT_ROOT) continue;
+                int expected = rotation == 0 ? slot : rotatedSlot(slot);
+                if (!matches(LAYOUTS[variant - 1][expected], controller.originalState(member).getBlock())) {
+                    matchesLayout = false;
+                    break;
+                }
+                member++;
+            }
+            if (matchesLayout) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Восстанавливает transient-индекс после загрузки мира (вызывается тиком BE).
+     * Оригинальные блоки из NBT фиксируют вариант, а оболочки проверяются по
+     * позициям и при необходимости получают обратно сохранённые свойства среза.
      */
     static boolean restoreController(ServerLevel level, SiliconFactoryBlockEntity controller) {
         if (!controller.isFormed() || controller.origin() == null) return false;
         BlockPos origin = controller.origin();
         if (!allChunksLoaded(level, origin, origin.offset(2, 1, 2))) return false;
-        Build build = validateBox(level, origin);
-        if (build == null || build.variant() != controller.variant()) {
+
+        BlockPos root = origin.offset(offsetOf(SLOT_ROOT));
+        BlockState rootState = level.getBlockState(root);
+        boolean valid = root.equals(controller.getBlockPos())
+            && rootState.is(ModBlocks.THIRD_SILICON_FACTORY.get())
+            && hasValidSavedLayout(controller, origin);
+        for (int slot = 0; slot < SLOTS && valid; slot++) {
+            if (slot == SLOT_ROOT) continue;
+            BlockState state = level.getBlockState(origin.offset(offsetOf(slot)));
+            valid = state.is(ModBlocks.THIRD_SILICON_FACTORY_SHELL.get());
+        }
+        if (!valid) {
             invalidate(level, controller, null);
             return false;
         }
-        index(level, origin, origin.offset(offsetOf(SLOT_ROOT)));
+
+        // Синхронизируем сохранённые свойства визуала на случай старого/частично
+        // записанного chunk state; это не должно превращать восстановление в распад.
+        BlockState expectedRoot = rootState.setValue(SiliconFactoryBlock.FORMED, true)
+            .setValue(SiliconFactoryBlock.VARIANT, controller.variant());
+        if (!rootState.equals(expectedRoot)) {
+            level.setBlock(root, expectedRoot, Block.UPDATE_CLIENTS);
+        }
+        index(level, origin, root);
+        int member = 0;
+        for (int slot = 0; slot < SLOTS; slot++) {
+            if (slot == SLOT_ROOT) continue;
+            BlockPos pos = origin.offset(offsetOf(slot));
+            BlockState expectedShell = ModBlocks.THIRD_SILICON_FACTORY_SHELL.get().defaultBlockState()
+                .setValue(SiliconFactoryShellBlock.SLICE, slot)
+                .setValue(SiliconFactoryShellBlock.VARIANT, controller.variant());
+            if (!level.getBlockState(pos).equals(expectedShell)) {
+                level.setBlock(pos, expectedShell, Block.UPDATE_CLIENTS);
+            }
+            RoomTopology.Kind kind = CleanRoomDetector.kind(controller.originalState(member));
+            LAST_ORIGINAL_KIND.put(pos.asLong(), kind);
+            if (level.getBlockEntity(pos) instanceof SiliconFactoryShellBlockEntity proxy) {
+                proxy.setPreserved(kind);
+            }
+            member++;
+        }
         controller.onIndexRestored();
         return true;
     }

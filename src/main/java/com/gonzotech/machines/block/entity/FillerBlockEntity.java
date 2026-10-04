@@ -520,23 +520,28 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
 
             if (canAmount > 0 && canFluidId != FLUID_EMPTY && (tankType == FLUID_EMPTY || tankType == canFluidId)) {
                 int transfer = Math.min(Math.min(canAmount, tankSpace), CANISTER_DRAIN_PER_TICK);
-                if (transfer > 0 && out.isEmpty()) {
+                int remaining = canAmount - transfer;
+                // Keep a partially filled canister in its input slot. The output
+                // slot is needed only for the final, empty canister.
+                if (transfer > 0 && (remaining > 0 || canAcceptItem(out, ModItems.CANISTER.get(), 1))) {
+                    int transferredSalt = (int) Math.round((double) canSalt * transfer / canAmount);
+                    int remainingSalt = canSalt - transferredSalt;
                     if (tankType == FLUID_EMPTY) tankType = canFluidId;
                     tankAmount += transfer;
-                    if (canFluidId == FLUID_WATER && canAmount > 0) {
-                        int transferredSalt = (int) Math.round((double) canSalt * transfer / canAmount);
+                    if (canFluidId == FLUID_WATER) {
                         tankSalt += transferredSalt;
                     }
                     applyTankChange(isLeftTank, tankType, tankAmount, tankSalt);
 
                     ItemStack resultCan = in.copy();
                     resultCan.setCount(1);
-                    int remaining = canAmount - transfer;
-                    int remainingSalt = canSalt - (int) Math.round((double) canSalt * transfer / canAmount);
                     CanisterItem.setFluidContent(resultCan, remaining > 0 ? canFluid : "empty", remaining, remainingSalt);
-
-                    in.shrink(1);
-                    items.set(outSlot, resultCan);
+                    if (remaining > 0) {
+                        items.set(inSlot, resultCan);
+                    } else {
+                        in.shrink(1);
+                        addOutputItem(outSlot, resultCan);
+                    }
                     return true;
                 }
             }
