@@ -107,7 +107,7 @@ public final class PipeRouting {
      * {@code lossMilli} — суммарная потеря маршрута за блок проноса
      * ({@link PipeLoss}); у прямых соседей (без сегментов) — 0.
      */
-    private record Lane(Transfer.Receiver wrapped, List<PathStep> path, long lossMilli) {
+    private record Lane(Transfer.Receiver wrapped, List<PathStep> path, long lossMilli, BlockPos target) {
     }
 
     /**
@@ -130,6 +130,9 @@ public final class PipeRouting {
     public static long drain(Level level, BlockPos fromPos, PipeType type, long budget, long rotation,
                              BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
         if (budget <= 0) return 0;
+        PipeRoutingDiagnostics.Trace diagnostics =
+            PipeRoutingDiagnostics.begin(level, fromPos, type, budget, "machine");
+        long routeStarted = diagnostics == null ? 0L : System.nanoTime();
 
         // Entry-трубы — прилегающие трубы этого типа, чья грань принимает слив из
         // машины (AUTO/PULL); каждая становится стартом своих дорожек. Бюджет
@@ -170,11 +173,22 @@ public final class PipeRouting {
         // достижимый из двух entry-труб, получает две дорожки (честные паралели);
         // общие сегменты между дорожками ограничивает закон при раскладке.
         for (BlockPos entry : entries) {
-            collectLanes(level, fromPos, type, entry, receiverOf, rawByPos, direct, lanes);
+            int visited = collectLanes(level, fromPos, type, entry, receiverOf, rawByPos, direct, lanes, diagnostics);
+            if (diagnostics != null) {
+                diagnostics.addBfsEntry(entry, visited, visited > MAX_BFS_CELLS_PER_ENTRY);
+            }
         }
 
-        if (lanes.isEmpty()) return 0;
-        return distributeLanes(level, type, lanes, budget, rotation);
+        long routeNanos = diagnostics == null ? 0L : System.nanoTime() - routeStarted;
+        if (lanes.isEmpty()) {
+            if (diagnostics != null) diagnostics.finish("no-lanes", 0L, routeNanos, 0L);
+            return 0;
+        }
+        long distributionStarted = diagnostics == null ? 0L : System.nanoTime();
+        long sourceTaken = distributeLanes(level, type, lanes, budget, rotation, diagnostics);
+        long distributionNanos = diagnostics == null ? 0L : System.nanoTime() - distributionStarted;
+        if (diagnostics != null) diagnostics.finish("ok", sourceTaken, routeNanos, distributionNanos);
+        return sourceTaken;
     }
 
     /**
@@ -206,6 +220,9 @@ public final class PipeRouting {
                                                BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
                                                BiFunction<Level, BlockPos, Boolean> isMember) {
         if (budget <= 0 || !isPipe(level.getBlockState(port), type)) return 0;
+        PipeRoutingDiagnostics.Trace diagnostics =
+            PipeRoutingDiagnostics.begin(level, port, type, budget, "multiblock-port");
+        long routeStarted = diagnostics == null ? 0L : System.nanoTime();
 
         Set<Long> direct = new HashSet<>();
         List<Lane> lanes = new ArrayList<>();
@@ -227,7 +244,7 @@ public final class PipeRouting {
                 Transfer.Receiver portRaw = TurbineStructure.steamReceiverAt(level, pipe);
                 if (portRaw != null) {
                     addPortLane(level, pipe, port, PipeType.STEAM, portRaw,
-                        buildPath(level, pipe, pipe, parent), direct, lanes);
+                        buildPath(level, pipe, pipe, parent), direct, lanes, diagnostics);
                 }
             }
             PipeMode mode = modeOf(pstate, type);
@@ -257,11 +274,20 @@ public final class PipeRouting {
                 // только когда приёмник подтверждён (ленивость 0.3.90). Старый вызов
                 // остался в до-рефакторочной расстановке аргументов (сборка автора
                 // упала: PipeType не конвертируется в BlockPos).
-                addMachineLane(level, pipe, next, port, type, receiverOf, parent, direct, lanes);
+                addMachineLane(level, pipe, next, port, type, receiverOf, parent, direct, lanes, diagnostics);
             }
         }
-        if (lanes.isEmpty()) return 0;
-        return distributeLanes(level, type, lanes, budget, rotation);
+        if (diagnostics != null) diagnostics.addBfsEntry(port, visited.size(), false);
+        long routeNanos = diagnostics == null ? 0L : System.nanoTime() - routeStarted;
+        if (lanes.isEmpty()) {
+            if (diagnostics != null) diagnostics.finish("no-lanes", 0L, routeNanos, 0L);
+            return 0;
+        }
+        long distributionStarted = diagnostics == null ? 0L : System.nanoTime();
+        long sourceTaken = distributeLanes(level, type, lanes, budget, rotation, diagnostics);
+        long distributionNanos = diagnostics == null ? 0L : System.nanoTime() - distributionStarted;
+        if (diagnostics != null) diagnostics.finish("ok", sourceTaken, routeNanos, distributionNanos);
+        return sourceTaken;
     }
 
     /**
@@ -279,7 +305,7 @@ public final class PipeRouting {
         if (raw == null) return;
         rawByPos.put(pos.asLong(), raw);
         direct.add(pos.asLong());
-        lanes.add(new Lane(raw, null, 0));
+        lanes.add(new Lane(raw, null, 0, pos));
     }
 
     /**
@@ -296,10 +322,11 @@ public final class PipeRouting {
     private static final int MAX_BFS_CELLS_PER_ENTRY = 2048;
     private static final int MAX_LANES_PER_DRAIN = 1024;
 
-    private static void collectLanes(Level level, BlockPos fromPos, PipeType type, BlockPos entry,
-                                     BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
-                                     Map<Long, Transfer.Receiver> rawByPos,
-                                     Set<Long> direct, List<Lane> lanes) {
+    private static int collectLanes(Level level, BlockPos fromPos, PipeType type, BlockPos entry,
+                                    BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
+                                    Map<Long, Transfer.Receiver> rawByPos,
+                                    Set<Long> direct, List<Lane> lanes,
+                                    PipeRoutingDiagnostics.Trace diagnostics) {
         // Родитель каждой посещённой трубы (труба ближе к entry), null у самой entry.
         Map<Long, BlockPos> parent = new HashMap<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
@@ -331,7 +358,7 @@ public final class PipeRouting {
             };
             if (portRaw != null) {
                 List<PathStep> selfPath = buildPath(level, pipe, pipe, parent);
-                addPortLane(level, pipe, fromPos, type, portRaw, selfPath, direct, lanes);
+                addPortLane(level, pipe, fromPos, type, portRaw, selfPath, direct, lanes, diagnostics);
             }
             PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
@@ -354,9 +381,10 @@ public final class PipeRouting {
                 // и ЭТА труба отдаёт в машину.
                 if (!machineConnects(pstate, type, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
-                addMachineLane(level, pipe, npos, fromPos, type, receiverOf, parent, direct, lanes);
+                addMachineLane(level, pipe, npos, fromPos, type, receiverOf, parent, direct, lanes, diagnostics);
             }
         }
+        return cells;
     }
 
     /**
@@ -368,7 +396,8 @@ public final class PipeRouting {
     private static void addMachineLane(Level level, BlockPos viaPipe, BlockPos pos, BlockPos fromPos, PipeType type,
                                        BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
                                        Map<Long, BlockPos> parent,
-                                       Set<Long> direct, List<Lane> lanes) {
+                                       Set<Long> direct, List<Lane> lanes,
+                                       PipeRoutingDiagnostics.Trace diagnostics) {
         if (lanes.size() >= MAX_LANES_PER_DRAIN) return;
         if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
         long key = pos.asLong();
@@ -379,7 +408,9 @@ public final class PipeRouting {
         List<PathStep> path = buildPath(level, viaPipe, pos, parent);
         long[] lossCells = pathLossCells(level, path, type);
         long loss = PipeLoss.sum(lossCells);
-        lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));
+        int laneIndex = lanes.size();
+        Transfer.Receiver observed = diagnostics == null ? raw : observeReceiver(raw, diagnostics, laneIndex);
+        lanes.add(new Lane(recording(level, observed, type, path, lossCells), path, loss, pos));
     }
 
     /**
@@ -388,12 +419,15 @@ public final class PipeRouting {
      */
     private static void addPortLane(Level level, BlockPos pos, BlockPos fromPos, PipeType type,
                                     Transfer.Receiver raw, List<PathStep> path,
-                                    Set<Long> direct, List<Lane> lanes) {
+                                    Set<Long> direct, List<Lane> lanes,
+                                    PipeRoutingDiagnostics.Trace diagnostics) {
         if (lanes.size() >= MAX_LANES_PER_DRAIN) return;
         if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
         long[] lossCells = pathLossCells(level, path, type);
         long loss = PipeLoss.sum(lossCells);
-        lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));
+        int laneIndex = lanes.size();
+        Transfer.Receiver observed = diagnostics == null ? raw : observeReceiver(raw, diagnostics, laneIndex);
+        lanes.add(new Lane(recording(level, observed, type, path, lossCells), path, loss, pos));
     }
 
     /**
@@ -423,7 +457,8 @@ public final class PipeRouting {
      *              сосед без сегментов)
      * @return сколько единиц списать с источника (принятое + потери проноса)
      */
-    private static long distributeLanes(Level level, PipeType type, List<Lane> lanes, long budget, long rotation) {
+    private static long distributeLanes(Level level, PipeType type, List<Lane> lanes, long budget, long rotation,
+                                        PipeRoutingDiagnostics.Trace diagnostics) {
         int n = lanes.size();
         if (n == 0 || budget <= 0) return 0;
 
@@ -444,10 +479,16 @@ public final class PipeRouting {
         Map<Long, Long> rem0 = new HashMap<>();
         Map<Long, Long> usage = new HashMap<>();
         Map<Long, List<Integer>> crossers = new HashMap<>();
+        long crossingStarted = diagnostics == null ? 0L : System.nanoTime();
+        long totalPathSteps = 0L;
+        long crossingReferences = 0L;
         for (int i = 0; i < n; i++) {
-            List<PathStep> path = lanes.get(i).path();
+            Lane lane = lanes.get(i);
+            List<PathStep> path = lane.path();
+            if (diagnostics != null) diagnostics.addLane(i, describeLane(lane));
             if (path == null) continue;
             for (PathStep s : path) {
+                if (diagnostics != null) totalPathSteps++;
                 long key = s.pipe().asLong();
                 // 0.3.98: позиции сшитого клампа НЕ капируют закон (внутри
                 // безлимит ×N членов; границу капируют реальные трубы) —
@@ -457,11 +498,20 @@ public final class PipeRouting {
                     PipeFlowLedger.remaining(level, s.pipe(), level.getBlockState(s.pipe()), type));
                 usage.putIfAbsent(key, 0L);
                 crossers.computeIfAbsent(key, k -> new ArrayList<>()).add(i);
+                if (diagnostics != null) crossingReferences++;
             }
+        }
+        long crossingIndexNanos = diagnostics == null ? 0L : System.nanoTime() - crossingStarted;
+        if (diagnostics != null) {
+            diagnostics.setTopology(n, totalPathSteps, crossers.size(), crossingReferences);
         }
 
         // Рунды левелинга.
+        long levelingStarted = diagnostics == null ? 0L : System.nanoTime();
+        String levelingStop = diagnostics == null ? null : "unknown";
         while (remaining > 0 && activeCount > 0) {
+            long roundRemainingBefore = remaining;
+            int roundActiveBefore = activeCount;
             long x = remaining / activeCount;
             // Уровень не может поднять позицию выше её остатка, делённого на
             // число активных дорожек, идущих через неё.
@@ -476,7 +526,24 @@ public final class PipeRouting {
                     if (lim < x) x = lim;
                 }
             }
-            if (x <= 0) break;
+            if (x <= 0) {
+                if (diagnostics != null) {
+                    levelingStop = remaining / activeCount == 0 ? "budget-below-active-count" : "pipe-capacity";
+                    for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
+                        int count = 0;
+                        for (int i : e.getValue()) {
+                            if (active[i]) count++;
+                        }
+                        long residual = rem0.get(e.getKey()) - usage.get(e.getKey());
+                        if (count > 0 && residual / count <= 0) {
+                            diagnostics.addLimitingPipe(BlockPos.of(e.getKey()), residual, count);
+                        }
+                    }
+                    diagnostics.levelingRound(x, roundRemainingBefore, remaining,
+                        roundActiveBefore, activeCount);
+                }
+                break;
+            }
             for (int i = 0; i < n; i++) {
                 if (!active[i]) continue;
                 given[i] += x;
@@ -497,23 +564,41 @@ public final class PipeRouting {
                     }
                 }
             }
+            if (diagnostics != null) {
+                diagnostics.levelingRound(x, roundRemainingBefore, remaining,
+                    roundActiveBefore, activeCount);
+            }
+        }
+        long levelingNanos = diagnostics == null ? 0L : System.nanoTime() - levelingStarted;
+        if (diagnostics != null) {
+            if ("unknown".equals(levelingStop)) {
+                if (remaining <= 0) levelingStop = "budget-exhausted";
+                else if (activeCount <= 0) levelingStop = "all-lanes-frozen";
+            }
+            diagnostics.levelingStopped(levelingStop, remaining, activeCount);
         }
 
         // 0.3.92 (автор 04.10): позиции-«узлы», через которые проходит ≥400
         // дорожек за итерацию, помечаются горячими — красная пыль (см.
         // PipeFlowWarnings): игрок видит, где роутинг дорогой.
+        long warningStarted = diagnostics == null ? 0L : System.nanoTime();
         for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
             if (e.getValue().size() >= PipeFlowWarnings.HOT_LANE_THRESHOLD) {
                 PipeFlowWarnings.mark(level, BlockPos.of(e.getKey()), level.getGameTime() + PipeFlowWarnings.HOLD_TICKS);
             }
         }
+        long warningNanos = diagnostics == null ? 0L : System.nanoTime() - warningStarted;
 
         // Остаток (меньше числа активных): по 1 единице с ротацией, пока есть
         // комната на сегментах. Прямые соседи (без пути) комнаты не теряют.
         int start = (int) Math.floorMod(rotation, n);
+        long tailStarted = diagnostics == null ? 0L : System.nanoTime();
+        boolean tailStalled = false;
         while (remaining > 0) {
+            if (diagnostics != null) diagnostics.tailPass();
             long before = remaining;
             for (int k = 0; k < n && remaining > 0; k++) {
+                if (diagnostics != null) diagnostics.tailLaneCheck();
                 int i = Math.floorMod(start + k, n);
                 if (!active[i]) continue;
                 List<PathStep> path = lanes.get(i).path();
@@ -524,6 +609,7 @@ public final class PipeRouting {
                 }
                 boolean room = true;
                 for (PathStep s : path) {
+                    if (diagnostics != null) diagnostics.tailPipeCheck();
                     // 0.3.101: члены клампа не капируют (индекс безлимитен) —
                     // и в rem0/usage их нет: NPE-крэш автора 02.10 (распаковка
                     // null из Map.get в хвостовом цикле остатка).
@@ -531,6 +617,7 @@ public final class PipeRouting {
                     long key = s.pipe().asLong();
                     if (rem0.get(key) - usage.get(key) <= 0) {
                         room = false;
+                        if (diagnostics != null) diagnostics.tailBlockedBy(s.pipe());
                         break;
                     }
                 }
@@ -542,14 +629,52 @@ public final class PipeRouting {
                 given[i]++;
                 remaining--;
             }
-            if (remaining == before) break;
+            if (remaining == before) {
+                tailStalled = true;
+                break;
+            }
+        }
+        long tailNanos = diagnostics == null ? 0L : System.nanoTime() - tailStarted;
+        if (diagnostics != null) {
+            diagnostics.tailFinished(remaining, tailStalled, tailNanos);
+            for (int i = 0; i < n; i++) diagnostics.laneAllocation(i, given[i]);
+            for (Map.Entry<Long, List<Integer>> e : crossers.entrySet()) {
+                diagnostics.addPipeState(BlockPos.of(e.getKey()), rem0.get(e.getKey()),
+                    usage.get(e.getKey()), e.getValue().size());
+            }
         }
 
         long moved = 0;
+        long receiverStarted = diagnostics == null ? 0L : System.nanoTime();
         for (int i = 0; i < n; i++) {
-            if (given[i] > 0) moved += lanes.get(i).wrapped().receive(given[i], false);
+            if (given[i] > 0) {
+                Lane lane = lanes.get(i);
+                long charged = lane.wrapped().receive(given[i], false);
+                moved += charged;
+                if (diagnostics != null) {
+                    if (lane.path() == null) diagnostics.laneAccepted(i, given[i], charged);
+                    diagnostics.laneCharged(i, charged);
+                }
+            }
+        }
+        long receiverNanos = diagnostics == null ? 0L : System.nanoTime() - receiverStarted;
+        if (diagnostics != null) {
+            diagnostics.phaseTimes(crossingIndexNanos, levelingNanos, warningNanos, tailNanos, receiverNanos);
         }
         return moved;
+    }
+
+    private static String describeLane(Lane lane) {
+        List<BlockPos> pipes = new ArrayList<>();
+        List<String> directions = new ArrayList<>();
+        if (lane.path() != null) {
+            for (PathStep step : lane.path()) {
+                pipes.add(step.pipe());
+                directions.add(step.out().name());
+            }
+        }
+        return PipeRoutingDiagnostics.routeDescription(lane.target(), pipes, directions,
+            lane.lossMilli(), lane.path() == null);
     }
 
     /**
@@ -584,6 +709,15 @@ public final class PipeRouting {
      * {@link PipeFlowLedger} (закон на трубе, по позициям). Если приёмник не
      * взял ничего — поток нулевой: трубы не платят и потерь не несут.
      */
+    private static Transfer.Receiver observeReceiver(Transfer.Receiver real,
+                                                     PipeRoutingDiagnostics.Trace diagnostics, int laneIndex) {
+        return (amount, simulate) -> {
+            long accepted = real.receive(amount, simulate);
+            if (!simulate) diagnostics.laneAccepted(laneIndex, amount, accepted);
+            return accepted;
+        };
+    }
+
     private static Transfer.Receiver recording(Level level, Transfer.Receiver real, PipeType type, List<PathStep> path,
                                                long[] lossCells) {
         long lossMilli = PipeLoss.sum(lossCells);

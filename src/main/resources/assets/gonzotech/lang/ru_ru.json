@@ -954,6 +954,8 @@
   "message.gonzotech.clue.elementary": "Элементарно...",
   "gonzotech.configuration.cosmeticFluidParticles": "Косметические частицы жидкостей",
   "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Пенка на поверхности жидкостей Gonzo Tech. Только визуальный эффект; не влияет на радиационные частицы и свойства жидкостей.",
+  "gonzotech.configuration.pipeRoutingDiagnostics": "Диагностика маршрутизации труб",
+  "gonzotech.configuration.pipeRoutingDiagnostics.tooltip": "Подробные серверные логи маршрутизации и перестройки топологии. Объёмные и могут снижать TPS; включайте только на короткий сеанс профилирования. На игровой процесс не влияет.",
   "gui.gonzotech.faint.get_up": "Встать",
   "entity.gonzotech.alt": "Альт-житель",
   "item.gonzotech.alt_spawn_egg": "Яйцо призыва альт-жителя",

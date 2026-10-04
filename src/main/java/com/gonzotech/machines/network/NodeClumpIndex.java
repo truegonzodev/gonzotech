@@ -200,6 +200,9 @@ public final class NodeClumpIndex {
      */
     public static void onNodeChanged(Level level, BlockPos pos) {
         if (!(level instanceof ServerLevel server)) return;
+        boolean diagnostics = PipeRoutingDiagnostics.isEnabled();
+        long rebuildStarted = diagnostics ? System.nanoTime() : 0L;
+        int oldMembers = diagnostics ? sizeAt(level, pos) : 0;
         String kind = kindOf(level, pos, level.getBlockState(pos));
         if (kind == null) return;
 
@@ -219,6 +222,13 @@ public final class NodeClumpIndex {
             }
         }
         register(server, union, kind);
+        if (diagnostics) {
+            int rebuiltMembers = sizeAt(level, pos);
+            PipeRoutingDiagnostics.clumpRebuilt(level, pos, "node-change", kind, oldMembers,
+                rebuiltMembers, rebuiltMembers >= 2 ? 1 : 0,
+                rebuiltMembers >= 2 ? "merged-or-refreshed" : "singleton",
+                System.nanoTime() - rebuildStarted);
+        }
     }
 
     /** Узел удалён (в т.ч. поршнем): кламп без него может расколоться. */
@@ -238,15 +248,30 @@ public final class NodeClumpIndex {
         for (BlockPos pos : ports) {
             String kind = kindOfBlock(level.getBlockState(pos));
             if (kind == null) continue;
-            removeInternal(level, pos, kind);
+            removeInternal(level, pos, kind, "detach-port");
         }
     }
 
     private static void removeInternal(ServerLevel level, BlockPos pos, String kind) {
+        removeInternal(level, pos, kind, "node-remove");
+    }
+
+    private static void removeInternal(ServerLevel level, BlockPos pos, String kind, String operation) {
+        boolean diagnostics = PipeRoutingDiagnostics.isEnabled();
+        long rebuildStarted = diagnostics ? System.nanoTime() : 0L;
+        int oldMembers = diagnostics ? sizeAt(level, pos) : 0;
         Map<Long, Long> members = MEMBER_ROOT.get(level);
-        if (members == null) return;
+        if (members == null) {
+            if (diagnostics) PipeRoutingDiagnostics.clumpRebuilt(level, pos, operation, kind,
+                oldMembers, 0, 0, "not-indexed", System.nanoTime() - rebuildStarted);
+            return;
+        }
         Long root = members.remove(pos.asLong());
-        if (root == null) return; // одиночка — не индексировался
+        if (root == null) {
+            if (diagnostics) PipeRoutingDiagnostics.clumpRebuilt(level, pos, operation, kind,
+                oldMembers, 0, 0, "singleton-not-indexed", System.nanoTime() - rebuildStarted);
+            return; // одиночка — не индексировался
+        }
         Map<Long, Clump> byRoot = BY_ROOT.get(level);
         Clump old = byRoot == null ? null : byRoot.remove(root);
 
@@ -254,6 +279,8 @@ public final class NodeClumpIndex {
         Set<Long> rest = new HashSet<>();
         if (old != null) rest.addAll(old.members());
         rest.remove(pos.asLong());
+        int rebuiltComponents = 0;
+        int rebuiltMembers = 0;
         // 0.3.105: протухшие маппинги остатка стираются ДО раскладки
         // компонентов. Иначе инвариант register у ВТОРОЙ компоненты читает
         // старый корень (общий с первой) и «съедает» только что
@@ -265,6 +292,10 @@ public final class NodeClumpIndex {
             Set<Long> component = floodWithin(level, min, rest);
             rest.removeAll(component);
             if (component.size() >= 2) {
+                if (diagnostics) {
+                    rebuiltComponents++;
+                    rebuiltMembers += component.size();
+                }
                 register(level, component, kind);
             } else if (component.size() == 1) {
                 members.remove(component.iterator().next()); // одиночка не индексируется
@@ -286,6 +317,12 @@ public final class NodeClumpIndex {
         if (byRoot != null && byRoot.isEmpty()) BY_ROOT.remove(level);
         if (members.isEmpty()) MEMBER_ROOT.remove(level);
         markDirty(level); // 0.3.114: разбор/раскол клампа — сразу в SavedData
+        if (diagnostics) {
+            String result = rebuiltComponents == 0 ? "no-clumps-left"
+                : rebuiltComponents == 1 ? "rebuilt-one-component" : "split-into-components";
+            PipeRoutingDiagnostics.clumpRebuilt(level, pos, operation, kind, oldMembers,
+                rebuiltMembers, rebuiltComponents, result, System.nanoTime() - rebuildStarted);
+        }
     }
 
     /** Сброс на остановке сервера (карты держат ссылки на Level). */

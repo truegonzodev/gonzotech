@@ -38,6 +38,8 @@ public class GonzoTechMod {
     private static final double MAX_BLAST_REQUEST_DISTANCE = 5.0D;
 
     public GonzoTechMod(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER,
+                com.gonzotech.core.config.GonzoServerConfig.SPEC);
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,
                 com.gonzotech.core.config.GonzoClientConfig.SPEC);
         modEventBus.addListener(this::commonSetup);
@@ -76,6 +78,7 @@ public class GonzoTechMod {
         // 0.3.114: сшитые узлы восстанавливаются из dimension-data на старте сервера —
         // после перезахода клампы больше не исчезают (репорт автора, раунд 12).
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStartedEvent e) -> {
+            com.gonzotech.machines.network.PipeRoutingDiagnostics.warnIfEnabled();
             for (net.minecraft.server.level.ServerLevel lvl : e.getServer().getAllLevels()) {
                 com.gonzotech.machines.network.NodeClumpSavedData.restore(lvl);
             }

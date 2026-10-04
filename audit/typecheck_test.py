@@ -33,6 +33,8 @@ if not java or not Path(java).is_file():
 
 real_files = [
     NET / "PipeRouting.java",
+    NET / "PipeRoutingDiagnostics.java",
+    ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java",
     NET / "PipeFlowWarnings.java",
     NET / "PipeType.java",
     NET / "PipeMode.java",
