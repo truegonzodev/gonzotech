@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "gonzotech:graphite"
+  },
+  "pattern": [
+    "GGG",
+    "GGG",
+    "GGG"
+  ],
+  "result": {
+    "id": "gonzotech:graphite_block",
+    "count": 1
+  },
+  "group": "graphite_block"
+}

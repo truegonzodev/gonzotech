@@ -22,13 +22,13 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Блок-энтити Химического завода (тир 3):
  * <ul>
- *   <li>Приём и хранение GTU: макс. 2600 GTU, макс. приём 66 GTU/t;</li>
+ *   <li>Приём и хранение GTU: максимум 2000 GTU, приём до 96 GTU/t;</li>
  *   <li>Слоты катализаторов: 0, 1, 2 (платиновые и палладиевые самородки);
  *       обычным рецептам нужны заняты все 3 слота, опилочным — 1 самородок
  *       (правила автора 24.09.2026, см. {@link ChemicalPlantRecipes});</li>
  *   <li>Сетка ингредиентов 3×3: слоты 3..11;</li>
  *   <li>Слот готовой продукции: слот 12;</li>
- *   <li>Длительность любой реакции: ровно 160 тиков, расход 1.9 GTU/t (1900 mGTU/t);</li>
+ *   <li>Реакции используют индивидуальные длительность и расход энергии из записи рецепта;</li>
  *   <li>По завершении: поглощает сырьё из сетки и катализаторы по правилу рецепта
  *       (обычные — случайно 0–3 самородка; опилочные — 90 % ничего, 10 % 1).</li>
  * </ul>
@@ -43,11 +43,10 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     public static final int GRID_COUNT = 9;
     public static final int SLOT_OUTPUT = 12;
 
-    public static final long GTU_CAPACITY = 10_840L;
+    public static final long GTU_CAPACITY = 2_000L;
     public static final long GTU_CAPACITY_MILLI = GTU_CAPACITY * MachineDefs.MILLI;
     public static final long MAX_GTU_INTAKE_MILLI = 96L * MachineDefs.MILLI;
-    public static final long GTU_PER_TICK_MILLI = 1900L; // 1.9 GTU/t
-    public static final int REACTION_TICKS = 240;
+    public static final int REACTION_TICKS = ChemicalPlantRecipes.DEFAULT_REACTION_TICKS;
 
     private static final int[] SLOTS_TOP = { 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     private static final int[] SLOTS_BOTTOM = { SLOT_OUTPUT };
@@ -55,6 +54,7 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
 
     private long currentGtuMilli = 0;
     private int progress = 0;
+    private String activeRecipeId = "";
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -62,7 +62,7 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
             return switch (i) {
                 case 0 -> (int) (currentGtuMilli / MachineDefs.MILLI);
                 case 1 -> progress;
-                case 2 -> REACTION_TICKS;
+                case 2 -> currentReactionTicks();
                 default -> 0;
             };
         }
@@ -70,7 +70,8 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
         @Override
         public void set(int i, int v) {
             switch (i) {
-                case 0 -> currentGtuMilli = (long) v * MachineDefs.MILLI;
+                case 0 -> currentGtuMilli = Math.max(0L,
+                        Math.min((long) v * MachineDefs.MILLI, GTU_CAPACITY_MILLI));
                 case 1 -> progress = v;
                 default -> { }
             }
@@ -99,7 +100,13 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
     }
 
     public int totalTicks() {
-        return REACTION_TICKS;
+        return currentReactionTicks();
+    }
+
+    private int currentReactionTicks() {
+        ChemicalPlantRecipes.ChemicalRecipe recipe =
+                ChemicalPlantRecipes.findRecipe(this, GRID_START, GRID_COUNT);
+        return recipe == null ? REACTION_TICKS : recipe.reactionTicks();
     }
 
     // ─────────────────────────── GtuSink ───────────────────────────
@@ -126,12 +133,23 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
         ChemicalPlantRecipes.ChemicalRecipe recipe = ChemicalPlantRecipes.findRecipe(this, GRID_START, GRID_COUNT);
 
         if (recipe == null) {
-            if (progress > 0) {
+            if (progress > 0 || !activeRecipeId.isEmpty()) {
                 progress = 0;
+                activeRecipeId = "";
                 setChanged();
             }
             return;
         }
+        if (activeRecipeId.isEmpty()) {
+            if (progress > 0) {
+                progress = 0;
+                setChanged();
+            }
+        } else if (!activeRecipeId.equals(recipe.id())) {
+            progress = 0;
+            setChanged();
+        }
+        activeRecipeId = recipe.id();
 
         // 2. Проверка катализаторов: обычным рецептам нужны все 3 слота занятыми,
         //    опилочным — минимум 1 самородок (автор 24.09.2026)
@@ -161,22 +179,25 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
             }
         }
 
-        // 4. Проверка энергии: нужно 1.9 GTU/t
-        if (currentGtuMilli < GTU_PER_TICK_MILLI) {
+        // 4. Проверка энергии по тарифу текущего рецепта.
+        if (currentGtuMilli < recipe.gtuPerTickMilli()) {
             // Энергии нет — шкала замирает и ждёт
             return;
         }
 
         // Потребляем энергию и двигаем прогресс реакции
-        currentGtuMilli -= GTU_PER_TICK_MILLI;
+        currentGtuMilli -= recipe.gtuPerTickMilli();
         progress++;
 
-        if (progress >= REACTION_TICKS) {
+        if (progress >= recipe.reactionTicks()) {
             // Реакция завершена:
             // а) Поглощаем сырьё из сетки
             ChemicalPlantRecipes.consumeInputs(this, GRID_START, GRID_COUNT, recipe);
             // б) Поглощаем катализаторы по правилу рецепта (0–3, либо 90/10 опилочным)
-            ChemicalPlantRecipes.consumeCatalystsRandomly(this, CATALYST_START, CATALYST_COUNT, level.random, recipe.softCatalysts());
+            if (recipe.catalystRequired() > 0) {
+                ChemicalPlantRecipes.consumeCatalystsRandomly(
+                        this, CATALYST_START, CATALYST_COUNT, level.random, recipe.softCatalysts());
+            }
             // в) Выдаём результат
             if (outSlotStack.isEmpty()) {
                 items.set(SLOT_OUTPUT, expectedOut.copy());
@@ -196,13 +217,26 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
         super.saveAdditional(tag, registries);
         tag.putLong("GtuMilli", currentGtuMilli);
         tag.putInt("Progress", progress);
+        tag.putString("ActiveRecipe", activeRecipeId);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
-        currentGtuMilli = tag.getLong("GtuMilli");
-        progress = tag.getInt("Progress");
+        currentGtuMilli = Math.max(0L, Math.min(tag.getLong("GtuMilli"), GTU_CAPACITY_MILLI));
+        progress = Math.max(0, Math.min(tag.getInt("Progress"), REACTION_TICKS));
+        activeRecipeId = tag.getString("ActiveRecipe");
+        if (activeRecipeId.isEmpty() && progress > 0) {
+            // Recover an in-flight legacy reaction from its still-present ingredients.
+            ChemicalPlantRecipes.ChemicalRecipe recipe =
+                    ChemicalPlantRecipes.findRecipe(this, GRID_START, GRID_COUNT);
+            if (recipe == null) {
+                progress = 0;
+            } else {
+                activeRecipeId = recipe.id();
+                progress = Math.min(progress, recipe.reactionTicks());
+            }
+        }
     }
 
     // ─────────────────────────── WorldlyContainer ───────────────────────────

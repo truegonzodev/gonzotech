@@ -6,6 +6,7 @@ import com.gonzotech.machines.menu.DispensingTapMenu;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -53,22 +54,22 @@ public class DispensingTapScreen extends MachineScreen<DispensingTapMenu> {
         if (inRect(mouseX, mouseY, distX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(tapFluidLine(
                     "gui.gonzotech.distillate.name", GtUnits.x1(menu.distillate()),
-                    GtUnits.x1(DispensingTapBlockEntity.DISTILLATE_CAPACITY), ChatFormatting.AQUA)
+                    GtUnits.x1(DispensingTapBlockEntity.DISTILLATE_CAPACITY), GtUnits.DISTILLATE)
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, wortX, barY, barW, barH)) {
             g.renderComponentTooltip(this.font, List.of(tapFluidLine(
                     "gui.gonzotech.wort.name", GtUnits.x1(menu.wort()),
-                    GtUnits.x1(DispensingTapBlockEntity.WORT_CAPACITY), ChatFormatting.GOLD)
+                    GtUnits.x1(DispensingTapBlockEntity.WORT_CAPACITY), GtUnits.WORT)
             ), mouseX, mouseY);
         }
     }
 
     /**
-     * Строка тултипа крана (автор 27.09.2026): «Дистиллят: 0 / 256 mB» —
-     * имя/числа/единица цветом шкалы, разделители «:» и «/» БЕЛЫЕ.
+     * Строка тултипа крана: имя/числа/единица в точном цвете жидкости из
+     * тултипов сусловарочного котла и дистиллятора; разделители «:» и «/» БЕЛЫЕ.
      */
-    private static Component tapFluidLine(String nameKey, String amount, String capacity, ChatFormatting base) {
-        return Component.empty().withStyle(base)
+    private static Component tapFluidLine(String nameKey, String amount, String capacity, int color) {
+        return Component.empty().withStyle(Style.EMPTY.withColor(color))
             .append(Component.translatable(nameKey))
             .append(Component.literal(":").withStyle(ChatFormatting.WHITE))
             .append(Component.literal(" " + amount))

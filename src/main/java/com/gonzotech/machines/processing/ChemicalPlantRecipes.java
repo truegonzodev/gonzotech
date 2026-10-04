@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 
 /**
  * Рецепты Химического завода (тир 3):
- * 11 утверждённых автором химических синтезов в сетке 3×3.
+ * 12 рецептов химического завода в сетке 3×3.
  *
  * <p>Катализаторы (платиновые и палладиевые самородки). Правила автора 24.09.2026:</p>
  * <ul>
@@ -29,6 +29,11 @@ import java.util.function.Supplier;
  * </ul>
  */
 public final class ChemicalPlantRecipes {
+
+    public static final int DEFAULT_REACTION_TICKS = 240;
+    public static final long DEFAULT_GTU_PER_TICK_MILLI = 1_900L;
+    public static final int GRAPHITE_REACTION_TICKS = 200;
+    public static final long GRAPHITE_GTU_PER_TICK_MILLI = 560L;
 
     public interface IngredientMatcher {
         boolean matches(ItemStack stack);
@@ -77,10 +82,21 @@ public final class ChemicalPlantRecipes {
         List<IngredientMatcher> ingredients,
         Supplier<ItemStack> outputSupplier,
         int catalystRequired,
-        boolean softCatalysts
+        boolean softCatalysts,
+        int reactionTicks,
+        long gtuPerTickMilli
     ) {
         public ChemicalRecipe(String id, List<IngredientMatcher> ingredients, Supplier<ItemStack> outputSupplier) {
-            this(id, ingredients, outputSupplier, 3, false);
+            this(id, ingredients, outputSupplier, 3, false,
+                    DEFAULT_REACTION_TICKS, DEFAULT_GTU_PER_TICK_MILLI);
+        }
+
+        public ChemicalRecipe(
+            String id, List<IngredientMatcher> ingredients, Supplier<ItemStack> outputSupplier,
+            int catalystRequired, boolean softCatalysts
+        ) {
+            this(id, ingredients, outputSupplier, catalystRequired, softCatalysts,
+                    DEFAULT_REACTION_TICKS, DEFAULT_GTU_PER_TICK_MILLI);
         }
 
         public ItemStack output() {
@@ -92,6 +108,12 @@ public final class ChemicalPlantRecipes {
 
     public static void init() {
         if (!RECIPES.isEmpty()) return;
+
+        // Графит: 1 уголь → 1 графит, 200 тиков и 0.56 GTU/т (112 GTU за цикл), без катализаторов.
+        RECIPES.add(new ChemicalRecipe("graphite", List.of(
+            new ItemMatcher(Items.COAL, 1)
+        ), () -> new ItemStack(ModItems.GRAPHITE.get(), 1),
+            0, false, GRAPHITE_REACTION_TICKS, GRAPHITE_GTU_PER_TICK_MILLI));
 
         // 1. ЭДТА (гранулы): ампула формальдегида + 2 лазурита + 1 жемчуг эндера + 1 сахар = 3 ЭДТА
         RECIPES.add(new ChemicalRecipe("edta", List.of(

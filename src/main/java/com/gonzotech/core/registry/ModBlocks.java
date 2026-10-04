@@ -111,6 +111,9 @@ public class ModBlocks {
     /** Литография (автор 28.09.2026): резиновый блок — упаковка 9 резины. */
     public static final DeferredBlock<Block> RUBBER_BLOCK = BLOCKS.registerSimpleBlock(
         "rubber_block", componentBlockProperties());
+    /** Блок-упаковка: 9 предметов графита в верстаке. */
+    public static final DeferredBlock<Block> GRAPHITE_BLOCK = BLOCKS.registerSimpleBlock(
+        "graphite_block", BlockBehaviour.Properties.ofFullCopy(Blocks.COAL_BLOCK));
     /** Литография (автор 28.09.2026): фабрика — контроллер многоблока 3×3×2 (верхний центр). */
     public static final DeferredBlock<com.gonzotech.machines.litho.SiliconFactoryBlock> THIRD_SILICON_FACTORY =
         BLOCKS.registerBlock("third_silicon_factory", com.gonzotech.machines.litho.SiliconFactoryBlock::new,

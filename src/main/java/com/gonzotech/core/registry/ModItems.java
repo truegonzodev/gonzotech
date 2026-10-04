@@ -269,6 +269,8 @@ public class ModItems {
         ITEMS.registerSimpleItem("white_porcelain_batch");
     public static final DeferredItem<Item> REBAR =
         ITEMS.registerSimpleItem("rebar");
+    /** Графит — продукт реакции угля в химзаводе. */
+    public static final DeferredItem<Item> GRAPHITE = ITEMS.registerSimpleItem("graphite");
 
     /**
      * Ядерный ряд «Компонентов» (автор 21.09): изотопы и топливные смеси.
@@ -313,6 +315,15 @@ public class ModItems {
     /** УТ — уран-ториевое топливо (автор 21.09: забыли в первом списке). */
     public static final DeferredItem<Item> UT_FUEL =
         ITEMS.registerSimpleItem("ut_fuel");
+    /** Основа ТВЭЛа, изготавливаемая по shaped-рецепту. */
+    public static final DeferredItem<Item> TVEL =
+        ITEMS.registerItem("tvel", props -> new Item(props.stacksTo(1)));
+    /** Сборка ТВЭЛа на урановом топливе; загрузка топлива и поведение реактора не добавляются. */
+    public static final DeferredItem<Item> UF_TVEL =
+        ITEMS.registerItem("uf_tvel", props -> new Item(props.stacksTo(1)));
+    /** Отработанный урановый ТВЭЛ; механики выгорания и обращения не добавляются. */
+    public static final DeferredItem<Item> DEPRESSED_UF_TVEL =
+        ITEMS.registerItem("depressed_uf_tvel", props -> new Item(props.stacksTo(1)));
 
     /**
      * Пыли ванильных металлов для побочных выходов ЦФ1УР. Они намеренно не добавлены
@@ -488,6 +499,8 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("sheathing", ModBlocks.SHEATHING);
     public static final DeferredItem<BlockItem> ALUMINUM_HOUSING_ITEM =
         ITEMS.registerSimpleBlockItem("aluminum_housing", ModBlocks.ALUMINUM_HOUSING);
+    public static final DeferredItem<BlockItem> GRAPHITE_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("graphite_block", ModBlocks.GRAPHITE_BLOCK);
     public static final DeferredItem<BlockItem> AIR_CLEANER_ITEM =
         ITEMS.registerSimpleBlockItem("third_air_cleaner", ModBlocks.AIR_CLEANER);
     public static final DeferredItem<BlockItem> AIR_FILTER_ITEM =

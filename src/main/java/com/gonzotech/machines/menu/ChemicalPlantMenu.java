@@ -83,7 +83,7 @@ public class ChemicalPlantMenu extends BaseMachineMenu {
     }
 
     public int maxGtu() {
-        return 2600;
+        return (int) ChemicalPlantBlockEntity.GTU_CAPACITY;
     }
 
     public int progress() {

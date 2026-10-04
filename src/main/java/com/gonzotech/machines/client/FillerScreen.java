@@ -171,6 +171,7 @@ public class FillerScreen extends MachineScreen<FillerMenu> {
             case 5 -> "gui.gonzotech.filler.recipe.aminoblazeethanol";
             case 6 -> "gui.gonzotech.filler.recipe.formaldehyde";
             case 7 -> "gui.gonzotech.filler.recipe.calcium_chloride";
+            case 8 -> "gui.gonzotech.filler.recipe.yellow_cake";
             default -> "gui.gonzotech.filler.idle";
         };
         int pct = menu.smeltTotal() > 0 ? (menu.smeltProgress() * 100 / menu.smeltTotal()) : 0;

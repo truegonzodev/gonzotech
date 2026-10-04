@@ -200,8 +200,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.REINFORCED_ARMOR_CONCRETE_ITEM.get());
                 output.accept(ModItems.DURABLE_CONCRETE_ITEM.get());
                 output.accept(ModItems.PORCELAIN_ITEM.get());
-                // Резиновый блок — упаковка 9 резины (автор 28.09.2026).
+                // Резиновый и графитовый блоки — упаковки материалов.
                 output.accept(ModItems.RUBBER_BLOCK_ITEM.get());
+                output.accept(ModItems.GRAPHITE_BLOCK_ITEM.get());
                 output.accept(ModItems.SLAG_CONCRETE_ITEM.get());
                 output.accept(ModItems.INDUSTRIAL_CONCRETE_ITEM.get());
                 output.accept(ModItems.REINFORCED_INDUSTRIAL_CONCRETE_ITEM.get());
@@ -323,6 +324,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ANDESITE_SILICATE_CLINKER.get());
                 output.accept(ModItems.WHITE_PORCELAIN_BATCH.get());
                 output.accept(ModItems.REBAR.get());
+                // Графитовый материал и его блок — рядом в компонентах.
+                output.accept(ModItems.GRAPHITE.get());
+                output.accept(ModItems.GRAPHITE_BLOCK_ITEM.get());
                 // Ядерный ряд — изотопы и топливные смеси (автор 21.09).
                 output.accept(ModItems.URANIUM_238.get());
                 output.accept(ModItems.URANIUM_235.get());
@@ -336,6 +340,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TMOX_FUEL.get());
                 output.accept(ModItems.SNUP_FUEL.get());
                 output.accept(ModItems.UT_FUEL.get());
+                output.accept(ModItems.TVEL.get());
+                output.accept(ModItems.UF_TVEL.get());
+                output.accept(ModItems.DEPRESSED_UF_TVEL.get());
                 // Полимеры Эпохи III — продукты химзавода (часть применений ещё в плане).
                 output.accept(ModItems.POLYETHYLENE.get());
                 output.accept(ModItems.POLYVINYL_CHLORIDE.get());
