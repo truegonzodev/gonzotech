@@ -260,7 +260,7 @@ for required in ("key(U_GTH, GTH)", "key(N_STEAM_GENITIVE, STEAM)", "num(value, 
                  "withStyle(ChatFormatting.WHITE)"):
     pin(required in units, f"GtUnits missing color/unit contract: {required}")
 
-# Turbine conversion and its nominal tooltip are unrelated and must not regress.
+# Turbine conversion and its nominal tooltip use the 0.3.147 target: 32 mB/GTU.
 reference_mb = integer(machine_defs, "TURBINE_REFERENCE_STEAM_MB")
 gtu_reference_milli = integer(machine_defs, "TURBINE_GTU_PER_REFERENCE_STEAM_MILLI")
 nominal_mb_per_gtu = reference_mb * milli / gtu_reference_milli
@@ -268,8 +268,8 @@ pin("nominalSteamMbPerGtu" in turbine_math
     and "TURBINE_REFERENCE_STEAM_MB" in turbine_math
     and "TURBINE_GTU_PER_REFERENCE_STEAM_MILLI" in turbine_math,
     "TurbineMath must retain its exact nominal steam-per-GTU conversion")
-pin(math.isclose(nominal_mb_per_gtu, 56 / 1.5, rel_tol=1e-12),
-    "turbine conversion should remain 56 mB → 1.5 GTU")
+pin(math.isclose(nominal_mb_per_gtu, 32.0, rel_tol=1e-12),
+    "0.3.147 turbine conversion should be exactly 32 mB/GTU (48 mB → 1.5 GTU)")
 pin("TurbineMath.nominalSteamMbPerGtu()" in turbine_screen
     and "steamConsumed()" not in turbine_screen,
     "turbine tooltip should continue showing nominal, not last-tick, spending")

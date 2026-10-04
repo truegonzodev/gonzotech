@@ -1,6 +1,7 @@
 package com.gonzotech.machines.menu;
 
 import com.gonzotech.machines.block.entity.FillerBlockEntity;
+import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -80,16 +81,18 @@ public class FillerMenu extends BaseMachineMenu {
         return super.clickMenuButton(player, id);
     }
 
-    public int gth() {
-        return data.get(0);
+    /** Current GTH in units; ContainerData transports the exact internal milli value. */
+    public double gth() {
+        return data.get(0) / (double) MachineDefs.MILLI;
     }
 
     public int maxGth() {
         return FillerBlockEntity.GTH_CAPACITY;
     }
 
-    public int gtu() {
-        return data.get(1);
+    /** Current GTU in units; ContainerData transports the exact internal milli value. */
+    public double gtu() {
+        return data.get(1) / (double) MachineDefs.MILLI;
     }
 
     public int maxGtu() {

@@ -56,8 +56,8 @@ public class FillerScreen extends MachineScreen<FillerMenu> {
         int leftTankX = x + 55;
         int rightTankX = x + 105;
 
-        float gthFrac = (float) menu.gth() / (float) menu.maxGth();
-        float gtuFrac = (float) menu.gtu() / (float) menu.maxGtu();
+        float gthFrac = (float) (menu.gth() / menu.maxGth());
+        float gtuFrac = (float) (menu.gtu() / menu.maxGtu());
         float leftFrac = (float) menu.leftFluidAmount() / (float) FillerBlockEntity.TANK_CAPACITY;
         float rightFrac = (float) menu.rightFluidAmount() / (float) FillerBlockEntity.TANK_CAPACITY;
 
@@ -93,9 +93,11 @@ public class FillerScreen extends MachineScreen<FillerMenu> {
                 || inRect(mouseX, mouseY, rightTankX, barY + 19, 12, 14)) {
             g.renderComponentTooltip(this.font, getFluidTooltip(menu.rightFluidType(), menu.rightFluidAmount(), menu.rightSaltMb()), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(GtUnits.gthPair(menu.gth(), menu.maxGth())), mouseX, mouseY);
+            g.renderComponentTooltip(this.font, List.of(
+                GtUnits.gthPair(GtUnits.x1(menu.gth()), GtUnits.x1(menu.maxGth()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, gtuX, barY, barW, barH)) {
-            g.renderComponentTooltip(this.font, List.of(GtUnits.gtuPair(menu.gtu(), menu.maxGtu())), mouseX, mouseY);
+            g.renderComponentTooltip(this.font, List.of(
+                GtUnits.gtuPair(GtUnits.x1(menu.gtu()), GtUnits.x1(menu.maxGtu()))), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, x + 80, y + 35, 16, 16)) {
             g.renderComponentTooltip(this.font, List.of(
                 Component.translatable("gui.gonzotech.filler.swap").withStyle(ChatFormatting.WHITE),

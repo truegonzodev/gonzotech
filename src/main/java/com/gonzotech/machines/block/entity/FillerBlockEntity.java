@@ -32,7 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * Блок-сущность Наполнителя («Открытие 3»).
  * <ul>
  *   <li>2 бака по 9000 mB (левый и правый);</li>
- *   <li>Шкалы GTH (2000) и GTU (8 808);</li>
+ *   <li>Шкалы GTH (2 508) и GTU (8 808);</li>
  *   <li>10 слотов инвентаря: 4 слота тары + 6 слотов сетки реагентов 2×3;</li>
  *   <li>8 рецептов химического синтеза и растворения (с 0.3.89 — жёлтый кек);</li>
  *   <li>Кнопка смены баков местами за 32 GTU.</li>
@@ -45,7 +45,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         Sinks.HotWaterSink, Sinks.PoisonPotionSink {
 
     public static final int TANK_CAPACITY = 9_000;
-    public static final int GTH_CAPACITY = 2_000;
+    public static final int GTH_CAPACITY = 2_508;
     public static final int GTU_CAPACITY = 8_808;
     /** 0.3.64: канистра опустошается в бак по 128 mB/т, а не мгновенно. */
     public static final int CANISTER_DRAIN_PER_TICK = 128;
@@ -175,10 +175,16 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         return activeRecipe;
     }
 
+    private int energyMilliForMenu(long currentMilli, int capacity) {
+        long clamped = Math.max(0L, Math.min(currentMilli, (long) capacity * MachineDefs.MILLI));
+        return (int) clamped;
+    }
+
     private int getData(int i) {
         return switch (i) {
-            case 0 -> getCurrentGth();
-            case 1 -> getCurrentGtu();
+            // ContainerData is int-based; the exact milli values fit comfortably in int.
+            case 0 -> energyMilliForMenu(currentGthMilli, GTH_CAPACITY);
+            case 1 -> energyMilliForMenu(currentGtuMilli, GTU_CAPACITY);
             case 2 -> leftFluidType;
             case 3 -> leftFluidAmount;
             case 4 -> leftSaltMb;

@@ -33,6 +33,7 @@ THIRD = {
     "FermentationVatScreen": 2, "WortKettleScreen": 3, "DistillerScreen": 4,
     "RectifierScreen": 4, "SnaketypeCondenserScreen": 2, "ChemicalPlantScreen": 1,
     "SiliconFactoryScreen": 1, "PcfsozScreen": 2, "DispensingTapScreen": 2,
+    "FillerScreen": 2,
 }
 for name, wraps in THIRD.items():
     src = rd(f"src/main/java/com/gonzotech/machines/client/{name}.java")

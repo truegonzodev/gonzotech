@@ -296,8 +296,8 @@ public final class MachineDefs {
     /** Базовый максимальный расход Steam на один эффективный ротор, mB/t. */
     public static final int TURBINE_STEAM_CONSUMPTION_PER_EFFECTIVE_ROTOR = 64;
 
-    /** Эталон конверсии: 56 mB Steam превращаются в 1.5 GTU. */
-    public static final int TURBINE_REFERENCE_STEAM_MB = 56;
+    /** Эталон конверсии: 48 mB Steam превращаются в 1.5 GTU (32 mB на 1 GTU). */
+    public static final int TURBINE_REFERENCE_STEAM_MB = 48;
     /** 1.5 GTU, выраженные во внутренней milli-точности. */
     public static final int TURBINE_GTU_PER_REFERENCE_STEAM_MILLI = 1_500;
 
