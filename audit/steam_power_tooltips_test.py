@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""SteamGen 0.3.142 balance curve, exchanger efficiency, and tooltip contract.
+"""SteamGen balance curve, exchanger efficiency, and Steam/GTH tooltip contract.
 
 Checks the six author-provided platinum targets, interpolated profiles, material
 quality anchors, machine-side headroom, two-decimal nominal costs, and retained turbine/pipe
@@ -147,8 +147,9 @@ for exchangers in range(27):
         and interpolate(steam_curve, exchangers) > 0,
         f"interpolated profile must stay positive at {exchangers} exchangers")
 
-# The chosen material-quality curve passes exactly through the requested
-# platinum / gold (-30%) / redstone (-50%) anchors.
+# Material quality still controls the physical steam output through the
+# platinum-curve multiplier; the tooltip separately reports actual steam/GTH
+# relative to a same-core profile with zero heat exchangers.
 def efficiency_permille(sum_ch, count):
     if count <= 0:
         return 1000
@@ -170,6 +171,41 @@ pin("average >= 125.0D" in steam_math and "0.70D" in steam_math
     "Java exchanger quality curve or its 10% floor changed")
 pin("Math.round(platinumOutput * (double) exchangerEfficiencyPermille" in steam_math,
     "fractional material output should accumulate without rounding each cycle down")
+
+
+def steam_per_gth_percent_from_core_only(sum_ch, count, cores=1):
+    if cores <= 0:
+        return 0.0
+    baseline_gth = interpolate(gth_curve, 0)
+    baseline_steam = interpolate(steam_curve, 0)
+    current_gth = interpolate(gth_curve, count)
+    current_steam = math.floor(
+        interpolate(steam_curve, count) * efficiency_permille(sum_ch, count) / 1000.0 + 0.5)
+    if min(baseline_gth, baseline_steam, current_gth, current_steam) <= 0:
+        return 0.0
+    return (current_steam / current_gth) / (baseline_steam / baseline_gth) * 100.0
+
+
+core_only = steam_per_gth_percent_from_core_only(0, 0)
+one_platinum = steam_per_gth_percent_from_core_only(150, 1)
+ten_platinum = steam_per_gth_percent_from_core_only(1500, 10)
+one_redstone = steam_per_gth_percent_from_core_only(95, 1)
+pin(round(core_only) == 100, "zero exchangers on a core-only structure define the 100% baseline")
+pin(round(one_platinum) == 105 and round(ten_platinum) == 128
+    and one_platinum != ten_platinum,
+    "display percentage must use actual exchanger-count-dependent steam/GTH, not material average")
+pin(0 < one_redstone < one_platinum,
+    "a redstone exchanger's actual steam/GTH conversion must be positive and below platinum")
+pin(steam_per_gth_percent_from_core_only(0, 0, cores=0) == 0.0,
+    "an absent core has no measurable steam/GTH percentage")
+pin("steamPerGthPercentFromCoreOnly(int cores, int sumCH, int exchangers)" in steam_math
+    and "if (cores <= 0) return 0.0D;" in steam_math
+    and "gthPerCycleMilli(cores, 0)" in steam_math
+    and "steamPerCycleMilli(cores, 0, 0)" in steam_math
+    and "gthPerCycleMilli(cores, exchangers)" in steam_math
+    and "steamPerCycleMilli(cores, sumCH, exchangers)" in steam_math
+    and "currentSteamPerGth / baselineSteamPerGth * 100.0D" in steam_math,
+    "Java compares actual steam/GTH to the same-core, zero-exchanger baseline")
 
 # Parse every metal block's actual stats. Vanilla HX stats are intentionally
 # overridden in SteamGenHeatExchangers (not the alloy catalog's vanilla stats).
@@ -295,13 +331,14 @@ pin(en["gui.gonzotech.steamgen.exchangers"]
 pin("platinum" not in en["gui.gonzotech.steamgen.exchangers"].lower()
     and "платины" not in ru["gui.gonzotech.steamgen.exchangers"].lower(),
     "exchanger tooltip must not describe the percentage as a platinum-relative delta")
-pin("SteamGenMath.exchangerEfficiency(menu.sumCH(), menu.precious()) * 100.0D" in steam_screen
-    and "- 100" not in steam_screen,
-    "displayed exchanger percentage stays positive from zero (e.g. Redstone 50%, not -50%)")
+pin("SteamGenMath.steamPerGthPercentFromCoreOnly(" in steam_screen
+    and "menu.cores(), menu.sumCH(), menu.precious()" in steam_screen
+    and "SteamGenMath.exchangerEfficiency(menu.sumCH(), menu.precious())" not in steam_screen,
+    "GUI percentage uses actual steam/GTH relative to a same-core zero-exchanger profile")
 
 if failures:
     print("FAIL — SteamGen balance/tooltip contract:")
     for failure in failures:
         print("  -", failure)
     sys.exit(1)
-print("OK: SteamGen six-point platinum curve, 52 exchanger materials, headroom, and two-decimal nominal tooltips")
+print("OK: SteamGen profile, 52 exchanger materials, core-only Steam/GTH tooltip, and nominal-cost contracts")

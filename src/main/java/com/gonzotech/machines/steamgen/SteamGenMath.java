@@ -55,6 +55,29 @@ public final class SteamGenMath {
         return exchangerEfficiencyPermille(sumCH, count) / 1_000.0D;
     }
 
+    /**
+     * Фактическая эффективность преобразования GTH в пар в процентах от
+     * профиля той же сборки с ядрами, но без теплообменников (эталон = 100%).
+     * Учитывает фактические GTH-расход и выход пара для текущего числа обменников,
+     * а также их материал; это не доля платинового выхода.
+     */
+    public static double steamPerGthPercentFromCoreOnly(int cores, int sumCH, int exchangers) {
+        if (cores <= 0) return 0.0D;
+
+        long baselineGthMilli = gthPerCycleMilli(cores, 0);
+        long baselineSteamMilli = steamPerCycleMilli(cores, 0, 0);
+        long currentGthMilli = gthPerCycleMilli(cores, exchangers);
+        long currentSteamMilli = steamPerCycleMilli(cores, sumCH, exchangers);
+        if (baselineGthMilli <= 0L || baselineSteamMilli <= 0L
+                || currentGthMilli <= 0L || currentSteamMilli <= 0L) {
+            return 0.0D;
+        }
+
+        double baselineSteamPerGth = baselineSteamMilli / (double) baselineGthMilli;
+        double currentSteamPerGth = currentSteamMilli / (double) currentGthMilli;
+        return currentSteamPerGth / baselineSteamPerGth * 100.0D;
+    }
+
     /** Буфер воды, mB: 256 на ядро. */
     public static int waterCapacity(int cores) {
         return Math.max(0, cores) * MachineDefs.STEAMGEN_WATER_CAPACITY_PER_CORE;

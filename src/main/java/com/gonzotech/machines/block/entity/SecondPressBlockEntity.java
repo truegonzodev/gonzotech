@@ -24,8 +24,9 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Tier-two Press with an immediate stamping stroke and a 60-tick punch-return
- * cooldown. The form and punch stay in their slots forever; every completed
- * fatigue cycle immediately attempts the next valid operation.
+ * cooldown. Ordinary forms and all punches are reusable; recipe-declared forms
+ * such as the empty TVEL blank are consumed on a successful stamp. Every
+ * completed fatigue cycle immediately attempts the next valid operation.
  */
 public final class SecondPressBlockEntity extends BaseMachineBlockEntity
     implements GtuSink, WorldlyContainer {
@@ -128,21 +129,26 @@ public final class SecondPressBlockEntity extends BaseMachineBlockEntity
         if (changed) be.setChanged();
     }
 
-    /** Executes one whole atomic stamp: reserve output, pay 126 GTU, consume one source, publish result. */
+    /** Executes one atomic stamp: reserve output, pay 126 GTU, consume its source/form, then publish. */
     private boolean tryPress() {
-        ItemStack result = PressRecipes.find(items.get(SLOT_INPUT), items.get(SLOT_FORM), items.get(SLOT_PUNCH));
+        ItemStack input = items.get(SLOT_INPUT);
+        ItemStack form = items.get(SLOT_FORM);
+        ItemStack punch = items.get(SLOT_PUNCH);
+        ItemStack result = PressRecipes.find(input, form, punch);
         if (result == null || !canStore(result) || !gtu.has(SecondTierDefs.PRESS_GTU_PER_STAMP)) return false;
+        boolean consumesForm = PressRecipes.consumesForm(input, form, punch);
 
         gtu.extract(SecondTierDefs.PRESS_GTU_PER_STAMP, false);
-        items.get(SLOT_INPUT).shrink(1);
+        input.shrink(1);
+        if (consumesForm) form.shrink(1);
         ItemStack output = items.get(SLOT_OUTPUT);
         if (output.isEmpty()) {
             items.set(SLOT_OUTPUT, result.copy());
         } else {
             output.grow(result.getCount());
         }
-        // The just-completed strike starts a new 60-tick recovery period. Forms
-        // and punches are never mutated or consumed.
+        // The just-completed strike starts a new 60-tick recovery period. Any
+        // recipe-specific consumable form was removed above; punches stay reusable.
         fatigueProgress = 0;
         fatigueActive = true;
         return true;

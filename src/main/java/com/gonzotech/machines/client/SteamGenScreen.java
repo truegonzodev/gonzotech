@@ -47,10 +47,11 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
         drawVBarTex(graphics, waterX, barY, barW, barH, water, BAR_WATER);
         drawVBarTex(graphics, steamX, barY, barW, barH, steam, BAR_STEAM);
 
-        // Display the positive output percentage from zero: Redstone stays 50%,
-        // rather than becoming -50% by subtracting the platinum baseline.
+        // Compare the actual steam-per-GTH conversion to the same-core,
+        // zero-exchanger profile; both exchanger count and material affect it.
         String efficiency = String.format(Locale.ROOT, "%.0f",
-            SteamGenMath.exchangerEfficiency(menu.sumCH(), menu.precious()) * 100.0D);
+            SteamGenMath.steamPerGthPercentFromCoreOnly(
+                menu.cores(), menu.sumCH(), menu.precious()));
         if (inRect(mouseX, mouseY, gthX, barY, barW, barH)) {
             String maxIntake = BigDecimal.valueOf(menu.maxGthIntakeMilli(), 3)
                 .stripTrailingZeros().toPlainString();

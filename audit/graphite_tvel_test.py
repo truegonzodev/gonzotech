@@ -156,17 +156,20 @@ for recipe_id, (ingredients, output, discovery_item) in fuel_recipe_specs.items(
 press_recipes = (SRC / "machines/processing/PressRecipes.java").read_text()
 press_entity = (SRC / "machines/block/entity/SecondPressBlockEntity.java").read_text()
 pin("private static final List<Recipe> TVEL_ASSEMBLIES" in press_recipes
-    and "recipe(ModItems.URANIUM_FUEL.get(), ModItems.UF_TVEL.get(), 1)" in press_recipes,
-    "Second Press maps uranium fuel to one fueled TVEL")
+    and "recipe(ModItems.URANIUM_FUEL.get(), ModItems.UF_TVEL.get(), 1, true)" in press_recipes,
+    "Second Press maps uranium fuel to one fueled TVEL and marks the blank form consumable")
 pin("hasInput(TVEL_ASSEMBLIES, input)" in press_recipes,
     "uranium fuel is accepted by the press input slot")
 pin("stack.is(ModItems.TVEL.get())" in press_recipes
     and "if (form.is(ModItems.TVEL.get())) return TVEL_ASSEMBLIES;" in press_recipes,
     "TVEL is accepted as a form for the flat-punch assembly")
-pin("items.get(SLOT_INPUT).shrink(1);" in press_entity
-    and "items.get(SLOT_FORM).shrink" not in press_entity
+pin("PressRecipes.consumesForm(input, form, punch)" in press_entity
+    and "input.shrink(1);" in press_entity
+    and "if (consumesForm) form.shrink(1);" in press_entity
     and "items.get(SLOT_PUNCH).shrink" not in press_entity,
-    "press consumes one uranium-fuel input and keeps the selectors reusable")
+    "press consumes uranium fuel plus recipe-declared blank forms, never the punch")
+pin("return recipe(input, output, count, false);" in press_recipes,
+    "ordinary press forms stay reusable by default")
 
 # Every new visual has its own existing RGBA PNG and a model reference.
 texture_paths = {

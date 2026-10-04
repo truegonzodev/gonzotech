@@ -10,11 +10,11 @@ import java.util.List;
 /**
  * Strict die/punch recipes for the tier-two Press.
  *
- * <p>The form and punch are mode selectors, not ingredients. A recipe is valid
- * only for a declared punch/form combination; notably, the wedge punch
- * requires an empty form slot. The flat punch and TVEL form assemble uranium
- * fuel into a fueled TVEL. No fallback conversion exists for another tool
- * combination.</p>
+ * <p>The punch is a reusable mode selector, and the ordinary core/plate/ingot
+ * forms remain reusable. A recipe is valid only for a declared punch/form
+ * combination; notably, the wedge punch requires an empty form slot. The flat
+ * punch and a TVEL form assemble uranium fuel into a fueled TVEL, consuming the
+ * empty TVEL form. No fallback conversion exists for another tool combination.</p>
  */
 public final class PressRecipes {
 
@@ -51,7 +51,7 @@ public final class PressRecipes {
     );
 
     private static final List<Recipe> TVEL_ASSEMBLIES = List.of(
-        recipe(ModItems.URANIUM_FUEL.get(), ModItems.UF_TVEL.get(), 1)
+        recipe(ModItems.URANIUM_FUEL.get(), ModItems.UF_TVEL.get(), 1, true)
     );
 
     private PressRecipes() {
@@ -63,11 +63,22 @@ public final class PressRecipes {
      * into the output.
      */
     public static ItemStack find(ItemStack input, ItemStack form, ItemStack punch) {
+        Recipe recipe = matchingRecipe(input, form, punch);
+        return recipe == null ? null : recipe.output();
+    }
+
+    /** Whether the selected recipe consumes its form along with the input. */
+    public static boolean consumesForm(ItemStack input, ItemStack form, ItemStack punch) {
+        Recipe recipe = matchingRecipe(input, form, punch);
+        return recipe != null && recipe.consumesForm();
+    }
+
+    private static Recipe matchingRecipe(ItemStack input, ItemStack form, ItemStack punch) {
         if (input.isEmpty()) return null;
         List<Recipe> table = tableFor(form, punch);
         if (table == null) return null;
         for (Recipe recipe : table) {
-            if (input.is(recipe.input())) return recipe.output();
+            if (input.is(recipe.input())) return recipe;
         }
         return null;
     }
@@ -108,7 +119,11 @@ public final class PressRecipes {
     }
 
     private static Recipe recipe(Item input, Item output, int count) {
-        return new Recipe(input, new ItemStack(output, count));
+        return recipe(input, output, count, false);
+    }
+
+    private static Recipe recipe(Item input, Item output, int count, boolean consumesForm) {
+        return new Recipe(input, new ItemStack(output, count), consumesForm);
     }
 
     private static Item ingot(String id) {
@@ -123,7 +138,7 @@ public final class PressRecipes {
         return item.get();
     }
 
-    private record Recipe(Item input, ItemStack output) {
+    private record Recipe(Item input, ItemStack output, boolean consumesForm) {
         Recipe {
             output = output.copy();
         }
