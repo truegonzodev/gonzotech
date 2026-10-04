@@ -121,8 +121,10 @@ public class ModFluidBlock extends LiquidBlock {
                 || !serverLevel.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) return;
         if (!hasNearbyVanillaFire(level, pos)) return;
 
-        // Leave vanilla fire visible during its 2–3 second liquid-ignition delay.
-        serverLevel.scheduleTick(pos, this, 40 + level.random.nextInt(21));
+        // Catch the ordinary flame while it is still present; vanilla fire may
+        // extinguish itself before a delayed fluid block tick would run.
+        LiquidFireBlock fire = fireForKind();
+        if (fire != null) fire.ignite(serverLevel, pos, 0, level.random);
     }
 
     @Override

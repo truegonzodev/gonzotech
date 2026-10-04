@@ -201,6 +201,39 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
         igniteVanillaFlamesOnCombustibles(level, firePos, random);
     }
 
+    /**
+     * An ordinary fire searches its surrounding 3×3×3 cube for these fuels.
+     * At most one candidate is ignited on each vanilla-fire tick.
+     */
+    public static boolean igniteNearbyFuel(ServerLevel level, BlockPos firePos, RandomSource random) {
+        if (!level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) return false;
+
+        List<BlockPos> candidates = new ArrayList<>(27);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos fuelPos = firePos.offset(dx, dy, dz);
+                    if (!level.hasChunkAt(fuelPos)) continue;
+                    FluidState fuelState = level.getFluidState(fuelPos);
+                    LiquidFireBlock fire = fireFor(fuelState.getType());
+                    if (fire == null) continue;
+
+                    BlockPos overlayPos = fuelPos.above();
+                    if (!level.hasChunkAt(overlayPos)) continue;
+                    BlockState overlayState = level.getBlockState(overlayPos);
+                    if (overlayState.getBlock() instanceof LiquidFireBlock) continue;
+                    if (!overlayState.isAir() && !(overlayState.getBlock() instanceof BaseFireBlock)) continue;
+                    candidates.add(fuelPos.immutable());
+                }
+            }
+        }
+
+        if (candidates.isEmpty()) return false;
+        BlockPos target = candidates.get(random.nextInt(candidates.size()));
+        LiquidFireBlock targetFire = fireFor(level.getFluidState(target).getType());
+        return targetFire != null && targetFire.ignite(level, target, 0, random);
+    }
+
     private static void spreadToOneLiquidCell(ServerLevel level, BlockPos firePos, RandomSource random) {
         BlockPos fuelPos = firePos.below();
         List<BlockPos> candidates = new ArrayList<>(6);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.154 per-cell liquid fire and corium radiation."""
+"""Static regression contract for 0.3.155 per-cell liquid fire and corium radiation."""
 import json
 import struct
 import zlib
@@ -73,14 +73,13 @@ pin("state.getFluidState().isEmpty()" in fluid_block
     and "fire.ignite(serverLevel, pos, 0, level.random)" in fluid_block
     and "return InteractionResult.CONSUME;" in fluid_block,
     "manual ignition supports all matching cells and blocks fallback vanilla fire placement")
-pin("40 + level.random.nextInt(21)" in fluid_block
-    and "serverLevel.scheduleTick(pos, this" in fluid_block
-    and "Leave vanilla fire visible" in fluid_block,
-    "vanilla fire remains visible while liquid ignition waits 40–60 ticks")
+pin("hasNearbyVanillaFire(level, pos)" in fluid_block
+    and "fire.ignite(serverLevel, pos, 0, level.random)" in fluid_block
+    and "serverLevel.scheduleTick(pos, this" not in fluid_block,
+    "ordinary fire ignites adjacent fuel immediately before the vanilla flame can extinguish")
 pin("instanceof BaseFireBlock" in fluid_block
-    and "!(neighbor.getBlock() instanceof LiquidFireBlock)" in fluid_block
-    and "40 + level.random.nextInt(21)" in fluid_block,
-    "only ordinary BaseFireBlock sources start the separate 2–3 second ignition delay")
+    and "!(neighbor.getBlock() instanceof LiquidFireBlock)" in fluid_block,
+    "custom overlays are excluded when identifying ordinary fire sources")
 
 fire = read_java("core/fluid/LiquidFireBlock.java")
 pin("BooleanProperty.create(\"active\")" in fire
@@ -103,6 +102,22 @@ pin("Do not delegate to FireBlock.updateShape" in fire
 pin("candidates.add(neighborFuel.immutable())" in fire
     and "targetFire.ignite(level, target, 0, random)" in fire,
     "each liquid-fire pulse ignites no more than one neighboring liquid cell")
+pin("public static boolean igniteNearbyFuel(ServerLevel level, BlockPos firePos, RandomSource random)" in fire
+    and "for (int dx = -1; dx <= 1; dx++)" in fire
+    and "for (int dy = -1; dy <= 1; dy++)" in fire
+    and "for (int dz = -1; dz <= 1; dz++)" in fire
+    and "candidates.add(fuelPos.immutable())" in fire
+    and "candidates.get(random.nextInt(candidates.size()))" in fire
+    and "targetFire.ignite(level, target, 0, random)" in fire,
+    "ordinary fire searches the full 3×3×3 cube and ignites at most one valid fuel cell per tick")
+mixin = read_java("mixin/FireBlockLiquidIgnitionMixin.java")
+mixin_config = json.loads((ROOT / "src/main/resources/gonzotech.mixins.json").read_text(encoding="utf-8"))
+pin("FireBlockLiquidIgnitionMixin" in mixin_config["mixins"]
+    and '@Mixin(FireBlock.class)' in mixin
+    and '@Inject(method = "tick", at = @At("RETURN"))' in mixin
+    and "state.getBlock() instanceof LiquidFireBlock" in mixin
+    and "LiquidFireBlock.igniteNearbyFuel(level, pos, random);" in mixin,
+    "ordinary vanilla FireBlock ticks invoke the local liquid-fuel search")
 pin("MIN_SPREAD_TICKS = 8" in read_java("core/fluid/LiquidFireBlockEntity.java")
     and "MAX_SPREAD_TICKS = 32" in read_java("core/fluid/LiquidFireBlockEntity.java"),
     "custom propagation uses the specified 8–32 tick interval")
@@ -138,7 +153,7 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.154" in version, "micropatch version should be 0.3.154")
+pin("mod_version=0.3.155" in version, "micropatch version should be 0.3.155")
 
 # Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]
@@ -158,7 +173,8 @@ for block, model_stem, texture in (
         pin(group[0]["apply"].get("model") == f"gonzotech:block/fire/{floor_name}",
             f"{block} surface {index} retains its lowered crossed-plane floor flame")
         floor_data = json.loads((RES / "models/block/fire" / f"{floor_name}.json").read_text(encoding="utf-8"))
-        offset = round((height - 1.0) * 16.0, 5)
+        original_offset = round((height - 1.0) * 16.0, 5)
+        offset = round(original_offset - (0.9 if index < 8 else 0.0), 5)
         pin(floor_data.get("render_type") == "minecraft:cutout"
             and all(round(element["from"][1], 5) == offset
                     and round(element["to"][1], 5) == round(22.4 + offset, 5)
