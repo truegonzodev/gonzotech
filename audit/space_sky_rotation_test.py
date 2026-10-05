@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for sky-star rotation and the 0.3.160 Overworld path."""
+"""Static regression contract for sky-star rotation and the Overworld path."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -68,7 +68,7 @@ pin("60F, /*yaw*/ -90F, /*tilt*/ 12F" in moon
     and "1F, -90F, 8F, 0F" in mars
     and "3.5F, -90F, 6F, 0F" in europa,
     "Moon, Mars, and Europa sky trajectories retain their existing yaw")
-pin("mod_version=0.3.160" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.160")
+pin("mod_version=0.3.161" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.161")
 
 print(f"space sky rotation audit: {checks} pins passed")

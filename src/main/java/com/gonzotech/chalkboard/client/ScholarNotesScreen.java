@@ -87,6 +87,8 @@ public class ScholarNotesScreen extends Screen {
     private static final int SKETCH_VIDEO_FRAME_WIDTH = 128;
     private static final int SKETCH_VIDEO_FRAME_HEIGHT = 72;
     private static final int SKETCH_VIDEO_FRAME_COUNT = SKETCH_VIDEO_FRAME_TICKS.length;
+    /** Render after item icons, which use a positive GUI z-offset. */
+    private static final int SKETCH_OVERLAY_Z = (int) (GuiGraphics.MAX_GUI_Z - 1.0F);
     private static final ResourceLocation TEX_SKETCH_VIDEO =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/videoplaybak.png");
 
@@ -319,8 +321,8 @@ public class ScholarNotesScreen extends Screen {
             g.renderTooltip(this.font, tooltipComponent, tooltipX, tooltipY);
         }
 
-        // renderItem откладывает GUI-буфер; сбрасываем его до полноэкранного оверлея,
-        // чтобы иконки вкладок не отрисовались поверх затемнения/видео.
+        // Сначала сбрасываем отложенные предметные иконки, затем выводим оверлей
+        // на максимальном GUI Z: z=0 проходит за item-иконками через depth test.
         g.flush();
         renderSketchPlaybackOverlay(g, partialTick);
     }
@@ -332,10 +334,11 @@ public class ScholarNotesScreen extends Screen {
             float progress = Math.min(1.0F,
                     (sketchPlaybackTicks + partialTick) / (float) SKETCH_FADE_TICKS);
             int alpha = Math.round(progress * 255.0F);
-            g.fill(0, 0, width, height, alpha << 24);
+            g.fill(0, 0, width, height, SKETCH_OVERLAY_Z, alpha << 24);
         } else if (sketchPlaybackStage == SketchPlaybackStage.VIDEO) {
             int frame = sketchVideoFrameAtTick(sketchPlaybackTicks);
             g.pose().pushPose();
+            g.pose().translate(0.0D, 0.0D, (double) SKETCH_OVERLAY_Z);
             g.pose().scale(width / (float) SKETCH_VIDEO_FRAME_WIDTH,
                     height / (float) SKETCH_VIDEO_FRAME_HEIGHT, 1.0F);
             g.blit(RenderType::guiTextured, TEX_SKETCH_VIDEO, 0, 0, 0.0F,

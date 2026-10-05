@@ -460,6 +460,14 @@ public final class PsycheStress {
      */
     public static void onMashDrunk(ServerPlayer player) {
         relieve(player, MASH_RELIEF);
+        resetMashTimer(player);
+    }
+
+    /**
+     * Сбросить таймер «без сусла» при напитке, который засчитывается как недавнее сусло.
+     * Самостоятельно стресс или зависимость не меняет.
+     */
+    public static void resetMashTimer(ServerPlayer player) {
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         psyche.setMashTick(player.serverLevel().getGameTime());
         save(player, psyche);

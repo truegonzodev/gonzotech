@@ -2,6 +2,7 @@ package com.gonzotech.core.item;
 
 import com.gonzotech.core.psyche.AlcoholDose;
 import com.gonzotech.core.psyche.AlcoholEffects;
+import com.gonzotech.core.psyche.PsycheStress;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -62,6 +63,7 @@ public class DrinkItem extends Item {
         }
         ConsumptionAccounting.record(serverPlayer, stack);
         AlcoholEffects.consume(serverPlayer, dose);
+        PsycheStress.resetMashTimer(serverPlayer);
         serverLevel.playSound(null, serverPlayer.blockPosition(),
                 SoundEvents.HONEY_DRINK.value(), SoundSource.PLAYERS, 0.8F, 1.1F);
         if (serverPlayer.getAbilities().instabuild) {

@@ -41,7 +41,7 @@ pin("public void tick()" in screen
     and "playSketchVideoSound();" in screen,
     "client tick stages delay, fade, and video; sound starts on the video transition")
 pin("(sketchPlaybackTicks + partialTick) / (float) SKETCH_FADE_TICKS" in screen
-    and "g.fill(0, 0, width, height, alpha << 24);" in screen
+    and "g.fill(0, 0, width, height, SKETCH_OVERLAY_Z, alpha << 24);" in screen
     and "else if (sketchPlaybackStage == SketchPlaybackStage.VIDEO)" in screen,
     "the fade is a black fullscreen overlay and disappears as video rendering begins")
 pin('"textures/gui/videoplaybak.png"' in screen
@@ -63,6 +63,10 @@ render = screen.split("public void render(GuiGraphics g", 1)[1].split(
 pin(render.rfind("g.renderTooltip") < render.index("g.flush();")
     < render.index("renderSketchPlaybackOverlay(g, partialTick);"),
     "the GUI batch is flushed after tabs/tooltips and before the fullscreen fade/video")
+pin("SKETCH_OVERLAY_Z = (int) (GuiGraphics.MAX_GUI_Z - 1.0F)" in screen
+    and "g.fill(0, 0, width, height, SKETCH_OVERLAY_Z, alpha << 24);" in screen
+    and "g.pose().translate(0.0D, 0.0D, (double) SKETCH_OVERLAY_Z);" in screen,
+    "fade and video render at the top GUI depth, above item-tab z offsets")
 
 png = (RES / "videoplaybak.png").read_bytes()
 pin(png.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", png[16:24]) == (128, 288),
@@ -71,7 +75,7 @@ metadata = json.loads((RES / "videoplaybak.png.mcmeta").read_text(encoding="utf-
 pin(metadata.get("width") == 128 and metadata.get("height") == 72
     and metadata.get("frametime") == 10 and metadata.get("frames") == [0, 1, 2, 3],
     "the texture metadata describes exactly four 10-tick frames")
-pin("mod_version=0.3.160" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.160")
+pin("mod_version=0.3.161" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.161")
 
 print(f"sketch page video audit: {checks} pins passed")
