@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.156 liquid-fire effects and corium radiation."""
+"""Static regression contract for 0.3.157 liquid-fire effects and corium radiation."""
 import json
 import struct
 import zlib
@@ -59,10 +59,23 @@ pin("LongOpenHashSet claimed = new LongOpenHashSet();" in chunk
 
 # Each liquid has a separately registered overlay; its timer entity supports both variants.
 blocks = read_java("core/registry/ModBlocks.java")
-pin('"rectificate_fire"' in blocks and "ModFluids.ETHANOL, 0x3AC5DE" in blocks,
-    "ethanol fire dust uses the exact #3ac5de tint")
-pin('"formaldehyde_fire"' in blocks and "ModFluids.FORMALDEHYDE, 0x563475" in blocks,
-    "formaldehyde fire dust uses the exact #563475 tint")
+particles = read_java("core/registry/ModParticles.java")
+particle_client = read_java("core/client/particle/ModParticleClient.java")
+pin('"rectificate_fire"' in blocks
+    and "ModParticles.ETHANOL_FIRE_DUST" in blocks
+    and "ModParticles.ETHANOL_FIRE_DUST_LARGE" in blocks,
+    "ethanol fire is wired to its two-size custom dust particle")
+pin('"formaldehyde_fire"' in blocks
+    and "ModParticles.FORMALDEHYDE_FIRE_DUST" in blocks
+    and "ModParticles.FORMALDEHYDE_FIRE_DUST_LARGE" in blocks,
+    "formaldehyde fire is wired to its two-size custom dust particle")
+pin("0x3AC5DE" in particle_client and "0x563475" in particle_client
+    and "0.9F" in particle_client and "1.5F" in particle_client,
+    "both dust sizes use the exact ethanol/formaldehyde colors")
+pin(all(name in particles for name in (
+        "ETHANOL_FIRE_DUST", "ETHANOL_FIRE_DUST_LARGE",
+        "FORMALDEHYDE_FIRE_DUST", "FORMALDEHYDE_FIRE_DUST_LARGE")),
+    "both liquid fires register small and large dust particle types")
 pin("state.getValue(LiquidFireBlock.ACTIVE) ? 12 : 0" in blocks
     and "state.getValue(LiquidFireBlock.ACTIVE) ? 11 : 0" in blocks,
     "hidden delayed overlay emits no light until ignition")
@@ -145,10 +158,24 @@ pin("random.nextInt(2) == 0" in animate_tick
     and "canBurnForEffects(" in animate_tick
     and "return state.ignitedByLava() || canBurn(state);" in fire,
     "vanilla fire's support and adjacent-fuel particle branches are retained")
-pin("new DustParticleOptions(flameColor, scale)" in fire
-    and "0.02D + random.nextDouble() * 0.02D" in fire
+pin("random.nextInt(4) == 0) return;" in fire
+    and "DUST_UPWARD_SPEED_MULTIPLIER = 2.1D" in fire
+    and "level.addParticle(particle, x, y, z," in fire
     and "surfaceHeight(fluid)" in animate_tick,
-    "colored dust starts at the actual liquid surface and rises upward")
+    "dust spawn attempts are reduced by 25% and upward speed is multiplied by 2.1")
+dust_particle = read_java("core/client/particle/LiquidFireDustParticle.java")
+pin("LIFETIME_MULTIPLIER = 1.2F" in dust_particle
+    and "Math.round(vanillaLifetime * LIFETIME_MULTIPLIER)" in dust_particle
+    and "this.yd *= 0.1D;" in dust_particle,
+    "custom dust retains vanilla sprite physics and lives 20% longer")
+dust_textures = ["minecraft:generic_7", "minecraft:generic_6", "minecraft:generic_5",
+                 "minecraft:generic_4", "minecraft:generic_3", "minecraft:generic_2",
+                 "minecraft:generic_1", "minecraft:generic_0"]
+for particle_id in ("ethanol_fire_dust", "ethanol_fire_dust_large",
+                    "formaldehyde_fire_dust", "formaldehyde_fire_dust_large"):
+    definition = json.loads((RES / "particles" / f"{particle_id}.json").read_text(encoding="utf-8"))
+    pin(definition.get("textures") == dust_textures,
+        f"{particle_id} uses the vanilla dust sprite animation")
 pin("ParticleTypes.SMOKE" not in fire and "ParticleTypes.LARGE_SMOKE" not in fire,
     "liquid-fire animation contains no leftover smoke particles")
 
@@ -174,7 +201,7 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.156" in version, "micropatch version should be 0.3.156")
+pin("mod_version=0.3.157" in version, "micropatch version should be 0.3.157")
 
 # Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]

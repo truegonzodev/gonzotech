@@ -24,6 +24,15 @@ public final class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> HOT_PIPE =
             PARTICLE_TYPES.register("hot_pipe", () -> new SimpleParticleType(true));
 
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> ETHANOL_FIRE_DUST =
+            PARTICLE_TYPES.register("ethanol_fire_dust", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> ETHANOL_FIRE_DUST_LARGE =
+            PARTICLE_TYPES.register("ethanol_fire_dust_large", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FORMALDEHYDE_FIRE_DUST =
+            PARTICLE_TYPES.register("formaldehyde_fire_dust", () -> new SimpleParticleType(false));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FORMALDEHYDE_FIRE_DUST_LARGE =
+            PARTICLE_TYPES.register("formaldehyde_fire_dust_large", () -> new SimpleParticleType(false));
+
     private ModParticles() {
     }
 }

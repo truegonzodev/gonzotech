@@ -4,7 +4,7 @@ import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -50,13 +50,19 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
         0.875D, 0.71875D, 0.60625D, 0.5D, 0.3875D, 0.28125D, 0.16875D, 0.05625D, 1.0D
     };
 
+    private static final double DUST_UPWARD_SPEED_MULTIPLIER = 2.1D;
     private final Supplier<? extends Fluid> fuel;
-    private final int flameColor;
+    private final Supplier<? extends SimpleParticleType> dustParticle;
+    private final Supplier<? extends SimpleParticleType> largeDustParticle;
 
-    public LiquidFireBlock(Supplier<? extends Fluid> fuel, int flameColor, Properties properties) {
+    public LiquidFireBlock(Supplier<? extends Fluid> fuel,
+                           Supplier<? extends SimpleParticleType> dustParticle,
+                           Supplier<? extends SimpleParticleType> largeDustParticle,
+                           Properties properties) {
         super(properties);
         this.fuel = fuel;
-        this.flameColor = flameColor;
+        this.dustParticle = dustParticle;
+        this.largeDustParticle = largeDustParticle;
         registerDefaultState(defaultBlockState().setValue(ACTIVE, false).setValue(SURFACE, 0));
     }
 
@@ -326,18 +332,18 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
         if (!canBurnForEffects(support) && !support.isFaceSturdy(level, fuelPos, Direction.UP)) {
             if (random.nextInt(2) == 0) {
                 addRisingDust(level, pos.getX() + random.nextDouble(), surfaceY + 0.45D,
-                    pos.getZ() + random.nextDouble(), random, 1.5F);
+                    pos.getZ() + random.nextDouble(), random, true);
             }
             for (int i = 0; i < 3; i++) {
                 addRisingDust(level, pos.getX() + random.nextDouble(),
                     surfaceY + random.nextDouble() * 0.45D,
-                    pos.getZ() + random.nextDouble(), random, 0.9F);
+                    pos.getZ() + random.nextDouble(), random, false);
             }
         } else {
             for (int i = 0; i < 3; i++) {
                 addRisingDust(level, pos.getX() + random.nextDouble(),
                     surfaceY + random.nextDouble() * 0.5D,
-                    pos.getZ() + random.nextDouble(), random, 0.9F);
+                    pos.getZ() + random.nextDouble(), random, false);
             }
         }
 
@@ -349,15 +355,20 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
             if (direction.getAxis() == Direction.Axis.X) xOffset = 0.5D;
             else zOffset = 0.5D;
             addRisingDust(level, pos.getX() + xOffset, surfaceY + yOffset,
-                pos.getZ() + zOffset, random, 0.9F);
+                pos.getZ() + zOffset, random, false);
         }
     }
 
     private void addRisingDust(Level level, double x, double y, double z,
-                               RandomSource random, float scale) {
-        level.addParticle(new DustParticleOptions(flameColor, scale), x, y, z,
+                               RandomSource random, boolean large) {
+        // Thin each vanilla fire-particle branch independently by 25%.
+        if (random.nextInt(4) == 0) return;
+        double upwardVelocity = (0.02D + random.nextDouble() * 0.02D)
+            * DUST_UPWARD_SPEED_MULTIPLIER;
+        SimpleParticleType particle = (large ? largeDustParticle : dustParticle).get();
+        level.addParticle(particle, x, y, z,
             (random.nextDouble() - 0.5D) * 0.01D,
-            0.02D + random.nextDouble() * 0.02D,
+            upwardVelocity,
             (random.nextDouble() - 0.5D) * 0.01D);
     }
 

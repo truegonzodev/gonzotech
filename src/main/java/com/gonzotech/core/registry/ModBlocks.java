@@ -285,12 +285,14 @@ public class ModBlocks {
         BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable());
     /** Поверхностный огонь этанола/ректификата; не имеет предмета блока. */
     public static final DeferredBlock<LiquidFireBlock> RECTIFICATE_FIRE = BLOCKS.registerBlock(
-        "rectificate_fire", properties -> new LiquidFireBlock(ModFluids.ETHANOL, 0x3AC5DE, properties),
+        "rectificate_fire", properties -> new LiquidFireBlock(ModFluids.ETHANOL,
+            ModParticles.ETHANOL_FIRE_DUST, ModParticles.ETHANOL_FIRE_DUST_LARGE, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE)
             .lightLevel(state -> state.getValue(LiquidFireBlock.ACTIVE) ? 12 : 0).noLootTable());
     /** Поверхностный голубой огонь формальдегида; не имеет предмета блока. */
     public static final DeferredBlock<LiquidFireBlock> FORMALDEHYDE_FIRE = BLOCKS.registerBlock(
-        "formaldehyde_fire", properties -> new LiquidFireBlock(ModFluids.FORMALDEHYDE, 0x563475, properties),
+        "formaldehyde_fire", properties -> new LiquidFireBlock(ModFluids.FORMALDEHYDE,
+            ModParticles.FORMALDEHYDE_FIRE_DUST, ModParticles.FORMALDEHYDE_FIRE_DUST_LARGE, properties),
         BlockBehaviour.Properties.ofFullCopy(Blocks.FIRE)
             .lightLevel(state -> state.getValue(LiquidFireBlock.ACTIVE) ? 11 : 0).noLootTable());
     /** Серная кислота — едкая кислота в мире. */
