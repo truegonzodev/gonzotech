@@ -5,9 +5,11 @@ import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
@@ -301,26 +303,68 @@ public final class LiquidFireBlock extends FireBlock implements EntityBlock {
         level.setBlock(fuelPos, BaseFireBlock.getState(level, fuelPos), Block.UPDATE_ALL);
     }
 
-    /** Sparks use the matching source/flowing cell's specified fluid-surface height. */
+    /**
+     * Client ambient effects follow vanilla fire's sound and particle cadence, with all smoke
+     * replaced by upward-moving dust tinted for the burning liquid.
+     */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (!state.getValue(ACTIVE)) return;
+        if (!level.isClientSide() || !state.getValue(ACTIVE)) return;
         BlockPos fuelPos = pos.below();
         FluidState fluid = level.getFluidState(fuelPos);
         if (!matchesFuel(fluid)) return;
 
+        if (random.nextInt(24) == 0) {
+            level.playLocalSound(
+                pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
+                SoundEvents.FIRE_AMBIENT, SoundSource.BLOCKS,
+                1.0F + random.nextFloat(), random.nextFloat() * 0.7F + 0.3F, false);
+        }
+
         double surfaceY = fuelPos.getY() + surfaceHeight(fluid);
-        double x = pos.getX() + 0.15 + random.nextDouble() * 0.7;
-        double z = pos.getZ() + 0.15 + random.nextDouble() * 0.7;
-        double y = surfaceY + 0.05 + random.nextDouble() * 0.45;
-        if (random.nextInt(3) == 0) {
-            level.addParticle(new DustParticleOptions(flameColor, 0.9F), x, y, z,
-                (random.nextDouble() - 0.5) * 0.015, 0.025 + random.nextDouble() * 0.025,
-                (random.nextDouble() - 0.5) * 0.015);
+        BlockState support = level.getBlockState(fuelPos);
+        if (!canBurnForEffects(support) && !support.isFaceSturdy(level, fuelPos, Direction.UP)) {
+            if (random.nextInt(2) == 0) {
+                addRisingDust(level, pos.getX() + random.nextDouble(), surfaceY + 0.45D,
+                    pos.getZ() + random.nextDouble(), random, 1.5F);
+            }
+            for (int i = 0; i < 3; i++) {
+                addRisingDust(level, pos.getX() + random.nextDouble(),
+                    surfaceY + random.nextDouble() * 0.45D,
+                    pos.getZ() + random.nextDouble(), random, 0.9F);
+            }
+        } else {
+            for (int i = 0; i < 3; i++) {
+                addRisingDust(level, pos.getX() + random.nextDouble(),
+                    surfaceY + random.nextDouble() * 0.5D,
+                    pos.getZ() + random.nextDouble(), random, 0.9F);
+            }
         }
-        if (random.nextInt(7) == 0) {
-            level.addParticle(ParticleTypes.SMOKE, x, y, z, 0.0, 0.035, 0.0);
+
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            if (!canBurnForEffects(level.getBlockState(pos.relative(direction)))) continue;
+            double xOffset = random.nextDouble() * 0.5D + 0.5D;
+            double yOffset = random.nextDouble() * 0.5D + 0.5D;
+            double zOffset = random.nextDouble() * 0.5D + 0.5D;
+            if (direction.getAxis() == Direction.Axis.X) xOffset = 0.5D;
+            else zOffset = 0.5D;
+            addRisingDust(level, pos.getX() + xOffset, surfaceY + yOffset,
+                pos.getZ() + zOffset, random, 0.9F);
         }
+    }
+
+    private void addRisingDust(Level level, double x, double y, double z,
+                               RandomSource random, float scale) {
+        level.addParticle(new DustParticleOptions(flameColor, scale), x, y, z,
+            (random.nextDouble() - 0.5D) * 0.01D,
+            0.02D + random.nextDouble() * 0.02D,
+            (random.nextDouble() - 0.5D) * 0.01D);
+    }
+
+    private boolean canBurnForEffects(BlockState state) {
+        // The vanilla FireBlock stores its spread table per instance; liquid-fire instances have
+        // their own table, so also honor the block state's lava-flammability flag.
+        return state.ignitedByLava() || canBurn(state);
     }
 
     private static LiquidFireBlock fireFor(Fluid fluid) {

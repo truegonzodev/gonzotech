@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.155 per-cell liquid fire and corium radiation."""
+"""Static regression contract for 0.3.156 liquid-fire effects and corium radiation."""
 import json
 import struct
 import zlib
@@ -59,10 +59,10 @@ pin("LongOpenHashSet claimed = new LongOpenHashSet();" in chunk
 
 # Each liquid has a separately registered overlay; its timer entity supports both variants.
 blocks = read_java("core/registry/ModBlocks.java")
-pin('"rectificate_fire"' in blocks and "ModFluids.ETHANOL, 0x2D66FF" in blocks,
-    "rectificate has its own blue fire block")
-pin('"formaldehyde_fire"' in blocks and "ModFluids.FORMALDEHYDE, 0x55E9FF" in blocks,
-    "formaldehyde has its own cyan fire block")
+pin('"rectificate_fire"' in blocks and "ModFluids.ETHANOL, 0x3AC5DE" in blocks,
+    "ethanol fire dust uses the exact #3ac5de tint")
+pin('"formaldehyde_fire"' in blocks and "ModFluids.FORMALDEHYDE, 0x563475" in blocks,
+    "formaldehyde fire dust uses the exact #563475 tint")
 pin("state.getValue(LiquidFireBlock.ACTIVE) ? 12 : 0" in blocks
     and "state.getValue(LiquidFireBlock.ACTIVE) ? 11 : 0" in blocks,
     "hidden delayed overlay emits no light until ignition")
@@ -82,6 +82,9 @@ pin("instanceof BaseFireBlock" in fluid_block
     "custom overlays are excluded when identifying ordinary fire sources")
 
 fire = read_java("core/fluid/LiquidFireBlock.java")
+pin("import net.minecraft.world.level.GameRules;" in fire
+    and "GameRules.RULE_DOFIRETICK" in fire,
+    "fire-tick gamerule symbol is imported from the 1.21.4 API package")
 pin("BooleanProperty.create(\"active\")" in fire
     and 'IntegerProperty.create("surface", 0, 8)' in fire,
     "overlay has an independent visibility flag and nine surface variants")
@@ -128,8 +131,26 @@ pin("support.ignitedByLava()" in fire
     and "supportFire.ignite(level, supportPos, 0, random)" in fire
     and "BaseFireBlock.getState(level, fuelPos)" in fire,
     "post-burn attempts valid vanilla or custom fire on the support")
-pin("state.getAmount()" in fire and "surfaceHeight(fluid)" in fire,
-    "colored sparks follow the current source/flowing surface")
+animate_tick = fire.split("public void animateTick(", 1)[1].split("\n    private void addRisingDust", 1)[0]
+pin("if (!level.isClientSide() || !state.getValue(ACTIVE)) return;" in animate_tick,
+    "sound and particles are gated to active client-side overlays")
+pin("random.nextInt(24) == 0" in animate_tick
+    and "level.playLocalSound(" in animate_tick
+    and "SoundEvents.FIRE_AMBIENT" in animate_tick
+    and "SoundSource.BLOCKS" in animate_tick,
+    "active liquid fire uses vanilla's local ambient crackle cadence")
+pin("random.nextInt(2) == 0" in animate_tick
+    and "for (int i = 0; i < 3; i++)" in animate_tick
+    and "Direction.Plane.HORIZONTAL" in animate_tick
+    and "canBurnForEffects(" in animate_tick
+    and "return state.ignitedByLava() || canBurn(state);" in fire,
+    "vanilla fire's support and adjacent-fuel particle branches are retained")
+pin("new DustParticleOptions(flameColor, scale)" in fire
+    and "0.02D + random.nextDouble() * 0.02D" in fire
+    and "surfaceHeight(fluid)" in animate_tick,
+    "colored dust starts at the actual liquid surface and rises upward")
+pin("ParticleTypes.SMOKE" not in fire and "ParticleTypes.LARGE_SMOKE" not in fire,
+    "liquid-fire animation contains no leftover smoke particles")
 
 fire_entity = read_java("core/fluid/LiquidFireBlockEntity.java")
 pin("MIN_BURN_TICKS = 8 * 20" in fire_entity
@@ -153,7 +174,7 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.155" in version, "micropatch version should be 0.3.155")
+pin("mod_version=0.3.156" in version, "micropatch version should be 0.3.156")
 
 # Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]
