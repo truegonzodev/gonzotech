@@ -8,8 +8,9 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 
-/** Colored vanilla-dust sprite with the liquid-fire lifetime adjustment. */
+/** Colored vanilla-dust sprite with liquid-fire size and lifetime adjustments. */
 public final class LiquidFireDustParticle extends TextureSheetParticle {
+    public static final float SIZE_MULTIPLIER = 1.5F;
     public static final float LIFETIME_MULTIPLIER = 1.2F;
 
     private final SpriteSet sprites;
@@ -25,7 +26,7 @@ public final class LiquidFireDustParticle extends TextureSheetParticle {
         this.zd *= 0.1D;
         this.friction = 0.96F;
         this.gravity = 0.0F;
-        this.quadSize *= 0.75F * scale;
+        this.quadSize *= 0.75F * scale * SIZE_MULTIPLIER;
 
         int vanillaLifetime = (int) (8.0D / (this.random.nextDouble() * 0.8D + 0.2D));
         this.lifetime = Math.max(Math.round(vanillaLifetime * LIFETIME_MULTIPLIER), 1);

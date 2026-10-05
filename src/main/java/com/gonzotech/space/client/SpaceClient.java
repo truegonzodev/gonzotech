@@ -181,6 +181,7 @@ public final class SpaceClient {
     }
 
     public static void onRegisterDimensionEffects(RegisterDimensionSpecialEffectsEvent event) {
+        // Deliberately leave Level.END unregistered; its vanilla sky is unchanged.
         event.register(Level.OVERWORLD.location(), overworld());
         event.register(SpaceDimensions.MOON_SKY, moon());
         event.register(SpaceDimensions.MARS_SKY, mars());

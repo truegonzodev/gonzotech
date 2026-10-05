@@ -64,6 +64,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      */
     private static final float STAR_DISTANCE = SKY_DISTANCE + 2.0F;
 
+    /** Stars turn 0.8 revolutions per complete day/night cycle. */
+    private static final double STAR_ROTATIONS_PER_DAY_CYCLE = 0.8D;
+    private static final double STAR_X_RELATIVE_SPEED = 0.20D;
+    private static final double STAR_Y_RELATIVE_SPEED = 0.40D;
+    private static final double DEFAULT_STAR_CYCLE_TICKS = 24000.0D;
+
     /** Полуразмер ванильного лунного квада: от -20 до +20. */
     static final float VANILLA_MOON_HALF_SIZE = 20.0F;
 
@@ -369,7 +375,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
         float starBrightness = Mth.lerp(dayFrac, starNightBrightness, starDayBrightness);
         if (starBrightness > 0.001F) {
-            renderStars(modelViewMatrix, starBrightness);
+            renderStars(starRotationMatrix(level, partialTick, modelViewMatrix), starBrightness);
         }
 
         renderBodies(level, partialTick, modelViewMatrix);
@@ -403,6 +409,41 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         double frac = Mth.frac((float) ((time - 6000.0) / cycleTicks));
         float cos = Mth.cos((float) (frac * 2.0 * Math.PI));
         return Mth.clamp((cos + 0.35F) / 1.35F, 0.0F, 1.0F);
+    }
+
+    /**
+     * Rotate the cached star field against the world clock without rebuilding its geometry.
+     * Dynamic-sun effects follow the configured day length; fixed-light effects still rotate
+     * against the conventional 24,000-tick Minecraft day.
+     */
+    private Matrix4f starRotationMatrix(ClientLevel level, float partialTick, Matrix4f baseMatrix) {
+        double cycleTicks = DEFAULT_STAR_CYCLE_TICKS;
+        if (fixedDaylight < 0.0F && primarySun != null) {
+            double sunCycleDays = primarySun.cycleDays();
+            if (Double.isFinite(sunCycleDays) && sunCycleDays > 0.0D) {
+                cycleTicks *= Math.max(0.001D, sunCycleDays);
+            }
+        }
+
+        double elapsedCycles = (level.getDayTime() + (double) partialTick) / cycleTicks;
+        double baseDegrees = elapsedCycles * 360.0D * STAR_ROTATIONS_PER_DAY_CYCLE;
+        float zDegrees = wrappedDegrees(baseDegrees);
+        float xDegrees = wrappedDegrees(baseDegrees * STAR_X_RELATIVE_SPEED);
+        float yDegrees = wrappedDegrees(baseDegrees * STAR_Y_RELATIVE_SPEED);
+
+        Matrix4f starMatrix = new Matrix4f(baseMatrix);
+        starMatrix.rotate(Axis.ZP.rotationDegrees(zDegrees));
+        starMatrix.rotate(Axis.XP.rotationDegrees(xDegrees));
+        starMatrix.rotate(Axis.YP.rotationDegrees(yDegrees));
+        return starMatrix;
+    }
+
+    private static float wrappedDegrees(double degrees) {
+        double wrapped = degrees % 360.0D;
+        if (wrapped < 0.0D) {
+            wrapped += 360.0D;
+        }
+        return (float) wrapped;
     }
 
     public boolean overridesSkyLight() {

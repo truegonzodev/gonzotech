@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.157 liquid-fire effects and corium radiation."""
+"""Static regression contract for 0.3.158 liquid-fire effects and corium radiation."""
 import json
 import struct
 import zlib
@@ -164,6 +164,9 @@ pin("random.nextInt(4) == 0) return;" in fire
     and "surfaceHeight(fluid)" in animate_tick,
     "dust spawn attempts are reduced by 25% and upward speed is multiplied by 2.1")
 dust_particle = read_java("core/client/particle/LiquidFireDustParticle.java")
+pin("SIZE_MULTIPLIER = 1.5F" in dust_particle
+    and "this.quadSize *= 0.75F * scale * SIZE_MULTIPLIER;" in dust_particle,
+    "all four liquid-fire dust variants are 1.5x their previous size")
 pin("LIFETIME_MULTIPLIER = 1.2F" in dust_particle
     and "Math.round(vanillaLifetime * LIFETIME_MULTIPLIER)" in dust_particle
     and "this.yd *= 0.1D;" in dust_particle,
@@ -201,7 +204,7 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.157" in version, "micropatch version should be 0.3.157")
+pin("mod_version=0.3.158" in version, "micropatch version should be 0.3.158")
 
 # Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]
