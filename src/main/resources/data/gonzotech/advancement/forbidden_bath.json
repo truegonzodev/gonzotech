@@ -1,0 +1,22 @@
+{
+  "parent": "gonzotech:cesium_interaction",
+  "display": {
+    "icon": {
+      "id": "gonzotech:obsidian_bucket"
+    },
+    "title": {
+      "translate": "advancements.gonzotech.forbidden_bath.title"
+    },
+    "description": {
+      "translate": "advancements.gonzotech.forbidden_bath.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "converted_while_submerged": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

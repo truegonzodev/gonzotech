@@ -131,7 +131,7 @@ video_ticks = ogg_duration_ticks(ASSETS / "sounds/videoplaybak.ogg")
 pin(abs(video_ticks - 91.0) <= 1.0,
     f"the OGG keeps its complete ~91-tick duration ({video_ticks:.2f} ticks)")
 
-pin("mod_version=0.3.162" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.162")
+pin("mod_version=0.3.163" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.163")
 
 print(f"sketch page video/audio audit: {checks} pins passed")

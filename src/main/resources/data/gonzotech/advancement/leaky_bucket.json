@@ -1,0 +1,40 @@
+{
+  "parent": "gonzotech:cesium_interaction",
+  "display": {
+    "icon": {
+      "id": "gonzotech:leaky_bucket"
+    },
+    "title": {
+      "translate": "advancements.gonzotech.leaky_bucket.title"
+    },
+    "description": {
+      "translate": "advancements.gonzotech.leaky_bucket.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "converted_to_leaky_bucket": {
+      "trigger": "minecraft:impossible"
+    },
+    "obtained_leaky_bucket": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:leaky_bucket"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "converted_to_leaky_bucket"
+    ],
+    [
+      "obtained_leaky_bucket"
+    ]
+  ]
+}

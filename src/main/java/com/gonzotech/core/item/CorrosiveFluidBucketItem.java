@@ -1,11 +1,13 @@
 package com.gonzotech.core.item;
 
+import com.gonzotech.chalkboard.advancement.ModAdvancements;
 import com.gonzotech.core.fluid.ModFluids;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
@@ -64,6 +66,9 @@ public class CorrosiveFluidBucketItem extends BucketItem {
             ItemStack leaky = new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount());
             if (entity instanceof Player player) {
                 player.getInventory().setItem(slotId, leaky);
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModAdvancements.awardLeakyBucket(serverPlayer);
+                }
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
                         SoundEvents.LAVA_EXTINGUISH, SoundSource.PLAYERS, 0.6F, 1.2F);
                 spillAcidNear(level, player.blockPosition());

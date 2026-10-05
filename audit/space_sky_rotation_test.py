@@ -68,7 +68,7 @@ pin("60F, /*yaw*/ -90F, /*tilt*/ 12F" in moon
     and "1F, -90F, 8F, 0F" in mars
     and "3.5F, -90F, 6F, 0F" in europa,
     "Moon, Mars, and Europa sky trajectories retain their existing yaw")
-pin("mod_version=0.3.162" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.162")
+pin("mod_version=0.3.163" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.163")
 
 print(f"space sky rotation audit: {checks} pins passed")

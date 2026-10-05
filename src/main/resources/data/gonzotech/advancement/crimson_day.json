@@ -1,22 +1,22 @@
 {
+  "parent": "gonzotech:root",
   "display": {
     "icon": {
-      "id": "gonzotech:discovery_1"
+      "id": "gonzotech:solar_watch"
     },
     "title": {
-      "translate": "advancements.gonzotech.discovery_1.title"
+      "translate": "advancements.gonzotech.crimson_day.title"
     },
     "description": {
-      "translate": "advancements.gonzotech.discovery_1.description"
+      "translate": "advancements.gonzotech.crimson_day.description"
     },
     "frame": "task",
     "show_toast": true,
     "announce_to_chat": true
   },
   "criteria": {
-    "unlocked": {
+    "witnessed_crimson_day": {
       "trigger": "minecraft:impossible"
     }
-  },
-  "parent": "gonzotech:root"
+  }
 }

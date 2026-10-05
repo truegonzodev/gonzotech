@@ -1,5 +1,6 @@
 package com.gonzotech.sunevent;
 
+import com.gonzotech.chalkboard.advancement.ModAdvancements;
 import com.gonzotech.chalkboard.network.NotesNetwork;
 import com.gonzotech.chalkboard.notes.ScholarNoteFlags;
 import com.gonzotech.chalkboard.progress.ModAttachments;
@@ -109,6 +110,7 @@ public final class SunEventServer {
     private static void unlockSunEventFlag(ServerLevel overworld) {
         MinecraftServer server = overworld.getServer();
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            ModAdvancements.awardCrimsonDay(p);
             PlayerChalkboardProgress progress = p.getData(ModAttachments.CHALKBOARD_PROGRESS);
             if (progress.unlockNoteFlag(ScholarNoteFlags.SUN_EVENT)) {
                 p.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
@@ -131,5 +133,8 @@ public final class SunEventServer {
             player,
             new com.gonzotech.space.SpaceSkyNetwork.SunStatePayload(data.sunState.getSerializedName()));
         SunEventNetwork.sendToPlayer(player, data);
+        if (data.lastEventDay > 0 && data.lastEventDay == overworld.getDayTime() / 24000L) {
+            ModAdvancements.awardCrimsonDay(player);
+        }
     }
 }

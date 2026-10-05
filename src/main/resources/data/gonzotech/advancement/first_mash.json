@@ -1,22 +1,22 @@
 {
+  "parent": "gonzotech:root",
   "display": {
     "icon": {
-      "id": "gonzotech:discovery_1"
+      "id": "gonzotech:the_fruit_mash"
     },
     "title": {
-      "translate": "advancements.gonzotech.discovery_1.title"
+      "translate": "advancements.gonzotech.first_mash.title"
     },
     "description": {
-      "translate": "advancements.gonzotech.discovery_1.description"
+      "translate": "advancements.gonzotech.first_mash.description"
     },
     "frame": "task",
     "show_toast": true,
     "announce_to_chat": true
   },
   "criteria": {
-    "unlocked": {
+    "first_mash": {
       "trigger": "minecraft:impossible"
     }
-  },
-  "parent": "gonzotech:root"
+  }
 }

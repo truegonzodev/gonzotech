@@ -45,7 +45,7 @@ pin("relieve(player, MASH_RELIEF);" in mash_handler
     and "resetMashTimer(player);" in mash_handler,
     "mash itself retains its existing stress relief and timer reset")
 
-pin("mod_version=0.3.162" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.162")
+pin("mod_version=0.3.163" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.163")
 
 print(f"drink mash timer audit: {checks} pins passed")

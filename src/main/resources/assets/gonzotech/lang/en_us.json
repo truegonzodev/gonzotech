@@ -982,5 +982,18 @@
   "gui.gonzotech.silicon_factory.photolithography": "§fPhotolithography: %s%%",
   "gui.gonzotech.silicon_factory.vulcanization": "§fVulcanization: %s%%",
   "gui.gonzotech.silicon_factory.quality": "§7Air quality: %s%% - reject chance: %s%%",
-  "gui.gonzotech.silicon_factory.quality_ambient": "§7Air quality: normal - reject chance: %s%%"
+  "gui.gonzotech.silicon_factory.quality_ambient": "§7Air quality: normal - reject chance: %s%%",
+  "advancements.gonzotech.energy_tab": "Energy",
+  "advancements.gonzotech.root.title": "Not-so-welcome!",
+  "advancements.gonzotech.root.description": "Start with a clean slate.",
+  "advancements.gonzotech.first_mash.title": "First Taste",
+  "advancements.gonzotech.first_mash.description": "Try either fruit mash or prototype mash.",
+  "advancements.gonzotech.crimson_day.title": "No Longer Warm",
+  "advancements.gonzotech.crimson_day.description": "Witness a crimson day for the first time.",
+  "advancements.gonzotech.cesium_interaction.title": "Explosive Temper",
+  "advancements.gonzotech.cesium_interaction.description": "Interact with any item or block whose name contains cesium.",
+  "advancements.gonzotech.leaky_bucket.title": "Industrial Incontinence",
+  "advancements.gonzotech.leaky_bucket.description": "Create a leaky bucket from an ethylene or sulfuric acid bucket.",
+  "advancements.gonzotech.forbidden_bath.title": "Bathing Forbidden",
+  "advancements.gonzotech.forbidden_bath.description": "Turn a lava bucket into an obsidian bucket by submerging yourself in water."
 }

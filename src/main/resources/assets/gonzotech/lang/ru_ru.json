@@ -982,5 +982,18 @@
   "gui.gonzotech.silicon_factory.photolithography": "§fФотолитография: %s%%",
   "gui.gonzotech.silicon_factory.vulcanization": "§fВулканизация: %s%%",
   "gui.gonzotech.silicon_factory.quality": "§7Качетсво воздуха: %s%% - шанс брака: %s%%",
-  "gui.gonzotech.silicon_factory.quality_ambient": "§7Качетсво воздуха: обычный - шанс брака: %s%%"
+  "gui.gonzotech.silicon_factory.quality_ambient": "§7Качетсво воздуха: обычный - шанс брака: %s%%",
+  "advancements.gonzotech.energy_tab": "Энергетика",
+  "advancements.gonzotech.root.title": "Недобро пожаловать!",
+  "advancements.gonzotech.root.description": "Начните всё с чистого листа.",
+  "advancements.gonzotech.first_mash.title": "Первая проба",
+  "advancements.gonzotech.first_mash.description": "Попробуйте фруктовое или прототипное сусло.",
+  "advancements.gonzotech.crimson_day.title": "Больше не греет",
+  "advancements.gonzotech.crimson_day.description": "Впервые повстречайте багровый день.",
+  "advancements.gonzotech.cesium_interaction.title": "Взрывной характер",
+  "advancements.gonzotech.cesium_interaction.description": "Взаимодействуйте с любым предметом или блоком, чьё имя содержит cesium.",
+  "advancements.gonzotech.leaky_bucket.title": "Промышленное недержание",
+  "advancements.gonzotech.leaky_bucket.description": "Создайте дырявое ведро из ведра этилена или серной кислоты.",
+  "advancements.gonzotech.forbidden_bath.title": "Купание запрещено",
+  "advancements.gonzotech.forbidden_bath.description": "Превратите ведро лавы в ведро обсидиана, погрузившись в воду."
 }

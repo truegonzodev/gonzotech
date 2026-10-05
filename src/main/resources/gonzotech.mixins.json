@@ -28,6 +28,7 @@
     "PistonBaseBlockMixin"
   ],
   "client": [
+    "client.AdvancementTabMixin",
     "client.InBedFaintingScreenMixin",
     "client.CatRenderStateMixin",
     "client.CatRendererMixin",

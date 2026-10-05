@@ -1,5 +1,6 @@
 package com.gonzotech.core.event;
 
+import com.gonzotech.chalkboard.advancement.ModAdvancements;
 import com.gonzotech.chalkboard.advancement.RecipeUnlocks;
 import com.gonzotech.chalkboard.network.NotesNetwork;
 import com.gonzotech.chalkboard.notes.ScholarNoteFlags;
@@ -342,6 +343,7 @@ public final class Phase3Events {
         // инвентарь редковатый (каждые 2 с) — достаточно для «первая добыча».
         if (level.getGameTime() % WORLD_KNOWLEDGE_SCAN_INTERVAL == 0) {
             updateWorldKnowledgeFlags(serverPlayer);
+            AchievementEvents.checkCesiumInventory(serverPlayer);
         }
 
         if (!player.isInWater()) return;
@@ -353,6 +355,7 @@ public final class Phase3Events {
             ItemStack st = inv.getItem(i);
             if (st.is(Items.LAVA_BUCKET)) {
                 inv.setItem(i, new ItemStack(ModItems.OBSIDIAN_BUCKET.get(), st.getCount()));
+                ModAdvancements.awardForbiddenBath(serverPlayer);
                 replaced = true;
             }
         }
@@ -453,6 +456,9 @@ public final class Phase3Events {
         // Ведро лавы в воде остаётся прежним безвредным «приколом».
         if (stack.is(Items.LAVA_BUCKET)) {
             itemEntity.setItem(new ItemStack(ModItems.OBSIDIAN_BUCKET.get(), stack.getCount()));
+            if (itemEntity.getOwner() instanceof ServerPlayer owner && owner.isInWater()) {
+                ModAdvancements.awardForbiddenBath(owner);
+            }
             return;
         }
 
@@ -463,6 +469,9 @@ public final class Phase3Events {
             if (level.getGameTime() >= leakAt) {
                 boolean isFluidBucket = stack.getItem() instanceof com.gonzotech.core.item.CorrosiveFluidBucketItem;
                 itemEntity.setItem(new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount()));
+                if (itemEntity.getOwner() instanceof ServerPlayer owner) {
+                    ModAdvancements.awardLeakyBucket(owner);
+                }
                 if (stack.is(ModItems.ETHYLENE_BUCKET.get())) {
                     com.gonzotech.core.item.CorrosiveBucketItem.triggerEthyleneExplosion(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), itemEntity);
                 } else {
@@ -518,6 +527,7 @@ public final class Phase3Events {
         if (eaten.isEmpty()) return;
         if (!eaten.is(ModItems.THE_PROTO_MASH.get()) && !eaten.is(ModItems.THE_FRUIT_MASH.get())) return;
 
+        ModAdvancements.awardFirstMash(player);
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         psyche.addAddiction(MASH_ADDICTION_PER_EAT);
         player.setData(ModPsycheAttachments.PSYCHE, psyche);

@@ -1,5 +1,6 @@
 package com.gonzotech.core.item;
 
+import com.gonzotech.chalkboard.advancement.ModAdvancements;
 import com.gonzotech.core.psyche.PsycheChemical;
 import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.core.registry.ModParticles;
@@ -108,6 +109,9 @@ public class CorrosiveBucketItem extends Item {
                 if (!player.getInventory().add(leaky)) {
                     player.drop(leaky, false);
                 }
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModAdvancements.awardLeakyBucket(serverPlayer);
+                }
             }
         }
         return InteractionResult.SUCCESS;
@@ -126,6 +130,9 @@ public class CorrosiveBucketItem extends Item {
             ItemStack leaky = new ItemStack(ModItems.LEAKY_BUCKET.get(), stack.getCount());
             if (entity instanceof Player player) {
                 player.getInventory().setItem(slotId, leaky);
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModAdvancements.awardLeakyBucket(serverPlayer);
+                }
                 triggerEthyleneExplosion(level, player.getX(), player.getY() + 0.5, player.getZ(), player);
             }
         }

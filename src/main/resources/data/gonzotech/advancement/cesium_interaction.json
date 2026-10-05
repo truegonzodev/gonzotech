@@ -1,0 +1,22 @@
+{
+  "parent": "gonzotech:root",
+  "display": {
+    "icon": {
+      "id": "gonzotech:cesium_ingot"
+    },
+    "title": {
+      "translate": "advancements.gonzotech.cesium_interaction.title"
+    },
+    "description": {
+      "translate": "advancements.gonzotech.cesium_interaction.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "interacted_with_cesium": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
