@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Static regression contract for the Scholar Notes video and overlay ordering."""
+"""Static contract for the Scholar Notes video/audio playback and overlay ordering."""
 import json
 import struct
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src/main/java/com/gonzotech/chalkboard"
-RES = ROOT / "src/main/resources/assets/gonzotech/textures/gui"
+SRC = ROOT / "src/main/java/com/gonzotech"
+ASSETS = ROOT / "src/main/resources/assets/gonzotech"
 checks = 0
 
 
@@ -16,9 +16,42 @@ def pin(condition, message):
     checks += 1
 
 
-screen = (SRC / "client/ScholarNotesScreen.java").read_text(encoding="utf-8")
-content = (SRC / "notes/ScholarNotesContent.java").read_text(encoding="utf-8")
-page = content.split("new ScholarPage(38, ScholarChapter.ERA_2", 1)[1].split("new ScholarPage(39,", 1)[0]
+def ogg_duration_ticks(path):
+    """Read the Vorbis sample rate and final Ogg granule position without extra deps."""
+    data = path.read_bytes()
+    offset = 0
+    packet = bytearray()
+    sample_rate = None
+    last_granule = None
+    while offset < len(data):
+        header = data[offset:offset + 27]
+        if len(header) != 27 or header[:4] != b"OggS":
+            raise AssertionError(f"invalid Ogg page at byte {offset}")
+        segment_count = header[26]
+        table_start = offset + 27
+        lacing = data[table_start:table_start + segment_count]
+        body_pos = table_start + segment_count
+        for segment_size in lacing:
+            packet.extend(data[body_pos:body_pos + segment_size])
+            body_pos += segment_size
+            if segment_size < 255:
+                if packet.startswith(b"\x01vorbis") and len(packet) >= 16:
+                    sample_rate = struct.unpack_from("<I", packet, 12)[0]
+                packet.clear()
+        granule = struct.unpack_from("<Q", header, 6)[0]
+        if granule != 0xFFFFFFFFFFFFFFFF:
+            last_granule = granule
+        offset = body_pos
+    if not sample_rate or last_granule is None:
+        raise AssertionError("Ogg Vorbis identification header or final granule is missing")
+    return last_granule / sample_rate * 20.0
+
+
+screen = (SRC / "chalkboard/client/ScholarNotesScreen.java").read_text(encoding="utf-8")
+content = (SRC / "chalkboard/notes/ScholarNotesContent.java").read_text(encoding="utf-8")
+page = content.split("new ScholarPage(38, ScholarChapter.ERA_2", 1)[1].split(
+    "new ScholarPage(39,", 1
+)[0]
 pin('"gui.gonzotech.notes.p44.title"' in page,
     "the trigger is attached to the Knowledge book's ‘Sketch’ page 5/11")
 pin("SKETCH_PAGE_NUMBER = 38" in screen
@@ -26,37 +59,47 @@ pin("SKETCH_PAGE_NUMBER = 38" in screen
     "the timer matches the stable page identity, not a translated title or list offset")
 pin("SKETCH_DELAY_TICKS = 5 * 20" in screen
     and "SKETCH_FADE_TICKS = 10 * 20" in screen,
-    "playback waits five seconds and fades to black over ten seconds")
-pin("int[] SKETCH_VIDEO_FRAME_TICKS = {10, 10, 10, 10};" in screen
-    and "sketchVideoFrameAtTick(sketchPlaybackTicks)" in screen
-    and "sketchVideoDurationTicks()" in screen,
-    "the four video frames each remain visible for ten client ticks")
+    "playback retains its five-second delay and ten-second fade")
+
+duration_method = screen.split("private static int sketchVideoDurationTicks()", 1)[1].split(
+    "private static int sketchVideoFrameAtTick", 1
+)[0]
+frame_method = screen.split("private static int sketchVideoFrameAtTick", 1)[1].split(
+    "@Override", 1
+)[0]
+pin("SKETCH_VIDEO_FRAME_COUNT = 91" in screen
+    and "return SKETCH_VIDEO_FRAME_COUNT;" in duration_method
+    and "return Math.min(Math.max(0, elapsedTicks), SKETCH_VIDEO_FRAME_COUNT - 1);" in frame_method,
+    "the clip renders 91 distinct frames at exactly one frame per client tick")
 pin("sketchSequenceConsumed = true;" in screen
     and "!sketchSequenceConsumed && sketchPlaybackStage == SketchPlaybackStage.IDLE" in screen
     and "updateSketchPlaybackPage();" in screen,
     "a page visit consumes one attempt for this book instance and cannot spam-retrigger")
-pin("public void tick()" in screen
-    and "sketchPlaybackStage = SketchPlaybackStage.FADE;" in screen
-    and "sketchPlaybackStage = SketchPlaybackStage.VIDEO;" in screen
-    and "playSketchVideoSound();" in screen,
-    "client tick stages delay, fade, and video; sound starts on the video transition")
-pin("(sketchPlaybackTicks + partialTick) / (float) SKETCH_FADE_TICKS" in screen
-    and "g.fill(0, 0, width, height, SKETCH_OVERLAY_Z, alpha << 24);" in screen
-    and "else if (sketchPlaybackStage == SketchPlaybackStage.VIDEO)" in screen,
-    "the fade is a black fullscreen overlay and disappears as video rendering begins")
-pin('"textures/gui/videoplaybak.png"' in screen
-    and "SKETCH_VIDEO_FRAME_WIDTH = 128" in screen
-    and "SKETCH_VIDEO_FRAME_HEIGHT = 72" in screen
-    and "SKETCH_VIDEO_FRAME_HEIGHT * SKETCH_VIDEO_FRAME_COUNT" in screen,
-    "the vertical 16:9 test strip is sampled one frame at a time and stretched fullscreen")
-pin("SoundEvents.ANVIL_LAND" in screen
-    and "getSoundManager().stop(this.sketchSound)" in screen
+
+fade_transition = screen.split("case FADE ->", 1)[1].split("case VIDEO ->", 1)[0]
+pin("sketchPlaybackStage = SketchPlaybackStage.VIDEO;" in fade_transition
+    and "sketchPlaybackTicks = 0;" in fade_transition
+    and "playSketchVideoSound();" in fade_transition,
+    "the custom sound starts on the same client tick that begins video frame zero")
+pin('SKETCH_VIDEO = sound("videoplaybak")' in (SRC / "core/registry/ModSounds.java").read_text(encoding="utf-8")
+    and "ModSounds.SKETCH_VIDEO.get()" in screen
+    and "SoundEvents.ANVIL_LAND" not in screen,
+    "playback uses the registered custom recording, not the temporary anvil sound")
+
+video_tick = screen.split("case VIDEO ->", 1)[1].split("default ->", 1)[0]
+pin("sketchPlaybackStage = SketchPlaybackStage.FINISHED;" in video_tick
+    and "stopSketchSound()" not in video_tick,
+    "finishing the 91-frame picture does not stop or truncate the audio")
+cancel_method = screen.split("private void cancelSketchPlayback()", 1)[1].split(
+    "private void playSketchVideoSound()", 1
+)[0]
+pin("            stopSketchSound();\n        }\n        // After the 91 video ticks" in cancel_method
     and "public void onClose()" in screen
-    and "public void removed()" in screen
-    and "cancelSketchPlayback();" in screen,
-    "the test sound plays once and Escape/screen removal cancels playback and stops it")
+    and "public void removed()" in screen,
+    "ESC/screen removal cancels active playback, while completed audio is allowed to finish")
 pin("public boolean isPauseScreen()" in screen and "return false;" in screen,
     "the book and playback do not pause gameplay or take movement control")
+
 render = screen.split("public void render(GuiGraphics g", 1)[1].split(
     "private void renderSketchPlaybackOverlay", 1
 )[0]
@@ -68,14 +111,27 @@ pin("SKETCH_OVERLAY_Z = (int) (GuiGraphics.MAX_GUI_Z - 1.0F)" in screen
     and "g.pose().translate(0.0D, 0.0D, (double) SKETCH_OVERLAY_Z);" in screen,
     "fade and video render at the top GUI depth, above item-tab z offsets")
 
-png = (RES / "videoplaybak.png").read_bytes()
-pin(png.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", png[16:24]) == (128, 288),
-    "videoplaybak.png is the supplied 128x288 four-frame strip")
-metadata = json.loads((RES / "videoplaybak.png.mcmeta").read_text(encoding="utf-8"))["animation"]
+png_path = ASSETS / "textures/gui/videoplaybak.png"
+png = png_path.read_bytes()
+pin(png.startswith(b"\x89PNG\r\n\x1a\n")
+    and struct.unpack(">II", png[16:24]) == (128, 91 * 72),
+    "the supplied vertical PNG contains exactly 91 frames of 128x72 pixels")
+metadata = json.loads((ASSETS / "textures/gui/videoplaybak.png.mcmeta").read_text(
+    encoding="utf-8"))["animation"]
 pin(metadata.get("width") == 128 and metadata.get("height") == 72
-    and metadata.get("frametime") == 10 and metadata.get("frames") == [0, 1, 2, 3],
-    "the texture metadata describes exactly four 10-tick frames")
-pin("mod_version=0.3.161" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.161")
+    and metadata.get("frametime") == 1 and metadata.get("frames") == list(range(91)),
+    "the PNG metadata selects each of the 91 frames for one tick")
 
-print(f"sketch page video audit: {checks} pins passed")
+sound_json = json.loads((ASSETS / "sounds.json").read_text(encoding="utf-8"))
+sound_entries = sound_json.get("videoplaybak", {}).get("sounds", [])
+pin(any(entry.get("name") == "gonzotech:videoplaybak" for entry in sound_entries)
+    and (ASSETS / "sounds/videoplaybak.ogg").is_file(),
+    "sounds.json points the registered playback event at the committed OGG asset")
+video_ticks = ogg_duration_ticks(ASSETS / "sounds/videoplaybak.ogg")
+pin(abs(video_ticks - 91.0) <= 1.0,
+    f"the OGG keeps its complete ~91-tick duration ({video_ticks:.2f} ticks)")
+
+pin("mod_version=0.3.162" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.162")
+
+print(f"sketch page video/audio audit: {checks} pins passed")

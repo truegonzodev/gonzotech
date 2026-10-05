@@ -1,1 +1,9 @@
-{}
+{
+  "videoplaybak": {
+    "sounds": [
+      {
+        "name": "gonzotech:videoplaybak"
+      }
+    ]
+  }
+}

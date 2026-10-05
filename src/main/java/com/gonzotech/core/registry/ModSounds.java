@@ -8,9 +8,11 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-/** Future custom sounds: add static holders here and matching entries in assets/gonzotech/sounds.json. */
+/** Registered custom sounds; each holder has a matching event in assets/gonzotech/sounds.json. */
 public final class ModSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, GonzoTechMod.MOD_ID);
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> SKETCH_VIDEO = sound("videoplaybak");
 
     public static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(

@@ -9,6 +9,7 @@ import com.gonzotech.chalkboard.notes.ScholarNotesContent;
 import com.gonzotech.chalkboard.notes.ScholarPage;
 import com.gonzotech.chalkboard.notes.StructureBlock;
 import com.gonzotech.chalkboard.notes.StructureModel;
+import com.gonzotech.core.registry.ModSounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,7 +20,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -83,10 +83,10 @@ public class ScholarNotesScreen extends Screen {
     private static final int SKETCH_PAGE_NUMBER = 38;
     private static final int SKETCH_DELAY_TICKS = 5 * 20;
     private static final int SKETCH_FADE_TICKS = 10 * 20;
-    private static final int[] SKETCH_VIDEO_FRAME_TICKS = {10, 10, 10, 10};
+    /** One new frame per client tick: four and a half seconds of 91-frame video. */
+    private static final int SKETCH_VIDEO_FRAME_COUNT = 91;
     private static final int SKETCH_VIDEO_FRAME_WIDTH = 128;
     private static final int SKETCH_VIDEO_FRAME_HEIGHT = 72;
-    private static final int SKETCH_VIDEO_FRAME_COUNT = SKETCH_VIDEO_FRAME_TICKS.length;
     /** Render after item icons, which use a positive GUI z-offset. */
     private static final int SKETCH_OVERLAY_Z = (int) (GuiGraphics.MAX_GUI_Z - 1.0F);
     private static final ResourceLocation TEX_SKETCH_VIDEO =
@@ -234,15 +234,17 @@ public class ScholarNotesScreen extends Screen {
                 || sketchPlaybackStage == SketchPlaybackStage.VIDEO) {
             sketchPlaybackStage = SketchPlaybackStage.CANCELLED;
             sketchPlaybackTicks = 0;
+            stopSketchSound();
         }
-        stopSketchSound();
+        // After the 91 video ticks, let the separately decoded sound finish naturally;
+        // it may be a fraction of a tick longer than the image sequence.
     }
 
     private void playSketchVideoSound() {
         if (this.minecraft == null) {
             return;
         }
-        this.sketchSound = SimpleSoundInstance.forUI(SoundEvents.ANVIL_LAND, 1.0F);
+        this.sketchSound = SimpleSoundInstance.forUI(ModSounds.SKETCH_VIDEO.get(), 1.0F);
         this.minecraft.getSoundManager().play(this.sketchSound);
     }
 
@@ -254,22 +256,12 @@ public class ScholarNotesScreen extends Screen {
     }
 
     private static int sketchVideoDurationTicks() {
-        int total = 0;
-        for (int duration : SKETCH_VIDEO_FRAME_TICKS) {
-            total += duration;
-        }
-        return total;
+        return SKETCH_VIDEO_FRAME_COUNT;
     }
 
+    /** At one frame per tick, the elapsed tick is also the vertical-strip frame index. */
     private static int sketchVideoFrameAtTick(int elapsedTicks) {
-        int remaining = Math.max(0, elapsedTicks);
-        for (int frame = 0; frame < SKETCH_VIDEO_FRAME_TICKS.length; frame++) {
-            if (remaining < SKETCH_VIDEO_FRAME_TICKS[frame]) {
-                return frame;
-            }
-            remaining -= SKETCH_VIDEO_FRAME_TICKS[frame];
-        }
-        return SKETCH_VIDEO_FRAME_COUNT - 1;
+        return Math.min(Math.max(0, elapsedTicks), SKETCH_VIDEO_FRAME_COUNT - 1);
     }
 
     @Override
@@ -286,6 +278,7 @@ public class ScholarNotesScreen extends Screen {
                 if (++sketchPlaybackTicks >= SKETCH_FADE_TICKS) {
                     sketchPlaybackStage = SketchPlaybackStage.VIDEO;
                     sketchPlaybackTicks = 0;
+                    // Start audio on the exact tick whose render presents video frame zero.
                     playSketchVideoSound();
                 }
             }

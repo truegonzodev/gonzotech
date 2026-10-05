@@ -204,7 +204,7 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.161" in version, "micropatch version should be 0.3.161")
+pin("mod_version=0.3.162" in version, "micropatch version should be 0.3.162")
 
 # Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]
