@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.158 custom sky-star rotation."""
+"""Static regression contract for 0.3.159 custom sky-star rotation."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,7 +49,7 @@ pin("event.register(Level.OVERWORLD.location(), overworld());" in registration
     and "SpaceDimensions." in registration
     and "event.register(Level.END" not in registration,
     "Overworld and custom skies are registered without changing End")
-pin("mod_version=0.3.158" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.158")
+pin("mod_version=0.3.159" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.159")
 
 print(f"space sky rotation audit: {checks} pins passed")

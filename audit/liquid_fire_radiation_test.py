@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.158 liquid-fire effects and corium radiation."""
+"""Static regression contract for 0.3.159 liquid-fire effects and corium radiation."""
 import json
 import struct
 import zlib
@@ -204,7 +204,7 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.158" in version, "micropatch version should be 0.3.158")
+pin("mod_version=0.3.159" in version, "micropatch version should be 0.3.159")
 
 # Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]
@@ -265,9 +265,14 @@ for block, model_stem, texture in (
             break
     width, height, bit_depth, color_type, *_ = image_header
     decoded = zlib.decompress(bytes(image_data))
-    pin((width, height, bit_depth, color_type) == (16, 16, 8, 6),
-        f"{texture} is a 16x16 32-bit RGBA image")
-    pin(len(decoded) == height * (1 + width * 4) and not any(decoded),
-        f"{texture} remains a fully transparent user-drawn placeholder")
+    pin((width, height, bit_depth, color_type) == (16, 480, 8, 6)
+        and height % 16 == 0,
+        f"{texture} is a 30-frame 16x16 32-bit RGBA fire animation strip")
+    pin(len(decoded) == height * (1 + width * 4),
+        f"{texture} contains complete RGBA pixel data for every frame")
+    animation = json.loads(texture_path.with_suffix(".png.mcmeta").read_text(encoding="utf-8"))["animation"]
+    pin(animation.get("frametime") == 1 and animation.get("interpolate") is False
+        and "frames" not in animation,
+        f"{texture}.mcmeta plays all 30 fire frames at one tick each")
 
 print(f"liquid fire / corium radiation contract passed: {checks} checks (static)")

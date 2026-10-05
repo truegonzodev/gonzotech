@@ -13,10 +13,13 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -76,6 +79,17 @@ public class ScholarNotesScreen extends Screen {
     /** Разрыв между вкладками линейных эпох и отдельной книгой «Познание мира». */
     private static final int SIDE_BOOK_GAP = 12;
 
+    /** «Зарисовка» — страница 5/11 книги «Познание мира». */
+    private static final int SKETCH_PAGE_NUMBER = 38;
+    private static final int SKETCH_DELAY_TICKS = 5 * 20;
+    private static final int SKETCH_FADE_TICKS = 10 * 20;
+    private static final int[] SKETCH_VIDEO_FRAME_TICKS = {10, 10, 10, 10};
+    private static final int SKETCH_VIDEO_FRAME_WIDTH = 128;
+    private static final int SKETCH_VIDEO_FRAME_HEIGHT = 72;
+    private static final int SKETCH_VIDEO_FRAME_COUNT = SKETCH_VIDEO_FRAME_TICKS.length;
+    private static final ResourceLocation TEX_SKETCH_VIDEO =
+            ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/videoplaybak.png");
+
     private static final ResourceLocation TEX_TAB_UNLOCKED =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/notes/notes_unlocked_tab.png");
     private static final ResourceLocation TEX_TAB_LOCKED =
@@ -108,6 +122,14 @@ public class ScholarNotesScreen extends Screen {
     private int[] structPrevRect;
     private int[] structNextRect;
 
+    private enum SketchPlaybackStage { IDLE, DELAY, FADE, VIDEO, FINISHED, CANCELLED }
+
+    private SketchPlaybackStage sketchPlaybackStage = SketchPlaybackStage.IDLE;
+    private int sketchPlaybackTicks;
+    /** Once per Screen instance, so the clip cannot retrigger until the book is reopened. */
+    private boolean sketchSequenceConsumed;
+    private SoundInstance sketchSound;
+
     public ScholarNotesScreen() {
         super(Component.translatable("gui.gonzotech.notes.title"));
     }
@@ -122,6 +144,7 @@ public class ScholarNotesScreen extends Screen {
         // Сбрасываем кэш размеров: если автор перерисовал PNG в другом разрешении
         // и сделал перезагрузку ресурсов (F3+T), подхватим новый размер.
         PNG_SIZE_CACHE.clear();
+        updateSketchPlaybackPage();
     }
 
     /** Актуальное состояние гейтинга страниц из последнего серверного ответа. */
@@ -176,7 +199,102 @@ public class ScholarNotesScreen extends Screen {
         this.pageIndex = idx;
         this.scroll = 0;
         this.structureSubpage = 0;
+        updateSketchPlaybackPage();
         playPageSound();
+    }
+
+    private boolean isSketchPage() {
+        if (pageIndex < 0 || pageIndex >= ScholarNotesContent.PAGES.size()) {
+            return false;
+        }
+        ScholarPage page = ScholarNotesContent.PAGES.get(pageIndex);
+        return page.number() == SKETCH_PAGE_NUMBER && page.chapter() == ScholarChapter.ERA_2;
+    }
+
+    /** Begin once on entering «Зарисовка»; leaving the page cancels this book's attempt. */
+    private void updateSketchPlaybackPage() {
+        if (isSketchPage()) {
+            if (!sketchSequenceConsumed && sketchPlaybackStage == SketchPlaybackStage.IDLE) {
+                sketchSequenceConsumed = true;
+                sketchPlaybackStage = SketchPlaybackStage.DELAY;
+                sketchPlaybackTicks = 0;
+            }
+        } else if (sketchPlaybackStage == SketchPlaybackStage.DELAY
+                || sketchPlaybackStage == SketchPlaybackStage.FADE
+                || sketchPlaybackStage == SketchPlaybackStage.VIDEO) {
+            cancelSketchPlayback();
+        }
+    }
+
+    private void cancelSketchPlayback() {
+        if (sketchPlaybackStage == SketchPlaybackStage.DELAY
+                || sketchPlaybackStage == SketchPlaybackStage.FADE
+                || sketchPlaybackStage == SketchPlaybackStage.VIDEO) {
+            sketchPlaybackStage = SketchPlaybackStage.CANCELLED;
+            sketchPlaybackTicks = 0;
+        }
+        stopSketchSound();
+    }
+
+    private void playSketchVideoSound() {
+        if (this.minecraft == null) {
+            return;
+        }
+        this.sketchSound = SimpleSoundInstance.forUI(SoundEvents.ANVIL_LAND, 1.0F);
+        this.minecraft.getSoundManager().play(this.sketchSound);
+    }
+
+    private void stopSketchSound() {
+        if (this.sketchSound != null && this.minecraft != null) {
+            this.minecraft.getSoundManager().stop(this.sketchSound);
+        }
+        this.sketchSound = null;
+    }
+
+    private static int sketchVideoDurationTicks() {
+        int total = 0;
+        for (int duration : SKETCH_VIDEO_FRAME_TICKS) {
+            total += duration;
+        }
+        return total;
+    }
+
+    private static int sketchVideoFrameAtTick(int elapsedTicks) {
+        int remaining = Math.max(0, elapsedTicks);
+        for (int frame = 0; frame < SKETCH_VIDEO_FRAME_TICKS.length; frame++) {
+            if (remaining < SKETCH_VIDEO_FRAME_TICKS[frame]) {
+                return frame;
+            }
+            remaining -= SKETCH_VIDEO_FRAME_TICKS[frame];
+        }
+        return SKETCH_VIDEO_FRAME_COUNT - 1;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        switch (sketchPlaybackStage) {
+            case DELAY -> {
+                if (++sketchPlaybackTicks >= SKETCH_DELAY_TICKS) {
+                    sketchPlaybackStage = SketchPlaybackStage.FADE;
+                    sketchPlaybackTicks = 0;
+                }
+            }
+            case FADE -> {
+                if (++sketchPlaybackTicks >= SKETCH_FADE_TICKS) {
+                    sketchPlaybackStage = SketchPlaybackStage.VIDEO;
+                    sketchPlaybackTicks = 0;
+                    playSketchVideoSound();
+                }
+            }
+            case VIDEO -> {
+                if (++sketchPlaybackTicks >= sketchVideoDurationTicks()) {
+                    sketchPlaybackStage = SketchPlaybackStage.FINISHED;
+                    sketchPlaybackTicks = 0;
+                }
+            }
+            default -> { }
+        }
     }
 
     // ─────────────────────────── отрисовка ───────────────────────────
@@ -199,6 +317,28 @@ public class ScholarNotesScreen extends Screen {
             g.renderTooltip(this.font, tooltipStack, tooltipX, tooltipY);
         } else if (tooltipComponent != null) {
             g.renderTooltip(this.font, tooltipComponent, tooltipX, tooltipY);
+        }
+        renderSketchPlaybackOverlay(g, partialTick);
+    }
+
+    private void renderSketchPlaybackOverlay(GuiGraphics g, float partialTick) {
+        int width = g.guiWidth();
+        int height = g.guiHeight();
+        if (sketchPlaybackStage == SketchPlaybackStage.FADE) {
+            float progress = Math.min(1.0F,
+                    (sketchPlaybackTicks + partialTick) / (float) SKETCH_FADE_TICKS);
+            int alpha = Math.round(progress * 255.0F);
+            g.fill(0, 0, width, height, alpha << 24);
+        } else if (sketchPlaybackStage == SketchPlaybackStage.VIDEO) {
+            int frame = sketchVideoFrameAtTick(sketchPlaybackTicks);
+            g.pose().pushPose();
+            g.pose().scale(width / (float) SKETCH_VIDEO_FRAME_WIDTH,
+                    height / (float) SKETCH_VIDEO_FRAME_HEIGHT, 1.0F);
+            g.blit(RenderType::guiTextured, TEX_SKETCH_VIDEO, 0, 0, 0.0F,
+                    (float) (frame * SKETCH_VIDEO_FRAME_HEIGHT),
+                    SKETCH_VIDEO_FRAME_WIDTH, SKETCH_VIDEO_FRAME_HEIGHT,
+                    SKETCH_VIDEO_FRAME_WIDTH, SKETCH_VIDEO_FRAME_HEIGHT * SKETCH_VIDEO_FRAME_COUNT);
+            g.pose().popPose();
         }
     }
 
@@ -1136,6 +1276,18 @@ public class ScholarNotesScreen extends Screen {
 
     private boolean inRect(int mx, int my, int[] r) {
         return inRect(mx, my, r[0], r[1], r[2], r[3]);
+    }
+
+    @Override
+    public void onClose() {
+        cancelSketchPlayback();
+        super.onClose();
+    }
+
+    @Override
+    public void removed() {
+        cancelSketchPlayback();
+        super.removed();
     }
 
     @Override
