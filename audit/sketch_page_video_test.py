@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for the one-shot Scholar Notes sketch playback (0.3.159)."""
+"""Static regression contract for the Scholar Notes video and overlay ordering."""
 import json
 import struct
 from pathlib import Path
@@ -57,6 +57,12 @@ pin("SoundEvents.ANVIL_LAND" in screen
     "the test sound plays once and Escape/screen removal cancels playback and stops it")
 pin("public boolean isPauseScreen()" in screen and "return false;" in screen,
     "the book and playback do not pause gameplay or take movement control")
+render = screen.split("public void render(GuiGraphics g", 1)[1].split(
+    "private void renderSketchPlaybackOverlay", 1
+)[0]
+pin(render.rfind("g.renderTooltip") < render.index("g.flush();")
+    < render.index("renderSketchPlaybackOverlay(g, partialTick);"),
+    "the GUI batch is flushed after tabs/tooltips and before the fullscreen fade/video")
 
 png = (RES / "videoplaybak.png").read_bytes()
 pin(png.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", png[16:24]) == (128, 288),
@@ -65,7 +71,7 @@ metadata = json.loads((RES / "videoplaybak.png.mcmeta").read_text(encoding="utf-
 pin(metadata.get("width") == 128 and metadata.get("height") == 72
     and metadata.get("frametime") == 10 and metadata.get("frames") == [0, 1, 2, 3],
     "the texture metadata describes exactly four 10-tick frames")
-pin("mod_version=0.3.159" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.159")
+pin("mod_version=0.3.160" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.160")
 
 print(f"sketch page video audit: {checks} pins passed")

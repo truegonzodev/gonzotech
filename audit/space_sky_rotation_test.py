@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression contract for 0.3.159 custom sky-star rotation."""
+"""Static regression contract for sky-star rotation and the 0.3.160 Overworld path."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,7 +49,26 @@ pin("event.register(Level.OVERWORLD.location(), overworld());" in registration
     and "SpaceDimensions." in registration
     and "event.register(Level.END" not in registration,
     "Overworld and custom skies are registered without changing End")
-pin("mod_version=0.3.159" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.159")
+overworld = client.split("private static SpaceSkyEffects overworld()", 1)[1].split(
+    "// ---- ЛУНА", 1
+)[0]
+pin('CelestialBody.sun(tex("overworld/sun"), 30F, Motion.SUN,\n                1F, 0F, 0F, 0F)' in overworld
+    and 'Motion.SUN, 1F, 0F, 0F, 180F)' in overworld,
+    "only Overworld sun and moon use the X/Y east-to-west orbit plane")
+moon = client.split("private static SpaceSkyEffects moon()", 1)[1].split(
+    "// ---- МАРС", 1
+)[0]
+mars = client.split("private static SpaceSkyEffects mars()", 1)[1].split(
+    "// ---- ЕВРОПА", 1
+)[0]
+europa = client.split("private static SpaceSkyEffects europa()", 1)[1].split(
+    "// ---- ОРБИТА СОЛНЦА", 1
+)[0]
+pin("60F, /*yaw*/ -90F, /*tilt*/ 12F" in moon
+    and "1F, -90F, 8F, 0F" in mars
+    and "3.5F, -90F, 6F, 0F" in europa,
+    "Moon, Mars, and Europa sky trajectories retain their existing yaw")
+pin("mod_version=0.3.160" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
+    "micropatch version is 0.3.160")
 
 print(f"space sky rotation audit: {checks} pins passed")

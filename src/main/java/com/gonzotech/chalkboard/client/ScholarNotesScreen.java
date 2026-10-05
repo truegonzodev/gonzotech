@@ -318,6 +318,10 @@ public class ScholarNotesScreen extends Screen {
         } else if (tooltipComponent != null) {
             g.renderTooltip(this.font, tooltipComponent, tooltipX, tooltipY);
         }
+
+        // renderItem откладывает GUI-буфер; сбрасываем его до полноэкранного оверлея,
+        // чтобы иконки вкладок не отрисовались поверх затемнения/видео.
+        g.flush();
         renderSketchPlaybackOverlay(g, partialTick);
     }
 
