@@ -30,7 +30,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
 
 /**
@@ -77,11 +77,10 @@ public final class GreatswordItem extends SwordItem {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (hand != InteractionHand.MAIN_HAND) return InteractionResultHolder.pass(player.getItemInHand(hand));
-        ItemStack stack = player.getItemInHand(hand);
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         player.startUsingItem(hand);
-        return InteractionResultHolder.consume(stack);
+        return InteractionResult.CONSUME;
     }
 
     @Override
@@ -90,8 +89,8 @@ public final class GreatswordItem extends SwordItem {
     }
 
     @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
-        GreatswordCombat.release(stack, level, user, timeLeft);
+    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
+        return GreatswordCombat.release(stack, level, user, timeLeft);
     }
 
     /** Progress used by the client charge indicator; clamped after 15 seconds. */

@@ -95,6 +95,19 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertEqual(10.0 * (1.0 + 0.5 * 0.5), 12.5)
         self.assertEqual(10.0 * (1.0 + 0.5), 15.0)
 
+    def test_greatsword_overrides_use_the_1_21_4_interaction_api(self):
+        item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
+        self.assertIn("public InteractionResult use(Level level, Player player, InteractionHand hand)", item_source)
+        self.assertIn("return InteractionResult.CONSUME", item_source)
+        self.assertIn("return InteractionResult.PASS", item_source)
+        self.assertNotIn("InteractionResultHolder", item_source)
+        self.assertIn("public boolean releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft)", item_source)
+
+        combat = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordCombat.java").read_text(encoding="utf-8")
+        self.assertIn("public static boolean release(", combat)
+        self.assertIn("if (charge <= 0.10F) return false", combat)
+        self.assertIn("return true;", combat)
+
     def test_greatswords_are_main_hand_only_and_displace_offhand_items(self):
         item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
         self.assertIn("canEquip(ItemStack stack, EquipmentSlot slot, LivingEntity entity)", item_source)

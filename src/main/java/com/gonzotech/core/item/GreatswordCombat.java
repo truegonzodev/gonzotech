@@ -85,14 +85,14 @@ public final class GreatswordCombat {
         player.containerMenu.broadcastChanges();
     }
 
-    public static void release(net.minecraft.world.item.ItemStack stack, Level level,
-                               LivingEntity user, int timeLeft) {
-        if (!(user instanceof ServerPlayer player) || !(level instanceof ServerLevel serverLevel)) return;
+    public static boolean release(net.minecraft.world.item.ItemStack stack, Level level,
+                                  LivingEntity user, int timeLeft) {
+        if (!(user instanceof ServerPlayer player) || !(level instanceof ServerLevel serverLevel)) return false;
 
         int elapsed = Math.max(0, GreatswordItem.MAX_USE_TICKS - timeLeft);
         float charge = Math.max(0.0F, Math.min(1.0F,
             elapsed / (float) GreatswordItem.FULL_CHARGE_TICKS));
-        if (charge <= 0.10F) return;
+        if (charge <= 0.10F) return false;
 
         Vec3 look = player.getLookAngle();
         LivingEntity target = findTarget(serverLevel, player, look);
@@ -129,6 +129,7 @@ public final class GreatswordCombat {
         applyChargedSplash(serverLevel, player, target, splashCenter, baseDamage, charge);
         spawnGroundBurst(serverLevel, impact, charge);
         dash(player, look, charge);
+        return true;
     }
 
     private static LivingEntity findTarget(ServerLevel level, Player player, Vec3 look) {
