@@ -2,6 +2,7 @@ package com.gonzotech.machines.processing;
 
 import com.gonzotech.core.registry.Metals;
 import com.gonzotech.core.registry.ModItems;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -10,13 +11,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Exact one-to-one conversions for the tier-two Grinder.
+ * Exact one-input conversions for the tier-two Grinder.
  *
- * <p>Only materials that have a registered dust may be ground: every GonzoTech
- * ingot for which {@link Metals#hasDust(String)} is true (including manganese),
- * plus vanilla iron and copper. Iodine, sulfur, and mercury deliberately have no
- * dust items in the material catalogue and therefore cannot become an invented
- * output. The two non-ingot recipes are explicitly listed as requested.</p>
+ * <p>Most metal recipes are one-to-one: every GonzoTech ingot for which
+ * {@link Metals#hasDust(String)} is true (including manganese), plus vanilla iron
+ * and copper, becomes its registered dust. Iodine, sulfur, and mercury deliberately
+ * have no dust items in the material catalogue. Explicit wood recipes remain
+ * listed below; any wool item becomes three string.</p>
  */
 public final class GrinderRecipes {
 
@@ -25,9 +26,10 @@ public final class GrinderRecipes {
     private GrinderRecipes() {
     }
 
-    /** Returns the exact one-item output, or {@code null} when this input has no grinder recipe. */
+    /** Returns the output stack for one input item, or {@code null} when this input has no grinder recipe. */
     public static ItemStack find(ItemStack input) {
         if (input.isEmpty()) return null;
+        if (input.is(ItemTags.WOOL)) return new ItemStack(Items.STRING, 3);
         Item output = RECIPES.get(input.getItem());
         return output == null ? null : new ItemStack(output);
     }

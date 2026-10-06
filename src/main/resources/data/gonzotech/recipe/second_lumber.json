@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "IRI",
+    "IDI",
+    "IPI"
+  ],
+  "key": {
+    "I": "gonzotech:cast_iron_ingot",
+    "R": "minecraft:repeater",
+    "D": "minecraft:dispenser",
+    "P": "minecraft:piston"
+  },
+  "result": {
+    "id": "gonzotech:second_lumber",
+    "count": 1
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "gonzotech:block/second/second_lumber_top",
+    "bottom": "gonzotech:block/second/second_lumber_bottom",
+    "side": "gonzotech:block/second/second_lumber_side",
+    "front": "gonzotech:block/second/second_lumber_face"
+  }
+}

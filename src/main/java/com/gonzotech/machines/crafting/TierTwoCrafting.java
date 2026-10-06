@@ -54,6 +54,7 @@ public final class TierTwoCrafting {
         "gonzotech:core_form",
         "gonzotech:second_grinder",
         "gonzotech:second_press",
+        "gonzotech:second_lumber",
         "gonzotech:second_cobble_generator",
         "gonzotech:second_alloy_foundry",
         "gonzotech:second_crusher",
@@ -86,7 +87,7 @@ public final class TierTwoCrafting {
         "gonzotech:speedometer"
     );
 
-    /** Prevents a 35-entry recipe-book grant on every player tick. Cleared on logout. */
+    /** Prevents a recipe-book grant on every player tick. Cleared on logout. */
     private static final Set<UUID> BOOK_GRANTED = ConcurrentHashMap.newKeySet();
 
     /** Read-only recipe-book policy, shared with diagnostics (not the physical craft gate). */
@@ -159,6 +160,7 @@ public final class TierTwoCrafting {
             || item == ModItems.CORE_FORM.get()
             || item == ModMachines.SECOND_GRINDER_ITEM.get()
             || item == ModMachines.SECOND_PRESS_ITEM.get()
+            || item == ModMachines.SECOND_LUMBER_ITEM.get()
             || item == ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get()
             || item == ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get()
             || item == ModMachines.SECOND_CRUSHER_ITEM.get()

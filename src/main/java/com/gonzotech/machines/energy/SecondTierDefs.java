@@ -90,6 +90,18 @@ public final class SecondTierDefs {
     /** КД возврата пуансона/шкала «Усталость», тиков. */
     public static final int PRESS_FATIGUE_TICKS = 140;
 
+    // ─────────────────────────── лесопилка II ───────────────────────────
+
+    /** Буфер лесопилки (mGTU: 358 GTU). */
+    public static final int SECOND_LUMBER_GTU_CAPACITY = 358 * MachineDefs.MILLI;
+    /** Совокупный приём энергии: 56 GTU за тик из всех подключённых сетей. */
+    public static final int SECOND_LUMBER_GTU_INTAKE = 56 * MachineDefs.MILLI;
+    public static final int SECOND_LUMBER_TICKS_PER_BLOCK = 55;
+    public static final int SECOND_LUMBER_GTU_PER_BLOCK = 56;
+    /** 0.005 GTU/t во внутренней milli-точности. */
+    public static final int SECOND_LUMBER_PARASITIC_MILLI_PER_TICK = 5;
+    public static final int SECOND_LUMBER_DEPTH = 8;
+
     // ─────────────────────────── фильтр II ───────────────────────────
 
     public static final int ITEM_FILTER_SLOTS = 5;

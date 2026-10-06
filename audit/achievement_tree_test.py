@@ -173,6 +173,6 @@ pin("Недобро пожаловать!" in updated_notes
     "the planned-achievement notes list the new tree while retaining the six old open items")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.164" in version, "micropatch version is 0.3.164")
+pin("mod_version=0.3.165" in version, "micropatch version is 0.3.165")
 
 print(f"achievement tree audit: {checks} pins passed")

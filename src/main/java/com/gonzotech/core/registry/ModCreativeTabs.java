@@ -117,6 +117,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PRESS_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_LUMBER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_SCAVENGER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PUMP_ITEM.get());

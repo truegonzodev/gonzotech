@@ -21,6 +21,7 @@ import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
 import com.gonzotech.machines.block.SecondElectricFurnaceBlock;
 import com.gonzotech.machines.block.SolarPanelBlock;
 import com.gonzotech.machines.block.SecondGrinderBlock;
+import com.gonzotech.machines.block.SecondLumberBlock;
 import com.gonzotech.machines.block.SecondPressBlock;
 import com.gonzotech.machines.block.SecondPumpBlock;
 import com.gonzotech.machines.block.SingularEnergySourceBlock;
@@ -383,6 +384,10 @@ public final class ModMachines {
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
 
+    /** Лесопилка II: красный сигнал, слот топора и линейный спил до восьми брёвен. */
+    public static final DeferredBlock<SecondLumberBlock> SECOND_LUMBER =
+        BLOCKS.registerBlock("second_lumber", SecondLumberBlock::new, machineMetal());
+
     public static final DeferredBlock<SecondItemFilterBlock> SECOND_ITEM_FILTER =
         BLOCKS.registerBlock("second_item_filter", SecondItemFilterBlock::new, copperLogisticsMachine());
 
@@ -634,6 +639,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_PRESS_ITEM =
         ITEMS.registerSimpleBlockItem("second_press", SECOND_PRESS);
+
+    public static final DeferredItem<BlockItem> SECOND_LUMBER_ITEM =
+        ITEMS.registerSimpleBlockItem("second_lumber", SECOND_LUMBER);
 
     public static final DeferredItem<BlockItem> SECOND_ITEM_FILTER_ITEM =
         ITEMS.registerSimpleBlockItem("second_item_filter", SECOND_ITEM_FILTER);

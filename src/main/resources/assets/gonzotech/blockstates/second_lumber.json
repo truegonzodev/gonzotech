@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,active=false": { "model": "gonzotech:block/second_lumber" },
+    "facing=north,active=true":  { "model": "gonzotech:block/second_lumber" },
+    "facing=east,active=false":  { "model": "gonzotech:block/second_lumber", "y": 90 },
+    "facing=east,active=true":   { "model": "gonzotech:block/second_lumber", "y": 90 },
+    "facing=south,active=false": { "model": "gonzotech:block/second_lumber", "y": 180 },
+    "facing=south,active=true":  { "model": "gonzotech:block/second_lumber", "y": 180 },
+    "facing=west,active=false":  { "model": "gonzotech:block/second_lumber", "y": 270 },
+    "facing=west,active=true":   { "model": "gonzotech:block/second_lumber", "y": 270 }
+  }
+}
