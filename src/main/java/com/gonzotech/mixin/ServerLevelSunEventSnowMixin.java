@@ -28,15 +28,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * (снег «идёт» только в холодных биомах). В окне мы:
  * <ol>
  *   <li>открываем гейт — снег во ВСЕХ биомах (redirect shouldSnow);</li>
- *   <li>ПРАВИЛО АВТОРА: снег ложится в ПУСТУЮ ячейку — ванильный
- *       setBlockAndUpdate бездумно «съел» бы факелы/цветки (HEAD-cancel).
- *       Плюс отдельный cancel, если под ячейкой ЖИДКОСТЬ: MOTION_BLOCKING
- *       включает жидкости, поэтому ваниль кладёт «плавающие» слои на воду —
- *       автору так не надо (скрин 2026-09-18). «Твёрдость земли» иначе не
- *       проверяется: под heightmap-позицией по построению топ-блок с
- *       коллизией, а {@code #minecraft:snow_layer_can_survive_on} в 1.21.4 —
- *       лишь override-список (honey_block/soul_sand/mud), grass_block в нём
- *       нет (использовать его для гейта нельзя).</li>
+ *   <li>снег укладывается в пустую ячейку (либо наращивает снежный слой) только
+ *       над полным блоком и не над жидкостью; неполные формы (полублоки,
+ *       дорожки, ступени, панели и другие частичные блоки) не подходят.</li>
  *   <li>плотность укладки — ВАНИЛЬНАЯ (1/48 на бросок): автор прогнал ×8 →
  *       ×2 → ×1, вернули ванильные снежные шапки («ниче нового»).</li>
  *   <li>гроза ×5 (автор: старт ×10 → смягчено до ×5, только день E): молнии
@@ -58,14 +52,10 @@ public abstract class ServerLevelSunEventSnowMixin {
     private static final int THUNDER_DELAY_DIVISOR = 5;
 
     /**
-     * Правило автора: снег только в ПУСТУЮ ячейку (не «съедать» факелы/цветки)
-     * и НЕ на воду (MOTION_BLOCKING включает жидкости — ваниль плавит
-     * «плавающие» слои, автор отклонил скрином 2026-09-18).
-     * «Твёрдость земли» дополнительно проверять НЕЧЕМ и НЕНУЖНО:
-     * {@code #minecraft:snow_layer_can_survive_on} в 1.21.4 — это override-список
-     * из honey_block/soul_sand/mud (grass_block там НЕТ — сверено по vanilla-тегу),
-     * а под heightmap-позицией по построению всегда топ-блок с коллизией.
-     * Вне окна ванильное поведение не трогаем.
+     * В окне снег укладывается только в пустую ячейку либо наращивает уже
+     * существующий снежный слой. В обоих случаях опора под ячейкой должна иметь
+     * полную коллизионную форму, а жидкость под ней исключает укладку.
+     * Вне окна ванильное поведение не меняется.
      */
     @Inject(method = "tickPrecipitation", at = @At("HEAD"), cancellable = true)
     private void gonzotech$sunEventProtectGround(BlockPos pos, CallbackInfo ci) {
@@ -75,17 +65,22 @@ public abstract class ServerLevelSunEventSnowMixin {
         }
         BlockPos surface = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos);
         BlockState surfaceState = level.getBlockState(surface);
-        if (surfaceState.is(Blocks.SNOW)) {
-            return; // на слое — обычное наращивание (ванил сделает)
-        }
-        if (!surfaceState.isAir()) {
-            // Факел/цветок/вода и т.п. занимают heightmap-позицию — не трогаем.
+        if (!surfaceState.isAir() && !surfaceState.is(Blocks.SNOW)) {
+            // Занятая ячейка (факел, цветок и т. п.) не заменяется снегом.
             ci.cancel();
             return;
         }
-        if (!level.getBlockState(surface.below()).getFluidState().isEmpty()) {
-            // Под ячейкой жидкость (MOTION_BLOCKING считает и жидкости) —
-            // снег на воду НЕ ложится (автор, скрин 2026-09-18).
+
+        BlockPos supportPos = surface.below();
+        BlockState supportState = level.getBlockState(supportPos);
+        if (!supportState.getFluidState().isEmpty()) {
+            // MOTION_BLOCKING включает жидкости, но снег на жидкость не укладывается.
+            ci.cancel();
+            return;
+        }
+        if (!supportState.isCollisionShapeFullBlock(level, supportPos)) {
+            // Проверка формы, а не списка исключений: полублоки, ступени,
+            // дорожки, панели и другие неполные блоки не подходят как опора.
             ci.cancel();
         }
     }
