@@ -1008,5 +1008,7 @@
   "item.gonzotech.diamond_greatsword": "Diamond Greatsword",
   "item.gonzotech.netherite_greatsword": "Netherite Greatsword",
   "item.gonzotech.alloy_greatsword": "Custom Alloy Greatsword",
-  "hud.gonzotech.greatsword_charge": "Charge: %s%%"
+  "hud.gonzotech.greatsword_charge": "Charge: %s%%",
+  "subtitles.gonzotech.sword_impact": "Greatsword impact",
+  "subtitles.gonzotech.sword_ready": "Greatsword ready"
 }

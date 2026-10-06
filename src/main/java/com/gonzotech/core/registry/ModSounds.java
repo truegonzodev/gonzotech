@@ -13,6 +13,8 @@ public final class ModSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, GonzoTechMod.MOD_ID);
 
     public static final DeferredHolder<SoundEvent, SoundEvent> SKETCH_VIDEO = sound("videoplaybak");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SWORD_IMPACT = sound("sword_impact");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SWORD_READY = sound("sword_ready");
 
     public static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(

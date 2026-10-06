@@ -1008,5 +1008,7 @@
   "item.gonzotech.diamond_greatsword": "Большой алмазный меч",
   "item.gonzotech.netherite_greatsword": "Большой незеритовый меч",
   "item.gonzotech.alloy_greatsword": "Большой меч из пользовательского сплава",
-  "hud.gonzotech.greatsword_charge": "Заряд: %s%%"
+  "hud.gonzotech.greatsword_charge": "Заряд: %s%%",
+  "subtitles.gonzotech.sword_impact": "Удар большого меча",
+  "subtitles.gonzotech.sword_ready": "Большой меч заряжен"
 }

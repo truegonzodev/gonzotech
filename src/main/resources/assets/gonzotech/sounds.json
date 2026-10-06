@@ -5,5 +5,21 @@
         "name": "gonzotech:videoplaybak"
       }
     ]
+  },
+  "sword_impact": {
+    "subtitle": "subtitles.gonzotech.sword_impact",
+    "sounds": [
+      {
+        "name": "gonzotech:sword_impact"
+      }
+    ]
+  },
+  "sword_ready": {
+    "subtitle": "subtitles.gonzotech.sword_ready",
+    "sounds": [
+      {
+        "name": "gonzotech:sword_ready"
+      }
+    ]
   }
 }

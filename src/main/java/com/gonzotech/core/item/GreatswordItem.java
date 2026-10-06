@@ -5,17 +5,21 @@ import com.gonzotech.core.component.AlloyComposition;
 import com.gonzotech.core.component.AlloyTint;
 import com.gonzotech.core.registry.GreatswordContent;
 import com.gonzotech.core.registry.ModDataComponents;
+import com.gonzotech.core.registry.ModSounds;
 import com.gonzotech.machines.processing.AlloyMaterialCatalog;
 import com.gonzotech.machines.processing.AlloyProperties;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -24,14 +28,14 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.DamageResistant;
-import net.minecraft.world.item.enchantment.Enchantable;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.enchantment.Enchantable;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.Level;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Shared identity and use behavior for the large swords. The constructor's
@@ -43,6 +47,7 @@ public final class GreatswordItem extends SwordItem {
     static final int MAX_USE_TICKS = 72_000;
     private static final int INERTNESS_ENCHANTMENT_LOCK = 50;
     private static final int LAVA_RESISTANCE_THRESHOLD = 70;
+    private static final Map<LivingEntity, Integer> CHARGE_READY_SOUND_STAGE = new WeakHashMap<>();
 
     public GreatswordItem(ToolMaterial hostMaterial, int durability, float attackDamage,
                           float attackSpeed, boolean compositionRepairOnly, Item.Properties properties) {
@@ -79,8 +84,24 @@ public final class GreatswordItem extends SwordItem {
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
+        if (level.isClientSide()) CHARGE_READY_SOUND_STAGE.put(player, 0);
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;
+    }
+
+    @Override
+    public void onUseTick(Level level, LivingEntity user, ItemStack stack, int remainingUseDuration) {
+        if (!level.isClientSide()) return;
+
+        int elapsed = Math.max(0, MAX_USE_TICKS - remainingUseDuration);
+        int stage = elapsed >= FULL_CHARGE_TICKS ? 2 : elapsed >= FULL_CHARGE_TICKS / 10 ? 1 : 0;
+        int previousStage = CHARGE_READY_SOUND_STAGE.getOrDefault(user, 0);
+        if (stage <= previousStage) return;
+
+        CHARGE_READY_SOUND_STAGE.put(user, stage);
+        float pitch = stage == 1 ? 1.5F : 1.0F;
+        level.playLocalSound(user.getX(), user.getY(), user.getZ(), ModSounds.SWORD_READY.get(),
+            SoundSource.PLAYERS, 1.0F, pitch, false);
     }
 
     @Override
@@ -90,6 +111,7 @@ public final class GreatswordItem extends SwordItem {
 
     @Override
     public boolean releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
+        if (level.isClientSide()) CHARGE_READY_SOUND_STAGE.remove(user);
         return GreatswordCombat.release(stack, level, user, timeLeft);
     }
 

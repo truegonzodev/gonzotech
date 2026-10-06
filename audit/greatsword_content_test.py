@@ -84,16 +84,23 @@ class GreatswordContentTest(unittest.TestCase):
             self.assertIn(text, source)
         combat = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordCombat.java").read_text(encoding="utf-8")
         self.assertIn("charge <= 0.10F", combat)
-        self.assertIn("baseDamage * (1.0D + 0.5D * charge)", combat)
+        self.assertIn("baseDamage * (1.0D + charge)", combat)
+        self.assertIn("desiredDamage / cooldownScale", combat)
+        self.assertIn("double radius = (1.35D + 1.4D * charge) * 1.2D", combat)
+        self.assertIn("int count = 50 + Math.round(70.0F * charge)", combat)
+        self.assertIn("double radius = (0.45D + 1.1D * charge) * 2.0D", combat)
+        self.assertIn("ParticleTypes.DUST_PILLAR", combat)
+        self.assertIn("ParticleTypes.SWEEP_ATTACK", combat)
+        self.assertIn("0, -2.0D, 0.0D, 0.0D, 0.0D", combat)
+        self.assertIn("ModSounds.SWORD_IMPACT.get()", combat)
         self.assertIn("look.scale(DASH_IMPULSE * charge)", combat)
         self.assertIn("DASH_IMPULSE = 0.20D", combat)
         self.assertIn("player.getDeltaMovement().add(impulse)", combat)
         self.assertIn("player.hurtMarked = true", combat)
-        self.assertIn("ParticleTypes.DUST_PILLAR", combat)
         microstep = (ROOT / "src/main/java/com/gonzotech/core/psyche/PsycheCrisis.java").read_text(encoding="utf-8")
         self.assertIn("MICROSTEP_IMPULSE = 0.14", microstep)
-        self.assertEqual(10.0 * (1.0 + 0.5 * 0.5), 12.5)
         self.assertEqual(10.0 * (1.0 + 0.5), 15.0)
+        self.assertEqual(10.0 * (1.0 + 1.0), 20.0)
 
     def test_greatsword_overrides_use_the_1_21_4_interaction_api(self):
         item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
@@ -102,6 +109,9 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("return InteractionResult.PASS", item_source)
         self.assertNotIn("InteractionResultHolder", item_source)
         self.assertIn("public boolean releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft)", item_source)
+        self.assertIn("elapsed >= FULL_CHARGE_TICKS / 10 ? 1 : 0", item_source)
+        self.assertIn("float pitch = stage == 1 ? 1.5F : 1.0F", item_source)
+        self.assertIn("ModSounds.SWORD_READY.get()", item_source)
 
         combat = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordCombat.java").read_text(encoding="utf-8")
         self.assertIn("public static boolean release(", combat)
@@ -126,7 +136,34 @@ class GreatswordContentTest(unittest.TestCase):
         ):
             self.assertIn(contract, combat)
 
-    def test_greatsword_models_have_requested_gui_transform(self):
+    def test_greatsword_models_scale_only_hand_and_ground_contexts(self):
+        expected = {
+            "firstperson_righthand": {
+                "rotation": [0, -90, 25],
+                "translation": [1.13, 3.2, 1.13],
+                "scale": [1.36, 1.36, 1.36],
+            },
+            "firstperson_lefthand": {
+                "rotation": [0, 90, -25],
+                "translation": [1.13, 3.2, 1.13],
+                "scale": [1.36, 1.36, 1.36],
+            },
+            "thirdperson_righthand": {
+                "rotation": [0, -90, 55],
+                "translation": [0, 4.0, 0.5],
+                "scale": [1.7, 1.7, 1.7],
+            },
+            "thirdperson_lefthand": {
+                "rotation": [0, 90, -55],
+                "translation": [0, 4.0, 0.5],
+                "scale": [1.7, 1.7, 1.7],
+            },
+            "ground": {
+                "rotation": [0, 0, 0],
+                "translation": [0, 2, 0],
+                "scale": [1, 1, 1],
+            },
+        }
         for item in GREATWORDS:
             with self.subTest(item=item):
                 model = read_json(ASSETS / f"models/item/{item}.json")
@@ -137,6 +174,25 @@ class GreatswordContentTest(unittest.TestCase):
                     "translation": [0, 0, 0],
                     "scale": [2, 2, 2],
                 })
+                for context, transform in expected.items():
+                    self.assertEqual(model["display"][context], transform)
+
+    def test_greatsword_sound_events_are_registered_and_have_audio(self):
+        sounds = read_json(ASSETS / "sounds.json")
+        registry = (ROOT / "src/main/java/com/gonzotech/core/registry/ModSounds.java").read_text(encoding="utf-8")
+        for sound in ("sword_impact", "sword_ready"):
+            with self.subTest(sound=sound):
+                self.assertEqual(sounds[sound]["sounds"], [{"name": f"gonzotech:{sound}"}])
+                self.assertTrue((ASSETS / f"sounds/{sound}.ogg").read_bytes().startswith(b"OggS"))
+                self.assertIn(f'{sound.upper()} = sound("{sound}")', registry)
+                subtitle = sounds[sound]["subtitle"]
+                self.assertIn(subtitle, read_json(ASSETS / "lang/en_us.json"))
+                self.assertIn(subtitle, read_json(ASSETS / "lang/ru_ru.json"))
+
+        item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
+        self.assertIn("elapsed >= FULL_CHARGE_TICKS / 10 ? 1 : 0", item_source)
+        self.assertIn("float pitch = stage == 1 ? 1.5F : 1.0F", item_source)
+        self.assertIn("ModSounds.SWORD_READY.get()", item_source)
 
     def test_alloy_example_and_localizations_exist(self):
         docs = (ROOT / "docs/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")

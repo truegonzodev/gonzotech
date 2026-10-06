@@ -1,12 +1,14 @@
 package com.gonzotech.core.item;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.core.registry.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -105,7 +107,7 @@ public final class GreatswordCombat {
             AttributeInstance attackDamage = player.getAttribute(Attributes.ATTACK_DAMAGE);
             float attackStrength = player.getAttackStrengthScale(0.5F);
             double cooldownScale = 0.2D + attackStrength * attackStrength * 0.8D;
-            double desiredDamage = baseDamage * (1.0D + 0.5D * charge);
+            double desiredDamage = baseDamage * (1.0D + charge);
             double temporaryBonus = desiredDamage / cooldownScale - baseDamage;
             CHARGED_SWINGS.add(player);
             if (attackDamage != null) {
@@ -115,7 +117,7 @@ public final class GreatswordCombat {
             }
             try {
                 // Compensate vanilla's attack-strength multiplier so the charged
-                // pre-mitigation base hit follows D × (1 + 0.5 × charge) directly.
+                // pre-mitigation base hit follows D × (1 + charge) directly.
                 // The larger custom splash below replaces the normal inner sweep
                 // for this release; ordinary left-clicks still use vanilla sweep.
                 player.attack(target);
@@ -128,6 +130,9 @@ public final class GreatswordCombat {
         Vec3 splashCenter = target != null ? target.getBoundingBox().getCenter() : impact.add(0.0D, 0.6D, 0.0D);
         applyChargedSplash(serverLevel, player, target, splashCenter, baseDamage, charge);
         spawnGroundBurst(serverLevel, impact, charge);
+        spawnChargedSweep(serverLevel, player, look);
+        serverLevel.playSound(null, impact.x, impact.y, impact.z, ModSounds.SWORD_IMPACT.get(),
+            SoundSource.PLAYERS, 1.0F, 1.0F);
         dash(player, look, charge);
         return true;
     }
@@ -159,7 +164,7 @@ public final class GreatswordCombat {
 
     private static void applyChargedSplash(ServerLevel level, ServerPlayer player, LivingEntity primary,
                                            Vec3 center, double baseDamage, float charge) {
-        double radius = 1.35D + 1.4D * charge;
+        double radius = (1.35D + 1.4D * charge) * 1.2D;
         double damage = baseDamage * 0.25D * charge;
         if (damage <= 0.0D) return;
         AABB bounds = new AABB(center.x - radius, center.y - radius, center.z - radius,
@@ -171,14 +176,22 @@ public final class GreatswordCombat {
         }
     }
 
+    private static void spawnChargedSweep(ServerLevel level, ServerPlayer player, Vec3 look) {
+        Vec3 position = player.position().add(look.scale(0.75D))
+            .add(0.0D, player.getBbHeight() * 0.5D, 0.0D);
+        // SweepAttackParticle uses negative x-speed to scale its sprite; -2 doubles it.
+        level.sendParticles(ParticleTypes.SWEEP_ATTACK, position.x, position.y, position.z,
+            0, -2.0D, 0.0D, 0.0D, 0.0D);
+    }
+
     private static void spawnGroundBurst(ServerLevel level, Vec3 impact, float charge) {
         BlockPos ground = BlockPos.containing(impact.x, impact.y, impact.z).below();
         BlockState groundState = level.getBlockState(ground);
         if (groundState.isAir()) return;
 
         BlockParticleOption dustPillar = new BlockParticleOption(ParticleTypes.DUST_PILLAR, groundState);
-        int count = 10 + Math.round(14.0F * charge);
-        double radius = 0.45D + 1.1D * charge;
+        int count = 50 + Math.round(70.0F * charge);
+        double radius = (0.45D + 1.1D * charge) * 2.0D;
         for (int i = 0; i < count; i++) {
             double angle = Math.PI * 2.0D * i / count;
             double x = impact.x + Math.cos(angle) * radius;
