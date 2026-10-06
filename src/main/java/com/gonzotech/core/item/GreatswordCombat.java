@@ -24,11 +24,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingSwapItemsEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Server-authoritative sweeping, charged impact, particles, and forward impulse. */
@@ -37,9 +40,15 @@ public final class GreatswordCombat {
 
     private static final double MELEE_REACH = 4.5D;
     private static final double DASH_IMPULSE = 0.20D;
-    private static final ResourceLocation CHARGED_DAMAGE_ID =
-        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "greatsword_charge_damage");
+    private static final float FULL_CHARGE_DAMAGE_MULTIPLIER = 1.55F;
+    private static final ResourceLocation EXTENDED_ATTACK_COOLDOWN_ID =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "greatsword_extended_attack_cooldown");
     private static final Set<Player> CHARGED_SWINGS = ConcurrentHashMap.newKeySet();
+    private static final Map<Player, ChargedAttackContext> CHARGED_ATTACKS = new ConcurrentHashMap<>();
+    private static final Map<ServerPlayer, Long> EXTENDED_ATTACK_COOLDOWN_EXPIRY = new WeakHashMap<>();
+
+    private record ChargedAttackContext(LivingEntity target, float damageMultiplier) {
+    }
 
     private GreatswordCombat() {
     }
@@ -51,6 +60,15 @@ public final class GreatswordCombat {
         if (player.getMainHandItem().getItem() instanceof GreatswordItem) {
             event.setSweeping(!CHARGED_SWINGS.contains(player));
         }
+    }
+
+    /** Scale only the charged attack's primary hit after ordinary damage modifiers are resolved. */
+    @SubscribeEvent
+    public static void onChargedAttackDamage(LivingDamageEvent.Pre event) {
+        if (!(event.getSource().getEntity() instanceof Player player)) return;
+        ChargedAttackContext context = CHARGED_ATTACKS.get(player);
+        if (context == null || event.getEntity() != context.target()) return;
+        event.setNewDamage(event.getNewDamage() * context.damageMultiplier());
     }
 
     /** Prevent the F-key swap from placing a greatsword into the offhand. */
@@ -68,6 +86,19 @@ public final class GreatswordCombat {
         boolean hasGreatswordInEitherHand = player.getMainHandItem().getItem() instanceof GreatswordItem
             || player.getOffhandItem().getItem() instanceof GreatswordItem;
         if (hasGreatswordInEitherHand) moveOffhandToInventory(player);
+        tickExtendedAttackCooldown(player);
+    }
+
+    private static void tickExtendedAttackCooldown(ServerPlayer player) {
+        Long expiresAt = EXTENDED_ATTACK_COOLDOWN_EXPIRY.get(player);
+        if (expiresAt == null || player.serverLevel().getGameTime() < expiresAt
+            || player.getAttackStrengthScale(0.0F) < 1.0F) {
+            return;
+        }
+
+        AttributeInstance attackSpeed = player.getAttribute(Attributes.ATTACK_SPEED);
+        if (attackSpeed != null) attackSpeed.removeModifier(EXTENDED_ATTACK_COOLDOWN_ID);
+        EXTENDED_ATTACK_COOLDOWN_EXPIRY.remove(player);
     }
 
     private static void moveOffhandToInventory(ServerPlayer player) {
@@ -104,26 +135,18 @@ public final class GreatswordCombat {
         double baseDamage = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
 
         if (target != null) {
-            AttributeInstance attackDamage = player.getAttribute(Attributes.ATTACK_DAMAGE);
-            float attackStrength = player.getAttackStrengthScale(0.5F);
-            double cooldownScale = 0.2D + attackStrength * attackStrength * 0.8D;
-            double desiredDamage = baseDamage * (1.0D + charge);
-            double temporaryBonus = desiredDamage / cooldownScale - baseDamage;
+            float damageMultiplier = 1.0F + (FULL_CHARGE_DAMAGE_MULTIPLIER - 1.0F) * charge;
             CHARGED_SWINGS.add(player);
-            if (attackDamage != null) {
-                attackDamage.removeModifier(CHARGED_DAMAGE_ID);
-                attackDamage.addTransientModifier(new AttributeModifier(CHARGED_DAMAGE_ID,
-                    temporaryBonus, AttributeModifier.Operation.ADD_VALUE));
-            }
+            CHARGED_ATTACKS.put(player, new ChargedAttackContext(target, damageMultiplier));
             try {
-                // Compensate vanilla's attack-strength multiplier so the charged
-                // pre-mitigation base hit follows D × (1 + charge) directly.
-                // The larger custom splash below replaces the normal inner sweep
-                // for this release; ordinary left-clicks still use vanilla sweep.
+                // Let vanilla calculate attack strength and all enchantment damage;
+                // LivingDamageEvent.Pre then scales the primary hit's final damage.
+                // The custom splash below replaces the normal inner sweep for this
+                // release; ordinary left-clicks still use vanilla sweep.
                 player.attack(target);
             } finally {
                 CHARGED_SWINGS.remove(player);
-                if (attackDamage != null) attackDamage.removeModifier(CHARGED_DAMAGE_ID);
+                CHARGED_ATTACKS.remove(player);
             }
         }
 
@@ -131,6 +154,7 @@ public final class GreatswordCombat {
         applyChargedSplash(serverLevel, player, target, splashCenter, baseDamage, charge);
         spawnGroundBurst(serverLevel, impact, charge);
         spawnChargedSweep(serverLevel, player, look);
+        startExtendedAttackCooldown(player);
         serverLevel.playSound(null, impact.x, impact.y, impact.z, ModSounds.SWORD_IMPACT.get(),
             SoundSource.PLAYERS, 1.0F, 1.0F);
         dash(player, look, charge);
@@ -199,6 +223,22 @@ public final class GreatswordCombat {
             level.sendParticles(dustPillar, x, ground.getY() + 1.01D, z,
                 1, 0.08D, 0.04D, 0.08D, 0.01D);
         }
+    }
+
+    private static void startExtendedAttackCooldown(ServerPlayer player) {
+        AttributeInstance attackSpeed = player.getAttribute(Attributes.ATTACK_SPEED);
+        if (attackSpeed != null) attackSpeed.removeModifier(EXTENDED_ATTACK_COOLDOWN_ID);
+
+        float baseCooldownTicks = player.getCurrentItemAttackStrengthDelay();
+        long extendedCooldownTicks = Math.max(1L, (long) Math.ceil(baseCooldownTicks * 1.5D));
+        player.resetAttackStrengthTicker();
+        if (attackSpeed == null) return;
+
+        // Multiplying attack speed by 2/3 makes vanilla's next-attack timer 1.5x longer.
+        attackSpeed.addTransientModifier(new AttributeModifier(EXTENDED_ATTACK_COOLDOWN_ID,
+            -1.0D / 3.0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        EXTENDED_ATTACK_COOLDOWN_EXPIRY.put(player,
+            player.serverLevel().getGameTime() + extendedCooldownTicks);
     }
 
     private static void dash(ServerPlayer player, Vec3 look, float charge) {

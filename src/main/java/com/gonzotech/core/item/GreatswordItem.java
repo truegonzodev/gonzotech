@@ -111,7 +111,13 @@ public final class GreatswordItem extends SwordItem {
 
     @Override
     public boolean releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft) {
-        if (level.isClientSide()) CHARGE_READY_SOUND_STAGE.remove(user);
+        if (level.isClientSide()) {
+            CHARGE_READY_SOUND_STAGE.remove(user);
+            int elapsed = Math.max(0, MAX_USE_TICKS - timeLeft);
+            if (elapsed > FULL_CHARGE_TICKS / 10 && user instanceof Player player) {
+                player.resetAttackStrengthTicker();
+            }
+        }
         return GreatswordCombat.release(stack, level, user, timeLeft);
     }
 
