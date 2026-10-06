@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "gonzotech:block/monolyth_side",
+    "end": "gonzotech:block/monolyth_top"
+  }
+}

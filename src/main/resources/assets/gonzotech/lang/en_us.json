@@ -1000,5 +1000,13 @@
   "advancements.gonzotech.leaky_bucket.title": "Industrial Incontinence",
   "advancements.gonzotech.leaky_bucket.description": "Create a leaky bucket from an ethylene or sulfuric acid bucket.",
   "advancements.gonzotech.forbidden_bath.title": "Bathing Forbidden",
-  "advancements.gonzotech.forbidden_bath.description": "Turn a lava bucket into an obsidian bucket by submerging yourself in water."
+  "advancements.gonzotech.forbidden_bath.description": "Turn a lava bucket into an obsidian bucket by submerging yourself in water.",
+  "block.gonzotech.monolith": "Monolith",
+  "item.gonzotech.stone_greatsword": "Stone Greatsword",
+  "item.gonzotech.iron_greatsword": "Iron Greatsword",
+  "item.gonzotech.golden_greatsword": "Golden Greatsword",
+  "item.gonzotech.diamond_greatsword": "Diamond Greatsword",
+  "item.gonzotech.netherite_greatsword": "Netherite Greatsword",
+  "item.gonzotech.alloy_greatsword": "Custom Alloy Greatsword",
+  "hud.gonzotech.greatsword_charge": "Charge: %s%%"
 }

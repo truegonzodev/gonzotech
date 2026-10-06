@@ -1,6 +1,12 @@
 {
   "replace": false,
   "values": [
-    "gonzotech:alloy_sword"
+    "gonzotech:alloy_sword",
+    "gonzotech:stone_greatsword",
+    "gonzotech:iron_greatsword",
+    "gonzotech:golden_greatsword",
+    "gonzotech:diamond_greatsword",
+    "gonzotech:netherite_greatsword",
+    "gonzotech:alloy_greatsword"
   ]
 }

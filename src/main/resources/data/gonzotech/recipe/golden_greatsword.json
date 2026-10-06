@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " IB",
+    "BIB",
+    "RI "
+  ],
+  "key": {
+    "I": "minecraft:gold_ingot",
+    "B": "minecraft:gold_block",
+    "R": "gonzotech:rebar"
+  },
+  "result": {
+    "id": "gonzotech:golden_greatsword",
+    "count": 1
+  }
+}

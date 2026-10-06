@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "C C",
+    "CCC",
+    "C C"
+  ],
+  "key": {
+    "C": "minecraft:cobblestone"
+  },
+  "result": {
+    "id": "gonzotech:monolith",
+    "count": 1
+  }
+}

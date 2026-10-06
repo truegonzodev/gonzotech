@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " IB",
+    "BIB",
+    "RI "
+  ],
+  "key": {
+    "I": "minecraft:netherite_ingot",
+    "B": "minecraft:netherite_block",
+    "R": "gonzotech:rebar"
+  },
+  "result": {
+    "id": "gonzotech:netherite_greatsword",
+    "count": 1
+  }
+}

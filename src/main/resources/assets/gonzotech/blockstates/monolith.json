@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "gonzotech:block/monolith",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "gonzotech:block/monolith"
+    },
+    "axis=z": {
+      "model": "gonzotech:block/monolith",
+      "x": 90
+    }
+  }
+}

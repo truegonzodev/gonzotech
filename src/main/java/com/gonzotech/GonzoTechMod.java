@@ -50,6 +50,8 @@ public class GonzoTechMod {
         ModFluids.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
+        com.gonzotech.core.registry.MonolithContent.register(modEventBus);
+        com.gonzotech.core.registry.GreatswordContent.register(modEventBus);
         // Сущности (мобы): «альт-житель». Поставщик яйца призыва resolve'ит
         // EntityType при регистрации предметов, а в ванильном порядке реестров
         // ENTITY_TYPE замораживается РАНЬШЕ ITEM — поэтому порядок вызовов register()
@@ -64,6 +66,7 @@ public class GonzoTechMod {
         // Эффекты мода: радиация (некроз/очищение) + психика (тремор/сердечный приступ).
         com.gonzotech.core.registry.ModEffects.register(modEventBus);
         ModRecipeSerializers.register(modEventBus);
+        com.gonzotech.core.registry.GreatswordRecipeSerializers.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
         ModAttachments.register(modEventBus);
