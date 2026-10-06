@@ -7,11 +7,13 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,7 +22,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingSwapItemsEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,6 +49,40 @@ public final class GreatswordCombat {
         if (player.getMainHandItem().getItem() instanceof GreatswordItem) {
             event.setSweeping(!CHARGED_SWINGS.contains(player));
         }
+    }
+
+    /** Prevent the F-key swap from placing a greatsword into the offhand. */
+    @SubscribeEvent
+    public static void onSwapHands(LivingSwapItemsEvent.Hands event) {
+        if (event.getItemSwappedToOffHand().getItem() instanceof GreatswordItem) {
+            event.setCanceled(true);
+        }
+    }
+
+    /** Enforce the main-hand-only rule and clear any pre-existing offhand item. */
+    @SubscribeEvent
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        boolean hasGreatswordInEitherHand = player.getMainHandItem().getItem() instanceof GreatswordItem
+            || player.getOffhandItem().getItem() instanceof GreatswordItem;
+        if (hasGreatswordInEitherHand) moveOffhandToInventory(player);
+    }
+
+    private static void moveOffhandToInventory(ServerPlayer player) {
+        ItemStack offhand = player.getOffhandItem();
+        if (offhand.isEmpty()) return;
+
+        ItemStack displaced = offhand.copy();
+        player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        var inventory = player.getInventory();
+        int freeSlot = inventory.getFreeSlot();
+        if (freeSlot >= 0) {
+            inventory.setItem(freeSlot, displaced);
+        } else {
+            // dropAround=false throws the item forward in the player's look direction.
+            player.drop(displaced, false, false);
+        }
+        player.containerMenu.broadcastChanges();
     }
 
     public static void release(net.minecraft.world.item.ItemStack stack, Level level,

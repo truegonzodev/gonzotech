@@ -95,6 +95,36 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertEqual(10.0 * (1.0 + 0.5 * 0.5), 12.5)
         self.assertEqual(10.0 * (1.0 + 0.5), 15.0)
 
+    def test_greatswords_are_main_hand_only_and_displace_offhand_items(self):
+        item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
+        self.assertIn("canEquip(ItemStack stack, EquipmentSlot slot, LivingEntity entity)", item_source)
+        self.assertIn("slot != EquipmentSlot.OFFHAND", item_source)
+
+        combat = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordCombat.java").read_text(encoding="utf-8")
+        for contract in (
+            "LivingSwapItemsEvent.Hands",
+            "event.getItemSwappedToOffHand()",
+            "event.setCanceled(true)",
+            "PlayerTickEvent.Post",
+            "inventory.getFreeSlot()",
+            "inventory.setItem(freeSlot, displaced)",
+            "player.drop(displaced, false, false)",
+            "player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY)",
+        ):
+            self.assertIn(contract, combat)
+
+    def test_greatsword_models_have_requested_gui_transform(self):
+        for item in GREATWORDS:
+            with self.subTest(item=item):
+                model = read_json(ASSETS / f"models/item/{item}.json")
+                self.assertEqual(model["parent"], "item/handheld")
+                self.assertEqual(model["textures"]["layer0"], f"gonzotech:item/{item}")
+                self.assertEqual(model["display"]["gui"], {
+                    "rotation": [0, 0, 0],
+                    "translation": [0, 0, 0],
+                    "scale": [2, 2, 2],
+                })
+
     def test_alloy_example_and_localizations_exist(self):
         docs = (ROOT / "docs/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")
         self.assertIn("3 порции кальция + 1 порция ванильного железа", docs)

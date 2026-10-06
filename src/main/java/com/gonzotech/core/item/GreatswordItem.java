@@ -11,6 +11,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -81,6 +82,11 @@ public final class GreatswordItem extends SwordItem {
         ItemStack stack = player.getItemInHand(hand);
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(stack);
+    }
+
+    @Override
+    public boolean canEquip(ItemStack stack, EquipmentSlot slot, LivingEntity entity) {
+        return slot != EquipmentSlot.OFFHAND && super.canEquip(stack, slot, entity);
     }
 
     @Override
