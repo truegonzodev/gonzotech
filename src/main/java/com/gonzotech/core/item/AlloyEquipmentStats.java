@@ -163,9 +163,14 @@ public final class AlloyEquipmentStats {
         return result;
     }
 
-    /** Recalculates the durability displayed by S after its effective B penalty. */
+    /** Recalculates standard alloy-tool durability after the effective-B penalty. */
     public static int durability(AlloyProperties properties) {
-        int strengthDurability = lerpInt(MIN_DURABILITY, MAX_DURABILITY, properties.strength());
+        return durability(properties, MIN_DURABILITY, MAX_DURABILITY);
+    }
+
+    /** Applies the shared S interpolation and effective-B penalty to a form-specific range. */
+    public static int durability(AlloyProperties properties, int minimum, int maximum) {
+        int strengthDurability = lerpInt(minimum, maximum, properties.strength());
         return Math.max(1, (int) Math.round(strengthDurability * (1.0D - brittlenessPenalty(properties.brittleness()))));
     }
 
@@ -308,7 +313,8 @@ public final class AlloyEquipmentStats {
         }
     }
 
-    private static ItemAttributeModifiers adjustToolAttributes(ItemAttributeModifiers hostAttributes,
+    /** Adjusts only main-hand ADD_VALUE combat modifiers while preserving the host tooltip layout. */
+    public static ItemAttributeModifiers adjustToolAttributes(ItemAttributeModifiers hostAttributes,
                                                                double damageBonus, double attackSpeedBonus) {
         ItemAttributeModifiers.Builder result = ItemAttributeModifiers.builder();
         for (ItemAttributeModifiers.Entry entry : hostAttributes.modifiers()) {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression checks for the 0.3.171 worldgen and sedative patch."""
+"""Static regression checks for the 0.3.172 worldgen and sedative patch."""
 import json
 import re
 import struct
@@ -38,7 +38,7 @@ expected = {
 }
 
 version = read(ROOT / "gradle.properties")
-require("mod_version=0.3.171" in version, "version should be 0.3.171")
+require("mod_version=0.3.172" in version, "version should be 0.3.172")
 ore_source = read(JAVA / "core/ore/OreDefinition.java")
 found = {}
 for match in re.finditer(
@@ -169,4 +169,4 @@ for locale, item_name, effect_name in (
     require(lang["item.gonzotech.sedative"] == item_name, f"wrong {locale} sedative name")
     require(lang["effect.gonzotech.relaxation"] == effect_name, f"wrong {locale} effect name")
 
-print("0.3.171 sedative/worldgen checks passed")
+print("0.3.172 sedative/worldgen checks passed")

@@ -15,13 +15,14 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
 /**
- * Composition-preserving 3×3 recipe for the alloy greatsword. All four alloy
- * ingots must have the same canonical composition; two titanium blocks and one
- * rebar complete the large-blade pattern.
+ * Composition-preserving 3×3 recipe for the alloy greatsword. All three alloy
+ * ingots must have the same canonical composition; three titanium blocks and
+ * one rebar complete the large-blade pattern.
  */
 public final class AlloyGreatswordRecipe extends CustomRecipe {
 
-    private static final String[] PATTERN = { " AA", "TAT", "RA " };
+    /** I = custom-alloy ingot, B = titanium block, R = rebar. */
+    private static final String[] PATTERN = { " IB", "BIB", "RI " };
 
     public AlloyGreatswordRecipe(CraftingBookCategory category) {
         super(category);
@@ -63,13 +64,13 @@ public final class AlloyGreatswordRecipe extends CustomRecipe {
             for (int column = 0; column < input.width(); column++) {
                 char expected = expectedAt(row - rowOffset, column - columnOffset);
                 ItemStack stack = input.getItem(row * input.width() + column);
-                if (expected == 'A') {
+                if (expected == 'I') {
                     if (!stack.is(ModItems.CUSTOM_ALLOY.get())) return null;
                     AlloyComposition candidate = stack.get(ModDataComponents.ALLOY_COMPOSITION.get());
                     if (candidate == null) return null;
                     if (composition == null) composition = candidate;
                     else if (!composition.equals(candidate)) return null;
-                } else if (expected == 'T') {
+                } else if (expected == 'B') {
                     if (!stack.is(titaniumBlock.get())) return null;
                 } else if (expected == 'R') {
                     if (!stack.is(ModItems.REBAR.get())) return null;

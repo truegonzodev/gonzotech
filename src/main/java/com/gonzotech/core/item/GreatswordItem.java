@@ -1,35 +1,27 @@
 package com.gonzotech.core.item;
 
-import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.component.AlloyComposition;
 import com.gonzotech.core.component.AlloyTint;
 import com.gonzotech.core.registry.GreatswordContent;
 import com.gonzotech.core.registry.ModDataComponents;
 import com.gonzotech.core.registry.ModSounds;
-import com.gonzotech.machines.processing.AlloyMaterialCatalog;
 import com.gonzotech.machines.processing.AlloyProperties;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUseAnimation;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.DamageResistant;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.item.enchantment.Enchantable;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -160,19 +152,30 @@ public final class GreatswordItem extends SwordItem {
         ItemStack result = new ItemStack(GreatswordContent.ALLOY_GREATSWORD.get());
         result.set(ModDataComponents.ALLOY_COMPOSITION.get(), composition);
         result.set(ModDataComponents.ALLOY_TINT.get(), new AlloyTint(properties.argbTint()));
-        result.set(DataComponents.MAX_DAMAGE, AlloyEquipmentStats.durability(properties));
+        result.set(DataComponents.MAX_DAMAGE,
+            AlloyEquipmentStats.durability(properties, 3, 1_259));
         result.set(DataComponents.DAMAGE, 0);
         // The base item is marked no-combine-repair. Keep the repair path
         // composition-specific rather than accepting a generic host ingot.
         result.remove(DataComponents.REPAIRABLE);
-        result.set(DataComponents.ATTRIBUTE_MODIFIERS, alloyAttributes(properties));
 
+        double weightDamage = 9.0D + 12.3D * properties.weight() / 100.0D;
+        double brittlenessBonus = -1.0D + 2.0D * properties.brittleness() / 100.0D;
+        double damage = weightDamage + brittlenessBonus;
+        double attackSpeed = 0.9D - 0.8D * properties.weight() / 100.0D;
+        ItemAttributeModifiers hostAttributes = result.get(DataComponents.ATTRIBUTE_MODIFIERS);
+        if (hostAttributes == null) hostAttributes = ItemAttributeModifiers.EMPTY;
+        // Adjust the fixed iron-host modifiers so the tooltip uses the same
+        // total-stat and base-plus-modifier layout as alloy tools and swords.
+        result.set(DataComponents.ATTRIBUTE_MODIFIERS, AlloyEquipmentStats.adjustToolAttributes(
+            hostAttributes,
+            damage - GreatswordContent.ALLOY_BASE_DAMAGE,
+            attackSpeed - GreatswordContent.ALLOY_BASE_ATTACK_SPEED));
+
+        // U (the dominant material tier) is deliberately irrelevant. Low-I stacks
+        // retain the alloy item's fixed iron-host enchantability; high-I stacks lose it.
         if (properties.inertness() >= INERTNESS_ENCHANTMENT_LOCK) {
             result.remove(DataComponents.ENCHANTABLE);
-        } else {
-            Enchantable hostEnchantability = new ItemStack(hostSword(properties.toolTier()))
-                .get(DataComponents.ENCHANTABLE);
-            if (hostEnchantability != null) result.set(DataComponents.ENCHANTABLE, hostEnchantability);
         }
         if (properties.heatResistance() >= LAVA_RESISTANCE_THRESHOLD) {
             result.set(DataComponents.DAMAGE_RESISTANT, new DamageResistant(DamageTypeTags.IS_FIRE));
@@ -180,49 +183,5 @@ public final class GreatswordItem extends SwordItem {
             result.remove(DataComponents.DAMAGE_RESISTANT);
         }
         return result;
-    }
-
-    private static ItemAttributeModifiers alloyAttributes(AlloyProperties properties) {
-        double damage = switch (properties.toolTier()) {
-            case STONE -> 11.0D;
-            case IRON -> 13.0D;
-            case DIAMOND -> 15.0D;
-            case NETHERITE_PLUS -> 17.0D;
-        } + 0.5D * AlloyEquipmentStats.brittlenessToolBonus(properties.brittleness());
-        double baseSpeed = switch (properties.toolTier()) {
-            case STONE -> 0.35D;
-            case IRON -> 0.32D;
-            case DIAMOND -> 0.44D;
-            case NETHERITE_PLUS -> 0.38D;
-        };
-        // M is deliberately gentler on a greatsword than on the ordinary alloy
-        // sword: it shifts the slow base by at most ±0.275 attack speed.
-        double speed = clamp(baseSpeed + 0.55D * (50.0D - properties.weight()) / 100.0D,
-            0.10D, 0.80D);
-
-        return ItemAttributeModifiers.builder()
-            .add(Attributes.ATTACK_DAMAGE,
-                modifier("alloy_greatsword_damage", damage - 1.0D), EquipmentSlotGroup.MAINHAND)
-            .add(Attributes.ATTACK_SPEED,
-                modifier("alloy_greatsword_speed", speed - 4.0D), EquipmentSlotGroup.MAINHAND)
-            .build();
-    }
-
-    private static AttributeModifier modifier(String path, double amount) {
-        return new AttributeModifier(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, path),
-            amount, AttributeModifier.Operation.ADD_VALUE);
-    }
-
-    private static Item hostSword(AlloyMaterialCatalog.ToolTier tier) {
-        return switch (tier) {
-            case STONE -> Items.STONE_SWORD;
-            case IRON -> Items.IRON_SWORD;
-            case DIAMOND -> Items.DIAMOND_SWORD;
-            case NETHERITE_PLUS -> Items.NETHERITE_SWORD;
-        };
-    }
-
-    private static double clamp(double value, double minimum, double maximum) {
-        return Math.max(minimum, Math.min(maximum, value));
     }
 }

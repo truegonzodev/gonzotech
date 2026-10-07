@@ -14,6 +14,10 @@ public final class GreatswordContent {
 
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(GonzoTechMod.MOD_ID);
 
+    /** Fixed alloy-item host stats; composition tier U never changes these defaults. */
+    public static final float ALLOY_BASE_DAMAGE = 13.0F;
+    public static final float ALLOY_BASE_ATTACK_SPEED = 0.32F;
+
     public static final DeferredItem<GreatswordItem> STONE_GREATSWORD =
         register("stone_greatsword", ToolMaterial.STONE, 113, 11.0F, 0.35F, false);
     public static final DeferredItem<GreatswordItem> IRON_GREATSWORD =
@@ -26,7 +30,8 @@ public final class GreatswordContent {
         register("netherite_greatsword", ToolMaterial.NETHERITE, 881, 17.0F, 0.38F, false);
     /** Template defaults are replaced with composition-stamped components by the dynamic recipe. */
     public static final DeferredItem<GreatswordItem> ALLOY_GREATSWORD =
-        register("alloy_greatsword", ToolMaterial.IRON, 280, 13.0F, 0.32F, true);
+        register("alloy_greatsword", ToolMaterial.IRON, 280,
+            ALLOY_BASE_DAMAGE, ALLOY_BASE_ATTACK_SPEED, true);
 
     private GreatswordContent() {
     }

@@ -58,15 +58,43 @@ class GreatswordContentTest(unittest.TestCase):
         recipe = read_json(RES / "data/gonzotech/recipe/alloy_greatsword.json")
         self.assertEqual(recipe, {"type": "gonzotech:alloy_greatsword", "category": "equipment"})
         source = (ROOT / "src/main/java/com/gonzotech/core/recipe/AlloyGreatswordRecipe.java").read_text(encoding="utf-8")
-        self.assertIn('PATTERN = { " AA", "TAT", "RA " }', source)
-        pattern = (" AA", "TAT", "RA ")
-        self.assertEqual(sum(row.count("A") for row in pattern), 4)
-        self.assertEqual(sum(row.count("T") for row in pattern), 2)
+        self.assertIn('PATTERN = { " IB", "BIB", "RI " }', source)
+        pattern = (" IB", "BIB", "RI ")
+        self.assertEqual(sum(row.count("I") for row in pattern), 3)
+        self.assertEqual(sum(row.count("B") for row in pattern), 3)
         self.assertEqual(sum(row.count("R") for row in pattern), 1)
         self.assertIn("composition.equals(candidate)", source)
         self.assertIn("GreatswordItem.createAlloyStack(composition)", source)
+        self.assertIn("GreatswordRecipeSerializers.ALLOY_GREATSWORD.get()", source)
         advancement = read_json(RES / "data/gonzotech/advancement/recipes/alloy_greatsword.json")
         self.assertEqual(advancement["rewards"]["recipes"], ["gonzotech:alloy_greatsword"])
+
+    def test_alloy_greatsword_stats_use_requested_ranges_ignore_u_and_match_tooltip(self):
+        source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
+        self.assertIn("durability(properties, 3, 1_259)", source)
+        self.assertIn("9.0D + 12.3D * properties.weight() / 100.0D", source)
+        self.assertIn("-1.0D + 2.0D * properties.brittleness() / 100.0D", source)
+        self.assertIn("0.9D - 0.8D * properties.weight() / 100.0D", source)
+        self.assertNotIn("properties.toolTier()", source)
+        self.assertIn("properties.inertness() >= INERTNESS_ENCHANTMENT_LOCK", source)
+        self.assertIn("properties.heatResistance() >= LAVA_RESISTANCE_THRESHOLD", source)
+        self.assertIn("new AlloyTint(properties.argbTint())", source)
+        self.assertIn("AlloyEquipmentStats.adjustToolAttributes", source)
+
+        stats = (ROOT / "src/main/java/com/gonzotech/core/item/AlloyEquipmentStats.java").read_text(encoding="utf-8")
+        self.assertIn("public static int durability(AlloyProperties properties, int minimum, int maximum)", stats)
+        self.assertIn("public static ItemAttributeModifiers adjustToolAttributes", stats)
+        properties = (ROOT / "src/main/java/com/gonzotech/machines/processing/AlloyProperties.java").read_text(encoding="utf-8")
+        self.assertIn("divideRound(brittleness, total) - averagePlasticity / 2", properties)
+
+        self.assertEqual(round(3 + 1_256 * 0.0), 3)
+        self.assertEqual(round(3 + 1_256 * 1.0), 1_259)
+        self.assertEqual(round(1_259 * 0.25), 315)
+        self.assertEqual(max(1, round(3 * 0.25)), 1)
+        self.assertAlmostEqual(9 + 12.3 * 0 / 100 - 1 + 2 * 0 / 100, 8.0)
+        self.assertAlmostEqual(9 + 12.3 * 100 / 100 - 1 + 2 * 100 / 100, 22.3)
+        self.assertAlmostEqual(0.9 - 0.8 * 0 / 100, 0.9)
+        self.assertAlmostEqual(0.9 - 0.8 * 100 / 100, 0.1)
 
     def test_item_tags_keep_other_sword_enchantments_enabled(self):
         expected = {f"gonzotech:{item}" for item in GREATWORDS}
@@ -80,8 +108,11 @@ class GreatswordContentTest(unittest.TestCase):
 
     def test_static_stats_and_charge_formula_are_pinned(self):
         source = (ROOT / "src/main/java/com/gonzotech/core/registry/GreatswordContent.java").read_text(encoding="utf-8")
-        for text in ("113, 11.0F, 0.35F", "280, 13.0F, 0.32F", "23, 14.0F, 0.29F", "432, 15.0F, 0.44F", "881, 17.0F, 0.38F"):
+        for text in ("113, 11.0F, 0.35F", "23, 14.0F, 0.29F", "432, 15.0F, 0.44F", "881, 17.0F, 0.38F"):
             self.assertIn(text, source)
+        self.assertIn("ALLOY_BASE_DAMAGE = 13.0F", source)
+        self.assertIn("ALLOY_BASE_ATTACK_SPEED = 0.32F", source)
+        self.assertIn("280,", source)
         combat = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordCombat.java").read_text(encoding="utf-8")
         self.assertIn("charge <= 0.10F", combat)
         self.assertIn("FULL_CHARGE_DAMAGE_MULTIPLIER = 1.55F", combat)
@@ -208,6 +239,10 @@ class GreatswordContentTest(unittest.TestCase):
     def test_alloy_example_and_localizations_exist(self):
         docs = (ROOT / "docs/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")
         self.assertIn("3 порции кальция + 1 порция ванильного железа", docs)
+        self.assertIn("3 одинаковых по составу `custom_alloy`", docs)
+        self.assertIn("9 + 12.3 × M / 100", docs)
+        self.assertIn("0.9 − 0.8 × M / 100", docs)
+        self.assertIn("U` не меняет", docs)
         self.assertIn("Магнитный привод для больших мечей", docs)
         self.assertIn("не реализована", docs)
         for locale in ("en_us", "ru_ru"):
