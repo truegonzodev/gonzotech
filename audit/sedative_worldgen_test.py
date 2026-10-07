@@ -25,8 +25,8 @@ def require(condition, message):
 
 expected = {
     # max vein size, average ore blocks per chunk, expected starts per chunk
-    "osmium": (1, 0.33, 0.33),
-    "iridium": (2, 0.70, 0.35),
+    "osmium": (1, 1.0, 1.0),
+    "iridium": (2, 2.0, 1.0),
     "cesium": (3, 4.0, 2.0),
     "palladium": (3, 2.75, 1.1),
     "platinum": (3, 2.75, 1.1),
@@ -38,7 +38,7 @@ expected = {
 }
 
 version = read(ROOT / "gradle.properties")
-require("mod_version=0.3.178" in version, "version should be 0.3.178")
+require("mod_version=0.3.179" in version, "version should be 0.3.179")
 ore_source = read(JAVA / "core/ore/OreDefinition.java")
 found = {}
 for match in re.finditer(
@@ -92,6 +92,37 @@ require("Math.floor(count)" in placement_source and "random.nextDouble() < count
         "fractional expected-count placement must use floor plus Bernoulli remainder")
 require("ModPlacementModifiers.EXPECTED_COUNT.get()" in placement_source,
         "custom expected-count placement type is not wired")
+entrypoint = read(JAVA / "GonzoTechMod.java")
+require("ModPlacementModifiers.register(modEventBus)" in entrypoint,
+        "custom expected-count placement registry is attached to the mod event bus")
+
+# Verify the complete worldgen chain for the two reported missing ores.
+biome_modifier = load(RES / "data/gonzotech/neoforge/biome_modifier/add_ores.json")
+for ore in ("osmium", "iridium"):
+    definition_line = next(line for line in ore_source.splitlines()
+                           if f'new OreDefinition("{ore}"' in line)
+    require(f'new OreDefinition("{ore}", -62, -32, -47,' in definition_line,
+            f"{ore}: definition uses the requested -62..-32 range")
+
+    placed = load(worldgen / "placed_feature" / f"{ore}_ore_placed.json")
+    height = next(m["height"] for m in placed["placement"]
+                  if m["type"] == "minecraft:height_range")
+    require(height["min_inclusive"]["absolute"] == -62
+            and height["max_inclusive"]["absolute"] == -32,
+            f"{ore}: placed feature uses the requested -62..-32 range")
+    count_modifier = next(m for m in placed["placement"]
+                          if m["type"] == "gonzotech:expected_count")
+    require(count_modifier["count"] == 1.0,
+            f"{ore}: boosted placement attempts one vein per chunk")
+    require(f"gonzotech:{ore}_ore_placed" in biome_modifier["features"],
+            f"{ore}: placed feature is injected into overworld underground ores")
+
+    configured = load(worldgen / "configured_feature" / f"{ore}_ore.json")
+    require(configured["type"] == "minecraft:ore"
+            and any(target["target"].get("tag") == "minecraft:deepslate_ore_replaceables"
+                    and target["state"].get("Name") == f"gonzotech:deepslate_{ore}_ore"
+                    for target in configured["config"]["targets"]),
+            f"{ore}: configured feature targets the registered deepslate ore block")
 
 replacement_source = read(JAVA / "core/worldgen/MineralReplacementFeature.java")
 require("DEEPSLATE_AT_OSMIUM_CHANCE = 0.30F" in replacement_source,

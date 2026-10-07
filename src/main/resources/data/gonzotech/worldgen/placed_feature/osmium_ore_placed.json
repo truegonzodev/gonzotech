@@ -3,7 +3,7 @@
   "placement": [
     {
       "type": "gonzotech:expected_count",
-      "count": 0.33
+      "count": 1.0
     },
     {
       "type": "minecraft:in_square"
@@ -13,10 +13,10 @@
       "height": {
         "type": "minecraft:uniform",
         "min_inclusive": {
-          "absolute": -63
+          "absolute": -62
         },
         "max_inclusive": {
-          "absolute": -52
+          "absolute": -32
         }
       }
     },

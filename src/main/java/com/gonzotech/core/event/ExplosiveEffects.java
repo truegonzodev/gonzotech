@@ -1,5 +1,6 @@
 package com.gonzotech.core.event;
 
+import com.gonzotech.core.block.GunpowderPrimedTnt;
 import com.gonzotech.core.block.IndustrialPrimedTnt;
 import com.gonzotech.core.registry.ModParticles;
 import net.minecraft.core.BlockPos;
@@ -7,6 +8,7 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -31,7 +33,7 @@ public final class ExplosiveEffects {
 
     private static final int MAX_INDUSTRIAL_DUST_PARTICLES = 128;
     private static final Map<ServerLevel, List<ScheduledParticle>> PENDING = new WeakHashMap<>();
-    private static final ThreadLocal<Boolean> REDIRECTING_INDUSTRIAL_EXPLOSION = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> REDIRECTING_CUSTOM_EXPLOSION = new ThreadLocal<>();
 
     private ExplosiveEffects() {
     }
@@ -54,33 +56,42 @@ public final class ExplosiveEffects {
     }
 
     /**
-     * PrimedTnt's vanilla explode() is private. Redirect only industrial TNT's
-     * cancellable start event so the normal blast calculation uses our scaled
-     * large-particle emitter instead of adding a second, unscaled vanilla one.
+     * PrimedTnt's vanilla explode() is private. Redirect our two custom TNT entities
+     * through the extended overload so each keeps its own power, interaction, and
+     * scaled large-particle emitter without creating a duplicate unscaled blast.
      */
     @SubscribeEvent
     public static void onExplosionStart(ExplosionEvent.Start event) {
-        if (Boolean.TRUE.equals(REDIRECTING_INDUSTRIAL_EXPLOSION.get())
+        if (Boolean.TRUE.equals(REDIRECTING_CUSTOM_EXPLOSION.get())
             || !(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
 
         Explosion explosion = event.getExplosion();
-        if (!(explosion.getDirectSourceEntity() instanceof IndustrialPrimedTnt primedTnt)) {
+        Entity source = explosion.getDirectSourceEntity();
+        boolean gunpowder = source instanceof GunpowderPrimedTnt;
+        boolean industrial = source instanceof IndustrialPrimedTnt;
+        if (!gunpowder && !industrial) {
             return;
         }
 
         Vec3 center = explosion.center();
         float power = explosion.radius();
         event.setCanceled(true);
-        REDIRECTING_INDUSTRIAL_EXPLOSION.set(true);
+        REDIRECTING_CUSTOM_EXPLOSION.set(true);
         try {
-            level.explode(primedTnt, null, null,
-                center.x, center.y, center.z, power, false, Level.ExplosionInteraction.TNT,
-                ParticleTypes.EXPLOSION, ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get(),
+            if (gunpowder) {
+                scheduleGunpowderSmoke(level, center, power);
+            }
+            level.explode(source, null, null,
+                center.x, center.y, center.z, power, false,
+                gunpowder ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.TNT,
+                ParticleTypes.EXPLOSION,
+                gunpowder ? ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()
+                    : ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get(),
                 SoundEvents.GENERIC_EXPLODE);
         } finally {
-            REDIRECTING_INDUSTRIAL_EXPLOSION.remove();
+            REDIRECTING_CUSTOM_EXPLOSION.remove();
         }
     }
 

@@ -30,6 +30,7 @@ custom_tnt = (JAVA / "core/block/CustomTntBlock.java").read_text(encoding="utf-8
 gunpowder = (JAVA / "core/block/GunpowderBlock.java").read_text(encoding="utf-8")
 industrial = (JAVA / "core/block/IndustrialTntBlock.java").read_text(encoding="utf-8")
 primed = (JAVA / "core/block/IndustrialPrimedTnt.java").read_text(encoding="utf-8")
+gunpowder_primed = (JAVA / "core/block/GunpowderPrimedTnt.java").read_text(encoding="utf-8")
 mod_particles = (JAVA / "core/registry/ModParticles.java").read_text(encoding="utf-8")
 particle_client = (JAVA / "core/client/particle/ModParticleClient.java").read_text(encoding="utf-8")
 scaled_emitter = (JAVA / "core/client/particle/ScaledExplosionEmitterParticle.java").read_text(encoding="utf-8")
@@ -52,10 +53,14 @@ accepted_items = re.findall(r"output\.accept\(([^;]+)\);", adaptations)
 pin(accepted_items[-1] == "ModItems.INDUSTRIAL_TNT_ITEM.get()",
     "industrial TNT is the last Adaptations tab item")
 
-# Powder block: instant strength-5.4 blast without fire, plus full-grid and reverse recipes.
+# Powder block: one-tick, block-breaking strength-5.4 blast, plus full-grid and reverse recipes.
 pin("EXPLOSION_STRENGTH = 5.4F" in gunpowder, "gunpowder blast power is nerfed to 5.4")
-pin("EXPLOSION_STRENGTH, false, Level.ExplosionInteraction.BLOCK" in gunpowder,
-    "gunpowder blast is immediate, block-breaking, and fire-free")
+pin("FUSE_TICKS = 1" in gunpowder
+    and "extends PrimedTnt" in gunpowder_primed
+    and "setFuse(GunpowderBlock.FUSE_TICKS)" in gunpowder_primed
+    and "serverLevel.addFreshEntity(primedTnt)" in gunpowder
+    and "serverLevel.explode(" not in gunpowder,
+    "gunpowder primes a one-tick TNT entity instead of excluding its igniter as explosion source")
 forward = load(DATA / "recipe/gunpowder_block.json")
 pin(forward["type"] == "minecraft:crafting_shaped", "gunpowder block requires a shaped recipe")
 pin(forward["pattern"] == ["GGG", "GGG", "GGG"], "gunpowder block uses all nine crafting slots")
@@ -91,7 +96,7 @@ for hook in ("onPlace", "neighborChanged", "onCaughtFire", "useItemOn", "onProje
     pin(hook in custom_tnt, f"TNT ignition path is handled: {hook}")
 
 # Both blasts replace only the large vanilla emitter, scaled via its own flash sprites.
-pin("ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in gunpowder
+pin("ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in explosive_effects
     and "ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get()" in explosive_effects,
     "each explosive uses its own custom emitter")
 pin("GUNPOWDER_SIZE_SCALE = 1.22F" in scaled_emitter
@@ -106,10 +111,12 @@ pin('PARTICLE_TYPES.register("gunpowder_explosion_emitter"' in mod_particles
     and "registerSpecial(ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in particle_client
     and "registerSpecial(ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get()" in particle_client,
     "both custom emitter types are registered with client providers")
-pin("ParticleTypes.EXPLOSION" in gunpowder and "SoundEvents.GENERIC_EXPLODE" in gunpowder
+pin("ParticleTypes.EXPLOSION" in explosive_effects and "SoundEvents.GENERIC_EXPLODE" in explosive_effects
+    and "instanceof GunpowderPrimedTnt" in explosive_effects
+    and "Level.ExplosionInteraction.BLOCK" in explosive_effects
     and "event.setCanceled(true)" in explosive_effects
     and "Level.ExplosionInteraction.TNT" in explosive_effects,
-    "custom large emitters retain vanilla small flashes, sound, and TNT block behavior")
+    "both one-tick custom blasts retain vanilla flash, sound, and their correct block interaction")
 
 # Powder smoke is delayed, distributed through a sphere, and uses vanilla large smoke.
 pin("GUNPOWDER_SMOKE_MIN = 20" in explosive_effects
@@ -203,6 +210,6 @@ pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
     "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.177" in version, "version is bumped to 0.3.177")
+pin("mod_version=0.3.179" in version, "version is bumped to 0.3.179")
 
 print(f"OK: {checks} explosives-content checks passed")

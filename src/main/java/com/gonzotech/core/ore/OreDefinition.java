@@ -148,8 +148,8 @@ public record OreDefinition(
         new OreDefinition("tellurium", -64, -20, -45, 3, ToolTier.DIAMOND, 3.75f, 37.0f, List.of(Host.DEEPSLATE), true, 0, 0),
         new OreDefinition("palladium", -64, -40, -58, 3, ToolTier.DIAMOND, 2.75f, 43.0f, List.of(Host.DEEPSLATE), true, 0, 0),
         new OreDefinition("cesium", -20, 90, 40, 3, ToolTier.DIAMOND, 4.0f, 48.5f, List.of(Host.STONE, Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("iridium", -63, -45, -55, 2, ToolTier.DIAMOND, 0.70f, 54.5f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("osmium", -63, -52, -59, 1, ToolTier.DIAMOND, 0.33f, 60.0f, List.of(Host.DEEPSLATE), true, 0, 0)
+        new OreDefinition("iridium", -62, -32, -47, 2, ToolTier.DIAMOND, 2.0f, 54.5f, List.of(Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("osmium", -62, -32, -47, 1, ToolTier.DIAMOND, 1.0f, 60.0f, List.of(Host.DEEPSLATE), true, 0, 0)
     );
 
     static {
