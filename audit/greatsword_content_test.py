@@ -106,6 +106,42 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("!isSharpness(enchantment)", source)
         self.assertIn("stored.keySet()", source)
 
+    def test_density_feather_falling_and_quick_charge_have_greatsword_effects(self):
+        item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
+        self.assertIn("Enchantments.DENSITY", item_source)
+        self.assertIn("Enchantments.FEATHER_FALLING", item_source)
+        self.assertIn("Enchantments.QUICK_CHARGE", item_source)
+        self.assertIn("isGreatswordSpecialEnchantment(enchantment)", item_source)
+        self.assertIn("stack.has(DataComponents.ENCHANTABLE)", item_source)
+        self.assertIn("QUICK_CHARGE_TIME_REDUCTION_PERCENT = { 0, 10, 21, 32 }", item_source)
+        self.assertIn("FULL_CHARGE_TICKS * remainingPercent / 100.0F", item_source)
+        self.assertIn("chargeDurationTicks(stack)", item_source)
+
+        combat = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordCombat.java").read_text(encoding="utf-8")
+        self.assertIn("chargeProgress(stack, elapsed)", combat)
+        self.assertIn("ItemAttributeModifierEvent", combat)
+        self.assertIn("event.addModifier(Attributes.ATTACK_SPEED", combat)
+        self.assertIn("FEATHER_FALLING_ATTACK_SPEED_PER_LEVEL = 0.05D", combat)
+        self.assertIn("return FEATHER_FALLING_ATTACK_SPEED_PER_LEVEL * level", combat)
+        self.assertIn("featherFallingAttackSpeedBonus(level)", combat)
+        self.assertIn("GreatswordItem.enchantmentLevel(stack, Enchantments.DENSITY)", combat)
+
+        for level, expected_multiplier in ((0, 1.55), (1, 1.63), (5, 1.95)):
+            actual = 1.0 + (0.55 + 0.08 * level)
+            self.assertAlmostEqual(actual, expected_multiplier)
+        quick_charge_ticks = [round(300 * (100 - reduction) / 100) for reduction in (0, 10, 21, 32)]
+        self.assertEqual(quick_charge_ticks, [300, 270, 237, 204])
+        for level, expected_bonus in enumerate((0.05, 0.10, 0.15, 0.20), start=1):
+            self.assertAlmostEqual(0.05 * level, expected_bonus)
+
+        docs = (ROOT / "docs/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")
+        self.assertIn("1.55` без Плотности", docs)
+        self.assertIn("1.63` с I", docs)
+        self.assertIn("1.95` с V", docs)
+        self.assertIn("0.05` к скорости атаки за уровень", docs)
+        self.assertIn("270, 237 и 204 тика", docs)
+        self.assertIn("Снимок реализации:** 0.3.173", docs)
+
     def test_static_stats_and_charge_formula_are_pinned(self):
         source = (ROOT / "src/main/java/com/gonzotech/core/registry/GreatswordContent.java").read_text(encoding="utf-8")
         for text in ("113, 11.0F, 0.35F", "23, 14.0F, 0.29F", "432, 15.0F, 0.44F", "881, 17.0F, 0.38F"):
@@ -115,8 +151,10 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("280,", source)
         combat = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordCombat.java").read_text(encoding="utf-8")
         self.assertIn("charge <= 0.10F", combat)
-        self.assertIn("FULL_CHARGE_DAMAGE_MULTIPLIER = 1.55F", combat)
-        self.assertIn("1.0F + (FULL_CHARGE_DAMAGE_MULTIPLIER - 1.0F) * charge", combat)
+        self.assertIn("BASE_CHARGED_DAMAGE_BONUS = 0.55D", combat)
+        self.assertIn("DENSITY_CHARGED_DAMAGE_BONUS_PER_LEVEL = 0.08D", combat)
+        self.assertIn("chargedDamageMultiplier(charge, densityLevel)", combat)
+        self.assertIn("return 1.0D + (BASE_CHARGED_DAMAGE_BONUS", combat)
         self.assertIn("LivingDamageEvent.Pre", combat)
         self.assertIn("event.setNewDamage(event.getNewDamage() * context.damageMultiplier())", combat)
         self.assertIn("player.attack(target)", combat)
@@ -151,7 +189,7 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertNotIn("InteractionResultHolder", item_source)
         self.assertIn("public boolean releaseUsing(ItemStack stack, Level level, LivingEntity user, int timeLeft)", item_source)
         self.assertIn("player.resetAttackStrengthTicker()", item_source)
-        self.assertIn("elapsed >= FULL_CHARGE_TICKS / 10 ? 1 : 0", item_source)
+        self.assertIn("elapsed >= tenPercentTicks ? 1 : 0", item_source)
         self.assertIn("float pitch = stage == 1 ? 1.5F : 1.0F", item_source)
         self.assertIn("ModSounds.SWORD_READY.get()", item_source)
 
@@ -232,7 +270,7 @@ class GreatswordContentTest(unittest.TestCase):
                 self.assertIn(subtitle, read_json(ASSETS / "lang/ru_ru.json"))
 
         item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
-        self.assertIn("elapsed >= FULL_CHARGE_TICKS / 10 ? 1 : 0", item_source)
+        self.assertIn("elapsed >= tenPercentTicks ? 1 : 0", item_source)
         self.assertIn("float pitch = stage == 1 ? 1.5F : 1.0F", item_source)
         self.assertIn("ModSounds.SWORD_READY.get()", item_source)
 

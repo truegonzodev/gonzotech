@@ -10,12 +10,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,6 +26,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingSwapItemsEvent;
 import net.neoforged.neoforge.event.entity.player.SweepAttackEvent;
@@ -40,7 +43,13 @@ public final class GreatswordCombat {
 
     private static final double MELEE_REACH = 4.5D;
     private static final double DASH_IMPULSE = 0.20D;
-    private static final float FULL_CHARGE_DAMAGE_MULTIPLIER = 1.55F;
+    private static final double BASE_CHARGED_DAMAGE_BONUS = 0.55D;
+    private static final double DENSITY_CHARGED_DAMAGE_BONUS_PER_LEVEL = 0.08D;
+    private static final double FEATHER_FALLING_ATTACK_SPEED_PER_LEVEL = 0.05D;
+    private static final int MAX_DENSITY_LEVEL = 5;
+    private static final int MAX_FEATHER_FALLING_LEVEL = 4;
+    private static final ResourceLocation FEATHER_FALLING_ATTACK_SPEED_ID =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "greatsword_feather_falling_attack_speed");
     private static final ResourceLocation EXTENDED_ATTACK_COOLDOWN_ID =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "greatsword_extended_attack_cooldown");
     private static final Set<Player> CHARGED_SWINGS = ConcurrentHashMap.newKeySet();
@@ -60,6 +69,22 @@ public final class GreatswordCombat {
         if (player.getMainHandItem().getItem() instanceof GreatswordItem) {
             event.setSweeping(!CHARGED_SWINGS.contains(player));
         }
+    }
+
+    /** Feather Falling is repurposed only on greatswords as a main-hand attack-speed bonus. */
+    @SubscribeEvent
+    public static void onGreatswordAttributeModifiers(ItemAttributeModifierEvent event) {
+        ItemStack stack = event.getItemStack();
+        if (!(stack.getItem() instanceof GreatswordItem)) return;
+
+        int level = GreatswordItem.enchantmentLevel(stack, Enchantments.FEATHER_FALLING);
+        double bonus = featherFallingAttackSpeedBonus(level);
+        if (bonus <= 0.0D) return;
+
+        event.addModifier(Attributes.ATTACK_SPEED,
+            new AttributeModifier(FEATHER_FALLING_ATTACK_SPEED_ID, bonus,
+                AttributeModifier.Operation.ADD_VALUE),
+            EquipmentSlotGroup.MAINHAND);
     }
 
     /** Scale only the charged attack's primary hit after ordinary damage modifiers are resolved. */
@@ -87,6 +112,20 @@ public final class GreatswordCombat {
             || player.getOffhandItem().getItem() instanceof GreatswordItem;
         if (hasGreatswordInEitherHand) moveOffhandToInventory(player);
         tickExtendedAttackCooldown(player);
+    }
+
+    /** Full-charge multiplier is 1.55 without Density, then +0.08 per Density level. */
+    public static double chargedDamageMultiplier(float charge, int densityLevel) {
+        double clampedCharge = Math.max(0.0D, Math.min(1.0D, charge));
+        int level = Math.max(0, Math.min(MAX_DENSITY_LEVEL, densityLevel));
+        return 1.0D + (BASE_CHARGED_DAMAGE_BONUS
+            + DENSITY_CHARGED_DAMAGE_BONUS_PER_LEVEL * level) * clampedCharge;
+    }
+
+    /** Feather Falling adds 0.05 attack speed per level, capped at level IV. */
+    public static double featherFallingAttackSpeedBonus(int featherFallingLevel) {
+        int level = Math.max(0, Math.min(MAX_FEATHER_FALLING_LEVEL, featherFallingLevel));
+        return FEATHER_FALLING_ATTACK_SPEED_PER_LEVEL * level;
     }
 
     private static void tickExtendedAttackCooldown(ServerPlayer player) {
@@ -123,8 +162,7 @@ public final class GreatswordCombat {
         if (!(user instanceof ServerPlayer player) || !(level instanceof ServerLevel serverLevel)) return false;
 
         int elapsed = Math.max(0, GreatswordItem.MAX_USE_TICKS - timeLeft);
-        float charge = Math.max(0.0F, Math.min(1.0F,
-            elapsed / (float) GreatswordItem.FULL_CHARGE_TICKS));
+        float charge = GreatswordItem.chargeProgress(stack, elapsed);
         if (charge <= 0.10F) return false;
 
         Vec3 look = player.getLookAngle();
@@ -135,7 +173,8 @@ public final class GreatswordCombat {
         double baseDamage = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
 
         if (target != null) {
-            float damageMultiplier = 1.0F + (FULL_CHARGE_DAMAGE_MULTIPLIER - 1.0F) * charge;
+            int densityLevel = GreatswordItem.enchantmentLevel(stack, Enchantments.DENSITY);
+            float damageMultiplier = (float) chargedDamageMultiplier(charge, densityLevel);
             CHARGED_SWINGS.add(player);
             CHARGED_ATTACKS.put(player, new ChargedAttackContext(target, damageMultiplier));
             try {

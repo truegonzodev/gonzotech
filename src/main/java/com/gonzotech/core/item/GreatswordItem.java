@@ -8,6 +8,7 @@ import com.gonzotech.core.registry.ModSounds;
 import com.gonzotech.machines.processing.AlloyProperties;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.InteractionHand;
@@ -39,6 +40,7 @@ public final class GreatswordItem extends SwordItem {
     static final int MAX_USE_TICKS = 72_000;
     private static final int INERTNESS_ENCHANTMENT_LOCK = 50;
     private static final int LAVA_RESISTANCE_THRESHOLD = 70;
+    private static final int[] QUICK_CHARGE_TIME_REDUCTION_PERCENT = { 0, 10, 21, 32 };
     private static final Map<LivingEntity, Integer> CHARGE_READY_SOUND_STAGE = new WeakHashMap<>();
 
     public GreatswordItem(ToolMaterial hostMaterial, int durability, float attackDamage,
@@ -86,7 +88,9 @@ public final class GreatswordItem extends SwordItem {
         if (!level.isClientSide()) return;
 
         int elapsed = Math.max(0, MAX_USE_TICKS - remainingUseDuration);
-        int stage = elapsed >= FULL_CHARGE_TICKS ? 2 : elapsed >= FULL_CHARGE_TICKS / 10 ? 1 : 0;
+        int chargeTicks = chargeDurationTicks(stack);
+        int tenPercentTicks = (int) Math.ceil(chargeTicks * 0.10D);
+        int stage = elapsed >= chargeTicks ? 2 : elapsed >= tenPercentTicks ? 1 : 0;
         int previousStage = CHARGE_READY_SOUND_STAGE.getOrDefault(user, 0);
         if (stage <= previousStage) return;
 
@@ -106,27 +110,57 @@ public final class GreatswordItem extends SwordItem {
         if (level.isClientSide()) {
             CHARGE_READY_SOUND_STAGE.remove(user);
             int elapsed = Math.max(0, MAX_USE_TICKS - timeLeft);
-            if (elapsed > FULL_CHARGE_TICKS / 10 && user instanceof Player player) {
+            int tenPercentTicks = (int) Math.ceil(chargeDurationTicks(stack) * 0.10D);
+            if (elapsed > tenPercentTicks && user instanceof Player player) {
                 player.resetAttackStrengthTicker();
             }
         }
         return GreatswordCombat.release(stack, level, user, timeLeft);
     }
 
-    /** Progress used by the client charge indicator; clamped after 15 seconds. */
+    /** Progress used by the charge indicator and charged attack, including Quick Charge. */
     public static float chargeProgress(Player player) {
         int elapsed = MAX_USE_TICKS - player.getUseItemRemainingTicks();
-        return Math.max(0.0F, Math.min(1.0F, elapsed / (float) FULL_CHARGE_TICKS));
+        return chargeProgress(player.getUseItem(), elapsed);
+    }
+
+    /** Clamped charge progress for the current stack and elapsed use ticks. */
+    public static float chargeProgress(ItemStack stack, int elapsedTicks) {
+        return Math.max(0.0F, Math.min(1.0F, elapsedTicks / (float) chargeDurationTicks(stack)));
+    }
+
+    /** Full-charge duration: Quick Charge removes the requested 10/21/32 percent. */
+    public static int chargeDurationTicks(ItemStack stack) {
+        return chargeDurationTicks(enchantmentLevel(stack, Enchantments.QUICK_CHARGE));
+    }
+
+    /** Pure duration formula, exposed so the exact level breakpoints stay regression-tested. */
+    public static int chargeDurationTicks(int quickChargeLevel) {
+        int level = Math.max(0, Math.min(3, quickChargeLevel));
+        int remainingPercent = 100 - QUICK_CHARGE_TIME_REDUCTION_PERCENT[level];
+        return Math.max(1, Math.round(FULL_CHARGE_TICKS * remainingPercent / 100.0F));
+    }
+
+    /** Reads one enchantment by registry key without requiring a registry lookup. */
+    public static int enchantmentLevel(ItemStack stack, ResourceKey<Enchantment> key) {
+        ItemEnchantments enchantments = stack.get(DataComponents.ENCHANTMENTS);
+        if (enchantments == null) return 0;
+        for (Holder<Enchantment> enchantment : enchantments.keySet()) {
+            if (enchantment.is(key)) return enchantments.getLevel(enchantment);
+        }
+        return 0;
     }
 
     @Override
     public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
-        return !isSharpness(enchantment) && super.supportsEnchantment(stack, enchantment);
+        return stack.has(DataComponents.ENCHANTABLE) && !isSharpness(enchantment)
+            && (isGreatswordSpecialEnchantment(enchantment) || super.supportsEnchantment(stack, enchantment));
     }
 
     @Override
     public boolean isPrimaryItemFor(ItemStack stack, Holder<Enchantment> enchantment) {
-        return !isSharpness(enchantment) && super.isPrimaryItemFor(stack, enchantment);
+        return stack.has(DataComponents.ENCHANTABLE) && !isSharpness(enchantment)
+            && (isGreatswordSpecialEnchantment(enchantment) || super.isPrimaryItemFor(stack, enchantment));
     }
 
     @Override
@@ -142,6 +176,12 @@ public final class GreatswordItem extends SwordItem {
 
     private static boolean isSharpness(Holder<Enchantment> enchantment) {
         return enchantment.is(Enchantments.SHARPNESS);
+    }
+
+    private static boolean isGreatswordSpecialEnchantment(Holder<Enchantment> enchantment) {
+        return enchantment.is(Enchantments.DENSITY)
+            || enchantment.is(Enchantments.FEATHER_FALLING)
+            || enchantment.is(Enchantments.QUICK_CHARGE);
     }
 
     /** Stamp one exact, validated custom-alloy composition onto the recipe output. */
