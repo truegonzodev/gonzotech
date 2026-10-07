@@ -95,7 +95,11 @@ for block_id in ("gunpowder_block", "industrial_tnt"):
     pin(f"block.gonzotech.{block_id}" in en and f"block.gonzotech.{block_id}" in ru,
         f"English and Russian names exist for {block_id}")
 
+pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
+    and "import net.minecraft.world.item.EquipmentSlot;" not in custom_tnt,
+    "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
+
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.174" in version, "version is bumped to 0.3.174")
+pin("mod_version=0.3.175" in version, "version is bumped to 0.3.175")
 
 print(f"OK: {checks} explosives-content checks passed")
