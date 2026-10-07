@@ -83,6 +83,11 @@ public final class ModEffects {
             MOB_EFFECTS.register("treatment_course", () ->
                     new PlainEffect(MobEffectCategory.BENEFICIAL, 0x5FA8A0));
 
+    /** Расслабление I — экранный фильтр седативного и защита от новых приступов тремора. */
+    public static final DeferredHolder<MobEffect, MobEffect> RELAXATION =
+            MOB_EFFECTS.register("relaxation", () ->
+                    new PlainEffect(MobEffectCategory.BENEFICIAL, 0xD5E6D8));
+
     private ModEffects() {
     }
 

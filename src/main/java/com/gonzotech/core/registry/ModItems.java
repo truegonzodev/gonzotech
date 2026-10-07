@@ -423,6 +423,10 @@ public class ModItems {
     public static final DeferredItem<Item> RAD_ABSORBENT =
         ITEMS.registerItem("rad_absorbent", props -> new com.gonzotech.radiation.RadAbsorbentItem(props));
 
+    /** Sedative: drink animation, four per stack, relieves stress while temporarily preventing tremor. */
+    public static final DeferredItem<Item> SEDATIVE =
+        ITEMS.registerItem("sedative", props -> new com.gonzotech.core.item.SedativeItem(props.stacksTo(4)));
+
     /** Бумажная ткань — основа хазмат-костюма (крафт 3×3 из бумаги). */
     public static final DeferredItem<Item> PAPER_FABRIC =
         ITEMS.registerSimpleItem("paper_fabric");

@@ -22,6 +22,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  *   <li>кальцит  → каменная? нет — кальцитовая кальциевая руда (10%)</li>
  *   <li>глина   → каменная алюминиевая руда (3%)</li>
  *   <li>камень, касающийся гранью dripstone_block → каменная цинковая руда (1%)</li>
+ *   <li>глубинный сланец, соседний с глубинносланцевой осмиевой рудой → глубинносланцевая
+ *       иридиевая руда (30%, независимо для каждого блока сланца)</li>
  * </ul>
  * Вызывается в biome modifier на шаге {@code top_layer_modification} — самом
  * позднем из стандартных шагов генерации, поэтому все источники (геоды,
@@ -38,6 +40,8 @@ public class MineralReplacementFeature extends Feature<NoneFeatureConfiguration>
     private static final float CLAY_CHANCE = 0.03F;
     /** Камень у dripstone_block → каменная цинковая руда. */
     private static final float STONE_AT_DRIPSTONE_CHANCE = 0.01F;
+    /** Глубинный сланец рядом с глубинносланцевым осмием → иридий. */
+    private static final float DEEPSLATE_AT_OSMIUM_CHANCE = 0.30F;
 
     public MineralReplacementFeature() {
         super(NoneFeatureConfiguration.CODEC);
@@ -71,6 +75,10 @@ public class MineralReplacementFeature extends Feature<NoneFeatureConfiguration>
                         if (hasDripstoneNeighbor(level, pos) && random.nextFloat() < STONE_AT_DRIPSTONE_CHANCE) {
                             level.setBlock(pos, stoneZincOre(), 2);
                         }
+                    } else if (state.is(Blocks.DEEPSLATE)
+                            && hasDeepslateOsmiumNeighbor(level, pos)
+                            && random.nextFloat() < DEEPSLATE_AT_OSMIUM_CHANCE) {
+                        level.setBlock(pos, deepslateIridiumOre(), 2);
                     }
                 }
             }
@@ -85,6 +93,20 @@ public class MineralReplacementFeature extends Feature<NoneFeatureConfiguration>
             }
         }
         return false;
+    }
+
+    private static boolean hasDeepslateOsmiumNeighbor(WorldGenLevel level, BlockPos pos) {
+        BlockState osmiumOre = ModBlocks.ORE_BLOCKS.get("osmium").get(Host.DEEPSLATE).get().defaultBlockState();
+        for (Direction direction : Direction.values()) {
+            if (level.getBlockState(pos.relative(direction)).is(osmiumOre.getBlock())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static BlockState deepslateIridiumOre() {
+        return ModBlocks.ORE_BLOCKS.get("iridium").get(Host.DEEPSLATE).get().defaultBlockState();
     }
 
     private static BlockState calciteCalciumOre() {

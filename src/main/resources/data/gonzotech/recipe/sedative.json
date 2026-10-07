@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:sugar",
+    "minecraft:fermented_spider_eye",
+    "minecraft:glowstone_dust",
+    "minecraft:red_mushroom",
+    "minecraft:allium",
+    "minecraft:pitcher_pod",
+    "minecraft:cocoa_beans",
+    "minecraft:pumpkin_seeds",
+    "minecraft:bowl"
+  ],
+  "result": {
+    "id": "gonzotech:sedative",
+    "count": 1
+  }
+}

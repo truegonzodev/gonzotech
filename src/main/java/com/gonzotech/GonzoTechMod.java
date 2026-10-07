@@ -69,6 +69,7 @@ public class GonzoTechMod {
         com.gonzotech.core.registry.GreatswordRecipeSerializers.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModFeatures.register(modEventBus);
+        com.gonzotech.core.registry.ModPlacementModifiers.register(modEventBus);
         ModAttachments.register(modEventBus);
         com.gonzotech.core.psyche.ModPsycheAttachments.register(modEventBus);
         com.gonzotech.core.registry.ModParticles.PARTICLE_TYPES.register(modEventBus);

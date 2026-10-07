@@ -1,18 +1,52 @@
 {
-  "type": "minecraft:ore",
+  "type": "minecraft:random_selector",
   "config": {
-    "targets": [
+    "features": [
       {
-        "target": {
-          "predicate_type": "minecraft:tag_match",
-          "tag": "minecraft:deepslate_ore_replaceables"
-        },
-        "state": {
-          "Name": "gonzotech:deepslate_tellurium_ore"
+        "chance": 0.5,
+        "feature": {
+          "feature": {
+            "type": "minecraft:ore",
+            "config": {
+              "targets": [
+                {
+                  "target": {
+                    "predicate_type": "minecraft:tag_match",
+                    "tag": "minecraft:deepslate_ore_replaceables"
+                  },
+                  "state": {
+                    "Name": "gonzotech:deepslate_tellurium_ore"
+                  }
+                }
+              ],
+              "size": 2,
+              "discard_chance_on_air_exposure": 0.0
+            }
+          },
+          "placement": []
         }
       }
     ],
-    "size": 2,
-    "discard_chance_on_air_exposure": 0.0
+    "default": {
+      "feature": {
+        "type": "minecraft:ore",
+        "config": {
+          "targets": [
+            {
+              "target": {
+                "predicate_type": "minecraft:tag_match",
+                "tag": "minecraft:deepslate_ore_replaceables"
+              },
+              "state": {
+                "Name": "gonzotech:deepslate_tellurium_ore"
+              }
+            }
+          ],
+          "size": 3,
+          "discard_chance_on_air_exposure": 0.0
+        }
+      },
+      "placement": []
+    }
   }
 }

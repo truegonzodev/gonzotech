@@ -2,12 +2,8 @@
   "feature": "gonzotech:tellurium_ore",
   "placement": [
     {
-      "type": "minecraft:rarity_filter",
-      "chance": 4
-    },
-    {
-      "type": "minecraft:count",
-      "count": 1
+      "type": "gonzotech:expected_count",
+      "count": 1.5
     },
     {
       "type": "minecraft:in_square"

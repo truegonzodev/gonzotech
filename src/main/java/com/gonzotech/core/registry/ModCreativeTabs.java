@@ -173,6 +173,7 @@ public class ModCreativeTabs {
             .displayItems((params, output) -> {
                 // Расходники к шкале облучения — во вкладке снаряжения (автор 22.09).
                 output.accept(ModItems.RAD_ABSORBENT.get());
+                output.accept(ModItems.SEDATIVE.get());
                 output.accept(ModItems.CYSTEAMINE.get());
                 output.accept(ModItems.PENTACIN.get());
                 output.accept(ModItems.DTPA.get());

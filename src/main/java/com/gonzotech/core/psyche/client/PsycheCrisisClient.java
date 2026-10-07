@@ -259,6 +259,8 @@ public final class PsycheCrisisClient {
         if (fakeDeath) {
             renderFakeDeath(g, mc, width, height);
         }
+        // Final GUI pass keeps the post-effect deterministic relative to the crisis overlays.
+        PsycheRelaxationClient.render(g, mc);
     }
 
     /** Кризисный «налёт на экран»: анимированная текстура + дымка, растущая с процентами. */

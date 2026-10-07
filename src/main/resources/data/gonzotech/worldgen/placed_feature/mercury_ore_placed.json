@@ -2,12 +2,8 @@
   "feature": "gonzotech:mercury_ore",
   "placement": [
     {
-      "type": "minecraft:rarity_filter",
-      "chance": 2
-    },
-    {
-      "type": "minecraft:count",
-      "count": 1
+      "type": "gonzotech:expected_count",
+      "count": 0.88
     },
     {
       "type": "minecraft:in_square"

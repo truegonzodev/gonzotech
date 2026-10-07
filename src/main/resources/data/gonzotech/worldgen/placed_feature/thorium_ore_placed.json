@@ -2,12 +2,8 @@
   "feature": "gonzotech:thorium_ore",
   "placement": [
     {
-      "type": "minecraft:rarity_filter",
-      "chance": 9
-    },
-    {
-      "type": "minecraft:count",
-      "count": 1
+      "type": "gonzotech:expected_count",
+      "count": 3.0
     },
     {
       "type": "minecraft:in_square"

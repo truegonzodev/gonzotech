@@ -164,16 +164,21 @@ public final class PsycheStressEffects {
         int stress = PsycheStress.percent(psyche.getStress());
         int addiction = PlayerPsyche.pointsPercent(psyche.getAddiction());
 
-        // Тремор I — «приступы тряски», только пока тремора нет.
-        if ((stress > TREMOR_MIN_PERCENT || addiction > TREMOR_MIN_PERCENT)
-                && !player.hasEffect(ModEffects.TREMOR)
-                && RNG.nextDouble() < TREMOR_CHANCE) {
-            applyTremor(player, 0, rollSeconds(TREMOR_SECONDS_MIN, TREMOR_SECONDS_MAX));
-        }
-        // Тремор III — выше 70 %: может прокать поверх и продлевать текущий.
-        if ((stress > TREMOR_STRONG_MIN_PERCENT || addiction > TREMOR_STRONG_MIN_PERCENT)
-                && RNG.nextDouble() < TREMOR_STRONG_CHANCE) {
-            applyTremor(player, 2, rollSeconds(TREMOR_STRONG_SECONDS_MIN, TREMOR_STRONG_SECONDS_MAX));
+        // «Расслабление» снимает уже начавшийся приступ и блокирует оба броска тремора.
+        if (player.hasEffect(ModEffects.RELAXATION)) {
+            player.removeEffect(ModEffects.TREMOR);
+        } else {
+            // Тремор I — «приступы тряски», только пока тремора нет.
+            if ((stress > TREMOR_MIN_PERCENT || addiction > TREMOR_MIN_PERCENT)
+                    && !player.hasEffect(ModEffects.TREMOR)
+                    && RNG.nextDouble() < TREMOR_CHANCE) {
+                applyTremor(player, 0, rollSeconds(TREMOR_SECONDS_MIN, TREMOR_SECONDS_MAX));
+            }
+            // Тремор III — выше 70 %: может прокать поверх и продлевать текущий.
+            if ((stress > TREMOR_STRONG_MIN_PERCENT || addiction > TREMOR_STRONG_MIN_PERCENT)
+                    && RNG.nextDouble() < TREMOR_STRONG_CHANCE) {
+                applyTremor(player, 2, rollSeconds(TREMOR_STRONG_SECONDS_MIN, TREMOR_STRONG_SECONDS_MAX));
+            }
         }
         // Слуховые галлюцинации.
         if (stress > HALLUCINATION_MIN_PERCENT && RNG.nextDouble() < HALLUCINATION_CHANCE) {
@@ -221,6 +226,9 @@ public final class PsycheStressEffects {
      * складываем с остатком («продлевая его»), с потолком {@value #TREMOR_MAX_SECONDS} с.
      */
     private static void applyTremor(ServerPlayer player, int amplifier, int seconds) {
+        if (player.hasEffect(ModEffects.RELAXATION)) {
+            return;
+        }
         MobEffectInstance current = player.getEffect(ModEffects.TREMOR);
         int ticks = seconds * 20;
         int level = amplifier;

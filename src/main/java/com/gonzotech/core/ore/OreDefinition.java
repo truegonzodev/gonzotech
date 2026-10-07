@@ -139,17 +139,17 @@ public record OreDefinition(
         new OreDefinition("cobalt", -64, -10, -40, 6, ToolTier.IRON, 5.5f, 15.5f, List.of(Host.DEEPSLATE, Host.NETHER), true, 0, 0),
         new OreDefinition("silver", -64, 30, -20, 8, ToolTier.IRON, 4.5f, 18.5f, List.of(Host.STONE, Host.DEEPSLATE), true, 0, 0),
         new OreDefinition("iodine", -40, 60, 10, 4, ToolTier.IRON, 3.0f, 21.5f, List.of(Host.STONE, Host.DEEPSLATE, Host.NETHER), false, 1, 5),
-        new OreDefinition("tungsten", -64, -20, -50, 4, ToolTier.IRON, 2.5f, 24.5f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("mercury", -50, 30, -15, 4, ToolTier.IRON, 2.2f, 27.0f, List.of(Host.STONE, Host.DEEPSLATE), false, 2, 5),
+        new OreDefinition("tungsten", -64, -20, -50, 5, ToolTier.IRON, 5.0f, 24.5f, List.of(Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("mercury", -50, 30, -15, 4, ToolTier.IRON, 3.52f, 27.0f, List.of(Host.STONE, Host.DEEPSLATE), false, 2, 5),
         new OreDefinition("uranium", -64, -10, -48, 5, ToolTier.DIAMOND, 1.8f, 20.0f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("zirconium", -64, 80, -30, 4, ToolTier.IRON, 1.5f, 30.0f, List.of(Host.STONE, Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("thorium", -64, 20, -40, 10, ToolTier.DIAMOND, 1.1f, 25.5f, List.of(Host.DEEPSLATE, Host.NETHER, Host.STONE), true, 0, 0),
-        new OreDefinition("platinum", -64, -30, -55, 3, ToolTier.DIAMOND, 0.8f, 31.5f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("tellurium", -64, -20, -45, 2, ToolTier.DIAMOND, 0.5f, 37.0f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("palladium", -64, -40, -58, 2, ToolTier.DIAMOND, 0.3f, 43.0f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("cesium", -20, 90, 40, 2, ToolTier.DIAMOND, 0.2f, 48.5f, List.of(Host.STONE, Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("iridium", -63, -45, -55, 1, ToolTier.DIAMOND, 0.05f, 54.5f, List.of(Host.DEEPSLATE), true, 0, 0),
-        new OreDefinition("osmium", -63, -52, -59, 1, ToolTier.DIAMOND, 0.03f, 60.0f, List.of(Host.DEEPSLATE), true, 0, 0)
+        new OreDefinition("zirconium", -64, 80, -30, 4, ToolTier.IRON, 4.0f, 30.0f, List.of(Host.STONE, Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("thorium", -64, 20, -40, 4, ToolTier.DIAMOND, 12.0f, 25.5f, List.of(Host.DEEPSLATE, Host.NETHER, Host.STONE), true, 0, 0),
+        new OreDefinition("platinum", -64, -30, -55, 3, ToolTier.DIAMOND, 2.75f, 31.5f, List.of(Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("tellurium", -64, -20, -45, 3, ToolTier.DIAMOND, 3.75f, 37.0f, List.of(Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("palladium", -64, -40, -58, 3, ToolTier.DIAMOND, 2.75f, 43.0f, List.of(Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("cesium", -20, 90, 40, 3, ToolTier.DIAMOND, 4.0f, 48.5f, List.of(Host.STONE, Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("iridium", -63, -45, -55, 2, ToolTier.DIAMOND, 0.70f, 54.5f, List.of(Host.DEEPSLATE), true, 0, 0),
+        new OreDefinition("osmium", -63, -52, -59, 1, ToolTier.DIAMOND, 0.33f, 60.0f, List.of(Host.DEEPSLATE), true, 0, 0)
     );
 
     static {
