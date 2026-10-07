@@ -1,5 +1,6 @@
 package com.gonzotech.core.item;
 
+import com.gonzotech.core.event.UncurableEffects;
 import com.gonzotech.core.psyche.PsycheStress;
 import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.server.level.ServerLevel;
@@ -52,7 +53,8 @@ public final class SedativeItem extends Item {
         }
 
         ConsumptionAccounting.record(player, stack);
-        player.removeEffect(ModEffects.TREMOR);
+        // Tremor is normally protected from general effect removal; the sedative is an explicit cure.
+        UncurableEffects.runUncancelled(() -> player.removeEffect(ModEffects.TREMOR));
         PsycheStress.relieve(player, STRESS_RELIEF);
         PsycheStress.addict(player, ADDICTION_INCREASE);
         player.addEffect(new MobEffectInstance(ModEffects.RELAXATION,

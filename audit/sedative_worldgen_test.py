@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression checks for the 0.3.173 worldgen and sedative patch."""
+"""Static regression checks for worldgen and sedative behavior."""
 import json
 import re
 import struct
@@ -38,7 +38,7 @@ expected = {
 }
 
 version = read(ROOT / "gradle.properties")
-require("mod_version=0.3.173" in version, "version should be 0.3.173")
+require("mod_version=0.3.178" in version, "version should be 0.3.178")
 ore_source = read(JAVA / "core/ore/OreDefinition.java")
 found = {}
 for match in re.finditer(
@@ -108,6 +108,8 @@ items = read(JAVA / "core/registry/ModItems.java")
 tabs = read(JAVA / "core/registry/ModCreativeTabs.java")
 effects = read(JAVA / "core/registry/ModEffects.java")
 psyche = read(JAVA / "core/psyche/PsycheStressEffects.java")
+relaxation_client = read(JAVA / "core/psyche/client/PsycheRelaxationClient.java")
+crisis_client = read(JAVA / "core/psyche/client/PsycheCrisisClient.java")
 require("ItemUseAnimation.DRINK" in item and "props.stacksTo(4)" in items,
         "sedative must drink and stack to four")
 require("ModItems.RAD_ABSORBENT.get()" in tabs
@@ -119,11 +121,25 @@ require("RELAXATION_DURATION_TICKS = 6_000" in item and "FADE_TICKS = 100" in it
         "relaxation should last five minutes and fade over five seconds")
 require("PsycheStress.relieve(player, STRESS_RELIEF)" in item
         and "PsycheStress.addict(player, ADDICTION_INCREASE)" in item
-        and "player.removeEffect(ModEffects.TREMOR)" in item,
-        "sedative consumption must change the psyche scales and remove tremor")
+        and "player.removeEffect(ModEffects.TREMOR)" in item
+        and "UncurableEffects.runUncancelled" in item,
+        "sedative consumption must change the psyche scales and explicitly clear protected tremor")
 require("player.hasEffect(ModEffects.RELAXATION)" in psyche
-        and "private static void applyTremor" in psyche,
-        "active relaxation must block tremor generation")
+        and "private static void applyTremor" in psyche
+        and "UncurableEffects.runUncancelled" in psyche,
+        "active relaxation must block tremor generation and clear any existing tremor")
+require("MAX_ALPHA = 0.34F" in relaxation_client
+        and "MAX_FRAME_STEP_SECONDS = 0.1F" in relaxation_client
+        and "System.nanoTime()" in relaxation_client
+        and "transitionSeconds = SedativeItem.FADE_TICKS / 20.0F" in relaxation_client
+        and "alpha + (relaxationActive ? alphaStep : -alphaStep)" in relaxation_client
+        and "graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight()" in relaxation_client
+        and "0x00FFFFFF" in relaxation_client
+        and "PostChain" not in relaxation_client,
+        "sedative uses a visible white GUI overlay with smooth, stateful fade-in and fade-out")
+require("PsycheRelaxationClient.render(g, mc)" in crisis_client
+        and "PsycheRelaxationClient.reset()" in crisis_client,
+        "sedative overlay renders with the GUI and resets cleanly without a player")
 
 recipe = load(RES / "data/gonzotech/recipe/sedative.json")
 require(recipe["type"] == "minecraft:crafting_shapeless", "sedative recipe must be shapeless")
@@ -135,22 +151,11 @@ require(set(recipe["ingredients"]) == {
 require(recipe["result"] == {"id": "gonzotech:sedative", "count": 1},
         "sedative recipe should return one item")
 
-post = load(RES / "assets/gonzotech/post_effect/relaxation.json")
-require(len(post["passes"]) == 2 and post["passes"][0]["inputs"][0]["target"] == "minecraft:main",
-        "relaxation should process the main screen and blit the result back")
-shader = load(RES / "assets/gonzotech/shaders/post/relaxation.json")
-require(shader["vertex"] == "minecraft:post/blit" and shader["fragment"] == "gonzotech:post/relaxation",
-        "relaxation shader program paths are invalid")
-shader_source = read(RES / "assets/gonzotech/shaders/post/relaxation.fsh")
-program_uniforms = {uniform["name"]: uniform["values"]
-                    for uniform in shader["uniforms"]}
-require("ContrastScale" in shader_source and "WhiteOverlay" in shader_source
-        and program_uniforms["ContrastScale"] == [0.77]
-        and program_uniforms["WhiteOverlay"] == [0.15],
-        "relaxation shader must expose 23 percent contrast reduction and 15 percent white overlay")
-require(any(uniform["name"] == "EffectStrength"
-            for uniform in post["passes"][0]["uniforms"]),
-        "relaxation fade uniform is not configured")
+# The overlay is drawn directly with GuiGraphics, so it does not depend on post-chain loading.
+require(not (RES / "assets/gonzotech/post_effect/relaxation.json").exists()
+        and not (RES / "assets/gonzotech/shaders/post/relaxation.json").exists()
+        and not (RES / "assets/gonzotech/shaders/post/relaxation.fsh").exists(),
+        "unused post-processing assets should not shadow or disable the direct GUI overlay")
 
 for path in (
     RES / "assets/gonzotech/textures/item/sedative.png",
@@ -169,4 +174,4 @@ for locale, item_name, effect_name in (
     require(lang["item.gonzotech.sedative"] == item_name, f"wrong {locale} sedative name")
     require(lang["effect.gonzotech.relaxation"] == effect_name, f"wrong {locale} effect name")
 
-print("0.3.173 sedative/worldgen checks passed")
+print("Sedative/worldgen checks passed")

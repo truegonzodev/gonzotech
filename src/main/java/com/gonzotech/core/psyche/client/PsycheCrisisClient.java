@@ -245,6 +245,7 @@ public final class PsycheCrisisClient {
     public static void onRenderGui(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
+            PsycheRelaxationClient.reset();
             return;
         }
         GuiGraphics g = event.getGuiGraphics();
@@ -259,7 +260,7 @@ public final class PsycheCrisisClient {
         if (fakeDeath) {
             renderFakeDeath(g, mc, width, height);
         }
-        // Final GUI pass keeps the post-effect deterministic relative to the crisis overlays.
+        // Final GUI pass draws the sedative haze smoothly above the crisis overlays.
         PsycheRelaxationClient.render(g, mc);
     }
 

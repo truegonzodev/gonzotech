@@ -1,6 +1,7 @@
 package com.gonzotech.core.psyche;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.core.event.UncurableEffects;
 import com.gonzotech.core.registry.ModEffects;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -166,7 +167,7 @@ public final class PsycheStressEffects {
 
         // «Расслабление» снимает уже начавшийся приступ и блокирует оба броска тремора.
         if (player.hasEffect(ModEffects.RELAXATION)) {
-            player.removeEffect(ModEffects.TREMOR);
+            UncurableEffects.runUncancelled(() -> player.removeEffect(ModEffects.TREMOR));
         } else {
             // Тремор I — «приступы тряски», только пока тремора нет.
             if ((stress > TREMOR_MIN_PERCENT || addiction > TREMOR_MIN_PERCENT)

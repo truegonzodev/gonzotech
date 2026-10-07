@@ -2,59 +2,64 @@ package com.gonzotech.core.psyche.client;
 
 import com.gonzotech.core.item.SedativeItem;
 import com.gonzotech.core.registry.ModEffects;
-import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
-import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.PostChain;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffectInstance;
-import org.slf4j.Logger;
 
-import java.util.Set;
+import java.util.UUID;
 
-/** Applies the sedative's post-processing filter to the completed frame. */
+/** Smooth, translucent white screen haze while the sedative's relaxation is active. */
 final class PsycheRelaxationClient {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final ResourceLocation POST_EFFECT =
-            ResourceLocation.fromNamespaceAndPath("gonzotech", "relaxation");
-    private static boolean unavailable;
-    private static boolean errorLogged;
+    private static final float MAX_ALPHA = 0.34F;
+    private static final float MAX_FRAME_STEP_SECONDS = 0.1F;
+    private static final float NANOS_PER_SECOND = 1_000_000_000.0F;
+
+    private static float alpha;
+    private static long lastFrameNanos;
+    private static UUID trackedPlayer;
 
     private PsycheRelaxationClient() {
     }
 
     static void render(GuiGraphics graphics, Minecraft minecraft) {
-        if (unavailable || minecraft.player == null) {
+        if (minecraft.player == null) {
+            reset();
             return;
         }
 
-        MobEffectInstance relaxation = minecraft.player.getEffect(ModEffects.RELAXATION);
-        if (relaxation == null) {
+        UUID playerId = minecraft.player.getUUID();
+        if (!playerId.equals(trackedPlayer)) {
+            reset();
+            trackedPlayer = playerId;
+        }
+
+        long now = System.nanoTime();
+        if (lastFrameNanos != 0L) {
+            float elapsedSeconds = Mth.clamp(
+                    (now - lastFrameNanos) / NANOS_PER_SECOND,
+                    0.0F, MAX_FRAME_STEP_SECONDS);
+            float transitionSeconds = SedativeItem.FADE_TICKS / 20.0F;
+            float alphaStep = MAX_ALPHA * elapsedSeconds / transitionSeconds;
+            boolean relaxationActive = minecraft.player.hasEffect(ModEffects.RELAXATION);
+            alpha = Mth.clamp(alpha + (relaxationActive ? alphaStep : -alphaStep), 0.0F, MAX_ALPHA);
+        }
+        lastFrameNanos = now;
+
+        if (alpha <= 0.0F) {
             return;
         }
 
-        // The status effect is 6000 ticks. Ramp over its first and last 100 ticks (5 seconds).
-        float elapsed = SedativeItem.RELAXATION_DURATION_TICKS - relaxation.getDuration();
-        float fadeIn = Mth.clamp(elapsed / SedativeItem.FADE_TICKS, 0.0F, 1.0F);
-        float fadeOut = Mth.clamp(relaxation.getDuration() / (float) SedativeItem.FADE_TICKS, 0.0F, 1.0F);
-        float strength = Math.min(fadeIn, fadeOut);
+        // Keep the animation state locally and move toward its target at a fixed rate:
+        // applying/refreshing the status effect cannot restart or flash the overlay.
+        int alphaChannel = Mth.clamp(Math.round(alpha * 255.0F), 0, 255);
+        graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(),
+                (alphaChannel << 24) | 0x00FFFFFF);
+    }
 
-        try {
-            // Flush the GUI batch first so the filter covers HUD and screens as well as the world.
-            graphics.flush();
-            PostChain postChain = minecraft.getShaderManager().getPostChain(
-                    POST_EFFECT, Set.of(PostChain.MAIN_TARGET_ID));
-            postChain.setUniform("EffectStrength", strength);
-            postChain.process(minecraft.getMainRenderTarget(), GraphicsResourceAllocator.UNPOOLED);
-        } catch (RuntimeException exception) {
-            unavailable = true;
-            if (!errorLogged) {
-                errorLogged = true;
-                LOGGER.error("Unable to render the Gonzo Tech relaxation post-effect", exception);
-            }
-        }
+    static void reset() {
+        alpha = 0.0F;
+        lastFrameNanos = 0L;
+        trackedPlayer = null;
     }
 }
