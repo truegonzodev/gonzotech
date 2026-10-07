@@ -129,6 +129,7 @@ public class GonzoTechMod {
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.AchievementEvents.class);
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.event.ExplosiveEffects.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.machines.blastfurnace.BlastFurnaceEvents.class);
         // Радиация (спека 2026-09-20): доза шкалы, наведённый фон предметов,
         // динамический фон чанков, учёт поставленных радио-блоков.

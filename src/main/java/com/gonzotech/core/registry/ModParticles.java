@@ -17,6 +17,16 @@ public final class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> ETHYLEN_EXPLOSION_EMITTER =
             PARTICLE_TYPES.register("ethylen_explosion_emitter", () -> new SimpleParticleType(true));
 
+    /** Vanilla explosion-emitter visuals with independently scaled flash sprites. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> GUNPOWDER_EXPLOSION_EMITTER =
+            PARTICLE_TYPES.register("gunpowder_explosion_emitter", () -> new SimpleParticleType(true));
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> INDUSTRIAL_TNT_EXPLOSION_EMITTER =
+            PARTICLE_TYPES.register("industrial_tnt_explosion_emitter", () -> new SimpleParticleType(true));
+
+    /** Industrial blast dust reuses the existing gonzotech:dust particle texture. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DUST =
+            PARTICLE_TYPES.register("dust", () -> new SimpleParticleType(true));
+
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RADIATION_MIST =
             PARTICLE_TYPES.register("radiation_mist", () -> new SimpleParticleType(true));
 

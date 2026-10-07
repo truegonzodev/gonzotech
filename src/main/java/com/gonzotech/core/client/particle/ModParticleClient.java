@@ -11,6 +11,11 @@ public final class ModParticleClient {
     public static void onRegisterParticleProviders(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ModParticles.ETHYLEN_EXPLOSION.get(), EthylenExplosionParticle.Provider::new);
         event.registerSpecial(ModParticles.ETHYLEN_EXPLOSION_EMITTER.get(), new EthylenExplosionSeedParticle.Provider());
+        event.registerSpecial(ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get(),
+            new ScaledExplosionEmitterParticle.Provider(ScaledExplosionEmitterParticle.GUNPOWDER_SIZE_SCALE));
+        event.registerSpecial(ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get(),
+            new ScaledExplosionEmitterParticle.Provider(ScaledExplosionEmitterParticle.INDUSTRIAL_TNT_SIZE_SCALE));
+        event.registerSpriteSet(ModParticles.DUST.get(), IndustrialBlastDustParticle.Provider::new);
         event.registerSpriteSet(ModParticles.RADIATION_MIST.get(), RadiationMistParticle.Provider::new);
         event.registerSpriteSet(ModParticles.HOT_PIPE.get(), HotPipeParticle.Provider::new);
         event.registerSpriteSet(ModParticles.ETHANOL_FIRE_DUST.get(),

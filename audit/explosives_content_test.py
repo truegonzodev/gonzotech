@@ -30,6 +30,12 @@ custom_tnt = (JAVA / "core/block/CustomTntBlock.java").read_text(encoding="utf-8
 gunpowder = (JAVA / "core/block/GunpowderBlock.java").read_text(encoding="utf-8")
 industrial = (JAVA / "core/block/IndustrialTntBlock.java").read_text(encoding="utf-8")
 primed = (JAVA / "core/block/IndustrialPrimedTnt.java").read_text(encoding="utf-8")
+mod_particles = (JAVA / "core/registry/ModParticles.java").read_text(encoding="utf-8")
+particle_client = (JAVA / "core/client/particle/ModParticleClient.java").read_text(encoding="utf-8")
+scaled_emitter = (JAVA / "core/client/particle/ScaledExplosionEmitterParticle.java").read_text(encoding="utf-8")
+blast_dust = (JAVA / "core/client/particle/IndustrialBlastDustParticle.java").read_text(encoding="utf-8")
+explosive_effects = (JAVA / "core/event/ExplosiveEffects.java").read_text(encoding="utf-8")
+mod_entry = (JAVA / "GonzoTechMod.java").read_text(encoding="utf-8")
 
 # Registrations and requested creative-tab placement.
 pin('"gunpowder_block", GunpowderBlock::new' in blocks, "gunpowder block is registered")
@@ -46,8 +52,8 @@ accepted_items = re.findall(r"output\.accept\(([^;]+)\);", adaptations)
 pin(accepted_items[-1] == "ModItems.INDUSTRIAL_TNT_ITEM.get()",
     "industrial TNT is the last Adaptations tab item")
 
-# Powder block: instant strength-6 blast without fire, plus full-grid and reverse recipes.
-pin("EXPLOSION_STRENGTH = 6.0F" in gunpowder, "gunpowder blast power is 6")
+# Powder block: instant strength-5.4 blast without fire, plus full-grid and reverse recipes.
+pin("EXPLOSION_STRENGTH = 5.4F" in gunpowder, "gunpowder blast power is nerfed to 5.4")
 pin("EXPLOSION_STRENGTH, false, Level.ExplosionInteraction.BLOCK" in gunpowder,
     "gunpowder blast is immediate, block-breaking, and fire-free")
 forward = load(DATA / "recipe/gunpowder_block.json")
@@ -62,7 +68,7 @@ pin(reverse["ingredients"] == ["gonzotech:gunpowder_block"], "reverse recipe con
 pin(reverse["result"] == {"id": "minecraft:gunpowder", "count": 9},
     "reverse recipe returns nine gunpowder")
 
-# Industrial TNT: exact recipe, doubled fuse, power 14, and native TNT explosion behavior.
+# Industrial TNT: exact recipe, doubled fuse, power 7.1, and native TNT explosion behavior.
 recipe = load(DATA / "recipe/industrial_tnt.json")
 pin(recipe["pattern"] == ["GPI", "PRP", "IPG"], "industrial TNT pattern matches the requested matrix")
 pin(recipe["key"] == {
@@ -74,7 +80,7 @@ pin(recipe["key"] == {
 pin(recipe["result"] == {"id": "gonzotech:industrial_tnt", "count": 1},
     "industrial TNT recipe output")
 pin("FUSE_TICKS = 160" in industrial, "industrial TNT fuse is 160 ticks")
-pin("EXPLOSION_STRENGTH = 14.0F" in industrial, "industrial TNT strength is 14")
+pin("EXPLOSION_STRENGTH = 7.1F" in industrial, "industrial TNT strength is nerfed to 7.1")
 pin("extends PrimedTnt" in primed and "setFuse(IndustrialTntBlock.FUSE_TICKS)" in primed,
     "industrial TNT uses the vanilla primed TNT entity and extended fuse")
 pin('"explosion_power"' in primed and "IndustrialTntBlock.EXPLOSION_STRENGTH" in primed,
@@ -83,6 +89,64 @@ pin("serverLevel.addFreshEntity(primedTnt)" in industrial,
     "industrial block primes an entity rather than exploding immediately")
 for hook in ("onPlace", "neighborChanged", "onCaughtFire", "useItemOn", "onProjectileHit", "playerWillDestroy", "wasExploded"):
     pin(hook in custom_tnt, f"TNT ignition path is handled: {hook}")
+
+# Both blasts replace only the large vanilla emitter, scaled via its own flash sprites.
+pin("ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in gunpowder
+    and "ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get()" in explosive_effects,
+    "each explosive uses its own custom emitter")
+pin("GUNPOWDER_SIZE_SCALE = 1.22F" in scaled_emitter
+    and "INDUSTRIAL_TNT_SIZE_SCALE = 1.55F" in scaled_emitter
+    and "LIFETIME_TICKS = 8" in scaled_emitter
+    and "PARTICLES_PER_TICK = 6" in scaled_emitter
+    and "ParticleTypes.EXPLOSION" in scaled_emitter
+    and "flash.scale(this.sizeScale)" in scaled_emitter,
+    "custom emitters match vanilla emitter timing while scaling flashes as requested")
+pin('PARTICLE_TYPES.register("gunpowder_explosion_emitter"' in mod_particles
+    and 'PARTICLE_TYPES.register("industrial_tnt_explosion_emitter"' in mod_particles
+    and "registerSpecial(ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in particle_client
+    and "registerSpecial(ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get()" in particle_client,
+    "both custom emitter types are registered with client providers")
+pin("ParticleTypes.EXPLOSION" in gunpowder and "SoundEvents.GENERIC_EXPLODE" in gunpowder
+    and "event.setCanceled(true)" in explosive_effects
+    and "Level.ExplosionInteraction.TNT" in explosive_effects,
+    "custom large emitters retain vanilla small flashes, sound, and TNT block behavior")
+
+# Powder smoke is delayed, distributed through a sphere, and uses vanilla large smoke.
+pin("GUNPOWDER_SMOKE_MIN = 20" in explosive_effects
+    and "GUNPOWDER_SMOKE_MAX = 40" in explosive_effects
+    and "GUNPOWDER_SMOKE_MAX_DELAY = 2" in explosive_effects,
+    "powder schedules 20-40 smoke puffs with up to two ticks of delay")
+pin("random.nextInt(GUNPOWDER_SMOKE_MAX - GUNPOWDER_SMOKE_MIN + 1)" in explosive_effects
+    and "random.nextInt(GUNPOWDER_SMOKE_MAX_DELAY + 1)" in explosive_effects
+    and "ParticleTypes.LARGE_SMOKE" in explosive_effects,
+    "powder smoke count, timing, and vanilla particle are honored")
+pin("randomPointInSphere(random, radius)" in explosive_effects
+    and "randomPointInSphere(random, 0.5D)" in explosive_effects,
+    "powder smoke is spherical with at most half-block positional jitter")
+
+# Industrial dust is sampled only from blocks actually affected by this TNT.
+pin("event.getAffectedBlocks()" in explosive_effects
+    and "affectedBlocks.isEmpty()" in explosive_effects
+    and "instanceof IndustrialPrimedTnt" in explosive_effects
+    and "level.getBlockState(particle.mustBeAir).isAir()" in explosive_effects,
+    "industrial dust requires affected block cells and an air-filled crater")
+pin("INDUSTRIAL_DUST_MIN_DELAY = 2" in explosive_effects
+    and "INDUSTRIAL_DUST_MAX_DELAY = 5" in explosive_effects
+    and "LIFETIME_TICKS = 100" in blast_dust
+    and "FADE_IN_TICKS = 3" in blast_dust and "MAX_ALPHA = 0.8F" in blast_dust
+    and "this.gravity = 0.03F" in blast_dust
+    and "setColor(0.58F, 0.58F, 0.58F)" in blast_dust
+    and "fadeOut" in blast_dust
+    and "this.quadSize = this.initialSize * (1.0F - 0.68F * lifeProgress)" in blast_dust,
+    "industrial dust delay, grey tint, fall, fade, shrink, and five-second life are fixed")
+pin('PARTICLE_TYPES.register("dust"' in mod_particles
+    and "ModParticles.DUST.get(), IndustrialBlastDustParticle.Provider::new" in particle_client,
+    "custom gonzotech:dust particle type uses its client provider")
+dust_definition = load(ASSETS / "particles/dust.json")
+pin(dust_definition["textures"] == ["gonzotech:dust"],
+    "industrial blast dust reuses the registered gonzotech:dust sprite")
+pin("NeoForge.EVENT_BUS.register(com.gonzotech.core.event.ExplosiveEffects.class)" in mod_entry,
+    "explosion effects and delayed-particle scheduler are registered")
 
 # Assets, loot, and both localizations are present for each placeable block.
 en = load(ASSETS / "lang/en_us.json")
@@ -139,6 +203,6 @@ pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
     "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.176" in version, "version is bumped to 0.3.176")
+pin("mod_version=0.3.177" in version, "version is bumped to 0.3.177")
 
 print(f"OK: {checks} explosives-content checks passed")

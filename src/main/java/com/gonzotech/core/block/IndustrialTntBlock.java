@@ -11,11 +11,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-/** TNT with a 160-tick fuse, power 14, and vanilla TNT explosion/drop behavior. */
+/** TNT with a 160-tick fuse, power 7.1, and vanilla TNT explosion/drop behavior. */
 public final class IndustrialTntBlock extends CustomTntBlock {
 
     public static final int FUSE_TICKS = 160;
-    public static final float EXPLOSION_STRENGTH = 14.0F;
+    public static final float EXPLOSION_STRENGTH = 7.1F;
 
     public IndustrialTntBlock(Properties properties) {
         super(properties);
