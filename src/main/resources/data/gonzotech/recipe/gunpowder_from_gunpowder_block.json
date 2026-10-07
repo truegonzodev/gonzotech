@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "gonzotech:gunpowder_block"
+  ],
+  "result": {
+    "id": "minecraft:gunpowder",
+    "count": 9
+  },
+  "group": "gunpowder_block"
+}

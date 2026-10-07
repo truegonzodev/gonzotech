@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "unstable=false": {
+      "model": "gonzotech:block/gunpowder_block"
+    },
+    "unstable=true": {
+      "model": "gonzotech:block/gunpowder_block"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "unstable=false": {
+      "model": "gonzotech:block/industrial_tnt"
+    },
+    "unstable=true": {
+      "model": "gonzotech:block/industrial_tnt"
+    }
+  }
+}

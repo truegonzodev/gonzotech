@@ -983,6 +983,8 @@
   "item.gonzotech.chip_soup": "Суп-набор для чипа",
   "block.gonzotech.rubber_block": "Резиновый блок",
   "block.gonzotech.graphite_block": "Графитовый блок",
+  "block.gonzotech.gunpowder_block": "Блок пороха",
+  "block.gonzotech.industrial_tnt": "Промышленный TNT",
   "block.gonzotech.third_silicon_factory": "Литографическая фабрика",
   "block.gonzotech.third_silicon_factory_shell": "Оболочка литографии",
   "gui.gonzotech.silicon_factory.etching": "§fТравление: %s%%",

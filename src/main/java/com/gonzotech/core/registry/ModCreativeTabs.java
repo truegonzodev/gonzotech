@@ -329,6 +329,7 @@ public class ModCreativeTabs {
                 // Графитовый материал и его блок — рядом в компонентах.
                 output.accept(ModItems.GRAPHITE.get());
                 output.accept(ModItems.GRAPHITE_BLOCK_ITEM.get());
+                output.accept(ModItems.GUNPOWDER_BLOCK_ITEM.get());
                 // Ядерный ряд — изотопы и топливные смеси (автор 21.09).
                 output.accept(ModItems.URANIUM_238.get());
                 output.accept(ModItems.URANIUM_235.get());
@@ -392,6 +393,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.CANISTER.get());
                 // Яйцо призыва «альт-жителя» (автор 27.09.2026) — рядом с вёдрами и канистрой.
                 output.accept(ModItems.ALT_SPAWN_EGG.get());
+                // Промышленная взрывчатка — в самом конце вкладки.
+                output.accept(ModItems.INDUSTRIAL_TNT_ITEM.get());
             })
             .build()
     );

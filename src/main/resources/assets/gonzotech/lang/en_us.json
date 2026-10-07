@@ -983,6 +983,8 @@
   "item.gonzotech.chip_soup": "Chip Soup Set",
   "block.gonzotech.rubber_block": "Rubber Block",
   "block.gonzotech.graphite_block": "Graphite Block",
+  "block.gonzotech.gunpowder_block": "Gunpowder Block",
+  "block.gonzotech.industrial_tnt": "Industrial TNT",
   "block.gonzotech.third_silicon_factory": "Lithography Factory",
   "block.gonzotech.third_silicon_factory_shell": "Lithography Shell",
   "gui.gonzotech.silicon_factory.etching": "§fEtching: %s%%",

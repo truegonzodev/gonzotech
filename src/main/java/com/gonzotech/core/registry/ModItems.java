@@ -505,6 +505,12 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("aluminum_housing", ModBlocks.ALUMINUM_HOUSING);
     public static final DeferredItem<BlockItem> GRAPHITE_BLOCK_ITEM =
         ITEMS.registerSimpleBlockItem("graphite_block", ModBlocks.GRAPHITE_BLOCK);
+    /** Упакованный порох — размещаемый блок-взрывчатка. */
+    public static final DeferredItem<BlockItem> GUNPOWDER_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("gunpowder_block", ModBlocks.GUNPOWDER_BLOCK);
+    /** Промышленный TNT — размещаемая взрывчатка с долгим фитилём. */
+    public static final DeferredItem<BlockItem> INDUSTRIAL_TNT_ITEM =
+        ITEMS.registerSimpleBlockItem("industrial_tnt", ModBlocks.INDUSTRIAL_TNT);
     public static final DeferredItem<BlockItem> AIR_CLEANER_ITEM =
         ITEMS.registerSimpleBlockItem("third_air_cleaner", ModBlocks.AIR_CLEANER);
     public static final DeferredItem<BlockItem> AIR_FILTER_ITEM =

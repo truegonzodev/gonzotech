@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:gravel",
+    "P": "gonzotech:gunpowder_block",
+    "I": "minecraft:iron_pickaxe",
+    "R": "minecraft:redstone_block"
+  },
+  "pattern": [
+    "GPI",
+    "PRP",
+    "IPG"
+  ],
+  "result": {
+    "id": "gonzotech:industrial_tnt",
+    "count": 1
+  },
+  "group": "industrial_tnt"
+}
