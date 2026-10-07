@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import re
+import struct
 
 ROOT = Path(__file__).resolve().parent.parent
 JAVA = ROOT / "src/main/java/com/gonzotech"
@@ -90,16 +91,54 @@ for block_id in ("gunpowder_block", "industrial_tnt"):
     state = load(ASSETS / f"blockstates/{block_id}.json")
     pin(set(state["variants"]) == {"unstable=false", "unstable=true"},
         f"blockstate covers both TNT unstable states for {block_id}")
+    variants = list(state["variants"].values())
+    pin(len({variant["model"] for variant in variants}) == 1,
+        f"both unstable states use the same upright model for {block_id}")
+    pin(all(not any(key in variant for key in ("x", "y", "uvlock")) for variant in variants),
+        f"blockstate does not rotate {block_id}; top stays upward")
     pin((ASSETS / f"items/{block_id}.json").exists(), f"item definition exists for {block_id}")
     pin((DATA / f"loot_table/blocks/{block_id}.json").exists(), f"loot table exists for {block_id}")
     pin(f"block.gonzotech.{block_id}" in en and f"block.gonzotech.{block_id}" in ru,
         f"English and Russian names exist for {block_id}")
+
+# Fixed-up cube models: powder uses a shared top/bottom, while industrial TNT
+# has three independent faces. Both use custom 16x16 PNG placeholders.
+gunpowder_model = load(ASSETS / "models/block/gunpowder_block.json")
+industrial_model = load(ASSETS / "models/block/industrial_tnt.json")
+pin(gunpowder_model["parent"] == "minecraft:block/cube_bottom_top",
+    "gunpowder block is a fixed upright cube model")
+pin(gunpowder_model["textures"].get("side") == "gonzotech:block/gunpowder_block_side"
+    and gunpowder_model["textures"].get("top") == "gonzotech:block/gunpowder_block_topbottom"
+    and gunpowder_model["textures"].get("bottom") == "gonzotech:block/gunpowder_block_topbottom",
+    "gunpowder block uses side and shared topbottom textures")
+pin(industrial_model["parent"] == "minecraft:block/cube_bottom_top",
+    "industrial TNT is a fixed upright cube model")
+pin(industrial_model["textures"].get("side") == "gonzotech:block/industrial_tnt_side"
+    and industrial_model["textures"].get("bottom") == "gonzotech:block/industrial_tnt_bottom"
+    and industrial_model["textures"].get("top") == "gonzotech:block/industrial_tnt_top",
+    "industrial TNT uses separate side, bottom, and top textures")
+for texture_id in (
+    "gunpowder_block_side", "gunpowder_block_topbottom",
+    "industrial_tnt_side", "industrial_tnt_bottom", "industrial_tnt_top",
+):
+    texture_path = ASSETS / f"textures/block/{texture_id}.png"
+    image = texture_path.read_bytes() if texture_path.is_file() else b""
+    pin(tuple(image[:8]) == (137, 80, 78, 71, 13, 10, 26, 10),
+        f"PNG texture exists for {texture_id}")
+    dimensions = struct.unpack(">II", image[16:24]) if len(image) >= 24 else None
+    pin(dimensions == (16, 16), f"{texture_id} is a 16x16 Minecraft placeholder")
+
+pin("extends TntBlock" in custom_tnt
+    and "extends CustomTntBlock" in gunpowder
+    and "extends CustomTntBlock" in industrial
+    and "FACING" not in custom_tnt and "DirectionProperty" not in custom_tnt,
+    "explosive blocks inherit TNT's non-directional upright placement")
 
 pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
     and "import net.minecraft.world.item.EquipmentSlot;" not in custom_tnt,
     "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.175" in version, "version is bumped to 0.3.175")
+pin("mod_version=0.3.176" in version, "version is bumped to 0.3.176")
 
 print(f"OK: {checks} explosives-content checks passed")

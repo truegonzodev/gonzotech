@@ -1,8 +1,9 @@
 {
   "parent": "minecraft:block/cube_bottom_top",
   "textures": {
-    "top": "minecraft:block/tnt_top",
-    "bottom": "minecraft:block/tnt_bottom",
-    "side": "minecraft:block/tnt_side"
+    "top": "gonzotech:block/industrial_tnt_top",
+    "bottom": "gonzotech:block/industrial_tnt_bottom",
+    "side": "gonzotech:block/industrial_tnt_side",
+    "particle": "gonzotech:block/industrial_tnt_side"
   }
 }
