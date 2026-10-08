@@ -8,14 +8,15 @@ import net.minecraft.util.Mth;
 
 import java.util.UUID;
 
-/** Smooth, translucent white screen haze while the sedative's relaxation is active. */
+/** Smooth screen dimming and reduced contrast while the sedative's relaxation is active. */
 final class PsycheRelaxationClient {
 
-    private static final float MAX_ALPHA = 0.34F;
+    private static final float BRIGHTNESS_REDUCTION = 0.30F;
+    private static final float CONTRAST_REDUCTION = 0.10F;
     private static final float MAX_FRAME_STEP_SECONDS = 0.1F;
     private static final float NANOS_PER_SECOND = 1_000_000_000.0F;
 
-    private static float alpha;
+    private static float effectStrength;
     private static long lastFrameNanos;
     private static UUID trackedPlayer;
 
@@ -40,25 +41,33 @@ final class PsycheRelaxationClient {
                     (now - lastFrameNanos) / NANOS_PER_SECOND,
                     0.0F, MAX_FRAME_STEP_SECONDS);
             float transitionSeconds = SedativeItem.FADE_TICKS / 20.0F;
-            float alphaStep = MAX_ALPHA * elapsedSeconds / transitionSeconds;
+            float strengthStep = elapsedSeconds / transitionSeconds;
             boolean relaxationActive = minecraft.player.hasEffect(ModEffects.RELAXATION);
-            alpha = Mth.clamp(alpha + (relaxationActive ? alphaStep : -alphaStep), 0.0F, MAX_ALPHA);
+            effectStrength = Mth.clamp(
+                    effectStrength + (relaxationActive ? strengthStep : -strengthStep), 0.0F, 1.0F);
         }
         lastFrameNanos = now;
 
-        if (alpha <= 0.0F) {
+        if (effectStrength <= 0.0F) {
             return;
         }
 
-        // Keep the animation state locally and move toward its target at a fixed rate:
-        // applying/refreshing the status effect cannot restart or flash the overlay.
-        int alphaChannel = Mth.clamp(Math.round(alpha * 255.0F), 0, 255);
-        graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(),
-                (alphaChannel << 24) | 0x00FFFFFF);
+        // Fade the requested filter in/out without resetting it when the effect refreshes.
+        // A black 30% overlay multiplies the existing image brightness by 0.70; the
+        // following 10% neutral-gray overlay pulls contrast 10% toward mid-gray.
+        int brightnessAlpha = Mth.clamp(Math.round(effectStrength * BRIGHTNESS_REDUCTION * 255.0F), 0, 255);
+        int contrastAlpha = Mth.clamp(Math.round(effectStrength * CONTRAST_REDUCTION * 255.0F), 0, 255);
+        if (brightnessAlpha > 0) {
+            graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(), brightnessAlpha << 24);
+        }
+        if (contrastAlpha > 0) {
+            graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(),
+                    (contrastAlpha << 24) | 0x00808080);
+        }
     }
 
     static void reset() {
-        alpha = 0.0F;
+        effectStrength = 0.0F;
         lastFrameNanos = 0L;
         trackedPlayer = null;
     }

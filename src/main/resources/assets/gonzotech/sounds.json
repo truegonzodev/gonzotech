@@ -21,5 +21,45 @@
         "name": "gonzotech:sword_ready"
       }
     ]
+  },
+  "gt_ost_40000ft": {
+    "sounds": [
+      {
+        "name": "gonzotech:ost/gt_ost_40000ft",
+        "stream": true
+      }
+    ]
+  },
+  "gt_ost_bitter": {
+    "sounds": [
+      {
+        "name": "gonzotech:ost/gt_ost_bitter",
+        "stream": true
+      }
+    ]
+  },
+  "gt_ost_cradle": {
+    "sounds": [
+      {
+        "name": "gonzotech:ost/gt_ost_cradle",
+        "stream": true
+      }
+    ]
+  },
+  "gt_ost_ethereal": {
+    "sounds": [
+      {
+        "name": "gonzotech:ost/gt_ost_ethereal",
+        "stream": true
+      }
+    ]
+  },
+  "gt_ost_raidin_bones": {
+    "sounds": [
+      {
+        "name": "gonzotech:ost/gt_ost_raidin_bones",
+        "stream": true
+      }
+    ]
   }
 }

@@ -30,6 +30,8 @@
   "client": [
     "client.AdvancementTabMixin",
     "client.InBedFaintingScreenMixin",
+    "client.MusicManagerAccessor",
+    "client.MusicManagerStartPlayingMixin",
     "client.CatRenderStateMixin",
     "client.CatRendererMixin",
     "client.ClientLevelSkyDarkenMixin",

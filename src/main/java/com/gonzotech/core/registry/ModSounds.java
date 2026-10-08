@@ -16,6 +16,12 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> SWORD_IMPACT = sound("sword_impact");
     public static final DeferredHolder<SoundEvent, SoundEvent> SWORD_READY = sound("sword_ready");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_40000FT = sound("gt_ost_40000ft");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_BITTER = sound("gt_ost_bitter");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_CRADLE = sound("gt_ost_cradle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_ETHEREAL = sound("gt_ost_ethereal");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_RAIDIN_BONES = sound("gt_ost_raidin_bones");
+
     public static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(
                 ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, name)));

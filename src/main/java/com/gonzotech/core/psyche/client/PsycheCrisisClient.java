@@ -260,7 +260,8 @@ public final class PsycheCrisisClient {
         if (fakeDeath) {
             renderFakeDeath(g, mc, width, height);
         }
-        // Final GUI pass draws the sedative haze smoothly above the crisis overlays.
+        // Final GUI pass applies the sedative's smooth brightness/contrast filter
+        // above crisis overlays.
         PsycheRelaxationClient.render(g, mc);
     }
 

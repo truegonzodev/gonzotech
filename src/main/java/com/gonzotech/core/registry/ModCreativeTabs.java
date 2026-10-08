@@ -49,6 +49,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SCHOLAR_NOTES.get());
                 // Инструменты: ключ сразу за заметками, затем измерительные приборы.
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
+                output.accept(ModItems.MAGNET.get());
                 output.accept(ModItems.DOSIMETER.get());
                 // Пылемер и телифон — рядом с дозиметром как приборы контроля среды.
                 output.accept(ModItems.DUST_METER.get());

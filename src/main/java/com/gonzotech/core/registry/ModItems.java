@@ -427,6 +427,10 @@ public class ModItems {
     public static final DeferredItem<Item> SEDATIVE =
         ITEMS.registerItem("sedative", props -> new com.gonzotech.core.item.SedativeItem(props.stacksTo(4)));
 
+    /** Held in either hand to attract dropped items and extend their pickup range. */
+    public static final DeferredItem<Item> MAGNET =
+        ITEMS.registerItem("magnet", props -> new com.gonzotech.core.item.MagnetItem(props.stacksTo(1)));
+
     /** Бумажная ткань — основа хазмат-костюма (крафт 3×3 из бумаги). */
     public static final DeferredItem<Item> PAPER_FABRIC =
         ITEMS.registerSimpleItem("paper_fabric");
