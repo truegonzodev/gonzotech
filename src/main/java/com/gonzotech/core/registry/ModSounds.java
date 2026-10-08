@@ -22,6 +22,10 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_ETHEREAL = sound("gt_ost_ethereal");
     public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_RAIDIN_BONES = sound("gt_ost_raidin_bones");
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_SPACE_AMBIENT_LOOP = sound("gt_space_ambient_loop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_SPACE_AMBIENT_ADDITIONS = sound("gt_space_ambient_additions");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GT_SPACE_AMBIENT_MOOD = sound("gt_space_ambient_mood");
+
     public static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(
                 ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, name)));

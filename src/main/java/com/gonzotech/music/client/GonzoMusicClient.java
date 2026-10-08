@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
@@ -70,6 +71,18 @@ public final class GonzoMusicClient {
 
         checkCrimsonSunStart(minecraft, level, player);
         checkUndergroundAttempt(minecraft, level, player);
+    }
+
+    /**
+     * MusicManager.startPlaying is the single entry point for all background music.
+     * Clear both its tracked instance and any orphaned MUSIC-channel streams before
+     * a new track starts; otherwise a stale streamed OGG can keep playing underneath.
+     */
+    public static MusicInfo prepareMusicStart(MusicInfo requestedMusic) {
+        Minecraft minecraft = Minecraft.getInstance();
+        minecraft.getMusicManager().stopPlaying();
+        minecraft.getSoundManager().stop(null, SoundSource.MUSIC);
+        return maybeAddOverworldBitter(requestedMusic);
     }
 
     /**

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-/** Adds the custom track to the ordinary Overworld pool at vanilla start attempts. */
+/** Enforces single-track music playback and adds Bitter to eligible Overworld starts. */
 @Mixin(MusicManager.class)
 public abstract class MusicManagerStartPlayingMixin {
 
@@ -16,7 +16,7 @@ public abstract class MusicManagerStartPlayingMixin {
             at = @At("HEAD"),
             argsOnly = true,
             ordinal = 0)
-    private MusicInfo gonzotech$addBitterToOverworld(MusicInfo vanillaMusic) {
-        return GonzoMusicClient.maybeAddOverworldBitter(vanillaMusic);
+    private MusicInfo gonzotech$prepareExclusiveMusicStart(MusicInfo vanillaMusic) {
+        return GonzoMusicClient.prepareMusicStart(vanillaMusic);
     }
 }

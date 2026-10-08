@@ -61,5 +61,62 @@
         "stream": true
       }
     ]
+  },
+  "gt_space_ambient_loop": {
+    "sounds": [
+      {
+        "name": "minecraft:ambient.nether_wastes.loop",
+        "type": "event",
+        "weight": 1
+      },
+      {
+        "name": "minecraft:ambient.basalt_deltas.loop",
+        "type": "event",
+        "weight": 1
+      },
+      {
+        "name": "minecraft:ambient.soul_sand_valley.loop",
+        "type": "event",
+        "weight": 1
+      }
+    ]
+  },
+  "gt_space_ambient_additions": {
+    "sounds": [
+      {
+        "name": "minecraft:ambient.nether_wastes.additions",
+        "type": "event",
+        "weight": 1
+      },
+      {
+        "name": "minecraft:ambient.basalt_deltas.additions",
+        "type": "event",
+        "weight": 1
+      },
+      {
+        "name": "minecraft:ambient.soul_sand_valley.additions",
+        "type": "event",
+        "weight": 1
+      }
+    ]
+  },
+  "gt_space_ambient_mood": {
+    "sounds": [
+      {
+        "name": "minecraft:ambient.nether_wastes.mood",
+        "type": "event",
+        "weight": 1
+      },
+      {
+        "name": "minecraft:ambient.basalt_deltas.mood",
+        "type": "event",
+        "weight": 1
+      },
+      {
+        "name": "minecraft:ambient.soul_sand_valley.mood",
+        "type": "event",
+        "weight": 1
+      }
+    ]
   }
 }
