@@ -95,9 +95,25 @@ pin("serverLevel.addFreshEntity(primedTnt)" in industrial,
 for hook in ("onPlace", "neighborChanged", "onCaughtFire", "useItemOn", "onProjectileHit", "playerWillDestroy", "wasExploded"):
     pin(hook in custom_tnt, f"TNT ignition path is handled: {hook}")
 
-# Both blasts replace only the large vanilla emitter, scaled via its own flash sprites.
-pin("ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in explosive_effects
-    and "ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get()" in explosive_effects,
+# Each custom primed TNT executes its own server blast directly with an explicit
+# vanilla explosion damage source. No ExplosionEvent.Start cancellation/re-entry.
+pin("public void tick()" in gunpowder_primed
+    and "public void tick()" in primed
+    and "Explosion.getDefaultDamageSource(serverLevel, this)" in gunpowder_primed
+    and "Explosion.getDefaultDamageSource(serverLevel, this)" in primed
+    and "serverLevel.explode(this," in gunpowder_primed
+    and "serverLevel.explode(this," in primed
+    and "if (getFuse() > 1)" in gunpowder_primed
+    and "if (getFuse() > 1)" in primed
+    and "setFuse(2);" in gunpowder_primed
+    and "setFuse(2);" in primed
+    and "super.tick();" in gunpowder_primed
+    and "super.tick();" in primed
+    and "discard();" in gunpowder_primed
+    and "discard();" in primed,
+    "both custom TNT entities directly detonate with vanilla explosion damage sources")
+pin("ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in gunpowder_primed
+    and "ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get()" in primed,
     "each explosive uses its own custom emitter")
 pin("GUNPOWDER_SIZE_SCALE = 1.22F" in scaled_emitter
     and "INDUSTRIAL_TNT_SIZE_SCALE = 1.55F" in scaled_emitter
@@ -111,12 +127,16 @@ pin('PARTICLE_TYPES.register("gunpowder_explosion_emitter"' in mod_particles
     and "registerSpecial(ModParticles.GUNPOWDER_EXPLOSION_EMITTER.get()" in particle_client
     and "registerSpecial(ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get()" in particle_client,
     "both custom emitter types are registered with client providers")
-pin("ParticleTypes.EXPLOSION" in explosive_effects and "SoundEvents.GENERIC_EXPLODE" in explosive_effects
-    and "instanceof GunpowderPrimedTnt" in explosive_effects
-    and "Level.ExplosionInteraction.BLOCK" in explosive_effects
-    and "event.setCanceled(true)" in explosive_effects
-    and "Level.ExplosionInteraction.TNT" in explosive_effects,
-    "both one-tick custom blasts retain vanilla flash, sound, and their correct block interaction")
+pin("ParticleTypes.EXPLOSION" in gunpowder_primed
+    and "SoundEvents.GENERIC_EXPLODE" in gunpowder_primed
+    and "Level.ExplosionInteraction.BLOCK" in gunpowder_primed
+    and "ParticleTypes.EXPLOSION" in primed
+    and "SoundEvents.GENERIC_EXPLODE" in primed
+    and "Level.ExplosionInteraction.TNT" in primed
+    and "scheduleGunpowderSmoke(serverLevel, center" in gunpowder_primed
+    and "ExplosionEvent.Start" not in explosive_effects
+    and "event.setCanceled(true)" not in explosive_effects,
+    "direct blasts keep their particles, sound, correct block interaction, and non-recursive smoke path")
 
 # Powder smoke is delayed, distributed through a sphere, and uses vanilla large smoke.
 pin("GUNPOWDER_SMOKE_MIN = 20" in explosive_effects

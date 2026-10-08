@@ -39,8 +39,10 @@ final class GreatswordImpactRenderer {
         out vec4 fragColor;
 
         uniform sampler2D u_screen;
+        uniform sampler2D u_frozen;
         uniform int u_filter;
         uniform float u_intensity;
+        uniform float u_liveBlend;
 
         void main() {
             vec4 source = texture(u_screen, v_uv);
@@ -63,6 +65,12 @@ final class GreatswordImpactRenderer {
             } else if (u_filter == 4) {
                 // Brightness remains +30 percent at thaw and eases back over three ticks.
                 color = clamp(color * (1.0 + 0.30 * u_intensity), 0.0, 1.0);
+            } else if (u_filter == 5) {
+                // Blend the held impact image into the moving camera. The live image carries
+                // the +30 percent exposure boost until the three-tick handoff completes.
+                vec3 frozenColor = texture(u_frozen, v_uv).rgb;
+                vec3 liveColor = clamp(color * (1.0 + 0.30 * u_intensity), 0.0, 1.0);
+                color = mix(frozenColor, liveColor, clamp(u_liveBlend, 0.0, 1.0));
             }
 
             fragColor = vec4(color, source.a);
@@ -82,8 +90,10 @@ final class GreatswordImpactRenderer {
     private static int vertexArrayId;
     private static int vertexBufferId;
     private static int screenUniform = -1;
+    private static int frozenUniform = -1;
     private static int filterUniform = -1;
     private static int intensityUniform = -1;
+    private static int liveBlendUniform = -1;
     private static boolean shaderInitialized;
     private static boolean shaderFailed;
 
@@ -111,6 +121,15 @@ final class GreatswordImpactRenderer {
             && drawTextureToTarget(frozenFrame.getColorTextureId(), screen, screen, Filter.COPY, 0.0F);
     }
 
+    static boolean renderThawTransition(RenderTarget screen, float liveBlend, float brightnessIntensity) {
+        if (!ensureResources(screen)
+            || !drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen, Filter.COPY, 0.0F)) {
+            return false;
+        }
+        return drawTextureToTarget(workingFrame.getColorTextureId(), screen, screen,
+            Filter.THAW_TRANSITION, brightnessIntensity, frozenFrame.getColorTextureId(), liveBlend);
+    }
+
     private static boolean ensureResources(RenderTarget screen) {
         if (screen == null || screen.width <= 0 || screen.height <= 0 || !initializeShader()) {
             return false;
@@ -120,14 +139,14 @@ final class GreatswordImpactRenderer {
             if (workingFrame == null) {
                 workingFrame = createTarget(screen.width, screen.height);
             } else if (workingFrame.width != screen.width || workingFrame.height != screen.height) {
-                workingFrame.resize(screen.width, screen.height, Minecraft.ON_OSX);
+                workingFrame.resize(screen.width, screen.height);
                 workingFrame.setFilterMode(GL11.GL_NEAREST);
             }
 
             if (frozenFrame == null) {
                 frozenFrame = createTarget(screen.width, screen.height);
             } else if (frozenFrame.width != screen.width || frozenFrame.height != screen.height) {
-                frozenFrame.resize(screen.width, screen.height, Minecraft.ON_OSX);
+                frozenFrame.resize(screen.width, screen.height);
                 frozenFrame.setFilterMode(GL11.GL_NEAREST);
             }
             return true;
@@ -171,9 +190,12 @@ final class GreatswordImpactRenderer {
             }
 
             screenUniform = GL20.glGetUniformLocation(programId, "u_screen");
+            frozenUniform = GL20.glGetUniformLocation(programId, "u_frozen");
             filterUniform = GL20.glGetUniformLocation(programId, "u_filter");
             intensityUniform = GL20.glGetUniformLocation(programId, "u_intensity");
-            if (screenUniform < 0 || filterUniform < 0 || intensityUniform < 0) {
+            liveBlendUniform = GL20.glGetUniformLocation(programId, "u_liveBlend");
+            if (screenUniform < 0 || frozenUniform < 0 || filterUniform < 0
+                || intensityUniform < 0 || liveBlendUniform < 0) {
                 throw new IllegalStateException("Impact shader is missing a required uniform");
             }
 
@@ -245,6 +267,12 @@ final class GreatswordImpactRenderer {
 
     private static boolean drawTextureToTarget(int sourceTexture, RenderTarget destination,
                                                RenderTarget restoreTarget, Filter filter, float intensity) {
+        return drawTextureToTarget(sourceTexture, destination, restoreTarget, filter, intensity, 0, 0.0F);
+    }
+
+    private static boolean drawTextureToTarget(int sourceTexture, RenderTarget destination,
+                                               RenderTarget restoreTarget, Filter filter, float intensity,
+                                               int frozenTexture, float liveBlend) {
         RenderSystem.assertOnRenderThread();
 
         int previousProgram = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
@@ -252,6 +280,13 @@ final class GreatswordImpactRenderer {
         int previousActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+        int previousFrozenTexture = 0;
+        if (frozenTexture != 0) {
+            GL13.glActiveTexture(GL13.GL_TEXTURE1);
+            previousFrozenTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+        }
+        GL13.glActiveTexture(previousActiveTexture);
+
         boolean depthEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
         boolean blendEnabled = GL11.glIsEnabled(GL11.GL_BLEND);
         boolean cullEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
@@ -274,6 +309,13 @@ final class GreatswordImpactRenderer {
             GL20.glUniform1i(screenUniform, 0);
             GL20.glUniform1i(filterUniform, filter.shaderValue);
             GL20.glUniform1f(intensityUniform, intensity);
+            if (frozenTexture != 0) {
+                GL13.glActiveTexture(GL13.GL_TEXTURE1);
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, frozenTexture);
+                GL20.glUniform1i(frozenUniform, 1);
+                GL20.glUniform1f(liveBlendUniform, liveBlend);
+                GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            }
 
             GL30.glBindVertexArray(vertexArrayId);
             GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
@@ -283,7 +325,12 @@ final class GreatswordImpactRenderer {
             return false;
         } finally {
             GL30.glBindVertexArray(previousVertexArray);
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
+            if (frozenTexture != 0) {
+                GL13.glActiveTexture(GL13.GL_TEXTURE1);
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousFrozenTexture);
+            }
             GL13.glActiveTexture(previousActiveTexture);
             GL20.glUseProgram(previousProgram);
 
@@ -321,7 +368,8 @@ final class GreatswordImpactRenderer {
         BRIGHTNESS(1),
         NEGATIVE_HARD_CONTRAST(2),
         INTENSE_IMPACT(3),
-        FADE_BRIGHTNESS(4);
+        FADE_BRIGHTNESS(4),
+        THAW_TRANSITION(5);
 
         private final int shaderValue;
 

@@ -16,15 +16,19 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 @EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = Dist.CLIENT)
 public final class GreatswordImpactClient {
 
+    // Emulate the requested 2-frame / 1-frame phases at 60 Hz, independent of the actual FPS.
+    private static final long BRIGHTNESS_PHASE_NANOS = 33_333_333L;
+    private static final long NEGATIVE_PHASE_NANOS = 16_666_667L;
     private static final int UNFREEZE_TICK = 3;
     private static final int FADE_TICKS = 3;
 
     private static Phase phase = Phase.IDLE;
     private static Player owner;
     private static int ticksSinceRelease;
-    private static int brightFramesRemaining;
     private static int fadeElapsedTicks;
-    private static float fadeIntensity;
+    private static long flashPhaseStartNanos;
+    private static boolean thawAfterImpactFrame;
+    private static boolean frozenFrameCaptured;
 
     private GreatswordImpactClient() {
     }
@@ -38,9 +42,10 @@ public final class GreatswordImpactClient {
 
         owner = releasingPlayer;
         ticksSinceRelease = 0;
-        brightFramesRemaining = 2;
         fadeElapsedTicks = 0;
-        fadeIntensity = 0.0F;
+        flashPhaseStartNanos = 0L;
+        thawAfterImpactFrame = false;
+        frozenFrameCaptured = false;
         phase = Phase.WAITING_FOR_FIRST_TICK;
     }
 
@@ -59,17 +64,36 @@ public final class GreatswordImpactClient {
             case WAITING_FOR_FIRST_TICK -> {
                 if (ticksSinceRelease >= 1) {
                     phase = Phase.BRIGHTNESS_FLASH;
-                    brightFramesRemaining = 2;
+                    flashPhaseStartNanos = System.nanoTime();
                 }
             }
             case FROZEN -> {
                 if (ticksSinceRelease >= UNFREEZE_TICK) {
-                    beginFadeOut();
+                    beginFadeOut(0);
                 }
             }
-            case FADING_OUT -> advanceFadeOut();
+            case BRIGHTNESS_FLASH, NEGATIVE_FLASH, IMPACT_FLASH -> {
+                if (ticksSinceRelease >= UNFREEZE_TICK) {
+                    // At very low render rates, honor the engine's tick-three deadline rather
+                    // than holding a late snapshot beyond it. Capture the impact image if the
+                    // renderer gets a frame on tick three; otherwise fall back to the live view.
+                    if (phase != Phase.IMPACT_FLASH) {
+                        phase = Phase.IMPACT_FLASH;
+                        flashPhaseStartNanos = System.nanoTime();
+                    }
+                    thawAfterImpactFrame = true;
+                    if (ticksSinceRelease > UNFREEZE_TICK && !frozenFrameCaptured) {
+                        beginFadeOut(ticksSinceRelease - UNFREEZE_TICK);
+                    }
+                }
+            }
+            case FADING_OUT -> {
+                fadeElapsedTicks++;
+                if (fadeElapsedTicks >= FADE_TICKS) {
+                    clearSequence();
+                }
+            }
             default -> {
-                // The three flash stages are advanced by rendered frames, not ticks.
             }
         }
     }
@@ -87,6 +111,7 @@ public final class GreatswordImpactClient {
         // Flush buffered HUD vertices before the raw full-screen shader touches the main target.
         event.getGuiGraphics().flush();
         RenderTarget screen = minecraft.getMainRenderTarget();
+        long now = System.nanoTime();
 
         switch (phase) {
             case BRIGHTNESS_FLASH -> {
@@ -95,8 +120,9 @@ public final class GreatswordImpactClient {
                     clearSequence();
                     return;
                 }
-                if (--brightFramesRemaining <= 0) {
+                if (now - flashPhaseStartNanos >= BRIGHTNESS_PHASE_NANOS) {
                     phase = Phase.NEGATIVE_FLASH;
+                    flashPhaseStartNanos = now;
                 }
             }
             case NEGATIVE_FLASH -> {
@@ -105,7 +131,9 @@ public final class GreatswordImpactClient {
                     clearSequence();
                     return;
                 }
-                phase = Phase.IMPACT_FLASH;
+                if (now - flashPhaseStartNanos >= NEGATIVE_PHASE_NANOS) {
+                    phase = Phase.IMPACT_FLASH;
+                }
             }
             case IMPACT_FLASH -> {
                 if (!GreatswordImpactRenderer.applyFilter(screen,
@@ -115,10 +143,11 @@ public final class GreatswordImpactClient {
                     return;
                 }
 
-                // If an unusually slow renderer reaches tick three before all four flash frames,
-                // show the final flash but do not extend the hold beyond the requested deadline.
-                if (ticksSinceRelease >= UNFREEZE_TICK) {
-                    beginFadeOut();
+                frozenFrameCaptured = true;
+                if (thawAfterImpactFrame || ticksSinceRelease >= UNFREEZE_TICK) {
+                    // Leave this final overexposed frame on screen for the current refresh;
+                    // the next render starts the tick-synchronized live-camera handoff.
+                    beginFadeOut(0);
                 } else {
                     phase = Phase.FROZEN;
                 }
@@ -129,9 +158,15 @@ public final class GreatswordImpactClient {
                 }
             }
             case FADING_OUT -> {
-                if (fadeIntensity > 0.0F
-                    && !GreatswordImpactRenderer.applyFilter(screen,
-                        GreatswordImpactRenderer.Filter.FADE_BRIGHTNESS, fadeIntensity)) {
+                float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+                float progress = fadeProgress(partialTick);
+                float liveBlend = smoothstep(progress);
+                float brightnessIntensity = 1.0F - liveBlend;
+                boolean rendered = frozenFrameCaptured
+                    ? GreatswordImpactRenderer.renderThawTransition(screen, liveBlend, brightnessIntensity)
+                    : GreatswordImpactRenderer.applyFilter(screen,
+                        GreatswordImpactRenderer.Filter.FADE_BRIGHTNESS, brightnessIntensity);
+                if (!rendered) {
                     clearSequence();
                 }
             }
@@ -142,39 +177,43 @@ public final class GreatswordImpactClient {
 
     @SubscribeEvent
     public static void onComputeFovModifier(ComputeFovModifierEvent event) {
-        if (phase != Phase.FADING_OUT || fadeIntensity <= 0.0F) return;
+        if (phase != Phase.FADING_OUT) return;
 
         Minecraft minecraft = Minecraft.getInstance();
         if (event.getPlayer() != owner || event.getPlayer() != minecraft.player) return;
 
-        // Multiply the already-computed modifier, preserving sprinting and other FOV effects.
-        float zoomFactor = 1.0F - 0.30F * fadeIntensity;
+        float partialTick = minecraft.getTimer().getGameTimeDeltaPartialTick(false);
+        float brightnessIntensity = 1.0F - smoothstep(fadeProgress(partialTick));
+        // -30% FOV gives the requested zoom; other modifiers (sprinting, effects) are preserved.
+        float zoomFactor = 1.0F - 0.30F * brightnessIntensity;
         event.setNewFovModifier(event.getNewFovModifier() * zoomFactor);
     }
 
-    private static void beginFadeOut() {
+    private static void beginFadeOut(int elapsedTicks) {
         phase = Phase.FADING_OUT;
-        fadeElapsedTicks = 0;
-        fadeIntensity = 1.0F;
+        fadeElapsedTicks = Math.max(0, Math.min(FADE_TICKS - 1, elapsedTicks));
     }
 
-    private static void advanceFadeOut() {
-        fadeElapsedTicks++;
-        float progress = Math.min(1.0F, fadeElapsedTicks / (float) FADE_TICKS);
-        // Ease-in: the return starts gently, then accelerates toward normal at the end.
-        fadeIntensity = 1.0F - progress * progress;
-        if (fadeElapsedTicks >= FADE_TICKS) {
-            clearSequence();
-        }
+    private static float fadeProgress(float partialTick) {
+        float clampedPartial = Math.max(0.0F, Math.min(1.0F, partialTick));
+        return Math.max(0.0F, Math.min(1.0F,
+            (fadeElapsedTicks + clampedPartial) / (float) FADE_TICKS));
+    }
+
+    /** Smoothstep ease-in-out for the three-tick handoff. */
+    private static float smoothstep(float value) {
+        float t = Math.max(0.0F, Math.min(1.0F, value));
+        return t * t * (3.0F - 2.0F * t);
     }
 
     private static void clearSequence() {
         phase = Phase.IDLE;
         owner = null;
         ticksSinceRelease = 0;
-        brightFramesRemaining = 0;
         fadeElapsedTicks = 0;
-        fadeIntensity = 0.0F;
+        flashPhaseStartNanos = 0L;
+        thawAfterImpactFrame = false;
+        frozenFrameCaptured = false;
     }
 
     private enum Phase {

@@ -198,6 +198,28 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("if (charge <= 0.10F) return false", combat)
         self.assertIn("return true;", combat)
 
+    def test_impact_frame_uses_time_phases_tick_thaw_and_smooth_camera_handoff(self):
+        client = (ROOT / "src/main/java/com/gonzotech/core/client/GreatswordImpactClient.java").read_text(encoding="utf-8")
+        renderer = (ROOT / "src/main/java/com/gonzotech/core/client/GreatswordImpactRenderer.java").read_text(encoding="utf-8")
+
+        self.assertIn("BRIGHTNESS_PHASE_NANOS = 33_333_333L", client)
+        self.assertIn("NEGATIVE_PHASE_NANOS = 16_666_667L", client)
+        self.assertIn("System.nanoTime()", client)
+        self.assertNotIn("brightFramesRemaining", client)
+        self.assertIn("UNFREEZE_TICK = 3", client)
+        self.assertIn("ticksSinceRelease >= UNFREEZE_TICK", client)
+        self.assertIn("getGameTimeDeltaPartialTick(false)", client)
+        self.assertIn("return t * t * (3.0F - 2.0F * t)", client)
+        self.assertIn("1.0F - 0.30F * brightnessIntensity", client)
+        self.assertIn("renderThawTransition(screen, liveBlend, brightnessIntensity)", client)
+
+        self.assertIn("workingFrame.resize(screen.width, screen.height);", renderer)
+        self.assertIn("frozenFrame.resize(screen.width, screen.height);", renderer)
+        self.assertNotIn("resize(screen.width, screen.height, Minecraft.ON_OSX)", renderer)
+        self.assertIn("uniform sampler2D u_frozen", renderer)
+        self.assertIn("uniform float u_liveBlend", renderer)
+        self.assertIn("Filter.THAW_TRANSITION", renderer)
+
     def test_greatswords_are_main_hand_only_and_displace_offhand_items(self):
         item_source = (ROOT / "src/main/java/com/gonzotech/core/item/GreatswordItem.java").read_text(encoding="utf-8")
         self.assertIn("canEquip(ItemStack stack, EquipmentSlot slot, LivingEntity entity)", item_source)
