@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-/** GPU-only full-screen filters and framebuffer copies used by the greatsword impact sequence. */
+/** GPU-only impact filters: binary monochrome, radial tracers, negative grain, and post-impact optics. */
 final class GreatswordImpactRenderer {
 
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -39,38 +39,110 @@ final class GreatswordImpactRenderer {
         out vec4 fragColor;
 
         uniform sampler2D u_screen;
-        uniform sampler2D u_frozen;
         uniform int u_filter;
         uniform float u_intensity;
-        uniform float u_liveBlend;
+        uniform float u_effectTime;
+
+        const float PI = 3.14159265358979323846;
+        const float TWO_PI = 6.28318530717958647692;
+        const float BINARY_THRESHOLD = 0.48;
+        const float POSITIVE_TRACE_CHANCE = 0.35;
+        const float NEGATIVE_TRACE_CHANCE = 0.55;
+        const int RAY_COUNT = 220;
+        const int MAX_TRACE_STEPS = 72;
+
+        float hash21(vec2 p) {
+            p = fract(p * vec2(123.34, 456.21));
+            p += dot(p, p + 45.32);
+            return fract(p.x * p.y);
+        }
 
         void main() {
             vec4 source = texture(u_screen, v_uv);
             vec3 color = source.rgb;
 
             if (u_filter == 1) {
-                // The first two frames are a clean 30 percent exposure boost.
-                color = clamp(color * 1.30, 0.0, 1.0);
+                fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                return;
             } else if (u_filter == 2) {
-                // Preserve the requested boost, then invert and crush the contrast.
-                color = clamp(color * 1.30, 0.0, 1.0);
-                color = vec3(1.0) - color;
-                color = clamp((color - 0.5) * 2.35 + 0.5, 0.0, 1.0);
-            } else if (u_filter == 3) {
-                // Strong saturation/contrast followed by four additive copies of the frame.
+                fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                return;
+            } else if (u_filter == 3 || u_filter == 4) {
+                bool negative = u_filter == 4;
+                vec2 resolution = vec2(textureSize(u_screen, 0));
+                vec2 pixel = gl_FragCoord.xy;
+                vec2 center = resolution * 0.5;
+                vec2 offset = pixel - center;
+                float radius = length(offset);
+
                 float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
-                color = mix(vec3(luminance), color, 1.75);
-                color = clamp((color - 0.43) * 1.8 + 0.43, 0.0, 1.0);
-                color = clamp(color * 4.0, 0.0, 1.0);
-            } else if (u_filter == 4) {
-                // Brightness remains +30 percent at thaw and eases back over three ticks.
-                color = clamp(color * (1.0 + 0.30 * u_intensity), 0.0, 1.0);
+                // A hard threshold makes every scene pixel exactly black or white (never gray).
+                float originalBit = luminance >= BINARY_THRESHOLD ? 1.0 : 0.0;
+                float outputBit = negative ? 1.0 - originalBit : originalBit;
+
+                // Quantized radial sectors make every emitted tracer converge on screen center.
+                float angle = atan(offset.y, offset.x);
+                float rayIndex = mod(floor((angle + PI) / TWO_PI * float(RAY_COUNT) + 0.5),
+                                     float(RAY_COUNT));
+                float rayAngle = rayIndex * (TWO_PI / float(RAY_COUNT)) - PI;
+                vec2 rayDirection = vec2(cos(rayAngle), sin(rayAngle));
+                float perpendicularDistance = abs(offset.x * rayDirection.y - offset.y * rayDirection.x);
+                float frameSeed = floor(u_effectTime * 48.0) + (negative ? 109.0 : 17.0);
+                float widthRandom = hash21(vec2(rayIndex + 71.3, frameSeed + 5.7));
+                float tracerWidth = negative
+                    ? 1.0 + floor(widthRandom * 2.0)
+                    : 1.0 + floor(widthRandom * 4.0);
+                bool insideRay = perpendicularDistance <= tracerWidth * 0.5 + 0.35;
+
+                // March outward from center. A ray activates only after a matching binary
+                // scene pixel passes its per-hit probability; it then keeps its direction.
+                bool rayActivated = false;
+                if (insideRay && radius > 1.0) {
+                    float maxRadius = length(center);
+                    float stepDistance = maxRadius / float(MAX_TRACE_STEPS);
+                    float hitChance = negative ? NEGATIVE_TRACE_CHANCE : POSITIVE_TRACE_CHANCE;
+                    for (int step = 1; step <= MAX_TRACE_STEPS; step++) {
+                        float sampleRadius = float(step) * stepDistance;
+                        if (sampleRadius > radius) break;
+
+                        vec2 samplePosition = center + rayDirection * sampleRadius;
+                        vec2 sampleUv = clamp(samplePosition / resolution, vec2(0.001), vec2(0.999));
+                        vec3 sampleColor = texture(u_screen, sampleUv).rgb;
+                        float sampleLuminance = dot(sampleColor, vec3(0.2126, 0.7152, 0.0722));
+                        bool hitReactivePixel = negative
+                            ? sampleLuminance < BINARY_THRESHOLD
+                            : sampleLuminance >= BINARY_THRESHOLD;
+                        float hitRoll = hash21(vec2(rayIndex * 1.37 + frameSeed,
+                                                    float(step) * 2.11 + frameSeed * 0.31));
+                        if (hitReactivePixel && hitRoll < hitChance) {
+                            rayActivated = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (rayActivated) outputBit = negative ? 0.0 : 1.0;
+
+                if (negative) {
+                    // Broken, high-contrast salt-and-pepper grain. Both specks and blocks
+                    // remain binary so the negative frame never introduces gray pixels.
+                    vec2 framePixel = floor(pixel);
+                    float grainFrame = floor(u_effectTime * 60.0);
+                    vec2 grainCell = floor(framePixel / vec2(2.0));
+                    float fineGrain = hash21(grainCell + vec2(grainFrame * 31.0, grainFrame * 17.0));
+                    vec2 blockCell = floor(framePixel / vec2(8.0, 6.0));
+                    float brokenBlock = hash21(blockCell + vec2(grainFrame * 7.0, grainFrame * 13.0));
+                    if (fineGrain < 0.12 || brokenBlock < 0.09) {
+                        outputBit = 1.0 - outputBit;
+                    }
+                }
+
+                color = vec3(outputBit);
             } else if (u_filter == 5) {
-                // Blend the held impact image into the moving camera. The live image carries
-                // the +30 percent exposure boost until the three-tick handoff completes.
-                vec3 frozenColor = texture(u_frozen, v_uv).rgb;
-                vec3 liveColor = clamp(color * (1.0 + 0.30 * u_intensity), 0.0, 1.0);
-                color = mix(frozenColor, liveColor, clamp(u_liveBlend, 0.0, 1.0));
+                // The post-impact state starts at FOV 0.60, brightness x1.30,
+                // and contrast 0.70; all three effects independently ease out.
+                color = (color - vec3(0.5)) * mix(1.0, 0.70, u_intensity) + vec3(0.5);
+                color = clamp(color * (1.0 + 0.30 * u_intensity), 0.0, 1.0);
             }
 
             fragColor = vec4(color, source.a);
@@ -90,44 +162,24 @@ final class GreatswordImpactRenderer {
     private static int vertexArrayId;
     private static int vertexBufferId;
     private static int screenUniform = -1;
-    private static int frozenUniform = -1;
     private static int filterUniform = -1;
     private static int intensityUniform = -1;
-    private static int liveBlendUniform = -1;
+    private static int effectTimeUniform = -1;
     private static boolean shaderInitialized;
     private static boolean shaderFailed;
-
     private static TextureTarget workingFrame;
-    private static TextureTarget frozenFrame;
 
     private GreatswordImpactRenderer() {
     }
 
-    static boolean applyFilter(RenderTarget screen, Filter filter, float intensity) {
+    static boolean applyFilter(RenderTarget screen, Filter filter, float intensity, float effectTime) {
         if (!ensureResources(screen)) return false;
-        if (!drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen, Filter.COPY, 0.0F)) {
-            return false;
-        }
-        return drawTextureToTarget(workingFrame.getColorTextureId(), screen, screen, filter, intensity);
-    }
-
-    static boolean captureFrozenFrame(RenderTarget screen) {
-        return ensureResources(screen)
-            && drawTextureToTarget(screen.getColorTextureId(), frozenFrame, screen, Filter.COPY, 0.0F);
-    }
-
-    static boolean drawFrozenFrame(RenderTarget screen) {
-        return ensureResources(screen)
-            && drawTextureToTarget(frozenFrame.getColorTextureId(), screen, screen, Filter.COPY, 0.0F);
-    }
-
-    static boolean renderThawTransition(RenderTarget screen, float liveBlend, float brightnessIntensity) {
-        if (!ensureResources(screen)
-            || !drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen, Filter.COPY, 0.0F)) {
+        if (!drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen,
+            Filter.COPY, 0.0F, effectTime)) {
             return false;
         }
         return drawTextureToTarget(workingFrame.getColorTextureId(), screen, screen,
-            Filter.THAW_TRANSITION, brightnessIntensity, frozenFrame.getColorTextureId(), liveBlend);
+            filter, intensity, effectTime);
     }
 
     private static boolean ensureResources(RenderTarget screen) {
@@ -142,17 +194,10 @@ final class GreatswordImpactRenderer {
                 workingFrame.resize(screen.width, screen.height);
                 workingFrame.setFilterMode(GL11.GL_NEAREST);
             }
-
-            if (frozenFrame == null) {
-                frozenFrame = createTarget(screen.width, screen.height);
-            } else if (frozenFrame.width != screen.width || frozenFrame.height != screen.height) {
-                frozenFrame.resize(screen.width, screen.height);
-                frozenFrame.setFilterMode(GL11.GL_NEAREST);
-            }
             return true;
         } catch (RuntimeException exception) {
-            LOGGER.error("[Gonzo Tech] Could not allocate greatsword impact-frame targets", exception);
-            destroyTargets();
+            LOGGER.error("[Gonzo Tech] Could not allocate greatsword impact-frame target", exception);
+            destroyTarget();
             return false;
         } finally {
             // Target constructors/resizes may bind their own framebuffer while reallocating.
@@ -190,12 +235,10 @@ final class GreatswordImpactRenderer {
             }
 
             screenUniform = GL20.glGetUniformLocation(programId, "u_screen");
-            frozenUniform = GL20.glGetUniformLocation(programId, "u_frozen");
             filterUniform = GL20.glGetUniformLocation(programId, "u_filter");
             intensityUniform = GL20.glGetUniformLocation(programId, "u_intensity");
-            liveBlendUniform = GL20.glGetUniformLocation(programId, "u_liveBlend");
-            if (screenUniform < 0 || frozenUniform < 0 || filterUniform < 0
-                || intensityUniform < 0 || liveBlendUniform < 0) {
+            effectTimeUniform = GL20.glGetUniformLocation(programId, "u_effectTime");
+            if (screenUniform < 0 || filterUniform < 0 || intensityUniform < 0 || effectTimeUniform < 0) {
                 throw new IllegalStateException("Impact shader is missing a required uniform");
             }
 
@@ -266,13 +309,8 @@ final class GreatswordImpactRenderer {
     }
 
     private static boolean drawTextureToTarget(int sourceTexture, RenderTarget destination,
-                                               RenderTarget restoreTarget, Filter filter, float intensity) {
-        return drawTextureToTarget(sourceTexture, destination, restoreTarget, filter, intensity, 0, 0.0F);
-    }
-
-    private static boolean drawTextureToTarget(int sourceTexture, RenderTarget destination,
-                                               RenderTarget restoreTarget, Filter filter, float intensity,
-                                               int frozenTexture, float liveBlend) {
+                                               RenderTarget restoreTarget, Filter filter,
+                                               float intensity, float effectTime) {
         RenderSystem.assertOnRenderThread();
 
         int previousProgram = GL11.glGetInteger(GL20.GL_CURRENT_PROGRAM);
@@ -280,11 +318,6 @@ final class GreatswordImpactRenderer {
         int previousActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-        int previousFrozenTexture = 0;
-        if (frozenTexture != 0) {
-            GL13.glActiveTexture(GL13.GL_TEXTURE1);
-            previousFrozenTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-        }
         GL13.glActiveTexture(previousActiveTexture);
 
         boolean depthEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
@@ -309,13 +342,7 @@ final class GreatswordImpactRenderer {
             GL20.glUniform1i(screenUniform, 0);
             GL20.glUniform1i(filterUniform, filter.shaderValue);
             GL20.glUniform1f(intensityUniform, intensity);
-            if (frozenTexture != 0) {
-                GL13.glActiveTexture(GL13.GL_TEXTURE1);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, frozenTexture);
-                GL20.glUniform1i(frozenUniform, 1);
-                GL20.glUniform1f(liveBlendUniform, liveBlend);
-                GL13.glActiveTexture(GL13.GL_TEXTURE0);
-            }
+            GL20.glUniform1f(effectTimeUniform, effectTime);
 
             GL30.glBindVertexArray(vertexArrayId);
             GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
@@ -327,10 +354,6 @@ final class GreatswordImpactRenderer {
             GL30.glBindVertexArray(previousVertexArray);
             GL13.glActiveTexture(GL13.GL_TEXTURE0);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
-            if (frozenTexture != 0) {
-                GL13.glActiveTexture(GL13.GL_TEXTURE1);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousFrozenTexture);
-            }
             GL13.glActiveTexture(previousActiveTexture);
             GL20.glUseProgram(previousProgram);
 
@@ -352,24 +375,20 @@ final class GreatswordImpactRenderer {
         }
     }
 
-    private static void destroyTargets() {
+    private static void destroyTarget() {
         if (workingFrame != null) {
             workingFrame.destroyBuffers();
             workingFrame = null;
-        }
-        if (frozenFrame != null) {
-            frozenFrame.destroyBuffers();
-            frozenFrame = null;
         }
     }
 
     enum Filter {
         COPY(0),
-        BRIGHTNESS(1),
-        NEGATIVE_HARD_CONTRAST(2),
-        INTENSE_IMPACT(3),
-        FADE_BRIGHTNESS(4),
-        THAW_TRANSITION(5);
+        FULL_WHITE(1),
+        FULL_BLACK(2),
+        BLACK_AND_WHITE_TRACERS(3),
+        NEGATIVE_GRAIN_HDR(4),
+        POST_IMPACT(5);
 
         private final int shaderValue;
 
