@@ -110,9 +110,13 @@ public final class GreatswordItem extends SwordItem {
         if (level.isClientSide()) {
             CHARGE_READY_SOUND_STAGE.remove(user);
             int elapsed = Math.max(0, MAX_USE_TICKS - timeLeft);
-            int tenPercentTicks = (int) Math.ceil(chargeDurationTicks(stack) * 0.10D);
+            int fullChargeTicks = chargeDurationTicks(stack);
+            int tenPercentTicks = (int) Math.ceil(fullChargeTicks * 0.10D);
             if (elapsed > tenPercentTicks && user instanceof Player player) {
                 player.resetAttackStrengthTicker();
+            }
+            if (elapsed >= fullChargeTicks && user instanceof Player player) {
+                com.gonzotech.core.client.GreatswordImpactClient.begin(player);
             }
         }
         return GreatswordCombat.release(stack, level, user, timeLeft);

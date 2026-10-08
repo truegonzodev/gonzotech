@@ -38,7 +38,7 @@ expected = {
 }
 
 version = read(ROOT / "gradle.properties")
-require("mod_version=0.3.179" in version, "version should be 0.3.179")
+require("mod_version=0.3.180" in version, "version should be 0.3.180")
 ore_source = read(JAVA / "core/ore/OreDefinition.java")
 found = {}
 for match in re.finditer(
