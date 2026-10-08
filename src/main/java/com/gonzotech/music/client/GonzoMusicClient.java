@@ -13,7 +13,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
@@ -31,7 +30,10 @@ public final class GonzoMusicClient {
     private static final int DEFAULT_MIN_DELAY_TICKS = 12_000;
     private static final int DEFAULT_MAX_DELAY_TICKS = 24_000;
     private static final long UNDERGROUND_CHECK_INTERVAL_TICKS = 1_200L;
+    private static final long DEFAULT_MUSIC_WINDOW_NANOS = 5L * 60L * 1_000_000_000L;
+    private static final long RAIDIN_BONES_WINDOW_NANOS = 8L * 60L * 1_000_000_000L;
 
+    private static long musicWindowUntilNanos;
     private static Object trackedConnection;
     private static UUID trackedPlayer;
     private static long handledCrimsonEventDay = Long.MIN_VALUE;
@@ -74,15 +76,24 @@ public final class GonzoMusicClient {
     }
 
     /**
-     * MusicManager.startPlaying is the single entry point for all background music.
-     * Clear both its tracked instance and any orphaned MUSIC-channel streams before
-     * a new track starts; otherwise a stale streamed OGG can keep playing underneath.
+     * Suppress a start request while another track is active or its minimum play
+     * window has not elapsed. The existing track is left untouched.
      */
-    public static MusicInfo prepareMusicStart(MusicInfo requestedMusic) {
-        Minecraft minecraft = Minecraft.getInstance();
-        minecraft.getMusicManager().stopPlaying();
-        minecraft.getSoundManager().stop(null, SoundSource.MUSIC);
-        return maybeAddOverworldBitter(requestedMusic);
+    public static boolean shouldSuppressMusicStart(Minecraft minecraft) {
+        return isMusicPlaying(minecraft);
+    }
+
+    /** Start a track-specific cooldown after MusicManager actually starts playback. */
+    public static void recordMusicStart(Minecraft minecraft, MusicInfo startedMusic) {
+        if (startedMusic == null || !isMusicPlayingFromManager(minecraft)) {
+            return;
+        }
+
+        SoundEvent sound = startedMusic.music().getEvent().value();
+        long window = sound == ModSounds.GT_OST_RAIDIN_BONES.get()
+                ? RAIDIN_BONES_WINDOW_NANOS
+                : DEFAULT_MUSIC_WINDOW_NANOS;
+        musicWindowUntilNanos = System.nanoTime() + window;
     }
 
     /**
@@ -117,8 +128,17 @@ public final class GonzoMusicClient {
         return vanillaMusic;
     }
 
-    /** True only while the MusicManager's current sound is active in the sound engine. */
+    /** True while a MusicManager track is active or its programmed minimum window remains. */
     public static boolean isMusicPlaying(Minecraft minecraft) {
+        if (isMusicPlayingFromManager(minecraft)) {
+            return true;
+        }
+
+        long until = musicWindowUntilNanos;
+        return until != 0L && System.nanoTime() - until < 0L;
+    }
+
+    private static boolean isMusicPlayingFromManager(Minecraft minecraft) {
         SoundInstance current = ((MusicManagerAccessor) (Object) minecraft.getMusicManager())
                 .gonzotech$getCurrentMusic();
         return current != null && minecraft.getSoundManager().isActive(current);
@@ -194,5 +214,6 @@ public final class GonzoMusicClient {
         handledCrimsonEventDay = Long.MIN_VALUE;
         undergroundDimension = null;
         nextUndergroundAttemptTick = Long.MIN_VALUE;
+        musicWindowUntilNanos = 0L;
     }
 }
