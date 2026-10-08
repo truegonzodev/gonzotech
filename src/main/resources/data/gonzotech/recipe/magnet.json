@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "magnet",
+  "pattern": [
+    "FAF",
+    "FIF",
+    "FAF"
+  ],
+  "key": {
+    "F": "gonzotech:ferromagnetic_ingot",
+    "A": "gonzotech:alnico_ingot",
+    "I": "gonzotech:inductive_module"
+  },
+  "result": {
+    "id": "gonzotech:magnet",
+    "count": 1
+  }
+}

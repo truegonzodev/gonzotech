@@ -115,7 +115,9 @@ public final class RecipeUnlocks {
             // Щипцы и ковш (0.3.87, автор 03.10): фулл-гейт по Открытию 2
             // (физический ботч — в TierTwoCrafting).
             "gonzotech:tongs",
-            "gonzotech:ladle"
+            "gonzotech:ladle",
+            // Магнит: и рецепт в книге, и физический крафт закрыты до Открытия 2.
+            "gonzotech:magnet"
         ),
         6, List.of(
             // Физически крафтится всегда, в книге появляется с Открытием 6.

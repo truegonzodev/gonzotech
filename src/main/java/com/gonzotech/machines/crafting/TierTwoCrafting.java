@@ -47,6 +47,8 @@ public final class TierTwoCrafting {
         "gonzotech:ladle",
         "gonzotech:coil",
         "gonzotech:inductive_module",
+        // Магнит: рецепт и физический крафт полностью закрыты до Открытия 2.
+        "gonzotech:magnet",
         "gonzotech:wedge_punch",
         "gonzotech:flat_punch",
         "gonzotech:ingot_form",
@@ -153,6 +155,7 @@ public final class TierTwoCrafting {
         return item == ModItems.SOLAR_WATCH.get()
             || item == ModItems.COIL.get()
             || item == ModItems.INDUCTIVE_MODULE.get()
+            || item == ModItems.MAGNET.get()
             || item == ModItems.WEDGE_PUNCH.get()
             || item == ModItems.FLAT_PUNCH.get()
             || item == ModItems.INGOT_FORM.get()
