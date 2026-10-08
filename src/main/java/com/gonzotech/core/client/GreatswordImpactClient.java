@@ -182,7 +182,7 @@ public final class GreatswordImpactClient {
         Minecraft minecraft = Minecraft.getInstance();
         if (event.getPlayer() != owner || event.getPlayer() != minecraft.player) return;
 
-        float partialTick = minecraft.getTimer().getGameTimeDeltaPartialTick(false);
+        float partialTick = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
         float brightnessIntensity = 1.0F - smoothstep(fadeProgress(partialTick));
         // -30% FOV gives the requested zoom; other modifiers (sprinting, effects) are preserved.
         float zoomFactor = 1.0F - 0.30F * brightnessIntensity;
