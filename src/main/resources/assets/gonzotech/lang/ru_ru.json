@@ -968,6 +968,8 @@
   "message.gonzotech.clue.elementary": "Элементарно...",
   "gonzotech.configuration.cosmeticFluidParticles": "Косметические частицы жидкостей",
   "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Пенка на поверхности жидкостей Gonzo Tech. Только визуальный эффект; не влияет на радиационные частицы и свойства жидкостей.",
+  "gonzotech.configuration.greatswordImpactFrames": "Импакт-фреймы больших мечей",
+  "gonzotech.configuration.greatswordImpactFrames.tooltip": "Включить тряску камеры, вспышки, трассеры, негатив с зерном и эффекты FOV/цвета после удара. Только клиентская графика.",
   "gonzotech.configuration.pipeRoutingDiagnostics": "Диагностика маршрутизации труб",
   "gonzotech.configuration.pipeRoutingDiagnostics.tooltip": "Подробные серверные логи маршрутизации и перестройки топологии. Объёмные и могут снижать TPS; включайте только на короткий сеанс профилирования. На игровой процесс не влияет.",
   "gui.gonzotech.faint.get_up": "Встать",

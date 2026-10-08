@@ -1,6 +1,7 @@
 package com.gonzotech.core.client;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.core.config.GonzoClientConfig;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
@@ -44,7 +45,8 @@ public final class GreatswordImpactClient {
     /** Starts the shake immediately on release; the first flash is deliberately delayed 41 ms. */
     public static void begin(Player releasingPlayer) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (releasingPlayer == null || minecraft.player != releasingPlayer || minecraft.level == null) {
+        if (!impactFramesEnabled() || releasingPlayer == null
+            || minecraft.player != releasingPlayer || minecraft.level == null) {
             return;
         }
 
@@ -141,9 +143,14 @@ public final class GreatswordImpactClient {
         return System.nanoTime() - releaseTimeNanos;
     }
 
+    private static boolean impactFramesEnabled() {
+        return !GonzoClientConfig.SPEC.isLoaded() || GonzoClientConfig.GREATSWORD_IMPACT_FRAMES.get();
+    }
+
     private static boolean isActiveFor(Minecraft minecraft) {
         if (!sequenceActive) return false;
-        if (minecraft.level == null || minecraft.player == null || minecraft.player != owner) {
+        if (!impactFramesEnabled() || minecraft.level == null || minecraft.player == null
+            || minecraft.player != owner) {
             clearSequence();
             return false;
         }

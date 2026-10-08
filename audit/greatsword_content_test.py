@@ -224,6 +224,13 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("FOV_FADE_NANOS = 1_000_000_000L", client)
         self.assertIn("1.0F - 0.40F * zoomStrength", client)
         self.assertIn("return remaining * remaining * remaining", client)
+        client_config = (ROOT / "src/main/java/com/gonzotech/core/config/GonzoClientConfig.java").read_text(encoding="utf-8")
+        self.assertIn("GonzoClientConfig.GREATSWORD_IMPACT_FRAMES.get()", client)
+        self.assertIn("define(\"greatswordImpactFrames\", true)", client_config)
+        for language in ("en_us", "ru_ru"):
+            translations = read_json(ASSETS / f"lang/{language}.json")
+            self.assertIn("gonzotech.configuration.greatswordImpactFrames", translations)
+            self.assertIn("gonzotech.configuration.greatswordImpactFrames.tooltip", translations)
 
         self.assertIn("BINARY_THRESHOLD = 0.48", renderer)
         self.assertIn("POSITIVE_TRACE_CHANCE = 0.35", renderer)
@@ -232,6 +239,17 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("MAX_TRACE_STEPS = 72", renderer)
         self.assertIn("negative ? 1.0 - originalBit : originalBit", renderer)
         self.assertIn("if (fineGrain < 0.12 || brokenBlock < 0.09)", renderer)
+        self.assertIn("Filter.NEGATIVE_TRACERS", renderer)
+        self.assertIn("Filter.GRAIN_OVERLAY", renderer)
+        self.assertIn("drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen,", renderer)
+        self.assertIn("drawTextureToTarget(workingFrame.getColorTextureId(), screen, screen,", renderer)
+        self.assertIn("NEGATIVE_GRAIN_HDR(-1)", renderer)
+        self.assertLess(renderer.index("Filter.NEGATIVE_TRACERS"), renderer.index("Filter.GRAIN_OVERLAY"))
+        trace_shader = renderer[
+            renderer.index("} else if (u_filter == 3 || u_filter == 4)"):
+            renderer.index("} else if (u_filter == 6)")
+        ]
+        self.assertNotIn("fineGrain", trace_shader)
         self.assertIn("mix(1.0, 0.70, u_intensity)", renderer)
         self.assertIn("1.0 + 0.30 * u_intensity", renderer)
         self.assertNotIn("captureFrozenFrame", renderer)

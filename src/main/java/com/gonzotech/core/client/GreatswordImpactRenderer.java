@@ -123,20 +123,20 @@ final class GreatswordImpactRenderer {
 
                 if (rayActivated) outputBit = negative ? 0.0 : 1.0;
 
-                if (negative) {
-                    // Broken, high-contrast salt-and-pepper grain. Both specks and blocks
-                    // remain binary so the negative frame never introduces gray pixels.
-                    vec2 framePixel = floor(pixel);
-                    float grainFrame = floor(u_effectTime * 60.0);
-                    vec2 grainCell = floor(framePixel / vec2(2.0));
-                    float fineGrain = hash21(grainCell + vec2(grainFrame * 31.0, grainFrame * 17.0));
-                    vec2 blockCell = floor(framePixel / vec2(8.0, 6.0));
-                    float brokenBlock = hash21(blockCell + vec2(grainFrame * 7.0, grainFrame * 13.0));
-                    if (fineGrain < 0.12 || brokenBlock < 0.09) {
-                        outputBit = 1.0 - outputBit;
-                    }
+                color = vec3(outputBit);
+            } else if (u_filter == 6) {
+                // This is a separate final pass: tracer detection has already finished,
+                // so this grain can never become a false ray trigger or interrupt ray marching.
+                float outputBit = source.r >= 0.5 ? 1.0 : 0.0;
+                vec2 pixel = floor(gl_FragCoord.xy);
+                float grainFrame = floor(u_effectTime * 60.0);
+                vec2 grainCell = floor(pixel / vec2(2.0));
+                float fineGrain = hash21(grainCell + vec2(grainFrame * 31.0, grainFrame * 17.0));
+                vec2 blockCell = floor(pixel / vec2(8.0, 6.0));
+                float brokenBlock = hash21(blockCell + vec2(grainFrame * 7.0, grainFrame * 13.0));
+                if (fineGrain < 0.12 || brokenBlock < 0.09) {
+                    outputBit = 1.0 - outputBit;
                 }
-
                 color = vec3(outputBit);
             } else if (u_filter == 5) {
                 // The post-impact state starts at FOV 0.60, brightness x1.30,
@@ -174,12 +174,26 @@ final class GreatswordImpactRenderer {
 
     static boolean applyFilter(RenderTarget screen, Filter filter, float intensity, float effectTime) {
         if (!ensureResources(screen)) return false;
-        if (!drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen,
-            Filter.COPY, 0.0F, effectTime)) {
-            return false;
+
+        if (filter == Filter.NEGATIVE_GRAIN_HDR) {
+            // Stage 1 samples the untouched main target and writes only negative + tracers.
+            if (!drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen,
+                Filter.NEGATIVE_TRACERS, intensity, effectTime)) {
+                return false;
+            }
+            // Stage 2 reads that finished image and lays grain over it; it has no ray logic.
+            return drawTextureToTarget(workingFrame.getColorTextureId(), screen, screen,
+                Filter.GRAIN_OVERLAY, intensity, effectTime);
         }
+
+        if (!copyMainTargetToWorkingFrame(screen, effectTime)) return false;
         return drawTextureToTarget(workingFrame.getColorTextureId(), screen, screen,
             filter, intensity, effectTime);
+    }
+
+    private static boolean copyMainTargetToWorkingFrame(RenderTarget screen, float effectTime) {
+        return drawTextureToTarget(screen.getColorTextureId(), workingFrame, screen,
+            Filter.COPY, 0.0F, effectTime);
     }
 
     private static boolean ensureResources(RenderTarget screen) {
@@ -194,10 +208,11 @@ final class GreatswordImpactRenderer {
                 workingFrame.resize(screen.width, screen.height);
                 workingFrame.setFilterMode(GL11.GL_NEAREST);
             }
+
             return true;
         } catch (RuntimeException exception) {
             LOGGER.error("[Gonzo Tech] Could not allocate greatsword impact-frame target", exception);
-            destroyTarget();
+            destroyTargets();
             return false;
         } finally {
             // Target constructors/resizes may bind their own framebuffer while reallocating.
@@ -375,7 +390,7 @@ final class GreatswordImpactRenderer {
         }
     }
 
-    private static void destroyTarget() {
+    private static void destroyTargets() {
         if (workingFrame != null) {
             workingFrame.destroyBuffers();
             workingFrame = null;
@@ -387,8 +402,10 @@ final class GreatswordImpactRenderer {
         FULL_WHITE(1),
         FULL_BLACK(2),
         BLACK_AND_WHITE_TRACERS(3),
-        NEGATIVE_GRAIN_HDR(4),
-        POST_IMPACT(5);
+        NEGATIVE_TRACERS(4),
+        POST_IMPACT(5),
+        GRAIN_OVERLAY(6),
+        NEGATIVE_GRAIN_HDR(-1);
 
         private final int shaderValue;
 

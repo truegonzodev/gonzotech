@@ -7,6 +7,7 @@ public final class GonzoClientConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue EXTENDED_ADVANCED_TOOLTIPS;
     public static final ModConfigSpec.BooleanValue COSMETIC_FLUID_PARTICLES;
+    public static final ModConfigSpec.BooleanValue GREATSWORD_IMPACT_FRAMES;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -19,6 +20,11 @@ public final class GonzoClientConfig {
                 .comment("Enable cosmetic foam particles on Gonzo fluid surfaces. Client-only; does not affect radiation particles or fluid gameplay.")
                 .translation("gonzotech.configuration.cosmeticFluidParticles")
                 .define("cosmeticFluidParticles", true);
+        GREATSWORD_IMPACT_FRAMES = builder
+                .comment("Enable the greatsword impact sequence: camera shake, flashes, tracers and post-impact optics.",
+                        "Client-only visual effect. Disabling it does not change greatsword damage or other gameplay.")
+                .translation("gonzotech.configuration.greatswordImpactFrames")
+                .define("greatswordImpactFrames", true);
         SPEC = builder.build();
     }
 

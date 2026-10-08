@@ -968,6 +968,8 @@
   "message.gonzotech.clue.elementary": "Piece of cake...",
   "gonzotech.configuration.cosmeticFluidParticles": "Cosmetic Fluid Particles",
   "gonzotech.configuration.cosmeticFluidParticles.tooltip": "Foam on Gonzo Tech fluid surfaces. Visual only; does not affect radiation particles or fluid gameplay.",
+  "gonzotech.configuration.greatswordImpactFrames": "Greatsword Impact Frames",
+  "gonzotech.configuration.greatswordImpactFrames.tooltip": "Enable the camera shake, flashes, tracers, negative grain and post-impact FOV/color effects. Client-side visuals only.",
   "gonzotech.configuration.pipeRoutingDiagnostics": "Pipe Routing Diagnostics",
   "gonzotech.configuration.pipeRoutingDiagnostics.tooltip": "Detailed server logs for pipe routing and topology rebuilds. High-volume and potentially expensive; enable only for a short profiling session. Does not change gameplay.",
   "gui.gonzotech.faint.get_up": "Get up",
