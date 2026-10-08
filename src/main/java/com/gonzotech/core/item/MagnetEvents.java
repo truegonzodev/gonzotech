@@ -18,6 +18,7 @@ public final class MagnetEvents {
     private static final double PICKUP_REACH_MULTIPLIER = 3.0D;
     /** Attraction reaches well beyond the enlarged pickup box. */
     private static final double ATTRACTION_RANGE = 12.0D;
+    private static final double ATTRACTION_RANGE_SQR = ATTRACTION_RANGE * ATTRACTION_RANGE;
     private static final double MAX_ATTRACTION_SPEED = 0.55D;
     private static final double VELOCITY_RESPONSE = 0.25D;
 
@@ -40,7 +41,8 @@ public final class MagnetEvents {
         Vec3 pullTarget = player.position().add(0.0D, 0.5D, 0.0D);
 
         for (ItemEntity item : player.level().getEntitiesOfClass(ItemEntity.class, attractionBox)) {
-            if (!item.isAlive() || item.hasPickUpDelay()) {
+            if (!item.isAlive() || item.hasPickUpDelay()
+                    || pullTarget.distanceToSqr(item.position()) > ATTRACTION_RANGE_SQR) {
                 continue;
             }
 
