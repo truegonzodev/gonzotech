@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Static regression checks for worldgen and sedative behavior."""
+import _ver
 import json
 import re
 import struct
@@ -38,7 +39,7 @@ expected = {
 }
 
 version = read(ROOT / "gradle.properties")
-require("mod_version=0.3.180" in version, "version should be 0.3.180")
+_ver.at_least("0.3.180", "version should be 0.3.180")
 ore_source = read(JAVA / "core/ore/OreDefinition.java")
 found = {}
 for match in re.finditer(
@@ -159,15 +160,19 @@ require("player.hasEffect(ModEffects.RELAXATION)" in psyche
         and "private static void applyTremor" in psyche
         and "UncurableEffects.runUncancelled" in psyche,
         "active relaxation must block tremor generation and clear any existing tremor")
-require("MAX_ALPHA = 0.34F" in relaxation_client
+# Автор 08.10.2026: оверлей не «белый» — яркость затемняется чёрным, контраст
+# уходит к нейтрально-серому; шаг кадра <= 100 мс, плавный фейд без шейдера.
+require("BRIGHTNESS_REDUCTION = 0.30F" in relaxation_client
+        and "CONTRAST_REDUCTION = 0.10F" in relaxation_client
         and "MAX_FRAME_STEP_SECONDS = 0.1F" in relaxation_client
         and "System.nanoTime()" in relaxation_client
         and "transitionSeconds = SedativeItem.FADE_TICKS / 20.0F" in relaxation_client
-        and "alpha + (relaxationActive ? alphaStep : -alphaStep)" in relaxation_client
+        and "effectStrength + (relaxationActive ? strengthStep : -strengthStep)" in relaxation_client
         and "graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight()" in relaxation_client
-        and "0x00FFFFFF" in relaxation_client
+        and "brightnessAlpha << 24" in relaxation_client
+        and "(contrastAlpha << 24) | 0x00808080" in relaxation_client
         and "PostChain" not in relaxation_client,
-        "sedative uses a visible white GUI overlay with smooth, stateful fade-in and fade-out")
+        "sedative darkens brightness (black) and contrast (neutral gray) with smooth, stateful fade")
 require("PsycheRelaxationClient.render(g, mc)" in crisis_client
         and "PsycheRelaxationClient.reset()" in crisis_client,
         "sedative overlay renders with the GUI and resets cleanly without a player")

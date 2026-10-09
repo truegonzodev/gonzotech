@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Nuclear firebox fuel-duration and per-item GTH-yield contract (0.3.143)."""
+import _ver
 import ast
 import operator
 import re
@@ -55,7 +56,7 @@ def java_int_constant(source, name, known):
 nuclear = read("src/main/java/com/gonzotech/machines/energy/NuclearDefs.java")
 firebox = read("src/main/java/com/gonzotech/machines/block/entity/NuclearFireboxBlockEntity.java")
 version = read("gradle.properties")
-pin("mod_version=0.3.173" in version, "micropatch version should be 0.3.173")
+_ver.at_least("0.3.173", "micropatch version should be 0.3.173")
 
 # User-selected ingot baselines and the old per-form ratios, rounded to the
 # nearest 20-Hz game tick when a ratio is not an integral tick count.

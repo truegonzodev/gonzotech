@@ -33,7 +33,9 @@ def method(source, name):
 # Name/unit keys are reused; separators are white literals (author 27.09.2026),
 # numbers stay literal so the base colour can differ from the separators.
 assert 'literal(":")' in tap and 'literal(" /")' in tap
-assert 'ChatFormatting.AQUA)' in tap and 'ChatFormatting.GOLD)' in tap
+# Автор 08.10.2026: цвета кранов = цвета флюидов ГОСТ в GtUnits (дистиллят/сусло),
+# не произвольные ChatFormatting.AQUA/GOLD. Разделители — белый 0xFFFFFF.
+assert 'GtUnits.DISTILLATE)' in tap and 'GtUnits.WORT)' in tap
 # Раунд 14: значения шкал крана — в формате эпохи 3 X.Y (GtUnits.x1).
 # Compile regression: this screen must explicitly import the cross-package formatter.
 assert 'import com.gonzotech.core.text.GtUnits;' in tap

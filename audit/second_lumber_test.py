@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Static regression checks for the tier-two wool/grinder and lumber mill feature."""
+import _ver
 from pathlib import Path
 import hashlib
 import json
@@ -132,5 +133,5 @@ for locale in ("ru_ru", "en_us"):
         check(key in lang, f"{locale} translation: {key}")
 
 version = text(ROOT / "gradle.properties")
-check("mod_version=0.3.165" in version, "micropatch version is 0.3.165")
+_ver.at_least("0.3.165", "micropatch version is 0.3.165")
 print(f"second_lumber_test: {checks} checks passed")

@@ -7,6 +7,7 @@ layer 3 (bottom) = 9 fireclay. Burn x4 vanilla, 34 GTH/t, storage 34 016,
 5 fuel slots insert-only, GTH out through structure nodes.
 """
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path

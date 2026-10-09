@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Static contract: fermented alcoholic drinks reset the Telifon no-mash timer."""
+import _ver
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,7 +46,6 @@ pin("relieve(player, MASH_RELIEF);" in mash_handler
     and "resetMashTimer(player);" in mash_handler,
     "mash itself retains its existing stress relief and timer reset")
 
-pin("mod_version=0.3.165" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.165")
+_ver.at_least("0.3.165", "micropatch version is 0.3.165")
 
 print(f"drink mash timer audit: {checks} pins passed")

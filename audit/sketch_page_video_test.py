@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Static contract for the Scholar Notes video/audio playback and overlay ordering."""
+import _ver
 import json
 import struct
 from pathlib import Path
@@ -128,10 +129,25 @@ pin(any(entry.get("name") == "gonzotech:videoplaybak" for entry in sound_entries
     and (ASSETS / "sounds/videoplaybak.ogg").is_file(),
     "sounds.json points the registered playback event at the committed OGG asset")
 video_ticks = ogg_duration_ticks(ASSETS / "sounds/videoplaybak.ogg")
-pin(abs(video_ticks - 91.0) <= 1.0,
-    f"the OGG keeps its complete ~91-tick duration ({video_ticks:.2f} ticks)")
+# Автор 08.10.2026: OGG намеренно заменён и длиннее видеоряда. Контракт: катсцена
+# (91 кадр) заканчивается и возвращает игрока в игру, а звук доигрывает сам;
+# ESC/закрытие прерывает и видео, и звук.
+pin(video_ticks >= 91.0,
+    f"the author-replaced OGG outlives the 91-frame video ({video_ticks:.2f} ticks)")
+cancel = screen.split("private void cancelSketchPlayback()", 1)[1].split(
+    "private void playSketchVideoSound", 1)[0]
+pin("stopSketchSound()" in cancel and "SketchPlaybackStage.CANCELLED" in cancel,
+    "ESC/close cancels every active stage and stops the sound")
+video_case = screen.split("case VIDEO ->", 1)[1].split("default ->", 1)[0]
+pin("SketchPlaybackStage.FINISHED" in video_case and "stopSketchSound" not in video_case,
+    "natural end leaves the sound running: VIDEO -> FINISHED without stopping audio")
+pin("cancelSketchPlayback();" in screen and "public void onClose()" in screen
+    and "public void removed()" in screen,
+    "onClose and removed both route through cancelSketchPlayback")
+pin("sketchPlaybackStage == SketchPlaybackStage.FADE" in screen
+    and "else if (sketchPlaybackStage == SketchPlaybackStage.VIDEO)" in screen,
+    "the overlay renders only during FADE/VIDEO, so FINISHED returns the player to the game")
 
-pin("mod_version=0.3.165" in (ROOT / "gradle.properties").read_text(encoding="utf-8"),
-    "micropatch version is 0.3.165")
+_ver.at_least("0.3.165", "micropatch version is 0.3.165")
 
 print(f"sketch page video/audio audit: {checks} pins passed")

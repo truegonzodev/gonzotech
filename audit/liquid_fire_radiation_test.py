@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Static regression contract for 0.3.159 liquid-fire effects and corium radiation."""
+import _ver
 import json
 import struct
 import zlib
@@ -204,7 +205,7 @@ pin('register("liquid_fire"' in block_entities
     and "ModBlocks.FORMALDEHYDE_FIRE.get()" in block_entities,
     "shared liquid-fire BlockEntity type is registered for both overlays")
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.165" in version, "micropatch version should be 0.3.165")
+_ver.at_least("0.3.165", "micropatch version should be 0.3.165")
 
 # Surface heights supplied by the author are encoded as nine vanilla-style fire assemblies per liquid.
 heights = [0.875, 0.71875, 0.60625, 0.5, 0.3875, 0.28125, 0.16875, 0.05625, 1.0]

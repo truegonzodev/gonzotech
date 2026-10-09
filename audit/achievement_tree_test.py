@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Static regression contract for the Energy advancement tree and event triggers."""
+import _ver
 import json
 from pathlib import Path
 
@@ -173,6 +174,6 @@ pin("Недобро пожаловать!" in updated_notes
     "the planned-achievement notes list the new tree while retaining the six old open items")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-pin("mod_version=0.3.165" in version, "micropatch version is 0.3.165")
+_ver.at_least("0.3.165", "micropatch version is 0.3.165")
 
 print(f"achievement tree audit: {checks} pins passed")

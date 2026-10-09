@@ -70,7 +70,18 @@ check(atlas['sprite'] == variant['asset_id'] and atlas['resource'] == 'gonzotech
 check(data('assets/gonzotech/items/gonzo_painting.json')['model']['model'] == 'minecraft:item/painting', 'vanilla inventory model')
 check('Rarity.UNCOMMON' in read('core/item/GonzoPaintingItem.java'), 'uncommon item')
 check('GonzoPaintingMixin' in data('gonzotech.mixins.json')['mixins'], 'custom variant pick/drop hooks registered')
-check('ModSounds.register(modEventBus)' in read('GonzoTechMod.java') and data('assets/gonzotech/sounds.json') == {}, 'future sounds wired, no missing fake sound')
+# Автор 08.10.2026: sounds.json больше не пуст — в нём реальные звуки. Пин стал
+# проверять не «пустоту», а что каждый зарегистрированный звук ссылается на
+# существующий OGG (никаких фейковых/пропавших ассетов).
+_sound_json = data('assets/gonzotech/sounds.json')
+# Проверяем только gonzotech:-звуки: minecraft:-входы ссылаются на ванильные
+# ассеты, которых в ресурсах мода нет и быть не должно.
+_missing = [s['name'] for _ev in _sound_json.values() for s in _ev.get('sounds', [])
+            if str(s.get('name', '')).startswith('gonzotech:')
+            and not (RES / 'assets/gonzotech/sounds' /
+                     (s['name'].split(':', 1)[-1] + '.ogg')).is_file()]
+check('ModSounds.register(modEventBus)' in read('GonzoTechMod.java') and not _missing,
+      'sounds wired; every registered sound maps to a committed OGG (no fake entries)')
 
 home = os.environ.get('JAVA_HOME')
 java = str(Path(home) / 'bin/java') if home else shutil.which('java')

@@ -323,7 +323,7 @@ for pin in ('PipeLoss.delivered(amount, lossMilli);','PipeLoss.flow(accepted, lo
             'if (st.getBlock() instanceof UniversalNodeBlock) continue;',
             # 0.3.110: экранированная семья эпохи 3 — потери за клетку ×0.88
             'Math.round(PipeLoss.perCell(true, heatType) * ThirdTierPipe.STAT_FACTOR)',
-            'lanes.add(new Lane(raw, null, 0));'):
+            'lanes.add(new Lane(raw, null, 0, pos));'):
     assert pin in pipe_routing_code, 'routing loss pin: '+pin
 assert pipe_routing_code.count('pathLossCells(level, path,') == 3  # 0.3.90: 2 билдера дорожек + обёртка pathLoss
 
@@ -406,8 +406,8 @@ assert 'CAPACITY_MILLI = 6_204_000L;' in litho and 'INTAKE_MILLI_PER_TICK = 96_0
 fcycle=(ROOT/'src/main/java/com/gonzotech/cleanroom/FilterCycle.java').read_text()
 assert 'CAPACITY_GTU = 2202;' in fcycle and 'INTAKE_MILLI_PER_TICK = 52000;' in fcycle
 chem=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/ChemicalPlantBlockEntity.java').read_text()
-assert 'GTU_CAPACITY = 10_840L;' in chem and 'MAX_GTU_INTAKE_MILLI = 96L * MachineDefs.MILLI;' in chem
-assert 'REACTION_TICKS = 240;' in chem  # ×1.5 время, расход/тик прежний → 456 GTU за реакцию
+assert 'GTU_CAPACITY = 2_560L;' in chem and 'MAX_GTU_INTAKE_MILLI = 96L * MachineDefs.MILLI;' in chem
+assert 'REACTION_TICKS = ChemicalPlantRecipes.DEFAULT_REACTION_TICKS;' in chem
 filler=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/FillerBlockEntity.java').read_text()
 assert 'GTU_CAPACITY = 8_808;' in filler and 'CANISTER_DRAIN_PER_TICK = 128;' in filler
 assert 'Math.min(amount, 96L * MachineDefs.MILLI)' in filler  # приём GTU 96
@@ -451,7 +451,7 @@ for pin in ('e.lossMilli = payload.lossMilli();',
 for pin in ('private static long[] pathLossCells(Level level, List<PathStep> path, PipeType type)',
             'FlowTracker.recordLoss(level, s.pipe(), type, cumulative);',
             'cumulative = PipeLoss.prefix(lossCells, i);',
-            'lanes.add(new Lane(recording(level, raw, type, path, lossCells), path, loss));'):
+            'lanes.add(new Lane(recording(level, observed, type, path, lossCells), path, loss, pos));'):
     assert pin in pipe_routing_code, 'routing 0.3.60 pin: '+pin
 assert pipe_routing_code.count('pathLossCells(level, path,') == 3
 
