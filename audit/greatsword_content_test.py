@@ -140,7 +140,7 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("1.95` с V", docs)
         self.assertIn("0.05` к скорости атаки за уровень", docs)
         self.assertIn("270, 237 и 204 тика", docs)
-        self.assertIn("Снимок реализации:** 0.3.173", docs)
+        self.assertIn("Снимок реализации:** 0.3.181", docs)
 
     def test_static_stats_and_charge_formula_are_pinned(self):
         source = (ROOT / "src/main/java/com/gonzotech/core/registry/GreatswordContent.java").read_text(encoding="utf-8")
@@ -276,33 +276,60 @@ class GreatswordContentTest(unittest.TestCase):
         ):
             self.assertIn(contract, combat)
 
-    def test_greatsword_models_scale_only_hand_and_ground_contexts(self):
+    def test_greatsword_models_double_length_and_width_but_keep_vanilla_depth(self):
+        # Автор 08.10.2026: квад большого меча — ×2 по длине и ширине, а ГЛУБИНА
+        # (локальная Z модели) остаётся ванильной, как у обычных предметов.
+        # Эталон глубины — ваниль 1.21.4: item/handheld даёт firstperson 0.68 и
+        # thirdperson 0.85, item/generated — ground 0.5; gui не задан нигде в
+        # цепочке handheld → generated → builtin/generated, то есть identity 1.0.
         expected = {
             "firstperson_righthand": {
                 "rotation": [0, -90, 25],
                 "translation": [1.13, 3.2, 1.13],
-                "scale": [1.36, 1.36, 1.36],
+                "scale": [1.36, 1.36, 0.68],
             },
             "firstperson_lefthand": {
                 "rotation": [0, 90, -25],
                 "translation": [1.13, 3.2, 1.13],
-                "scale": [1.36, 1.36, 1.36],
+                "scale": [1.36, 1.36, 0.68],
             },
             "thirdperson_righthand": {
                 "rotation": [0, -90, 55],
                 "translation": [0, 4.0, 0.5],
-                "scale": [1.7, 1.7, 1.7],
+                "scale": [1.7, 1.7, 0.85],
             },
             "thirdperson_lefthand": {
                 "rotation": [0, 90, -55],
                 "translation": [0, 4.0, 0.5],
-                "scale": [1.7, 1.7, 1.7],
+                "scale": [1.7, 1.7, 0.85],
             },
             "ground": {
                 "rotation": [0, 0, 0],
                 "translation": [0, 2, 0],
-                "scale": [1, 1, 1],
+                "scale": [1, 1, 0.5],
             },
+            # Автор 08.10.2026 (ответ на вопрос): рамка и голова тоже ×2 по
+            # длине/ширине. Rotation/translation — ванильные из item/generated.
+            "head": {
+                "rotation": [0, 180, 0],
+                "translation": [0, 13, 7],
+                "scale": [2, 2, 1],
+            },
+            "fixed": {
+                "rotation": [0, 180, 0],
+                "scale": [2, 2, 1],
+            },
+        }
+        # Отрицательный пин: ни в одном контексте глубина не масштабируется.
+        vanilla_depth = {
+            "gui": 1.0,
+            "firstperson_righthand": 0.68,
+            "firstperson_lefthand": 0.68,
+            "thirdperson_righthand": 0.85,
+            "thirdperson_lefthand": 0.85,
+            "ground": 0.5,
+            "head": 1.0,
+            "fixed": 1.0,
         }
         for item in GREATWORDS:
             with self.subTest(item=item):
@@ -312,10 +339,16 @@ class GreatswordContentTest(unittest.TestCase):
                 self.assertEqual(model["display"]["gui"], {
                     "rotation": [0, 0, 0],
                     "translation": [0, 0, 0],
-                    "scale": [2, 2, 2],
+                    "scale": [2, 2, 1],
                 })
                 for context, transform in expected.items():
                     self.assertEqual(model["display"][context], transform)
+                for context, depth in vanilla_depth.items():
+                    self.assertAlmostEqual(
+                        model["display"][context]["scale"][2],
+                        depth,
+                        msg=f"{item}: глубина {context} обязана остаться ванильной",
+                    )
 
     def test_greatsword_sound_events_are_registered_and_have_audio(self):
         sounds = read_json(ASSETS / "sounds.json")
