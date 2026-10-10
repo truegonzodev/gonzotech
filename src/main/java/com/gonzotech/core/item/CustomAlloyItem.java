@@ -26,6 +26,60 @@ public final class CustomAlloyItem extends Item {
         super(properties);
     }
 
+    /**
+     * Динамическое имя: один и тот же премдет {@code custom_alloy} называется по
+     * составу — «<преобладающая характеристика> <класс энтропии> сплав».
+     * Например иридий+осмий (тяжёлые, равные доли) → «Тяжёлый среднеэнтропийный
+     * сплав». Без состава (пустой/битый стек) возвращается базовое имя, а
+     * переименование в наковальне по-прежнему перекрывает этот хук (ItemStack
+     * сначала смотрит custom name, потом {@link Item#getName}).
+     */
+    @Override
+    public Component getName(ItemStack stack) {
+        AlloyComposition composition = stack.get(ModDataComponents.ALLOY_COMPOSITION.get());
+        if (composition == null) return super.getName(stack);
+        AlloyProperties properties = AlloyProperties.from(composition).orElse(null);
+        if (properties == null) return super.getName(stack);
+        return Component.translatable("item.gonzotech.custom_alloy.named",
+            Component.translatable("alloy.gonzotech.adjective." + dominantTrait(properties)),
+            Component.translatable("alloy.gonzotech.entropy." + entropyClass(composition)));
+    }
+
+    /** Ключ самой преобладающей характеристики (при равенстве — первая по порядку). */
+    private static String dominantTrait(AlloyProperties properties) {
+        int best = properties.strength();
+        String key = "strength";
+        if (properties.brittleness() > best) { best = properties.brittleness(); key = "brittleness"; }
+        if (properties.inertness() > best) { best = properties.inertness(); key = "inertness"; }
+        if (properties.conductivity() > best) { best = properties.conductivity(); key = "conductivity"; }
+        if (properties.heatResistance() > best) { best = properties.heatResistance(); key = "heat"; }
+        if (properties.plasticity() > best) { best = properties.plasticity(); key = "plasticity"; }
+        if (properties.weight() > best) { key = "weight"; }
+        return key;
+    }
+
+    /**
+     * Класс энтропии по числу компонентов и доле крупнейшего:
+     * основа &gt;85% — легированный; &gt;50% — низкоэнтропийный; иначе по количеству
+     * равнозначных элементов: 14+ сверх-, 5+ высоко-, 2–4 среднеэнтропийный.
+     */
+    private static String entropyClass(AlloyComposition composition) {
+        int total = 0;
+        int max = 0;
+        for (int value : composition.parts().values()) {
+            total += value;
+            if (value > max) max = value;
+        }
+        if (total <= 0) return "medium";
+        double maxFraction = (double) max / total;
+        if (maxFraction > 0.85D) return "legated";
+        if (maxFraction > 0.50D) return "low";
+        int count = composition.parts().size();
+        if (count >= 14) return "super";
+        if (count >= 5) return "high";
+        return "medium";
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         AlloyComposition composition = stack.get(ModDataComponents.ALLOY_COMPOSITION.get());
