@@ -48,7 +48,8 @@ public final class GonzoInfoButton extends AbstractWidget {
         graphics.fill(x, y, x + 1, y + h, edge);
         graphics.fill(x + w - 1, y, x + w, y + h, edge);
         int inset = Math.max(2, (w - 16) / 2 + 1);
-        graphics.blit(ICON, x + inset / 2 + 1, y + inset / 2 + 1, 0.0F, 0.0F, 16, 16, 16, 16);
+        graphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, ICON,
+            x + inset / 2 + 1, y + inset / 2 + 1, 0.0F, 0.0F, 16, 16, 16, 16);
     }
 
     @Override

@@ -8,7 +8,7 @@ import net.minecraft.world.level.GameType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerLoggedInEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 
 import java.io.IOException;
@@ -51,27 +51,30 @@ public final class OnboardingClient {
         if (!autoShownThisSession && !hasMarker(ONBOARDED_FILE)) {
             autoShownThisSession = true;
             Minecraft mc = Minecraft.getInstance();
-            mc.tell(() -> mc.setScreen(new GonzoOnboardingScreen()));
+            mc.execute(() -> mc.setScreen(new GonzoOnboardingScreen()));
         }
     }
 
-    /** Приветствие в чат при самом первом входе в мир. */
+    /** Приветствие в чат при самом первом входе в мир (детект по первому тику в мире). */
     @SubscribeEvent
-    public static void onFirstJoin(ClientPlayerLoggedInEvent event) {
+    public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || hasMarker(WELCOMED_FILE)) {
+        if (mc.player == null || mc.level == null || mc.screen != null || hasMarker(WELCOMED_FILE)) {
             return;
         }
         writeMarker(WELCOMED_FILE);
-        boolean hardcore = mc.player.level().getLevelData().isHardcore();
-        GameType mode = mc.player.gameMode != null
-            ? mc.player.gameMode.getGameModeForPlayer() : GameType.SURVIVAL;
+        boolean hardcore = mc.level.getLevelData().isHardcore();
+        GameType mode = mc.gameMode != null ? mc.gameMode.getPlayerMode() : GameType.SURVIVAL;
         String key = hardcore ? "gui.gonzotech.welcome.hardcore"
             : (mode == GameType.SURVIVAL || mode == GameType.ADVENTURE)
                 ? "gui.gonzotech.welcome.survival"
                 : "gui.gonzotech.welcome.generic";
         Component message = Component.translatable(key);
-        mc.tell(() -> mc.player.displayClientMessage(message, false));
+        mc.execute(() -> {
+            if (mc.player != null) {
+                mc.player.displayClientMessage(message, false);
+            }
+        });
     }
 
     /** Вызывается онбординг-экраном при закрытии. */

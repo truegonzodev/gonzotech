@@ -36,7 +36,7 @@ check((TEX / "onboarding_panel.png").is_file(), "panel placeholder PNG exists")
 
 onb = (JAVA / "core/client/onboard/OnboardingClient.java").read_text(encoding="utf-8")
 check("@EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = Dist.CLIENT)" in onb, "client subscriber registered")
-check("ScreenEvent.Init.Post" in onb and "ClientPlayerLoggedInEvent" in onb, "hooks title init and first join")
+check("ScreenEvent.Init.Post" in onb and "ClientTickEvent.Post" in onb, "hooks title init and first join")
 check("gonzotech_onboarded.marker" in onb and "gonzotech_welcomed.marker" in onb, "first-run flags persisted")
 
 screen = (JAVA / "core/client/onboard/GonzoOnboardingScreen.java").read_text(encoding="utf-8")

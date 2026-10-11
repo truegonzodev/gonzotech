@@ -61,17 +61,15 @@ public final class GonzoOnboardingScreen extends Screen {
         y += 14;
 
         String raw = Component.translatable("gui.gonzotech.onboarding.body").getString();
-        List<String> lines = new ArrayList<>();
+        List<net.minecraft.util.FormattedCharSequence> lines = new ArrayList<>();
         for (String paragraph : raw.split("\n")) {
             if (paragraph.isBlank()) {
-                lines.add("");
+                lines.add(Component.literal(" ").getVisualOrderText());
                 continue;
             }
-            for (Component line : this.font.split(Component.literal(paragraph), textWidth)) {
-                lines.add(line.getString());
-            }
+            lines.addAll(this.font.split(Component.literal(paragraph), textWidth));
         }
-        for (String line : lines) {
+        for (net.minecraft.util.FormattedCharSequence line : lines) {
             if (y > bottom - 12) break;
             graphics.drawString(this.font, line, left + 12, y, 0xFF_D7D7D7, false);
             y += this.font.lineHeight + LINE_SPACING;
