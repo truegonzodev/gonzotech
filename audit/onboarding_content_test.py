@@ -33,11 +33,16 @@ for lang in ("ru_ru", "en_us"):
 
 check((TEX / "onboarding_button.png").is_file(), "icon PNG exists")
 check((TEX / "onboarding_panel.png").is_file(), "panel placeholder PNG exists")
+check((TEX / "onboarding_frame.png").is_file(), "frame placeholder PNG exists")
+# Суперплоский мир: оверворлд не должен быть переопределён датапаком.
+check(not (RES / "data/minecraft/dimension/overworld.json").exists(),
+      "overworld dimension override removed (superflat works)")
 
 onb = (JAVA / "core/client/onboard/OnboardingClient.java").read_text(encoding="utf-8")
 check("@EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = Dist.CLIENT)" in onb, "client subscriber registered")
 check("ScreenEvent.Init.Post" in onb and "ClientTickEvent.Post" in onb, "hooks title init and first join")
-check("gonzotech_onboarded.marker" in onb and "gonzotech_welcomed.marker" in onb, "first-run flags persisted")
+check("gonzotech_onboarded.marker" in onb and "gonzotech_welcomed_" in onb and "currentWorldKey" in onb,
+      "onboard flag global + welcome marker per-world")
 
 screen = (JAVA / "core/client/onboard/GonzoOnboardingScreen.java").read_text(encoding="utf-8")
 check("extends Screen" in screen and "gui.gonzotech.onboarding.body" in screen, "onboarding screen renders lang body")

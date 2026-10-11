@@ -16,20 +16,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Клиентский онбординг первого запуска: кнопка «О моде» в главном меню,
- * авто-показ экрана-введения при первом запуске и приветствие в чат при первом
- * входе в мир (пересказ описания выбранного режима).
+ * Клиентский онбординг: кнопка «О моде» в главном меню, авто-показ экрана-введения
+ * при первом запуске и приветствие в чат при первом входе в каждый новый мир.
  *
- * <p>Флаги «онбординг показан» и «приветствие отправлено» хранятся маркер-
- * файлами в каталоге игры, чтобы не показывать повторно.
+ * <p>Флаг «онбординг показан» хранится глобальным маркер-файлом в каталоге игры.
+ * Приветствие показывается один раз на мир: маркер пишется в каталог игры с
+ * именем, производным от идентификатора мира (папка одиночной игры или адрес
+ * сервера), поэтому каждый новый мир получает своё приветствие.
  */
 @EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = Dist.CLIENT)
 public final class OnboardingClient {
 
     private static final String ONBOARDED_FILE = "gonzotech_onboarded.marker";
-    private static final String WELCOMED_FILE = "gonzotech_welcomed.marker";
+    private static final String WELCOMED_PREFIX = "gonzotech_welcomed_";
 
     private static boolean autoShownThisSession = false;
+    /** -1 = не определено; >0 = тики до отправки; 0 = отправить на следующем тике. */
+    private static int welcomeDelay = -1;
 
     private OnboardingClient() {
     }
@@ -41,7 +44,8 @@ public final class OnboardingClient {
             return;
         }
         int x = title.width / 2 + 104;
-        int y = title.height / 4 + 48;
+        // Поднята на 16 px выше базовой позиции (height/4 + 48 → + 32).
+        int y = title.height / 4 + 32;
         GonzoInfoButton button = new GonzoInfoButton(x, y, 20, b ->
             Minecraft.getInstance().setScreen(new GonzoOnboardingScreen()));
         button.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
@@ -55,14 +59,41 @@ public final class OnboardingClient {
         }
     }
 
-    /** Приветствие в чат при самом первом входе в мир (детект по первому тику в мире). */
+    /** Приветствие в чат при первом входе в каждый новый мир. */
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null || mc.screen != null || hasMarker(WELCOMED_FILE)) {
+        if (mc.player == null || mc.level == null) {
+            welcomeDelay = -1;
             return;
         }
-        writeMarker(WELCOMED_FILE);
+        // Не шлём, пока открыт экран (меню/загрузка).
+        if (mc.screen != null) {
+            return;
+        }
+        if (welcomeDelay == -1) {
+            String worldKey = currentWorldKey(mc);
+            if (worldKey == null) {
+                return;
+            }
+            String marker = WELCOMED_PREFIX + sanitize(worldKey) + ".marker";
+            if (hasMarker(marker)) {
+                return;
+            }
+            writeMarker(marker);
+            // Небольшая задержка, чтобы чат-HUD успел инициализироваться.
+            welcomeDelay = 20;
+            return;
+        }
+        if (welcomeDelay > 0) {
+            welcomeDelay--;
+            return;
+        }
+        sendWelcome(mc);
+        welcomeDelay = -1;
+    }
+
+    private static void sendWelcome(Minecraft mc) {
         boolean hardcore = mc.level.getLevelData().isHardcore();
         GameType mode = mc.gameMode != null ? mc.gameMode.getPlayerMode() : GameType.SURVIVAL;
         String key = hardcore ? "gui.gonzotech.welcome.hardcore"
@@ -77,9 +108,36 @@ public final class OnboardingClient {
         });
     }
 
+    /** Идентификатор текущего мира: папка одиночной игры или адрес сервера. */
+    private static String currentWorldKey(Minecraft mc) {
+        var server = mc.getSingleplayerServer();
+        if (server != null) {
+            try {
+                return "sp_" + server.storageSource.getLevelId();
+            } catch (RuntimeException e) {
+                return "sp_unknown";
+            }
+        }
+        var data = mc.getCurrentServer();
+        if (data != null && data.ip != null && !data.ip.isEmpty()) {
+            return "mp_" + data.ip;
+        }
+        return null;
+    }
+
     /** Вызывается онбординг-экраном при закрытии. */
     public static void markOnboarded() {
         writeMarker(ONBOARDED_FILE);
+    }
+
+    private static String sanitize(String raw) {
+        StringBuilder sb = new StringBuilder(raw.length());
+        for (int i = 0; i < raw.length(); i++) {
+            char c = raw.charAt(i);
+            sb.append((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                || (c >= '0' && c <= '9') || c == '-' || c == '_' ? c : '_');
+        }
+        return sb.toString();
     }
 
     private static Path markerPath(String name) {

@@ -1,10 +1,14 @@
 package com.gonzotech.core.client.onboard;
 
+import com.gonzotech.GonzoTechMod;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +21,15 @@ import java.util.List;
  * <p>Вызывается автоматически при первом запуске и по кнопке «О моде» из
  * главного меню. Текст собирается из lang-ключа
  * {@code gui.gonzotech.onboarding.body} (переносы строк — {@code \n}).
+ * Окно оформлено накладной рамкой {@code onboarding_frame.png} (912×445).
  */
 public final class GonzoOnboardingScreen extends Screen {
 
-    private static final int PANEL_MARGIN = 24;
+    /** Плейсхолдер рамки окна (912×445 текстелей, ×2 на мониторе). */
+    private static final ResourceLocation FRAME =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/gui/onboarding_frame.png");
+    private static final int FRAME_W = 912;
+    private static final int FRAME_H = 445;
     private static final int LINE_SPACING = 2;
 
     public GonzoOnboardingScreen() {
@@ -31,9 +40,10 @@ public final class GonzoOnboardingScreen extends Screen {
     protected void init() {
         super.init();
         int buttonWidth = 160;
+        int bottom = Math.min(this.height, Math.max(0, (this.height - FRAME_H) / 2) + FRAME_H);
         this.addRenderableWidget(Button.builder(Component.translatable("gui.gonzotech.onboarding.ok"),
                 button -> this.onClose())
-            .bounds(this.width / 2 - buttonWidth / 2, this.height - 32, buttonWidth, 20)
+            .bounds(this.width / 2 - buttonWidth / 2, bottom - 28, buttonWidth, 20)
             .build());
     }
 
@@ -47,13 +57,12 @@ public final class GonzoOnboardingScreen extends Screen {
     }
 
     private void drawPanel(GuiGraphics graphics) {
-        int left = PANEL_MARGIN;
-        int right = this.width - PANEL_MARGIN;
-        int top = PANEL_MARGIN;
-        int bottom = this.height - 40;
+        int left = Math.max(0, (this.width - FRAME_W) / 2);
+        int top = Math.max(0, (this.height - FRAME_H) / 2);
+        int right = Math.min(this.width, left + FRAME_W);
+        int bottom = Math.min(this.height, top + FRAME_H);
+        // Тёмная подложка для читаемости текста (серые полосы убраны — их заменяет рамка).
         graphics.fill(left, top, right, bottom, 0xCC_101010);
-        graphics.fill(left, top, right, top + 1, 0xFF_555555);
-        graphics.fill(left, bottom - 1, right, bottom, 0xFF_555555);
 
         int textWidth = right - left - 24;
         int y = top + 10;
@@ -61,7 +70,7 @@ public final class GonzoOnboardingScreen extends Screen {
         y += 14;
 
         String raw = Component.translatable("gui.gonzotech.onboarding.body").getString();
-        List<net.minecraft.util.FormattedCharSequence> lines = new ArrayList<>();
+        List<FormattedCharSequence> lines = new ArrayList<>();
         for (String paragraph : raw.split("\n")) {
             if (paragraph.isBlank()) {
                 lines.add(Component.literal(" ").getVisualOrderText());
@@ -69,11 +78,14 @@ public final class GonzoOnboardingScreen extends Screen {
             }
             lines.addAll(this.font.split(Component.literal(paragraph), textWidth));
         }
-        for (net.minecraft.util.FormattedCharSequence line : lines) {
+        for (FormattedCharSequence line : lines) {
             if (y > bottom - 12) break;
             graphics.drawString(this.font, line, left + 12, y, 0xFF_D7D7D7, false);
             y += this.font.lineHeight + LINE_SPACING;
         }
+
+        // Рамка поверх (плейсхолдер 912×445, 1:1).
+        graphics.blit(RenderType::guiTextured, FRAME, left, top, 0.0F, 0.0F, FRAME_W, FRAME_H, FRAME_W, FRAME_H);
     }
 
     @Override

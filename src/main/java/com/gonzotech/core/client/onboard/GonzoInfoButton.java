@@ -16,6 +16,10 @@ public final class GonzoInfoButton extends AbstractWidget {
 
     private static final ResourceLocation ICON =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/gui/onboarding_button.png");
+    private static final ResourceLocation PANEL =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/gui/onboarding_panel.png");
+    private static final ResourceLocation PANEL =
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/gui/onboarding_panel.png");
 
     public GonzoInfoButton(int x, int y, int size, OnPress onPress) {
         super(x, y, size, size, Component.translatable("gui.gonzotech.onboarding.button.tooltip"));
@@ -41,15 +45,18 @@ public final class GonzoInfoButton extends AbstractWidget {
         int y = this.getY();
         int w = this.getWidth();
         int h = this.getHeight();
-        // Простая подложка: рамка ярче при наведении.
-        int edge = this.isHoveredOrFocused() ? 0xFF_FFFFFF : 0xFF_8B8B8B;
+        // Обводка: чёрная в обычном состоянии, белая при наведении/выборе.
+        int edge = this.isHoveredOrFocused() ? 0xFF_FFFFFF : 0xFF_000000;
         graphics.fill(x, y, x + w, y + 1, edge);
         graphics.fill(x, y + h - 1, x + w, y + h, edge);
         graphics.fill(x, y, x + 1, y + h, edge);
         graphics.fill(x + w - 1, y, x + w, y + h, edge);
-        int inset = Math.max(2, (w - 16) / 2 + 1);
+        // Внутренность кнопки (18×18): заливка-панель, поверх — иконка.
+        int inner = Math.max(0, Math.min(w, h) - 2);
+        graphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, PANEL,
+            x + 1, y + 1, 0.0F, 0.0F, inner, inner, 18, 18);
         graphics.blit(net.minecraft.client.renderer.RenderType::guiTextured, ICON,
-            x + inset / 2 + 1, y + inset / 2 + 1, 0.0F, 0.0F, 16, 16, 16, 16);
+            x + 1, y + 1, 0.0F, 0.0F, inner, inner, 18, 18);
     }
 
     @Override
