@@ -18,8 +18,6 @@ public final class GonzoInfoButton extends AbstractWidget {
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/gui/onboarding_button.png");
     private static final ResourceLocation PANEL =
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/gui/onboarding_panel.png");
-    private static final ResourceLocation PANEL =
-        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "textures/gui/onboarding_panel.png");
 
     public GonzoInfoButton(int x, int y, int size, OnPress onPress) {
         super(x, y, size, size, Component.translatable("gui.gonzotech.onboarding.button.tooltip"));

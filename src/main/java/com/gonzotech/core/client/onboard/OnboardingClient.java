@@ -110,13 +110,15 @@ public final class OnboardingClient {
 
     /** Идентификатор текущего мира: папка одиночной игры или адрес сервера. */
     private static String currentWorldKey(Minecraft mc) {
+        if (mc.level == null) {
+            return null;
+        }
         var server = mc.getSingleplayerServer();
         if (server != null) {
-            try {
-                return "sp_" + server.storageSource.getLevelId();
-            } catch (RuntimeException e) {
-                return "sp_unknown";
-            }
+            // Имя папки одиночной игры клиенту недоступно (storageSource protected),
+            // поэтому ключ мира — стабильная точка спавна.
+            var spawn = mc.level.getLevelData().getSpawnPos();
+            return "sp_" + spawn.getX() + "_" + spawn.getY() + "_" + spawn.getZ();
         }
         var data = mc.getCurrentServer();
         if (data != null && data.ip != null && !data.ip.isEmpty()) {
