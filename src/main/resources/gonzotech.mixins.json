@@ -25,7 +25,8 @@
     "WolfFatnessMixin",
     "GonzoPaintingMixin",
     "PistonHeadBlockMixin",
-    "PistonBaseBlockMixin"
+    "PistonBaseBlockMixin",
+    "OverworldBiomeBuilderDesolationMixin"
   ],
   "client": [
     "client.AdvancementTabMixin",
