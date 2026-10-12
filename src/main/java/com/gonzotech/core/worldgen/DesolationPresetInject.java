@@ -1,6 +1,7 @@
 package com.gonzotech.core.worldgen;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.mixin.LiveBiomeSourceDesolationMixin;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -10,7 +11,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -66,6 +66,7 @@ public final class DesolationPresetInject {
                     + "инжект в пресет пропущен");
                 return;
             }
+            LiveBiomeSourceDesolationMixin.gonzotech$cacheDesolation(desolation);
             MultiNoiseBiomeSourceParameterList list = server.registryAccess()
                 .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
                 .get(OVERWORLD_LIST)
@@ -114,11 +115,19 @@ public final class DesolationPresetInject {
                     + "LevelEvent.Load — дозаправка источника пропущена");
                 return;
             }
-            BiomeSource source = serverLevel.getChunkSource().getGenerator().getBiomeSource();
-            if (source instanceof DesolationPresetExt ext) {
+            LiveBiomeSourceDesolationMixin.gonzotech$cacheDesolation(desolation);
+            MultiNoiseBiomeSourceParameterList entry = serverLevel.registryAccess()
+                .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .get(OVERWORLD_LIST)
+                .map(Holder::value)
+                .orElse(null);
+            if (entry instanceof DesolationPresetExt ext) {
                 ext.gonzotech$addDesolationPoints(desolation);
-                LOGGER.info("[gonzotech] desolation: климат-точки живого источника "
-                    + "оверворлда проверены/дописаны (LevelEvent.Load)");
+                LOGGER.info("[gonzotech] desolation: холдер закэширован, запись "
+                    + "пресета проверена/дописана (LevelEvent.Load)");
+            } else {
+                LOGGER.info("[gonzotech] desolation: холдер закэширован для живых "
+                    + "источников (LevelEvent.Load)");
             }
         } catch (Throwable t) {
             LOGGER.warn("[gonzotech] desolation: дозаправка источника не выполнена: {}",

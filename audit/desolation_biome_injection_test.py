@@ -80,19 +80,24 @@ mixcfg = json.load(open(os.path.join(RES, "gonzotech.mixins.json"), encoding="ut
 check("MultiNoiseParameterListDesolationMixin" in mixcfg.get("mixins", []),
       "mixin пресета не зарегистрирован")
 
-# 0.3.195: дозаправка живого источника на перезаходе
+# 0.3.197: живой источник правится перехватом ВОЗВРАТА parameters()
+# (в 1.21.4 у MultiNoiseBiomeSource нет теневого поля — хранение на Either,
+# список отдаёт метод parameters(); @Shadow field крашил bootstrap).
 src_mx = os.path.join(JAVA, "mixin", "LiveBiomeSourceDesolationMixin.java")
 check(os.path.isfile(src_mx), "нет LiveBiomeSourceDesolationMixin.java")
 if os.path.isfile(src_mx):
     sm = read(src_mx)
-    check("implements DesolationPresetExt" in sm and "@Mutable" in sm,
-          "source-mixin не реализует контракт/нет @Mutable parameters")
+    check("method = \"parameters\"" in sm and "@At(\"RETURN\")" in sm,
+          "source-mixin не перехватывает возврат parameters()")
+    check("setReturnValue" in sm and "gonzotech$cacheDesolation" in sm,
+          "source-mixin: нет подмены возврата/кэша холдера")
+    check("@Shadow" not in sm, "source-mixin снова тянет @Shadow (поле недоступно в 1.21.4)")
 check("LiveBiomeSourceDesolationMixin" in mixcfg.get("mixins", []),
       "LiveBiomeSourceDesolationMixin не зарегистрирован")
 inj_src = read(inj)
 check("LevelEvent.Load" in inj_src, "нет дозаправки на LevelEvent.Load")
 check("Level.OVERWORLD" in inj_src, "дозаправка не ограничена оверворлдом")
-check("getBiomeSource" in inj_src, "дозаправка не трогает живой источник генератора")
+check("gonzotech$cacheDesolation" in inj_src, "обработчик не кэширует холдер для source-mixin")
 
 # 4. контент по биому
 conv = read(os.path.join(JAVA, "core", "worldgen", "DesolationConversionFeature.java"))
