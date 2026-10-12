@@ -10,7 +10,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -56,6 +59,7 @@ public final class DesolationPresetInject {
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
         try {
             MinecraftServer server = event.getServer();
+            DesolationLiveCache.trackOverworldSource(null);
             Holder<Biome> desolation = server.registryAccess()
                 .lookupOrThrow(Registries.BIOME)
                 .get(DESOLATION)
@@ -115,6 +119,19 @@ public final class DesolationPresetInject {
                 return;
             }
             DesolationLiveCache.cacheDesolation(desolation);
+
+            ChunkGenerator generator = serverLevel.getChunkSource().getGenerator();
+            BiomeSource biomeSource = generator.getBiomeSource();
+            boolean multiNoiseOverworld = biomeSource instanceof MultiNoiseBiomeSource;
+            if (multiNoiseOverworld) {
+                // Track before querying parameters/possibleBiomes; callbacks now
+                // augment only this world's Overworld source, never the Nether.
+                DesolationLiveCache.trackOverworldSource(biomeSource);
+            } else {
+                LOGGER.info("[gonzotech] desolation: Overworld использует не MultiNoise "
+                    + "BiomeSource; live-инжект пропущен (например, superflat)");
+            }
+
             MultiNoiseBiomeSourceParameterList entry = serverLevel.registryAccess()
                 .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
                 .get(OVERWORLD_LIST)
@@ -127,6 +144,15 @@ public final class DesolationPresetInject {
             } else {
                 LOGGER.info("[gonzotech] desolation: холдер закэширован для живых "
                     + "источников (LevelEvent.Load)");
+            }
+
+            if (multiNoiseOverworld) {
+                // validate() may have memoized the old biome/feature set before
+                // the world was opened. Rebuild its index after both source
+                // hooks are active, or decoration can resolve a feature to -1.
+                generator.refreshFeaturesPerStep();
+                LOGGER.info("[gonzotech] desolation: обновлён порядок placed-фич "
+                    + "генератора Overworld");
             }
         } catch (Throwable t) {
             LOGGER.warn("[gonzotech] desolation: дозаправка источника не выполнена: {}",

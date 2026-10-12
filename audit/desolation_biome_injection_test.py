@@ -100,6 +100,27 @@ inj_src = read(inj)
 check("LevelEvent.Load" in inj_src, "нет дозаправки на LevelEvent.Load")
 check("Level.OVERWORLD" in inj_src, "дозаправка не ограничена оверворлдом")
 check("DesolationLiveCache.cacheDesolation" in inj_src, "обработчик не кэширует холдер для source-mixin")
+check("trackOverworldSource" in inj_src, "обработчик не привязывает инжект к источнику именно Overworld")
+check("refreshFeaturesPerStep" in inj_src,
+      "после позднего инжекта не сбрасывается memoized-порядок placed-фич генератора")
+if os.path.isfile(src_mx):
+    check("isOverworldSource(this)" in sm,
+          "параметры других MultiNoise-измерений могут получить desolation")
+
+# BiomeSource.possibleBiomes() тоже мемоизируется; после поздней подмены
+# параметров требуется включить desolation в его результат до перестройки
+# ChunkGenerator.featuresPerStep, иначе indexMapping вернёт -1.
+possible_mx_path = os.path.join(JAVA, "mixin", "BiomeSourcePossibleBiomesDesolationMixin.java")
+check(os.path.isfile(possible_mx_path), "нет BiomeSourcePossibleBiomesDesolationMixin.java")
+if os.path.isfile(possible_mx_path):
+    possible_mx = read(possible_mx_path)
+    check('method = "possibleBiomes"' in possible_mx and 'DesolationLiveCache.includeDesolationInPossibleBiomes' in possible_mx,
+          "possibleBiomes() не дополняет кэшированный список для Overworld")
+check("BiomeSourcePossibleBiomesDesolationMixin" in mixcfg.get("mixins", []),
+      "BiomeSourcePossibleBiomesDesolationMixin не зарегистрирован")
+cache_src = read(os.path.join(JAVA, "core", "worldgen", "DesolationLiveCache.java"))
+check("includeDesolationInPossibleBiomes" in cache_src and "source != overworldSource" in cache_src,
+      "кэш possibleBiomes не ограничен идентичностью источника Overworld")
 
 # 4. контент по биому
 conv = read(os.path.join(JAVA, "core", "worldgen", "DesolationConversionFeature.java"))

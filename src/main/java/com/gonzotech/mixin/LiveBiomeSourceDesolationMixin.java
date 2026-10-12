@@ -43,6 +43,9 @@ public abstract class LiveBiomeSourceDesolationMixin {
     private void gonzotech$augmentParameters(
             CallbackInfoReturnable<Climate.ParameterList<Holder<Biome>>> cir) {
         try {
+            if (!DesolationLiveCache.isOverworldSource(this)) {
+                return; // другие MultiNoise-измерения остаются нетронутыми
+            }
             Holder<Biome> des = DesolationLiveCache.desolation();
             if (des == null) {
                 return; // реестры ещё не дали холдер — ванильный возврат
