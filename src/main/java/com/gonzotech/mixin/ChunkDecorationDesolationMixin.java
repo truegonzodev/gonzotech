@@ -3,6 +3,7 @@ package com.gonzotech.mixin;
 import com.gonzotech.core.worldgen.DesolationConversionFeature;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ public abstract class ChunkDecorationDesolationMixin {
 
     @Inject(method = "applyBiomeDecoration", at = @At("HEAD"))
     private void gonzotech$convertDesolationColumns(WorldGenLevel level, ChunkAccess chunk,
-            CallbackInfo ci) {
+            StructureManager structures, CallbackInfo ci) {
         try {
             DesolationConversionFeature.convertChunk(level, chunk.getPos());
         } catch (Throwable t) {
