@@ -1,5 +1,6 @@
 package com.gonzotech.mixin;
 
+import com.gonzotech.core.worldgen.DesolationLiveCache;
 import com.gonzotech.core.worldgen.DesolationPresetExt;
 import com.mojang.datafixers.util.Pair;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -29,41 +29,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * ВОЗВРАТ {@code parameters()} и подменяем список расширенным: /locate
  * (findNearestBiome3d) и генерация чанков читают именно этот возврат.
  *
- * <p>Холдер desolation кэшируется статикой из {@code DesolationPresetInject}
- * (туда он попадает из любого хука, где доступны реестры). Идемпотентно:
- * {@link DesolationPresetExt#contains} — если точки уже есть (первое создание
- * мира, мутация записи реестра), подмена не выполняется. Быстро: расширенный
- * список строится один раз на исходный объект (кэш по идентичности).
+ * <p>Холдер desolation и кэш по идентичности живут в
+ * {@link DesolationLiveCache} (mixin'ам запрещены статик-члены без private —
+ * краш 0.3.197). Идемпотентно: {@link DesolationPresetExt#contains} — если
+ * точки уже есть (мутация записи реестра сработала), подмена не выполняется.
  * Fail-safe: любая ошибка/нет холдера — возврат остаётся ванильным.
+ * В этом классе НЕТ static-членов (требование mixin).
  */
 @Mixin(MultiNoiseBiomeSource.class)
 public abstract class LiveBiomeSourceDesolationMixin {
-
-    @Unique
-    private static Holder<Biome> gonzotech$cachedDesolation;
-
-    @Unique
-    private static Climate.ParameterList<Holder<Biome>> gonzotech$lastOriginal;
-
-    @Unique
-    private static Climate.ParameterList<Holder<Biome>> gonzotech$lastAugmented;
-
-    /** Вызывается из DesolationPresetInject, когда реестры доступны. */
-    public static void gonzotech$cacheDesolation(Holder<Biome> desolation) {
-        gonzotech$cachedDesolation = desolation;
-    }
 
     @Inject(method = "parameters", at = @At("RETURN"), cancellable = true)
     private void gonzotech$augmentParameters(
             CallbackInfoReturnable<Climate.ParameterList<Holder<Biome>>> cir) {
         try {
-            Holder<Biome> des = gonzotech$cachedDesolation;
+            Holder<Biome> des = DesolationLiveCache.desolation();
             if (des == null) {
                 return; // реестры ещё не дали холдер — ванильный возврат
             }
             Climate.ParameterList<Holder<Biome>> original = cir.getReturnValue();
-            if (original == gonzotech$lastOriginal) {
-                cir.setReturnValue(gonzotech$lastAugmented);
+            Climate.ParameterList<Holder<Biome>> cached =
+                DesolationLiveCache.augmentedFor(original);
+            if (cached != null) {
+                cir.setReturnValue(cached);
                 return;
             }
             List<Pair<Climate.ParameterPoint, Holder<Biome>>> values = original.values();
@@ -75,8 +63,7 @@ public abstract class LiveBiomeSourceDesolationMixin {
                 copy.add(Pair.of(p, des));
             }
             Climate.ParameterList<Holder<Biome>> augmented = new Climate.ParameterList<>(copy);
-            gonzotech$lastOriginal = original;
-            gonzotech$lastAugmented = augmented;
+            DesolationLiveCache.remember(original, augmented);
             cir.setReturnValue(augmented);
         } catch (Throwable t) {
             // fail-safe: источник остаётся ванильным

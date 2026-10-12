@@ -1,7 +1,6 @@
 package com.gonzotech.core.worldgen;
 
 import com.gonzotech.GonzoTechMod;
-import com.gonzotech.mixin.LiveBiomeSourceDesolationMixin;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -66,7 +65,7 @@ public final class DesolationPresetInject {
                     + "инжект в пресет пропущен");
                 return;
             }
-            LiveBiomeSourceDesolationMixin.gonzotech$cacheDesolation(desolation);
+            DesolationLiveCache.cacheDesolation(desolation);
             MultiNoiseBiomeSourceParameterList list = server.registryAccess()
                 .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
                 .get(OVERWORLD_LIST)
@@ -115,7 +114,7 @@ public final class DesolationPresetInject {
                     + "LevelEvent.Load — дозаправка источника пропущена");
                 return;
             }
-            LiveBiomeSourceDesolationMixin.gonzotech$cacheDesolation(desolation);
+            DesolationLiveCache.cacheDesolation(desolation);
             MultiNoiseBiomeSourceParameterList entry = serverLevel.registryAccess()
                 .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
                 .get(OVERWORLD_LIST)

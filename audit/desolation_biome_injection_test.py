@@ -89,15 +89,17 @@ if os.path.isfile(src_mx):
     sm = read(src_mx)
     check("method = \"parameters\"" in sm and "@At(\"RETURN\")" in sm,
           "source-mixin не перехватывает возврат parameters()")
-    check("setReturnValue" in sm and "gonzotech$cacheDesolation" in sm,
+    check("setReturnValue" in sm and "DesolationLiveCache" in sm,
           "source-mixin: нет подмены возврата/кэша холдера")
+    check("public static" not in sm and "private static" not in sm,
+          "в source-mixin остались static-члены (запрещены mixin'ом)")
     check("@Shadow" not in sm, "source-mixin снова тянет @Shadow (поле недоступно в 1.21.4)")
 check("LiveBiomeSourceDesolationMixin" in mixcfg.get("mixins", []),
       "LiveBiomeSourceDesolationMixin не зарегистрирован")
 inj_src = read(inj)
 check("LevelEvent.Load" in inj_src, "нет дозаправки на LevelEvent.Load")
 check("Level.OVERWORLD" in inj_src, "дозаправка не ограничена оверворлдом")
-check("gonzotech$cacheDesolation" in inj_src, "обработчик не кэширует холдер для source-mixin")
+check("DesolationLiveCache.cacheDesolation" in inj_src, "обработчик не кэширует холдер для source-mixin")
 
 # 4. контент по биому
 conv = read(os.path.join(JAVA, "core", "worldgen", "DesolationConversionFeature.java"))
