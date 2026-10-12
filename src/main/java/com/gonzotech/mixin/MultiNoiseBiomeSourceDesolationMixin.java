@@ -1,10 +1,12 @@
 package com.gonzotech.mixin;
 
 import com.gonzotech.core.worldgen.DesolationBiomeInject;
+import com.mojang.logging.LogUtils;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,16 +18,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <p>Перехватываем {@link MultiNoiseBiomeSource#getNoiseBiome(Climate.TargetPoint)}
  * (через него идёт и int-перегрузка — она делегирует сюда). Если климат-точка
  * попадает в один из четырёх гиперкубов десоляции
- * ({@link DesolationBiomeInject#BOXES}) — возвращаем десоляцию вместо
- * ванильного биома. Генератор/пресет не трогаем, поэтому суперплоский и прочие
- * типы мира остаются собой.
+ * ({@link DesolationBiomeInject#BOXES}) — возвращаем её вместо ванильного
+ * биома. Генератор/пресет не трогаем, поэтому суперплоский и прочие типы мира
+ * остаются собой.
  *
  * <p>Fail-safe: если холдер биома ещё не захвачен или что-то пошло не так —
  * НЕ отменяем возврат, остаётся ванильный биом. Краш невозможен; худший
  * исход — десоляция не появится.
+ *
+ * <p>Диагностика: одноразовые логи «hook вызван» и «первая инъекция» — по ним
+ * в логе видно, какая ступень сработала, а какая молчит.
  */
 @Mixin(MultiNoiseBiomeSource.class)
 public abstract class MultiNoiseBiomeSourceDesolationMixin {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     @Inject(
         method = "getNoiseBiome(Lnet/minecraft/world/level/biome/Climate$TargetPoint;)Lnet/minecraft/core/Holder;",
@@ -35,12 +42,20 @@ public abstract class MultiNoiseBiomeSourceDesolationMixin {
     private void gonzotech$injectDesolation(Climate.TargetPoint target,
                                             CallbackInfoReturnable<Holder<Biome>> cir) {
         try {
+            if (DesolationBiomeInject.HOOK_LOGGED.compareAndSet(false, true)) {
+                LOGGER.info("[gonzotech] desolation hook: первый вызов "
+                    + "getNoiseBiome(TargetPoint) — mixin работает");
+            }
             Holder<Biome> desolation = DesolationBiomeInject.get();
             if (desolation == null) {
                 return; // холдер не захвачен — ваниль
             }
             for (Climate.ParameterPoint box : DesolationBiomeInject.BOXES) {
                 if (gonzotech$matches(box, target)) {
+                    if (DesolationBiomeInject.INJECT_LOGGED.compareAndSet(false, true)) {
+                        LOGGER.info("[gonzotech] desolation: первая инъекция биома "
+                            + "в шумовой оверворлд");
+                    }
                     cir.setReturnValue(desolation);
                     return;
                 }

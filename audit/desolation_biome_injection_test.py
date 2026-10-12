@@ -50,6 +50,7 @@ if os.path.isfile(mixin_path):
     check("cancellable = true" in mx, "инъекция не cancellable")
     check("catch (Throwable" in mx, "нет fail-safe try/catch")
     check("@Mixin(MultiNoiseBiomeSource.class)" in mx, "нет @Mixin(MultiNoiseBiomeSource.class)")
+    check("HOOK_LOGGED" in mx and "INJECT_LOGGED" in mx, "нет диагностических логов в mixin")
 
 # 3. класс-держатель
 inject_path = os.path.join(JAVA, "core", "worldgen", "DesolationBiomeInject.java")
@@ -58,6 +59,8 @@ if os.path.isfile(inject_path):
     with open(inject_path, encoding="utf-8") as f:
         inj = f.read()
     check("ServerAboutToStartEvent" in inj, "нет захвата на ServerAboutToStartEvent")
+    check("ServerStoppedEvent" in inj, "нет сброса на ServerStoppedEvent")
+    check("MinecraftServer" in inj, "нет ленивого захвата через MinecraftServer")
     check("lookupOrThrow(Registries.BIOME)" in inj, "нет lookupOrThrow(Registries.BIOME)")
     check("getOrThrow(DESOLATION)" in inj, "нет getOrThrow(DESOLATION)")
     check("catch (Throwable" in inj, "нет fail-safe в захвате холдера")
@@ -65,6 +68,7 @@ if os.path.isfile(inject_path):
     check(len(boxes) == 4, f"ожидалось 4 климат-бокса, найдено {len(boxes)}")
     check("Climate.Parameter.span" in inj, "нет Climate.Parameter.span")
     check("volatile Holder<Biome> desolation" in inj, "нет volatile-холдера")
+    check("HOOK_LOGGED" in inj and "INJECT_LOGGED" in inj, "нет диагностических логов")
 
 # 4. нет dimension-оверрайда
 check(not os.path.exists(os.path.join(RES, "data", "minecraft", "dimension", "overworld.json")),
