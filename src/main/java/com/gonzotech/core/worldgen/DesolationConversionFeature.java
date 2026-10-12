@@ -107,56 +107,79 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
      */
     public static void convertChunk(WorldGenLevel level, ChunkPos chunkPos) {
         RandomSource random = level.getRandom();
-        int minY = level.getMinY();
-        int maxY = level.getMaxY();
         Map<Block, Block> remap = oreRemap();
-
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int worldX = chunkPos.getMinBlockX() + x;
                 int worldZ = chunkPos.getMinBlockZ() + z;
-                // Органические границы: конвертируем колонку, только если её биом — наш.
-                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, worldX, worldZ) - 1;
-                if (!level.getBiome(new BlockPos(worldX, surfaceY, worldZ)).is(DESOLATION)) {
-                    continue;
+                convertColumn(level, worldX, worldZ, random, remap, true, false);
+            }
+        }
+    }
+
+    /** Applies Desolation's dry soil/rock replacement to one surface column, without a biome gate. */
+    public static void convertColumnWithoutBiome(WorldGenLevel level, int worldX, int worldZ,
+                                                 RandomSource random) {
+        convertColumn(level, worldX, worldZ, random, oreRemap(), false, true);
+    }
+
+    private static void convertColumn(WorldGenLevel level, int worldX, int worldZ,
+                                      RandomSource random, Map<Block, Block> remap,
+                                      boolean requireDesolationBiome, boolean surfaceOnly) {
+        int surfaceY = -1;
+        if (requireDesolationBiome) {
+            surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, worldX, worldZ) - 1;
+            if (!level.getBiome(new BlockPos(worldX, surfaceY, worldZ)).is(DESOLATION)) {
+                return;
+            }
+        }
+        if (surfaceOnly) {
+            surfaceY = DesolationWorldgenSupport.findGroundY(level, worldX, worldZ);
+            if (surfaceY == DesolationWorldgenSupport.NO_SURFACE) {
+                return;
+            }
+        }
+
+        int minY = level.getMinY();
+        int startY = surfaceOnly ? surfaceY : level.getMaxY() - 1;
+        boolean enteredSolidSurface = false;
+        for (int y = startY; y >= minY; y--) {
+            BlockPos pos = new BlockPos(worldX, y, worldZ);
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir()) {
+                if (surfaceOnly && enteredSolidSurface) {
+                    break;
                 }
-                // Сканируем всю колонку сверху вниз.
-                for (int y = maxY - 1; y >= minY; y--) {
-                    BlockPos pos = new BlockPos(worldX, y, worldZ);
-                    BlockState state = level.getBlockState(pos);
-                    if (state.isAir()) {
-                        continue;
-                    }
-                    Block block = state.getBlock();
+                continue;
+            }
+            if (surfaceOnly && !state.getFluidState().isEmpty()) {
+                break;
+            }
+            enteredSolidSurface = true;
+            if (y < 50) {
+                break; // дальше по оси y столбцы только глубже — выходим из колонки
+            }
 
-                    // Материальная выжженность — только поверхностная полоса y≥50
-                    // (руды — там же: автор, второй заход).
-                    if (y < 50) {
-                        break; // дальше по оси y столбцы только глубже — выходим из колонки
-                    }
+            Block block = state.getBlock();
+            Block oreTarget = remap.get(block);
+            if (oreTarget != null) {
+                level.setBlock(pos, oreTarget.defaultBlockState(), 2);
+                continue;
+            }
 
-                    // Руды: есть deepslate-вариант → он; нет (алюминий и пр.) → dead_stone.
-                    Block oreTarget = remap.get(block);
-                    if (oreTarget != null) {
-                        level.setBlock(pos, oreTarget.defaultBlockState(), 2);
-                        continue;
-                    }
-
-                    if (state.getFluidState().getType() == Fluids.WATER
-                        || state.getFluidState().getType() == Fluids.FLOWING_WATER) {
-                        level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 2);
-                    } else if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT
-                        || block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
-                        level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 2);
-                    } else if (block == Blocks.SAND) {
-                        level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 2);
-                    } else if (block == Blocks.STONE || block == Blocks.ANDESITE
-                        || block == Blocks.GRANITE) {
-                        if (y >= 60 || y >= 50 && random.nextInt(11) < y - 49) {
-                            // 60+: всегда; 50–59: (y−49)/11 (0.09 … 0.91) — градиент спада.
-                            level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 2);
-                        }
-                    }
+            if (!surfaceOnly && (state.getFluidState().getType() == Fluids.WATER
+                || state.getFluidState().getType() == Fluids.FLOWING_WATER)) {
+                level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 2);
+            } else if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT
+                || block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
+                level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 2);
+            } else if (block == Blocks.SAND) {
+                level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 2);
+            } else if (block == Blocks.STONE || block == Blocks.ANDESITE
+                || block == Blocks.GRANITE) {
+                if (y >= 60 || y >= 50 && random.nextInt(11) < y - 49) {
+                    // 60+: всегда; 50–59: (y−49)/11 (0.09 … 0.91) — градиент спада.
+                    level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 2);
                 }
             }
         }

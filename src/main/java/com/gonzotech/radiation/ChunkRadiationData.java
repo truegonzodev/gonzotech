@@ -1,5 +1,6 @@
 package com.gonzotech.radiation;
 
+import com.gonzotech.core.registry.ModBlocks;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -14,6 +15,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ import java.util.List;
  * <ul>
  *   <li><b>baseline</b> — природный фон чанка, вычисляется ЛЕНИВО один раз и
  *       кэшируется: обычный чанк 1–10nZt; биом {@code gonzotech:desolation}
- *       1–5mZt (природный фон биома, не «заражение» — не вымывается);</li>
+ *       1–5mZt; чанк с бочками отходов 1–10mZt (не «заражение» — не вымывается);</li>
  *   <li><b>contamination</b> — динамическое заражение поверх baseline.
  *       <b>Урановая руда больше НЕ является baseline</b> (автор 21.09): при
  *       первом обращении к чанку (≈генерация для игрока) руда ОДИН РАЗ сыплет
@@ -388,10 +390,9 @@ public class ChunkRadiationData extends SavedData {
     // ───────────────────────── baseline ─────────────────────────
 
     /**
-     * Природный фон чанка: «Пустошь» 1–5mZt (перекрывает всё) или обычный 1–10nZt.
-     * УРАНОВАЯ РУДА отдельно (автор 21.09): «не подпитывает чанк постоянно, а
-     * ОДИН РАЗ даёт при генерации» — находим её в этом же скане и сыплем
-     * 10–80nZt в contamination; выполняется только при первом обращении.
+     * Природный фон чанка: отходы 1–10mZt; иначе «Пустошь» 1–5mZt или
+     * обычный чанк 1–10nZt. Урановая руда отдельно: находим её в том же
+     * однократном скане и добавляем 10–80nZt в contamination.
      */
     private double computeBaseline(ServerLevel level, long chunkKey) {
         ChunkPos cp = new ChunkPos(chunkKey);
@@ -400,16 +401,34 @@ public class ChunkRadiationData extends SavedData {
         BlockPos center = cp.getMiddleBlockPosition(64);
         boolean desolation = level.getBiome(center).unwrapKey()
                 .map(k -> k.location().equals(DESOLATION)).orElse(false);
+        ChunkAccess chunk = level.getChunk(cp.x, cp.z);
+        int minY = level.getMinY(), maxY = level.getMaxY();
+        int baseX = cp.getMinBlockX(), baseZ = cp.getMinBlockZ();
+        BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
+
+        // Generated barrels are surface-only. Ignore leaves in this heightmap
+        // so a barrel below a tree canopy is still found without a full scan.
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int worldX = baseX + x;
+                int worldZ = baseZ + z;
+                int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, worldX, worldZ);
+                int fromY = Math.max(minY, surfaceY - 5);
+                int toY = Math.min(maxY - 1, surfaceY + 1);
+                for (int y = fromY; y <= toY; y++) {
+                    mp.set(worldX, y, worldZ);
+                    if (chunk.getBlockState(mp).is(ModBlocks.WASTE_BARREL.get())) {
+                        return (1.0 + rnd.nextDouble() * 9.0) * RadUnits.MILLI;
+                    }
+                }
+            }
+        }
         if (desolation) {
             return (1.0 + rnd.nextDouble() * 4.0) * RadUnits.MILLI;
         }
 
-        // Разовый скан руды (ишем заодно с первой инициализацией baseline).
+        // Разовый скан урановой руды при первой инициализации baseline.
         int ores = 0;
-        ChunkAccess chunk = level.getChunk(cp.x, cp.z);
-        int minY = level.getMinY(), maxY = level.getMaxY();
-        BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();
-        int baseX = cp.getMinBlockX(), baseZ = cp.getMinBlockZ();
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 for (int y = minY; y < maxY; y++) {
@@ -456,8 +475,8 @@ public class ChunkRadiationData extends SavedData {
             }
         }
         // Миграция v1 (автор 21.09): руда раньше жила в baseline (10–80, «вечная
-        // подпитка»). Теперь baseline — только природа (обычные ≤10, «Пустошь»
-        // пересчитается по биому сама). Старые записи >10nZt просто забываем:
+        // подпитка»). Теперь baseline — только природный фон: обычные чанки ≤10,
+        // «Пустошь»/отходы пересчитываются по биому и наличию бочек. Старые записи >10nZt забываем:
         // при следующем обращении чанк получит природный фон + РАЗОВЫЙ посев
         // руды в contamination (если руда жива), дальше — обычное затухание.
         var bit = d.baseline.long2DoubleEntrySet().iterator();

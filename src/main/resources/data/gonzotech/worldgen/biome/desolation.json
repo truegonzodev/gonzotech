@@ -6,11 +6,11 @@
   ],
   "downfall": 0.4,
   "effects": {
-    "fog_color": 9143409,
-    "sky_color": 10261892,
-    "water_color": 6187604,
-    "water_fog_color": 4278840,
-    "grass_color": 10127966,
+    "fog_color": 7236945,
+    "sky_color": 7568731,
+    "water_color": 530952,
+    "water_fog_color": 1912363,
+    "grass_color": 2499612,
     "foliage_color": 9273172,
     "mood_sound": {
       "block_search_extent": 8,

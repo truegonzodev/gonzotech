@@ -156,6 +156,16 @@ if os.path.isfile(biome_p):
     eff = b.get("effects", {})
     for k in ("sky_color", "water_color", "grass_color", "foliage_color"):
         check(k in eff, f"в биоме нет цвета {k}")
+    expected_colors = {
+        "grass_color": 0x26241C,
+        "water_color": 0x081A08,
+        "sky_color": 0x737D5B,
+        "fog_color": 0x6E6D51,
+        "water_fog_color": 0x1D2E2B,
+    }
+    for key, expected in expected_colors.items():
+        check(eff.get(key) == expected,
+              f"в биоме {key} не совпадает с утверждённым цветом #{expected:06x}")
     feats = json.dumps(b.get("features", []))
     check("desolation_trunks" in feats, "в биоме нет фичи стволов")
     check("desolation_conversion" not in feats,

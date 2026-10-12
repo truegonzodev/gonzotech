@@ -1,6 +1,8 @@
 package com.gonzotech.mixin;
 
 import com.gonzotech.core.worldgen.DesolationConversionFeature;
+import com.gonzotech.core.worldgen.SurfaceRuinGenerator;
+import com.gonzotech.core.worldgen.SurfaceWasteGenerator;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.StructureManager;
@@ -13,8 +15,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Материальная конверсия «Пустоши» — на КАЖДЫЙ генерируемый чанк, независимо
- * от биома центра (автор, 2026-10-12).
+ * Материальная конверсия «Пустоши» — на каждый генерируемый чанк, независимо
+ * от биома центра.
  *
  * <p>История: placed-фича конверсии с {@code count+in_square+biome} исполнялась
  * только когда случайная точка размещения попадала в desolation; в чанках с
@@ -22,14 +24,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * рваной по чанкам и коррелировала со стволами (у них тот же случайный гейт) —
  * «есть деревья → есть замена».
  *
- * <p>Теперь конверсия вызывается из {@code applyBiomeDecoration} на HEAD —
- * до всех ванильных и наших фич, так что стволы встают уже на мёртвый грунт.
- * Вызов идёт для каждого чанка любого генератора (шумовые, суперплоский,
- * одиночный биом);
- * в 1.21.4 ChunkGenerator/ChunkAccess живут в net.minecraft.world.level.chunk. внутри {@code convertChunk} каждая колонка проверяется на
- * СВОЙ биом, поэтому граница следует шумовой форме биома, а запись — только в
- * свой чанк (порядок генерации соседей не важен). В чужих биомах и измерениях —
- * дешёвый no-op. Любая ошибка — fail-safe: чанк остаётся ванильным.
+ * <p>Конверсия вызывается из {@code applyBiomeDecoration} на HEAD — до ванильных
+ * фич, чтобы стволы вставали на уже изменённый грунт. Отдельные генераторы
+ * развалин и отходов вызываются на RETURN, после обычной декорации поверхности.
+ * Вызов идёт для каждого чанка любого генератора; конверсия проверяет биом
+ * каждой колонки, а процедурные участки строятся детерминированно, без записи
+ * в соседние чанки. Любая ошибка — fail-safe для соответствующей генерации.
  */
 @Mixin(ChunkGenerator.class)
 public abstract class ChunkDecorationDesolationMixin {
@@ -43,6 +43,23 @@ public abstract class ChunkDecorationDesolationMixin {
             DesolationConversionFeature.convertChunk(level, chunk.getPos());
         } catch (Throwable t) {
             LOGGER.warn("[gonzotech] desolation: конверсия чанка не выполнена: {}",
+                String.valueOf(t));
+        }
+    }
+
+    @Inject(method = "applyBiomeDecoration", at = @At("RETURN"))
+    private void gonzotech$generateSurfaceSites(WorldGenLevel level, ChunkAccess chunk,
+            StructureManager structures, CallbackInfo ci) {
+        try {
+            SurfaceRuinGenerator.generateForChunk(level, chunk.getPos());
+        } catch (Throwable t) {
+            LOGGER.warn("[gonzotech] ruins: поверхностная генерация чанка не выполнена: {}",
+                String.valueOf(t));
+        }
+        try {
+            SurfaceWasteGenerator.generateForChunk(level, chunk.getPos());
+        } catch (Throwable t) {
+            LOGGER.warn("[gonzotech] waste: поверхностная генерация чанка не выполнена: {}",
                 String.valueOf(t));
         }
     }
