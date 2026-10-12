@@ -64,7 +64,9 @@ public final class DesolationPresetInject {
             }
             MultiNoiseBiomeSourceParameterList list = server.registryAccess()
                 .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
-                .get(OVERWORLD_LIST);
+                .get(OVERWORLD_LIST)
+                .map(Holder::value)
+                .orElse(null);
             if (list instanceof DesolationPresetExt ext) {
                 ext.gonzotech$addDesolationPoints(desolation);
                 LOGGER.info("[gonzotech] desolation: +4 климат-точки в пресет "
