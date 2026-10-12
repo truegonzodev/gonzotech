@@ -11,9 +11,24 @@
           "to_place": {
             "type": "minecraft:weighted_state_provider",
             "entries": [
-              { "weight": 3, "data": { "Name": "gonzotech:scorched_tuft_medium" } },
-              { "weight": 2, "data": { "Name": "gonzotech:scorched_tuft" } },
-              { "weight": 1, "data": { "Name": "gonzotech:scorched_tuft_large" } }
+              {
+                "weight": 3,
+                "data": {
+                  "Name": "gonzotech:scorched_tuft_medium"
+                }
+              },
+              {
+                "weight": 2,
+                "data": {
+                  "Name": "gonzotech:scorched_tuft"
+                }
+              },
+              {
+                "weight": 1,
+                "data": {
+                  "Name": "gonzotech:scorched_tuft_large"
+                }
+              }
             ]
           }
         }
@@ -21,7 +36,28 @@
       "placement": [
         {
           "type": "minecraft:block_predicate_filter",
-          "predicate": { "type": "minecraft:matching_blocks", "blocks": "minecraft:air" }
+          "predicate": {
+            "type": "minecraft:all_of",
+            "predicates": [
+              {
+                "type": "minecraft:matching_blocks",
+                "blocks": "minecraft:air"
+              },
+              {
+                "type": "minecraft:matching_blocks",
+                "blocks": [
+                  "gonzotech:dead_dirt",
+                  "gonzotech:dead_sand",
+                  "gonzotech:dead_stone"
+                ],
+                "offset": [
+                  0,
+                  -1,
+                  0
+                ]
+              }
+            ]
+          }
         }
       ]
     }

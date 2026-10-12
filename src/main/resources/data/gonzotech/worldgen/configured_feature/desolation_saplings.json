@@ -10,14 +10,37 @@
         "config": {
           "to_place": {
             "type": "minecraft:simple_state_provider",
-            "state": { "Name": "gonzotech:charred_sapling" }
+            "state": {
+              "Name": "gonzotech:charred_sapling"
+            }
           }
         }
       },
       "placement": [
         {
           "type": "minecraft:block_predicate_filter",
-          "predicate": { "type": "minecraft:matching_blocks", "blocks": "minecraft:air" }
+          "predicate": {
+            "type": "minecraft:all_of",
+            "predicates": [
+              {
+                "type": "minecraft:matching_blocks",
+                "blocks": "minecraft:air"
+              },
+              {
+                "type": "minecraft:matching_blocks",
+                "blocks": [
+                  "gonzotech:dead_dirt",
+                  "gonzotech:dead_sand",
+                  "gonzotech:dead_stone"
+                ],
+                "offset": [
+                  0,
+                  -1,
+                  0
+                ]
+              }
+            ]
+          }
         }
       ]
     }
