@@ -25,12 +25,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Дезоляция — пост-обработка чанка биома (автор, 2026-09-19): материальная
+ * Дезоляция — пост-обработка чанка (автор, 2026-09-19): материальная
  * «выжженность» на ванильном рельефе.
  *
- * <p>Ходит ОДИН раз на чанк (шаг VEGETAL_DECORATION, первой в списке — после
- * всех руд, включая добавленные biome_modifier'ом из тега is_overworld, и
- * после всех водоёмов) по правилам:
+ * <p>Исполняется миксином {@code ChunkDecorationDesolationMixin} из
+ * {@code ChunkGenerator.applyBiomeDecoration} (HEAD) — ОДИН раз на каждый
+ * генерируемый чанк ЛЮБОГО биома/генератора. Каждая колонка проверяется на
+ * свой биом: конвертируются ТОЛЬКО колонки desolation, граница следует
+ * шумовой форме биома (кварт-ячейка ~4 блока), а не квадрату чанка. Запись
+ * только в свой чанк — порядок генерации соседей не важен. Правила:
  * <ul>
  *   <li>{@code water (source/flowing), y≥50} → {@code dead_slime_block}
  *       (затонувшие пруды/озёра; глубокие аквиферы не трогаем);</li>
@@ -88,27 +91,21 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
         return oreRemap;
     }
 
-    /** Чанки, где конверсия уже прошла (идемпотентный триггер из стволов/плейсмодифаера). */
-    private static final java.util.Set<Long> doneChunks = new java.util.HashSet<>();
-
     /** Наш биом — конверсия идёт только в колонках, где биом — он сам. */
     private static final ResourceKey<Biome> DESOLATION = ResourceKey.create(
         Registries.BIOME,
         ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "desolation"));
 
     /**
-     * Материальная конверсия чанка биома. Вызывается и из placed-фичи, и из
-     * DeadTrunkFeature (гарантированная точка исполнения, count=4 подряд) —
-     * дедупликация по ChunkPos: повтор в чанке — мгновенный no-op.
+     * Материальная конверсия чанка. Единственный вызывающий — миксин
+     * {@code ChunkDecorationDesolationMixin} (HEAD applyBiomeDecoration),
+     * один раз на чанк; дедупликация не нужна.
      *
      * <p>ВНИМАНИЕ: конвертируются ТОЛЬКО колонки, чей биом = desolation
      * (проверка по WG-хайтмапу поверхности). Граница получает органическую
      * шумовую форму биома (кварт-ячейка ~4 блока), а не квадрат чанка 16×16.
      */
     public static void convertChunk(WorldGenLevel level, ChunkPos chunkPos) {
-        if (!doneChunks.add(chunkPos.toLong())) {
-            return; // чанк уже обработан (стволы x4 + возможный placed-вызов)
-        }
         RandomSource random = level.getRandom();
         int minY = level.getMinY();
         int maxY = level.getMaxY();

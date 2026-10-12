@@ -60,7 +60,8 @@ if os.path.isfile(mx_path):
     check("gonzotech$addDesolationPoints" in mx, "нет gonzotech$addDesolationPoints")
     check("@Inject" not in mx, "mixin всё ещё использует @Inject (конструктор-инжект мёртв)")
     check("@Mutable" in mx and "parameters" in mx, "нет @Mutable-поля parameters")
-    check(mx.count("box(0.15F") == 4, "ожидалось 4 климат-бокса")
+    check(mx.count("box(0.05F") + mx.count("box(-0.45F") == 6,
+          "ожидалось 6 климат-боксов (расширены в 0.3.194)")
 
 # 2. обработчик события
 inj = os.path.join(JAVA, "core", "worldgen", "DesolationPresetInject.java")
@@ -113,8 +114,27 @@ if os.path.isfile(biome_p):
     for k in ("sky_color", "water_color", "grass_color", "foliage_color"):
         check(k in eff, f"в биоме нет цвета {k}")
     feats = json.dumps(b.get("features", []))
-    check("desolation_conversion" in feats and "desolation_trunks" in feats,
-          "в биоме нет фич конверсии/стволов")
+    check("desolation_trunks" in feats, "в биоме нет фичи стволов")
+    check("desolation_conversion" not in feats,
+          "конверсия должна идти через mixin applyBiomeDecoration, не из списка биома")
+
+# 7. конверсия — через mixin на каждый чанк; стволы не триггерят её
+cdx = os.path.join(JAVA, "mixin", "ChunkDecorationDesolationMixin.java")
+check(os.path.isfile(cdx), "нет ChunkDecorationDesolationMixin.java")
+if os.path.isfile(cdx):
+    c = read(cdx)
+    check("applyBiomeDecoration" in c and "@At(\"HEAD\")" in c,
+          "mixin не инжектится в HEAD applyBiomeDecoration")
+    check("convertChunk" in c and "catch (Throwable" in c,
+          "mixin не вызывает convertChunk fail-safe")
+check("ChunkDecorationDesolationMixin" in mixcfg.get("mixins", []),
+      "ChunkDecorationDesolationMixin не зарегистрирован")
+check("convertChunk" not in trunk, "DeadTrunkFeature всё ещё триггерит конверсию")
+check("doneChunks" not in conv, "в конверсии остался дедуп doneChunks")
+check(not os.path.exists(os.path.join(
+    RES, "data", "gonzotech", "worldgen", "placed_feature",
+    "desolation_conversion_placed.json")),
+      "мёртвый placed_feature конверсии не удалён")
 
 if failures:
     print("FAIL: desolation post-build preset-injection contract broken:")

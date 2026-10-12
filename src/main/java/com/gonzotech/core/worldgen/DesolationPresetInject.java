@@ -22,7 +22,7 @@ import org.slf4j.Logger;
  * bound, {@code RegistrySetBuilder} не участвует, трекинга «висячих» ссылок
  * нет. Берём готовый объект {@code minecraft:overworld} из реестра
  * {@code multi_noise_biome_source_parameter_list} и дописываем в его список
- * 4 климат-точки desolation — дальше ванильный nearest-neighbor расставляет
+ * 6 климат-точек desolation — дальше ванильный nearest-neighbor расставляет
  * биом сам (сетка чанка → цвета/F3//locate/конверсия/радиация).
  *
  * <p>Повторяется на каждый старт сервера: каждая загрузка мира строит свежие
@@ -69,7 +69,7 @@ public final class DesolationPresetInject {
                 .orElse(null);
             if (list instanceof DesolationPresetExt ext) {
                 ext.gonzotech$addDesolationPoints(desolation);
-                LOGGER.info("[gonzotech] desolation: +4 климат-точки в пресет "
+                LOGGER.info("[gonzotech] desolation: +6 климат-точек в пресет "
                     + "оверворлда (после сборки реестров)");
             } else {
                 LOGGER.warn("[gonzotech] desolation: пресет оверворлда недоступен "

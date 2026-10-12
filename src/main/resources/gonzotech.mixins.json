@@ -26,7 +26,8 @@
     "GonzoPaintingMixin",
     "PistonHeadBlockMixin",
     "PistonBaseBlockMixin",
-    "MultiNoiseParameterListDesolationMixin"
+    "MultiNoiseParameterListDesolationMixin",
+    "ChunkDecorationDesolationMixin"
   ],
   "client": [
     "client.AdvancementTabMixin",
