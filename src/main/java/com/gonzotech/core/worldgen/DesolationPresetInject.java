@@ -7,10 +7,14 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import org.slf4j.Logger;
 
@@ -77,6 +81,47 @@ public final class DesolationPresetInject {
             }
         } catch (Throwable t) {
             LOGGER.warn("[gonzotech] desolation: инжект в пресет не выполнен: {}",
+                String.valueOf(t));
+        }
+    }
+
+    /**
+     * Дозаправка ЖИВОГО источника биома оверворлда (фикс перезахода, 0.3.195).
+     *
+     * <p>На перезаходе (интегрированный сервер) к ServerAboutToStartEvent
+     * датапак-реестры могут быть ещё не собраны, и источник биома строится из
+     * level.dat/пресета без наших точек: /locate «не находит» биом, стоя в нём,
+     * а новые чанки генерируются ванильными. Здесь (сразу после постройки
+     * ServerLevel, реестры гарантированно готовы) берём живой
+     * {@code MultiNoiseBiomeSource} генератора и дописываем точки прямо в его
+     * поле — /locate и генерация новых чанков читают именно его. Только
+     * OVERWORLD: в Незер свой пресет, и трогать его нельзя. Идемпотентно:
+     * если точки уже есть (первое создание мира) — no-op.
+     */
+    @SubscribeEvent
+    public static void onLevelLoad(LevelEvent.Load event) {
+        try {
+            if (!(event.getLevel() instanceof ServerLevel serverLevel)
+                    || serverLevel.dimension() != Level.OVERWORLD) {
+                return;
+            }
+            Holder<Biome> desolation = serverLevel.registryAccess()
+                .lookupOrThrow(Registries.BIOME)
+                .get(DESOLATION)
+                .orElse(null);
+            if (desolation == null) {
+                LOGGER.warn("[gonzotech] desolation: биом не найден при "
+                    + "LevelEvent.Load — дозаправка источника пропущена");
+                return;
+            }
+            BiomeSource source = serverLevel.getChunkSource().getGenerator().getBiomeSource();
+            if (source instanceof DesolationPresetExt ext) {
+                ext.gonzotech$addDesolationPoints(desolation);
+                LOGGER.info("[gonzotech] desolation: климат-точки живого источника "
+                    + "оверворлда проверены/дописаны (LevelEvent.Load)");
+            }
+        } catch (Throwable t) {
+            LOGGER.warn("[gonzotech] desolation: дозаправка источника не выполнена: {}",
                 String.valueOf(t));
         }
     }

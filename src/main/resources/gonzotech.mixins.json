@@ -27,6 +27,7 @@
     "PistonHeadBlockMixin",
     "PistonBaseBlockMixin",
     "MultiNoiseParameterListDesolationMixin",
+    "LiveBiomeSourceDesolationMixin",
     "ChunkDecorationDesolationMixin"
   ],
   "client": [

@@ -60,8 +60,9 @@ if os.path.isfile(mx_path):
     check("gonzotech$addDesolationPoints" in mx, "нет gonzotech$addDesolationPoints")
     check("@Inject" not in mx, "mixin всё ещё использует @Inject (конструктор-инжект мёртв)")
     check("@Mutable" in mx and "parameters" in mx, "нет @Mutable-поля parameters")
-    check(mx.count("box(0.05F") + mx.count("box(-0.45F") == 6,
-          "ожидалось 6 климат-боксов (расширены в 0.3.194)")
+    ext_src = read(ext)
+    check(ext_src.count("box(0.05F") + ext_src.count("box(-0.45F") == 6,
+          "ожидалось 6 климат-боксов в DesolationPresetExt (расширены в 0.3.194)")
 
 # 2. обработчик события
 inj = os.path.join(JAVA, "core", "worldgen", "DesolationPresetInject.java")
@@ -78,6 +79,20 @@ if os.path.isfile(inj):
 mixcfg = json.load(open(os.path.join(RES, "gonzotech.mixins.json"), encoding="utf-8"))
 check("MultiNoiseParameterListDesolationMixin" in mixcfg.get("mixins", []),
       "mixin пресета не зарегистрирован")
+
+# 0.3.195: дозаправка живого источника на перезаходе
+src_mx = os.path.join(JAVA, "mixin", "LiveBiomeSourceDesolationMixin.java")
+check(os.path.isfile(src_mx), "нет LiveBiomeSourceDesolationMixin.java")
+if os.path.isfile(src_mx):
+    sm = read(src_mx)
+    check("implements DesolationPresetExt" in sm and "@Mutable" in sm,
+          "source-mixin не реализует контракт/нет @Mutable parameters")
+check("LiveBiomeSourceDesolationMixin" in mixcfg.get("mixins", []),
+      "LiveBiomeSourceDesolationMixin не зарегистрирован")
+inj_src = read(inj)
+check("LevelEvent.Load" in inj_src, "нет дозаправки на LevelEvent.Load")
+check("Level.OVERWORLD" in inj_src, "дозаправка не ограничена оверворлдом")
+check("getBiomeSource" in inj_src, "дозаправка не трогает живой источник генератора")
 
 # 4. контент по биому
 conv = read(os.path.join(JAVA, "core", "worldgen", "DesolationConversionFeature.java"))
