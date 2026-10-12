@@ -2,10 +2,9 @@ package com.gonzotech.mixin;
 
 import com.gonzotech.core.worldgen.DesolationConversionFeature;
 import com.mojang.logging.LogUtils;
-import net.minecraft.world.level.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.WorldGenLevel;
-import net.minecraft.world.level.levelgen.ChunkGenerator;
-import net.minecraft.world.level.levelgen.structure.StructureManager;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,7 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>Теперь конверсия вызывается из {@code applyBiomeDecoration} на HEAD —
  * до всех ванильных и наших фич, так что стволы встают уже на мёртвый грунт.
  * Вызов идёт для каждого чанка любого генератора (шумовые, суперплоский,
- * одиночный биом); внутри {@code convertChunk} каждая колонка проверяется на
+ * одиночный биом);
+ * в 1.21.4 ChunkGenerator/ChunkAccess живут в net.minecraft.world.level.chunk. внутри {@code convertChunk} каждая колонка проверяется на
  * СВОЙ биом, поэтому граница следует шумовой форме биома, а запись — только в
  * свой чанк (порядок генерации соседей не важен). В чужих биомах и измерениях —
  * дешёвый no-op. Любая ошибка — fail-safe: чанк остаётся ванильным.
@@ -37,7 +37,7 @@ public abstract class ChunkDecorationDesolationMixin {
 
     @Inject(method = "applyBiomeDecoration", at = @At("HEAD"))
     private void gonzotech$convertDesolationColumns(WorldGenLevel level, ChunkAccess chunk,
-            StructureManager structures, CallbackInfo ci) {
+            CallbackInfo ci) {
         try {
             DesolationConversionFeature.convertChunk(level, chunk.getPos());
         } catch (Throwable t) {
