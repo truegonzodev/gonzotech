@@ -1,20 +1,21 @@
 package com.gonzotech.core.worldgen;
 
+import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.registry.ModBlocks;
-import com.gonzotech.radiation.ChunkRadiationData;
-import com.gonzotech.radiation.RadUnits;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -90,21 +91,21 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
     /** Чанки, где конверсия уже прошла (идемпотентный триггер из стволов/плейсмодифаера). */
     private static final java.util.Set<Long> doneChunks = new java.util.HashSet<>();
 
+    /** Наш биом — конверсия идёт только в колонках, где биом — он сам. */
+    private static final ResourceKey<Biome> DESOLATION = ResourceKey.create(
+        Registries.BIOME,
+        ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "desolation"));
+
     /**
      * Материальная конверсия чанка биома. Вызывается и из placed-фичи, и из
      * DeadTrunkFeature (гарантированная точка исполнения, count=4 подряд) —
      * дедупликация по ChunkPos: повтор в чанке — мгновенный no-op.
      *
-     * <p>ВНИМАНИЕ: конвертируются ТОЛЬКО колонки, чей климат (noise-router)
-     * попадает в гиперкубы «Пустоши» ({@link DesolationClimate}, проверка по
-     * WG-хайтмапу поверхности). Граница получает органическую шумовую форму
-     * (кварт-ячейка ~4 блока), а не квадрат чанка 16×16.
-     *
-     * <p>Радиация: чанки, где конверсия реально прошла, помечаются как
-     * «Пустошь» в {@link ChunkRadiationData} (baseline 1–5 mZt) — искусственная
-     * привязка к фиче, раз биома больше нет.
+     * <p>ВНИМАНИЕ: конвертируются ТОЛЬКО колонки, чей биом = desolation
+     * (проверка по WG-хайтмапу поверхности). Граница получает органическую
+     * шумовую форму биома (кварт-ячейка ~4 блока), а не квадрат чанка 16×16.
      */
-    public static void convertChunk(WorldGenLevel level, ChunkPos chunkPos, RandomState randomState) {
+    public static void convertChunk(WorldGenLevel level, ChunkPos chunkPos) {
         if (!doneChunks.add(chunkPos.toLong())) {
             return; // чанк уже обработан (стволы x4 + возможный placed-вызов)
         }
@@ -112,18 +113,16 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
         int minY = level.getMinY();
         int maxY = level.getMaxY();
         Map<Block, Block> remap = oreRemap();
-        int convertedColumns = 0;
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int worldX = chunkPos.getMinBlockX() + x;
                 int worldZ = chunkPos.getMinBlockZ() + z;
-                // Органические границы: конвертируем колонку, только если климат — наш.
+                // Органические границы: конвертируем колонку, только если её биом — наш.
                 int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, worldX, worldZ) - 1;
-                if (!DesolationClimate.isDesolation(randomState, worldX, surfaceY, worldZ)) {
+                if (!level.getBiome(new BlockPos(worldX, surfaceY, worldZ)).is(DESOLATION)) {
                     continue;
                 }
-                convertedColumns++;
                 // Сканируем всю колонку сверху вниз.
                 for (int y = maxY - 1; y >= minY; y--) {
                     BlockPos pos = new BlockPos(worldX, y, worldZ);
@@ -164,18 +163,11 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
                 }
             }
         }
-
-        // Радиация «Пустоши» привязана к фиче: конверсия прошла — чанк фонит 1–5 mZt.
-        if (convertedColumns > 0 && level instanceof ServerLevel serverLevel) {
-            ChunkRadiationData.get(serverLevel).markDesolation(
-                chunkPos.toLong(),
-                (1.0 + random.nextDouble() * 4.0) * RadUnits.MILLI);
-        }
     }
 
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
-        convertChunk(context.level(), new ChunkPos(context.origin()), context.randomState());
+        convertChunk(context.level(), new ChunkPos(context.origin()));
         return true;
     }
 }

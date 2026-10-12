@@ -30,19 +30,14 @@ public class DeadTrunkFeature extends Feature<NoneFeatureConfiguration> {
         WorldGenLevel level = context.level();
         RandomSource random = context.random();
         BlockPos origin = context.origin();
-        net.minecraft.world.level.levelgen.RandomState randomState = context.randomState();
 
-        // Гарантированный триггер материальной конверсии чанка «Пустоши»
+        // Гарантированный триггер материальной конверсии чанка биома
         // (placed-фича конверсии недетерминированно молчит; стволы — точно исполняются).
-        DesolationConversionFeature.convertChunk(level, new net.minecraft.world.level.ChunkPos(origin), randomState);
+        DesolationConversionFeature.convertChunk(level, new net.minecraft.world.level.ChunkPos(origin));
 
         int groundX = origin.getX();
         int groundZ = origin.getZ();
         int groundY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, groundX, groundZ) - 1;
-        // Стволы — только в климатической зоне «Пустоши» (биома больше нет).
-        if (!DesolationClimate.isDesolation(randomState, groundX, groundY, groundZ)) {
-            return false;
-        }
         BlockPos ground = new BlockPos(groundX, groundY, groundZ);
 
         Block soil = level.getBlockState(ground).getBlock();

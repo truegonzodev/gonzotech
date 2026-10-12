@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Container;
@@ -53,6 +54,10 @@ public class ChunkRadiationData extends SavedData {
 
     /** Затухание заражения за обслуживание (применяется ВСЕГДА, автор 21.09). */
     private static final double DECAY = 0.99;
+
+    /** Ключ биома «Пустошь» (data/gonzotech/worldgen/biome/desolation.json). */
+    private static final ResourceLocation DESOLATION =
+            ResourceLocation.fromNamespaceAndPath("gonzotech", "desolation");
 
     /** Максимум новых обходов контура за проход чанка; источники в уже закэшированной полости лимит не тратят. */
     private static final int MAX_PROBES_PER_CHUNK = 16;
@@ -180,16 +185,6 @@ public class ChunkRadiationData extends SavedData {
             setDirty();
         }
         return v;
-    }
-
-    /**
-     * «Пустошь» без биома (автор, 2026-10-12): конверсия при генерации
-     * выставляет природный фон чанка напрямую. Вызывается один раз на чанк
-     * (конверсия идемпотентна), значение персистится в baseline.
-     */
-    public void markDesolation(long chunkKey, double baselineNzt) {
-        baseline.put(chunkKey, baselineNzt);
-        setDirty();
     }
 
     // ───────────────────────── поставленные блоки ─────────────────────────
@@ -402,9 +397,12 @@ public class ChunkRadiationData extends SavedData {
         ChunkPos cp = new ChunkPos(chunkKey);
         RandomSource rnd = RandomSource.create(level.getSeed() ^ chunkKey * 0x9E3779B97F4A7C15L);
 
-        // «Пустошь» (1–5 mZt) больше не вычисляется по биому: baseline таких
-        // чанков выставляет конверсия при генерации (markDesolation). Сюда
-        // доходят только обычные чанки.
+        BlockPos center = cp.getMiddleBlockPosition(64);
+        boolean desolation = level.getBiome(center).unwrapKey()
+                .map(k -> k.location().equals(DESOLATION)).orElse(false);
+        if (desolation) {
+            return (1.0 + rnd.nextDouble() * 4.0) * RadUnits.MILLI;
+        }
 
         // Разовый скан руды (ишем заодно с первой инициализацией baseline).
         int ores = 0;

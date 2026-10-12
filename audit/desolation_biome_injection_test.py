@@ -1,23 +1,30 @@
 #!/usr/bin/env python3
-"""Пин: «Пустошь» без биома — климат-гейт через noise-router (вариант 4).
+"""Пин: desolation в оверворлде через дописывание климат-точек в пресет.
 
-Инжект биома в оверворлд невозможен ни одним датапак-путём (подтверждено
-крашами/логами): dimension-оверрайд ломает суперплоский, пресет-реестр
-принимает только {"preset":...}, mixin в BiomeSource не попадает в биомную
-сетку чанка. Поэтому «Пустошь» — климатическая зона + фичи на весь оверворлд.
+История (все подходы проверены запуском):
+  - dimension/overworld.json        -> ломает суперплоский;
+  - preset-реестр multi_noise_...   -> принимает только {"preset":...};
+  - mixin в OverworldBiomeBuilder   -> краш bootstrap'а (висячие ссылки);
+  - mixin в getNoiseBiome           -> инъекция была, но сетка чанка/цвета
+                                       мимо (0.3.188);
+  - климат-фичи без биома (0.3.189) -> контент есть, но НЕТ цветов биома
+                                       (небо/трава/вода) — вернул автор.
+
+Итог: дописываем 4 климат-точки desolation в Climate.ParameterList пресета
+оверворлда в конструкторе MultiNoiseBiomeSourceParameterList (мягкий
+holderGetter.get — bootstrap не крашится). Ванильный findValue сам даёт
+частоту/границы; биом в сетке чанка -> цвета/F3//locate/конверсия работают.
 
 Контракт:
-  1. DesolationClimate: 4 гиперкуба, вычисление из density-функций router
-     (temperature/vegetation/continents/erosion/ridges), fail-safe;
-  2. DesolationConversionFeature: гейт по климату (НЕ по биому), convertChunk
-     принимает RandomState, радиация привязана к конверсии (markDesolation);
-  3. DeadTrunkFeature: стволы только в климат-зоне;
-  4. ChunkRadiationData: есть markDesolation, НЕТ биом-проверки;
-  5. biome_modifier add_desolation_features: is_overworld, vegetal_decoration,
-     4 фичи в порядке conversion→trunks→scorched→saplings;
-  6. placed-фичи дезоляции БЕЗ minecraft:biome-фильтра;
-  7. НЕТ mixin-инжекта биома и НЕТ DesolationBiomeInject;
-  8. НЕТ dimension/overworld.json и preset-оверрайда.
+  1. mixin MultiNoiseParameterListDesolationMixin зарегистрирован; инъекция в
+     конструктор (Preset, HolderGetter), мягкий get(DESOLATION), отбор
+     оверворлда по plains, fail-safe, 4 бокса;
+  2. конверсия и стволы снова гейтятся по биому (цвета и контент согласованы);
+  3. радиация baseline снова по биому desolation;
+  4. НЕТ климат-фич: DesolationClimate, add_desolation_features;
+  5. НЕТ мёртвых подходов: getNoiseBiome-mixin, DesolationBiomeInject,
+     dimension-оверрайд, preset-оверрайд;
+  6. биом desolation.json с effects (цвета) и фичами на месте.
 """
 import json
 import os
@@ -41,85 +48,68 @@ def read(path):
         return f.read()
 
 
-# 1. климат-гейт
-climate = os.path.join(JAVA, "core", "worldgen", "DesolationClimate.java")
-check(os.path.isfile(climate), "нет DesolationClimate.java")
-if os.path.isfile(climate):
-    c = read(climate)
-    check(c.count("0.15F, 0.50F") == 4, "ожидалось 4 гиперкуба")
-    for acc in ("temperature()", "vegetation()", "continents()", "erosion()", "ridges()"):
-        check(acc in c, f"нет обращения к router.{acc}")
-    check("SinglePointContext" in c, "нет SinglePointContext")
-    check("catch (Throwable" in c, "нет fail-safe в климат-гейте")
+# 1. mixin пресета
+mx_path = os.path.join(JAVA, "mixin", "MultiNoiseParameterListDesolationMixin.java")
+check(os.path.isfile(mx_path), "нет MultiNoiseParameterListDesolationMixin.java")
+mixcfg = json.load(open(os.path.join(RES, "gonzotech.mixins.json"), encoding="utf-8"))
+check("MultiNoiseParameterListDesolationMixin" in mixcfg.get("mixins", []),
+      "mixin пресета не зарегистрирован")
+if os.path.isfile(mx_path):
+    mx = read(mx_path)
+    check("<init>(Lnet/minecraft/world/level/biome/MultiNoiseBiomeSourceParameterList$Preset;"
+          "Lnet/minecraft/core/HolderGetter;)V" in mx, "инъекция не в конструктор пресета")
+    check("biomes.get(DESOLATION)" in mx, "нет мягкого holderGetter.get(DESOLATION)")
+    check("Biomes.PLAINS" in mx, "нет отбора оверворлда по plains")
+    check("catch (Throwable" in mx, "нет fail-safe")
+    check(mx.count("box(0.15F") == 4, "ожидалось 4 климат-бокса")
 
-# 2. конверсия
-conv = os.path.join(JAVA, "core", "worldgen", "DesolationConversionFeature.java")
-check(os.path.isfile(conv), "нет DesolationConversionFeature.java")
-if os.path.isfile(conv):
-    v = read(conv)
-    check(".is(DESOLATION)" not in v, "конверсия всё ещё гейтится по биому")
-    check("DesolationClimate.isDesolation" in v, "конверсия не гейтится по климату")
-    check("RandomState randomState" in v, "convertChunk не принимает RandomState")
-    check("markDesolation" in v, "радиация не привязана к конверсии")
+# 2. контент по биому
+conv = read(os.path.join(JAVA, "core", "worldgen", "DesolationConversionFeature.java"))
+check(".is(DESOLATION)" in conv, "конверсия не гейтится по биому")
+check("DesolationClimate" not in conv, "конверсия ссылается на удалённый климат-гейт")
+trunk = read(os.path.join(JAVA, "core", "worldgen", "DeadTrunkFeature.java"))
+check("DesolationClimate" not in trunk, "стволы ссылаются на удалённый климат-гейт")
 
-# 3. стволы
-trunk = os.path.join(JAVA, "core", "worldgen", "DeadTrunkFeature.java")
-check(os.path.isfile(trunk), "нет DeadTrunkFeature.java")
-if os.path.isfile(trunk):
-    t = read(trunk)
-    check("DesolationClimate.isDesolation" in t, "стволы не гейтятся по климату")
+# 3. радиация по биому
+rad = read(os.path.join(JAVA, "radiation", "ChunkRadiationData.java"))
+check("DESOLATION" in rad and "getBiome" in rad, "радиация не по биому desolation")
 
-# 4. радиация
-rad = os.path.join(JAVA, "radiation", "ChunkRadiationData.java")
-check(os.path.isfile(rad), "нет ChunkRadiationData.java")
-if os.path.isfile(rad):
-    r = read(rad)
-    check("markDesolation" in r, "нет markDesolation в радиации")
-    check("DESOLATION" not in r, "радиация всё ещё ссылается на биом DESOLATION")
+# 4. климат-фич убраны
+check(not os.path.isfile(os.path.join(JAVA, "core", "worldgen", "DesolationClimate.java")),
+      "DesolationClimate.java не удалён")
+check(not os.path.exists(os.path.join(
+    RES, "data", "gonzotech", "neoforge", "biome_modifier", "add_desolation_features.json")),
+    "biome_modifier климат-фич не удалён")
 
-# 5. biome_modifier
-mod = os.path.join(RES, "data", "gonzotech", "neoforge", "biome_modifier",
-                   "add_desolation_features.json")
-check(os.path.isfile(mod), "нет biome_modifier add_desolation_features.json")
-if os.path.isfile(mod):
-    m = json.load(open(mod, encoding="utf-8"))
-    check(m.get("biomes") == "#minecraft:is_overworld", "modifier не на is_overworld")
-    check(m.get("step") == "vegetal_decoration", "modifier не в vegetal_decoration")
-    feats = m.get("features", [])
-    check(feats[:1] == ["gonzotech:desolation_conversion_placed"],
-          "конверсия должна идти первой")
-    check(len(feats) == 4, "ожидалось 4 фичи в modifier")
-
-# 6. placed-фичи без biome-фильтра
-for f in ("desolation_conversion_placed", "desolation_trunks_placed",
-          "desolation_scorched_placed", "desolation_saplings_placed"):
-    p = os.path.join(RES, "data", "gonzotech", "worldgen", "placed_feature", f + ".json")
-    check(os.path.isfile(p), f"нет placed_feature {f}")
-    if os.path.isfile(p):
-        d = json.load(open(p, encoding="utf-8"))
-        check(all(pl.get("type") != "minecraft:biome" for pl in d["placement"]),
-              f"{f} всё ещё имеет minecraft:biome-фильтр")
-
-# 7. mixin-инжект биома убран
+# 5. мёртвые подходы отсутствуют
 check(not os.path.isfile(os.path.join(JAVA, "mixin", "MultiNoiseBiomeSourceDesolationMixin.java")),
-      "mixin-инжект биома не удалён")
+      "getNoiseBiome-mixin не удалён")
 check(not os.path.isfile(os.path.join(JAVA, "core", "worldgen", "DesolationBiomeInject.java")),
       "DesolationBiomeInject не удалён")
-mixcfg = json.load(open(os.path.join(RES, "gonzotech.mixins.json"), encoding="utf-8"))
 check("MultiNoiseBiomeSourceDesolationMixin" not in mixcfg.get("mixins", []),
-      "mixin всё ещё зарегистрирован")
-
-# 8. нет dimension/preset-оверрайдов
+      "getNoiseBiome-mixin всё ещё зарегистрирован")
 check(not os.path.exists(os.path.join(RES, "data", "minecraft", "dimension", "overworld.json")),
       "dimension/overworld.json снова появился")
 check(not os.path.exists(os.path.join(
     RES, "data", "minecraft", "worldgen",
     "multi_noise_biome_source_parameter_list", "overworld.json")),
-      "preset-оверрайд снова появился")
+    "preset-оверрайд снова появился")
+
+# 6. биом с цветами и фичами
+biome_p = os.path.join(RES, "data", "gonzotech", "worldgen", "biome", "desolation.json")
+check(os.path.isfile(biome_p), "нет desolation.json")
+if os.path.isfile(biome_p):
+    b = json.load(open(biome_p, encoding="utf-8"))
+    eff = b.get("effects", {})
+    for k in ("sky_color", "water_color", "grass_color", "foliage_color"):
+        check(k in eff, f"в биоме нет цвета {k}")
+    feats = json.dumps(b.get("features", []))
+    check("desolation_conversion" in feats and "desolation_trunks" in feats,
+          "в биоме нет фич конверсии/стволов")
 
 if failures:
-    print("FAIL: desolation climate-feature contract broken:")
+    print("FAIL: desolation preset-injection contract broken:")
     for m in failures:
         print("  -", m)
     sys.exit(1)
-print("OK: desolation climate-feature contract holds")
+print("OK: desolation preset-injection contract holds")
