@@ -59,6 +59,7 @@ if os.path.isfile(mx_path):
     check("<init>(Lnet/minecraft/world/level/biome/MultiNoiseBiomeSourceParameterList$Preset;"
           "Lnet/minecraft/core/HolderGetter;)V" in mx, "инъекция не в конструктор пресета")
     check("biomes.get(DESOLATION)" in mx, "нет мягкого holderGetter.get(DESOLATION)")
+    check("isBound()" in mx, "нет проверки isBound (крах 0.3.190: unbound-плейсхолдер)")
     check("Biomes.PLAINS" in mx, "нет отбора оверворлда по plains")
     check("catch (Throwable" in mx, "нет fail-safe")
     check(mx.count("box(0.15F") == 4, "ожидалось 4 климат-бокса")

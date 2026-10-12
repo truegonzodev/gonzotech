@@ -89,10 +89,14 @@ public abstract class MultiNoiseParameterListDesolationMixin {
             if (!overworld) {
                 return;
             }
-            // Мягкий lookup: во время ванильного bootstrap'а биома ещё нет —
-            // пропускаем, не создавая «висячих» ссылок (причина краха 0.3.185).
+            // Во время ванильного bootstrap'а lookup RegistrySetBuilder выдаёт
+            // для отсутствующего ключа UNBOUND-плейсхолдер (не empty!), и
+            // встраивание его в список затем крашится «Unreferenced key»
+            // (крах 0.3.190). Поэтому требуем именно BOUND-холдер: в
+            // bootstrap'е пропускаем и ничего не встраиваем, в слое датапака
+            // биом зарегистрирован — холдер bound и точки добавляются.
             Optional<Holder.Reference<Biome>> des = biomes.get(DESOLATION);
-            if (des.isEmpty()) {
+            if (des.isEmpty() || !des.get().isBound()) {
                 return;
             }
             Holder<Biome> holder = des.get();
