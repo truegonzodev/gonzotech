@@ -4,9 +4,10 @@ import com.gonzotech.core.worldgen.DesolationConversionFeature;
 import com.gonzotech.core.worldgen.SurfaceRuinGenerator;
 import com.gonzotech.core.worldgen.SurfaceWasteGenerator;
 import com.mojang.logging.LogUtils;
-import net.minecraft.world.level.chunk.ChunkAccess;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,6 +36,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ChunkDecorationDesolationMixin {
 
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final AtomicBoolean DESOLATION_FAILURE_LOGGED = new AtomicBoolean();
+    private static final AtomicBoolean RUINS_FAILURE_LOGGED = new AtomicBoolean();
+    private static final AtomicBoolean WASTE_FAILURE_LOGGED = new AtomicBoolean();
+
+    private static void logFailureOnce(AtomicBoolean logged, String message, Throwable error) {
+        // The full crash report is needed to diagnose a worldgen failure. Log it
+        // once per generator so repeated chunk failures cannot flood the worker log.
+        if (logged.compareAndSet(false, true)) {
+            LOGGER.error(message, error);
+        }
+    }
 
     @Inject(method = "applyBiomeDecoration", at = @At("HEAD"))
     private void gonzotech$convertDesolationColumns(WorldGenLevel level, ChunkAccess chunk,
@@ -42,8 +54,8 @@ public abstract class ChunkDecorationDesolationMixin {
         try {
             DesolationConversionFeature.convertChunk(level, chunk.getPos());
         } catch (Throwable t) {
-            LOGGER.warn("[gonzotech] desolation: конверсия чанка не выполнена: {}",
-                String.valueOf(t));
+            logFailureOnce(DESOLATION_FAILURE_LOGGED,
+                "[gonzotech] desolation: conversion failed at chunk " + chunk.getPos(), t);
         }
     }
 
@@ -53,14 +65,14 @@ public abstract class ChunkDecorationDesolationMixin {
         try {
             SurfaceRuinGenerator.generateForChunk(level, chunk.getPos());
         } catch (Throwable t) {
-            LOGGER.warn("[gonzotech] ruins: поверхностная генерация чанка не выполнена: {}",
-                String.valueOf(t));
+            logFailureOnce(RUINS_FAILURE_LOGGED,
+                "[gonzotech] ruins: surface generation failed at chunk " + chunk.getPos(), t);
         }
         try {
             SurfaceWasteGenerator.generateForChunk(level, chunk.getPos());
         } catch (Throwable t) {
-            LOGGER.warn("[gonzotech] waste: поверхностная генерация чанка не выполнена: {}",
-                String.valueOf(t));
+            logFailureOnce(WASTE_FAILURE_LOGGED,
+                "[gonzotech] waste: surface generation failed at chunk " + chunk.getPos(), t);
         }
     }
 }

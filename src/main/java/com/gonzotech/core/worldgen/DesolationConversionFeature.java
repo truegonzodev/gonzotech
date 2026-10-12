@@ -163,26 +163,34 @@ public class DesolationConversionFeature extends Feature<NoneFeatureConfiguratio
             Block block = state.getBlock();
             Block oreTarget = remap.get(block);
             if (oreTarget != null) {
-                level.setBlock(pos, oreTarget.defaultBlockState(), 2);
+                setConvertedBlock(level, pos, oreTarget.defaultBlockState(), surfaceOnly, surfaceY);
                 continue;
             }
 
             if (!surfaceOnly && (state.getFluidState().getType() == Fluids.WATER
                 || state.getFluidState().getType() == Fluids.FLOWING_WATER)) {
-                level.setBlock(pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), 2);
+                setConvertedBlock(level, pos, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState(), surfaceOnly, surfaceY);
             } else if (block == Blocks.GRASS_BLOCK || block == Blocks.DIRT
                 || block == Blocks.COARSE_DIRT || block == Blocks.ROOTED_DIRT) {
-                level.setBlock(pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), 2);
+                setConvertedBlock(level, pos, ModBlocks.DEAD_DIRT.get().defaultBlockState(), surfaceOnly, surfaceY);
             } else if (block == Blocks.SAND) {
-                level.setBlock(pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), 2);
+                setConvertedBlock(level, pos, ModBlocks.DEAD_SAND.get().defaultBlockState(), surfaceOnly, surfaceY);
             } else if (block == Blocks.STONE || block == Blocks.ANDESITE
                 || block == Blocks.GRANITE) {
                 if (y >= 60 || y >= 50 && random.nextInt(11) < y - 49) {
                     // 60+: всегда; 50–59: (y−49)/11 (0.09 … 0.91) — градиент спада.
-                    level.setBlock(pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), 2);
+                    setConvertedBlock(level, pos, ModBlocks.DEAD_STONE.get().defaultBlockState(), surfaceOnly, surfaceY);
                 }
             }
         }
+    }
+
+    private static void setConvertedBlock(WorldGenLevel level, BlockPos pos, BlockState replacement,
+                                          boolean surfaceOnly, int surfaceY) {
+        if (surfaceOnly && pos.getY() == surfaceY) {
+            DesolationWorldgenSupport.clearSurfaceVegetation(level, pos.getX(), pos.getY(), pos.getZ());
+        }
+        level.setBlock(pos, replacement, 2);
     }
 
     @Override

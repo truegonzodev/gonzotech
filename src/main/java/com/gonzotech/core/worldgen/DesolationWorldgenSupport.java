@@ -189,6 +189,31 @@ final class DesolationWorldgenSupport {
             || isSurfaceDecoration(state);
     }
 
+    /**
+     * Removes replaceable surface plants and similar cover before a site block
+     * replaces the terrain beneath it. A short bounded scan clears both halves
+     * of tall grass/flowers without cutting through logs or other solid blocks.
+     */
+    static void clearSurfaceVegetation(WorldGenLevel level, int x, int groundY, int z) {
+        int clearToY = Math.min(groundY + 3, level.getMaxY() - 1);
+        for (int y = groundY + 1; y <= clearToY; y++) {
+            BlockPos pos = new BlockPos(x, y, z);
+            BlockState state = level.getBlockState(pos);
+            if (state.isAir()) {
+                continue;
+            }
+            if (!state.getFluidState().isEmpty() || !state.canBeReplaced()) {
+                break;
+            }
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+        }
+    }
+
+    static void setSurfaceBlock(WorldGenLevel level, BlockPos groundPos, BlockState replacement) {
+        clearSurfaceVegetation(level, groundPos.getX(), groundPos.getY(), groundPos.getZ());
+        level.setBlock(groundPos, replacement, 2);
+    }
+
     static boolean hasTreeLogAbove(WorldGenLevel level, int x, int groundY, int z) {
         int top = Math.min(groundY + 4, level.getMaxY() - 1);
         for (int y = groundY + 1; y <= top; y++) {

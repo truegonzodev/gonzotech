@@ -38,7 +38,10 @@ public final class SurfaceRuinGenerator {
     public static void generateForChunk(WorldGenLevel level, ChunkPos targetChunk) {
         for (int anchorX = targetChunk.x - 1; anchorX <= targetChunk.x + 1; anchorX++) {
             for (int anchorZ = targetChunk.z - 1; anchorZ <= targetChunk.z + 1; anchorZ++) {
-                generateCandidate(level, targetChunk, anchorX, anchorZ);
+                // WorldGenRegion only exposes chunks required by this generation step.
+                if (level.hasChunk(anchorX, anchorZ)) {
+                    generateCandidate(level, targetChunk, anchorX, anchorZ);
+                }
             }
         }
     }
@@ -49,6 +52,12 @@ public final class SurfaceRuinGenerator {
         RandomSource random = RandomSource.create(seed);
         int centerX = (anchorChunkX << 4) + random.nextInt(16);
         int centerZ = (anchorChunkZ << 4) + random.nextInt(16);
+        // Consume the same roll as before, but reject impossible candidates before
+        // heightmap/biome/block reads. This avoids nine terrain scans per chunk.
+        double chanceRoll = random.nextDouble();
+        if (chanceRoll >= BASE_CHANCE * 2.0) {
+            return;
+        }
         int centerY = DesolationWorldgenSupport.findGroundY(level, centerX, centerZ);
         if (centerY == DesolationWorldgenSupport.NO_SURFACE) {
             return;
@@ -57,11 +66,11 @@ public final class SurfaceRuinGenerator {
         BlockPos center = new BlockPos(centerX, centerY, centerZ);
         boolean desolation = level.getBiome(center).is(DESOLATION);
         double chance = BASE_CHANCE * (desolation ? 2.0 : 1.0);
-        if (random.nextDouble() >= chance) {
+        if (chanceRoll >= chance) {
             return;
         }
 
-        double bowlRadius = 1.5 + random.nextDouble() * 2.0;
+        double coreRadius = 1.5 + random.nextDouble() * 2.0;
         double debrisRadius = 6.0 + random.nextDouble() * 10.0;
         double plasticRadius = 5.0 + random.nextDouble() * 5.0;
         double siteRadius = Math.max(debrisRadius, plasticRadius);
@@ -112,7 +121,7 @@ public final class SurfaceRuinGenerator {
                 double centerDensity = 0.54 + 0.28 * (1.0 - Math.min(1.0, distance / debrisRadius));
                 double debrisCoverage = edgeFade * centerDensity;
                 boolean debrisCovered = insideDebris
-                    && (distance <= bowlRadius
+                    && (distance <= coreRadius
                         || DesolationWorldgenSupport.hash01(seed ^ 0xA54FF53A5F1D36F1L, x, z)
                             < debrisCoverage);
                 double plasticDensity = 0.78 - 0.48 * Math.min(1.0, distance / plasticRadius);
@@ -121,8 +130,8 @@ public final class SurfaceRuinGenerator {
                     && DesolationWorldgenSupport.hash01(seed ^ 0x1F83D9ABFB41BD6BL, x, z)
                         < plasticDensity * plasticFade;
 
-                if (distance <= bowlRadius && debrisCovered) {
-                    makeBowl(level, seed, x, z, groundY, distance, bowlRadius);
+                if (distance <= coreRadius && debrisCovered) {
+                    makeWreckCore(level, seed, x, z, groundY, distance, coreRadius);
                     continue;
                 }
                 BlockState material;
@@ -133,11 +142,11 @@ public final class SurfaceRuinGenerator {
                 } else {
                     continue;
                 }
-                level.setBlock(groundPos, material, 2);
+                DesolationWorldgenSupport.setSurfaceBlock(level, groundPos, material);
 
-                // Broken hull panels and debris protrude irregularly from the bowl rim.
-                boolean nearRim = Math.abs(distance - bowlRadius) <= 2.2;
-                double protrusionChance = nearRim ? 0.22 : 0.035;
+                // Broken hull panels and debris rise irregularly around the wreck's core.
+                boolean nearCoreEdge = Math.abs(distance - coreRadius) <= 2.2;
+                double protrusionChance = nearCoreEdge ? 0.34 : 0.035;
                 if (debrisCovered
                         && DesolationWorldgenSupport.hash01(seed ^ 0x5BE0CD19137E2179L, x, z)
                             < protrusionChance * edgeFade) {
@@ -158,10 +167,13 @@ public final class SurfaceRuinGenerator {
         placeScatter(level, targetChunk, seed, scatter);
     }
 
-    private static void makeBowl(WorldGenLevel level, long seed, int x, int z,
-                                  int groundY, double distance, double bowlRadius) {
-        int depth = 1 + (int) Math.floor(2.0 * (1.0 - distance / (bowlRadius + 0.25)));
-        depth = Math.max(1, Math.min(3, depth));
+    private static void makeWreckCore(WorldGenLevel level, long seed, int x, int z,
+                                      int groundY, double distance, double coreRadius) {
+        // Keep the core mostly at the natural surface; only scattered inner
+        // columns collapse by one block, avoiding a continuous crater silhouette.
+        int depth = distance <= coreRadius * 0.72
+                && DesolationWorldgenSupport.hash01(seed ^ 0xC6E00BF33DA88FC2L, x, z) < 0.32
+            ? 1 : 0;
         int floorY = groundY - depth;
         if (floorY <= level.getMinY()) {
             return;
@@ -174,7 +186,7 @@ public final class SurfaceRuinGenerator {
                     level.getBlockState(new BlockPos(x, floorY - 1, z)))) {
             return;
         }
-        // Never open an existing cave or aquifer while forming the shallow bowl.
+        // Never open an existing cave or aquifer while shaping a collapsed pocket.
         for (int y = floorY; y <= groundY; y++) {
             if (!DesolationWorldgenSupport.isNaturalTerrain(level.getBlockState(new BlockPos(x, y, z)))) {
                 return;
@@ -194,8 +206,8 @@ public final class SurfaceRuinGenerator {
         }
 
         int markerY = floorY - depth - 1;
-        if (markerY < level.getMinY()
-                || !DesolationWorldgenSupport.isNaturalTerrain(level.getBlockState(new BlockPos(x, markerY, z)))) {
+        if (depth > 0 && (markerY < level.getMinY()
+                || !DesolationWorldgenSupport.isNaturalTerrain(level.getBlockState(new BlockPos(x, markerY, z))))) {
             return;
         }
         for (int y = floorY + 1; y <= clearTop; y++) {
@@ -205,30 +217,33 @@ public final class SurfaceRuinGenerator {
             }
         }
 
-        // A genuinely sunken centre is ringed by broken panels and rubble.
+        // Weathered machinery/plastic form a broken surface mound; only the
+        // hashed pockets sit below the original terrain line.
         double coreRoll = DesolationWorldgenSupport.hash01(seed ^ 0x428A2F98D728AE22L, x, z);
         BlockState core = coreRoll < 0.58
             ? ModBlocks.WEATHERED_MECHANISMS.get().defaultBlockState()
             : ModBlocks.PLASTIC_WASTE.get().defaultBlockState();
         level.setBlock(floor, core, 2);
 
-        // Buried cache markers encode the local basin depth for deterministic
-        // reconstruction when adjacent chunks evaluate the same site.
-        level.setBlock(new BlockPos(x, markerY, z),
-            ModBlocks.SILICON_CACHE.get().defaultBlockState(), 2);
+        // A shallow-pocket marker lets neighboring chunks recover the original
+        // terrain height even though this column's visible core sits one block lower.
+        if (depth > 0) {
+            level.setBlock(new BlockPos(x, markerY, z),
+                ModBlocks.SILICON_CACHE.get().defaultBlockState(), 2);
+        }
         int cacheY = groundY - 8;
-        if (distance <= bowlRadius * 0.82
+        if (distance <= coreRadius * 0.82
                 && DesolationWorldgenSupport.hash01(seed ^ 0x7137449123EF65CDL, x, z) < 0.28
                 && cacheY >= level.getMinY()
                 && DesolationWorldgenSupport.isNaturalTerrain(level.getBlockState(new BlockPos(x, cacheY, z)))) {
             level.setBlock(new BlockPos(x, cacheY, z), ModBlocks.SILICON_CACHE.get().defaultBlockState(), 2);
         }
 
-        // A few old mechanisms/plastic fragments remain in the sunken centre.
+        // Surface fragments fill some of the shallow pockets and break up the core.
         BlockPos inner = floor.above();
         if (inner.getY() < level.getMaxY()
-                && distance <= bowlRadius * 0.55
-                && DesolationWorldgenSupport.hash01(seed ^ 0xB5C0FBCFEC4D3B2FL, x, z) < 0.27
+                && distance <= coreRadius * 0.72
+                && DesolationWorldgenSupport.hash01(seed ^ 0xB5C0FBCFEC4D3B2FL, x, z) < 0.42
                 && DesolationWorldgenSupport.canPlaceOnTopOfTerrain(level.getBlockState(inner))) {
             BlockState coreFragment = DesolationWorldgenSupport.hash01(seed ^ 0xE9B5DBA58189DBBCL,
                 x, z) < 0.58
@@ -298,7 +313,7 @@ public final class SurfaceRuinGenerator {
             }
             BlockState base = pickSurfaceMaterial(seed ^ (0x9E3779B97F4A7C15L * (piece.index() + 1L)),
                 piece.x(), piece.z());
-            level.setBlock(ground, base, 2);
+            DesolationWorldgenSupport.setSurfaceBlock(level, ground, base);
             for (int dy = 1; dy < piece.height(); dy++) {
                 BlockPos above = ground.above(dy);
                 if (above.getY() >= level.getMaxY()

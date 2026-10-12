@@ -30,6 +30,8 @@ check('method = "applyBiomeDecoration", at = @At("RETURN")' in mixin,
       "surface generators are not called after biome decoration")
 check("SurfaceRuinGenerator.generateForChunk" in mixin and "SurfaceWasteGenerator.generateForChunk" in mixin,
       "one or both surface generators are not wired into the chunk hook")
+check("AtomicBoolean" in mixin and "LOGGER.error(message, error)" in mixin,
+      "worldgen failure logging must include a stack trace and be bounded")
 
 # Surface filter rejects water, ocean/river biomes, and finds natural ground from
 # the world-surface heightmap rather than scanning a cave-floor feature position.
@@ -41,6 +43,12 @@ check("convertColumnWithoutBiome" in conversion and "requireDesolationBiome" in 
 check("boolean surfaceOnly" in conversion and "enteredSolidSurface" in conversion
       and "!surfaceOnly &&" in conversion,
       "waste conversion can flow into caves or alter water")
+check("clearSurfaceVegetation" in helper and "state.canBeReplaced()" in helper
+      and "level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2)" in helper,
+      "replaceable grass/flowers are not removed above converted surface blocks")
+check("clearSurfaceVegetation" in conversion and "setSurfaceBlock" in ruins
+      and "clearSurfaceVegetation" in waste,
+      "vegetation cleanup is not wired into conversion, ruins and barrel placement")
 check("convertColumnWithoutBiome(" in waste,
       "waste patch does not reuse the desolation block-conversion routine")
 
@@ -51,8 +59,20 @@ for token in ("1.0 / 444.0", "desolation ? 2.0 : 1.0", "1.5 + random.nextDouble(
               "ModBlocks.SILICON_CACHE", "ModBlocks.WEATHERED_MECHANISMS",
               "ModBlocks.PLASTIC_WASTE", "floorY = groundY - depth",
               "markerY = floorY - depth - 1", "createScatter",
-              "DesolationWorldgenSupport.noise"):
+              "DesolationWorldgenSupport.noise", "coreRadius * 0.72", "< 0.32"):
     check(token in ruins, f"ruin contract missing {token}")
+for source, name in ((ruins, "ruins"), (waste, "waste")):
+    check("level.hasChunk(anchorX, anchorZ)" in source,
+          f"{name} generator can request a chunk outside WorldGenRegion dependencies")
+    candidate = source.split("private static void generateCandidate", 1)[1]
+    check(candidate.index("double chanceRoll") < candidate.index("findGroundY"),
+          f"{name} candidate reads terrain before its maximum-rate fast rejection")
+
+baseline = (ROOT / "docs/WORLDGEN-SURFACE-RUINS.md").read_text(encoding="utf-8")
+check("bb4dea7161f79ce3eb2a4d845a1fccaa721a9cfc" in baseline
+      and "int depth = 1 + (int) Math.floor(2.0" in baseline
+      and "1 / 444" in baseline,
+      "tested crater-style ruins fallback is not documented with its source commit and parameters")
 for block in ("MECHANISMS", "WEATHERED_PLATING", "DEBRIS", "WEATHERED_DEBRIS",
               "WEATHERED_MECHANISMS", "PLASTIC_WASTE"):
     check(f"ModBlocks.{block}" in ruins, f"ruin palette missing {block}")
@@ -72,7 +92,7 @@ check("(1.0 + rnd.nextDouble() * 9.0) * RadUnits.MILLI" in radiation,
       "waste-bearing chunk baseline is not 1–10 mZt/t")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-check("mod_version=0.3.202" in version, "content-change version was not bumped")
+check("mod_version=0.3.203" in version, "content-change version was not bumped")
 
 if failures:
     for failure in failures:

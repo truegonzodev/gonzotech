@@ -33,7 +33,10 @@ public final class SurfaceWasteGenerator {
     public static void generateForChunk(WorldGenLevel level, ChunkPos targetChunk) {
         for (int anchorX = targetChunk.x - 1; anchorX <= targetChunk.x + 1; anchorX++) {
             for (int anchorZ = targetChunk.z - 1; anchorZ <= targetChunk.z + 1; anchorZ++) {
-                generateCandidate(level, targetChunk, anchorX, anchorZ);
+                // WorldGenRegion only exposes chunks required by this generation step.
+                if (level.hasChunk(anchorX, anchorZ)) {
+                    generateCandidate(level, targetChunk, anchorX, anchorZ);
+                }
             }
         }
     }
@@ -44,13 +47,19 @@ public final class SurfaceWasteGenerator {
         RandomSource random = RandomSource.create(seed);
         int sampledX = (anchorChunkX << 4) + random.nextInt(16);
         int sampledZ = (anchorChunkZ << 4) + random.nextInt(16);
+        // Consume the same roll as before, but reject impossible candidates before
+        // heightmap/biome/block reads. This avoids nine terrain scans per chunk.
+        double chanceRoll = random.nextDouble();
+        if (chanceRoll >= BASE_CHANCE * 12.0) {
+            return;
+        }
         int sampledY = DesolationWorldgenSupport.findGroundY(level, sampledX, sampledZ);
         if (sampledY == DesolationWorldgenSupport.NO_SURFACE) {
             return;
         }
         boolean desolation = level.getBiome(new BlockPos(sampledX, sampledY, sampledZ)).is(DESOLATION);
         double chance = BASE_CHANCE * (desolation ? 12.0 : 1.0);
-        if (random.nextDouble() >= chance) {
+        if (chanceRoll >= chance) {
             return;
         }
 
@@ -175,6 +184,7 @@ public final class SurfaceWasteGenerator {
                     || !DesolationWorldgenSupport.canPlaceBarrelAt(above)) {
                 continue;
             }
+            DesolationWorldgenSupport.clearSurfaceVegetation(level, barrel.x(), groundY, barrel.z());
             level.setBlock(placePos, ModBlocks.WASTE_BARREL.get().defaultBlockState(), 2);
         }
     }
@@ -222,7 +232,11 @@ public final class SurfaceWasteGenerator {
                     BlockState debris = (DesolationWorldgenSupport.hash01(posSeed, x, z) < 0.5)
                         ? ModBlocks.DEBRIS.get().defaultBlockState()
                         : ModBlocks.WEATHERED_DEBRIS.get().defaultBlockState();
-                    level.setBlock(pos, debris, 2);
+                    if (y == groundY) {
+                        DesolationWorldgenSupport.setSurfaceBlock(level, pos, debris);
+                    } else {
+                        level.setBlock(pos, debris, 2);
+                    }
                 }
             }
         }
