@@ -36,7 +36,8 @@ _ver.at_least("0.3.206", "noble-moss content version")
 blocks = (ROOT / "src/main/java/com/gonzotech/core/registry/ModBlocks.java").read_text(encoding="utf-8")
 items = (ROOT / "src/main/java/com/gonzotech/core/registry/ModItems.java").read_text(encoding="utf-8")
 tabs = (ROOT / "src/main/java/com/gonzotech/core/registry/ModCreativeTabs.java").read_text(encoding="utf-8")
-assert "BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE)" in blocks
+assert "BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)" in blocks
+assert ".requiresCorrectToolForDrops();" in blocks[blocks.index("private static BlockBehaviour.Properties nobleMossProperties()"):]
 for block_id in FAMILY:
     assert f'"{block_id}"' in blocks, f"block registration missing: {block_id}"
     assert f'ITEMS.registerSimpleBlockItem("{block_id}"' in items, f"block item missing: {block_id}"

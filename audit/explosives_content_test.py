@@ -282,6 +282,20 @@ pin(face_textures["north"]["texture"] == "#face"
     and face_textures["down"]["texture"] == "#bottom"
     and all(face_textures[side]["texture"] == "#side" for side in ("south", "east", "west")),
     "tunnel block model assigns the requested front/side/top/bottom textures")
+tunnel_item_model = load(ASSETS / "models/item/tunnel_tnt.json")
+tunnel_item_definition = load(ASSETS / "items/tunnel_tnt.json")
+pin(tunnel_item_model["parent"] == "minecraft:block/cube"
+    and tunnel_item_model["textures"] == {
+        "particle": "gonzotech:block/tunnel_tnt_side",
+        "north": "gonzotech:block/tunnel_tnt_face",
+        "south": "gonzotech:block/tunnel_tnt_side",
+        "east": "gonzotech:block/tunnel_tnt_side",
+        "west": "gonzotech:block/tunnel_tnt_side",
+        "up": "gonzotech:block/tunnel_tnt_top",
+        "down": "gonzotech:block/tunnel_tnt_bottom",
+    }
+    and tunnel_item_definition["model"]["model"] == "gonzotech:item/tunnel_tnt",
+    "tunnel TNT item renders as a 3D cube with the six block textures")
 for texture_id in ("tunnel_tnt_side", "tunnel_tnt_face", "tunnel_tnt_top", "tunnel_tnt_bottom"):
     image = (ASSETS / f"textures/block/{texture_id}.png").read_bytes()
     pin(tuple(image[:8]) == (137, 80, 78, 71, 13, 10, 26, 10),
@@ -300,6 +314,6 @@ pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
     "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-_ver.at_least("0.3.206", "version is bumped to 0.3.206")
+_ver.at_least("0.3.207", "version is bumped to 0.3.207")
 
 print(f"OK: {checks} explosives-content checks passed")

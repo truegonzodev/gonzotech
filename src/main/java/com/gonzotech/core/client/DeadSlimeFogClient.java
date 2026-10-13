@@ -13,7 +13,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 public final class DeadSlimeFogClient {
 
     public static final int FOG_COLOR = 0x7CAB6F;
-    public static final float FOG_START = 0.0F;
+    // Start fog in front of the camera, like submerged-water fog, instead of tinting only distant scenery.
+    public static final float FOG_START = -8.0F;
     public static final float FOG_END = 9.0F;
 
     private DeadSlimeFogClient() {

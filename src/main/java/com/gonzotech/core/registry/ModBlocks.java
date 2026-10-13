@@ -391,7 +391,9 @@ public class ModBlocks {
     }
 
     private static BlockBehaviour.Properties nobleMossProperties() {
-        return BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE);
+        // Vanilla stone hardness/resistance; correct drops require a pickaxe (mineable/pickaxe tag).
+        return BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
+            .requiresCorrectToolForDrops();
     }
 
     // ─────────────────────────── Фаза 4: блоки космоса ───────────────────────────

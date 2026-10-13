@@ -24,7 +24,10 @@ def load(path: Path):
 fog = read("core/client/DeadSlimeFogClient.java")
 entry = read("GonzoTechMod.java")
 assert "FOG_COLOR = 0x7CAB6F" in fog
-assert "FOG_END = 9.0F" in fog and "FOG_START = 0.0F" in fog
+assert "FOG_END = 9.0F" in fog and "FOG_START = -8.0F" in fog
+assert "event.setNearPlaneDistance(FOG_START)" in fog
+assert "event.setFarPlaneDistance(FOG_END)" in fog
+assert "like submerged-water fog" in fog
 assert "ViewportEvent.ComputeFogColor" in fog and "ViewportEvent.RenderFog" in fog
 assert "event.setFogShape(FogShape.SPHERE)" in fog and "event.setCanceled(true)" in fog
 assert "cameraInsideDeadSlime" in fog and "ModBlocks.DEAD_SLIME_BLOCK.get()" in fog
@@ -79,5 +82,5 @@ assert "отдельной цены нет" in deferred and "смерть" in de
 assert "Туннельный TNT" in load(ASSETS / "lang/ru_ru.json").values()
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert "mod_version=0.3.206" in version
+assert "mod_version=0.3.207" in version
 print("QOL batch checks passed: fog, sound, 21 plastic pairs, TNT item protection and design notes")

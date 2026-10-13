@@ -1,3 +1,12 @@
 {
-  "parent": "gonzotech:block/tunnel_tnt"
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "gonzotech:block/tunnel_tnt_side",
+    "north": "gonzotech:block/tunnel_tnt_face",
+    "south": "gonzotech:block/tunnel_tnt_side",
+    "east": "gonzotech:block/tunnel_tnt_side",
+    "west": "gonzotech:block/tunnel_tnt_side",
+    "up": "gonzotech:block/tunnel_tnt_top",
+    "down": "gonzotech:block/tunnel_tnt_bottom"
+  }
 }
