@@ -26,6 +26,8 @@ assert len(textures) == len(expected) and len(set(textures)) == len(expected)
 category = (JAVA / "integration/jei/MachineJeiRecipeCategory.java").read_text(encoding="utf-8")
 assert 'definition.texture() + "_gui.png"' in category
 assert "_gui_bg.png" not in category
+assert "setOutputSlotBackground" not in category
+assert "slotBuilder.setStandardSlotBackground();" in category
 assert "drawableBuilder(texture, 128, 128, definition.width(), definition.height())" in category
 for texture in textures:
     path = RES / f"assets/gonzotech/textures/gui/{texture}_gui.png"

@@ -5,7 +5,6 @@ import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
-import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -69,11 +68,8 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
     public void setRecipe(IRecipeLayoutBuilder builder, MachineJeiRecipe recipe, IFocusGroup focuses) {
         for (MachineJeiRecipe.Slot slot : recipe.slots()) {
             var slotBuilder = builder.addSlot(slot.role(), slot.x(), slot.y());
-            if (slot.role() == RecipeIngredientRole.OUTPUT) {
-                slotBuilder.setOutputSlotBackground();
-            } else {
-                slotBuilder.setStandardSlotBackground();
-            }
+            // Machine GUI slots are 16x16 for every role; do not use JEI's oversized crafting-output frame.
+            slotBuilder.setStandardSlotBackground();
 
             if (!slot.itemStacks().isEmpty()) {
                 slotBuilder.addItemStacks(slot.itemStacks());
