@@ -41,7 +41,7 @@ assert "ModBlocks.RAW_ORE_BLOCKS.get(ore.id())" in items_java
 properties_start = blocks_java.index("private static BlockBehaviour.Properties rawOreBlockProperties()")
 properties_end = blocks_java.index("\n    }", properties_start)
 properties = blocks_java[properties_start:properties_end]
-assert ".sound(SoundType.IRON)" in properties
+assert ".sound(SoundType.METAL)" in properties
 assert ".strength(4.5f, 10.8f)" in properties
 assert ".requiresCorrectToolForDrops()" in properties
 raw_items_index = tabs_java.index("ModItems.RAW_ORE_ITEMS.values()")

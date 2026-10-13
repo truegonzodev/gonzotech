@@ -405,7 +405,8 @@ public class ModBlocks {
         // or better pickaxe is a valid drop tool; higher tiers only mine faster.
         return BlockBehaviour.Properties.of()
             .mapColor(MapColor.STONE)
-            .sound(SoundType.IRON)
+            // Minecraft 1.21.4 exposes iron's shared sound family as METAL.
+            .sound(SoundType.METAL)
             .strength(4.5f, 10.8f)
             .requiresCorrectToolForDrops();
     }
