@@ -21,14 +21,14 @@ import java.util.Locale;
 /** Renderer shared by every machine processing category. */
 public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJeiRecipe> {
     private final MachineJeiCategories.Definition definition;
-    private final IDrawable background;
+    private final IDrawable machineGui;
     private final IDrawable icon;
 
     public MachineJeiRecipeCategory(IGuiHelper guiHelper, MachineJeiCategories.Definition definition) {
         this.definition = definition;
         ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(
-            "gonzotech", "textures/gui/" + definition.texture() + "_gui_bg.png");
-        this.background = guiHelper.drawableBuilder(texture, 128, 128, definition.width(), definition.height())
+            "gonzotech", "textures/gui/" + definition.texture() + "_gui.png");
+        this.machineGui = guiHelper.drawableBuilder(texture, 128, 128, definition.width(), definition.height())
             .setTextureSize(512, 512)
             .build();
         this.icon = guiHelper.createDrawableIngredient(
@@ -47,7 +47,7 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
 
     @Override
     public IDrawable getBackground() {
-        return background;
+        return machineGui;
     }
 
     @Override
