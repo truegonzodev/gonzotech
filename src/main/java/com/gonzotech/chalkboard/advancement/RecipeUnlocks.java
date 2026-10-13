@@ -148,7 +148,28 @@ public final class RecipeUnlocks {
     private static final List<String> RECIPES_AFTER_TWENTY_MINUTES = List.of(
         "gonzotech:radioactive_slime_block",
         "gonzotech:charcoal_from_dead_log",
-        "gonzotech:plastic_waste"
+        // The 21 unordered pairs of two different plastic inputs all share this time gate.
+        "gonzotech:plastic_waste",
+        "gonzotech:plastic_waste_from_celluloid_and_polyethylene",
+        "gonzotech:plastic_waste_from_celluloid_and_polyvinyl_chloride",
+        "gonzotech:plastic_waste_from_celluloid_and_resin",
+        "gonzotech:plastic_waste_from_celluloid_and_rubber",
+        "gonzotech:plastic_waste_from_celluloid_and_honeycomb",
+        "gonzotech:plastic_waste_from_celluloid_and_resin_clump",
+        "gonzotech:plastic_waste_from_polyethylene_and_polyvinyl_chloride",
+        "gonzotech:plastic_waste_from_polyethylene_and_resin",
+        "gonzotech:plastic_waste_from_polyethylene_and_rubber",
+        "gonzotech:plastic_waste_from_polyethylene_and_honeycomb",
+        "gonzotech:plastic_waste_from_polyethylene_and_resin_clump",
+        "gonzotech:plastic_waste_from_polyvinyl_chloride_and_resin",
+        "gonzotech:plastic_waste_from_polyvinyl_chloride_and_rubber",
+        "gonzotech:plastic_waste_from_polyvinyl_chloride_and_honeycomb",
+        "gonzotech:plastic_waste_from_polyvinyl_chloride_and_resin_clump",
+        "gonzotech:plastic_waste_from_resin_and_rubber",
+        "gonzotech:plastic_waste_from_resin_and_honeycomb",
+        "gonzotech:plastic_waste_from_resin_and_resin_clump",
+        "gonzotech:plastic_waste_from_rubber_and_honeycomb",
+        "gonzotech:plastic_waste_from_rubber_and_resin_clump"
     );
 
     private static final String SOLAR_WATCH_RECIPE = "gonzotech:solar_watch";

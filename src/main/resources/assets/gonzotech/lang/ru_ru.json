@@ -1010,6 +1010,7 @@
   "block.gonzotech.graphite_block": "Графитовый блок",
   "block.gonzotech.gunpowder_block": "Блок пороха",
   "block.gonzotech.industrial_tnt": "Промышленный TNT",
+  "block.gonzotech.tunnel_tnt": "Туннельный TNT",
   "block.gonzotech.third_silicon_factory": "Литографическая фабрика",
   "block.gonzotech.third_silicon_factory_shell": "Оболочка литографии",
   "gui.gonzotech.silicon_factory.etching": "§fТравление: %s%%",

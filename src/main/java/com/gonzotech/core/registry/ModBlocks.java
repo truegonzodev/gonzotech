@@ -5,6 +5,7 @@ import com.gonzotech.chalkboard.ChalkboardBlock;
 import com.gonzotech.core.block.HeavyDoorBlock;
 import com.gonzotech.core.block.GunpowderBlock;
 import com.gonzotech.core.block.IndustrialTntBlock;
+import com.gonzotech.core.block.TunnelTntBlock;
 import com.gonzotech.core.block.TungstenAbsorberBlock;
 import com.gonzotech.core.fluid.LiquidFireBlock;
 import com.gonzotech.core.fluid.ModFluids;
@@ -123,6 +124,9 @@ public class ModBlocks {
     /** Промышленный TNT: ванильный фитиль удвоенной длительности и усиленный взрыв. */
     public static final DeferredBlock<IndustrialTntBlock> INDUSTRIAL_TNT = BLOCKS.registerBlock(
         "industrial_tnt", IndustrialTntBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.TNT));
+    /** Направленный TNT с промышленным фитилём и взрывом вдоль FACING. */
+    public static final DeferredBlock<TunnelTntBlock> TUNNEL_TNT = BLOCKS.registerBlock(
+        "tunnel_tnt", TunnelTntBlock::new, BlockBehaviour.Properties.ofFullCopy(Blocks.TNT));
     /** Литография (автор 28.09.2026): фабрика — контроллер многоблока 3×3×2 (верхний центр). */
     public static final DeferredBlock<com.gonzotech.machines.litho.SiliconFactoryBlock> THIRD_SILICON_FACTORY =
         BLOCKS.registerBlock("third_silicon_factory", com.gonzotech.machines.litho.SiliconFactoryBlock::new,

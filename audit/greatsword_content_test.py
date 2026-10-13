@@ -355,7 +355,13 @@ class GreatswordContentTest(unittest.TestCase):
         registry = (ROOT / "src/main/java/com/gonzotech/core/registry/ModSounds.java").read_text(encoding="utf-8")
         for sound in ("sword_impact", "sword_ready"):
             with self.subTest(sound=sound):
-                self.assertEqual(sounds[sound]["sounds"], [{"name": f"gonzotech:{sound}"}])
+                sound_entry = sounds[sound]["sounds"]
+                self.assertEqual(len(sound_entry), 1)
+                self.assertEqual(sound_entry[0]["name"], f"gonzotech:{sound}")
+                if sound == "sword_impact":
+                    self.assertEqual(sound_entry[0].get("volume"), 0.75)
+                else:
+                    self.assertNotIn("volume", sound_entry[0])
                 self.assertTrue((ASSETS / f"sounds/{sound}.ogg").read_bytes().startswith(b"OggS"))
                 self.assertIn(f'{sound.upper()} = sound("{sound}")', registry)
                 subtitle = sounds[sound]["subtitle"]

@@ -31,6 +31,10 @@ custom_tnt = (JAVA / "core/block/CustomTntBlock.java").read_text(encoding="utf-8
 gunpowder = (JAVA / "core/block/GunpowderBlock.java").read_text(encoding="utf-8")
 industrial = (JAVA / "core/block/IndustrialTntBlock.java").read_text(encoding="utf-8")
 primed = (JAVA / "core/block/IndustrialPrimedTnt.java").read_text(encoding="utf-8")
+tunnel_block = (JAVA / "core/block/TunnelTntBlock.java").read_text(encoding="utf-8")
+tunnel_primed = (JAVA / "core/block/TunnelPrimedTnt.java").read_text(encoding="utf-8")
+entities = (JAVA / "core/registry/ModEntities.java").read_text(encoding="utf-8")
+tunnel_renderer = (JAVA / "core/client/TunnelTntRenderer.java").read_text(encoding="utf-8")
 gunpowder_primed = (JAVA / "core/block/GunpowderPrimedTnt.java").read_text(encoding="utf-8")
 mod_particles = (JAVA / "core/registry/ModParticles.java").read_text(encoding="utf-8")
 particle_client = (JAVA / "core/client/particle/ModParticleClient.java").read_text(encoding="utf-8")
@@ -42,8 +46,10 @@ mod_entry = (JAVA / "GonzoTechMod.java").read_text(encoding="utf-8")
 # Registrations and requested creative-tab placement.
 pin('"gunpowder_block", GunpowderBlock::new' in blocks, "gunpowder block is registered")
 pin('"industrial_tnt", IndustrialTntBlock::new' in blocks, "industrial TNT block is registered")
+pin('"tunnel_tnt", TunnelTntBlock::new' in blocks, "tunnel TNT block is registered")
 pin('"gunpowder_block", ModBlocks.GUNPOWDER_BLOCK' in items, "gunpowder BlockItem is registered")
 pin('"industrial_tnt", ModBlocks.INDUSTRIAL_TNT' in items, "industrial TNT BlockItem is registered")
+pin('"tunnel_tnt", ModBlocks.TUNNEL_TNT' in items, "tunnel TNT BlockItem is registered")
 components = tabs.split('"components"', 1)[1].split('.build()', 1)[0]
 component_items = re.findall(r"output\.accept\(([^;]+)\);", components)
 graphite_block_index = component_items.index("ModItems.GRAPHITE_BLOCK_ITEM.get()")
@@ -51,8 +57,8 @@ pin(component_items[graphite_block_index + 1] == "ModItems.GUNPOWDER_BLOCK_ITEM.
     "gunpowder block immediately follows graphite in Components")
 adaptations = tabs.split('"adaptations"', 1)[1].split('.build()', 1)[0]
 accepted_items = re.findall(r"output\.accept\(([^;]+)\);", adaptations)
-pin(accepted_items[-1] == "ModItems.INDUSTRIAL_TNT_ITEM.get()",
-    "industrial TNT is the last Adaptations tab item")
+pin(accepted_items[-2:] == ["ModItems.INDUSTRIAL_TNT_ITEM.get()", "ModItems.TUNNEL_TNT_ITEM.get()"],
+    "industrial and tunnel TNT finish the Adaptations tab in order")
 
 # Powder block: one-tick, block-breaking strength-5.4 blast, plus full-grid and reverse recipes.
 pin("EXPLOSION_STRENGTH = 5.4F" in gunpowder, "gunpowder blast power is nerfed to 5.4")
@@ -85,6 +91,12 @@ pin(recipe["key"] == {
 }, "industrial TNT ingredients match the requested matrix")
 pin(recipe["result"] == {"id": "gonzotech:industrial_tnt", "count": 1},
     "industrial TNT recipe output")
+tunnel_recipe = load(DATA / "recipe/tunnel_tnt.json")
+pin(tunnel_recipe["pattern"] == ["SSS", "III", "SSS"],
+    "tunnel TNT uses three industrial TNT blocks between two sand rows")
+pin(tunnel_recipe["key"] == {"S": "minecraft:sand", "I": "gonzotech:industrial_tnt"}
+    and tunnel_recipe["result"] == {"id": "gonzotech:tunnel_tnt", "count": 1},
+    "tunnel TNT recipe uses sand and industrial TNT exactly")
 pin("FUSE_TICKS = 160" in industrial, "industrial TNT fuse is 160 ticks")
 pin("EXPLOSION_STRENGTH = 7.1F" in industrial, "industrial TNT strength is nerfed to 7.1")
 pin("extends PrimedTnt" in primed and "setFuse(IndustrialTntBlock.FUSE_TICKS)" in primed,
@@ -152,12 +164,39 @@ pin("randomPointInSphere(random, radius)" in explosive_effects
     and "randomPointInSphere(random, 0.5D)" in explosive_effects,
     "powder smoke is spherical with at most half-block positional jitter")
 
+# Tunnel TNT is a persistent directional industrial charge with its own entity renderer.
+pin("DirectionProperty FACING = BlockStateProperties.FACING" in tunnel_block
+    and "BLAST_LENGTH = 20.0D" in tunnel_block
+    and "BLAST_HALF_WIDTH = 2.0D" in tunnel_block
+    and "getNearestLookingDirection().getOpposite()" in tunnel_block,
+    "tunnel TNT stores a six-way placement-facing and a 4×4×20 forward blast contract")
+pin("extends PrimedTnt" in tunnel_primed
+    and "ModEntities.TUNNEL_TNT.get()" in tunnel_primed
+    and "tunnel_facing" in tunnel_primed
+    and "BLAST_SEGMENT_LENGTH = 7.0D" in tunnel_primed
+    and "segmentStart < TunnelTntBlock.BLAST_LENGTH" in tunnel_primed
+    and "Math.min(segmentStart + BLAST_SEGMENT_LENGTH" in tunnel_primed
+    and "new TunnelExplosionDamageCalculator(\n                origin, facing, segmentStart, segmentEnd)" in tunnel_primed
+    and "forward < segmentStart || forward >= segmentEnd" in tunnel_primed
+    and "emitDirectionalExplosionParticles(serverLevel)" in tunnel_primed
+    and "serverLevel.explode(this, damageSource, calculator" in tunnel_primed
+    and "IndustrialTntBlock.EXPLOSION_STRENGTH" in tunnel_primed,
+    "tunnel entity persists facing and applies the industrial-strength explosion only ahead")
+pin('ENTITIES.register("tunnel_tnt"' in entities
+    and "TunnelTntRenderer::new" in mod_entry
+    and "EntityRenderer<TunnelPrimedTnt, TntRenderState>" in tunnel_renderer
+    and "state.blockState = entity.getBlockState()" in tunnel_renderer,
+    "tunnel primed entity has its own registered type and vanilla-style block renderer")
+
 # Industrial dust is sampled only from blocks actually affected by this TNT.
 pin("event.getAffectedBlocks()" in explosive_effects
     and "affectedBlocks.isEmpty()" in explosive_effects
     and "instanceof IndustrialPrimedTnt" in explosive_effects
+    and "instanceof TunnelPrimedTnt" in explosive_effects
+    and "event.getAffectedEntities().removeIf" in explosive_effects
+    and "instanceof ItemEntity" in explosive_effects
     and "level.getBlockState(particle.mustBeAir).isAir()" in explosive_effects,
-    "industrial dust requires affected block cells and an air-filled crater")
+    "industrial-family blasts protect item drops and source dust/effects from affected tunnel blocks")
 pin("INDUSTRIAL_DUST_MIN_DELAY = 2" in explosive_effects
     and "INDUSTRIAL_DUST_MAX_DELAY = 5" in explosive_effects
     and "LIFETIME_TICKS = 100" in blast_dust
@@ -193,6 +232,20 @@ for block_id in ("gunpowder_block", "industrial_tnt"):
     pin(f"block.gonzotech.{block_id}" in en and f"block.gonzotech.{block_id}" in ru,
         f"English and Russian names exist for {block_id}")
 
+tunnel_state = load(ASSETS / "blockstates/tunnel_tnt.json")
+expected_tunnel_states = {
+    f"facing={facing},unstable={unstable}"
+    for facing in ("north", "south", "east", "west", "up", "down")
+    for unstable in ("false", "true")
+}
+pin(set(tunnel_state["variants"]) == expected_tunnel_states,
+    "tunnel TNT covers six facing directions and both unstable values")
+pin((ASSETS / "items/tunnel_tnt.json").exists()
+    and (DATA / "loot_table/blocks/tunnel_tnt.json").exists()
+    and (DATA / "advancement/recipes/tunnel_tnt.json").exists()
+    and "block.gonzotech.tunnel_tnt" in en and "block.gonzotech.tunnel_tnt" in ru,
+    "tunnel TNT has item definition, loot, recipe advancement and RU/EN names")
+
 # Fixed-up cube models: powder uses a shared top/bottom, while industrial TNT
 # has three independent faces. Both use custom 16x16 PNG placeholders.
 gunpowder_model = load(ASSETS / "models/block/gunpowder_block.json")
@@ -220,6 +273,20 @@ for texture_id in (
     dimensions = struct.unpack(">II", image[16:24]) if len(image) >= 24 else None
     pin(dimensions == (16, 16), f"{texture_id} is a 16x16 Minecraft placeholder")
 
+tunnel_model = load(ASSETS / "models/block/tunnel_tnt.json")
+face_textures = tunnel_model["elements"][0]["faces"]
+pin(face_textures["north"]["texture"] == "#face"
+    and face_textures["up"]["texture"] == "#top"
+    and face_textures["down"]["texture"] == "#bottom"
+    and all(face_textures[side]["texture"] == "#side" for side in ("south", "east", "west")),
+    "tunnel block model assigns the requested front/side/top/bottom textures")
+for texture_id in ("tunnel_tnt_side", "tunnel_tnt_face", "tunnel_tnt_top", "tunnel_tnt_bottom"):
+    image = (ASSETS / f"textures/block/{texture_id}.png").read_bytes()
+    pin(tuple(image[:8]) == (137, 80, 78, 71, 13, 10, 26, 10),
+        f"PNG texture exists for {texture_id}")
+    dimensions = struct.unpack(">II", image[16:24])
+    pin(dimensions == (16, 16), f"{texture_id} is a 16x16 RGBA texture")
+
 pin("extends TntBlock" in custom_tnt
     and "extends CustomTntBlock" in gunpowder
     and "extends CustomTntBlock" in industrial
@@ -231,6 +298,6 @@ pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
     "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-_ver.at_least("0.3.181", "version is bumped to 0.3.181")
+_ver.at_least("0.3.205", "version is bumped to 0.3.205")
 
 print(f"OK: {checks} explosives-content checks passed")

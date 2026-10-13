@@ -37,7 +37,8 @@ import java.util.concurrent.ThreadLocalRandom;
  *
  * <p><b>Общий механизм.</b> Подсказку зовут {@code /gonzotech debug clue} и
  * напитки через {@link #giveNatural}. Револьвер остаётся будущим источником.
- * Отдельная цена самой подсказки в стрессе/кризисе пока не назначена.</p>
+ * По решению автора 13.10.2026 дополнительной цены подсказки нет: эффект уже выпитой
+ * водки/пива независимо применяется в {@code AlcoholEffects.consume}.</p>
  */
 public final class ResonanceClue {
 

@@ -515,6 +515,9 @@ public class ModItems {
     /** Промышленный TNT — размещаемая взрывчатка с долгим фитилём. */
     public static final DeferredItem<BlockItem> INDUSTRIAL_TNT_ITEM =
         ITEMS.registerSimpleBlockItem("industrial_tnt", ModBlocks.INDUSTRIAL_TNT);
+    /** Туннельный TNT — направленная версия промышленной взрывчатки. */
+    public static final DeferredItem<BlockItem> TUNNEL_TNT_ITEM =
+        ITEMS.registerSimpleBlockItem("tunnel_tnt", ModBlocks.TUNNEL_TNT);
     public static final DeferredItem<BlockItem> AIR_CLEANER_ITEM =
         ITEMS.registerSimpleBlockItem("third_air_cleaner", ModBlocks.AIR_CLEANER);
     public static final DeferredItem<BlockItem> AIR_FILTER_ITEM =

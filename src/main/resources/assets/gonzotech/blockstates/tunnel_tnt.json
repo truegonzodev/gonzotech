@@ -1,0 +1,50 @@
+{
+  "variants": {
+    "facing=north,unstable=false": {
+      "model": "gonzotech:block/tunnel_tnt"
+    },
+    "facing=north,unstable=true": {
+      "model": "gonzotech:block/tunnel_tnt"
+    },
+    "facing=south,unstable=false": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "y": 180
+    },
+    "facing=south,unstable=true": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "y": 180
+    },
+    "facing=east,unstable=false": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "y": 90
+    },
+    "facing=east,unstable=true": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "y": 90
+    },
+    "facing=west,unstable=false": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "y": 270
+    },
+    "facing=west,unstable=true": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "y": 270
+    },
+    "facing=up,unstable=false": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "x": 90
+    },
+    "facing=up,unstable=true": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "x": 90
+    },
+    "facing=down,unstable=false": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "x": 270
+    },
+    "facing=down,unstable=true": {
+      "model": "gonzotech:block/tunnel_tnt",
+      "x": 270
+    }
+  }
+}

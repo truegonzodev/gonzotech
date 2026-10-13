@@ -1,11 +1,14 @@
 package com.gonzotech.core.event;
 
 import com.gonzotech.core.block.IndustrialPrimedTnt;
+import com.gonzotech.core.block.TunnelPrimedTnt;
 import com.gonzotech.core.registry.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
@@ -49,13 +52,22 @@ public final class ExplosiveEffects {
         }
     }
 
-    /** Build dust only from blocks the industrial explosion is actually about to remove. */
+    /** Industrial TNT protects dropped items; both industrial blast types share block-sourced dust. */
     @SubscribeEvent
     public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
-        if (!(event.getLevel() instanceof ServerLevel level)
-            || !(event.getExplosion().getDirectSourceEntity() instanceof IndustrialPrimedTnt)) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
+        Entity source = event.getExplosion().getDirectSourceEntity();
+        boolean industrialBlast = source instanceof IndustrialPrimedTnt
+            || source instanceof TunnelPrimedTnt;
+        if (!industrialBlast) {
+            return;
+        }
+
+        // NeoForge fires Detonate before applying entity damage; removing item entities here
+        // prevents nearby blasts from deleting drops left by an earlier industrial explosion.
+        event.getAffectedEntities().removeIf(entity -> entity instanceof ItemEntity);
 
         List<BlockPos> affectedBlocks = event.getAffectedBlocks();
         if (affectedBlocks.isEmpty()) {

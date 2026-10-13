@@ -396,6 +396,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ALT_SPAWN_EGG.get());
                 // Промышленная взрывчатка — в самом конце вкладки.
                 output.accept(ModItems.INDUSTRIAL_TNT_ITEM.get());
+                output.accept(ModItems.TUNNEL_TNT_ITEM.get());
             })
             .build()
     );

@@ -5,8 +5,8 @@
     "minecraft:slime_ball",
     "minecraft:slime_ball",
     "minecraft:clay_ball",
-    "minecraft:resin_clump",
-    "minecraft:honeycomb"
+    "minecraft:honeycomb",
+    "minecraft:resin_clump"
   ],
   "result": {
     "id": "gonzotech:plastic_waste",

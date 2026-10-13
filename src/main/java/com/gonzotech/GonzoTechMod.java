@@ -156,6 +156,9 @@ public class GonzoTechMod {
             modEventBus.addListener(com.gonzotech.machines.client.MachineClient::onRegisterScreens);
             // Клиентский рендер «альт-жителя» (ванильная меша вилладжера).
             modEventBus.addListener(com.gonzotech.core.client.AltVillagerClient::onRegisterRenderers);
+            modEventBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) ->
+                event.registerEntityRenderer(com.gonzotech.core.registry.ModEntities.TUNNEL_TNT.get(),
+                    com.gonzotech.core.client.TunnelTntRenderer::new));
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterItemTintSources);
             // Клиентские текстуры/тинт расплавленного кориума и жидкостей в мире.
             modEventBus.addListener(com.gonzotech.core.fluid.client.CoriumFluidClient::registerClientExtensions);
@@ -165,6 +168,8 @@ public class GonzoTechMod {
             modEventBus.addListener(com.gonzotech.machines.client.AlloyClient::onRegisterClientExtensions);
             // Тряска камеры от эффекта «Тремор» — только на клиенте.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheTremorClient.class);
+            // Туман мёртвой жижи активен только когда камера находится внутри блока.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.DeadSlimeFogClient.class);
             // Эффекты кризиса на клиенте: экранный эффект, фиксация камеры, ложная смерть.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheCrisisClient.class);
             // Texture-only Smart CTM корпусной оболочки турбины.

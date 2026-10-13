@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.entity.AltVillagerEntity;
+import com.gonzotech.core.block.TunnelPrimedTnt;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +31,15 @@ public class ModEntities {
             .clientTrackingRange(10)
             .build(ResourceKey.create(Registries.ENTITY_TYPE,
                 ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "alt"))));
+
+    /** Persistent TNT entity needed to preserve the tunnel direction through chunk saves. */
+    public static final DeferredHolder<EntityType<?>, EntityType<TunnelPrimedTnt>> TUNNEL_TNT =
+        ENTITIES.register("tunnel_tnt", () -> EntityType.Builder.of(TunnelPrimedTnt::new, MobCategory.MISC)
+            .sized(0.98F, 0.98F)
+            .clientTrackingRange(10)
+            .updateInterval(10)
+            .build(ResourceKey.create(Registries.ENTITY_TYPE,
+                ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "tunnel_tnt"))));
 
     public static void register(IEventBus modEventBus) {
         ENTITIES.register(modEventBus);

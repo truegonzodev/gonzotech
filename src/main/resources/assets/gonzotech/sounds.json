@@ -10,7 +10,8 @@
     "subtitle": "subtitles.gonzotech.sword_impact",
     "sounds": [
       {
-        "name": "gonzotech:sword_impact"
+        "name": "gonzotech:sword_impact",
+        "volume": 0.75
       }
     ]
   },
