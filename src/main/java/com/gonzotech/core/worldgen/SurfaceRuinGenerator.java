@@ -63,8 +63,8 @@ public final class SurfaceRuinGenerator {
             return;
         }
 
-        BlockPos center = new BlockPos(centerX, centerY, centerZ);
-        boolean desolation = level.getBiome(center).is(DESOLATION);
+        boolean desolation = DesolationWorldgenSupport.isBiomeAt(
+            level, centerX, centerY, centerZ, DESOLATION);
         double chance = BASE_CHANCE * (desolation ? 2.0 : 1.0);
         if (chanceRoll >= chance) {
             return;

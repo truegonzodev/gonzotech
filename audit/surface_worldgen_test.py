@@ -51,6 +51,12 @@ check("clearSurfaceVegetation" in conversion and "setSurfaceBlock" in ruins
       "vegetation cleanup is not wired into conversion, ruins and barrel placement")
 check("convertColumnWithoutBiome(" in waste,
       "waste patch does not reuse the desolation block-conversion routine")
+check("ChunkAccess chunk = level.getChunk(chunkX, chunkZ)" in helper
+      and "chunk.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z))" in helper
+      and "if (!level.hasChunk(chunkX, chunkZ))" in helper,
+      "surface biome lookup must stay within the position's available chunk")
+check("level.getBiome" not in helper,
+      "surface helper still uses fuzzy biome sampling that can cross worldgen-region bounds")
 
 # Ruins: requested base rate, Desolation multiplier, dimensions, vein palette,
 # sunk machinery/plastic bowl, buried silicon-cache layer, and detached fragments.
@@ -64,6 +70,8 @@ for token in ("1.0 / 444.0", "desolation ? 2.0 : 1.0", "1.5 + random.nextDouble(
 for source, name in ((ruins, "ruins"), (waste, "waste")):
     check("level.hasChunk(anchorX, anchorZ)" in source,
           f"{name} generator can request a chunk outside WorldGenRegion dependencies")
+    check("DesolationWorldgenSupport.isBiomeAt(" in source and "level.getBiome" not in source,
+          f"{name} candidate must use bounded, chunk-local biome sampling")
     candidate = source.split("private static void generateCandidate", 1)[1]
     check(candidate.index("double chanceRoll") < candidate.index("findGroundY"),
           f"{name} candidate reads terrain before its maximum-rate fast rejection")
@@ -92,7 +100,7 @@ check("(1.0 + rnd.nextDouble() * 9.0) * RadUnits.MILLI" in radiation,
       "waste-bearing chunk baseline is not 1–10 mZt/t")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-check("mod_version=0.3.203" in version, "content-change version was not bumped")
+check("mod_version=0.3.204" in version, "content-change version was not bumped")
 
 if failures:
     for failure in failures:

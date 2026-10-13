@@ -2,11 +2,17 @@ package com.gonzotech.core.worldgen;
 
 import com.gonzotech.core.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 /** Surface/noise helpers shared by the procedural ruin and waste features. */
@@ -78,9 +84,32 @@ final class DesolationWorldgenSupport {
     }
 
     private static boolean isDrySurfaceBiome(WorldGenLevel level, int x, int y, int z) {
-        BlockPos surface = new BlockPos(x, y, z);
-        return !level.getBiome(surface).is(BiomeTags.IS_OCEAN)
-            && !level.getBiome(surface).is(BiomeTags.IS_RIVER);
+        Holder<Biome> biome = localBiomeAt(level, x, y, z);
+        return biome != null
+            && !biome.is(BiomeTags.IS_OCEAN)
+            && !biome.is(BiomeTags.IS_RIVER);
+    }
+
+    /**
+     * Reads the biome from the position's own chunk instead of using the
+     * fuzzy BiomeManager lookup. The latter can sample a neighboring chunk
+     * outside WorldGenRegion's direct dependencies while surface features are
+     * running near a chunk edge.
+     */
+    static boolean isBiomeAt(WorldGenLevel level, int x, int y, int z, ResourceKey<Biome> key) {
+        Holder<Biome> biome = localBiomeAt(level, x, y, z);
+        return biome != null && biome.is(key);
+    }
+
+    private static Holder<Biome> localBiomeAt(WorldGenLevel level, int x, int y, int z) {
+        int chunkX = SectionPos.blockToSectionCoord(x);
+        int chunkZ = SectionPos.blockToSectionCoord(z);
+        if (!level.hasChunk(chunkX, chunkZ)) {
+            return null;
+        }
+
+        ChunkAccess chunk = level.getChunk(chunkX, chunkZ);
+        return chunk.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z));
     }
 
     static boolean isNaturalTerrain(BlockState state) {

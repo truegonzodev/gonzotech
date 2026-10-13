@@ -57,7 +57,8 @@ public final class SurfaceWasteGenerator {
         if (sampledY == DesolationWorldgenSupport.NO_SURFACE) {
             return;
         }
-        boolean desolation = level.getBiome(new BlockPos(sampledX, sampledY, sampledZ)).is(DESOLATION);
+        boolean desolation = DesolationWorldgenSupport.isBiomeAt(
+            level, sampledX, sampledY, sampledZ, DESOLATION);
         double chance = BASE_CHANCE * (desolation ? 12.0 : 1.0);
         if (chanceRoll >= chance) {
             return;
