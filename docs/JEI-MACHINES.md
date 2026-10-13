@@ -2,7 +2,7 @@
 
 ## Scope
 
-GonzoTech contributes one JEI category for each of these registered machines:
+The plugin registers 17 categories: 15 machine categories, the dispensing tap, and a text-only crimson-obsidian reaction entry.
 
 1. `first_electric_furnace`
 2. `second_electric_furnace`
@@ -19,47 +19,68 @@ GonzoTech contributes one JEI category for each of these registered machines:
 13. `third_wort_kettle`
 14. `third_distiller`
 15. `third_rectifier`
+16. `third_dispensing_tap`
+17. `crimson_obsidian` (text-only; no visible ingredient/result slots)
 
-Vanilla smelting recipes are copied into the two electric-furnace categories through JEI's runtime lookup with hidden entries included. Their normal vanilla JEI category remains untouched. Crusher, centrifuge, and PCFSOZ output chances are displayed separately from guaranteed outputs. Dynamic recipes are described rather than represented by a fabricated fixed result.
+Vanilla smelting recipes are projected into both electric-furnace categories with hidden JEI entries included; their normal vanilla category remains untouched. Crusher, centrifuge and PCFSOZ output chances remain visible. No JEI recipes are hidden, and machine recipe visibility is not progression-gated.
 
-No recipe is hidden. Progression gates are not applied to machine recipes. Gated workbench recipes remain visible in the ordinary crafting category and receive only a small marker with a tooltip describing the gate.
+The crimson-obsidian page has one text box and no visible slots. The output block remains an invisible JEI ingredient for search/focus; lava buckets and redstone blocks are registered as category catalysts. The text is: “При соприкосновении лавы и блока красного камня образуется багровый обсидиан.”
 
-## Adding another machine category
+## Artwork crops and geometry
 
-The category renderer and recipe model are shared. A new machine normally needs these additions:
+GUI background and foreground layers keep the in-game order: `*_gui_bg.png` → gauges → the normal `*_gui.png` foreground. The foreground is not replaced by the `_gui_bg.png` layer. Standard 512×512 sheets use crop `(128,127)` with size `176×167`; this includes the first row of the authored window. `alloy_foundry` is kept at its existing exceptional crop `(128,128)`, `176×166` because its art has different geometry. The JEI canvas is not expanded to 256×256. Existing item-slot and gauge coordinates are unchanged.
 
-1. Add a `MachineJeiCategories.Definition` and include it in `MachineJeiCategories.ALL`. Supply a stable category id, an existing GUI texture base name, and the machine's item supplier.
-2. Add a JEI-agnostic display projection beside the authoritative processing table when the table is enumerable. Do not make server processing classes depend on JEI.
-3. Add the projection to `MachineJeiRecipes.build()` (or a small dedicated adapter for dynamic operations), using machine-layout coordinates for item/fluid slots and translated notes where necessary.
-4. Add the category title and any new notes to both `en_us.json` and `ru_ru.json`.
+The filler tanks mirror `FillerScreen` at `(55,17)` and `(105,17)`, each nominally `16×52`. Each visual gauge and tooltip uses two separate, non-overlapping regions:
 
-JEI now mirrors the in-game layer order: `*_gui_bg.png` is the drawable background, animated bars are drawn next, and the normal 512×512 `*_gui.png` foreground is drawn over them to mask each fill to its authored cut-out. The foreground `*_gui.png` remains essential; `*_gui_bg.png` is only the rear layer, not a replacement for it. Both use the same source-sheet crop at `(128, 128)` with size `176×166`; slot coordinates are unchanged. No new image is required for these categories.
+- left tank: channel `(55,17,4,52)` and belly `(59,36,12,14)`;
+- right tank: channel `(117,17,4,52)` and belly `(105,36,12,14)`.
 
-Custom registered fluid names are translated with `fluid_type.gonzotech.<fluid_type_id>` in both locale files. Add the FluidType's display name there; the separate registry id shown with advanced tooltips is expected. A dynamic output must be described or represented with all its actual variants, never as a fixed composition or guaranteed byproduct when the machine does not guarantee it.
+The fill level is clipped to those authored regions, so no continuous bar is drawn through the cut-out between them. The visual regions are also the tooltip hitboxes; neither intersects the item slots. Invisible fluid ingredients preserve JEI lookup/focus wherever the tank resource is a registered `Fluid`.
+
+## Added display projections
+
+### Crusher
+
+The GTU gauge is animated and the process gauge reports the real duration range at the full/empty start-charge endpoints. The charge at operation start fixes progress speed; energy drawn on each working tick follows the *current* charge. The tooltip therefore shows the source-derived active-tick range and duration, not a fabricated total GTU amount for the whole crushing operation.
+
+### Dispensing tap
+
+The category uses the existing pump GUI artwork and the tap's existing input/output slot positions. It lists:
+
+- glass bottle + 128 mB distillate → vodka bottle;
+- glass bottle + 128 mB wort → beer mug;
+- empty bucket + 1000 mB wort → beer bucket.
+
+`DispensingTapBlockEntity` checks the vodka branch first for a glass bottle when at least 128 mB distillate is available and the vodka output fits. If that condition fails, the `else if` may use 128 mB wort for a beer mug (including when the vodka output is blocked). The bucket path consumes 1000 mB wort. These are instantaneous container operations, so their liquid bars are static; the required volume is shown in the tooltip. No duration or energy cost is invented.
+
+### Filler containers
+
+The filler now shows bucket filling for its nine existing bucket items: water, rectificate/ethanol, sulfuric acid, ethylene, aminoblazeethanol, formaldehyde, mash, wort and distillate. Bucket recipes use the actual 1000 mB container amount. Empty regular and durable ampoules each have separate 128 mB recipes for all eleven supported ampoule fluids: those nine plus hot water and poison solution. Filled ampoule stacks are created through `AmpouleItem.createFilled`, so the displayed result carries the same fluid id, amount and durable state as the real item.
+
+Fluid ingredients are registered invisibly when a corresponding `Fluid` exists. The filler’s private tank types (for example ethylene, aminoblazeethanol, hot water and poison solution) are not registered `Fluid` objects; their filled bucket/ampoule item results remain searchable by item focus instead.
+
+### Crimson obsidian
+
+The reaction entry has no visible ingredient or result slots, no machine GUI art, and no animation. It consists only of the requested sentence shown above.
 
 ## JEI display standard — GonzoTech GOST-JEI-01
 
-This is a project display convention, not an external standards certification. The goal is to make the recipe page read like a short, repeatable machine cycle rather than a paragraph of notes.
+This is a project display convention, not an external standards certification.
 
-- **Machine artwork:** preserve the in-game Z order: rear `*_gui_bg.png`, dynamic bars, then foreground `*_gui.png` with its authored cut-outs. Keep the same crop and do not offset recipe slots to compensate for choosing the wrong layer.
-- **Slot frame:** every item icon, including outputs, stays at the normal 16×16 ingredient size and uses JEI's standard slot background. Do not apply its enlarged crafting-output frame to machine recipes.
-- **Coordinate space:** recipe-slot positions are local to the cropped `176×166` window. For coordinates measured on the `512×512` sheet in `SUPER_CRUCIAL_FILE.md`, convert with `jeiX = sheetX - 128` and `jeiY = sheetY - 128`. Do not move slots based on a full-screen screenshot without identifying its crop origin.
-- **One page represents one operation:** keep item input/output slots visible and stationary. Render fluid ingredients as bars at their existing GUI coordinates; register them invisibly with JEI so recipe lookup/focus remains intact. Animate only genuine resource/process flows; instantaneous or retained fluids use static bars. Never hide, reveal, swap, or move item-slot contents at an animation boundary.
-- **Normalized energy bar:** the displayed gauge represents the energy for one operation (or the explicitly named active tick for continuous machines), not the block entity's full storage capacity. It drains over the approximately five-second visual loop. Derive cost and duration from authoritative machine code/tables, including rounding behavior where relevant. If cost depends on machine state, show its real range/dependency rather than inventing a fixed amount.
-- **Fluids and outcomes:** use the actual fluid type, localized display name, and per-operation or per-active-tick amount. Probabilistic byproducts remain visibly probabilistic; the animation must not turn a chance into a guarantee.
-- **Minimal notes:** reserve text for exceptions, dynamic state, and probabilities that the animation cannot express. Do not duplicate the main input → process → output explanation in prose.
-- **Display only:** JEI animation is a visual simulation. It must not execute recipes, mutate machine state, or apply progression checks.
+- **Slots:** input and output item stacks stay static at the existing 16×16 machine positions and all use JEI's standard slot frame. Outputs do not use JEI's enlarged crafting-result frame.
+- **Fluid search:** visible fluid slots are replaced by bars, while real registered-fluid ingredients remain hidden-registered for JEI lookup/focus. Machine-private fluids that have no `Fluid` registry entry are represented through their filled container items.
+- **Bars:** animate only actual GTU/GTH, process and fluid flows. Use one synchronized five-second visual loop for real operations; instantaneous or retained resources remain static. A bar represents the operation/active-tick flow, not machine-buffer or tank capacity.
+- **Tooltips:** keep them to actual amounts and units, in the fluid/GTU/GTH palette: `Суммарно на операцию`, `За активный тик`, and the real duration. Only data affecting duration/speed or actual cost/flow is shown. The silicon-factory GTU tooltip is the total for a full chip operation; it is not split into separate step costs. The fermentation vat has no invented per-item GTH total because feeding and fermentation are continuous.
+- **Text boxes:** removed from all machine recipes. The crimson-obsidian text-only page is the sole exception.
+- **Display only:** JEI projections and animation do not execute recipes, mutate machine state or apply progression checks.
 
-The shared renderer animates gauge fills on a synchronized five-second loop. JEI now follows the in-game order: `*_gui_bg.png`, gauges, then `*_gui.png` to mask them through the authored cut-outs; the ingredient slots are drawn afterward. Item slots are still built once and remain static. Registered fluid ingredient data is registered through JEI's invisible-ingredient API, preserving search/focus while visible fluid slots are replaced by fluid-texture bars at the same coordinates. Machine-private buffers that are not registered `Fluid` ingredients still get display bars and custom tooltips, but cannot participate in native fluid lookup. GTU/GTH bars drain, process bars advance, and fluid-flow bars consume or produce. Each bar has a custom tooltip for the actual per-operation amount, per-active-tick flow, or dynamic dependency; normalized operation bars explicitly distinguish their cycle from tank/buffer capacity. Values derive from authoritative machine logic, using its constants and rounding rules where available. Where inputs can use different item forms (the alloy foundry), JEI shows the resulting duration/energy range. The crusher derives its actual 282–417 tick range from integer progress units: duration is set by GTU stored at start, while GTU/t follows live charge and is shown as a 0.976–1.571 range rather than a fixed total.
+## Adding another category
 
-Fourteen categories have animated operation/flow bars. The fermentation vat deliberately has no animated operation gauge: it accepts items immediately while its 68 GTH/t draw and mash fermentation are continuous. Its fixed 128 mB mash-per-item output is shown as a static fluid bar, without inventing a duration. The custom-alloy information-only page likewise has no fabricated cycle. For fluid inputs that are retained as a medium, or fluids used in instantaneous packaging, the visual bar is static and the custom tooltip states the actual amount or that it is not fixed. No item-slot coordinates or item-slot cycling changed. A full JEI client launch is still required to visually validate the layering and hover behavior in Minecraft; the repository environment has no JDK.
+1. Add a `MachineJeiCategories.Definition`, including it in `ALL`, with a stable id, GUI texture base name, item supplier and the correct crop geometry. Text-only categories use a blank drawable.
+2. Project the authoritative machine behavior into `MachineJeiRecipes`; do not make server processing classes depend on JEI.
+3. Keep item positions from the in-game menu and add hidden fluid ingredients only for actual registered `Fluid` instances.
+4. Add the category title and any necessary display strings to both `en_us.json` and `ru_ru.json`.
 
-## Coordinating visual adjustments
+## Validation status
 
-For a future alignment pass, send the machine/category and recipe id, plus (1) a JEI screenshot at a known UI scale and (2) the matching in-game machine GUI. If an element truly needs moving, mark its desired **top-left slot coordinate relative to the 176×166 recipe window**, or annotate the image with that coordinate. A source-sheet coordinate uses the `-128` conversion above. This pass deliberately changes only the artwork layer and fluid names; the existing slot coordinates are unchanged.
-
-## Optional dependency and validation
-
-The JEI 20.0.0.4 APIs are compile-only; the NeoForge runtime artifact uses Gradle's `runtimeOnly` configuration for development launches and is not embedded in the mod JAR. JEI remains an optional client dependency. The machine categories are registered from one annotated `IModPlugin`, with no changes to recipe visibility.
-
-The current implementation was not compiled or launched in Minecraft because this environment has no JDK. Validate the full JEI client path, image crops, layout, and JEI reload behavior when a Java 21 development environment is available.
+`audit/jei_display_test.py` checks the category set, texture/crop geometry, ingredient lookup, standard item slots, filler tank regions, tap outputs, container amounts and RU/EN tooltip keys. Static Python audits are available in this repository. A full Java build and in-game JEI visual check require a Java 21 development environment; the current sandbox has no JDK.

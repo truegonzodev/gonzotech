@@ -1,5 +1,6 @@
 package com.gonzotech.integration.jei;
 
+import com.gonzotech.core.text.GtUnits;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.ITooltipBuilder;
@@ -17,7 +18,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
-import java.util.Locale;
+
+import static mezz.jei.api.recipe.RecipeIngredientRole.OUTPUT;
 
 /** Renderer shared by every machine processing category. */
 public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJeiRecipe> {
@@ -28,18 +30,23 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
 
     public MachineJeiRecipeCategory(IGuiHelper guiHelper, MachineJeiCategories.Definition definition) {
         this.definition = definition;
-        ResourceLocation backgroundTexture = ResourceLocation.fromNamespaceAndPath(
-            "gonzotech", "textures/gui/" + definition.texture() + "_gui_bg.png");
-        ResourceLocation foregroundTexture = ResourceLocation.fromNamespaceAndPath(
-            "gonzotech", "textures/gui/" + definition.texture() + "_gui.png");
-        this.machineGuiBackground = guiHelper.drawableBuilder(
-                backgroundTexture, 128, 128, definition.width(), definition.height())
-            .setTextureSize(512, 512)
-            .build();
-        this.machineGuiForeground = guiHelper.drawableBuilder(
-                foregroundTexture, 128, 128, definition.width(), definition.height())
-            .setTextureSize(512, 512)
-            .build();
+        if (definition.textOnly()) {
+            this.machineGuiBackground = guiHelper.createBlankDrawable(definition.width(), definition.height());
+            this.machineGuiForeground = null;
+        } else {
+            ResourceLocation backgroundTexture = ResourceLocation.fromNamespaceAndPath(
+                "gonzotech", "textures/gui/" + definition.texture() + "_gui_bg.png");
+            ResourceLocation foregroundTexture = ResourceLocation.fromNamespaceAndPath(
+                "gonzotech", "textures/gui/" + definition.texture() + "_gui.png");
+            this.machineGuiBackground = guiHelper.drawableBuilder(
+                    backgroundTexture, definition.textureX(), definition.textureY(), definition.width(), definition.height())
+                .setTextureSize(512, 512)
+                .build();
+            this.machineGuiForeground = guiHelper.drawableBuilder(
+                    foregroundTexture, definition.textureX(), definition.textureY(), definition.width(), definition.height())
+                .setTextureSize(512, 512)
+                .build();
+        }
         this.icon = guiHelper.createDrawableIngredient(
             VanillaTypes.ITEM_STACK, new ItemStack(definition.station().get()));
     }
@@ -76,6 +83,10 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, MachineJeiRecipe recipe, IFocusGroup focuses) {
+        if (definition.textOnly()) {
+            builder.addInvisibleIngredients(OUTPUT).add(new ItemStack(definition.station().get()));
+            return;
+        }
         for (MachineJeiRecipe.Slot slot : recipe.slots()) {
             if (!slot.fluids().isEmpty()) {
                 // The visible representation is the colocated gauge; retain the ingredient for JEI lookup/focus.
@@ -96,10 +107,11 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
             }
 
             if (slot.chancePermille() < 1_000) {
-                slotBuilder.addRichTooltipCallback((view, tooltip) -> tooltip.add(
-                    Component.translatable("jei.gonzotech.output_chance",
-                        String.format(Locale.ROOT, "%.1f%%", slot.chancePermille() / 10.0))
-                        .withStyle(ChatFormatting.GRAY)));
+                slotBuilder.addRichTooltipCallback((view, tooltip) -> tooltip.add(Component.empty()
+                    .append(Component.translatable("jei.gonzotech.output_chance").withStyle(ChatFormatting.GRAY))
+                    .append(Component.literal(" ").withStyle(ChatFormatting.GRAY))
+                    .append(GtUnits.num(GtUnits.x1(slot.chancePermille() / 10.0), GtUnits.ITEM))
+                    .append(Component.literal("%").withColor(GtUnits.ITEM))));
             }
             for (Component extra : slot.tooltips()) {
                 slotBuilder.addRichTooltipCallback((view, tooltip) -> tooltip.add(extra));
@@ -118,9 +130,12 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
         }
         // Mirror the in-game Z stack: GUI background, animated bars, then the
         // foreground window that masks the bars to its authored cut-outs.
-        machineGuiForeground.draw(graphics, 0, 0);
+        if (machineGuiForeground != null) {
+            machineGuiForeground.draw(graphics, 0, 0);
+        }
 
-        if (recipe.notes().isEmpty()) return;
+        // Only the world-reaction category carries explanatory text; machine pages stay uncluttered.
+        if (!definition.textOnly() || recipe.notes().isEmpty()) return;
         Font font = Minecraft.getInstance().font;
         int maxWidth = getWidth() - 16;
         List<net.minecraft.util.FormattedCharSequence> lines = recipe.notes().stream()
@@ -174,39 +189,35 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
             case HORIZONTAL_LEFT_TO_RIGHT -> clipRight = x + filled;
             case HORIZONTAL_RIGHT_TO_LEFT -> clipLeft = x + width - filled;
         }
-        graphics.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+        List<MachineJeiRecipe.TooltipArea> renderAreas = gauge.tooltipAreas().isEmpty()
+            ? List.of(new MachineJeiRecipe.TooltipArea(x, y, width, height))
+            : gauge.tooltipAreas();
+        for (MachineJeiRecipe.TooltipArea area : renderAreas) {
+            int areaLeft = Math.max(clipLeft, area.x());
+            int areaTop = Math.max(clipTop, area.y());
+            int areaRight = Math.min(clipRight, area.x() + area.width());
+            int areaBottom = Math.min(clipBottom, area.y() + area.height());
+            if (areaLeft >= areaRight || areaTop >= areaBottom) continue;
 
-        switch (gauge.direction()) {
-            case VERTICAL_BOTTOM_TO_TOP -> {
-                for (int tileY = y + height - 16; tileY > y - 16; tileY -= 16) {
-                    for (int tileX = x; tileX < x + width; tileX += 16) {
-                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
+            graphics.enableScissor(areaLeft, areaTop, areaRight, areaBottom);
+            switch (gauge.direction()) {
+                case VERTICAL_BOTTOM_TO_TOP -> {
+                    for (int tileY = y + height - 16; tileY > y - 16; tileY -= 16) {
+                        for (int tileX = x; tileX < x + width; tileX += 16) {
+                            blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
+                        }
+                    }
+                }
+                case VERTICAL_TOP_TO_BOTTOM, HORIZONTAL_LEFT_TO_RIGHT, HORIZONTAL_RIGHT_TO_LEFT -> {
+                    for (int tileY = y; tileY < y + height; tileY += 16) {
+                        for (int tileX = x; tileX < x + width; tileX += 16) {
+                            blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
+                        }
                     }
                 }
             }
-            case VERTICAL_TOP_TO_BOTTOM -> {
-                for (int tileY = y; tileY < y + height; tileY += 16) {
-                    for (int tileX = x; tileX < x + width; tileX += 16) {
-                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
-                    }
-                }
-            }
-            case HORIZONTAL_LEFT_TO_RIGHT -> {
-                for (int tileY = y; tileY < y + height; tileY += 16) {
-                    for (int tileX = x; tileX < x + width; tileX += 16) {
-                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
-                    }
-                }
-            }
-            case HORIZONTAL_RIGHT_TO_LEFT -> {
-                for (int tileY = y; tileY < y + height; tileY += 16) {
-                    for (int tileX = x; tileX < x + width; tileX += 16) {
-                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
-                    }
-                }
-            }
+            graphics.disableScissor();
         }
-        graphics.disableScissor();
     }
 
     private static void blitGaugeTile(GuiGraphics graphics, ResourceLocation texture, int x, int y) {

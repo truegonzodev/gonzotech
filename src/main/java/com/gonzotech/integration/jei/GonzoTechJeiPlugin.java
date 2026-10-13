@@ -11,6 +11,7 @@ import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IVanillaCategoryExtensionRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
@@ -50,6 +51,8 @@ public final class GonzoTechJeiPlugin implements IModPlugin {
         for (MachineJeiCategories.Definition definition : MachineJeiCategories.ALL) {
             registration.addCraftingStation(definition.type(), definition.station().get());
         }
+        registration.addCraftingStation(MachineJeiCategories.CRIMSON_OBSIDIAN.type(),
+            Items.LAVA_BUCKET, Items.REDSTONE_BLOCK);
         registration.addCraftingStation(RecipeTypes.SMELTING,
             com.gonzotech.machines.registry.ModMachines.FIRST_ELECTRIC_FURNACE_ITEM.get(),
             com.gonzotech.machines.registry.ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get());

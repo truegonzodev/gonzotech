@@ -62,10 +62,16 @@ public final class MachineJeiRecipe {
     /** A visual-only bar with a stable operation, active-tick, or static-fluid tooltip. */
     public record Gauge(int x, int y, int width, int height, ResourceLocation texture,
                         GaugeDirection direction, GaugeMotion motion, List<Component> tooltip,
-                        double cycleStart, double cycleEnd) {
+                        double cycleStart, double cycleEnd, List<TooltipArea> tooltipAreas) {
         public Gauge(int x, int y, int width, int height, ResourceLocation texture,
                      GaugeDirection direction, GaugeMotion motion, List<Component> tooltip) {
-            this(x, y, width, height, texture, direction, motion, tooltip, 0.0, 1.0);
+            this(x, y, width, height, texture, direction, motion, tooltip, 0.0, 1.0, List.of());
+        }
+
+        public Gauge(int x, int y, int width, int height, ResourceLocation texture,
+                     GaugeDirection direction, GaugeMotion motion, List<Component> tooltip,
+                     double cycleStart, double cycleEnd) {
+            this(x, y, width, height, texture, direction, motion, tooltip, cycleStart, cycleEnd, List.of());
         }
 
         public Gauge {
@@ -77,6 +83,20 @@ public final class MachineJeiRecipe {
             Objects.requireNonNull(direction, "direction");
             Objects.requireNonNull(motion, "motion");
             tooltip = List.copyOf(tooltip);
+            tooltipAreas = List.copyOf(tooltipAreas);
+            for (int index = 0; index < tooltipAreas.size(); index++) {
+                TooltipArea area = tooltipAreas.get(index);
+                if (area.x() < x || area.y() < y || area.x() + area.width() > x + width
+                    || area.y() + area.height() > y + height) {
+                    throw new IllegalArgumentException("Gauge render/tooltip area must fit inside the gauge");
+                }
+                for (int other = index + 1; other < tooltipAreas.size(); other++) {
+                    TooltipArea next = tooltipAreas.get(other);
+                    boolean overlaps = area.x() < next.x() + next.width() && area.x() + area.width() > next.x()
+                        && area.y() < next.y() + next.height() && area.y() + area.height() > next.y();
+                    if (overlaps) throw new IllegalArgumentException("Gauge render/tooltip areas must not overlap");
+                }
+            }
         }
 
         public float fillFraction(double operationProgress) {
@@ -84,6 +104,20 @@ public final class MachineJeiRecipe {
             double phaseProgress = (operationProgress - cycleStart) / (cycleEnd - cycleStart);
             float progress = (float) Math.max(0.0, Math.min(1.0, phaseProgress));
             return motion == GaugeMotion.CONSUME ? 1.0F - progress : progress;
+        }
+
+        public boolean contains(double mouseX, double mouseY) {
+            if (tooltipAreas.isEmpty()) {
+                return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+            }
+            return tooltipAreas.stream().anyMatch(area -> area.contains(mouseX, mouseY));
+        }
+    }
+
+    /** Independent render regions and matching tooltip hitboxes for non-rectangular gauges. */
+    public record TooltipArea(int x, int y, int width, int height) {
+        public TooltipArea {
+            if (width <= 0 || height <= 0) throw new IllegalArgumentException("Tooltip area must be positive");
         }
 
         public boolean contains(double mouseX, double mouseY) {
