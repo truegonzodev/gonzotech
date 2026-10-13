@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static regression checks for the 0.3.206 noble-moss block family."""
+"""Static regression checks for the 0.3.209 noble-moss block family."""
 import hashlib
 import json
 import struct
@@ -30,7 +30,7 @@ def recipe(name: str):
     return load(DATA / "recipe" / f"{name}.json")
 
 
-_ver.at_least("0.3.206", "noble-moss content version")
+_ver.at_least("0.3.209", "noble-moss content version")
 
 # Registrations, block items and creative-tab visibility.
 blocks = (ROOT / "src/main/java/com/gonzotech/core/registry/ModBlocks.java").read_text(encoding="utf-8")
@@ -44,7 +44,11 @@ for block_id in FAMILY:
     assert f"ModItems.{block_id.upper()}_ITEM.get()" in tabs, f"creative tab entry missing: {block_id}"
 assert "new StairBlock(NOBLE_MOSS.get().defaultBlockState(), properties)" in blocks
 assert '"noble_moss_slab", SlabBlock::new' in blocks
-assert '"noble_moss_pillar", RotatedPillarBlock::new' in blocks
+assert '"noble_moss_pillar", NobleMossPillarBlock::new' in blocks
+pillar_class = (ROOT / "src/main/java/com/gonzotech/core/block/NobleMossPillarBlock.java").read_text(encoding="utf-8")
+assert "BlockStateProperties.FACING" in pillar_class
+assert "context.getNearestLookingDirection().getOpposite()" in pillar_class
+assert "rotation.rotate(state.getValue(FACING))" in pillar_class
 
 # Per-variant blockstates, models, item definitions and English/Russian display names.
 lang_en = load(ASSETS / "lang/en_us.json")
@@ -86,7 +90,9 @@ assert pillar_model["textures"] == {
     "side": "gonzotech:block/noble_moss_pillar_side",
 }
 pillar_states = load(ASSETS / "blockstates/noble_moss_pillar.json")["variants"]
-assert set(pillar_states) == {"axis=x", "axis=y", "axis=z"}
+assert set(pillar_states) == {
+    "facing=down", "facing=up", "facing=north", "facing=south", "facing=east", "facing=west"
+}
 assert all(state["model"] == "gonzotech:block/noble_moss_pillar" for state in pillar_states.values())
 
 # Base conversion: exact shapeless inputs and two output blocks.

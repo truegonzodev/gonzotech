@@ -260,15 +260,18 @@ pin(gunpowder_model["textures"].get("side") == "gonzotech:block/gunpowder_block_
     "gunpowder block uses side and shared topbottom textures")
 pin(industrial_model["parent"] == "minecraft:block/cube_bottom_top",
     "industrial TNT is a fixed upright cube model")
-pin(industrial_model["textures"].get("side") == "gonzotech:block/industrial_tnt_side"
-    and industrial_model["textures"].get("bottom") == "gonzotech:block/industrial_tnt_bottom"
-    and industrial_model["textures"].get("top") == "gonzotech:block/industrial_tnt_top",
+pin(industrial_model["textures"].get("side") == "gonzotech:block/industry/industrial_tnt_side"
+    and industrial_model["textures"].get("bottom") == "gonzotech:block/industry/industrial_tnt_bottom"
+    and industrial_model["textures"].get("top") == "gonzotech:block/industry/industrial_tnt_top",
     "industrial TNT uses separate side, bottom, and top textures")
-for texture_id in (
-    "gunpowder_block_side", "gunpowder_block_topbottom",
-    "industrial_tnt_side", "industrial_tnt_bottom", "industrial_tnt_top",
+for texture_id, relative_path in (
+    ("gunpowder_block_side", "block/gunpowder_block_side.png"),
+    ("gunpowder_block_topbottom", "block/gunpowder_block_topbottom.png"),
+    ("industrial_tnt_side", "block/industry/industrial_tnt_side.png"),
+    ("industrial_tnt_bottom", "block/industry/industrial_tnt_bottom.png"),
+    ("industrial_tnt_top", "block/industry/industrial_tnt_top.png"),
 ):
-    texture_path = ASSETS / f"textures/block/{texture_id}.png"
+    texture_path = ASSETS / f"textures/{relative_path}"
     image = texture_path.read_bytes() if texture_path.is_file() else b""
     pin(tuple(image[:8]) == (137, 80, 78, 71, 13, 10, 26, 10),
         f"PNG texture exists for {texture_id}")
@@ -286,18 +289,18 @@ tunnel_item_model = load(ASSETS / "models/item/tunnel_tnt.json")
 tunnel_item_definition = load(ASSETS / "items/tunnel_tnt.json")
 pin(tunnel_item_model["parent"] == "minecraft:block/cube"
     and tunnel_item_model["textures"] == {
-        "particle": "gonzotech:block/tunnel_tnt_side",
-        "north": "gonzotech:block/tunnel_tnt_face",
-        "south": "gonzotech:block/tunnel_tnt_side",
-        "east": "gonzotech:block/tunnel_tnt_side",
-        "west": "gonzotech:block/tunnel_tnt_side",
-        "up": "gonzotech:block/tunnel_tnt_top",
-        "down": "gonzotech:block/tunnel_tnt_bottom",
+        "particle": "gonzotech:block/industry/tunnel_tnt_side",
+        "north": "gonzotech:block/industry/tunnel_tnt_face",
+        "south": "gonzotech:block/industry/tunnel_tnt_side",
+        "east": "gonzotech:block/industry/tunnel_tnt_side",
+        "west": "gonzotech:block/industry/tunnel_tnt_side",
+        "up": "gonzotech:block/industry/tunnel_tnt_top",
+        "down": "gonzotech:block/industry/tunnel_tnt_bottom",
     }
     and tunnel_item_definition["model"]["model"] == "gonzotech:item/tunnel_tnt",
     "tunnel TNT item renders as a 3D cube with the six block textures")
 for texture_id in ("tunnel_tnt_side", "tunnel_tnt_face", "tunnel_tnt_top", "tunnel_tnt_bottom"):
-    image = (ASSETS / f"textures/block/{texture_id}.png").read_bytes()
+    image = (ASSETS / f"textures/block/industry/{texture_id}.png").read_bytes()
     pin(tuple(image[:8]) == (137, 80, 78, 71, 13, 10, 26, 10),
         f"PNG texture exists for {texture_id}")
     dimensions = struct.unpack(">II", image[16:24])
@@ -314,6 +317,6 @@ pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
     "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-_ver.at_least("0.3.207", "version is bumped to 0.3.207")
+_ver.at_least("0.3.209", "version is bumped to 0.3.209")
 
 print(f"OK: {checks} explosives-content checks passed")

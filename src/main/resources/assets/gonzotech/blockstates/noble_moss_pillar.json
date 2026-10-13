@@ -1,16 +1,30 @@
 {
   "variants": {
-    "axis=x": {
+    "facing=down": {
+      "model": "gonzotech:block/noble_moss_pillar",
+      "x": 180
+    },
+    "facing=up": {
+      "model": "gonzotech:block/noble_moss_pillar"
+    },
+    "facing=north": {
+      "model": "gonzotech:block/noble_moss_pillar",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "gonzotech:block/noble_moss_pillar",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
       "model": "gonzotech:block/noble_moss_pillar",
       "x": 90,
       "y": 90
     },
-    "axis=y": {
-      "model": "gonzotech:block/noble_moss_pillar"
-    },
-    "axis=z": {
+    "facing=west": {
       "model": "gonzotech:block/noble_moss_pillar",
-      "x": 90
+      "x": 90,
+      "y": 270
     }
   }
 }

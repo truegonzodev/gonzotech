@@ -1,10 +1,10 @@
 {
   "textures": {
-    "particle": "gonzotech:block/tunnel_tnt_side",
-    "face": "gonzotech:block/tunnel_tnt_face",
-    "side": "gonzotech:block/tunnel_tnt_side",
-    "top": "gonzotech:block/tunnel_tnt_top",
-    "bottom": "gonzotech:block/tunnel_tnt_bottom"
+    "particle": "gonzotech:block/industry/tunnel_tnt_side",
+    "face": "gonzotech:block/industry/tunnel_tnt_face",
+    "side": "gonzotech:block/industry/tunnel_tnt_side",
+    "top": "gonzotech:block/industry/tunnel_tnt_top",
+    "bottom": "gonzotech:block/industry/tunnel_tnt_bottom"
   },
   "elements": [
     {

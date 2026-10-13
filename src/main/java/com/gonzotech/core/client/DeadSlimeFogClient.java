@@ -6,6 +6,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 
@@ -41,6 +42,17 @@ public final class DeadSlimeFogClient {
         event.setFarPlaneDistance(FOG_END);
         event.setFogShape(FogShape.SPHERE);
         event.setCanceled(true);
+    }
+
+    /** A close, screen-space haze keeps the effect visible even when world fog is subtle. */
+    @SubscribeEvent
+    public static void onRenderGui(RenderGuiEvent.Post event) {
+        if (!cameraInsideDeadSlime(Minecraft.getInstance().gameRenderer.getMainCamera())) {
+            return;
+        }
+
+        var graphics = event.getGuiGraphics();
+        graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(), 0x664F813F);
     }
 
     private static boolean cameraInsideDeadSlime(Camera camera) {

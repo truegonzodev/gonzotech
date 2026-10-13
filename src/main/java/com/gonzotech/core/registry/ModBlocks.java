@@ -5,6 +5,7 @@ import com.gonzotech.chalkboard.ChalkboardBlock;
 import com.gonzotech.core.block.HeavyDoorBlock;
 import com.gonzotech.core.block.GunpowderBlock;
 import com.gonzotech.core.block.IndustrialTntBlock;
+import com.gonzotech.core.block.NobleMossPillarBlock;
 import com.gonzotech.core.block.TunnelTntBlock;
 import com.gonzotech.core.block.TungstenAbsorberBlock;
 import com.gonzotech.core.fluid.LiquidFireBlock;
@@ -269,8 +270,8 @@ public class ModBlocks {
         "noble_moss_stairs",
         properties -> new StairBlock(NOBLE_MOSS.get().defaultBlockState(), properties),
         nobleMossProperties());
-    public static final DeferredBlock<RotatedPillarBlock> NOBLE_MOSS_PILLAR = BLOCKS.registerBlock(
-        "noble_moss_pillar", RotatedPillarBlock::new, nobleMossProperties());
+    public static final DeferredBlock<NobleMossPillarBlock> NOBLE_MOSS_PILLAR = BLOCKS.registerBlock(
+        "noble_moss_pillar", NobleMossPillarBlock::new, nobleMossProperties());
 
     // ───────────────────────────── Декорации радиации ─────────────────────────────
     public static final DeferredBlock<Block> DEAD_DIRT = BLOCKS.registerSimpleBlock(

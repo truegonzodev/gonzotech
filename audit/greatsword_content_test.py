@@ -30,8 +30,8 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertEqual(set(state["variants"]), {"axis=x", "axis=y", "axis=z"})
         model = read_json(ASSETS / "models/block/monolith.json")
         self.assertEqual(model["parent"], "minecraft:block/cube_column")
-        self.assertEqual(model["textures"]["side"], "gonzotech:block/monolyth_side")
-        self.assertEqual(model["textures"]["end"], "gonzotech:block/monolyth_top")
+        self.assertEqual(model["textures"]["side"], "gonzotech:block/industry/monolyth_side")
+        self.assertEqual(model["textures"]["end"], "gonzotech:block/industry/monolyth_top")
         recipe = read_json(RES / "data/gonzotech/recipe/monolith.json")
         self.assertEqual(recipe["pattern"], ["C C", "CCC", "C C"])
         self.assertEqual(sum(row.count("C") for row in recipe["pattern"]), 7)
@@ -391,8 +391,8 @@ class GreatswordContentTest(unittest.TestCase):
 
     def test_png_assets_are_valid_rgba_images(self):
         paths = [
-            ASSETS / "textures/block/monolyth_side.png",
-            ASSETS / "textures/block/monolyth_top.png",
+            ASSETS / "textures/block/industry/monolyth_side.png",
+            ASSETS / "textures/block/industry/monolyth_top.png",
             *(ASSETS / f"textures/item/{item}.png" for item in GREATWORDS),
         ]
         for path in paths:
