@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:tungsten_block_from_raw_tungsten_block_smelting",
+      "gonzotech:tungsten_block_from_raw_tungsten_block_blasting"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:tungsten_block_from_raw_tungsten_block_smelting"
+      }
+    },
+    "has_raw_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:raw_tungsten_block"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_block",
+      "has_the_recipe"
+    ]
+  ]
+}

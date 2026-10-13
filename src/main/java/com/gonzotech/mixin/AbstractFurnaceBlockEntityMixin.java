@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Фаза 3 — цезий в ВАНИЛЬНЫХ печах (печь/плавильня/коптильня).
  * <p>
  * Логика должна совпадать с нашими машинами (топка/электропечь): взрыв возникает
- * в БЛОКЕ печи в тот момент, когда цезиевый слиток появляется в слоте результата
+ * в БЛОКЕ печи в тот момент, когда цезиевый слиток или блок появляется в слоте результата
  * переплавки, — а не при заборе игроком и не в самом игроке. Событие
  * {@code ItemSmeltedEvent} для этого не годится (оно срабатывает только при заборе
  * и не знает позицию печи), поэтому подключаемся прямо к тику печи.
@@ -38,7 +38,9 @@ public abstract class AbstractFurnaceBlockEntityMixin {
                                               AbstractFurnaceBlockEntity be, CallbackInfo ci) {
         ItemStack result = be.getItem(RESULT_SLOT);
         if (result.isEmpty()) return;
-        if (!result.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get())) return;
+        boolean cesiumIngot = result.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get());
+        boolean cesiumBlock = result.is(ModItems.METAL_BLOCK_ITEMS.get("cesium_block").get());
+        if (!cesiumIngot && !cesiumBlock) return;
 
         Containers.dropContents(level, pos, be);
         be.clearContent();

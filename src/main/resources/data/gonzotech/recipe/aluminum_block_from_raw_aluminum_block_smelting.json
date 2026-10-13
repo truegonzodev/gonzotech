@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "aluminum_block",
+  "ingredient": "gonzotech:raw_aluminum_block",
+  "result": {
+    "id": "gonzotech:aluminum_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 1800
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "thorium_block",
+  "ingredient": "gonzotech:raw_thorium_block",
+  "result": {
+    "id": "gonzotech:thorium_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 900
+}

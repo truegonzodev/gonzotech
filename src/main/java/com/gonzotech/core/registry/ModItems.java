@@ -49,6 +49,9 @@ public class ModItems {
      */
     public static final Map<String, DeferredItem<Item>> RAW_ORE_ITEMS = new LinkedHashMap<>();
 
+    /** Compressed raw-ore block items in OreDefinition.ALL order. */
+    public static final Map<String, DeferredItem<BlockItem>> RAW_ORE_BLOCK_ITEMS = new LinkedHashMap<>();
+
     /** Слитки металлов и сплавов (26 рудных + 21 сплава/дополнительный). */
     public static final Map<String, DeferredItem<Item>> INGOT_ITEMS = new LinkedHashMap<>();
 
@@ -703,6 +706,9 @@ public class ModItems {
             ORE_BLOCK_ITEMS.put(ore.id(), byHost);
 
             RAW_ORE_ITEMS.put(ore.id(), ITEMS.registerSimpleItem(ore.rawItemId()));
+            String rawBlockId = ore.rawItemId() + "_block";
+            RAW_ORE_BLOCK_ITEMS.put(ore.id(), ITEMS.registerSimpleBlockItem(
+                rawBlockId, ModBlocks.RAW_ORE_BLOCKS.get(ore.id())));
         }
 
         for (String ingotId : INGOT_IDS) {

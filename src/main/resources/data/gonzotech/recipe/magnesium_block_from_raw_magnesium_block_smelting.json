@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "magnesium_block",
+  "ingredient": "gonzotech:raw_magnesium_block",
+  "result": {
+    "id": "gonzotech:magnesium_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 1800
+}

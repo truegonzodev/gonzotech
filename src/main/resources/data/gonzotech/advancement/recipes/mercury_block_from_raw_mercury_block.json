@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:mercury_block_from_raw_mercury_block_smelting",
+      "gonzotech:mercury_block_from_raw_mercury_block_blasting"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:mercury_block_from_raw_mercury_block_smelting"
+      }
+    },
+    "has_raw_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:raw_mercury_block"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_block",
+      "has_the_recipe"
+    ]
+  ]
+}

@@ -677,12 +677,13 @@ public final class Phase3Events {
 
     /**
      * Полный и намеренно явный список реактивных форм цезия. Поллуцит — это
-     * {@code raw_cesium}; рудные BlockItem'ы и цезиевый блок-хранилище также
-     * считаются реактивными переносимыми формами.
+     * {@code raw_cesium}; сжатый raw-ore block, рудные BlockItem'ы и цезиевый
+     * блок-хранилище также считаются реактивными переносимыми формами.
      */
     private static boolean isWaterReactiveCesium(ItemStack stack) {
         if (stack.isEmpty()) return false;
         if (stack.is(ModItems.RAW_ORE_ITEMS.get("cesium").get())
+            || stack.is(ModItems.RAW_ORE_BLOCK_ITEMS.get("cesium").get())
             || stack.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get())
             || stack.is(ModItems.NUGGET_ITEMS.get("cesium_nugget").get())
             || stack.is(ModItems.DUST_ITEMS.get("cesium_dust").get())

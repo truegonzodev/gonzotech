@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_uranium_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_uranium"
+  },
+  "result": {
+    "id": "gonzotech:raw_uranium_block",
+    "count": 1
+  }
+}

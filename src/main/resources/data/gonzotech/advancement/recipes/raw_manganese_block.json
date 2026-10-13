@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:raw_manganese_block"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:raw_manganese_block"
+      }
+    },
+    "has_raw_ore": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:raw_manganese"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_ore",
+      "has_the_recipe"
+    ]
+  ]
+}

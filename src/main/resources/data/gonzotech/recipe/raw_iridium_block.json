@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_iridium_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_iridium"
+  },
+  "result": {
+    "id": "gonzotech:raw_iridium_block",
+    "count": 1
+  }
+}

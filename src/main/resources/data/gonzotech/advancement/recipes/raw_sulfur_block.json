@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:raw_sulfur_block"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:raw_sulfur_block"
+      }
+    },
+    "has_raw_ore": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:raw_sulfur"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_ore",
+      "has_the_recipe"
+    ]
+  ]
+}

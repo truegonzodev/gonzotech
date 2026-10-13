@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_tungsten_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_tungsten"
+  },
+  "result": {
+    "id": "gonzotech:raw_tungsten_block",
+    "count": 1
+  }
+}

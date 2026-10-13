@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "tin_block",
+  "ingredient": "gonzotech:raw_tin_block",
+  "result": {
+    "id": "gonzotech:tin_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 900
+}

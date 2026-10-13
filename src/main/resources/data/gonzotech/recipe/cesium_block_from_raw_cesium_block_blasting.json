@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "cesium_block",
+  "ingredient": "gonzotech:raw_cesium_block",
+  "result": {
+    "id": "gonzotech:cesium_block"
+  },
+  "experience": 9.0,
+  "cookingtime": 900
+}

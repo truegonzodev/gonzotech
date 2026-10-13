@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "uranium_block",
+  "ingredient": "gonzotech:raw_uranium_block",
+  "result": {
+    "id": "gonzotech:uranium_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 900
+}

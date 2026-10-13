@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_calcite_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_calcite"
+  },
+  "result": {
+    "id": "gonzotech:raw_calcite_block",
+    "count": 1
+  }
+}

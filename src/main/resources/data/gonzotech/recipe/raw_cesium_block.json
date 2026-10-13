@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_cesium_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_cesium"
+  },
+  "result": {
+    "id": "gonzotech:raw_cesium_block",
+    "count": 1
+  }
+}

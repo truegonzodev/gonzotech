@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "gonzotech:block/raw_mercury_block"
+    }
+  }
+}

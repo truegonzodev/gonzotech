@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_thorium_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_thorium"
+  },
+  "result": {
+    "id": "gonzotech:raw_thorium_block",
+    "count": 1
+  }
+}

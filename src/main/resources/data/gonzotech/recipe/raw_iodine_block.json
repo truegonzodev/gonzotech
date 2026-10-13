@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_iodine_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_iodine"
+  },
+  "result": {
+    "id": "gonzotech:raw_iodine_block",
+    "count": 1
+  }
+}

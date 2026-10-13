@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "mercury_block",
+  "ingredient": "gonzotech:raw_mercury_block",
+  "result": {
+    "id": "gonzotech:mercury_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 1800
+}

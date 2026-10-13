@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_barium_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_barium"
+  },
+  "result": {
+    "id": "gonzotech:raw_barium_block",
+    "count": 1
+  }
+}

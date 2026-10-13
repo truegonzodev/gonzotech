@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "boron_block",
+  "ingredient": "gonzotech:raw_boron_block",
+  "result": {
+    "id": "gonzotech:boron_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 1800
+}

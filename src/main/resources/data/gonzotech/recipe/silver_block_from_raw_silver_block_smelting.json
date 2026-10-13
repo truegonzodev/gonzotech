@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "silver_block",
+  "ingredient": "gonzotech:raw_silver_block",
+  "result": {
+    "id": "gonzotech:silver_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 1800
+}

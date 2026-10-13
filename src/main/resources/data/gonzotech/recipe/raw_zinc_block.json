@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_zinc_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_zinc"
+  },
+  "result": {
+    "id": "gonzotech:raw_zinc_block",
+    "count": 1
+  }
+}

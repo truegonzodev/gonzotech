@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "tellurium_block",
+  "ingredient": "gonzotech:raw_tellurium_block",
+  "result": {
+    "id": "gonzotech:tellurium_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 900
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_tellurium_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_tellurium"
+  },
+  "result": {
+    "id": "gonzotech:raw_tellurium_block",
+    "count": 1
+  }
+}

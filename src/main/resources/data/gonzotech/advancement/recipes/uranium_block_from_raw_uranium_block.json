@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:uranium_block_from_raw_uranium_block_smelting",
+      "gonzotech:uranium_block_from_raw_uranium_block_blasting"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:uranium_block_from_raw_uranium_block_smelting"
+      }
+    },
+    "has_raw_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:raw_uranium_block"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_block",
+      "has_the_recipe"
+    ]
+  ]
+}

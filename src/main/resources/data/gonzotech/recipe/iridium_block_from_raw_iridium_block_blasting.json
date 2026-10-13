@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:blasting",
+  "category": "misc",
+  "group": "iridium_block",
+  "ingredient": "gonzotech:raw_iridium_block",
+  "result": {
+    "id": "gonzotech:iridium_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 900
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_tin_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_tin"
+  },
+  "result": {
+    "id": "gonzotech:raw_tin_block",
+    "count": 1
+  }
+}

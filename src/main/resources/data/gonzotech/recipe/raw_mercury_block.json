@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_mercury_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_mercury"
+  },
+  "result": {
+    "id": "gonzotech:raw_mercury_block",
+    "count": 1
+  }
+}

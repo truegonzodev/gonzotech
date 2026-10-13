@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:osmium_block_from_raw_osmium_block_smelting",
+      "gonzotech:osmium_block_from_raw_osmium_block_blasting"
+    ]
+  },
+  "criteria": {
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "gonzotech:osmium_block_from_raw_osmium_block_smelting"
+      }
+    },
+    "has_raw_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:raw_osmium_block"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_block",
+      "has_the_recipe"
+    ]
+  ]
+}

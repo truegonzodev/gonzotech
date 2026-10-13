@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "titanium_block",
+  "ingredient": "gonzotech:raw_titanium_block",
+  "result": {
+    "id": "gonzotech:titanium_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 1800
+}

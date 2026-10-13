@@ -27,6 +27,7 @@ public class ModCreativeTabs {
                 ModItems.ORE_BLOCK_ITEMS.values().forEach(byHost ->
                     byHost.values().forEach(item -> output.accept(item.get())));
                 ModItems.RAW_ORE_ITEMS.values().forEach(item -> output.accept(item.get()));
+                ModItems.RAW_ORE_BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
                 // Порядок во вкладке: слитки → блоки → пыль → самородки.
                 ModItems.INGOT_ITEMS.values().forEach(item -> output.accept(item.get()));
                 output.accept(ModItems.CUSTOM_ALLOY.get());

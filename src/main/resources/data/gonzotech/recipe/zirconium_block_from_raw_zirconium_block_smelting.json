@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "group": "zirconium_block",
+  "ingredient": "gonzotech:raw_zirconium_block",
+  "result": {
+    "id": "gonzotech:zirconium_block"
+  },
+  "experience": 1.8,
+  "cookingtime": 1800
+}

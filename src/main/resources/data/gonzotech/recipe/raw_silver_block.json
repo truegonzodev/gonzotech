@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_silver_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_silver"
+  },
+  "result": {
+    "id": "gonzotech:raw_silver_block",
+    "count": 1
+  }
+}

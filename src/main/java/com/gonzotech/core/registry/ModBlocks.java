@@ -44,6 +44,9 @@ public class ModBlocks {
     /** ore id -> (host -> зарегистрированный блок этого host-варианта). */
     public static final Map<String, Map<Host, DeferredBlock<? extends Block>>> ORE_BLOCKS = new LinkedHashMap<>();
 
+    /** One compressed raw-ore block per OreDefinition, keyed by ore id and kept in declaration order. */
+    public static final Map<String, DeferredBlock<Block>> RAW_ORE_BLOCKS = new LinkedHashMap<>();
+
     /**
      * Фаза 3 — «драгоценные» блоки-хранилища из 9 слитков (по одному на КАЖДЫЙ
      * слиток из {@link ModItems#INGOT_IDS}, без исключений). Ключ карты — id блока
@@ -396,6 +399,16 @@ public class ModBlocks {
             .requiresCorrectToolForDrops();
     }
 
+    private static BlockBehaviour.Properties rawOreBlockProperties() {
+        // Deepslate hardness ×1.5; stone blast resistance ×1.8. Any stone-tier
+        // or better pickaxe is a valid drop tool; higher tiers only mine faster.
+        return BlockBehaviour.Properties.of()
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.IRON)
+            .strength(4.5f, 10.8f)
+            .requiresCorrectToolForDrops();
+    }
+
     // ─────────────────────────── Фаза 4: блоки космоса ───────────────────────────
     // Плейсхолдер-текстуры (см. textures/block/*.png). Балансы прочности пока
     // грубые: породы — как камень, грунты/песок — как земля/песок. Все блоки
@@ -573,6 +586,8 @@ public class ModBlocks {
                 byHost.put(host, block);
             }
             ORE_BLOCKS.put(ore.id(), byHost);
+            String rawBlockId = ore.rawItemId() + "_block";
+            RAW_ORE_BLOCKS.put(ore.id(), BLOCKS.registerSimpleBlock(rawBlockId, rawOreBlockProperties()));
         }
 
         // Блоки-хранилища из слитков: мягкие/обычные/прочные материалы имеют

@@ -13,8 +13,8 @@ import net.minecraft.world.level.Level;
 /**
  * Побочные эффекты горячей переработки в НАШИХ машинах, Фаза 3:
  * <ul>
- *   <li><b>Цезий</b>: если горячая операция произвела цезиевый слиток или
- *       цезиевую пыль, машина взрывается (сила 2, ломает блоки, урон). Это
+ *   <li><b>Цезий</b>: если горячая операция произвела цезиевый слиток, блок
+ *       или пыль, машина взрывается (сила 2, ломает блоки, урон). Это
  *       охватывает топку, электропечь и центрифугу с кипятком. Проверяем по
  *       ПРОИЗВЕДЁННОМУ предмету, чтобы не завязываться на вход.</li>
  *   <li><b>Свинец</b>: при переплавке железной руды/сырого железа с шансом 5%
@@ -71,13 +71,14 @@ public final class SmeltSideEffects {
     }
 
     /**
-     * Цезиевый слиток получают в печах, а цезиевая пыль — на выходе ЦФ1УР.
+     * Цезиевые слиток/блок получают в печах, а пыль — на выходе ЦФ1УР.
      * Единая проверка не даёт превратить промывку с кипятком в безопасный обход
      * печного взрыва.
      */
     private static boolean isExplosiveCesiumProduct(ItemStack produced) {
         return produced.is(ModItems.INGOT_ITEMS.get("cesium_ingot").get())
-            || produced.is(ModItems.DUST_ITEMS.get("cesium_dust").get());
+            || produced.is(ModItems.DUST_ITEMS.get("cesium_dust").get())
+            || produced.is(ModItems.METAL_BLOCK_ITEMS.get("cesium_block").get());
     }
 
     private static ItemEntity dropEntity(Level level, BlockPos pos, ItemStack stack) {

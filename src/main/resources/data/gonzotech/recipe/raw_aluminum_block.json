@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "raw_aluminum_block",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "gonzotech:raw_aluminum"
+  },
+  "result": {
+    "id": "gonzotech:raw_aluminum_block",
+    "count": 1
+  }
+}
