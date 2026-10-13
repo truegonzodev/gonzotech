@@ -37,6 +37,6 @@ Existing 512×512 GUI background PNGs are cropped from the normal 176×166 machi
 
 ## Optional dependency and validation
 
-The JEI 20.0.0.4 APIs are compile-only; the NeoForge runtime artifact is included only in the local development runtime. JEI remains an optional client dependency. The machine categories are registered from one annotated `IModPlugin`, with no changes to recipe visibility.
+The JEI 20.0.0.4 APIs are compile-only; the NeoForge runtime artifact uses Gradle's `runtimeOnly` configuration for development launches and is not embedded in the mod JAR. JEI remains an optional client dependency. The machine categories are registered from one annotated `IModPlugin`, with no changes to recipe visibility.
 
 The current implementation was not compiled or launched in Minecraft because this environment has no JDK. Validate the full JEI client path, image crops, layout, and JEI reload behavior when a Java 21 development environment is available.
