@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "gonzotech:noble_moss",
+  "result": {
+    "id": "gonzotech:noble_moss_slab",
+    "count": 2
+  }
+}

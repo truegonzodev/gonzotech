@@ -251,6 +251,24 @@ public class ModBlocks {
     public static final DeferredBlock<WallBlock> SCULK_BRICK_WALL = BLOCKS.registerBlock(
         "sculk_brick_wall", WallBlock::new, sculkBrickProperties());
 
+    // Снеговой слой не может опираться на блоки семейства благородного мха (vanilla tag + snowfall hook).
+    public static final DeferredBlock<Block> NOBLE_MOSS = BLOCKS.registerSimpleBlock(
+        "noble_moss", nobleMossProperties());
+    public static final DeferredBlock<Block> SMOOTH_NOBLE_MOSS = BLOCKS.registerSimpleBlock(
+        "smooth_noble_moss", nobleMossProperties());
+    public static final DeferredBlock<Block> POLISHED_NOBLE_MOSS = BLOCKS.registerSimpleBlock(
+        "polished_noble_moss", nobleMossProperties());
+    public static final DeferredBlock<Block> CHISELED_NOBLE_MOSS = BLOCKS.registerSimpleBlock(
+        "chiseled_noble_moss", nobleMossProperties());
+    public static final DeferredBlock<SlabBlock> NOBLE_MOSS_SLAB = BLOCKS.registerBlock(
+        "noble_moss_slab", SlabBlock::new, nobleMossProperties());
+    public static final DeferredBlock<StairBlock> NOBLE_MOSS_STAIRS = BLOCKS.registerBlock(
+        "noble_moss_stairs",
+        properties -> new StairBlock(NOBLE_MOSS.get().defaultBlockState(), properties),
+        nobleMossProperties());
+    public static final DeferredBlock<RotatedPillarBlock> NOBLE_MOSS_PILLAR = BLOCKS.registerBlock(
+        "noble_moss_pillar", RotatedPillarBlock::new, nobleMossProperties());
+
     // ───────────────────────────── Декорации радиации ─────────────────────────────
     public static final DeferredBlock<Block> DEAD_DIRT = BLOCKS.registerSimpleBlock(
         "dead_dirt", BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
@@ -370,6 +388,10 @@ public class ModBlocks {
 
     private static BlockBehaviour.Properties sculkBrickProperties() {
         return BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BRICKS).sound(SoundType.SCULK);
+    }
+
+    private static BlockBehaviour.Properties nobleMossProperties() {
+        return BlockBehaviour.Properties.ofFullCopy(Blocks.MOSSY_COBBLESTONE);
     }
 
     // ─────────────────────────── Фаза 4: блоки космоса ───────────────────────────

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "gonzotech:block/noble_moss_stairs",
+    "side": "gonzotech:block/noble_moss_stairs",
+    "top": "gonzotech:block/noble_moss_stairs"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:noble_moss"
+    ]
+  },
+  "criteria": {
+    "has_mossy_cobblestone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:mossy_cobblestone"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_mossy_cobblestone"
+    ]
+  ]
+}

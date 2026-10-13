@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": "gonzotech:noble_moss",
+  "result": {
+    "id": "gonzotech:chiseled_noble_moss",
+    "count": 1
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:noble_moss_stairs",
+      "gonzotech:noble_moss_stairs_from_stonecutter"
+    ]
+  },
+  "criteria": {
+    "has_noble_moss": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:noble_moss"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_noble_moss"
+    ]
+  ]
+}

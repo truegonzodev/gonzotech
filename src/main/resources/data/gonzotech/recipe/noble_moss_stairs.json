@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "M  ",
+    "MM ",
+    "MMM"
+  ],
+  "key": {
+    "M": "gonzotech:noble_moss"
+  },
+  "result": {
+    "id": "gonzotech:noble_moss_stairs",
+    "count": 4
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "minecraft:mossy_cobblestone",
+    "minecraft:bone_meal",
+    "minecraft:slime_ball"
+  ],
+  "result": {
+    "id": "gonzotech:noble_moss",
+    "count": 2
+  }
+}

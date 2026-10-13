@@ -607,6 +607,20 @@ public class ModItems {
         ITEMS.registerSimpleBlockItem("sculk_brick_slab", ModBlocks.SCULK_BRICK_SLAB);
     public static final DeferredItem<BlockItem> SCULK_BRICK_WALL_ITEM =
         ITEMS.registerSimpleBlockItem("sculk_brick_wall", ModBlocks.SCULK_BRICK_WALL);
+    public static final DeferredItem<BlockItem> NOBLE_MOSS_ITEM =
+        ITEMS.registerSimpleBlockItem("noble_moss", ModBlocks.NOBLE_MOSS);
+    public static final DeferredItem<BlockItem> SMOOTH_NOBLE_MOSS_ITEM =
+        ITEMS.registerSimpleBlockItem("smooth_noble_moss", ModBlocks.SMOOTH_NOBLE_MOSS);
+    public static final DeferredItem<BlockItem> POLISHED_NOBLE_MOSS_ITEM =
+        ITEMS.registerSimpleBlockItem("polished_noble_moss", ModBlocks.POLISHED_NOBLE_MOSS);
+    public static final DeferredItem<BlockItem> CHISELED_NOBLE_MOSS_ITEM =
+        ITEMS.registerSimpleBlockItem("chiseled_noble_moss", ModBlocks.CHISELED_NOBLE_MOSS);
+    public static final DeferredItem<BlockItem> NOBLE_MOSS_SLAB_ITEM =
+        ITEMS.registerSimpleBlockItem("noble_moss_slab", ModBlocks.NOBLE_MOSS_SLAB);
+    public static final DeferredItem<BlockItem> NOBLE_MOSS_STAIRS_ITEM =
+        ITEMS.registerSimpleBlockItem("noble_moss_stairs", ModBlocks.NOBLE_MOSS_STAIRS);
+    public static final DeferredItem<BlockItem> NOBLE_MOSS_PILLAR_ITEM =
+        ITEMS.registerSimpleBlockItem("noble_moss_pillar", ModBlocks.NOBLE_MOSS_PILLAR);
 
     public static final DeferredItem<BlockItem> DEAD_DIRT_ITEM =
         ITEMS.registerSimpleBlockItem("dead_dirt", ModBlocks.DEAD_DIRT);

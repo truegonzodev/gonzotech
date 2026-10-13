@@ -226,6 +226,14 @@ public class ModCreativeTabs {
                 output.accept(ModItems.SCULK_BRICK_STAIRS_ITEM.get());
                 output.accept(ModItems.SCULK_BRICK_SLAB_ITEM.get());
                 output.accept(ModItems.SCULK_BRICK_WALL_ITEM.get());
+                // Благородный мох и его классические строительные варианты.
+                output.accept(ModItems.NOBLE_MOSS_ITEM.get());
+                output.accept(ModItems.SMOOTH_NOBLE_MOSS_ITEM.get());
+                output.accept(ModItems.POLISHED_NOBLE_MOSS_ITEM.get());
+                output.accept(ModItems.CHISELED_NOBLE_MOSS_ITEM.get());
+                output.accept(ModItems.NOBLE_MOSS_SLAB_ITEM.get());
+                output.accept(ModItems.NOBLE_MOSS_STAIRS_ITEM.get());
+                output.accept(ModItems.NOBLE_MOSS_PILLAR_ITEM.get());
                 // Радиация: блоки радиоактивных зон и комплексов.
                 output.accept(ModItems.DEAD_DIRT_ITEM.get());
                 output.accept(ModItems.DEAD_SAND_ITEM.get());

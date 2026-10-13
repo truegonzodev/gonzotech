@@ -300,6 +300,6 @@ pin("import net.minecraft.world.entity.EquipmentSlot;" in custom_tnt
     "flint-and-steel damage uses the 1.21.4 EquipmentSlot package")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-_ver.at_least("0.3.205", "version is bumped to 0.3.205")
+_ver.at_least("0.3.206", "version is bumped to 0.3.206")
 
 print(f"OK: {checks} explosives-content checks passed")

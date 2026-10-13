@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "gonzotech:noble_moss",
+    "gonzotech:smooth_noble_moss",
+    "gonzotech:polished_noble_moss",
+    "gonzotech:chiseled_noble_moss",
+    "gonzotech:noble_moss_slab",
+    "gonzotech:noble_moss_stairs",
+    "gonzotech:noble_moss_pillar"
+  ]
+}

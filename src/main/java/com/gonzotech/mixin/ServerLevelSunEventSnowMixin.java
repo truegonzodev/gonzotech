@@ -3,6 +3,7 @@ package com.gonzotech.mixin;
 import com.gonzotech.sunevent.SunEventServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.IntProvider;
 import net.minecraft.world.level.Level;
@@ -60,19 +61,28 @@ public abstract class ServerLevelSunEventSnowMixin {
     @Inject(method = "tickPrecipitation", at = @At("HEAD"), cancellable = true)
     private void gonzotech$sunEventProtectGround(BlockPos pos, CallbackInfo ci) {
         ServerLevel level = (ServerLevel) (Object) this;
-        if (!SunEventServer.snowWindowDay(level) || !level.isRaining()) {
+        if (!level.isRaining()) {
             return;
         }
         BlockPos surface = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos);
         BlockState surfaceState = level.getBlockState(surface);
+        BlockPos supportPos = surface.below();
+        BlockState supportState = level.getBlockState(supportPos);
+        if ((surfaceState.isAir() || surfaceState.is(Blocks.SNOW))
+            && supportState.is(BlockTags.SNOW_LAYER_CANNOT_SURVIVE_ON)) {
+            // Applies both to vanilla precipitation and to the custom all-biomes snow window.
+            ci.cancel();
+            return;
+        }
+        if (!SunEventServer.snowWindowDay(level)) {
+            return;
+        }
         if (!surfaceState.isAir() && !surfaceState.is(Blocks.SNOW)) {
             // Занятая ячейка (факел, цветок и т. п.) не заменяется снегом.
             ci.cancel();
             return;
         }
 
-        BlockPos supportPos = surface.below();
-        BlockState supportState = level.getBlockState(supportPos);
         if (!supportState.getFluidState().isEmpty()) {
             // MOTION_BLOCKING включает жидкости, но снег на жидкость не укладывается.
             ci.cancel();

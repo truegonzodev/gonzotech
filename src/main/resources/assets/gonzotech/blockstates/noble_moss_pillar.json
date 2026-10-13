@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "gonzotech:block/noble_moss_pillar",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "gonzotech:block/noble_moss_pillar"
+    },
+    "axis=z": {
+      "model": "gonzotech:block/noble_moss_pillar",
+      "x": 90
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "building",
+  "ingredient": "gonzotech:noble_moss",
+  "result": {
+    "id": "gonzotech:smooth_noble_moss",
+    "count": 1
+  },
+  "experience": 0.1,
+  "cookingtime": 200
+}

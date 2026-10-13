@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "MMM"
+  ],
+  "key": {
+    "M": "gonzotech:noble_moss"
+  },
+  "result": {
+    "id": "gonzotech:noble_moss_slab",
+    "count": 6
+  }
+}
