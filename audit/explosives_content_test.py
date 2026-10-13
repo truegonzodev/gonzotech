@@ -165,7 +165,7 @@ pin("randomPointInSphere(random, radius)" in explosive_effects
     "powder smoke is spherical with at most half-block positional jitter")
 
 # Tunnel TNT is a persistent directional industrial charge with its own entity renderer.
-pin("DirectionProperty FACING = BlockStateProperties.FACING" in tunnel_block
+pin("EnumProperty<Direction> FACING = BlockStateProperties.FACING" in tunnel_block
     and "BLAST_LENGTH = 20.0D" in tunnel_block
     and "BLAST_HALF_WIDTH = 2.0D" in tunnel_block
     and "getNearestLookingDirection().getOpposite()" in tunnel_block,
@@ -183,6 +183,8 @@ pin("extends PrimedTnt" in tunnel_primed
     and "IndustrialTntBlock.EXPLOSION_STRENGTH" in tunnel_primed,
     "tunnel entity persists facing and applies the industrial-strength explosion only ahead")
 pin('ENTITIES.register("tunnel_tnt"' in entities
+    and "EntityType.Builder.<TunnelPrimedTnt>of(" in entities
+    and "EntityType<TunnelPrimedTnt> entityType" in tunnel_primed
     and "TunnelTntRenderer::new" in mod_entry
     and "EntityRenderer<TunnelPrimedTnt, TntRenderState>" in tunnel_renderer
     and "state.blockState = entity.getBlockState()" in tunnel_renderer,

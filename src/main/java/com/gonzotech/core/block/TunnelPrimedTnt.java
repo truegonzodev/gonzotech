@@ -35,7 +35,7 @@ public final class TunnelPrimedTnt extends PrimedTnt {
     @Nullable
     private LivingEntity tunnelOwner;
 
-    public TunnelPrimedTnt(EntityType<? extends TunnelPrimedTnt> entityType, Level level) {
+    public TunnelPrimedTnt(EntityType<TunnelPrimedTnt> entityType, Level level) {
         super(entityType, level);
     }
 
