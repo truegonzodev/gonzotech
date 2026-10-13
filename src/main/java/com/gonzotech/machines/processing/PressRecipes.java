@@ -57,6 +57,32 @@ public final class PressRecipes {
     private PressRecipes() {
     }
 
+    /** Read-only item recipe view for client recipe integrations. */
+    public static List<ProcessingRecipeDisplay> displayRecipes() {
+        List<ProcessingRecipeDisplay> displays = new java.util.ArrayList<>();
+        addDisplayRecipes(displays, "plate", PLATES, ModItems.PLATE_FORM.get(), ModItems.FLAT_PUNCH.get());
+        addDisplayRecipes(displays, "wire", WIRES, null, ModItems.WEDGE_PUNCH.get());
+        addDisplayRecipes(displays, "core", CORES, ModItems.CORE_FORM.get(), ModItems.FLAT_PUNCH.get());
+        addDisplayRecipes(displays, "raw_ingot", RAW_INGOTS, ModItems.INGOT_FORM.get(), ModItems.FLAT_PUNCH.get());
+        addDisplayRecipes(displays, "tvel", TVEL_ASSEMBLIES, ModItems.TVEL.get(), ModItems.FLAT_PUNCH.get());
+        displays.sort(java.util.Comparator.comparing(ProcessingRecipeDisplay::id));
+        return List.copyOf(displays);
+    }
+
+    private static void addDisplayRecipes(List<ProcessingRecipeDisplay> displays, String family,
+                                          List<Recipe> recipes, Item form, Item punch) {
+        for (Recipe recipe : recipes) {
+            List<ItemStack> input = List.of(new ItemStack(recipe.input()));
+            List<ItemStack> formSlot = form == null ? List.of() : List.of(new ItemStack(form));
+            List<ItemStack> punchSlot = List.of(new ItemStack(punch));
+            String inputId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(recipe.input()).toString();
+            displays.add(new ProcessingRecipeDisplay(
+                family + "/" + inputId,
+                List.of(input, formSlot, punchSlot),
+                List.of(new ProcessingRecipeDisplay.Output(recipe.output(), 1_000))));
+        }
+    }
+
     /**
      * Finds a recipe for exactly the current punch/form combination. The result
      * is a fresh stack, so neither the selectors nor source components can leak

@@ -86,6 +86,40 @@ public final class CrusherRecipes {
     private CrusherRecipes() {
     }
 
+    /** Read-only item recipe view for client recipe integrations. */
+    public static List<ProcessingRecipeDisplay> displayRecipes() {
+        List<ProcessingRecipeDisplay> result = new java.util.ArrayList<>();
+
+        for (OreDefinition ore : OreDefinition.ALL) {
+            Map<Host, ? extends Supplier<? extends Item>> byHost = ModItems.ORE_BLOCK_ITEMS.get(ore.id());
+            if (byHost == null) continue;
+            for (Map.Entry<Host, ? extends Supplier<? extends Item>> entry : byHost.entrySet()) {
+                ItemStack input = new ItemStack(entry.getValue().get());
+                addDisplayRecipe(result, input, gonzoOreRecipe(ore.id(), entry.getKey()));
+            }
+        }
+        for (InputRecipe recipe : VANILLA_ORE_RECIPES) {
+            addDisplayRecipe(result, recipe.input().stack(1), recipe.recipe());
+        }
+        for (InputRecipe recipe : ROCK_RECIPES) {
+            addDisplayRecipe(result, recipe.input().stack(1), recipe.recipe());
+        }
+
+        result.sort(java.util.Comparator.comparing(ProcessingRecipeDisplay::id));
+        return List.copyOf(result);
+    }
+
+    private static void addDisplayRecipe(List<ProcessingRecipeDisplay> target, ItemStack input, Recipe recipe) {
+        List<ProcessingRecipeDisplay.Output> outputs = new java.util.ArrayList<>(4);
+        for (SlotResult result : List.of(recipe.first(), recipe.second(), recipe.third(), recipe.fourth())) {
+            if (result.item() != null) {
+                outputs.add(new ProcessingRecipeDisplay.Output(result.preview(), result.chancePermille()));
+            }
+        }
+        String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(input.getItem()).toString();
+        target.add(new ProcessingRecipeDisplay(id, List.of(List.of(input)), outputs));
+    }
+
     /**
      * Returns a recipe from the actual input item. Every registered Gonzo ore
      * block, including the four raw-dropping special ores, receives a host recipe.

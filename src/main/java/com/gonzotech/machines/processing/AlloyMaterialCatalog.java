@@ -43,6 +43,17 @@ public final class AlloyMaterialCatalog {
         return CATALOG.byId;
     }
 
+    /** Every concrete accepted item form and its material-unit value for one material. */
+    public static Map<Item, Integer> acceptedForms(ResourceLocation materialId) {
+        Map<Item, Integer> forms = new LinkedHashMap<>();
+        for (Map.Entry<Item, Ingredient> entry : CATALOG.byItem.entrySet()) {
+            if (entry.getValue().material().id().equals(materialId)) {
+                forms.put(entry.getKey(), entry.getValue().units());
+            }
+        }
+        return Map.copyOf(forms);
+    }
+
     private static Catalog createCatalog() {
         Builder builder = new Builder();
 

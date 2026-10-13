@@ -17,6 +17,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 repositories {
     mavenCentral()
+    maven { url = 'https://maven.blamejared.com' } // JEI 20.0.0 for Minecraft 1.21.4
     maven { url = 'https://maven.parchmentmc.org' }   // было без "maven."
     maven { url = 'https://maven.neoforged.net/releases' }
 }
@@ -64,7 +65,10 @@ dependencies {
     // NB: НЕ добавлять org.spongepowered:mixin processor — под NeoForge миксины
     // работают в официальном (mojang) неймспейсе, refmap не нужен. AP ищет
     // searge/notch-маппинги, которых тут нет, и падает на @Inject (serverTick).
-    // сюда позже: GeckoLib/AzureLib, JEI (localRuntime), и т.д.
+    // JEI остаётся необязательной клиентской интеграцией и не упаковывается в мод.
+    compileOnly "mezz.jei:jei-1.21.4-common-api:20.0.0.4"
+    compileOnly "mezz.jei:jei-1.21.4-neoforge-api:20.0.0.4"
+    localRuntime "mezz.jei:jei-1.21.4-neoforge:20.0.0.4"
 }
 
 // ───────────────────────── Headless self-test движка формул ─────────────────────────

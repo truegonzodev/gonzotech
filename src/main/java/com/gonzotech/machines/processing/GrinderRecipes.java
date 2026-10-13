@@ -26,6 +26,35 @@ public final class GrinderRecipes {
     private GrinderRecipes() {
     }
 
+    /** Read-only item recipe view for client recipe integrations. */
+    public static java.util.List<ProcessingRecipeDisplay> displayRecipes() {
+        java.util.List<ProcessingRecipeDisplay> displays = new java.util.ArrayList<>();
+        java.util.List<Map.Entry<Item, Item>> entries = new java.util.ArrayList<>(RECIPES.entrySet());
+        entries.sort(java.util.Comparator.comparing(entry ->
+            net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()).toString()));
+        for (Map.Entry<Item, Item> entry : entries) {
+            String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()).toString();
+            displays.add(new ProcessingRecipeDisplay(id,
+                java.util.List.of(java.util.List.of(new ItemStack(entry.getKey()))),
+                java.util.List.of(new ProcessingRecipeDisplay.Output(new ItemStack(entry.getValue()), 1_000))));
+        }
+
+        java.util.List<ItemStack> wool = new java.util.ArrayList<>();
+        for (Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+            if (item != Items.AIR) {
+                ItemStack stack = new ItemStack(item);
+                if (stack.is(ItemTags.WOOL)) wool.add(stack);
+            }
+        }
+        wool.sort(java.util.Comparator.comparing(stack ->
+            net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()));
+        if (wool.isEmpty()) wool.add(new ItemStack(Items.WHITE_WOOL));
+        displays.add(new ProcessingRecipeDisplay("tag/wool",
+            java.util.List.of(wool),
+            java.util.List.of(new ProcessingRecipeDisplay.Output(new ItemStack(Items.STRING, 3), 1_000))));
+        return java.util.List.copyOf(displays);
+    }
+
     /** Returns the output stack for one input item, or {@code null} when this input has no grinder recipe. */
     public static ItemStack find(ItemStack input) {
         if (input.isEmpty()) return null;

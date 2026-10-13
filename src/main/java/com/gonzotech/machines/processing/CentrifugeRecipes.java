@@ -83,6 +83,48 @@ public final class CentrifugeRecipes {
     private CentrifugeRecipes() {
     }
 
+    /** Read-only item recipe view for client recipe integrations. */
+    public static List<ProcessingRecipeDisplay> displayRecipes() {
+        List<ProcessingRecipeDisplay> result = new java.util.ArrayList<>(RECIPES.size());
+        for (Recipe recipe : RECIPES) {
+            List<ItemStack> inputs = new java.util.ArrayList<>();
+            for (ItemRef input : recipe.explicitInputs()) {
+                inputs.add(input.stack(1));
+            }
+            if (recipe.oreId() != null) {
+                if (recipe.acceptsRaw()) {
+                    Supplier<? extends Item> raw = ModItems.RAW_ORE_ITEMS.get(recipe.oreId());
+                    if (raw != null) inputs.add(new ItemStack(raw.get()));
+                }
+                Map<?, ? extends Supplier<? extends Item>> blocks = ModItems.ORE_BLOCK_ITEMS.get(recipe.oreId());
+                if (blocks != null) {
+                    for (Supplier<? extends Item> blockItem : blocks.values()) {
+                        inputs.add(new ItemStack(blockItem.get()));
+                    }
+                }
+            }
+            if (inputs.isEmpty()) continue;
+
+            List<ProcessingRecipeDisplay.Output> outputs = new java.util.ArrayList<>(4);
+            outputs.add(new ProcessingRecipeDisplay.Output(recipe.main().stack(), CHANCE_SCALE));
+            addDisplayOutput(outputs, recipe.first());
+            addDisplayOutput(outputs, recipe.second());
+            addDisplayOutput(outputs, recipe.third());
+            String id = recipe.oreId() == null
+                ? net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(inputs.getFirst().getItem()).toString()
+                : "ore/" + recipe.oreId();
+            result.add(new ProcessingRecipeDisplay(id, List.of(inputs), outputs));
+        }
+        result.sort(java.util.Comparator.comparing(ProcessingRecipeDisplay::id));
+        return List.copyOf(result);
+    }
+
+    private static void addDisplayOutput(List<ProcessingRecipeDisplay.Output> outputs, Byproduct byproduct) {
+        if (byproduct.item() != null) {
+            outputs.add(new ProcessingRecipeDisplay.Output(byproduct.preview(), byproduct.chancePermille()));
+        }
+    }
+
     /** Возвращает единственный рецепт для стека или {@code null}, если сырьё не поддерживается. */
     public static Recipe find(ItemStack input) {
         if (input.isEmpty()) return null;

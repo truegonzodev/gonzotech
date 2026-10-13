@@ -38,6 +38,7 @@ public final class ChemicalPlantRecipes {
     public interface IngredientMatcher {
         boolean matches(ItemStack stack);
         int count();
+        List<ItemStack> displayStacks();
     }
 
     public static class ItemMatcher implements IngredientMatcher {
@@ -62,6 +63,11 @@ public final class ChemicalPlantRecipes {
         public int count() {
             return count;
         }
+
+        @Override
+        public List<ItemStack> displayStacks() {
+            return List.of(new ItemStack(itemSupplier.get(), count));
+        }
     }
 
     public record AmpouleMatcher(String fluid, int count) implements IngredientMatcher {
@@ -74,6 +80,22 @@ public final class ChemicalPlantRecipes {
                 return "rectificate".equals(stored) || "ethanol".equals(stored);
             }
             return fluid.equals(stored);
+        }
+
+        @Override
+        public List<ItemStack> displayStacks() {
+            List<String> fluids = ("rectificate".equals(fluid) || "ethanol".equals(fluid))
+                ? List.of("rectificate", "ethanol")
+                : List.of(fluid);
+            List<ItemStack> stacks = new ArrayList<>(fluids.size() * 2);
+            for (String storedFluid : fluids) {
+                for (boolean durable : new boolean[] {false, true}) {
+                    ItemStack stack = AmpouleItem.createFilled(storedFluid, AmpouleItem.CAPACITY, durable);
+                    stack.setCount(count);
+                    stacks.add(stack);
+                }
+            }
+            return List.copyOf(stacks);
         }
     }
 

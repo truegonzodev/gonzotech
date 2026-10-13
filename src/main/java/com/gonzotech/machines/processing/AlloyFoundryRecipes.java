@@ -53,6 +53,39 @@ public final class AlloyFoundryRecipes {
     private AlloyFoundryRecipes() {
     }
 
+    /** Read-only item recipe view for client recipe integrations. */
+    public static List<ProcessingRecipeDisplay> displayRecipes() {
+        List<ProcessingRecipeDisplay> displays = new java.util.ArrayList<>(PRESETS.size());
+        for (Preset preset : PRESETS) {
+            List<List<ItemStack>> inputSlots = new java.util.ArrayList<>();
+            List<Map.Entry<ResourceLocation, Integer>> ingredients = new java.util.ArrayList<>(preset.ratio().entrySet());
+            ingredients.sort(java.util.Comparator.comparing(entry -> entry.getKey().toString()));
+            for (Map.Entry<ResourceLocation, Integer> ingredient : ingredients) {
+                Map<Item, Integer> forms = AlloyMaterialCatalog.acceptedForms(ingredient.getKey());
+                List<Map.Entry<Item, Integer>> orderedForms = new java.util.ArrayList<>(forms.entrySet());
+                orderedForms.sort(java.util.Comparator.comparing(entry ->
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()).toString()));
+
+                List<ItemStack> variants = new java.util.ArrayList<>();
+                for (Map.Entry<Item, Integer> form : orderedForms) {
+                    int unitsPerItem = form.getValue();
+                    if (unitsPerItem > 0 && ingredient.getValue() % unitsPerItem == 0) {
+                        variants.add(new ItemStack(form.getKey(), ingredient.getValue() / unitsPerItem));
+                    }
+                }
+                if (variants.isEmpty()) {
+                    throw new IllegalStateException("Alloy preset has no exact display input for " + ingredient.getKey());
+                }
+                inputSlots.add(variants);
+            }
+            ItemStack output = new ItemStack(outputItem(preset.outputIngotId()), preset.outputCount());
+            displays.add(new ProcessingRecipeDisplay(
+                preset.outputIngotId(), inputSlots,
+                List.of(new ProcessingRecipeDisplay.Output(output, 1_000))));
+        }
+        return List.copyOf(displays);
+    }
+
     /** Whether a stack is a legitimate input in either a preset or generic alloy. */
     public static boolean isSupportedInput(ItemStack stack) {
         return AlloyMaterialCatalog.ingredient(stack) != null;

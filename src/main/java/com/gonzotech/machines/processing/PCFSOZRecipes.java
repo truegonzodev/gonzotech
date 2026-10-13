@@ -32,6 +32,28 @@ public final class PCFSOZRecipes {
     private PCFSOZRecipes() {
     }
 
+    /** Read-only item recipe view for client recipe integrations. */
+    public static List<ProcessingRecipeDisplay> displayRecipes() {
+        List<ProcessingRecipeDisplay> displays = new java.util.ArrayList<>(RECIPES.size());
+        for (Recipe recipe : RECIPES) {
+            List<ItemStack> inputs = recipe.inputs().stream().map(input -> input.stack(1)).toList();
+            List<ProcessingRecipeDisplay.Output> outputs = new java.util.ArrayList<>(4);
+            outputs.add(new ProcessingRecipeDisplay.Output(recipe.main().stack(), CHANCE_SCALE));
+            addDisplayOutput(outputs, recipe.first());
+            addDisplayOutput(outputs, recipe.second());
+            addDisplayOutput(outputs, recipe.third());
+            String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(inputs.getFirst().getItem()).toString();
+            displays.add(new ProcessingRecipeDisplay(id, List.of(inputs), outputs));
+        }
+        return List.copyOf(displays);
+    }
+
+    private static void addDisplayOutput(List<ProcessingRecipeDisplay.Output> outputs, Byproduct byproduct) {
+        if (byproduct.item() != null) {
+            outputs.add(new ProcessingRecipeDisplay.Output(byproduct.preview(), byproduct.chancePermille()));
+        }
+    }
+
     /** Единственный рецепт для стека или {@code null}, если сырьё не поддерживается. */
     public static Recipe find(ItemStack input) {
         if (input.isEmpty()) return null;
