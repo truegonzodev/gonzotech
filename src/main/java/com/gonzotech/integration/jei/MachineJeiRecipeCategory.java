@@ -2,6 +2,7 @@ package com.gonzotech.integration.jei;
 
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
@@ -10,6 +11,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -97,8 +99,14 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
     @Override
     public void draw(MachineJeiRecipe recipe, mezz.jei.api.gui.ingredient.IRecipeSlotsView recipeSlotsView,
                      GuiGraphics graphics, double mouseX, double mouseY) {
-        if (recipe.notes().isEmpty()) return;
+        if (!recipe.gauges().isEmpty()) {
+            double operationProgress = (System.currentTimeMillis() % GAUGE_CYCLE_MILLIS) / (double) GAUGE_CYCLE_MILLIS;
+            for (MachineJeiRecipe.Gauge gauge : recipe.gauges()) {
+                drawGauge(graphics, gauge, gauge.fillFraction(operationProgress));
+            }
+        }
 
+        if (recipe.notes().isEmpty()) return;
         Font font = Minecraft.getInstance().font;
         int maxWidth = getWidth() - 16;
         List<net.minecraft.util.FormattedCharSequence> lines = recipe.notes().stream()
@@ -115,6 +123,80 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
             graphics.drawString(font, line, 8, y, 0xFFFFFFFF, false);
             y += lineHeight;
         }
+    }
+
+    @Override
+    public void getTooltip(ITooltipBuilder tooltip, MachineJeiRecipe recipe,
+                           mezz.jei.api.gui.ingredient.IRecipeSlotsView recipeSlotsView,
+                           double mouseX, double mouseY) {
+        for (MachineJeiRecipe.Gauge gauge : recipe.gauges()) {
+            if (!gauge.contains(mouseX, mouseY)) continue;
+            for (Component line : gauge.tooltip()) {
+                tooltip.add(line);
+            }
+            return;
+        }
+    }
+
+    private static final long GAUGE_CYCLE_MILLIS = 5_000L;
+
+    private static void drawGauge(GuiGraphics graphics, MachineJeiRecipe.Gauge gauge, float fraction) {
+        int width = gauge.width();
+        int height = gauge.height();
+        int x = gauge.x();
+        int y = gauge.y();
+        boolean vertical = gauge.direction() == MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP
+            || gauge.direction() == MachineJeiRecipe.GaugeDirection.VERTICAL_TOP_TO_BOTTOM;
+        int filled = Math.round(Math.max(0.0F, Math.min(1.0F, fraction)) * (vertical ? height : width));
+        if (filled <= 0) return;
+
+        int clipLeft = x;
+        int clipTop = y;
+        int clipRight = x + width;
+        int clipBottom = y + height;
+        switch (gauge.direction()) {
+            case VERTICAL_BOTTOM_TO_TOP -> clipTop = y + height - filled;
+            case VERTICAL_TOP_TO_BOTTOM -> clipBottom = y + filled;
+            case HORIZONTAL_LEFT_TO_RIGHT -> clipRight = x + filled;
+            case HORIZONTAL_RIGHT_TO_LEFT -> clipLeft = x + width - filled;
+        }
+        graphics.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+
+        switch (gauge.direction()) {
+            case VERTICAL_BOTTOM_TO_TOP -> {
+                for (int tileY = y + height - 16; tileY > y - 16; tileY -= 16) {
+                    for (int tileX = x; tileX < x + width; tileX += 16) {
+                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
+                    }
+                }
+            }
+            case VERTICAL_TOP_TO_BOTTOM -> {
+                for (int tileY = y; tileY < y + height; tileY += 16) {
+                    for (int tileX = x; tileX < x + width; tileX += 16) {
+                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
+                    }
+                }
+            }
+            case HORIZONTAL_LEFT_TO_RIGHT -> {
+                for (int tileY = y; tileY < y + height; tileY += 16) {
+                    for (int tileX = x; tileX < x + width; tileX += 16) {
+                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
+                    }
+                }
+            }
+            case HORIZONTAL_RIGHT_TO_LEFT -> {
+                for (int tileY = y; tileY < y + height; tileY += 16) {
+                    for (int tileX = x; tileX < x + width; tileX += 16) {
+                        blitGaugeTile(graphics, gauge.texture(), tileX, tileY);
+                    }
+                }
+            }
+        }
+        graphics.disableScissor();
+    }
+
+    private static void blitGaugeTile(GuiGraphics graphics, ResourceLocation texture, int x, int y) {
+        graphics.blit(RenderType::guiTextured, texture, x, y, 0.0F, 0.0F, 16, 16, 16, 16);
     }
 
     @Override

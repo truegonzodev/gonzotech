@@ -17,11 +17,17 @@ public final class MachineJeiRecipe {
     private final ResourceLocation id;
     private final List<Slot> slots;
     private final List<Component> notes;
+    private final List<Gauge> gauges;
 
     public MachineJeiRecipe(ResourceLocation id, List<Slot> slots, List<Component> notes) {
+        this(id, slots, notes, List.of());
+    }
+
+    public MachineJeiRecipe(ResourceLocation id, List<Slot> slots, List<Component> notes, List<Gauge> gauges) {
         this.id = Objects.requireNonNull(id, "id");
         this.slots = List.copyOf(slots);
         this.notes = List.copyOf(notes);
+        this.gauges = List.copyOf(gauges);
     }
 
     public ResourceLocation id() {
@@ -34,6 +40,53 @@ public final class MachineJeiRecipe {
 
     public List<Component> notes() {
         return notes;
+    }
+
+    public List<Gauge> gauges() {
+        return gauges;
+    }
+
+    public enum GaugeDirection {
+        VERTICAL_BOTTOM_TO_TOP,
+        VERTICAL_TOP_TO_BOTTOM,
+        HORIZONTAL_LEFT_TO_RIGHT,
+        HORIZONTAL_RIGHT_TO_LEFT
+    }
+
+    public enum GaugeMotion {
+        CONSUME,
+        PRODUCE
+    }
+
+    /** A visual-only animated bar with a stable operation or active-tick tooltip. */
+    public record Gauge(int x, int y, int width, int height, ResourceLocation texture,
+                        GaugeDirection direction, GaugeMotion motion, List<Component> tooltip,
+                        double cycleStart, double cycleEnd) {
+        public Gauge(int x, int y, int width, int height, ResourceLocation texture,
+                     GaugeDirection direction, GaugeMotion motion, List<Component> tooltip) {
+            this(x, y, width, height, texture, direction, motion, tooltip, 0.0, 1.0);
+        }
+
+        public Gauge {
+            if (width <= 0 || height <= 0) throw new IllegalArgumentException("Gauge dimensions must be positive");
+            if (cycleStart < 0.0 || cycleEnd > 1.0 || cycleStart >= cycleEnd) {
+                throw new IllegalArgumentException("Gauge cycle interval must be within [0, 1] and non-empty");
+            }
+            Objects.requireNonNull(texture, "texture");
+            Objects.requireNonNull(direction, "direction");
+            Objects.requireNonNull(motion, "motion");
+            tooltip = List.copyOf(tooltip);
+        }
+
+        public float fillFraction(double operationProgress) {
+            double phaseProgress = (operationProgress - cycleStart) / (cycleEnd - cycleStart);
+            float progress = (float) Math.max(0.0, Math.min(1.0, phaseProgress));
+            return motion == GaugeMotion.CONSUME ? 1.0F - progress : progress;
+        }
+
+        public boolean contains(double mouseX, double mouseY) {
+            return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+        }
     }
 
     public static Slot items(RecipeIngredientRole role, int x, int y, List<ItemStack> stacks) {
