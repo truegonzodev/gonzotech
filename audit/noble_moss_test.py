@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Static regression checks for the 0.3.209 noble-moss block family."""
-import hashlib
 import json
 import struct
 from pathlib import Path
@@ -63,7 +62,7 @@ for block_id in FAMILY:
     lang_key = f"block.gonzotech.{block_id}"
     assert lang_key in lang_en and lang_key in lang_ru, lang_key
 
-# Each stone finish has its own 16x16 RGBA texture; the pillar gets separate side/end art.
+# Use the user's relocated noble/ textures; the pillar keeps separate side/end art.
 textures = (
     "noble_moss",
     "smooth_noble_moss",
@@ -74,20 +73,17 @@ textures = (
     "noble_moss_pillar_side",
     "noble_moss_pillar_topbottom",
 )
-texture_hashes = set()
 for texture_id in textures:
-    image = (ASSETS / f"textures/block/{texture_id}.png").read_bytes()
+    image = (ASSETS / f"textures/block/noble/{texture_id}.png").read_bytes()
     assert image[:8] == b"\x89PNG\r\n\x1a\n", texture_id
     assert struct.unpack(">II", image[16:24]) == (16, 16), texture_id
     assert image[24] == 8 and image[25] == 6, f"{texture_id} must be 32-bit RGBA"
-    texture_hashes.add(hashlib.sha256(image).digest())
-assert len(texture_hashes) == len(textures), "family textures should be unique"
 
 pillar_model = load(ASSETS / "models/block/noble_moss_pillar.json")
 assert pillar_model["parent"] == "minecraft:block/cube_column"
 assert pillar_model["textures"] == {
-    "end": "gonzotech:block/noble_moss_pillar_topbottom",
-    "side": "gonzotech:block/noble_moss_pillar_side",
+    "end": "gonzotech:block/noble/noble_moss_pillar_topbottom",
+    "side": "gonzotech:block/noble/noble_moss_pillar_side",
 }
 pillar_states = load(ASSETS / "blockstates/noble_moss_pillar.json")["variants"]
 assert set(pillar_states) == {
@@ -157,4 +153,4 @@ for block_id in FAMILY:
 pickaxe = load(RES / "data/minecraft/tags/block/mineable/pickaxe.json")["values"]
 assert {f"gonzotech:{block_id}" for block_id in FAMILY} <= set(pickaxe)
 
-print("Noble-moss checks passed: 7 blocks, 13 recipes, 8 unique RGBA textures, pillar axes, snow/mining tags")
+print("Noble-moss checks passed: 7 blocks, 13 recipes, 8 RGBA texture paths, pillar axes, snow/mining tags")

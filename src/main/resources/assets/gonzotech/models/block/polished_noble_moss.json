@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/polished_noble_moss"
+    "all": "gonzotech:block/noble/polished_noble_moss"
   }
 }
