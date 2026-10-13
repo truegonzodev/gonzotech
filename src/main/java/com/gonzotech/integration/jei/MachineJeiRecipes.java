@@ -31,6 +31,7 @@ import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.item.crafting.display.FurnaceRecipeDisplay;
 import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import net.minecraft.world.item.crafting.display.SlotDisplay;
+import net.minecraft.world.level.material.Fluid;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -49,7 +50,6 @@ import static mezz.jei.api.recipe.RecipeIngredientRole.RENDER_ONLY;
 /** Builds immutable, display-only JEI recipes from the live machine tables. */
 public final class MachineJeiRecipes {
     private static final int[][] FOUR_OUTPUT_SLOTS = {{116, 17}, {152, 17}, {116, 53}, {152, 53}};
-    private static final int FLUID_RENDERER_CAPACITY = 1_000;
 
     private MachineJeiRecipes() {
     }
@@ -229,11 +229,10 @@ public final class MachineJeiRecipes {
             Component.translatable("jei.gonzotech.gauge.normalized_note"));
     }
 
-    private static List<Component> activeTickEnergyTooltip(long milliUnits, boolean heat, Component detail) {
+    private static List<Component> activeTickEnergyCostTooltip(long milliUnits, boolean heat) {
         return List.of(
             Component.translatable("jei.gonzotech.gauge.active_tick_cost", formatMilliUnits(milliUnits),
                 Component.translatable(heat ? GtUnits.U_GTH : GtUnits.U_GTU)),
-            detail,
             Component.translatable("jei.gonzotech.gauge.normalized_note"));
     }
 
@@ -244,6 +243,43 @@ public final class MachineJeiRecipes {
         tooltip.addAll(List.of(details));
         tooltip.add(Component.translatable("jei.gonzotech.gauge.normalized_note"));
         return List.copyOf(tooltip);
+    }
+
+    private static MachineJeiRecipe.Gauge fluidGauge(int x, int y, String texture,
+                                                       MachineJeiRecipe.GaugeMotion motion,
+                                                       List<Component> tooltip) {
+        return gauge(x, y, 16, 16, barTexture(texture),
+            MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP, motion, tooltip);
+    }
+
+    private static MachineJeiRecipe.Gauge fluidGauge(int x, int y, Fluid fluid,
+                                                       MachineJeiRecipe.GaugeMotion motion,
+                                                       List<Component> tooltip) {
+        return fluidGauge(x, y, fluidBarTexture(fluid), motion, tooltip);
+    }
+
+    private static String fluidBarTexture(Fluid fluid) {
+        if (fluid == net.minecraft.world.level.material.Fluids.WATER) return "bar_water";
+        if (fluid == ModFluids.ETHANOL.get()) return "bar_rectificate";
+        if (fluid == ModFluids.SULFURIC_ACID.get()) return "bar_sulfuric_acid";
+        if (fluid == ModFluids.DISTILLATE.get()) return "bar_distillate";
+        if (fluid == ModFluids.FORMALDEHYDE.get()) return "bar_formaldehyde";
+        if (fluid == ModFluids.MASH.get()) return "bar_mash";
+        if (fluid == ModFluids.WORT.get()) return "bar_wort";
+        throw new IllegalArgumentException("No JEI bar texture for fluid " + fluid);
+    }
+
+    private static Component fluidName(Fluid fluid) {
+        if (fluid == net.minecraft.world.level.material.Fluids.WATER) {
+            return Component.translatable("resource.gonzotech.water");
+        }
+        if (fluid == ModFluids.ETHANOL.get()) return Component.translatable("resource.gonzotech.rectificate");
+        if (fluid == ModFluids.SULFURIC_ACID.get()) return Component.translatable("resource.gonzotech.sulfuric_acid");
+        if (fluid == ModFluids.DISTILLATE.get()) return Component.translatable("resource.gonzotech.distillate");
+        if (fluid == ModFluids.FORMALDEHYDE.get()) return Component.translatable("resource.gonzotech.formaldehyde");
+        if (fluid == ModFluids.MASH.get()) return Component.translatable("resource.gonzotech.mash");
+        if (fluid == ModFluids.WORT.get()) return Component.translatable("resource.gonzotech.wort");
+        throw new IllegalArgumentException("No JEI localized name for fluid " + fluid);
     }
 
     private static List<Component> operationFluidTooltip(Component fluidName, long milliBuckets) {
@@ -434,34 +470,66 @@ public final class MachineJeiRecipes {
     }
 
     private static List<MachineJeiRecipe.Gauge> fillerGauges(String id) {
+        List<MachineJeiRecipe.Gauge> gauges = new ArrayList<>(switch (id) {
+            case "sulfuric_acid" -> fillerProcessGauges(90, 20, 9, null);
+            case "ethylene" -> fillerProcessGauges(150, 32, 3, null);
+            case "calcite_dissolution" -> fillerProcessGauges(30, 0, 0,
+                Component.translatable("jei.gonzotech.gauge.filler_calcite_salt"));
+            case "salt_evaporation" -> fillerProcessGauges(120, 11, 0,
+                Component.translatable("jei.gonzotech.gauge.filler_salt_evaporation"));
+            case "aminoblazeethanol" -> fillerProcessGauges(270, 2, 12, null);
+            case "formaldehyde" -> fillerProcessGauges(165, 16, 7, null);
+            case "calcium_chloride" -> fillerProcessGauges(75, 24, 2, null);
+            case "yellow_cake" -> fillerProcessGauges(FillerBlockEntity.YELLOW_CAKE_TICKS, 12, 4, null);
+            default -> List.of();
+        });
+        gauges.addAll(fillerFluidGauges(id));
+        return List.copyOf(gauges);
+    }
+
+    private static List<MachineJeiRecipe.Gauge> fillerFluidGauges(String id) {
         Component water = Component.translatable("resource.gonzotech.water");
         Component rectificate = Component.translatable("resource.gonzotech.rectificate");
         return switch (id) {
-            case "sulfuric_acid" -> fillerProcessGauges(90, 20, 9,
-                water, 23, Component.translatable("resource.gonzotech.sulfuric_acid"), 17, true, null);
-            case "ethylene" -> fillerProcessGauges(150, 32, 3,
-                rectificate, 19, Component.translatable("resource.gonzotech.ethylene"), 20, true, null);
-            case "calcite_dissolution" -> fillerProcessGauges(30, 0, 0,
-                null, 0, null, 0, true, Component.translatable("jei.gonzotech.gauge.filler_calcite_salt"));
-            case "salt_evaporation" -> fillerProcessGauges(120, 11, 0,
-                null, 0, null, 0, true, Component.translatable("jei.gonzotech.gauge.filler_salt_evaporation"));
-            case "aminoblazeethanol" -> fillerProcessGauges(270, 2, 12,
-                rectificate, 19, Component.translatable("resource.gonzotech.aminoblazeethanol"), 19, true, null);
-            case "formaldehyde" -> fillerProcessGauges(165, 16, 7,
-                rectificate, 19, Component.translatable("resource.gonzotech.formaldehyde"), 16, true, null);
-            case "calcium_chloride" -> fillerProcessGauges(75, 24, 2,
-                water, 12, null, 0, true, null);
-            case "yellow_cake" -> fillerProcessGauges(FillerBlockEntity.YELLOW_CAKE_TICKS, 12, 4,
-                Component.translatable("resource.gonzotech.sulfuric_acid"), FillerBlockEntity.YELLOW_CAKE_ACID_TOTAL,
-                null, 0, false, null);
+            case "sulfuric_acid" -> List.of(
+                fluidGauge(55, 35, "bar_water", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidLimitTooltip(water, 23, false)),
+                fluidGauge(105, 35, "bar_sulfuric_acid", MachineJeiRecipe.GaugeMotion.PRODUCE,
+                    activeTickFluidLimitTooltip(Component.translatable("resource.gonzotech.sulfuric_acid"), 17, true)));
+            case "ethylene" -> List.of(
+                fluidGauge(55, 35, "bar_rectificate", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidLimitTooltip(rectificate, 19, false)),
+                fluidGauge(105, 35, "bar_ethylene", MachineJeiRecipe.GaugeMotion.PRODUCE,
+                    activeTickFluidLimitTooltip(Component.translatable("resource.gonzotech.ethylene"), 20, true)));
+            case "calcite_dissolution" -> List.of(
+                fluidGauge(55, 35, "bar_water", MachineJeiRecipe.GaugeMotion.STATIC,
+                    List.of(Component.translatable("jei.gonzotech.gauge.retained_water"))));
+            case "salt_evaporation" -> List.of(
+                fluidGauge(55, 35, "bar_water", MachineJeiRecipe.GaugeMotion.STATIC,
+                    List.of(Component.translatable("jei.gonzotech.gauge.retained_water"),
+                        Component.translatable("jei.gonzotech.gauge.filler_salt_evaporation"))));
+            case "aminoblazeethanol" -> List.of(
+                fluidGauge(55, 35, "bar_rectificate", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidLimitTooltip(rectificate, 19, false)),
+                fluidGauge(105, 35, "bar_aminoblazeethanol", MachineJeiRecipe.GaugeMotion.PRODUCE,
+                    activeTickFluidLimitTooltip(Component.translatable("resource.gonzotech.aminoblazeethanol"), 19, true)));
+            case "formaldehyde" -> List.of(
+                fluidGauge(55, 35, "bar_rectificate", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidLimitTooltip(rectificate, 19, false)),
+                fluidGauge(105, 35, "bar_formaldehyde", MachineJeiRecipe.GaugeMotion.PRODUCE,
+                    activeTickFluidLimitTooltip(Component.translatable("resource.gonzotech.formaldehyde"), 16, true)));
+            case "calcium_chloride" -> List.of(
+                fluidGauge(55, 35, "bar_water", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidLimitTooltip(water, 12, false)));
+            case "yellow_cake" -> List.of(
+                fluidGauge(55, 35, "bar_sulfuric_acid", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    operationFluidTooltip(Component.translatable("resource.gonzotech.sulfuric_acid"),
+                        FillerBlockEntity.YELLOW_CAKE_ACID_TOTAL)));
             default -> List.of();
         };
     }
 
     private static List<MachineJeiRecipe.Gauge> fillerProcessGauges(int ticks, int gthPerTick, int gtuPerTick,
-                                                                      Component inputFluid, long inputAmount,
-                                                                      Component outputFluid, long outputAmount,
-                                                                      boolean fluidAmountsPerTick,
                                                                       Component extraDetail) {
         List<MachineJeiRecipe.Gauge> gauges = new ArrayList<>();
         var vertical = MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP;
@@ -475,12 +543,6 @@ public final class MachineJeiRecipes {
                 operationEnergyTooltip((long) gtuPerTick * ticks * MachineDefs.MILLI, false)));
         }
         List<Component> processTooltip = new ArrayList<>(durationTooltip("reaction", ticks));
-        if (inputFluid != null) processTooltip.addAll(fluidAmountsPerTick
-            ? activeTickFluidLimitTooltip(inputFluid, inputAmount, false)
-            : operationFluidTooltip(inputFluid, inputAmount));
-        if (outputFluid != null) processTooltip.addAll(fluidAmountsPerTick
-            ? activeTickFluidLimitTooltip(outputFluid, outputAmount, true)
-            : List.of(Component.translatable("jei.gonzotech.gauge.operation_fluid_output", outputAmount, outputFluid)));
         if (extraDetail != null) processTooltip.add(extraDetail);
         gauges.add(gauge(99, 1, 59, 16, barTexture("bar_chemical"),
             MachineJeiRecipe.GaugeDirection.HORIZONTAL_RIGHT_TO_LEFT,
@@ -620,7 +682,7 @@ public final class MachineJeiRecipes {
             List.of(
                 MachineJeiRecipe.items(INPUT, 80, 35, generalOrganic),
                 MachineJeiRecipe.fluid(OUTPUT, 152, 35, ModFluids.MASH.get(), 128)),
-            List.of(Component.translatable("jei.gonzotech.note.fermentation_general"))));
+            List.of(Component.translatable("jei.gonzotech.note.fermentation_general")), fermentationFluidGauge()));
         addFermentationSpecial(recipes, "proto_mash", protoMash, 0.9);
         addFermentationSpecial(recipes, "fruit_mash", fruitMash, 0.9);
         addFermentationSpecial(recipes, "golden_apple", Items.GOLDEN_APPLE, 2.7);
@@ -633,7 +695,14 @@ public final class MachineJeiRecipes {
             List.of(
                 MachineJeiRecipe.item(INPUT, 80, 35, input),
                 MachineJeiRecipe.fluid(OUTPUT, 152, 35, ModFluids.MASH.get(), 128)),
-            List.of(Component.translatable("jei.gonzotech.note.fermentation_special", alcohol))));
+            List.of(Component.translatable("jei.gonzotech.note.fermentation_special", alcohol)),
+            fermentationFluidGauge()));
+    }
+
+    private static List<MachineJeiRecipe.Gauge> fermentationFluidGauge() {
+        return List.of(fluidGauge(152, 35, "bar_mash", MachineJeiRecipe.GaugeMotion.STATIC,
+            List.of(Component.translatable("jei.gonzotech.gauge.fluid_per_input_item", 128,
+                Component.translatable("resource.gonzotech.mash")))));
     }
 
     private static void addWortKettleRecipes(Map<String, List<MachineJeiRecipe>> target) {
@@ -642,86 +711,123 @@ public final class MachineJeiRecipes {
             List.of(
                 MachineJeiRecipe.fluid(INPUT, 80, 35, ModFluids.MASH.get(), WortKettleBlockEntity.BOIL_RATE),
                 MachineJeiRecipe.fluid(OUTPUT, 116, 35, ModFluids.WORT.get(), WortKettleBlockEntity.BOIL_RATE)),
-            List.of(), List.of(gauge(152, 17, 16, 52, barTexture("bar_gth"),
-                MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
-                MachineJeiRecipe.GaugeMotion.CONSUME,
-                activeTickEnergyLimitTooltip((long) WortKettleBlockEntity.BOIL_GTH_COST * MachineDefs.MILLI, true,
-                    Component.translatable("jei.gonzotech.gauge.wort_boiling_energy",
-                        WortKettleBlockEntity.BOIL_GTH_COST, WortKettleBlockEntity.BOIL_RATE),
-                    Component.translatable("jei.gonzotech.gauge.wort_boiling_flow",
-                        WortKettleBlockEntity.BOIL_RATE, WortKettleBlockEntity.BOIL_RATE))))));
+            List.of(), List.of(
+                fluidGauge(80, 35, "bar_mash", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidLimitTooltip(Component.translatable("resource.gonzotech.mash"),
+                        WortKettleBlockEntity.BOIL_RATE, false)),
+                fluidGauge(116, 35, "bar_wort", MachineJeiRecipe.GaugeMotion.PRODUCE,
+                    List.of(
+                        Component.translatable("jei.gonzotech.gauge.active_tick_fluid_output_limit",
+                            WortKettleBlockEntity.BOIL_RATE, Component.translatable("resource.gonzotech.wort")),
+                        Component.translatable("jei.gonzotech.gauge.wort_boiling_flow",
+                            WortKettleBlockEntity.BOIL_RATE, WortKettleBlockEntity.BOIL_RATE),
+                        Component.translatable("jei.gonzotech.gauge.normalized_note"))),
+                gauge(152, 17, 16, 52, barTexture("bar_gth"),
+                    MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
+                    MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickEnergyLimitTooltip((long) WortKettleBlockEntity.BOIL_GTH_COST * MachineDefs.MILLI, true,
+                        Component.translatable("jei.gonzotech.gauge.wort_boiling_energy",
+                            WortKettleBlockEntity.BOIL_GTH_COST, WortKettleBlockEntity.BOIL_RATE))))));
 
         recipes.add(new MachineJeiRecipe(recipeId(MachineJeiCategories.THIRD_WORT_KETTLE, "evaporate/wort"),
             List.of(MachineJeiRecipe.fluid(INPUT, 116, 35, ModFluids.WORT.get(), WortKettleBlockEntity.EVAPORATE_RATE)),
-            List.of(), List.of(gauge(152, 17, 16, 52, barTexture("bar_gth"),
-                MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
-                MachineJeiRecipe.GaugeMotion.CONSUME,
-                activeTickEnergyTooltip((long) WortKettleBlockEntity.EVAPORATE_GTH_COST * MachineDefs.MILLI, true,
-                    Component.translatable("jei.gonzotech.gauge.wort_evaporation_flow",
-                        WortKettleBlockEntity.EVAPORATE_RATE, WortKettleBlockEntity.MAX_WORT_ALCOHOL))))));
+            List.of(), List.of(
+                fluidGauge(116, 35, "bar_wort", MachineJeiRecipe.GaugeMotion.CONSUME,
+                    List.of(Component.translatable("jei.gonzotech.gauge.wort_evaporation_flow",
+                        WortKettleBlockEntity.EVAPORATE_RATE, WortKettleBlockEntity.MAX_WORT_ALCOHOL),
+                        Component.translatable("jei.gonzotech.gauge.normalized_note"))),
+                gauge(152, 17, 16, 52, barTexture("bar_gth"),
+                    MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
+                    MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickEnergyCostTooltip((long) WortKettleBlockEntity.EVAPORATE_GTH_COST * MachineDefs.MILLI,
+                        true)))));
 
         recipes.add(new MachineJeiRecipe(recipeId(MachineJeiCategories.THIRD_WORT_KETTLE, "package/beer_mug"),
             List.of(
                 MachineJeiRecipe.item(INPUT, 26, 35, Items.GLASS_BOTTLE),
                 MachineJeiRecipe.fluid(INPUT, 80, 35, ModFluids.WORT.get(), 128),
                 MachineJeiRecipe.item(OUTPUT, 44, 35, ModItems.BEER_MUG.get())),
-            List.of(Component.translatable("jei.gonzotech.note.wort_packaging"))));
+            List.of(Component.translatable("jei.gonzotech.note.wort_packaging")),
+            List.of(fluidGauge(80, 35, "bar_wort", MachineJeiRecipe.GaugeMotion.STATIC,
+                operationFluidTooltip(Component.translatable("resource.gonzotech.wort"), 128)))));
 
         recipes.add(new MachineJeiRecipe(recipeId(MachineJeiCategories.THIRD_WORT_KETTLE, "package/beer_bucket"),
             List.of(
                 MachineJeiRecipe.item(INPUT, 26, 35, Items.BUCKET),
                 MachineJeiRecipe.fluid(INPUT, 80, 35, ModFluids.WORT.get(), 1_000),
                 MachineJeiRecipe.item(OUTPUT, 44, 35, ModItems.BEER_BUCKET.get())),
-            List.of(Component.translatable("jei.gonzotech.note.wort_packaging"))));
+            List.of(Component.translatable("jei.gonzotech.note.wort_packaging")),
+            List.of(fluidGauge(80, 35, "bar_wort", MachineJeiRecipe.GaugeMotion.STATIC,
+                operationFluidTooltip(Component.translatable("resource.gonzotech.wort"), 1_000)))));
     }
 
     private static void addDistillerRecipes(Map<String, List<MachineJeiRecipe>> target) {
-        List<MachineJeiRecipe.FluidAmount> raw = List.of(
-            new MachineJeiRecipe.FluidAmount(ModFluids.MASH.get(), DistillerBlockEntity.PROCESS_RAW_RATE),
-            new MachineJeiRecipe.FluidAmount(ModFluids.WORT.get(), DistillerBlockEntity.PROCESS_RAW_RATE));
-        List<MachineJeiRecipe.Slot> inputs = List.of(
-            MachineJeiRecipe.fluids(INPUT, 116, 17, raw, FLUID_RENDERER_CAPACITY),
-            MachineJeiRecipe.fluid(INPUT, 44, 17, net.minecraft.world.level.material.Fluids.WATER,
-                DistillerBlockEntity.PROCESS_WATER_RATE));
+        for (Fluid rawFluid : List.of(ModFluids.MASH.get(), ModFluids.WORT.get())) {
+            String rawId = rawFluid == ModFluids.MASH.get() ? "mash" : "wort";
+            Component rawName = fluidName(rawFluid);
+            List<MachineJeiRecipe.Slot> inputs = List.of(
+                MachineJeiRecipe.fluid(INPUT, 116, 17, rawFluid, DistillerBlockEntity.PROCESS_RAW_RATE),
+                MachineJeiRecipe.fluid(INPUT, 44, 17, net.minecraft.world.level.material.Fluids.WATER,
+                    DistillerBlockEntity.PROCESS_WATER_RATE));
+            List<MachineJeiRecipe.Gauge> inputGauges = List.of(
+                gauge(8, 17, 16, 52, barTexture("bar_gth"),
+                    MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
+                    MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickEnergyCostTooltip((long) DistillerBlockEntity.PROCESS_GTH_COST * MachineDefs.MILLI, true)),
+                fluidGauge(116, 17, rawFluid, MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidTooltip(rawName, DistillerBlockEntity.PROCESS_RAW_RATE, false)),
+                fluidGauge(44, 17, net.minecraft.world.level.material.Fluids.WATER, MachineJeiRecipe.GaugeMotion.CONSUME,
+                    activeTickFluidTooltip(Component.translatable("resource.gonzotech.water"),
+                        DistillerBlockEntity.PROCESS_WATER_RATE, false)),
+                gauge(80, 17, 16, 52, barTexture("bar_hot_water"),
+                    MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
+                    MachineJeiRecipe.GaugeMotion.PRODUCE,
+                    activeTickFluidTooltip(Component.translatable("resource.gonzotech.hot_water"),
+                        DistillerBlockEntity.PROCESS_WATER_RATE, true)));
 
-        List<MachineJeiRecipe.Gauge> gauges = List.of(
-            gauge(8, 17, 16, 52, barTexture("bar_gth"),
-                MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
-                MachineJeiRecipe.GaugeMotion.CONSUME,
-                activeTickEnergyTooltip((long) DistillerBlockEntity.PROCESS_GTH_COST * MachineDefs.MILLI, true,
-                    Component.translatable("jei.gonzotech.gauge.distiller_flow",
-                        DistillerBlockEntity.PROCESS_RAW_RATE, DistillerBlockEntity.PROCESS_WATER_RATE))),
-            gauge(80, 17, 16, 52, barTexture("bar_hot_water"),
-                MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
-                MachineJeiRecipe.GaugeMotion.PRODUCE,
-                activeTickFluidTooltip(Component.translatable("resource.gonzotech.hot_water"),
-                    DistillerBlockEntity.PROCESS_WATER_RATE, true)));
+            List<MachineJeiRecipe.Gauge> cleanGauges = new ArrayList<>(inputGauges);
+            cleanGauges.add(fluidGauge(152, 17, ModFluids.DISTILLATE.get(), MachineJeiRecipe.GaugeMotion.PRODUCE,
+                activeTickFluidTooltip(fluidName(ModFluids.DISTILLATE.get()),
+                    DistillerBlockEntity.PROCESS_RAW_RATE, true)));
+            target.get(MachineJeiCategories.THIRD_DISTILLER.id()).add(new MachineJeiRecipe(
+                recipeId(MachineJeiCategories.THIRD_DISTILLER, "distill/clean/" + rawId),
+                List.of(
+                    inputs.get(0), inputs.get(1),
+                    MachineJeiRecipe.fluid(OUTPUT, 152, 17, ModFluids.DISTILLATE.get(), DistillerBlockEntity.PROCESS_RAW_RATE)),
+                List.of(Component.translatable("jei.gonzotech.note.distiller_clean")), cleanGauges));
 
-        target.get(MachineJeiCategories.THIRD_DISTILLER.id()).add(new MachineJeiRecipe(
-            recipeId(MachineJeiCategories.THIRD_DISTILLER, "distill/clean"),
-            List.of(
-                inputs.get(0), inputs.get(1),
-                MachineJeiRecipe.fluid(OUTPUT, 152, 17, ModFluids.DISTILLATE.get(), DistillerBlockEntity.PROCESS_RAW_RATE)),
-            List.of(Component.translatable("jei.gonzotech.note.distiller_clean")), gauges));
-        target.get(MachineJeiCategories.THIRD_DISTILLER.id()).add(new MachineJeiRecipe(
-            recipeId(MachineJeiCategories.THIRD_DISTILLER, "distill/contaminated"), inputs,
-            List.of(Component.translatable("jei.gonzotech.note.distiller_contaminated")), gauges));
+            int poisonMin = DistillerBlockEntity.PROCESS_RAW_RATE / 2;
+            int poisonMax = (DistillerBlockEntity.PROCESS_RAW_RATE + 1) / 2;
+            List<Component> poisonTooltip = List.of(
+                Component.translatable("jei.gonzotech.gauge.distiller_poison_output", poisonMin, poisonMax,
+                    DistillerBlockEntity.PROCESS_RAW_RATE),
+                Component.translatable("jei.gonzotech.gauge.normalized_note"));
+            List<MachineJeiRecipe.Gauge> contaminatedGauges = new ArrayList<>(inputGauges);
+            contaminatedGauges.add(fluidGauge(152, 17, "bar_poison", MachineJeiRecipe.GaugeMotion.PRODUCE,
+                poisonTooltip));
+            target.get(MachineJeiCategories.THIRD_DISTILLER.id()).add(new MachineJeiRecipe(
+                recipeId(MachineJeiCategories.THIRD_DISTILLER, "distill/contaminated/" + rawId),
+                inputs, List.of(Component.translatable("jei.gonzotech.note.distiller_contaminated")),
+                contaminatedGauges));
+        }
     }
 
     private static void addRectifierRecipe(Map<String, List<MachineJeiRecipe>> target) {
-        Component flow = Component.translatable("jei.gonzotech.gauge.rectifier_flow",
-            RectifierBlockEntity.PROCESS_DISTILLATE_COST, RectifierBlockEntity.PROCESS_RECTIFICATE_YIELD);
         List<MachineJeiRecipe.Gauge> gauges = List.of(
             gauge(8, 17, 16, 52, barTexture("bar_gtu"),
                 MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
                 MachineJeiRecipe.GaugeMotion.CONSUME,
-                activeTickEnergyTooltip((long) RectifierBlockEntity.PROCESS_GTU_COST * MachineDefs.MILLI,
-                    false, flow)),
+                activeTickEnergyCostTooltip((long) RectifierBlockEntity.PROCESS_GTU_COST * MachineDefs.MILLI, false)),
             gauge(26, 17, 16, 52, barTexture("bar_gth"),
                 MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP,
                 MachineJeiRecipe.GaugeMotion.CONSUME,
-                activeTickEnergyTooltip((long) RectifierBlockEntity.PROCESS_GTH_COST * MachineDefs.MILLI,
-                    true, flow)));
+                activeTickEnergyCostTooltip((long) RectifierBlockEntity.PROCESS_GTH_COST * MachineDefs.MILLI, true)),
+            fluidGauge(62, 35, ModFluids.DISTILLATE.get(), MachineJeiRecipe.GaugeMotion.CONSUME,
+                activeTickFluidTooltip(fluidName(ModFluids.DISTILLATE.get()),
+                    RectifierBlockEntity.PROCESS_DISTILLATE_COST, false)),
+            fluidGauge(98, 35, ModFluids.ETHANOL.get(), MachineJeiRecipe.GaugeMotion.PRODUCE,
+                activeTickFluidTooltip(fluidName(ModFluids.ETHANOL.get()),
+                    RectifierBlockEntity.PROCESS_RECTIFICATE_YIELD, true)));
         target.get(MachineJeiCategories.THIRD_RECTIFIER.id()).add(new MachineJeiRecipe(
             recipeId(MachineJeiCategories.THIRD_RECTIFIER, "rectify/distillate"),
             List.of(

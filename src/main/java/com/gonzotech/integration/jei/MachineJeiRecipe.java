@@ -55,10 +55,11 @@ public final class MachineJeiRecipe {
 
     public enum GaugeMotion {
         CONSUME,
-        PRODUCE
+        PRODUCE,
+        STATIC
     }
 
-    /** A visual-only animated bar with a stable operation or active-tick tooltip. */
+    /** A visual-only bar with a stable operation, active-tick, or static-fluid tooltip. */
     public record Gauge(int x, int y, int width, int height, ResourceLocation texture,
                         GaugeDirection direction, GaugeMotion motion, List<Component> tooltip,
                         double cycleStart, double cycleEnd) {
@@ -79,6 +80,7 @@ public final class MachineJeiRecipe {
         }
 
         public float fillFraction(double operationProgress) {
+            if (motion == GaugeMotion.STATIC) return 1.0F;
             double phaseProgress = (operationProgress - cycleStart) / (cycleEnd - cycleStart);
             float progress = (float) Math.max(0.0, Math.min(1.0, phaseProgress));
             return motion == GaugeMotion.CONSUME ? 1.0F - progress : progress;
@@ -90,7 +92,7 @@ public final class MachineJeiRecipe {
     }
 
     public static Slot items(RecipeIngredientRole role, int x, int y, List<ItemStack> stacks) {
-        return new Slot(role, x, y, stacks, List.of(), null, 1_000, List.of(), 1_000);
+        return new Slot(role, x, y, stacks, List.of(), null, 1_000, List.of());
     }
 
     public static Slot item(RecipeIngredientRole role, int x, int y, ItemStack stack) {
@@ -103,19 +105,15 @@ public final class MachineJeiRecipe {
 
     /** A deliberately blank machine slot, useful for showing an unused reusable tool position. */
     public static Slot empty(RecipeIngredientRole role, int x, int y) {
-        return new Slot(role, x, y, List.of(), List.of(), null, 1_000, List.of(), 1_000);
-    }
-
-    public static Slot fluids(RecipeIngredientRole role, int x, int y, List<FluidAmount> fluids, long rendererCapacity) {
-        return new Slot(role, x, y, List.of(), fluids, null, 1_000, List.of(), rendererCapacity);
+        return new Slot(role, x, y, List.of(), List.of(), null, 1_000, List.of());
     }
 
     public static Slot fluid(RecipeIngredientRole role, int x, int y, Fluid fluid, long amount) {
-        return fluids(role, x, y, List.of(new FluidAmount(fluid, amount)), Math.max(1_000L, amount));
+        return new Slot(role, x, y, List.of(), List.of(new FluidAmount(fluid, amount)), null, 1_000, List.of());
     }
 
     public static Slot display(RecipeIngredientRole role, int x, int y, SlotDisplay display) {
-        return new Slot(role, x, y, List.of(), List.of(), display, 1_000, List.of(), 1_000);
+        return new Slot(role, x, y, List.of(), List.of(), display, 1_000, List.of());
     }
 
     public record FluidAmount(Fluid fluid, long amount) {
@@ -133,8 +131,7 @@ public final class MachineJeiRecipe {
         List<FluidAmount> fluids,
         @Nullable SlotDisplay display,
         int chancePermille,
-        List<Component> tooltips,
-        long rendererCapacity
+        List<Component> tooltips
     ) {
         public Slot {
             Objects.requireNonNull(role, "role");
@@ -147,7 +144,6 @@ public final class MachineJeiRecipe {
             int contentKinds = (!itemStacks.isEmpty() ? 1 : 0) + (!fluids.isEmpty() ? 1 : 0) + (display != null ? 1 : 0);
             if (contentKinds > 1) throw new IllegalArgumentException("A JEI slot can contain only one ingredient kind");
             if (chancePermille < 0 || chancePermille > 1_000) throw new IllegalArgumentException("Chance must be in permille");
-            if (!fluids.isEmpty() && rendererCapacity <= 0) throw new IllegalArgumentException("Fluid slots need a positive capacity");
         }
 
         @Override
@@ -156,13 +152,13 @@ public final class MachineJeiRecipe {
         }
 
         public Slot withChance(int permille) {
-            return new Slot(role, x, y, itemStacks, fluids, display, permille, tooltips, rendererCapacity);
+            return new Slot(role, x, y, itemStacks, fluids, display, permille, tooltips);
         }
 
         public Slot withTooltip(Component tooltip) {
             java.util.ArrayList<Component> next = new java.util.ArrayList<>(tooltips);
             next.add(Objects.requireNonNull(tooltip, "tooltip"));
-            return new Slot(role, x, y, itemStacks, fluids, display, chancePermille, next, rendererCapacity);
+            return new Slot(role, x, y, itemStacks, fluids, display, chancePermille, next);
         }
     }
 }

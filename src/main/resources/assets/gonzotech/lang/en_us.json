@@ -1162,5 +1162,8 @@
   "jei.gonzotech.gauge.active_tick_cost_limit": "Up to %s %s per active tick.",
   "jei.gonzotech.gauge.wort_boiling_energy": "Cost rounds up in proportion to the mash boiled: ceil(%s GTH × boiled mB / %s mB).",
   "jei.gonzotech.gauge.active_tick_fluid_input_limit": "Up to %s mB of %s is consumed per active tick.",
-  "jei.gonzotech.gauge.active_tick_fluid_output_limit": "Up to %s mB of %s is produced per active tick."
+  "jei.gonzotech.gauge.active_tick_fluid_output_limit": "Up to %s mB of %s is produced per active tick.",
+  "jei.gonzotech.gauge.fluid_per_input_item": "Added per accepted input item: %s mB of %s.",
+  "jei.gonzotech.gauge.retained_water": "Water is retained as the medium; its tank amount is not a fixed recipe quantity.",
+  "jei.gonzotech.gauge.distiller_poison_output": "Output: %s–%s mB per active tick (2:1 from %s mB feed; half-mB remainder carries forward)."
 }

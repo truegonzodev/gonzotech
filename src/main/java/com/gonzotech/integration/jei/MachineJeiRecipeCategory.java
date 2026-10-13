@@ -22,14 +22,22 @@ import java.util.Locale;
 /** Renderer shared by every machine processing category. */
 public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJeiRecipe> {
     private final MachineJeiCategories.Definition definition;
-    private final IDrawable machineGui;
+    private final IDrawable machineGuiBackground;
+    private final IDrawable machineGuiForeground;
     private final IDrawable icon;
 
     public MachineJeiRecipeCategory(IGuiHelper guiHelper, MachineJeiCategories.Definition definition) {
         this.definition = definition;
-        ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(
+        ResourceLocation backgroundTexture = ResourceLocation.fromNamespaceAndPath(
+            "gonzotech", "textures/gui/" + definition.texture() + "_gui_bg.png");
+        ResourceLocation foregroundTexture = ResourceLocation.fromNamespaceAndPath(
             "gonzotech", "textures/gui/" + definition.texture() + "_gui.png");
-        this.machineGui = guiHelper.drawableBuilder(texture, 128, 128, definition.width(), definition.height())
+        this.machineGuiBackground = guiHelper.drawableBuilder(
+                backgroundTexture, 128, 128, definition.width(), definition.height())
+            .setTextureSize(512, 512)
+            .build();
+        this.machineGuiForeground = guiHelper.drawableBuilder(
+                foregroundTexture, 128, 128, definition.width(), definition.height())
             .setTextureSize(512, 512)
             .build();
         this.icon = guiHelper.createDrawableIngredient(
@@ -48,7 +56,7 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
 
     @Override
     public IDrawable getBackground() {
-        return machineGui;
+        return machineGuiBackground;
     }
 
     @Override
@@ -69,17 +77,20 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, MachineJeiRecipe recipe, IFocusGroup focuses) {
         for (MachineJeiRecipe.Slot slot : recipe.slots()) {
+            if (!slot.fluids().isEmpty()) {
+                // The visible representation is the colocated gauge; retain the ingredient for JEI lookup/focus.
+                var invisibleIngredients = builder.addInvisibleIngredients(slot.role());
+                for (MachineJeiRecipe.FluidAmount fluid : slot.fluids()) {
+                    invisibleIngredients.add(fluid.fluid(), fluid.amount());
+                }
+                continue;
+            }
             var slotBuilder = builder.addSlot(slot.role(), slot.x(), slot.y());
             // Machine GUI slots are 16x16 for every role; do not use JEI's oversized crafting-output frame.
             slotBuilder.setStandardSlotBackground();
 
             if (!slot.itemStacks().isEmpty()) {
                 slotBuilder.addItemStacks(slot.itemStacks());
-            } else if (!slot.fluids().isEmpty()) {
-                slotBuilder.setFluidRenderer(slot.rendererCapacity(), true, 16, 16);
-                for (MachineJeiRecipe.FluidAmount fluid : slot.fluids()) {
-                    slotBuilder.add(fluid.fluid(), fluid.amount());
-                }
             } else if (slot.display() != null) {
                 slotBuilder.add(slot.display());
             }
@@ -105,6 +116,9 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
                 drawGauge(graphics, gauge, gauge.fillFraction(operationProgress));
             }
         }
+        // Mirror the in-game Z stack: GUI background, animated bars, then the
+        // foreground window that masks the bars to its authored cut-outs.
+        machineGuiForeground.draw(graphics, 0, 0);
 
         if (recipe.notes().isEmpty()) return;
         Font font = Minecraft.getInstance().font;

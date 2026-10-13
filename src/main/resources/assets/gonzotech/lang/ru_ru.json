@@ -1162,5 +1162,8 @@
   "jei.gonzotech.gauge.active_tick_cost_limit": "Расход до %s %s за активный тик.",
   "jei.gonzotech.gauge.wort_boiling_energy": "Расход округляется вверх пропорционально объёму браги: ceil(%s GTH × вскипячённые mB / %s mB).",
   "jei.gonzotech.gauge.active_tick_fluid_input_limit": "За активный тик расходуется до %s mB жидкости «%s».",
-  "jei.gonzotech.gauge.active_tick_fluid_output_limit": "За активный тик получается до %s mB жидкости «%s»."
+  "jei.gonzotech.gauge.active_tick_fluid_output_limit": "За активный тик получается до %s mB жидкости «%s».",
+  "jei.gonzotech.gauge.fluid_per_input_item": "Добавляется за каждый принятый предмет: %s mB жидкости «%s».",
+  "jei.gonzotech.gauge.retained_water": "Вода остаётся средой реакции; её объём в баке не задан фиксированным количеством рецепта.",
+  "jei.gonzotech.gauge.distiller_poison_output": "Выход: %s–%s mB за активный тик (2:1 из %s mB сырья; половинный остаток переносится на следующий тик)."
 }

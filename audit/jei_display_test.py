@@ -25,10 +25,14 @@ assert len(textures) == len(expected) and len(set(textures)) == len(expected)
 
 category = (JAVA / "integration/jei/MachineJeiRecipeCategory.java").read_text(encoding="utf-8")
 assert 'definition.texture() + "_gui.png"' in category
-assert "_gui_bg.png" not in category
+assert 'definition.texture() + "_gui_bg.png"' in category
+assert "machineGuiForeground.draw(graphics, 0, 0);" in category
+assert "addInvisibleIngredients(slot.role())" in category
+assert "invisibleIngredients.add(fluid.fluid(), fluid.amount())" in category
 assert "setOutputSlotBackground" not in category
 assert "slotBuilder.setStandardSlotBackground();" in category
-assert "drawableBuilder(texture, 128, 128, definition.width(), definition.height())" in category
+assert "backgroundTexture, 128, 128, definition.width(), definition.height()" in category
+assert "foregroundTexture, 128, 128, definition.width(), definition.height()" in category
 assert "GAUGE_CYCLE_MILLIS = 5_000L" in category
 assert "drawGauge(graphics, gauge, gauge.fillFraction(operationProgress))" in category
 assert "public void getTooltip(ITooltipBuilder tooltip" in category
@@ -38,6 +42,7 @@ assert "setDisplayedIngredient" not in category
 gauge_model = (JAVA / "integration/jei/MachineJeiRecipe.java").read_text(encoding="utf-8")
 assert "public record Gauge(" in gauge_model
 assert "cycleStart" in gauge_model and "cycleEnd" in gauge_model
+assert "motion == GaugeMotion.STATIC) return 1.0F" in gauge_model
 assert "motion == GaugeMotion.CONSUME ? 1.0F - progress : progress" in gauge_model
 
 recipes = (JAVA / "integration/jei/MachineJeiRecipes.java").read_text(encoding="utf-8")
@@ -50,6 +55,9 @@ for source in (
     "DistillerBlockEntity.PROCESS_GTH_COST", "RectifierBlockEntity.PROCESS_GTU_COST",
     "MachineDefs.CRUSHER_PROGRESS_TOTAL", "MachineDefs.crusherProgressUnitsPerTick(",
     "MachineDefs.CRUSHER_GTU_MILLI_PER_TICK_MIN", "MachineDefs.CRUSHER_GTU_MILLI_PER_TICK_MAX",
+    "fluidGauge(55, 35", "fluidGauge(105, 35", "fluidGauge(152, 35, \"bar_mash\"",
+    "fluidGauge(80, 35", "fluidGauge(116, 35", "fluidGauge(116, 17", "fluidGauge(44, 17",
+    "fluidGauge(152, 17", "fluidGauge(62, 35", "fluidGauge(98, 35",
     "SiliconFactoryBlockEntity.STEP_TICKS",
 ):
     assert source in recipes, f"JEI gauge data is not derived from machine logic: {source}"
@@ -59,6 +67,8 @@ draw_end = category.index("@Override\n    public void getTooltip", draw_start)
 draw_body = category[draw_start:draw_end]
 assert "recipe.slots()" not in draw_body and "setDisplayedIngredient" not in draw_body, \
     "JEI animation must affect gauges only; input/output slots stay static"
+assert draw_body.index("drawGauge(graphics, gauge") < draw_body.index("machineGuiForeground.draw(graphics, 0, 0)"), \
+    "machine GUI foreground must mask the animated bars"
 for texture in textures:
     path = RES / f"assets/gonzotech/textures/gui/{texture}_gui.png"
     assert path.is_file(), f"missing machine GUI foreground: {path}"
@@ -66,6 +76,12 @@ for texture in textures:
         image.seek(16)
         width, height = struct.unpack(">II", image.read(8))
     assert (width, height) == (512, 512), f"unexpected GUI sheet dimensions: {path}"
+    background = RES / f"assets/gonzotech/textures/gui/{texture}_gui_bg.png"
+    assert background.is_file(), f"missing machine GUI background layer: {background}"
+    with background.open("rb") as image:
+        image.seek(16)
+        bg_width, bg_height = struct.unpack(">II", image.read(8))
+    assert (bg_width, bg_height) == (512, 512), f"unexpected GUI background dimensions: {background}"
 
 fluid_source = (JAVA / "core/fluid/ModFluids.java").read_text(encoding="utf-8")
 fluid_ids = set(re.findall(r'FLUID_TYPES\.register\("([a-z0-9_]+)"', fluid_source))
@@ -79,7 +95,8 @@ gauge_translation_keys = {
     "jei.gonzotech.gauge.active_tick_fluid_output_limit", "jei.gonzotech.gauge.duration",
     "jei.gonzotech.gauge.duration_range", "jei.gonzotech.gauge.operation_cost_range",
     "jei.gonzotech.gauge.crusher_duration", "jei.gonzotech.gauge.crusher_energy_range",
-    "jei.gonzotech.gauge.silicon_energy_note", "jei.gonzotech.gauge.wort_boiling_flow",
+    "jei.gonzotech.gauge.silicon_energy_note", "jei.gonzotech.gauge.retained_water",
+    "jei.gonzotech.gauge.fluid_per_input_item", "jei.gonzotech.gauge.distiller_poison_output", "jei.gonzotech.gauge.wort_boiling_flow",
     "jei.gonzotech.gauge.wort_boiling_energy", "jei.gonzotech.gauge.wort_evaporation_flow",
     "jei.gonzotech.gauge.distiller_flow",
     "jei.gonzotech.gauge.rectifier_flow", "jei.gonzotech.gauge.filler_calcite_salt",
@@ -104,4 +121,4 @@ assert ".includeHidden()" in plugin
 assert "hideRecipes" not in plugin + recipes
 assert "RecipeUnlocks" not in recipes, "machine JEI recipes must not be progression-filtered"
 assert "GOST-JEI-01" in (ROOT / "docs/JEI-MACHINES.md").read_text(encoding="utf-8")
-print("JEI display checks passed: 15 categories, static slots, animated gauges, accurate tooltips, visible recipes")
+print("JEI display checks passed: 15 categories, layered GUI, static item slots, fluid bars, invisible JEI fluid lookup")
