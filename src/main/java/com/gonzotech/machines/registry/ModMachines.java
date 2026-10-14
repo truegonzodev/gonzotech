@@ -13,6 +13,8 @@ import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FermentationVatBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.NuclearFireboxBlock;
+import com.gonzotech.core.block.ReactorControlPanelBlock;
+import com.gonzotech.core.block.ReactorFuelSheathBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.RectifierBlock;
 import com.gonzotech.machines.block.SnaketypeCondenserBlock;
@@ -131,6 +133,14 @@ public final class ModMachines {
     /** Discovery-2 heat source: one uranium/thorium fuel slot and a dangerous GTH buffer. */
     public static final DeferredBlock<NuclearFireboxBlock> SECOND_NUCLEAR_FIREBOX =
         BLOCKS.registerBlock("second_nuclear_firebox", NuclearFireboxBlock::new, machineMetal());
+
+    // First-generation uranium reactor foundation; runtime structure logic is a later stage.
+    public static final DeferredBlock<Block> FIRST_URANIUM_REACTOR_CASING =
+        BLOCKS.registerSimpleBlock("first_uranium_reactor_casing", machineMetal());
+    public static final DeferredBlock<ReactorControlPanelBlock> FIRST_URANIUM_REACTOR_CONTROL_PANEL =
+        BLOCKS.registerBlock("first_uranium_reactor_control_panel", ReactorControlPanelBlock::new, machineMetal());
+    public static final DeferredBlock<ReactorFuelSheathBlock> FIRST_URANIUM_REACTOR_FUEL_SHEATH =
+        BLOCKS.registerBlock("first_uranium_reactor_fuel_sheath", ReactorFuelSheathBlock::new, machineMetal());
 
     public static final DeferredBlock<BoilerBlock> BOILER =
         BLOCKS.registerBlock("boiler", BoilerBlock::new, machineMetalCustomShape());
@@ -443,6 +453,13 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_NUCLEAR_FIREBOX_ITEM =
         ITEMS.registerSimpleBlockItem("second_nuclear_firebox", SECOND_NUCLEAR_FIREBOX);
+
+    public static final DeferredItem<BlockItem> FIRST_URANIUM_REACTOR_CASING_ITEM =
+        ITEMS.registerSimpleBlockItem("first_uranium_reactor_casing", FIRST_URANIUM_REACTOR_CASING);
+    public static final DeferredItem<BlockItem> FIRST_URANIUM_REACTOR_CONTROL_PANEL_ITEM =
+        ITEMS.registerSimpleBlockItem("first_uranium_reactor_control_panel", FIRST_URANIUM_REACTOR_CONTROL_PANEL);
+    public static final DeferredItem<BlockItem> FIRST_URANIUM_REACTOR_FUEL_SHEATH_ITEM =
+        ITEMS.registerSimpleBlockItem("first_uranium_reactor_fuel_sheath", FIRST_URANIUM_REACTOR_FUEL_SHEATH);
 
     public static final DeferredItem<BlockItem> BOILER_ITEM =
         ITEMS.registerSimpleBlockItem("boiler", BOILER);

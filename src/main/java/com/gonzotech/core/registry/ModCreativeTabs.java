@@ -127,8 +127,11 @@ public class ModCreativeTabs {
                 // Продвинутый парогенератор — в витрине второго открытия.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CASING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CORE_ITEM.get());
-                // Ядерная топка замыкает вкладку: самая опасная и поздняя машина.
+                // Ядерная топка и первая стадия реактора — отдельные устройства/детали.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_URANIUM_REACTOR_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_URANIUM_REACTOR_CONTROL_PANEL_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_URANIUM_REACTOR_FUEL_SHEATH_ITEM.get());
                 // Эпоха III (Открытие 3): линейка брожения
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get());
@@ -356,6 +359,8 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TVEL.get());
                 output.accept(ModItems.UF_TVEL.get());
                 output.accept(ModItems.DEPRESSED_UF_TVEL.get());
+                // Реакторный компонент сохраняет состав и свойства пользовательского сплава.
+                output.accept(ModItems.HEAT_EXCHANGER_CELL.get());
                 // Полимеры Эпохи III — продукты химзавода (часть применений ещё в плане).
                 output.accept(ModItems.POLYETHYLENE.get());
                 output.accept(ModItems.POLYVINYL_CHLORIDE.get());

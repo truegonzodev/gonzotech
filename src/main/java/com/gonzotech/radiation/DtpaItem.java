@@ -116,7 +116,9 @@ public class DtpaItem extends Item {
         // 1. Моментально −2 % от ТЕКУЩЕЙ дозы.
         int dose = psyche.getRadiation();
         if (dose > 0) {
-            psyche.setRadiation((int) Math.round(dose * DOSE_REMAINING));
+            int afterDose = (int) Math.round(dose * DOSE_REMAINING);
+            psyche.setRadiation(afterDose);
+            RadiationTrace.playerDoseChange(serverPlayer, dose, psyche.getRadiation(), "ДТПА: разовая очистка");
         }
 
         // 2. «Абсорбция дозы» I уровня на 1 минуту.
@@ -135,7 +137,9 @@ public class DtpaItem extends Item {
         if (count >= COURSE_DOSES) {
             serverPlayer.addEffect(new MobEffectInstance(ModEffects.RAD_CLEANSE,
                     BONUS_CLEANSE_SECONDS * 20, BONUS_CLEANSE_AMPLIFIER, false, true));
-            psyche.setRadiation((int) Math.round(psyche.getRadiation() * COURSE_DOSE_REMAINING));
+            int beforeCourseDose = psyche.getRadiation();
+            psyche.setRadiation((int) Math.round(beforeCourseDose * COURSE_DOSE_REMAINING));
+            RadiationTrace.playerDoseChange(serverPlayer, beforeCourseDose, psyche.getRadiation(), "ДТПА: завершение курса");
             Necrosis.cure(serverPlayer);
             psyche.setStress(Math.max(0, psyche.getStress() - COURSE_STRESS_RELIEF));
             psyche.setCrisis(Math.max(0, psyche.getCrisis() - COURSE_CRISIS_RELIEF));

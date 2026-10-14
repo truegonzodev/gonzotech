@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "gonzotech:heat_exchanger_cell"
+    ]
+  },
+  "criteria": {
+    "has_custom_alloy": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "gonzotech:custom_alloy"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -38,7 +38,7 @@ public final class RadiationDebugCommand {
         }
         ServerLevel level = player.serverLevel();
         ChunkPos center = new ChunkPos(player.blockPosition());
-        ChunkRadiationData.get(level).purgeAround(center, 8);
+        ChunkRadiationData.get(level).purgeAround(level, center, 8);
         context.getSource().sendSuccess(() -> Component.literal(
                 "[GonzoTech] Радиация очищена в радиусе 8 чанков вокруг чанка "
                         + center.x + ", " + center.z + ". Все значения установлены в 0 nZt/s."), true);
@@ -52,11 +52,20 @@ public final class RadiationDebugCommand {
             return 0;
         }
         ServerLevel level = player.serverLevel();
+        RadiationTrace.start(player);
         PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
         double percent = RadDose.percent(psyche.getRadiation());
         ChunkPos chunk = new ChunkPos(player.blockPosition());
         ChunkRadiationData data = ChunkRadiationData.get(level);
         double chunkNzt = data.value(level, chunk.toLong());
+        double insideDose = Containment.insideDose(level,
+                net.minecraft.core.BlockPos.containing(player.getEyePosition()));
+        RadiationTrace.log(level, player.blockPosition(), "ИСХОДНЫЙ СНИМОК GETDOSE",
+                "radiationScale=" + psyche.getRadiation() + "; percent="
+                        + String.format(Locale.ROOT, "%.1f%%", percent)
+                        + "; chunk=" + chunk.x + "," + chunk.z
+                        + "; chunkDose=" + RadiationTrace.rate(chunkNzt)
+                        + "; insideSources=" + RadiationTrace.rate(insideDose));
 
         player.sendSystemMessage(Component.literal("Доза: ")
                 .append(Component.literal(String.format(Locale.ROOT, "%.1f%%", percent)))
@@ -73,7 +82,7 @@ public final class RadiationDebugCommand {
                 Component.translatable(contour.enclosed() ? "gui.yes" : "gui.no"),
                 String.format(Locale.ROOT, "%.6f", contour.factor())).withStyle(ChatFormatting.GRAY));
         player.sendSystemMessage(Component.translatable("command.gonzotech.radiation.inside_dose",
-                GtUnits.zt(Containment.insideDose(level, observer))).withStyle(ChatFormatting.GRAY));
+                GtUnits.zt(insideDose)).withStyle(ChatFormatting.GRAY));
 
         var sources = data.sourcesInChunk(level, chunk.toLong());
         if (sources.isEmpty()) {

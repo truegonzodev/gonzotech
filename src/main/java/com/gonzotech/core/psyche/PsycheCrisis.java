@@ -1,5 +1,6 @@
 package com.gonzotech.core.psyche;
 
+import com.gonzotech.radiation.RadiationTrace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -283,7 +284,9 @@ public final class PsycheCrisis {
         psyche.setAddiction(scales[0]);
         psyche.setStress(scales[1]);
         psyche.setCrisis(scales[2]);
+        int radiationBeforeRollback = psyche.getRadiation();
         psyche.setRadiation(scales[3]);
+        RadiationTrace.playerDoseChange(player, radiationBeforeRollback, psyche.getRadiation(), "откат каскада кризиса");
         psyche.setUv(scales[4]);
         psyche.setChemical(scales[5]);
         player.setData(ModPsycheAttachments.PSYCHE, psyche);

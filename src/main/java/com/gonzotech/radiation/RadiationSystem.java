@@ -8,6 +8,7 @@ import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModEffects;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 import java.util.HashMap;
 import java.util.List;
@@ -150,6 +152,7 @@ public final class RadiationSystem {
         }
         ServerLevel level = (ServerLevel) player.level();
         ChunkRadiationData data = ChunkRadiationData.get(level);
+        boolean tracing = RadiationTrace.isActive(level);
         if (hasVisualInstrument(player)) {
             List<RadiationVisualPayload.Source> visual = data.visualSources(level, player.blockPosition(), 18).stream()
                     .map(s -> new RadiationVisualPayload.Source(s.pos().asLong(), (float) s.emission()))
@@ -180,6 +183,8 @@ public final class RadiationSystem {
         }
 
         double chunkNzt = data.value(level, chunkKey);
+        double chunkContamination = data.contaminationOf(chunkKey);
+        double chunkBaseline = chunkNzt - chunkContamination;
         // Источники наведённого фона: собственные радио-предметы или очень горячий чанк (п.4).
         boolean hasSourceContext = intrinsic > 0.0 || chunkNzt > ITEM_FROM_CHUNK_MIN;
         // Цель наведённого фона = эмиссия СИЛЬНЕЙШЕГО локального источника (100%,
@@ -189,8 +194,10 @@ public final class RadiationSystem {
         double chunkSource = chunkNzt > ITEM_FROM_CHUNK_MIN ? chunkNzt : 0.0;
 
         double induced = 0.0;
-        for (List<ItemStack> part : compartments) {
-            for (ItemStack stack : part) {
+        for (int compartmentIndex = 0; compartmentIndex < compartments.size(); compartmentIndex++) {
+            List<ItemStack> part = compartments.get(compartmentIndex);
+            for (int slot = 0; slot < part.size(); slot++) {
+                ItemStack stack = part.get(slot);
                 if (stack.isEmpty()) {
                     continue;
                 }
@@ -203,16 +210,40 @@ public final class RadiationSystem {
                 double stackSource = Math.max(
                         ownEmission >= maxStackEmission ? secondStackEmission : maxStackEmission,
                         chunkSource);
+                double factor = RadMaterials.itemFactor(stack);
+                double oldInduced = 0.0;
+                if (tracing) {
+                    oldInduced = ItemRadioactivity.getInduced(stack);
+                    if (activeHand) {
+                        InteractionHand hand = stack == player.getOffhandItem()
+                                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+                        HeldRadState heldState = HELD_RAD.get(new HeldKey(player.getUUID(), hand));
+                        if (heldState != null && heldState.stack == stack) oldInduced = heldState.value;
+                    }
+                }
                 double perItem;
                 if (activeHand) {
                     perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
-                            stackSource, RadMaterials.itemFactor(stack));
+                            stackSource, factor);
                 } else {
-                    ItemRadioactivity.tickInduced(stack, hasSourceContext, stackSource,
-                            RadMaterials.itemFactor(stack));
+                    ItemRadioactivity.tickInduced(stack, hasSourceContext, stackSource, factor);
                     perItem = ItemRadioactivity.getInduced(stack);
                 }
-                induced += perItem * Math.max(1, stack.getCount());
+                int count = Math.max(1, stack.getCount());
+                induced += perItem * count;
+                if (tracing && (ownEmission > 0.0 || oldInduced > 0.0 || perItem > 0.0)) {
+                    RadiationTrace.log(level, player.blockPosition(), "ПРЕДМЕТЫ ИНВЕНТАРЯ ↔ ДОЗА ИГРОКА",
+                            inventoryCompartmentName(compartmentIndex) + " слот " + slot
+                                    + "; item=" + BuiltInRegistries.ITEM.getKey(stack.getItem())
+                                    + "; count=" + count
+                                    + "; intrinsic=" + RadiationTrace.rate(ownEmission)
+                                    + "; induced/item=" + RadiationTrace.rate(oldInduced)
+                                    + "→" + RadiationTrace.rate(perItem)
+                                    + "; inventoryContribution=" + RadiationTrace.rate(perItem * count)
+                                    + "; strongestOtherSource=" + RadiationTrace.rate(stackSource)
+                                    + "; materialFactor=" + RadiationTrace.number(factor)
+                                    + (hardUse ? "; held under active use protection" : ""));
+                }
             }
         }
 
@@ -224,18 +255,22 @@ public final class RadiationSystem {
         // The enclosure protects the outside chunk, not somebody standing beside
         // its sources. Add 40% of actual block emission in this same closed cavity;
         // this does not feed chunk contamination or inventory-induced radiation.
-        double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT
-                + Containment.insideDose(level, BlockPos.containing(player.getEyePosition()));
+        double containmentDose = Containment.insideDose(level, BlockPos.containing(player.getEyePosition()));
+        double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT + containmentDose;
         // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
-        rawDose *= PsycheChemical.doseMultiplier(player);
-        double suitFactor = Hazmat.factor(player, rawDose);
+        double psycheDoseMultiplier = PsycheChemical.doseMultiplier(player);
+        rawDose *= psycheDoseMultiplier;
+        double hazmatFactor = Hazmat.factor(player, rawDose);
+        double suitFactor = hazmatFactor;
+        double absorptionFactor = 1.0;
         // «Абсорбция дозы» (Цистамин/ДТПА, спека 24.09): срезает получаемую игроком
         // дозу на (30 + уровень²) %: уровень 1 → 31 %, уровень 2 → 34 %.
         var absorption = player.getEffect(com.gonzotech.core.registry.ModEffects.DOSE_ABSORPTION);
         if (absorption != null) {
             int absLevel = absorption.getAmplifier() + 1;
             int cut = Math.min(100, 30 + absLevel * absLevel);
-            suitFactor *= (100 - cut) / 100.0;
+            absorptionFactor = (100 - cut) / 100.0;
+            suitFactor *= absorptionFactor;
         }
         double acc = DOSE_ACC.getOrDefault(player.getUUID(), 0.0) + rawDose * suitFactor;
         int gainPermille = (int) (acc / NZT_PER_PERMILLE);
@@ -257,6 +292,23 @@ public final class RadiationSystem {
         }
 
         int newScale = scale + gainPermille - shedPermille;
+        if (tracing) {
+            RadiationTrace.log(level, player.blockPosition(), "ДОЗА ИГРОКА",
+                    "intrinsicInventory=" + RadiationTrace.rate(intrinsic)
+                            + "; inducedInventory=" + RadiationTrace.rate(induced)
+                            + "; chunkBaseline=" + RadiationTrace.rate(chunkBaseline)
+                            + "; chunkContamination=" + RadiationTrace.rate(chunkContamination)
+                            + "; chunkTotal=" + RadiationTrace.rate(chunkNzt) + "×" + CHUNK_DOSE_WEIGHT
+                            + "=" + RadiationTrace.rate(chunkNzt * CHUNK_DOSE_WEIGHT)
+                            + "; insideBlockSources=" + RadiationTrace.rate(containmentDose)
+                            + "; psycheMultiplier=" + RadiationTrace.number(psycheDoseMultiplier)
+                            + "; hazmatFactor=" + RadiationTrace.number(hazmatFactor)
+                            + "; absorptionFactor=" + RadiationTrace.number(absorptionFactor)
+                            + "; delivered=" + RadiationTrace.rate(doseThisTick)
+                            + "; doseRemainder=" + RadiationTrace.number(acc) + " nZt accumulator"
+                            + "; gain=" + gainPermille + "‰; shed=" + shedPermille + "‰"
+                            + "; radiationScale=" + scale + "→" + newScale);
+        }
         if (newScale != scale) {
             psyche.setRadiation(newScale);
             PsycheNetwork.sendToPlayer(player);
@@ -265,7 +317,13 @@ public final class RadiationSystem {
         // Химическое заражение: 2 % дозы уходит в шестую шкалу (автор 22.09.2026):
         // «шкалы радиации и заражения имеют одинаковую размерность».
         if (doseThisTick > 0.0) {
-            PsycheChemical.addFromDose(player, doseThisTick / NZT_PER_PERMILLE);
+            double chemicalTransfer = doseThisTick / NZT_PER_PERMILLE;
+            PsycheChemical.addFromDose(player, chemicalTransfer);
+            if (tracing) {
+                RadiationTrace.log(level, player.blockPosition(), "ДОЗА → ХИМИЧЕСКОЕ ЗАРАЖЕНИЕ ИГРОКА",
+                        "transfer=" + RadiationTrace.number(chemicalTransfer)
+                                + "; dose=" + RadiationTrace.rate(doseThisTick));
+            }
         }
 
         // Антирадиновый абсорбент (автор 22.09): «Очищение» плавно выводит долю
@@ -285,20 +343,29 @@ public final class RadiationSystem {
         // выше — никогда («источник не может заразить больше, чем имеет сам»).
         double contam = data.contaminationOf(chunkKey);
         if (intrinsic > 0.0 && contam < intrinsic) {
-            data.addContamination(chunkKey,
-                    intrinsic * INVENTORY_TO_CHUNK_RATE * (1.0 - contam / intrinsic));
+            double transfer = intrinsic * INVENTORY_TO_CHUNK_RATE * (1.0 - contam / intrinsic);
+            data.addContamination(level, chunkKey, transfer, "радиоактивный инвентарь игрока → чанк");
         }
         if (shedPermille > 0 && contam < SHED_CEILING) {
-            data.addContamination(chunkKey,
-                    shedPermille * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING));
+            double transfer = shedPermille * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING);
+            data.addContamination(level, chunkKey, transfer, "радиационный спад игрока → чанк");
         }
         if (cleansed > 0 && contam < SHED_CEILING) {
-            data.addContamination(chunkKey,
-                    cleansed * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING));
+            double transfer = cleansed * NZT_PER_PERMILLE * SHED_TO_CHUNK * (1.0 - contam / SHED_CEILING);
+            data.addContamination(level, chunkKey, transfer, "очищение/сброс игрока → чанк");
         }
 
         // Скан содержимого контейнеров своего чанка (сундуки/бочки с ураном греют чанк).
         scanContainersInto(level, chunkKey, data);
+    }
+
+    private static String inventoryCompartmentName(int compartment) {
+        return switch (compartment) {
+            case 0 -> "инвентарь/горячая панель";
+            case 1 -> "броня";
+            case 2 -> "вторая рука";
+            default -> "слот " + compartment;
+        };
     }
 
     private static boolean hasVisualInstrument(ServerPlayer player) {
@@ -363,25 +430,41 @@ public final class RadiationSystem {
                 for (int i = 0; i < container.getContainerSize(); i++) {
                     mine += RadSources.emissionDeep(container.getItem(i));
                 }
+                double rawMine = mine;
+                double attenuation = 1.0;
                 BlockPos pos = be.getBlockPos();
                 // 0.3.111: содержимое свинцового ящика фонит на 80% слабее
                 if (be.getBlockState().getBlock() instanceof com.gonzotech.machines.block.ThirdLeadChestBlock) {
-                    mine *= com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR;
+                    double leadFactor = com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR;
+                    mine *= leadFactor;
+                    attenuation *= leadFactor;
                 }
                 if (mine > 0.0 && pos != null) {
-                    mine *= Containment.factor(level, pos); // экран контура контейнера
+                    double contourFactor = Containment.factor(level, pos);
+                    mine *= contourFactor; // экран контура контейнера
+                    attenuation *= contourFactor;
                 }
                 found += mine;
+                if (mine > 0.0) {
+                    RadiationTrace.log(level, pos, "КОНТЕЙНЕР → ЧАНК",
+                            "block=" + BuiltInRegistries.BLOCK.getKey(be.getBlockState().getBlock())
+                                    + "; contentEmission=" + RadiationTrace.rate(rawMine)
+                                    + "; attenuation=" + RadiationTrace.number(attenuation)
+                                    + "; effectiveEmission=" + RadiationTrace.rate(mine)
+                                    + "; chunkTargetContribution="
+                                    + RadiationTrace.rate(mine * CHEST_TO_CHUNK_RATE));
+                }
             }
         }
         // 0.3.108: блоки на полу/в рамках — полной ставкой (как поставленные),
-        // россыпь — ставкой CHEST_TO_CHUNK_RATE; корriesha (1 − contam/target)
+        // россыпь — ставкой CHEST_TO_CHUNK_RATE; correction (1 − contam/target)
         // сохранена для обеих частей.
         double target = found * CHEST_TO_CHUNK_RATE + placedLike;
         if (target > 0.0) {
             double contam = data.contaminationOf(chunkKey);
             if (contam < target) {
-                data.addContamination(chunkKey, target * (1.0 - contam / target));
+                double transfer = target * (1.0 - contam / target);
+                data.addContamination(level, chunkKey, transfer, "контейнеры/предметы в чанке → чанк");
             }
         }
     }
@@ -403,12 +486,12 @@ public final class RadiationSystem {
         for (net.minecraft.world.entity.item.ItemEntity drop
                 : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box,
                     e -> !e.getItem().isEmpty())) {
-            classifyFloorStack(drop.getItem(), mine);
+            classifyFloorStack(level, drop.blockPosition(), "предмет на земле", drop.getItem(), mine);
         }
         for (net.minecraft.world.entity.decoration.ItemFrame frame
                 : level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box,
                     e -> !e.getItem().isEmpty())) {
-            classifyFloorStack(frame.getItem(), mine);
+            classifyFloorStack(level, frame.blockPosition(), "предмет в рамке", frame.getItem(), mine);
         }
         return mine;
     }
@@ -420,15 +503,32 @@ public final class RadiationSystem {
      * именно второго варианта»). Неблочные предметы (пыль/слитки) — как
      * раньше: emissionDeep и ставка россыпи у вызывающего.
      */
-    private static void classifyFloorStack(net.minecraft.world.item.ItemStack stack, double[] out) {
+    private static void classifyFloorStack(ServerLevel level, BlockPos pos, String source,
+                                           ItemStack stack, double[] out) {
         if (stack.getItem() instanceof net.minecraft.world.item.BlockItem bi) {
             double be = blockEmission(bi.getBlock());
             if (be > 0.0) {
-                out[1] += be * stack.getCount();
+                double transfer = be * stack.getCount();
+                out[1] += transfer;
+                RadiationTrace.log(level, pos, "БЛОЧНЫЙ ПРЕДМЕТ → МОДЕЛЬ ЗАРАЖЕНИЯ ЧАНКА",
+                        source + "; item=" + BuiltInRegistries.ITEM.getKey(stack.getItem())
+                                + "; count=" + stack.getCount()
+                                + "; emission=" + RadiationTrace.rate(be)
+                                + "; targetContribution=" + RadiationTrace.rate(transfer));
                 return;
             }
         }
-        out[0] += RadSources.emissionDeep(stack);
+        double emission = RadSources.emissionDeep(stack);
+        out[0] += emission;
+        if (emission > 0.0) {
+            RadiationTrace.log(level, pos, "ПРЕДМЕТ → ЧАНК",
+                    source + "; item=" + BuiltInRegistries.ITEM.getKey(stack.getItem())
+                            + "; count=" + stack.getCount()
+                            + "; emission=" + RadiationTrace.rate(emission)
+                            + "; chunkRate=" + RadiationTrace.number(CHEST_TO_CHUNK_RATE)
+                            + "; targetContribution="
+                            + RadiationTrace.rate(emission * CHEST_TO_CHUNK_RATE));
+        }
     }
 
     // ═══════════════════════ выход из игры: чистим карты ═══════════════════════
@@ -436,6 +536,7 @@ public final class RadiationSystem {
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            RadiationTrace.stop(player, "выход из игры");
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
             LAST_SWING.remove(player.getUUID());
@@ -460,7 +561,9 @@ public final class RadiationSystem {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerPsyche psyche = player.getData(ModPsycheAttachments.PSYCHE);
             if (psyche.getRadiation() != 0) {
+                int before = psyche.getRadiation();
                 psyche.setRadiation(0);
+                RadiationTrace.playerDoseChange(player, before, psyche.getRadiation(), "смерть: сброс шкалы");
             }
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
@@ -475,12 +578,18 @@ public final class RadiationSystem {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        RadiationTrace.tick(event.getServer());
         if (event.getServer().getTickCount() % CHUNK_MAINT_PERIOD_TICKS != 0) {
             return;
         }
         for (ServerLevel level : event.getServer().getAllLevels()) {
             ChunkRadiationData.get(level).maintain(level);
         }
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        RadiationTrace.clearAll();
     }
 
     // ═══════════════════════ поставленные блоки ═══════════════════════
@@ -499,7 +608,7 @@ public final class RadiationSystem {
         }
         double emission = RadSources.blockEmission(event.getState());
         if (emission > 0.0) {
-            ChunkRadiationData.get(level).onBlockRemoved(event.getPos(), emission);
+            ChunkRadiationData.get(level).onBlockRemoved(level, event.getPos(), emission);
         }
     }
 
@@ -508,7 +617,7 @@ public final class RadiationSystem {
                                         net.minecraft.world.level.block.state.BlockState state) {
         double emission = RadSources.blockEmission(state);
         if (emission > 0.0) {
-            ChunkRadiationData.get(level).onBlockPlaced(pos, emission);
+            ChunkRadiationData.get(level).onBlockPlaced(level, pos, emission);
         }
     }
 
@@ -520,8 +629,8 @@ public final class RadiationSystem {
         double newEmission = RadSources.blockEmission(newState);
         if (oldEmission <= 0.0 && newEmission <= 0.0) return;
         ChunkRadiationData data = ChunkRadiationData.get(level);
-        if (oldEmission > 0.0) data.onBlockRemoved(pos, oldEmission);
-        if (newEmission > 0.0) data.onBlockPlaced(pos, newEmission);
+        if (oldEmission > 0.0) data.onBlockRemoved(level, pos, oldEmission);
+        if (newEmission > 0.0) data.onBlockPlaced(level, pos, newEmission);
     }
 
     private static double blockEmission(net.minecraft.world.level.block.Block block) {

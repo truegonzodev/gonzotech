@@ -75,6 +75,7 @@ public final class RadCleanse {
         }
         int applied = Math.min(shed, dose);
         psyche.setRadiation(dose - applied);
+        RadiationTrace.playerDoseChange(player, dose, psyche.getRadiation(), "Очищение / RadCleanse");
         PsycheNetwork.sendToPlayer(player);
         return applied;
     }

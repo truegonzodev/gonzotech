@@ -4,6 +4,7 @@ import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.psyche.PsycheStressEffects;
+import com.gonzotech.radiation.RadiationTrace;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -132,7 +133,11 @@ public final class PsycheCommand {
             case "addiction" -> psyche.setAddiction(clampPoints(target));
             case "stress" -> psyche.setStress(clampPoints(target));
             case "crisis" -> psyche.setCrisis(clampPoints(target));
-            case "radiation" -> psyche.setRadiation(clampPermille(target));
+            case "radiation" -> {
+                int before = psyche.getRadiation();
+                psyche.setRadiation(clampPermille(target));
+                RadiationTrace.playerDoseChange(player, before, psyche.getRadiation(), "команда psyche " + scale);
+            }
             case "uv" -> psyche.setUv(clampPermille(target));
             default -> psyche.setChemical(clampPermille(target));
         }

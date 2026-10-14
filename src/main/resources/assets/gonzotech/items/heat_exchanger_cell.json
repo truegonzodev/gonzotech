@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "gonzotech:item/heat_exchanger_cell",
+    "tints": [
+      {
+        "type": "gonzotech:alloy_tint",
+        "default": 6902652
+      }
+    ]
+  }
+}

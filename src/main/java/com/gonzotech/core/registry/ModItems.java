@@ -7,6 +7,7 @@ import com.gonzotech.core.item.AlloyChestplateItem;
 import com.gonzotech.core.item.AlloyPickaxeItem;
 import com.gonzotech.core.item.AlloySwordItem;
 import com.gonzotech.core.item.CustomAlloyItem;
+import com.gonzotech.core.item.HeatExchangerCellItem;
 import com.gonzotech.core.ore.OreDefinition;
 import com.gonzotech.core.ore.OreDefinition.Host;
 import net.minecraft.world.item.BlockItem;
@@ -93,6 +94,10 @@ public class ModItems {
      */
     public static final DeferredItem<CustomAlloyItem> CUSTOM_ALLOY =
         ITEMS.registerItem("custom_alloy", CustomAlloyItem::new);
+
+    /** Composition-preserving heat-exchanger component made from one exact custom alloy. */
+    public static final DeferredItem<HeatExchangerCellItem> HEAT_EXCHANGER_CELL =
+        ITEMS.registerItem("heat_exchanger_cell", HeatExchangerCellItem::new);
 
     /** Dynamic equipment stamped from one exact {@link CustomAlloyItem} composition. */
     public static final DeferredItem<AlloyPickaxeItem> ALLOY_PICKAXE =

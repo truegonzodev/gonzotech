@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "side": "gonzotech:block/fullmetall/steel_block",
+    "end": "gonzotech:block/fullmetall/uranium_block"
+  }
+}

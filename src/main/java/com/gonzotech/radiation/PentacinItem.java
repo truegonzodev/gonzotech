@@ -104,7 +104,9 @@ public class PentacinItem extends Item {
         // 2. Моментально −20 % от ТЕКУЩЕЙ дозы.
         int currentDose = psyche.getRadiation();
         if (currentDose > 0) {
-            psyche.setRadiation((int) Math.round(currentDose * DOSE_REMAINING));
+            int afterDose = (int) Math.round(currentDose * DOSE_REMAINING);
+            psyche.setRadiation(afterDose);
+            RadiationTrace.playerDoseChange(serverPlayer, currentDose, psyche.getRadiation(), "Пентацин");
         }
 
         // 3. «Исушение» II (Wither) на 5 секунд.

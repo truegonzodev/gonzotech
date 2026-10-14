@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "axis=y": { "model": "gonzotech:block/first_uranium_reactor_fuel_sheath" },
+    "axis=z": { "model": "gonzotech:block/first_uranium_reactor_fuel_sheath", "x": 90 },
+    "axis=x": { "model": "gonzotech:block/first_uranium_reactor_fuel_sheath", "x": 90, "y": 90 }
+  }
+}

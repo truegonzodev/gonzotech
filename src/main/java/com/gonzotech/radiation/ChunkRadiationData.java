@@ -100,14 +100,24 @@ public class ChunkRadiationData extends SavedData {
      * baseline фиксируется в нуле, чтобы ленивый природный фон не создался заново
      * при следующем запросе дозиметра.
      */
-    public void purgeAround(ChunkPos center, int radius) {
+    public void purgeAround(ServerLevel level, ChunkPos center, int radius) {
         for (int cx = center.x - radius; cx <= center.x + radius; cx++) {
             for (int cz = center.z - radius; cz <= center.z + radius; cz++) {
                 long key = ChunkPos.asLong(cx, cz);
+                double oldBaseline = Math.max(0.0, baseline.get(key));
+                double oldContamination = contamination.get(key);
+                double oldPlaced = placed.get(key);
+                int oldSources = placedPos.containsKey(key) ? placedPos.get(key).size() : 0;
                 baseline.put(key, 0.0);
                 contamination.remove(key);
                 placed.remove(key);
                 placedPos.remove(key);
+                if (oldBaseline != 0.0 || oldContamination != 0.0 || oldPlaced != 0.0 || oldSources > 0) {
+                    RadiationTrace.log(level, null, "ЧАНК → ОЧИЩЕНИЕ",
+                            "purge: чанк [" + cx + "," + cz + "]; baseline=" + RadiationTrace.rate(oldBaseline)
+                                    + "; contamination=" + RadiationTrace.rate(oldContamination)
+                                    + "; placed=" + RadiationTrace.rate(oldPlaced) + "; источников=" + oldSources);
+                }
             }
         }
         setDirty();
@@ -140,10 +150,22 @@ public class ChunkRadiationData extends SavedData {
     }
 
     /** Прибавить заражение (дельта может быть отрицательной; клэмп снизу в 0). */
-    public void addContamination(long chunkKey, double deltaNzt) {
-        double next = Math.max(0.0, contamination.get(chunkKey) + deltaNzt);
+    public void addContamination(ServerLevel level, long chunkKey, double deltaNzt, String cause) {
+        double before = contamination.get(chunkKey);
+        double next = Math.max(0.0, before + deltaNzt);
         contamination.put(chunkKey, next);
         setDirty();
+        double applied = next - before;
+        if (applied != 0.0) {
+            int chunkX = ChunkPos.getX(chunkKey);
+            int chunkZ = ChunkPos.getZ(chunkKey);
+            RadiationTrace.log(level, null, "ЗАРАЖЕНИЕ ЧАНКА",
+                    "чанк [" + chunkX + "," + chunkZ + "]; причина=" + cause
+                            + "; requested=" + RadiationTrace.rate(deltaNzt)
+                            + "; actual=" + RadiationTrace.rate(applied)
+                            + "; contamination=" + RadiationTrace.rate(before)
+                            + "→" + RadiationTrace.rate(next));
+        }
     }
 
     /** Read-only nearby source snapshot for the instrument visualizer. */
@@ -185,6 +207,9 @@ public class ChunkRadiationData extends SavedData {
             v = computeBaseline(level, chunkKey);
             baseline.put(chunkKey, v);
             setDirty();
+            RadiationTrace.log(level, null, "ПРИРОДНЫЙ ФОН ЧАНКА",
+                    "чанк [" + ChunkPos.getX(chunkKey) + "," + ChunkPos.getZ(chunkKey)
+                            + "]; baseline=" + RadiationTrace.rate(v));
         }
         return v;
     }
@@ -192,21 +217,31 @@ public class ChunkRadiationData extends SavedData {
     // ───────────────────────── поставленные блоки ─────────────────────────
 
     /** Поставлен радио-блок: индекс позиции идемпотентен для bucket-хуков и BlockEvent вместе. */
-    public void onBlockPlaced(BlockPos pos, double emissionNzt) {
+    public void onBlockPlaced(ServerLevel level, BlockPos pos, double emissionNzt) {
         long key = new ChunkPos(pos).toLong();
         LongOpenHashSet set = placedPos.computeIfAbsent(key, k -> new LongOpenHashSet());
         if (!set.add(pos.asLong())) return;
-        placed.put(key, placed.get(key) + emissionNzt);
+        double before = placed.get(key);
+        double next = before + emissionNzt;
+        placed.put(key, next);
         setDirty();
+        RadiationTrace.log(level, pos, "РАДИОАКТИВНЫЙ БЛОК → ИНДЕКС ЧАНКА",
+                "эмиссия=" + RadiationTrace.rate(emissionNzt)
+                        + "; placed=" + RadiationTrace.rate(before) + "→" + RadiationTrace.rate(next));
     }
 
     /** Сломан радио-блок: вычитаем вклад только если позиция была учтена. */
-    public void onBlockRemoved(BlockPos pos, double emissionNzt) {
+    public void onBlockRemoved(ServerLevel level, BlockPos pos, double emissionNzt) {
         long key = new ChunkPos(pos).toLong();
         LongOpenHashSet set = placedPos.get(key);
         if (set == null || !set.remove(pos.asLong())) return;
-        placed.put(key, Math.max(0.0, placed.get(key) - emissionNzt));
+        double before = placed.get(key);
+        double next = Math.max(0.0, before - emissionNzt);
+        placed.put(key, next);
         setDirty();
+        RadiationTrace.log(level, pos, "ИНДЕКС ЧАНКА → УДАЛЕНИЕ ИСТОЧНИКА",
+                "эмиссия=" + RadiationTrace.rate(emissionNzt)
+                        + "; placed=" + RadiationTrace.rate(before) + "→" + RadiationTrace.rate(next));
     }
 
     // ───────────────────────── обслуживание (раз в 20 с) ─────────────────────────
@@ -222,6 +257,7 @@ public class ChunkRadiationData extends SavedData {
      * </ol>
      */
     public void maintain(ServerLevel level) {
+        boolean tracing = RadiationTrace.isActive(level);
         // Before feeding contamination, reconcile the registry with the world.
         // A piston can move a source without firing the player break/place path;
         // a bounded local search preserves that source at its new position.
@@ -234,21 +270,43 @@ public class ChunkRadiationData extends SavedData {
                 continue;
             }
             long key = pe.getLongKey();
-            double target = emitted * screenFactor(level, key);
-            double c = contamination.get(key);
-            c = Math.max(0.0, c + (target - c) * PLACED_CONVERGE);
+            double screen = screenFactor(level, key);
+            double target = emitted * screen;
+            double before = contamination.get(key);
+            double c = Math.max(0.0, before + (target - before) * PLACED_CONVERGE);
             contamination.put(key, c);
+            if (tracing && c != before) {
+                LongOpenHashSet sources = placedPos.get(key);
+                RadiationTrace.log(level, null, "ИСТОЧНИКИ БЛОКОВ → ЗАРАЖЕНИЕ ЧАНКА",
+                        "чанк [" + ChunkPos.getX(key) + "," + ChunkPos.getZ(key) + "]; источников="
+                                + (sources == null ? 0 : sources.size())
+                                + "; emissions=" + RadiationTrace.rate(emitted)
+                                + "; contourFactor=" + RadiationTrace.number(screen)
+                                + "; target=" + RadiationTrace.rate(target)
+                                + "; contamination=" + RadiationTrace.rate(before)
+                                + "→" + RadiationTrace.rate(c));
+            }
         }
 
         // 2) Затухание: ВСЕГДА (автор 21.09: «за долгую AFK сессию чанк может
         //    полностью очиститься») — запись вычищается, когда питания нет и фон стёрся.
         for (var it = contamination.long2DoubleEntrySet().iterator(); it.hasNext(); ) {
             var e = it.next();
-            double v = e.getDoubleValue() * DECAY;
-            if (v < 0.1 * MUST_MAINTAIN && placed.get(e.getLongKey()) <= 0.0) {
+            long key = e.getLongKey();
+            double before = e.getDoubleValue();
+            double v = before * DECAY;
+            boolean removed = v < 0.1 * MUST_MAINTAIN && placed.get(key) <= 0.0;
+            if (removed) {
                 it.remove();
+                v = 0.0;
             } else {
                 e.setValue(v);
+            }
+            if (tracing && v != before) {
+                RadiationTrace.log(level, null, "РАСПАД ЗАРАЖЕНИЯ ЧАНКА",
+                        "чанк [" + ChunkPos.getX(key) + "," + ChunkPos.getZ(key) + "]; contamination="
+                                + RadiationTrace.rate(before) + "→" + RadiationTrace.rate(v)
+                                + (removed ? "; запись удалена после порога" : "; decay=" + RadiationTrace.number(DECAY)));
             }
         }
 
@@ -276,6 +334,13 @@ public class ChunkRadiationData extends SavedData {
                     if (flow > 0.0) { // только отдаём; «приём» посчитает сосед из своего снимка
                         delta.addTo(key, -flow);
                         delta.addTo(nk, flow);
+                        if (tracing) {
+                            RadiationTrace.log(level, null, "ДИФФУЗИЯ ЧАНК → ЧАНК",
+                                    "[" + x + "," + z + "] → [" + (x + dx) + "," + (z + dz)
+                                            + "]; transfer=" + RadiationTrace.rate(flow)
+                                            + "; snapshot=" + RadiationTrace.rate(self)
+                                            + "→" + RadiationTrace.rate(other));
+                        }
                     }
                 }
             }
@@ -316,10 +381,18 @@ public class ChunkRadiationData extends SavedData {
         }
         for (BlockPos origin : missing) {
             BlockPos moved = findNearbySource(level, origin, claimed);
-            if (moved == null) continue;
+            if (moved == null) {
+                RadiationTrace.log(level, origin, "ИСТОЧНИК ПОКИНУЛ ПОЗИЦИЮ",
+                        "радиоактивный блок больше не найден рядом; индекс будет удалён");
+                continue;
+            }
             double movedEmission = RadSources.blockEmission(level.getBlockState(moved));
             if (movedEmission > 0.0 && claimed.add(moved.asLong())) {
                 known.add(new SourceRecord(moved, movedEmission));
+                RadiationTrace.log(level, moved, "ПЕРЕНОС ИНДЕКСА ИСТОЧНИКА",
+                        "старое положение=" + origin.getX() + "," + origin.getY() + "," + origin.getZ()
+                                + "; новое положение=" + moved.getX() + "," + moved.getY() + "," + moved.getZ()
+                                + "; emission=" + RadiationTrace.rate(movedEmission));
             }
         }
 
@@ -441,7 +514,14 @@ public class ChunkRadiationData extends SavedData {
             }
         }
         if (ores > 0) {
-            contamination.addTo(chunkKey, Math.min(80.0, 10.0 + ores * 5.0)); // 10–80 nZt один раз
+            double seed = Math.min(80.0, 10.0 + ores * 5.0); // 10–80 nZt один раз
+            double before = contamination.get(chunkKey);
+            contamination.addTo(chunkKey, seed);
+            RadiationTrace.log(level, null, "УРАНОВАЯ РУДА → ЗАРАЖЕНИЕ ЧАНКА",
+                    "чанк [" + cp.x + "," + cp.z + "]; найдено руд=" + ores
+                            + "; посев=" + RadiationTrace.rate(seed)
+                            + "; contamination=" + RadiationTrace.rate(before)
+                            + "→" + RadiationTrace.rate(contamination.get(chunkKey)));
         }
         return 1.0 + rnd.nextDouble() * 9.0; // природный фон обычного чанка
     }

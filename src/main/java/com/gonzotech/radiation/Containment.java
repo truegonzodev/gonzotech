@@ -106,7 +106,23 @@ public final class Containment {
         // Do not apply the source/container "ignore my own solid block" exception
         // to an observer overlapping a closed wall or door.
         if (occupancy.barrier() && occupancy.emission() <= 0) return 0;
-        return result(level, observer).insideDose();
+        RadiationContour.Result enclosure = result(level, observer);
+        if (RadiationTrace.isActive(level) && enclosure.insideDose() > 0.0) {
+            for (RadiationContour.Pos point : enclosure.interior()) {
+                BlockPos source = new BlockPos(point.x(), point.y(), point.z());
+                double emission = RadSources.blockEmission(level.getBlockState(source));
+                if (emission > 0.0) {
+                    RadiationTrace.log(level, source, "БЛОК В КОНТУРЕ → ДОЗА ИГРОКА",
+                            "observer=" + observer.getX() + "," + observer.getY() + "," + observer.getZ()
+                                    + "; block=" + net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                                            .getKey(level.getBlockState(source).getBlock())
+                                    + "; emission=" + RadiationTrace.rate(emission)
+                                    + "; insideDose=" + RadiationTrace.rate(
+                                            emission * RadiationContour.INSIDE_DOSE_WEIGHT));
+                }
+            }
+        }
+        return enclosure.insideDose();
     }
 
     /** A moving piston cell normally exposes only minecraft:moving_piston. For our

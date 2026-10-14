@@ -82,12 +82,16 @@ public final class CustomAlloyItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        AlloyComposition composition = stack.get(ModDataComponents.ALLOY_COMPOSITION.get());
-        if (composition == null) {
+        if (!appendCompositionTooltip(stack, tooltip)) {
             tooltip.add(Component.translatable("tooltip.gonzotech.custom_alloy.blank").withStyle(ChatFormatting.DARK_GRAY));
-            super.appendHoverText(stack, context, tooltip, flag);
-            return;
         }
+        super.appendHoverText(stack, context, tooltip, flag);
+    }
+
+    /** Adds the canonical composition and complete derived stat vector to any alloy-stamped item. */
+    public static boolean appendCompositionTooltip(ItemStack stack, List<Component> tooltip) {
+        AlloyComposition composition = stack.get(ModDataComponents.ALLOY_COMPOSITION.get());
+        if (composition == null) return false;
 
         int displayMultiplier = composition.minimumFoundryBatchMultiplier();
         for (var entry : composition.parts().entrySet()) {
@@ -119,8 +123,7 @@ public final class CustomAlloyItem extends Item {
                 Component.translatable("tooltip.gonzotech.custom_alloy.tier." + properties.toolTier().name().toLowerCase(Locale.ROOT))
                     .withColor(tierColor(properties.toolTier()))));
         });
-
-        super.appendHoverText(stack, context, tooltip, flag);
+        return true;
     }
 
     /** Builds a standard label with only the changing numerical value coloured. */

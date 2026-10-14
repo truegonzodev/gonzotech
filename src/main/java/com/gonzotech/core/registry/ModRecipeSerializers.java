@@ -2,6 +2,7 @@ package com.gonzotech.core.registry;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.recipe.AlloyEquipmentRecipe;
+import com.gonzotech.core.recipe.HeatExchangerCellRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -14,6 +15,10 @@ public final class ModRecipeSerializers {
 
     public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
         DeferredRegister.create(Registries.RECIPE_SERIALIZER, GonzoTechMod.MOD_ID);
+
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<HeatExchangerCellRecipe>> HEAT_EXCHANGER_CELL =
+        RECIPE_SERIALIZERS.register("heat_exchanger_cell",
+            () -> new CustomRecipe.Serializer<>(HeatExchangerCellRecipe::new));
 
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<AlloyEquipmentRecipe.Pickaxe>> ALLOY_PICKAXE =
         RECIPE_SERIALIZERS.register("alloy_pickaxe",

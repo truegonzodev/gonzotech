@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "gonzotech:block/turbine/first_turbine_casing"
+  }
+}
