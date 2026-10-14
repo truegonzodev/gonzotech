@@ -150,12 +150,14 @@ public final class TunnelPrimedTnt extends PrimedTnt {
     }
 
     private static Vec3 directionVector(Direction direction) {
+        // Cardinal step signs are preserved, so DOWN is (0, -1, 0) and UP is (0, 1, 0).
         return new Vec3(direction.getStepX(), direction.getStepY(), direction.getStepZ());
     }
 
     private static final class TunnelExplosionDamageCalculator extends ExplosionDamageCalculator {
         private final Vec3 origin;
         private final Direction facing;
+        private final Vec3 direction;
         private final double segmentStart;
         private final double segmentEnd;
 
@@ -163,6 +165,7 @@ public final class TunnelPrimedTnt extends PrimedTnt {
                                                 double segmentStart, double segmentEnd) {
             this.origin = origin;
             this.facing = facing;
+            this.direction = directionVector(facing);
             this.segmentStart = segmentStart;
             this.segmentEnd = segmentEnd;
         }
@@ -190,9 +193,10 @@ public final class TunnelPrimedTnt extends PrimedTnt {
 
         private boolean isInsideTunnel(Vec3 point) {
             Vec3 offset = point.subtract(origin);
-            double forward = offset.x * facing.getStepX()
-                + offset.y * facing.getStepY()
-                + offset.z * facing.getStepZ();
+            // Use the same signed facing vector as segment placement; DOWN has a negative Y component.
+            double forward = offset.x * direction.x
+                + offset.y * direction.y
+                + offset.z * direction.z;
             if (forward < segmentStart || forward >= segmentEnd) {
                 return false;
             }

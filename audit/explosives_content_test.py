@@ -168,14 +168,20 @@ pin("randomPointInSphere(random, radius)" in explosive_effects
 pin("EnumProperty<Direction> FACING = BlockStateProperties.FACING" in tunnel_block
     and "BLAST_LENGTH = 20.0D" in tunnel_block
     and "BLAST_HALF_WIDTH = 2.0D" in tunnel_block
-    and "getNearestLookingDirection().getOpposite()" in tunnel_block,
-    "tunnel TNT stores a six-way placement-facing and a 4×4×20 forward blast contract")
+    and "setValue(FACING, context.getNearestLookingDirection())" in tunnel_block
+    and "getNearestLookingDirection().getOpposite()" not in tunnel_block,
+    "tunnel TNT faces along the player's look direction, away from the placer")
 pin("extends PrimedTnt" in tunnel_primed
     and "ModEntities.TUNNEL_TNT.get()" in tunnel_primed
     and "tunnel_facing" in tunnel_primed
     and "BLAST_SEGMENT_LENGTH = 7.0D" in tunnel_primed
     and "segmentStart < TunnelTntBlock.BLAST_LENGTH" in tunnel_primed
     and "Math.min(segmentStart + BLAST_SEGMENT_LENGTH" in tunnel_primed
+    and "this.direction = directionVector(facing);" in tunnel_primed
+    and "return new Vec3(direction.getStepX(), direction.getStepY(), direction.getStepZ());" in tunnel_primed
+    and "double forward = offset.x * direction.x" in tunnel_primed
+    and "+ offset.y * direction.y" in tunnel_primed
+    and "+ offset.z * direction.z;" in tunnel_primed
     and "new TunnelExplosionDamageCalculator(\n                origin, facing, segmentStart, segmentEnd)" in tunnel_primed
     and "forward < segmentStart || forward >= segmentEnd" in tunnel_primed
     and "emitDirectionalExplosionParticles(serverLevel)" in tunnel_primed

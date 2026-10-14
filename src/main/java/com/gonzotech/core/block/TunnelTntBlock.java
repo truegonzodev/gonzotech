@@ -31,7 +31,8 @@ public final class TunnelTntBlock extends CustomTntBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        // The block's front is the player's look direction: away from the placer.
+        return defaultBlockState().setValue(FACING, context.getNearestLookingDirection());
     }
 
     @Override
