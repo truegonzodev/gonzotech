@@ -83,7 +83,46 @@ public final class AlloyFoundryRecipes {
                 preset.outputIngotId(), inputSlots,
                 List.of(new ProcessingRecipeDisplay.Output(output, 1_000))));
         }
+        displays.add(customAlloyDisplay());
         return List.copyOf(displays);
+    }
+
+    /**
+     * JEI-only representative of the dynamic recipe. Paired cycling alternatives
+     * are generated from distinct materials, with each side normalized to one
+     * ten-unit portion; every displayed pair is therefore a valid two-material
+     * minimum batch, regardless of whether the chosen form is an ingot, dust, or nuggets.
+     */
+    private static ProcessingRecipeDisplay customAlloyDisplay() {
+        List<Map.Entry<Item, AlloyMaterialCatalog.Ingredient>> forms =
+            new java.util.ArrayList<>(AlloyMaterialCatalog.genericInputs().entrySet());
+        forms.sort(java.util.Comparator
+            .comparing((Map.Entry<Item, AlloyMaterialCatalog.Ingredient> entry) ->
+                entry.getValue().material().id().toString())
+            .thenComparing(entry -> net.minecraft.core.registries.BuiltInRegistries.ITEM
+                .getKey(entry.getKey()).toString()));
+
+        List<ItemStack> firstSlot = new java.util.ArrayList<>();
+        List<ItemStack> secondSlot = new java.util.ArrayList<>();
+        for (int first = 0; first < forms.size(); first++) {
+            Map.Entry<Item, AlloyMaterialCatalog.Ingredient> a = forms.get(first);
+            int unitsA = a.getValue().units();
+            if (unitsA <= 0 || AlloyMaterialCatalog.UNITS_PER_PORTION % unitsA != 0) continue;
+            for (int second = first + 1; second < forms.size(); second++) {
+                Map.Entry<Item, AlloyMaterialCatalog.Ingredient> b = forms.get(second);
+                if (a.getValue().material().id().equals(b.getValue().material().id())) continue;
+                int unitsB = b.getValue().units();
+                if (unitsB <= 0 || AlloyMaterialCatalog.UNITS_PER_PORTION % unitsB != 0) continue;
+                firstSlot.add(new ItemStack(a.getKey(), AlloyMaterialCatalog.UNITS_PER_PORTION / unitsA));
+                secondSlot.add(new ItemStack(b.getKey(), AlloyMaterialCatalog.UNITS_PER_PORTION / unitsB));
+            }
+        }
+        if (firstSlot.isEmpty() || firstSlot.size() != secondSlot.size()) {
+            throw new IllegalStateException("No valid dynamic custom-alloy display pairs");
+        }
+        ItemStack output = new ItemStack(ModItems.CUSTOM_ALLOY.get(), 2);
+        return new ProcessingRecipeDisplay("custom_alloy", List.of(firstSlot, secondSlot),
+            List.of(new ProcessingRecipeDisplay.Output(output, 1_000)));
     }
 
     /** Whether a stack is a legitimate input in either a preset or generic alloy. */

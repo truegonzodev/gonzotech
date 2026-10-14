@@ -49,6 +49,11 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     public static final int GTU_CAPACITY = 8_808;
     /** 0.3.64: канистра опустошается в бак по 128 mB/т, а не мгновенно. */
     public static final int CANISTER_DRAIN_PER_TICK = 128;
+    public static final int SALT_PER_ITEM_MB = 128;
+    public static final int CALCITE_DISSOLUTION_TICKS = 30;
+    public static final int CALCITE_SALT_MB_PER_TICK = 5;
+    public static final int SALT_EVAPORATION_TICKS_PER_ITEM = 120;
+    public static final int SALT_EVAPORATION_GTH_PER_TICK = 11;
 
     // 0.3.89 (автор 04.10): синтез жёлтого кека — уран + 512 mB серной кислоты
     // суммарно за 240 тиков, 4 GTU/t + 12 GTH/t.
@@ -732,8 +737,8 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     // ─────────────────────── Выпаривание соли (Рецепт 4) ───────────────────────
 
     private boolean handleSaltEvaporation() {
-        boolean leftHasSalt = (leftFluidType == FLUID_WATER && leftSaltMb >= 128);
-        boolean rightHasSalt = (rightFluidType == FLUID_WATER && rightSaltMb >= 128);
+        boolean leftHasSalt = (leftFluidType == FLUID_WATER && leftSaltMb >= SALT_PER_ITEM_MB);
+        boolean rightHasSalt = (rightFluidType == FLUID_WATER && rightSaltMb >= SALT_PER_ITEM_MB);
 
         if (!leftHasSalt && !rightHasSalt) {
             evapProgress = 0;
@@ -746,19 +751,19 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             return false;
         }
 
-        if (currentGthMilli < 11L * MachineDefs.MILLI) {
+        if (currentGthMilli < (long) SALT_EVAPORATION_GTH_PER_TICK * MachineDefs.MILLI) {
             return false;
         }
 
-        currentGthMilli -= 11L * MachineDefs.MILLI;
+        currentGthMilli -= (long) SALT_EVAPORATION_GTH_PER_TICK * MachineDefs.MILLI;
         evapProgress++;
 
-        if (evapProgress >= 120) {
+        if (evapProgress >= SALT_EVAPORATION_TICKS_PER_ITEM) {
             evapProgress = 0;
             if (leftHasSalt) {
-                leftSaltMb -= 128;
+                leftSaltMb -= SALT_PER_ITEM_MB;
             } else {
-                rightSaltMb -= 128;
+                rightSaltMb -= SALT_PER_ITEM_MB;
             }
             addOutputItem(targetSlot, new ItemStack(ModItems.SALT.get()));
         }
@@ -825,12 +830,12 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 return true;
             }
 
-            // 3. Растворение кальцита: Вода в левом баке + 1 кальцит -> +5 mB соли/t (всего 100 mB)
+            // 3. Растворение кальцита: вода + 1 кальцит -> до 150 mB соли за 30 тиков.
             if (leftFluidType == FLUID_WATER && leftFluidAmount > 0 && countGridItem(Items.CALCITE) >= 1) {
                 consumeFromGrid(Items.CALCITE, 1);
                 activeRecipe = 3;
                 smeltProgress = 0;
-                smeltTotal = 30;
+                smeltTotal = CALCITE_DISSOLUTION_TICKS;
                 return true;
             }
 
@@ -956,7 +961,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
             }
             case 3 -> { // Растворение кальцита: 0 GTH, 0 GTU
                 if (leftFluidType == FLUID_WATER && leftFluidAmount > 0) {
-                    leftSaltMb = Math.min(leftFluidAmount, leftSaltMb + 5);
+                    leftSaltMb = Math.min(leftFluidAmount, leftSaltMb + CALCITE_SALT_MB_PER_TICK);
                 }
                 smeltProgress++;
             }

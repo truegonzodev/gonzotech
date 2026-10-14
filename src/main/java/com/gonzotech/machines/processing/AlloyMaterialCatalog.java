@@ -54,6 +54,15 @@ public final class AlloyMaterialCatalog {
         return Map.copyOf(forms);
     }
 
+    /** Every material item form accepted by the dynamic recipe (excluding preset-only reagents). */
+    public static Map<Item, Ingredient> genericInputs() {
+        Map<Item, Ingredient> forms = new LinkedHashMap<>();
+        for (Map.Entry<Item, Ingredient> entry : CATALOG.byItem.entrySet()) {
+            if (entry.getValue().genericAllowed()) forms.put(entry.getKey(), entry.getValue());
+        }
+        return Map.copyOf(forms);
+    }
+
     private static Catalog createCatalog() {
         Builder builder = new Builder();
 

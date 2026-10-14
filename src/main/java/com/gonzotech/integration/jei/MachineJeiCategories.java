@@ -28,7 +28,8 @@ public final class MachineJeiCategories {
     public static final Definition SECOND_PRESS = define(
         "second_press", "second_press", () -> ModMachines.SECOND_PRESS_ITEM.get());
     public static final Definition SECOND_ALLOY_FOUNDRY = define(
-        "second_alloy_foundry", "alloy_foundry", () -> ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get(), 128, 128, 166);
+        "second_alloy_foundry", "alloy_foundry", () -> ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get(),
+        128, 128, 166, 0);
     public static final Definition THIRD_CHEMICAL_PLANT = define(
         "third_chemical_plant", "third_chemical_plant", () -> ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get());
     public static final Definition THIRD_FILLER = define(
@@ -45,6 +46,22 @@ public final class MachineJeiCategories {
         "third_rectifier", "third_rectifier", () -> ModMachines.THIRD_RECTIFIER_ITEM.get());
     public static final Definition THIRD_DISPENSING_TAP = define(
         "third_dispensing_tap", "pump", () -> ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
+
+    // Generator pages are authored directly on their in-game coordinates; unlike
+    // the existing recipe pages, these receive no JEI-only one-pixel correction.
+    public static final Definition FIREBOX = defineAligned(
+        "firebox", "firebox", () -> ModMachines.FIREBOX_ITEM.get());
+    public static final Definition SECOND_NUCLEAR_FIREBOX = defineAligned(
+        "second_nuclear_firebox", "nuclear_firebox", () -> ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get());
+    public static final Definition BOILER = defineAligned(
+        "boiler", "boiler", () -> ModMachines.BOILER_ITEM.get());
+    public static final Definition STIRLING_GENERATOR = defineAligned(
+        "stirling_generator", "stirling", () -> ModMachines.STIRLING_ITEM.get());
+    public static final Definition SECOND_STEAMGEN_CORE = defineAligned(
+        "second_steamgen_core", "steamgen", () -> ModMachines.SECOND_STEAMGEN_CORE_ITEM.get());
+    public static final Definition FIRST_TURBINE_ROTOR = defineAligned(
+        "first_turbine_rotor", "turbine", () -> ModMachines.FIRST_TURBINE_ROTOR_ITEM.get());
+
     public static final Definition CRIMSON_OBSIDIAN = defineTextOnly(
         "crimson_obsidian", () -> ModItems.CRIMSON_OBSIDIAN_ITEM.get());
 
@@ -65,6 +82,12 @@ public final class MachineJeiCategories {
         THIRD_DISTILLER,
         THIRD_RECTIFIER,
         THIRD_DISPENSING_TAP,
+        FIREBOX,
+        SECOND_NUCLEAR_FIREBOX,
+        BOILER,
+        STIRLING_GENERATOR,
+        SECOND_STEAMGEN_CORE,
+        FIRST_TURBINE_ROTOR,
         CRIMSON_OBSIDIAN
     );
 
@@ -72,22 +95,26 @@ public final class MachineJeiCategories {
     }
 
     private static Definition define(String id, String texture, Supplier<? extends ItemLike> station) {
-        return define(id, texture, station, 128, 127, CATEGORY_HEIGHT);
+        return define(id, texture, station, 128, 127, CATEGORY_HEIGHT, 1);
+    }
+
+    private static Definition defineAligned(String id, String texture, Supplier<? extends ItemLike> station) {
+        return define(id, texture, station, 128, 127, CATEGORY_HEIGHT, 0);
     }
 
     private static Definition define(String id, String texture, Supplier<? extends ItemLike> station,
-                                     int textureX, int textureY, int height) {
+                                     int textureX, int textureY, int height, int contentOffsetY) {
         return new Definition(IRecipeType.create("gonzotech", id, MachineJeiRecipe.class),
-            id, texture, station, CATEGORY_WIDTH, height, textureX, textureY, false);
+            id, texture, station, CATEGORY_WIDTH, height, textureX, textureY, false, contentOffsetY);
     }
 
     private static Definition defineTextOnly(String id, Supplier<? extends ItemLike> icon) {
         return new Definition(IRecipeType.create("gonzotech", id, MachineJeiRecipe.class),
-            id, null, icon, CATEGORY_WIDTH, CATEGORY_HEIGHT, 128, 127, true);
+            id, null, icon, CATEGORY_WIDTH, CATEGORY_HEIGHT, 128, 127, true, 0);
     }
 
     public record Definition(IRecipeType<MachineJeiRecipe> type, String id, String texture,
                              Supplier<? extends ItemLike> station, int width, int height,
-                             int textureX, int textureY, boolean textOnly) {
+                             int textureX, int textureY, boolean textOnly, int contentOffsetY) {
     }
 }

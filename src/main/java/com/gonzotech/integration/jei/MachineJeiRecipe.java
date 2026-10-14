@@ -56,22 +56,35 @@ public final class MachineJeiRecipe {
     public enum GaugeMotion {
         CONSUME,
         PRODUCE,
-        STATIC
+        STATIC,
+        EMPTY
     }
 
-    /** A visual-only bar with a stable operation, active-tick, or static-fluid tooltip. */
+    @FunctionalInterface
+    public interface DynamicTooltip {
+        List<Component> lines(double phaseProgress);
+    }
+
+    /** A visual-only bar with a stable operation, active-tick, or dynamic tooltip. */
     public record Gauge(int x, int y, int width, int height, ResourceLocation texture,
                         GaugeDirection direction, GaugeMotion motion, List<Component> tooltip,
-                        double cycleStart, double cycleEnd, List<TooltipArea> tooltipAreas) {
+                        double cycleStart, double cycleEnd, List<TooltipArea> tooltipAreas,
+                        @Nullable DynamicTooltip dynamicTooltip) {
         public Gauge(int x, int y, int width, int height, ResourceLocation texture,
                      GaugeDirection direction, GaugeMotion motion, List<Component> tooltip) {
-            this(x, y, width, height, texture, direction, motion, tooltip, 0.0, 1.0, List.of());
+            this(x, y, width, height, texture, direction, motion, tooltip, 0.0, 1.0, List.of(), null);
         }
 
         public Gauge(int x, int y, int width, int height, ResourceLocation texture,
                      GaugeDirection direction, GaugeMotion motion, List<Component> tooltip,
                      double cycleStart, double cycleEnd) {
-            this(x, y, width, height, texture, direction, motion, tooltip, cycleStart, cycleEnd, List.of());
+            this(x, y, width, height, texture, direction, motion, tooltip, cycleStart, cycleEnd, List.of(), null);
+        }
+
+        public Gauge(int x, int y, int width, int height, ResourceLocation texture,
+                     GaugeDirection direction, GaugeMotion motion, List<Component> tooltip,
+                     double cycleStart, double cycleEnd, List<TooltipArea> tooltipAreas) {
+            this(x, y, width, height, texture, direction, motion, tooltip, cycleStart, cycleEnd, tooltipAreas, null);
         }
 
         public Gauge {
@@ -99,11 +112,21 @@ public final class MachineJeiRecipe {
             }
         }
 
+        public List<Component> tooltipAt(double operationProgress) {
+            if (dynamicTooltip == null) return tooltip;
+            return List.copyOf(dynamicTooltip.lines(phaseProgress(operationProgress)));
+        }
+
         public float fillFraction(double operationProgress) {
             if (motion == GaugeMotion.STATIC) return 1.0F;
-            double phaseProgress = (operationProgress - cycleStart) / (cycleEnd - cycleStart);
-            float progress = (float) Math.max(0.0, Math.min(1.0, phaseProgress));
+            if (motion == GaugeMotion.EMPTY) return 0.0F;
+            float progress = phaseProgress(operationProgress);
             return motion == GaugeMotion.CONSUME ? 1.0F - progress : progress;
+        }
+
+        private float phaseProgress(double operationProgress) {
+            double phaseProgress = (operationProgress - cycleStart) / (cycleEnd - cycleStart);
+            return (float) Math.max(0.0, Math.min(1.0, phaseProgress));
         }
 
         public boolean contains(double mouseX, double mouseY) {

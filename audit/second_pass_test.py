@@ -411,7 +411,8 @@ assert 'REACTION_TICKS = ChemicalPlantRecipes.DEFAULT_REACTION_TICKS;' in chem
 filler=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/FillerBlockEntity.java').read_text()
 assert 'GTU_CAPACITY = 8_808;' in filler and 'CANISTER_DRAIN_PER_TICK = 128;' in filler
 assert 'Math.min(amount, 96L * MachineDefs.MILLI)' in filler  # приём GTU 96
-assert 'smeltTotal = 270;' in filler and 'evapProgress >= 120' in filler  # операции ×1.5
+assert 'smeltTotal = 270;' in filler and 'evapProgress >= SALT_EVAPORATION_TICKS_PER_ITEM' in filler
+assert 'SALT_EVAPORATION_TICKS_PER_ITEM = 120;' in filler  # соль: одна порция за 120 тиков
 u2=(ROOT/'src/main/java/com/gonzotech/machines/network/SecondUniversalNodeBlock.java').read_text()
 assert 'THROUGHPUT_FACTOR = 0.91D;' in u2 and 'return THROUGHPUT_FACTOR;' in u2
 furn2=(ROOT/'src/main/java/com/gonzotech/machines/block/entity/SecondElectricFurnaceBlockEntity.java').read_text()

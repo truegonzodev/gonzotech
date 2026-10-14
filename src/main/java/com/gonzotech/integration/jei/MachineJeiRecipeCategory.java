@@ -58,7 +58,9 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
 
     @Override
     public Component getTitle() {
-        return Component.translatable("jei.gonzotech.category." + definition.id());
+        // JEI headings intentionally mirror the live block name exactly; tier/gate
+        // prefixes in registry ids are not user-facing names.
+        return Component.translatable("block.gonzotech." + definition.id());
     }
 
     @Override
@@ -96,7 +98,7 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
                 }
                 continue;
             }
-            var slotBuilder = builder.addSlot(slot.role(), slot.x(), slot.y());
+            var slotBuilder = builder.addSlot(slot.role(), slot.x(), slot.y() + definition.contentOffsetY());
             // Machine GUI slots are 16x16 for every role; do not use JEI's oversized crafting-output frame.
             slotBuilder.setStandardSlotBackground();
 
@@ -125,7 +127,7 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
         if (!recipe.gauges().isEmpty()) {
             double operationProgress = (System.currentTimeMillis() % GAUGE_CYCLE_MILLIS) / (double) GAUGE_CYCLE_MILLIS;
             for (MachineJeiRecipe.Gauge gauge : recipe.gauges()) {
-                drawGauge(graphics, gauge, gauge.fillFraction(operationProgress));
+                drawGauge(graphics, gauge, gauge.fillFraction(operationProgress), definition.contentOffsetY());
             }
         }
         // Mirror the in-game Z stack: GUI background, animated bars, then the
@@ -158,9 +160,10 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
     public void getTooltip(ITooltipBuilder tooltip, MachineJeiRecipe recipe,
                            mezz.jei.api.gui.ingredient.IRecipeSlotsView recipeSlotsView,
                            double mouseX, double mouseY) {
+        double operationProgress = (System.currentTimeMillis() % GAUGE_CYCLE_MILLIS) / (double) GAUGE_CYCLE_MILLIS;
         for (MachineJeiRecipe.Gauge gauge : recipe.gauges()) {
-            if (!gauge.contains(mouseX, mouseY)) continue;
-            for (Component line : gauge.tooltip()) {
+            if (!gauge.contains(mouseX, mouseY - definition.contentOffsetY())) continue;
+            for (Component line : gauge.tooltipAt(operationProgress)) {
                 tooltip.add(line);
             }
             return;
@@ -169,11 +172,11 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
 
     private static final long GAUGE_CYCLE_MILLIS = 5_000L;
 
-    private static void drawGauge(GuiGraphics graphics, MachineJeiRecipe.Gauge gauge, float fraction) {
+    private static void drawGauge(GuiGraphics graphics, MachineJeiRecipe.Gauge gauge, float fraction, int offsetY) {
         int width = gauge.width();
         int height = gauge.height();
         int x = gauge.x();
-        int y = gauge.y();
+        int y = gauge.y() + offsetY;
         boolean vertical = gauge.direction() == MachineJeiRecipe.GaugeDirection.VERTICAL_BOTTOM_TO_TOP
             || gauge.direction() == MachineJeiRecipe.GaugeDirection.VERTICAL_TOP_TO_BOTTOM;
         int filled = Math.round(Math.max(0.0F, Math.min(1.0F, fraction)) * (vertical ? height : width));
@@ -191,7 +194,10 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
         }
         List<MachineJeiRecipe.TooltipArea> renderAreas = gauge.tooltipAreas().isEmpty()
             ? List.of(new MachineJeiRecipe.TooltipArea(x, y, width, height))
-            : gauge.tooltipAreas();
+            : gauge.tooltipAreas().stream()
+                .map(area -> new MachineJeiRecipe.TooltipArea(area.x(), area.y() + offsetY,
+                    area.width(), area.height()))
+                .toList();
         for (MachineJeiRecipe.TooltipArea area : renderAreas) {
             int areaLeft = Math.max(clipLeft, area.x());
             int areaTop = Math.max(clipTop, area.y());

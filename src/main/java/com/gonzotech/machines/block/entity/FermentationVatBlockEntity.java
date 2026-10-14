@@ -57,6 +57,12 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
 
     public static final double MAX_ALCOHOL = 13.0;
     public static final double MAX_ROT = 98.0;
+    public static final double FERMENTATION_HEAT_THRESHOLD_PERCENT = 90.0;
+    public static final int TICKS_PER_MINUTE = 1_200;
+    public static final int FERMENTATION_REFERENCE_MASH_MB = 4_000;
+    public static final double ALCOHOL_GAIN_PERCENT_PER_MINUTE = 0.56;
+    public static final double ALCOHOL_LOSS_PERCENT_PER_MINUTE_PER_SHORTAGE = 0.01;
+    public static final double ROT_GAIN_PERCENT_PER_MINUTE_PER_SHORTAGE = 0.03;
 
     private static final int GTH_PACKET_BASE = 10_000;
 
@@ -193,17 +199,19 @@ public class FermentationVatBlockEntity extends BaseMachineBlockEntity implement
             double heatRatio = maxGth > 0 ? (double) currentGthMilli / ((double) maxGth * MachineDefs.MILLI) : 0.0;
             double heatPercent = heatRatio * 100.0;
 
-            if (heatPercent >= 90.0) {
+            if (heatPercent >= FERMENTATION_HEAT_THRESHOLD_PERCENT) {
                 // Скорость 0.56% спирта в 4000 mB/мин (1200 тиков).
-                double rate = 0.56 * (4000.0 / Math.max(4000.0, (double) mash.amount()));
-                double alcGain = rate / 1200.0;
+                double rate = ALCOHOL_GAIN_PERCENT_PER_MINUTE
+                    * (FERMENTATION_REFERENCE_MASH_MB / Math.max((double) FERMENTATION_REFERENCE_MASH_MB,
+                        (double) mash.amount()));
+                double alcGain = rate / TICKS_PER_MINUTE;
                 double newAlc = Math.min(MAX_ALCOHOL, mash.alcoholPercent() + alcGain);
                 mash = mash.withAlcoholAndRot(newAlc, mash.rotPercent());
             } else {
-                // Штраф: -0.01%/мин спирта и +0.03%/мин гнили за 1% нехватки ниже 90%.
-                double shortage = 90.0 - heatPercent;
-                double alcLoss = (0.01 * shortage) / 1200.0;
-                double rotGain = (0.03 * shortage) / 1200.0;
+                // Штраф: -0.01%/мин спирта и +0.03%/мин гнили за каждый процент ниже порога.
+                double shortage = FERMENTATION_HEAT_THRESHOLD_PERCENT - heatPercent;
+                double alcLoss = (ALCOHOL_LOSS_PERCENT_PER_MINUTE_PER_SHORTAGE * shortage) / TICKS_PER_MINUTE;
+                double rotGain = (ROT_GAIN_PERCENT_PER_MINUTE_PER_SHORTAGE * shortage) / TICKS_PER_MINUTE;
                 double newAlc = Math.max(0.0, mash.alcoholPercent() - alcLoss);
                 double newRot = Math.min(MAX_ROT, mash.rotPercent() + rotGain);
                 mash = mash.withAlcoholAndRot(newAlc, newRot);
