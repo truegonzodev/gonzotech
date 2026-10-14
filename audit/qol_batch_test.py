@@ -84,5 +84,5 @@ assert "отдельной цены нет" in deferred and "смерть" in de
 assert "Туннельный TNT" in load(ASSETS / "lang/ru_ru.json").values()
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert "mod_version=0.3.222" in version
+assert "mod_version=0.3.223" in version
 print("QOL batch checks passed: fog, sound, 21 plastic pairs, TNT item protection and design notes")

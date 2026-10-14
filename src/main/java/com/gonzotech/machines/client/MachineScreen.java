@@ -108,6 +108,9 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     @Override
     public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        // Preserve the vanilla container-screen background pipeline before applying
+        // the project tint; AbstractContainerScreen draws the machine art afterward.
+        super.renderBackground(g, mouseX, mouseY, partialTick);
         // The packed alpha 0xA0 is the nearest 8-bit representation of the
         // requested 62.8% opacity / 37.2% transparency black layer.
         g.fill(0, 0, this.width, this.height, WORLD_DARKENING_ARGB);

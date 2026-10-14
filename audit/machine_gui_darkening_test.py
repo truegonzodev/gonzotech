@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep Gonzo machine screens at one vanilla-opacity world-darkening layer."""
+"""Preserve vanilla machine-screen backgrounds and the single explicit project tint."""
 from pathlib import Path
 import re
 
@@ -8,11 +8,16 @@ source = (ROOT / "src/main/java/com/gonzotech/machines/client/MachineScreen.java
 assert "WORLD_DARKENING_ARGB = 0xA0000000" in source
 background = re.search(r"public void renderBackground\(GuiGraphics g, int mouseX, int mouseY, float partialTick\) \{(.*?)\n    \}", source, re.S)
 assert background, "machine screens need an explicit fixed-alpha world overlay"
-assert "g.fill(0, 0, this.width, this.height, WORLD_DARKENING_ARGB);" in background.group(1)
+background_body = background.group(1)
+assert "super.renderBackground(g, mouseX, mouseY, partialTick);" in background_body, \
+    "the vanilla screen-background pipeline must remain active"
+assert background_body.index("super.renderBackground(") < background_body.index("g.fill("), \
+    "apply the project tint after the vanilla background"
+assert "g.fill(0, 0, this.width, this.height, WORLD_DARKENING_ARGB);" in background_body
 render = re.search(r"public void render\(GuiGraphics g, int mouseX, int mouseY, float partial\) \{(.*?)\n    \}", source, re.S)
 assert render, "MachineScreen.render must remain the shared machine-screen entry point"
 body = render.group(1)
 assert "super.render(g, mouseX, mouseY, partial);" in body
 assert "this.renderBackground(" not in body, "do not composite a second black overlay"
 assert "this.renderTooltip(g, mouseX, mouseY);" in body
-print("Machine GUI darkening check passed: one 0xA0 black overlay (nearest 8-bit form of 62.8%)")
+print("Machine GUI background check passed: vanilla hook preserved, one explicit 0xA0 tint")
