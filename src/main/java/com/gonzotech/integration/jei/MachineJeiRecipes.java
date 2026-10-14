@@ -887,7 +887,7 @@ public final class MachineJeiRecipes {
                     MachineJeiRecipe.GaugeMotion.CONSUME,
                     activeTickEnergyCostTooltip((long) DistillerBlockEntity.PROCESS_GTH_COST * MachineDefs.MILLI, true)),
                 fluidGauge(116, 17, rawFluid, MachineJeiRecipe.GaugeMotion.CONSUME,
-                    activeTickFluidTooltip(DistillerBlockEntity.PROCESS_RAW_RATE, rawId)),
+                    activeTickFluidLimitTooltip(DistillerBlockEntity.PROCESS_RAW_RATE, rawId)),
                 fluidGauge(44, 17, net.minecraft.world.level.material.Fluids.WATER, MachineJeiRecipe.GaugeMotion.CONSUME,
                     activeTickFluidTooltip(DistillerBlockEntity.PROCESS_WATER_RATE, "water")),
                 gauge(80, 17, 16, 52, barTexture("bar_hot_water"),
@@ -897,7 +897,7 @@ public final class MachineJeiRecipes {
 
             List<MachineJeiRecipe.Gauge> cleanGauges = new ArrayList<>(inputGauges);
             cleanGauges.add(fluidGauge(152, 17, ModFluids.DISTILLATE.get(), MachineJeiRecipe.GaugeMotion.PRODUCE,
-                activeTickFluidTooltip(DistillerBlockEntity.PROCESS_RAW_RATE, "distillate")));
+                activeTickFluidLimitTooltip(DistillerBlockEntity.PROCESS_RAW_RATE, "distillate")));
             target.get(MachineJeiCategories.THIRD_DISTILLER.id()).add(new MachineJeiRecipe(
                 recipeId(MachineJeiCategories.THIRD_DISTILLER, "distill/clean/" + rawId),
                 List.of(
@@ -905,11 +905,10 @@ public final class MachineJeiRecipes {
                     MachineJeiRecipe.fluid(OUTPUT, 152, 17, ModFluids.DISTILLATE.get(), DistillerBlockEntity.PROCESS_RAW_RATE)),
                 List.of(), cleanGauges));
 
-            int poisonMin = DistillerBlockEntity.PROCESS_RAW_RATE / 2;
             int poisonMax = (DistillerBlockEntity.PROCESS_RAW_RATE + 1) / 2;
             List<MachineJeiRecipe.Gauge> contaminatedGauges = new ArrayList<>(inputGauges);
             contaminatedGauges.add(fluidGauge(152, 17, "bar_poison", MachineJeiRecipe.GaugeMotion.PRODUCE,
-                activeTickFluidRangeTooltip(poisonMin, poisonMax, "poison_potion")));
+                activeTickFluidLimitTooltip(poisonMax, "poison_potion")));
             target.get(MachineJeiCategories.THIRD_DISTILLER.id()).add(new MachineJeiRecipe(
                 recipeId(MachineJeiCategories.THIRD_DISTILLER, "distill/contaminated/" + rawId),
                 inputs, List.of(), contaminatedGauges));

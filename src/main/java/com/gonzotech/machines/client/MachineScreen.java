@@ -36,6 +36,8 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     /** Каталог текстур GUI машин. */
     public static final String GUI_DIR = "textures/gui/";
+    /** Nearest 8-bit ARGB alpha for the requested 62.8% black overlay. */
+    private static final int WORLD_DARKENING_ARGB = 0xA0000000;
 
     protected static ResourceLocation gui(String file) {
         return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + file);
@@ -105,8 +107,16 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     // ─────────────────── Рендер ───────────────────
 
     @Override
+    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        // The packed alpha 0xA0 is the nearest 8-bit representation of the
+        // requested 62.8% opacity / 37.2% transparency black layer.
+        g.fill(0, 0, this.width, this.height, WORLD_DARKENING_ARGB);
+    }
+
+    @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
-        this.renderBackground(g, mouseX, mouseY, partial);
+        // AbstractContainerScreen calls renderBackground once. Do not composite
+        // another copy here or the world becomes much darker than the target.
         super.render(g, mouseX, mouseY, partial);
         this.renderTooltip(g, mouseX, mouseY);
     }

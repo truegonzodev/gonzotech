@@ -60,8 +60,32 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
     private static final int GTH_PACKET_BASE = 10_000;
     private static final int[] NO_SLOTS = new int[0];
 
+    private enum RawInputType {
+        NONE("none"), MASH("mash"), WORT("wort"), UNKNOWN("unknown");
+
+        private final String id;
+
+        RawInputType(String id) {
+            this.id = id;
+        }
+
+        String id() {
+            return id;
+        }
+
+        static RawInputType fromStored(String id, boolean hasContents) {
+            if (!hasContents) return NONE;
+            return switch (id) {
+                case "mash" -> MASH;
+                case "wort" -> WORT;
+                default -> UNKNOWN;
+            };
+        }
+    }
+
     private long currentGthMilli = 0;
     private MashBlend rawInput = MashBlend.EMPTY;
+    private RawInputType rawInputType = RawInputType.NONE;
     private final ResourceBuffer water = new ResourceBuffer(WATER_CAPACITY);
     private final ResourceBuffer boilingWater = new ResourceBuffer(HOT_WATER_CAPACITY);
     private final ResourceBuffer distillate = new ResourceBuffer(OUTPUT_CAPACITY);
@@ -161,10 +185,12 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveMash(long amount, double alcoholPercent, double rotPercent, boolean simulate) {
+        if (!canReceiveRawInput(RawInputType.MASH)) return 0;
         long space = Math.max(0, INPUT_CAPACITY - rawInput.amount());
         long allowed = Math.min(amount, 288);
         long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
+            if (rawInput.isEmpty()) rawInputType = RawInputType.MASH;
             rawInput = rawInput.withAdded(accepted, alcoholPercent, rotPercent);
             setChanged();
         }
@@ -174,14 +200,22 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
     @Override
     public long receiveWort(long amount, double alcoholPercent, boolean simulate) {
         // Сусло — очищенное сырьё с 0% гнили (негустая жидкость, до 492 mB/t)
+        if (!canReceiveRawInput(RawInputType.WORT)) return 0;
         long space = Math.max(0, INPUT_CAPACITY - rawInput.amount());
         long allowed = Math.min(amount, 492);
         long accepted = Math.min(allowed, space);
         if (!simulate && accepted > 0) {
+            if (rawInput.isEmpty()) rawInputType = RawInputType.WORT;
             rawInput = rawInput.withAdded(accepted, alcoholPercent, 0.0);
             setChanged();
         }
         return accepted;
+    }
+
+    private boolean canReceiveRawInput(RawInputType incomingType) {
+        // A legacy save without an input-type marker is drained before accepting
+        // either fluid, because its previous mash/wort identity cannot be inferred.
+        return rawInput.isEmpty() || rawInputType == incomingType;
     }
 
     // ─────────────────────────── Тик ───────────────────────────
@@ -200,29 +234,32 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
             changed = true;
         }
 
-        // 1. Перегонка
+        // 1. Перегонка. Последний активный тик обрабатывает остаток < 11 mB,
+        // иначе небольшое количество сырья могло бы навсегда остаться в буфере.
+        long rawToProcess = Math.min(PROCESS_RAW_RATE, rawInput.amount());
         long gthCostMilli = (long) PROCESS_GTH_COST * MachineDefs.MILLI;
-        if (rawInput.amount() >= PROCESS_RAW_RATE
+        if (rawToProcess > 0
             && water.amount() >= PROCESS_WATER_RATE
             && currentGthMilli >= gthCostMilli
             && boilingWater.space() >= PROCESS_WATER_RATE
-            && outputSpace() >= PROCESS_RAW_RATE) {
+            && outputSpace() >= rawToProcess) {
 
             boolean isPoison = rawInput.rotPercent() > 8.0 || poison.amount() > 127;
 
             currentGthMilli -= gthCostMilli;
             water.extract(PROCESS_WATER_RATE, false);
             boilingWater.receive(PROCESS_WATER_RATE, false);
-            rawInput = rawInput.withExtracted(PROCESS_RAW_RATE);
+            rawInput = rawInput.withExtracted(rawToProcess);
+            if (rawInput.isEmpty()) rawInputType = RawInputType.NONE;
 
             if (isPoison) {
-                // Конверсия 2:1 (1000 mB -> 500 mB)
-                int totalPoisonUnits = PROCESS_RAW_RATE + poisonRemainder;
+                // Конверсия 2:1 (в том числе для последней неполной порции).
+                int totalPoisonUnits = (int) rawToProcess + poisonRemainder;
                 int poisonMb = totalPoisonUnits / 2;
                 poisonRemainder = totalPoisonUnits % 2;
                 poison.receive(poisonMb, false);
             } else {
-                distillate.receive(PROCESS_RAW_RATE, false);
+                distillate.receive(rawToProcess, false);
             }
             changed = true;
         }
@@ -316,6 +353,7 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
         super.saveAdditional(tag, registries);
         tag.putLong("GthMilli", currentGthMilli);
         tag.putInt("PoisonRemainder", poisonRemainder);
+        tag.putString("RawInputType", rawInputType.id());
         rawInput.save(tag, "Raw");
         water.save(tag, "Water");
         boilingWater.save(tag, "BoilingWater");
@@ -329,6 +367,7 @@ public class DistillerBlockEntity extends BaseMachineBlockEntity
         currentGthMilli = tag.getLong("GthMilli");
         poisonRemainder = tag.getInt("PoisonRemainder");
         rawInput = MashBlend.load(tag, "Raw");
+        rawInputType = RawInputType.fromStored(tag.getString("RawInputType"), !rawInput.isEmpty());
         water.load(tag, "Water");
         boilingWater.load(tag, "BoilingWater");
         distillate.load(tag, "Distillate");

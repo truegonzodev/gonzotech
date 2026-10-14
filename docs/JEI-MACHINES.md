@@ -2,7 +2,7 @@
 
 ## Scope
 
-The plugin registers 17 categories: 15 machine categories, the dispensing tap, and a text-only crimson-obsidian reaction entry.
+The plugin registers 17 categories: 15 machine categories, the dispensing tap, and a text-only crimson-obsidian reaction entry. [Recipe inventory and category counts for in-game review](JEI-RECIPE-INVENTORY.md).
 
 1. `first_electric_furnace`
 2. `second_electric_furnace`
