@@ -47,19 +47,19 @@ public final class MachineJeiCategories {
     public static final Definition THIRD_DISPENSING_TAP = define(
         "third_dispensing_tap", "pump", () -> ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
 
-    // Generator pages are authored directly on their in-game coordinates; unlike
-    // the existing recipe pages, these receive no JEI-only one-pixel correction.
-    public static final Definition FIREBOX = defineAligned(
+    // Generator pages also shift all JEI content down by one pixel, matching
+    // the other machine pages while leaving the authored GUI art untouched.
+    public static final Definition FIREBOX = define(
         "firebox", "firebox", () -> ModMachines.FIREBOX_ITEM.get());
-    public static final Definition SECOND_NUCLEAR_FIREBOX = defineAligned(
+    public static final Definition SECOND_NUCLEAR_FIREBOX = define(
         "second_nuclear_firebox", "nuclear_firebox", () -> ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get());
-    public static final Definition BOILER = defineAligned(
+    public static final Definition BOILER = define(
         "boiler", "boiler", () -> ModMachines.BOILER_ITEM.get());
-    public static final Definition STIRLING_GENERATOR = defineAligned(
+    public static final Definition STIRLING_GENERATOR = define(
         "stirling_generator", "stirling", () -> ModMachines.STIRLING_ITEM.get());
-    public static final Definition SECOND_STEAMGEN_CORE = defineAligned(
+    public static final Definition SECOND_STEAMGEN_CORE = define(
         "second_steamgen_core", "steamgen", () -> ModMachines.SECOND_STEAMGEN_CORE_ITEM.get());
-    public static final Definition FIRST_TURBINE_ROTOR = defineAligned(
+    public static final Definition FIRST_TURBINE_ROTOR = define(
         "first_turbine_rotor", "turbine", () -> ModMachines.FIRST_TURBINE_ROTOR_ITEM.get());
 
     public static final Definition CRIMSON_OBSIDIAN = defineTextOnly(
@@ -96,10 +96,6 @@ public final class MachineJeiCategories {
 
     private static Definition define(String id, String texture, Supplier<? extends ItemLike> station) {
         return define(id, texture, station, 128, 127, CATEGORY_HEIGHT, 1);
-    }
-
-    private static Definition defineAligned(String id, String texture, Supplier<? extends ItemLike> station) {
-        return define(id, texture, station, 128, 127, CATEGORY_HEIGHT, 0);
     }
 
     private static Definition define(String id, String texture, Supplier<? extends ItemLike> station,

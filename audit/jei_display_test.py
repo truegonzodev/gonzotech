@@ -40,14 +40,20 @@ textures = re.findall(
 assert len(textures) == 22 and len(set(textures)) == len(textures)
 assert "CATEGORY_HEIGHT = 167" in categories
 assert 'return define(id, texture, station, 128, 127, CATEGORY_HEIGHT, 1);' in categories
-assert 'return define(id, texture, station, 128, 127, CATEGORY_HEIGHT, 0);' in categories
 assert '"second_alloy_foundry", "alloy_foundry", () -> ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get(),\n        128, 128, 166, 0' in categories
 assert '"crimson_obsidian", () -> ModItems.CRIMSON_OBSIDIAN_ITEM.get()' in categories
-aligned_ids = set(re.findall(r'defineAligned\(\s*"([a-z0-9_]+)"', categories))
-assert aligned_ids == {
+generator_ids = {
     "firebox", "second_nuclear_firebox", "boiler", "stirling_generator",
     "second_steamgen_core", "first_turbine_rotor",
 }
+for generator_id in generator_ids:
+    default_offset_definition = (
+        r'Definition \w+ = define\(\s*"' + generator_id
+        + r'"\s*,\s*"[a-z0-9_]+"\s*,\s*\(\) -> [A-Za-z0-9_.]+\(\)\);'
+    )
+    assert re.search(default_offset_definition, categories), \
+        f"generator category does not use the default +1 px content offset: {generator_id}"
+assert "defineAligned" not in categories
 
 category = (JAVA / "integration/jei/MachineJeiRecipeCategory.java").read_text(encoding="utf-8")
 assert 'definition.texture() + "_gui.png"' in category
@@ -317,7 +323,7 @@ assert "hideRecipes" not in plugin + recipes
 assert "RecipeUnlocks" not in recipes, "machine JEI recipes must not be progression-filtered"
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert "mod_version=0.3.221" in version
+assert "mod_version=0.3.222" in version
 inventory = (ROOT / "docs/JEI-RECIPE-INVENTORY.md").read_text(encoding="utf-8")
 docs = (ROOT / "docs/JEI-MACHINES.md").read_text(encoding="utf-8")
 assert "23 категории" in inventory and "**292**" in inventory and "**293**" in inventory

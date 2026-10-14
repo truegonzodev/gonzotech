@@ -36,8 +36,7 @@ The crimson-obsidian page has one text box and no visible slots. The output bloc
 
 GUI background and foreground layers keep the in-game order: `*_gui_bg.png` → animated bars → the normal `*_gui.png` foreground. The foreground is not replaced by the `_gui_bg.png` layer. Standard 512×512 sheets use crop `(128,127)` with size `176×167`; this includes the first row of the authored window. `alloy_foundry` keeps its exceptional crop `(128,128)`, `176×166` because its art has different geometry. The JEI canvas is not expanded to 256×256.
 
-- Existing categories shift every slot, bar, and associated tooltip region **down by 1 px**, except the alloy foundry, which stays at its authored coordinates.
-- New generator categories use their in-game coordinates directly and receive no offset.
+- All machine categories, including the six generator pages, shift every slot, bar, and associated tooltip hitbox **down by 1 px**, except the alloy foundry, which stays at its authored coordinates. GUI background/foreground art is not shifted.
 - Text-only crimson obsidian has no visible machine slots or bars.
 - Item slots stay static and use JEI's normal **16×16** slot background for both inputs and outputs.
 - Machine liquid gauges are `16×52`; bars animate only flow, not item stacks.
@@ -110,7 +109,7 @@ This is a project display convention, not an external standards certification.
 ## Adding another category
 
 1. Add a `MachineJeiCategories.Definition`, include it in `ALL`, and use the exact block translation key for the heading. Supply the stable id, GUI texture base name, item supplier and crop geometry; text-only categories use a blank drawable.
-2. Choose the 1 px content offset deliberately: existing pages use `+1` except alloy foundry, and new generator pages use `0` to match authored coordinates.
+2. Keep the 1 px content offset on all machine/generator pages; alloy foundry is the sole `0` offset exception.
 3. Project authoritative machine behavior into `MachineJeiRecipes`; do not make server processing classes depend on JEI.
 4. Keep item positions from the in-game menu and add hidden fluid ingredients only for actual registered `Fluid` instances.
 5. Add/synchronize category titles and tooltip strings in both `en_us.json` and `ru_ru.json`.
