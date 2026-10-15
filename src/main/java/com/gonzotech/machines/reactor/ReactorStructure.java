@@ -3,6 +3,7 @@ package com.gonzotech.machines.reactor;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -91,9 +92,9 @@ public final class ReactorStructure {
                             sheaths++;
                         } else if (block == ModBlocks.GRAPHITE_BLOCK.get()) {
                             graphite++;
-                        } else if (block == ModBlocks.BARIUM_CONCRETE.get()) {
+                        } else if (isMetalBlock(state, "barium_block")) {
                             barium++;
-                        } else if (block == ModBlocks.BORE_STAINED_GLASS.get()) {
+                        } else if (isMetalBlock(state, "boron_block")) {
                             boron++;
                         } else if (block == Blocks.WATER) {
                             water++;
@@ -109,6 +110,12 @@ public final class ReactorStructure {
 
         return new Result(size, sheaths, heatNodes, fluidNodes, panels, graphite, barium, boron, water);
     }
+
+
+    private static boolean isMetalBlock(BlockState state, String path) {
+        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().equals(path);
+    }
+
 
     private static final class Result {
         final int size;
