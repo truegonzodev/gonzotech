@@ -39,7 +39,8 @@ import java.util.UUID;
  * (permille), облучает соседние предметы ЛОГИСТИЧЕСКИ к уровню сильнейшего
  * источника («источник не может заразить больше, чем имеет сам»; материал цели
  * замедляет накопление — {@link RadMaterials}) и чуть-чуть заражает чанк.
- * Контейнеры НЕ тикаем (железное правило производительности).</p>
+ * Обычные контейнеры не тикаем; у свинцового ящика наведёнка содержимого только
+ * затухает с обычной секундной скоростью, без роста от внешних источников.</p>
  *
  * <p><b>2. Чанки (доза — каждую секунду; обслуживание — каждые 20 с).</b>
  * Фон чанка бьёт по шкале с весом 1/10 (п.4). На предметы — только при фоне
@@ -424,10 +425,11 @@ public final class RadiationSystem {
         return state.value;
     }
 
-    /** Контейнеры активного чанка: 1% оставшейся разницы для обычного сундука
-     *  и предметной россыпи, 0,2% для свинцового ящика; каждый контейнер может
-     *  дополнительно экранироваться своим контуром. Радиоактивные блочные предметы
-     *  остаются постоянной целью на уровне поставленного блока. */
+    /** Контейнеры активного чанка: обычное содержимое и предметная россыпь
+     *  передают 1% оставшейся разницы; у свинцового ящика эмиссия сначала
+     *  умножается на 0,2, затем на экран контура, но ставка остаётся 1%. Наведёнка
+     *  предметов в свинцовом ящике отдельно затухает с обычной скоростью; блочные
+     *  радиоактивные предметы остаются постоянными источниками уровня блока. */
     private static void scanContainersInto(ServerLevel level, long chunkKey, ChunkRadiationData data) {
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
         double chestEmission = 0.0;
@@ -437,19 +439,20 @@ public final class RadiationSystem {
         double placedLike = drops[1];
         for (BlockEntity be : chunk.getBlockEntities().values()) {
             if (be instanceof Container container) {
+                boolean leadChest = be.getBlockState().getBlock()
+                        instanceof com.gonzotech.machines.block.ThirdLeadChestBlock;
                 double mine = 0.0;
                 for (int i = 0; i < container.getContainerSize(); i++) {
                     mine += RadSources.emissionDeep(container.getItem(i));
                 }
                 BlockPos pos = be.getBlockPos();
                 if (mine > 0.0 && pos != null) {
-                    boolean leadChest = be.getBlockState().getBlock()
-                            instanceof com.gonzotech.machines.block.ThirdLeadChestBlock;
-                    double contourFactor = Containment.factor(level, pos);
-                    double effectiveMine = mine * contourFactor;
-                    double chunkRate = CHEST_TO_CHUNK_RATE * (leadChest
+                    double sourceFactor = leadChest
                             ? com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR
-                            : 1.0);
+                            : 1.0;
+                    double preContourEmission = mine * sourceFactor;
+                    double contourFactor = Containment.factor(level, pos);
+                    double effectiveMine = preContourEmission * contourFactor;
                     if (leadChest) {
                         leadChestEmission += effectiveMine;
                     } else {
@@ -458,19 +461,20 @@ public final class RadiationSystem {
                     RadiationTrace.log(level, pos, "КОНТЕЙНЕР → ЧАНК",
                             "block=" + BuiltInRegistries.BLOCK.getKey(be.getBlockState().getBlock())
                                     + "; contentEmission=" + RadiationTrace.rate(mine)
+                                    + "; sourceFactor=" + RadiationTrace.number(sourceFactor)
+                                    + "; preContourEmission=" + RadiationTrace.rate(preContourEmission)
                                     + "; contourFactor=" + RadiationTrace.number(contourFactor)
-                                    + "; chunkRate=" + RadiationTrace.number(chunkRate)
+                                    + "; chunkRate=" + RadiationTrace.number(CHEST_TO_CHUNK_RATE)
                                     + "; effectiveEmission=" + RadiationTrace.rate(effectiveMine)
                                     + "; chunkTargetContribution="
-                                    + RadiationTrace.rate(effectiveMine * chunkRate));
+                                    + RadiationTrace.rate(effectiveMine * CHEST_TO_CHUNK_RATE));
                 }
             }
         }
 
         double contam = data.contaminationOf(chunkKey);
         double ordinaryTransfer = transferTowardChunk(contam, chestEmission, CHEST_TO_CHUNK_RATE);
-        double leadTransfer = transferTowardChunk(contam, leadChestEmission,
-                CHEST_TO_CHUNK_RATE * com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR);
+        double leadTransfer = transferTowardChunk(contam, leadChestEmission, CHEST_TO_CHUNK_RATE);
         // Блочный радиоактивный предмет в мире ведёт себя как поставленный блок:
         // его постоянный вклад не получает ставку предметной наведёнки.
         double placedBlockTransfer = Math.max(0.0, placedLike - contam);

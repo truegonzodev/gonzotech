@@ -3,6 +3,7 @@ package com.gonzotech.machines.block.entity;
 import com.gonzotech.machines.block.ThirdLeadChestBlock;
 import com.gonzotech.machines.menu.ThirdLeadChestMenu;
 import com.gonzotech.machines.registry.ModBlockEntities;
+import com.gonzotech.radiation.ItemRadioactivity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -24,18 +25,47 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Блок-сущность свинцового ящика: ровно 9 слотов (один ряд), автоматизация —
- * все слоты в обе стороны (копия бочки). Счётчик зрителей управляет свойством
- * OPEN и звуками крышки, как у ванильной бочки.
+ * все слоты в обе стороны (копия бочки). Наведёнка в содержимом затухает раз
+ * в секунду обычным темпом, а постоянная эмиссия предметов не меняется. Счётчик
+ * зрителей управляет свойством OPEN и звуками крышки, как у ванильной бочки.
  */
 public class ThirdLeadChestBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider {
 
     public static final int SLOT_COUNT = 9;
 
+    private static final int RADIATION_DECAY_INTERVAL_TICKS = 20;
+
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private int openers;
+    private int radiationDecayCounter;
 
     public ThirdLeadChestBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.THIRD_LEAD_CHEST.get(), pos, state);
+    }
+
+    /**
+     * В ящике наведённая активность затухает с обычной скоростью 1×.
+     * Постоянная эмиссия предмета не меняется и остаётся источником.
+     */
+    public static void serverTick(Level level, BlockPos pos, BlockState state,
+                                  ThirdLeadChestBlockEntity chest) {
+        if (level.isClientSide() || ++chest.radiationDecayCounter < RADIATION_DECAY_INTERVAL_TICKS) {
+            return;
+        }
+        chest.radiationDecayCounter = 0;
+        chest.decayInducedContents();
+    }
+
+    private void decayInducedContents() {
+        boolean changed = false;
+        for (ItemStack stack : this.items) {
+            if (stack.isEmpty()) continue;
+            double before = ItemRadioactivity.getInduced(stack);
+            if (before <= 0.0D) continue;
+            ItemRadioactivity.tickInduced(stack, false, 0.0D, 1.0D);
+            changed |= ItemRadioactivity.getInduced(stack) != before;
+        }
+        if (changed) this.setChanged();
     }
 
     // ─────────────────────────── Container ───────────────────────────

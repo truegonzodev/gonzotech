@@ -2,6 +2,7 @@ package com.gonzotech.machines.block;
 
 import com.mojang.serialization.MapCodec;
 import com.gonzotech.machines.block.entity.ThirdLeadChestBlockEntity;
+import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +20,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -31,13 +34,14 @@ import java.util.List;
 /**
  * Свинцовый ящик (0.3.111, эпоха 3): копия ванильной бочки — один ряд из 9 слотов,
  * «двойных» сцепок нет. Сам блок НЕ замыкает радиационный контур и экранирующим
- * свойством не обладает; содержимое ящика передаётся в чанк по 20% обычной
- * скорости ({@link #CONTENT_CHUNK_FACTOR}; 0,2% оставшейся разницы в секунду),
- * а его визуальный источник также ослаблен этим коэффициентом.
+ * свойством не обладает; наведёнка предметов внутри затухает с обычной скоростью,
+ * а сам источник содержимого передаётся в чанк с эмиссией ×0,2 ДО экрана контура
+ * и затем по обычной ставке 1% оставшейся разницы. Визуальный источник также
+ * ослаблен коэффициентом {@link #CONTENT_CHUNK_FACTOR}.
  */
 public class ThirdLeadChestBlock extends Block implements EntityBlock {
 
-    /** Множитель ставки передачи содержимого в чанк: 20% от обычных 1%/с. */
+    /** Множитель эмиссии содержимого перед экраном контура и ставкой чанка: ×0,2. */
     public static final double CONTENT_CHUNK_FACTOR = 0.2;
 
     /** Полная ориентация, как у бочки: включая вверх/вниз. */
@@ -102,6 +106,17 @@ public class ThirdLeadChestBlock extends Block implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ThirdLeadChestBlockEntity(pos, state);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+            Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide()) return null;
+        return type == ModBlockEntities.THIRD_LEAD_CHEST.get()
+                ? (BlockEntityTicker<T>) (BlockEntityTicker<ThirdLeadChestBlockEntity>)
+                        ThirdLeadChestBlockEntity::serverTick
+                : null;
     }
 
     @Override

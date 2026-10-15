@@ -51,9 +51,13 @@ assert "out[1] += transfer;" in rad
 assert "INVENTORY_TO_CHUNK_RATE = 0.01" in rad
 assert "intrinsic * INVENTORY_TO_CHUNK_RATE * (1.0 - contam / intrinsic)" in rad
 assert "CHEST_TO_CHUNK_RATE = 0.01" in rad
+assert "double preContourEmission = mine * sourceFactor;" in rad
+assert "double effectiveMine = preContourEmission * contourFactor;" in rad
 assert "transferTowardChunk(contam, chestEmission, CHEST_TO_CHUNK_RATE)" in rad
-assert "CHEST_TO_CHUNK_RATE * com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR" in rad
+assert "transferTowardChunk(contam, leadChestEmission, CHEST_TO_CHUNK_RATE)" in rad
 assert "double placedBlockTransfer = Math.max(0.0, placedLike - contam);" in rad
+lead_be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/ThirdLeadChestBlockEntity.java").read_text()
+assert "ItemRadioactivity.tickInduced(stack, false, 0.0D, 1.0D);" in lead_be
 assert "double totalNzt = Math.max(0.0, intrinsic + induced - inducedBefore);" in rad
 assert "ItemEntity.class, box," in rad
 assert "ItemFrame.class, box," in rad

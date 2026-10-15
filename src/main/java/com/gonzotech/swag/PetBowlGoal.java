@@ -19,8 +19,9 @@ import java.util.EnumSet;
  *
  * <p>Гейты входа (автор): торс &lt; ×2.0, с последнего приёма &gt;140 с,
  * питомец не сидит/не в транспорте, миска в 12 блоках. Успешный заход:
- * обязательный приём + цепочка шансов (см. {@link FatPetLogic#rollMaxBites}),
- * пауза 12 тиков между кусками. Пустая миска: стоим 2–3 с, потом частица
+ * обязательный приём + цепочка шансов (см. {@link FatPetLogic#rollMaxBites});
+ * каждый успешный кусок лечит 4 HP, пауза между кусками — 12 тиков. Пустая миска:
+ * стоим 2–3 с, потом частица
  * {@code damage_indicator} и кулдаун пустого захода 30 с.
  */
 public class PetBowlGoal extends Goal {
@@ -165,6 +166,7 @@ public class PetBowlGoal extends Goal {
         if (bowl.tryEatOne()) {
             this.bitesDone++;
             this.biteTimer = BITE_PAUSE_TICKS;
+            this.pet.heal(4.0F); // каждый успешно съеденный кусок лечит ровно 4 HP
             ServerLevel level = (ServerLevel) this.pet.level();
             FatPetLogic.onEat(this.fat, level.getGameTime());
             level.playSound(null, this.bowlPos, SoundEvents.GENERIC_EAT.value(), SoundSource.NEUTRAL,
