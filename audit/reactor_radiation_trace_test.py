@@ -27,9 +27,9 @@ _ver.at_least("0.3.229", "filter GUI theme selector and highlighted contour radi
 machines = read(JAVA / "com/gonzotech/machines/registry/ModMachines.java")
 tabs = read(JAVA / "com/gonzotech/core/registry/ModCreativeTabs.java")
 blocks = (
-    "first_uranium_reactor_casing",
-    "first_uranium_reactor_control_panel",
-    "first_uranium_reactor_fuel_sheath",
+    "third_uranium_reactor_casing",
+    "third_uranium_reactor_control_panel",
+    "third_uranium_reactor_fuel_sheath",
 )
 for name in blocks:
     assert f'"{name}"' in machines, f"block registration missing: {name}"
@@ -45,14 +45,14 @@ for name in blocks:
 panel = read(JAVA / "com/gonzotech/core/block/ReactorControlPanelBlock.java")
 assert "BlockStateProperties.FACING" in panel
 assert "context.getNearestLookingDirection().getOpposite()" in panel
-panel_states = load(ASSETS / "blockstates/first_uranium_reactor_control_panel.json")["variants"]
+panel_states = load(ASSETS / "blockstates/third_uranium_reactor_control_panel.json")["variants"]
 assert set(panel_states) == {f"facing={direction}" for direction in ("down", "up", "north", "south", "east", "west")}
-assert all(entry["model"] == "gonzotech:block/first_uranium_reactor_control_panel" for entry in panel_states.values())
+assert all(entry["model"] == "gonzotech:block/third_uranium_reactor_control_panel" for entry in panel_states.values())
 
 sheath = read(JAVA / "com/gonzotech/core/block/ReactorFuelSheathBlock.java")
 assert "extends RotatedPillarBlock" in sheath
 assert "setValue(AXIS, Direction.Axis.Y)" in sheath
-sheath_states = load(ASSETS / "blockstates/first_uranium_reactor_fuel_sheath.json")["variants"]
+sheath_states = load(ASSETS / "blockstates/third_uranium_reactor_fuel_sheath.json")["variants"]
 assert set(sheath_states) == {"axis=x", "axis=y", "axis=z"}
 
 # The dynamic cell is an exact-composition result, never a static anonymous ingredient/output.

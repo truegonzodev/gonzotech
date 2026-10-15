@@ -129,9 +129,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_STEAMGEN_CORE_ITEM.get());
                 // Ядерная топка и первая стадия реактора — отдельные устройства/детали.
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_NUCLEAR_FIREBOX_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_URANIUM_REACTOR_CASING_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_URANIUM_REACTOR_CONTROL_PANEL_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.FIRST_URANIUM_REACTOR_FUEL_SHEATH_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_URANIUM_REACTOR_CASING_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_URANIUM_REACTOR_CONTROL_PANEL_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH_ITEM.get());
                 // Эпоха III (Открытие 3): линейка брожения
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get());
