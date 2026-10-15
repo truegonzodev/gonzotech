@@ -32,19 +32,19 @@
     },
     "facing=up,unstable=false": {
       "model": "gonzotech:block/tunnel_tnt",
-      "x": 90
+      "x": 270
     },
     "facing=up,unstable=true": {
       "model": "gonzotech:block/tunnel_tnt",
-      "x": 90
+      "x": 270
     },
     "facing=down,unstable=false": {
       "model": "gonzotech:block/tunnel_tnt",
-      "x": 270
+      "x": 90
     },
     "facing=down,unstable=true": {
       "model": "gonzotech:block/tunnel_tnt",
-      "x": 270
+      "x": 90
     }
   }
 }

@@ -1013,7 +1013,7 @@
   "gonzotech.configuration.greatswordImpactFrames": "Greatsword Impact Frames",
   "gonzotech.configuration.greatswordImpactFrames.tooltip": "Enable the camera shake, flashes, tracers, negative grain and post-impact FOV/color effects. Client-side visuals only.",
   "gonzotech.configuration.useClassicMachineGuis": "Use Classic Machine GUIs",
-  "gonzotech.configuration.useClassicMachineGuis.tooltip": "ON uses the classic machine GUI textures; OFF uses the NEO sheets. JEI always uses the original textures.",
+  "gonzotech.configuration.useClassicMachineGuis.tooltip": "ON uses classic machine and item-filter GUI textures; OFF uses their NEO sheets. JEI always uses the original textures.",
   "gonzotech.configuration.pipeRoutingDiagnostics": "Pipe Routing Diagnostics",
   "gonzotech.configuration.pipeRoutingDiagnostics.tooltip": "Detailed server logs for pipe routing and topology rebuilds. High-volume and potentially expensive; enable only for a short profiling session. Does not change gameplay.",
   "gui.gonzotech.faint.get_up": "Get up",

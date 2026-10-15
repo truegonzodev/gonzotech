@@ -27,7 +27,7 @@ public final class GonzoClientConfig {
                 .translation("gonzotech.configuration.greatswordImpactFrames")
                 .define("greatswordImpactFrames", true);
         USE_CLASSIC_MACHINE_GUIS = builder
-                .comment("Use the classic machine GUI sheets instead of the NEO sheets.",
+                .comment("Use the classic machine and item-filter GUI sheets instead of the NEO sheets.",
                         "Client-only visual preference. JEI always uses the original GUI textures.")
                 .translation("gonzotech.configuration.useClassicMachineGuis")
                 .define("useClassicMachineGuis", false);

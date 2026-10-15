@@ -100,7 +100,7 @@ check("(1.0 + rnd.nextDouble() * 9.0) * RadUnits.MILLI" in radiation,
       "waste-bearing chunk baseline is not 1–10 mZt/t")
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-check("mod_version=0.3.228" in version, "content-change version was not bumped")
+check("mod_version=0.3.229" in version, "content-change version was not bumped")
 
 if failures:
     for failure in failures:

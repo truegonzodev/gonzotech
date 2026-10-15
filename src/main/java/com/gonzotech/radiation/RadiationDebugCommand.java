@@ -57,6 +57,7 @@ public final class RadiationDebugCommand {
         double percent = RadDose.percent(psyche.getRadiation());
         ChunkPos chunk = new ChunkPos(player.blockPosition());
         ChunkRadiationData data = ChunkRadiationData.get(level);
+        data.tracePlacedSources(level, chunk, RadiationTrace.CHUNK_RADIUS);
         double chunkNzt = data.value(level, chunk.toLong());
         double insideDose = Containment.insideDose(level,
                 net.minecraft.core.BlockPos.containing(player.getEyePosition()));

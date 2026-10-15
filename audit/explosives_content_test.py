@@ -248,6 +248,10 @@ expected_tunnel_states = {
 }
 pin(set(tunnel_state["variants"]) == expected_tunnel_states,
     "tunnel TNT covers six facing directions and both unstable values")
+for unstable in ("false", "true"):
+    pin(tunnel_state["variants"][f"facing=up,unstable={unstable}"].get("x") == 270
+        and tunnel_state["variants"][f"facing=down,unstable={unstable}"].get("x") == 90,
+        f"vertical texture rotation aligns the front with the UP/DOWN facing ({unstable=})")
 pin((ASSETS / "items/tunnel_tnt.json").exists()
     and (DATA / "loot_table/blocks/tunnel_tnt.json").exists()
     and (DATA / "advancement/recipes/tunnel_tnt.json").exists()

@@ -168,6 +168,18 @@ public class ChunkRadiationData extends SavedData {
         }
     }
 
+    /** Emit an immediate contour-to-chunk diagnostic for placed sources in the command's 3×3 area. */
+    public void tracePlacedSources(ServerLevel level, ChunkPos center, int radius) {
+        for (var entry : placedPos.long2ObjectEntrySet()) {
+            long key = entry.getLongKey();
+            int chunkX = ChunkPos.getX(key);
+            int chunkZ = ChunkPos.getZ(key);
+            if (Math.abs((long) chunkX - center.x) > radius
+                    || Math.abs((long) chunkZ - center.z) > radius) continue;
+            screenFactor(level, key);
+        }
+    }
+
     /** Read-only nearby source snapshot for the instrument visualizer. */
     public List<VisualSource> visualSources(ServerLevel level, BlockPos center, int radius) {
         List<VisualSource> out = new ArrayList<>();
@@ -438,24 +450,43 @@ public class ChunkRadiationData extends SavedData {
         if (set == null || set.isEmpty()) {
             return 1.0;
         }
+        int chunkX = ChunkPos.getX(chunkKey);
+        int chunkZ = ChunkPos.getZ(chunkKey);
+        boolean tracingChunk = RadiationTrace.isActiveChunk(level, chunkX, chunkZ);
         double weighted = 0.0, weight = 0.0;
         int probed = 0;
         List<Long> stale = null;
         for (long packed : set) {
             BlockPos pos = BlockPos.of(packed);
-            double e = RadSources.blockEmission(level.getBlockState(pos));
-            if (e <= 0.0) {
+            var state = level.getBlockState(pos);
+            double emission = RadSources.blockEmission(state);
+            if (emission <= 0.0) {
                 // Блок исчез в обход событий (взрыв/поршень/setblock) — забываем позицию.
                 (stale == null ? stale = new ArrayList<>() : stale).add(packed);
                 continue;
             }
-            var cached = Containment.cachedResult(level, pos);
-            // Budget new geometry probes, not the number of sources: a shared
-            // closed cavity already covers all its blocks, including the 17th+.
-            double f = cached != null ? cached.factor()
-                    : probed++ < MAX_PROBES_PER_CHUNK ? Containment.factor(level, pos) : 1.0;
-            weighted += e * f;
-            weight += e;
+            RadiationContour.Result contour = Containment.cachedResult(level, pos);
+            if (contour == null && probed++ < MAX_PROBES_PER_CHUNK) {
+                contour = Containment.result(level, pos);
+            }
+            // Sources beyond the per-chunk probe budget keep the existing unshielded fallback.
+            double factor = contour == null ? 1.0 : contour.factor();
+            double contribution = emission * factor;
+            weighted += contribution;
+            weight += emission;
+
+            if (tracingChunk) {
+                String contourState = contour == null ? "not-probed"
+                        : contour.enclosed() ? "closed" : "open/unsealed";
+                RadiationTrace.logHighlighted(level, pos, "БЛОК В КОНТУРЕ → ЧАНК",
+                        "block=" + BuiltInRegistries.BLOCK.getKey(state.getBlock())
+                                + "; chunk=[" + chunkX + "," + chunkZ + "]"
+                                + "; contour=" + contourState
+                                + "; contourFactor=" + RadiationTrace.number(factor)
+                                + "; blockEmission=" + RadiationTrace.rate(emission)
+                                + "; sourceTargetContribution=" + RadiationTrace.rate(contribution)
+                                + "; chunkContamination=" + RadiationTrace.rate(contamination.get(chunkKey)));
+            }
         }
         if (stale != null) {
             stale.forEach(set::remove);

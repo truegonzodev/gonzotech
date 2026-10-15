@@ -119,23 +119,30 @@ public final class RadiationTrace {
     public static void log(ServerLevel level, BlockPos pos, String flow, String details) {
         if (pos == null) return;
         logScoped(level, pos.getX() >> 4, pos.getZ() >> 4, false, 0, 0,
-                " @" + pos.getX() + "," + pos.getY() + "," + pos.getZ(), flow, details);
+                " @" + pos.getX() + "," + pos.getY() + "," + pos.getZ(), flow, details, ChatFormatting.GRAY);
+    }
+
+    /** Record a highlighted position-based flow (used for source-to-chunk diagnostics). */
+    public static void logHighlighted(ServerLevel level, BlockPos pos, String flow, String details) {
+        if (pos == null) return;
+        logScoped(level, pos.getX() >> 4, pos.getZ() >> 4, false, 0, 0,
+                " @" + pos.getX() + "," + pos.getY() + "," + pos.getZ(), flow, details, ChatFormatting.GOLD);
     }
 
     /** Record a chunk-local event only for viewers whose 3×3 area contains that chunk. */
     public static void logChunk(ServerLevel level, int chunkX, int chunkZ, String flow, String details) {
-        logScoped(level, chunkX, chunkZ, false, 0, 0, "", flow, details);
+        logScoped(level, chunkX, chunkZ, false, 0, 0, "", flow, details, ChatFormatting.GRAY);
     }
 
     /** Record an inter-chunk flow for viewers covering either endpoint. */
     public static void logChunkTransfer(ServerLevel level, int fromX, int fromZ, int toX, int toZ,
                                         String flow, String details) {
-        logScoped(level, fromX, fromZ, true, toX, toZ, "", flow, details);
+        logScoped(level, fromX, fromZ, true, toX, toZ, "", flow, details, ChatFormatting.GRAY);
     }
 
     private static void logScoped(ServerLevel level, int chunkX, int chunkZ,
                                   boolean hasSecondChunk, int secondChunkX, int secondChunkZ,
-                                  String location, String flow, String details) {
+                                  String location, String flow, String details, ChatFormatting color) {
         if (SESSIONS.isEmpty()) return;
         MinecraftServer server = level.getServer();
         long now = server.getTickCount();
@@ -151,7 +158,7 @@ public final class RadiationTrace {
             double elapsedSeconds = Math.max(0L, now - session.startedAtTick) / 20.0D;
             String line = String.format(Locale.ROOT, "[RadTrace +%.2fs][%s][%s]%s %s",
                     elapsedSeconds, dimension, flow, location, details);
-            session.viewer.sendSystemMessage(Component.literal(line).withStyle(ChatFormatting.GRAY));
+            session.viewer.sendSystemMessage(Component.literal(line).withStyle(color));
             session.eventLines++;
             delivered = true;
         }

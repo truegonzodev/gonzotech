@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static contracts for the client machine-GUI selector and solid-red NEO sheets."""
+"""Static contracts for the client GUI selector, NEO sheets, and JEI isolation."""
 import json
 import struct
 import zlib
@@ -47,40 +47,46 @@ def assert_solid_red_rgba(path: Path) -> None:
         assert row[0] == 0 and row[1:] == expected_row, f"non-red or transparent pixel in {path}, row {y}"
 
 
-_ver.at_least("0.3.228", "client machine GUI theme selector and scoped radiation trace")
+_ver.at_least("0.3.229", "machine/filter GUI selector, scoped source trace, and TNT texture orientation")
 
-# Only the 512×512 machine GUI sandwich sheets get NEO copies; the two smaller
-# item-filter canvases are not part of this switch.
-source_sheets = {
+machine_sheets = {
     path for path in GUI_DIR.glob("*.png")
     if path.name.endswith(("_gui.png", "_gui_bg.png")) and dimensions(path) == (512, 512)
 }
-assert len(source_sheets) == 62, f"expected 62 source sheets, found {len(source_sheets)}"
+assert len(machine_sheets) == 62, f"expected 62 source machine sheets, found {len(machine_sheets)}"
+filter_sheets = {GUI_DIR / "item_filter_gui.png", GUI_DIR / "second_item_filter_gui.png"}
+assert all(dimensions(path) == (176, 184) for path in filter_sheets)
+source_sheets = machine_sheets | filter_sheets
 expected_neo = {path.stem + "_neo.png" for path in source_sheets}
-actual_neo = {
-    path.name for path in GUI_DIR.glob("*_neo.png")
-    if path.name.endswith(("_gui_neo.png", "_gui_bg_neo.png"))
-}
+actual_neo = {path.name for path in GUI_DIR.glob("*_neo.png")}
 assert actual_neo == expected_neo, f"NEO sheet set mismatch: missing={expected_neo - actual_neo}, extra={actual_neo - expected_neo}"
 for source in source_sheets:
     neo = source.with_name(source.stem + "_neo.png")
     assert neo.is_file(), f"missing NEO copy for {source.name}"
-    assert_solid_red_rgba(neo)
+    assert dimensions(neo) == dimensions(source), f"NEO canvas must match {source.name}"
 
-for name in ("item_filter_gui.png", "second_item_filter_gui.png"):
-    source = GUI_DIR / name
-    assert dimensions(source) == (176, 184), f"expected filter screen texture dimensions: {source}"
-    assert not source.with_name(source.stem + "_neo.png").exists(), f"filter UI must remain unchanged: {name}"
+# Keep the submitted boiler NEO art intact; the remaining 60 large placeholder
+# sheets retain the initial pure-red canvas. Filter NEO sheets are user-provided copies.
+for source in machine_sheets:
+    if source.name not in {"boiler_gui.png", "boiler_gui_bg.png"}:
+        assert_solid_red_rgba(source.with_name(source.stem + "_neo.png"))
+for source in filter_sheets:
+    assert source.with_name(source.stem + "_neo.png").stat().st_size > 0
 
 config = read(JAVA / "core/config/GonzoClientConfig.java")
 screen = read(JAVA / "machines/client/MachineScreen.java")
 silicon = read(JAVA / "machines/client/SiliconFactoryScreen.java")
+filter_screen = read(JAVA / "machines/client/ItemFilterScreen.java")
 assert 'define("useClassicMachineGuis", false)' in config, "NEO should be the default"
 assert 'translation("gonzotech.configuration.useClassicMachineGuis")' in config
 assert "isMachineGuiSheet(file) && !usesClassicMachineGuis()" in screen
 assert 'file.substring(0, file.length() - ".png".length()) + "_neo.png"' in screen
 assert "GonzoClientConfig.USE_CLASSIC_MACHINE_GUIS.get()" in screen
 assert "resolvedClassic == classic" in silicon, "cached dynamic GUI sheets must notice config changes"
+assert '"item_filter_gui.png"' in filter_screen and '"second_item_filter_gui.png"' in filter_screen
+assert "filterGuiTexture(textureFile)" in filter_screen
+assert "GonzoClientConfig.USE_CLASSIC_MACHINE_GUIS.get()" in filter_screen
+assert '"_neo.png"' in filter_screen
 
 for locale in ("en_us", "ru_ru"):
     translations = json.loads((ASSETS / f"lang/{locale}.json").read_text(encoding="utf-8"))
@@ -97,8 +103,5 @@ assert 'definition.texture() + "_gui_bg.png"' in jei_category
 assert 'definition.texture() + "_gui.png"' in jei_category
 assert '"textures/gui/" + name + ".png"' in jei_recipes
 assert "_neo" not in jei_category and "_neo" not in jei_recipes
-filter_screen = read(JAVA / "machines/client/ItemFilterScreen.java")
-assert "extends AbstractContainerScreen<ItemFilterMenu>" in filter_screen
-assert "MachineScreen.gui" not in filter_screen and "_neo" not in filter_screen
 
-print("machine GUI theme selector + NEO assets: PASS (62 solid-red 512×512 sheets; JEI unchanged)")
+print("machine/filter GUI theme selector + NEO assets: PASS (64 sheets; JEI unchanged)")

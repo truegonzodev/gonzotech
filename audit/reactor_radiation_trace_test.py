@@ -21,7 +21,7 @@ def load(path: Path):
     return json.loads(read(path))
 
 
-_ver.at_least("0.3.228", "machine GUI theme selector and scoped radiation trace")
+_ver.at_least("0.3.229", "filter GUI theme selector and highlighted contour radiation trace")
 
 # The first implementation intentionally supplies components only, not a running multiblock.
 machines = read(JAVA / "com/gonzotech/machines/registry/ModMachines.java")
@@ -113,6 +113,11 @@ assert "centerChunkX" in trace and "centerChunkZ" in trace
 assert "dimension.equals(level.dimension().location())" in trace
 assert "Math.abs((long) chunkX - centerChunkX) <= CHUNK_RADIUS" in trace
 assert "isActiveChunkTransfer" in chunk and "logChunkTransfer" in chunk
+assert '"БЛОК В КОНТУРЕ → ЧАНК"' in chunk
+assert "logHighlighted" in chunk and "ChatFormatting.GOLD" in trace
+assert "sourceTargetContribution=" in chunk and "contourFactor=" in chunk
+assert "tracePlacedSources(level, chunk, RadiationTrace.CHUNK_RADIUS)" in command
+assert "enclosed() ? \"closed\" : \"open/unsealed\"" in chunk
 assert "все измерения сервера" not in trace
 assert "RadiationTrace.start(player)" in command
 assert "RadiationTrace.tick(event.getServer())" in system
