@@ -8,6 +8,13 @@ import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import com.gonzotech.machines.reactor.ReactorStructure;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
@@ -21,6 +28,20 @@ public final class ReactorControlPanelBlock extends Block {
     public ReactorControlPanelBlock(BlockBehaviour.Properties properties) {
         super(properties);
         registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+    }
+
+
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
+                                InteractionHand hand, BlockHitResult hit) {
+        if (level.isClientSide()) return InteractionResult.SUCCESS;
+        String description = ReactorStructure.describe(level, pos);
+        if (description != null) {
+            player.displayClientMessage(Component.literal(description), true);
+            return InteractionResult.SUCCESS;
+        }
+        player.displayClientMessage(Component.literal("Реактор не собран: нужен куб 4..10 из обшивки/узлов, без пустот внутри."), true);
+        return InteractionResult.SUCCESS;
     }
 
     @Override

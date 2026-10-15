@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "gonzotech:first_uranium_reactor_casing"
+          "name": "gonzotech:third_uranium_reactor_fuel_sheath"
         }
       ],
       "conditions": [
