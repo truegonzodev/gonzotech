@@ -48,7 +48,13 @@ assert "private static void classifyFloorStack(" in rad
 assert "double be = blockEmission(bi.getBlock());" in rad
 assert "double transfer = be * stack.getCount();" in rad
 assert "out[1] += transfer;" in rad
-assert "double target = found * CHEST_TO_CHUNK_RATE + placedLike;" in rad
+assert "INVENTORY_TO_CHUNK_RATE = 0.01" in rad
+assert "intrinsic * INVENTORY_TO_CHUNK_RATE * (1.0 - contam / intrinsic)" in rad
+assert "CHEST_TO_CHUNK_RATE = 0.01" in rad
+assert "transferTowardChunk(contam, chestEmission, CHEST_TO_CHUNK_RATE)" in rad
+assert "CHEST_TO_CHUNK_RATE * com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR" in rad
+assert "double placedBlockTransfer = Math.max(0.0, placedLike - contam);" in rad
+assert "double totalNzt = Math.max(0.0, intrinsic + induced - inducedBefore);" in rad
 assert "ItemEntity.class, box," in rad
 assert "ItemFrame.class, box," in rad
 # 0.3.108: вызовы emissionDeep ушли в classifyFloorStack (пол/рамки: блоки —

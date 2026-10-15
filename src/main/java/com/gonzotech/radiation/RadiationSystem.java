@@ -80,15 +80,16 @@ public final class RadiationSystem {
     // ── чанк ↔ предметы/игрок ──
     /** Предметы фонят от чанка только если он ОЧЕНЬ горячий (п.4: >30mZt). */
     private static final double ITEM_FROM_CHUNK_MIN = 30.0 * RadUnits.MILLI;
-    /** Доля эмиссии ПРЕСЕТНОГО источника в инвентаре, уходящая в чанк ежесекундно
-     *  (логистика к полной сумме инвентаря — анти-дюп: предмет никогда не
-     *  заражает округу сильнее, чем фонит сам, автор 21.09). */
+    /** Доля текущей полной эмиссии инвентаря, уходящая в чанк за секунду как
+     *  часть оставшейся разницы до суммы инвентаря. Цель не ограничивается
+     *  эмиссией сильнейшего стака. */
     private static final double INVENTORY_TO_CHUNK_RATE = 0.01;
-    /** Вклад содержимого контейнеров в чанк за секунду сканирования (логистика
-     *  к сумме эмиссии содержимого × экран контура каждого горячего контейнера). */
-    private static final double CHEST_TO_CHUNK_RATE = 0.0005;
-    /** Наведённый фон предметов НЕ греет чанк по своему весу (помпа только
-     *  пресетных источников) — иначе петля «предметы→чанк→предметы» дюпала фон. */
+    /** Ставка «контейнеры/обычные предметы в чанке → чанк»: 1% оставшейся
+     *  разницы с суммарной эмиссией за каждую секунду сканирования. */
+    private static final double CHEST_TO_CHUNK_RATE = 0.01;
+    /** Наведённый компонент уже учтён в общей сумме инвентаря; отдельный
+     *  повторный перенос не запускается, чтобы не создавать петлю
+     *  «предметы→чанк→предметы». */
 
     // ── естественное восстановление шкалы ──
     /** Доля шкалы, спадающая в секунду (точно 0.2%/с от текущего, автор: «теряет
@@ -161,7 +162,8 @@ public final class RadiationSystem {
         }
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
 
-        // Скан инвентаря: пресетная эмиссия + самый горячий стак (цель логистики фона).
+        // Скан полной эмиссии инвентаря; максимум и второй максимум используются
+        // только для локальной логистики наведёнки предметов, не для переноса в чанк.
         List<List<ItemStack>> compartments = List.of(
                 player.getInventory().items, player.getInventory().armor, player.getInventory().offhand);
         // 0.3.83: суммы — с рекурсивным обходом вложенных хранилищ (шалкер/
@@ -193,6 +195,7 @@ public final class RadiationSystem {
         // собственным содержимым, а empty-щипцы не росли бы от чужих источников).
         double chunkSource = chunkNzt > ITEM_FROM_CHUNK_MIN ? chunkNzt : 0.0;
 
+        double inducedBefore = 0.0;
         double induced = 0.0;
         for (int compartmentIndex = 0; compartmentIndex < compartments.size(); compartmentIndex++) {
             List<ItemStack> part = compartments.get(compartmentIndex);
@@ -211,15 +214,18 @@ public final class RadiationSystem {
                         ownEmission >= maxStackEmission ? secondStackEmission : maxStackEmission,
                         chunkSource);
                 double factor = RadMaterials.itemFactor(stack);
-                double oldInduced = 0.0;
-                if (tracing) {
-                    oldInduced = ItemRadioactivity.getInduced(stack);
-                    if (activeHand) {
-                        InteractionHand hand = stack == player.getOffhandItem()
-                                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-                        HeldRadState heldState = HELD_RAD.get(new HeldKey(player.getUUID(), hand));
-                        if (heldState != null && heldState.stack == stack) oldInduced = heldState.value;
-                    }
+                int count = Math.max(1, stack.getCount());
+                // intrinsic уже содержит NBT-наведёнку до тика. Запоминаем ровно
+                // этот верхний уровень, чтобы заменить его новым значением, а не
+                // прибавить наведённую эмиссию к уже включённой второй раз.
+                double storedInduced = ItemRadioactivity.getInduced(stack);
+                inducedBefore += storedInduced * count;
+                double oldInduced = tracing ? storedInduced : 0.0;
+                if (tracing && activeHand) {
+                    InteractionHand hand = stack == player.getOffhandItem()
+                            ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+                    HeldRadState heldState = HELD_RAD.get(new HeldKey(player.getUUID(), hand));
+                    if (heldState != null && heldState.stack == stack) oldInduced = heldState.value;
                 }
                 double perItem;
                 if (activeHand) {
@@ -229,7 +235,6 @@ public final class RadiationSystem {
                     ItemRadioactivity.tickInduced(stack, hasSourceContext, stackSource, factor);
                     perItem = ItemRadioactivity.getInduced(stack);
                 }
-                int count = Math.max(1, stack.getCount());
                 induced += perItem * count;
                 if (tracing && (ownEmission > 0.0 || oldInduced > 0.0 || perItem > 0.0)) {
                     RadiationTrace.log(level, player.blockPosition(), "ПРЕДМЕТЫ ИНВЕНТАРЯ ↔ ДОЗА ИГРОКА",
@@ -247,7 +252,10 @@ public final class RadiationSystem {
             }
         }
 
-        double totalNzt = intrinsic + induced;
+        // intrinsic — полный снимок эмиссии до обновления наведёнки. Убираем из
+        // него старую наведёнку верхнего уровня и добавляем обновлённую ровно раз;
+        // вложенные контейнеры остаются в intrinsic без изменений.
+        double totalNzt = Math.max(0.0, intrinsic + induced - inducedBefore);
 
         // Доза шкалы: инвентарь полным весом + фон чанка с весом 1/10.
         // Хазмат I (автор 22.09) режет входящую дозу, но пробивается горячим
@@ -294,8 +302,10 @@ public final class RadiationSystem {
         int newScale = scale + gainPermille - shedPermille;
         if (tracing) {
             RadiationTrace.log(level, player.blockPosition(), "ДОЗА ИГРОКА",
-                    "intrinsicInventory=" + RadiationTrace.rate(intrinsic)
-                            + "; inducedInventory=" + RadiationTrace.rate(induced)
+                    "inventoryEmissionBeforeTick=" + RadiationTrace.rate(intrinsic)
+                            + "; inducedInventoryBeforeTick=" + RadiationTrace.rate(inducedBefore)
+                            + "; inducedInventoryAfterTick=" + RadiationTrace.rate(induced)
+                            + "; inventoryDoseEmission=" + RadiationTrace.rate(totalNzt)
                             + "; chunkBaseline=" + RadiationTrace.rate(chunkBaseline)
                             + "; chunkContamination=" + RadiationTrace.rate(chunkContamination)
                             + "; chunkTotal=" + RadiationTrace.rate(chunkNzt) + "×" + CHUNK_DOSE_WEIGHT
@@ -338,9 +348,8 @@ public final class RadiationSystem {
         // Считаются здесь же, чтобы не заводить второй тик на игрока.
         RadSickness.tick(player, psyche.getRadiation());
 
-        // Игрок → чанк: ТОЛЬКО пресетная эмиссия (наведённый фон не греет местность),
-        // логистика к ПОЛНОЙ сумме инвентаря: ближе к уровню источника — медленнее,
-        // выше — никогда («источник не может заразить больше, чем имеет сам»).
+        // Игрок → чанк: 1% оставшейся разницы до полной эмиссии инвентаря;
+        // цель — сумма, без потолка по сильнейшему стаку. Эта логистика сохранена.
         double contam = data.contaminationOf(chunkKey);
         if (intrinsic > 0.0 && contam < intrinsic) {
             double transfer = intrinsic * INVENTORY_TO_CHUNK_RATE * (1.0 - contam / intrinsic);
@@ -415,14 +424,16 @@ public final class RadiationSystem {
         return state.value;
     }
 
-    /** Контейнеры активного чанка: логистика к сумме эмиссии содержимого,
-     *  на каждый горячий контейнер — свой экран контура (свинцовый купол над
-     *  сундуком с ураном гасит вклад, автор 21.09). */
+    /** Контейнеры активного чанка: 1% оставшейся разницы для обычного сундука
+     *  и предметной россыпи, 0,2% для свинцового ящика; каждый контейнер может
+     *  дополнительно экранироваться своим контуром. Радиоактивные блочные предметы
+     *  остаются постоянной целью на уровне поставленного блока. */
     private static void scanContainersInto(ServerLevel level, long chunkKey, ChunkRadiationData data) {
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
-        double found = 0.0;
-        double[] drops = scanDroppedItemsInto(level, chunkKey); // [россыпь, блоки]
-        found += drops[0];
+        double chestEmission = 0.0;
+        double leadChestEmission = 0.0;
+        double[] drops = scanDroppedItemsInto(level, chunkKey); // [обычная россыпь, блоки-источники]
+        chestEmission += drops[0];
         double placedLike = drops[1];
         for (BlockEntity be : chunk.getBlockEntities().values()) {
             if (be instanceof Container container) {
@@ -430,51 +441,56 @@ public final class RadiationSystem {
                 for (int i = 0; i < container.getContainerSize(); i++) {
                     mine += RadSources.emissionDeep(container.getItem(i));
                 }
-                double rawMine = mine;
-                double attenuation = 1.0;
                 BlockPos pos = be.getBlockPos();
-                // 0.3.111: содержимое свинцового ящика фонит на 80% слабее
-                if (be.getBlockState().getBlock() instanceof com.gonzotech.machines.block.ThirdLeadChestBlock) {
-                    double leadFactor = com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR;
-                    mine *= leadFactor;
-                    attenuation *= leadFactor;
-                }
                 if (mine > 0.0 && pos != null) {
+                    boolean leadChest = be.getBlockState().getBlock()
+                            instanceof com.gonzotech.machines.block.ThirdLeadChestBlock;
                     double contourFactor = Containment.factor(level, pos);
-                    mine *= contourFactor; // экран контура контейнера
-                    attenuation *= contourFactor;
-                }
-                found += mine;
-                if (mine > 0.0) {
+                    double effectiveMine = mine * contourFactor;
+                    double chunkRate = CHEST_TO_CHUNK_RATE * (leadChest
+                            ? com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR
+                            : 1.0);
+                    if (leadChest) {
+                        leadChestEmission += effectiveMine;
+                    } else {
+                        chestEmission += effectiveMine;
+                    }
                     RadiationTrace.log(level, pos, "КОНТЕЙНЕР → ЧАНК",
                             "block=" + BuiltInRegistries.BLOCK.getKey(be.getBlockState().getBlock())
-                                    + "; contentEmission=" + RadiationTrace.rate(rawMine)
-                                    + "; attenuation=" + RadiationTrace.number(attenuation)
-                                    + "; effectiveEmission=" + RadiationTrace.rate(mine)
+                                    + "; contentEmission=" + RadiationTrace.rate(mine)
+                                    + "; contourFactor=" + RadiationTrace.number(contourFactor)
+                                    + "; chunkRate=" + RadiationTrace.number(chunkRate)
+                                    + "; effectiveEmission=" + RadiationTrace.rate(effectiveMine)
                                     + "; chunkTargetContribution="
-                                    + RadiationTrace.rate(mine * CHEST_TO_CHUNK_RATE));
+                                    + RadiationTrace.rate(effectiveMine * chunkRate));
                 }
             }
         }
-        // 0.3.108: блоки на полу/в рамках — полной ставкой (как поставленные),
-        // россыпь — ставкой CHEST_TO_CHUNK_RATE; correction (1 − contam/target)
-        // сохранена для обеих частей.
-        double target = found * CHEST_TO_CHUNK_RATE + placedLike;
-        if (target > 0.0) {
-            double contam = data.contaminationOf(chunkKey);
-            if (contam < target) {
-                double transfer = target * (1.0 - contam / target);
-                data.addContamination(level, chunkKey, transfer, "контейнеры/предметы в чанке → чанк");
-            }
+
+        double contam = data.contaminationOf(chunkKey);
+        double ordinaryTransfer = transferTowardChunk(contam, chestEmission, CHEST_TO_CHUNK_RATE);
+        double leadTransfer = transferTowardChunk(contam, leadChestEmission,
+                CHEST_TO_CHUNK_RATE * com.gonzotech.machines.block.ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR);
+        // Блочный радиоактивный предмет в мире ведёт себя как поставленный блок:
+        // его постоянный вклад не получает ставку предметной наведёнки.
+        double placedBlockTransfer = Math.max(0.0, placedLike - contam);
+        double transfer = ordinaryTransfer + leadTransfer + placedBlockTransfer;
+        if (transfer > 0.0) {
+            data.addContamination(level, chunkKey, transfer, "контейнеры/предметы в чанке → чанк");
         }
+    }
+
+    /** Перенос доли оставшейся разницы к эмиссии источника. */
+    private static double transferTowardChunk(double contamination, double sourceEmission, double rate) {
+        return sourceEmission > contamination ? (sourceEmission - contamination) * rate : 0.0;
     }
 
     /**
      * 0.3.96 (автор): россыпь на полу и предметы в рамках тоже заражали чанк —
      * сканировались только BlockEntity-контейнеры. ItemEntity и ItemFrame —
      * сущности, поэтому добираем их отдельным проходом по чанку (раз в секунду,
-     * вместе со сканом контейнеров). Ставка та же, что у россыпи в сундуке
-     * (CHEST_TO_CHUNK_RATE): экранирования у лежащего предмета нет.
+     * вместе со сканом контейнеров). Обычная эмиссия передаётся по 1% остатка
+     * (CHEST_TO_CHUNK_RATE); экранирования у лежащего предмета нет.
      */
     private static double[] scanDroppedItemsInto(ServerLevel level, long chunkKey) {
         int cx = ChunkPos.getX(chunkKey);

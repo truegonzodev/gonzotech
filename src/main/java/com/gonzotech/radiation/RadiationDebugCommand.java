@@ -3,6 +3,7 @@ package com.gonzotech.radiation;
 import com.gonzotech.core.psyche.ModPsycheAttachments;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.text.GtUnits;
+import com.gonzotech.music.MusicDebugNetwork;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -27,7 +28,23 @@ public final class RadiationDebugCommand {
                                 .then(Commands.literal("purge")
                                         .executes(RadiationDebugCommand::purge))
                                 .then(Commands.literal("getdose")
-                                        .executes(RadiationDebugCommand::getDose))));
+                                        .executes(RadiationDebugCommand::getDose))
+                                .then(Commands.literal("trigger")
+                                        .then(Commands.literal("music")
+                                                .executes(RadiationDebugCommand::triggerMusic))));
+    }
+
+    private static int triggerMusic(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player == null) {
+            context.getSource().sendFailure(Component.literal(
+                    "[GonzoTech] Для проверки музыки нужен игрок в качестве отправителя."));
+            return 0;
+        }
+        // Проверка текущего трека и клиентского cooldown возможна только на клиенте;
+        // ответ о шансах/пуле он выведет в чат после фактического броска.
+        MusicDebugNetwork.requestDebugRoll(player);
+        return 1;
     }
 
     private static int purge(CommandContext<CommandSourceStack> context) {
