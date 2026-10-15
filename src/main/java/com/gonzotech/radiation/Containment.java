@@ -107,7 +107,7 @@ public final class Containment {
         // to an observer overlapping a closed wall or door.
         if (occupancy.barrier() && occupancy.emission() <= 0) return 0;
         RadiationContour.Result enclosure = result(level, observer);
-        if (RadiationTrace.isActive(level) && enclosure.insideDose() > 0.0) {
+        if (RadiationTrace.isActive(level, observer) && enclosure.insideDose() > 0.0) {
             for (RadiationContour.Pos point : enclosure.interior()) {
                 BlockPos source = new BlockPos(point.x(), point.y(), point.z());
                 double emission = RadSources.blockEmission(level.getBlockState(source));

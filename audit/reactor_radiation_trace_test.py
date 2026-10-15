@@ -21,7 +21,7 @@ def load(path: Path):
     return json.loads(read(path))
 
 
-_ver.at_least("0.3.227", "first-generation reactor and radiation tracing")
+_ver.at_least("0.3.228", "machine GUI theme selector and scoped radiation trace")
 
 # The first implementation intentionally supplies components only, not a running multiblock.
 machines = read(JAVA / "com/gonzotech/machines/registry/ModMachines.java")
@@ -108,6 +108,12 @@ system = read(JAVA / "com/gonzotech/radiation/RadiationSystem.java")
 chunk = read(JAVA / "com/gonzotech/radiation/ChunkRadiationData.java")
 containment = read(JAVA / "com/gonzotech/radiation/Containment.java")
 assert "DURATION_TICKS = 5 * 20" in trace
+assert "CHUNK_RADIUS = 1" in trace
+assert "centerChunkX" in trace and "centerChunkZ" in trace
+assert "dimension.equals(level.dimension().location())" in trace
+assert "Math.abs((long) chunkX - centerChunkX) <= CHUNK_RADIUS" in trace
+assert "isActiveChunkTransfer" in chunk and "logChunkTransfer" in chunk
+assert "все измерения сервера" not in trace
 assert "RadiationTrace.start(player)" in command
 assert "RadiationTrace.tick(event.getServer())" in system
 assert "RadiationTrace.clearAll()" in system

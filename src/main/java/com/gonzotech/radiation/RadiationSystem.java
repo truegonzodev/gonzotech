@@ -152,7 +152,7 @@ public final class RadiationSystem {
         }
         ServerLevel level = (ServerLevel) player.level();
         ChunkRadiationData data = ChunkRadiationData.get(level);
-        boolean tracing = RadiationTrace.isActive(level);
+        boolean tracing = RadiationTrace.isActive(level, player.blockPosition());
         if (hasVisualInstrument(player)) {
             List<RadiationVisualPayload.Source> visual = data.visualSources(level, player.blockPosition(), 18).stream()
                     .map(s -> new RadiationVisualPayload.Source(s.pos().asLong(), (float) s.emission()))

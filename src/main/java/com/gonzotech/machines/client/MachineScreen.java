@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client;
 
+import com.gonzotech.core.config.GonzoClientConfig;
 import com.gonzotech.machines.menu.BaseMachineMenu;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -27,7 +28,7 @@ import net.minecraft.world.entity.player.Inventory;
  * координаты 128,128). Рисунок может торчать за окно до 128 px во все стороны —
  * меню выглядит крупным, а геометрия слотов остаётся стандартной. Слои
  * {@code *_gui_bg.png} и {@code *_gui.png} берутся из ресурсов конкретной машины;
- * цвет/оформление не задаются этим классом.
+ * классическая или NEO-версия выбирается клиентской настройкой.
  *
  * Шкалы ограничены только своей заданной в коде областью и долей заполнения.
  * PNG не читается на CPU: непрозрачные части переднего слоя визуально закрывают заливку.
@@ -37,7 +38,21 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
     /** Каталог текстур GUI машин. */
     public static final String GUI_DIR = "textures/gui/";
     protected static ResourceLocation gui(String file) {
-        return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + file);
+        String selected = file;
+        if (isMachineGuiSheet(file) && !usesClassicMachineGuis()) {
+            selected = file.substring(0, file.length() - ".png".length()) + "_neo.png";
+        }
+        return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + selected);
+    }
+
+    private static boolean isMachineGuiSheet(String file) {
+        return file.endsWith("_gui.png") || file.endsWith("_gui_bg.png");
+    }
+
+    /** If the config has not loaded yet, retain the default NEO selection. */
+    protected static boolean usesClassicMachineGuis() {
+        return GonzoClientConfig.SPEC.isLoaded()
+                && GonzoClientConfig.USE_CLASSIC_MACHINE_GUIS.get();
     }
 
     // Пер-ресурсные шахматные текстуры-заливки шкал (общие, но НЕ универсальные).

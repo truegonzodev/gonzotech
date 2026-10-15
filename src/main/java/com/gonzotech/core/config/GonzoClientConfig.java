@@ -8,6 +8,7 @@ public final class GonzoClientConfig {
     public static final ModConfigSpec.BooleanValue EXTENDED_ADVANCED_TOOLTIPS;
     public static final ModConfigSpec.BooleanValue COSMETIC_FLUID_PARTICLES;
     public static final ModConfigSpec.BooleanValue GREATSWORD_IMPACT_FRAMES;
+    public static final ModConfigSpec.BooleanValue USE_CLASSIC_MACHINE_GUIS;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -25,6 +26,11 @@ public final class GonzoClientConfig {
                         "Client-only visual effect. Disabling it does not change greatsword damage or other gameplay.")
                 .translation("gonzotech.configuration.greatswordImpactFrames")
                 .define("greatswordImpactFrames", true);
+        USE_CLASSIC_MACHINE_GUIS = builder
+                .comment("Use the classic machine GUI sheets instead of the NEO sheets.",
+                        "Client-only visual preference. JEI always uses the original GUI textures.")
+                .translation("gonzotech.configuration.useClassicMachineGuis")
+                .define("useClassicMachineGuis", false);
         SPEC = builder.build();
     }
 

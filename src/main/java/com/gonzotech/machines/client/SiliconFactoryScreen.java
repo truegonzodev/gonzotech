@@ -27,6 +27,7 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
         "gui.gonzotech.silicon_factory.vulcanization",
     };
     private int resolvedVariant = -1;
+    private boolean resolvedClassic;
     private ResourceLocation background;
     private ResourceLocation foreground;
 
@@ -48,8 +49,11 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
 
     private void resolveSheets() {
         int variant = menu.variant();
-        if (resolvedVariant == variant) return;
+        boolean classic = usesClassicMachineGuis();
+        if (resolvedVariant == variant && resolvedClassic == classic
+                && background != null && foreground != null) return;
         resolvedVariant = variant;
+        resolvedClassic = classic;
         if (variant >= 1 && variant <= 3) {
             ResourceLocation bg = gui("silicon_factory_chip_" + variant + "_gui_bg.png");
             ResourceLocation fg = gui("silicon_factory_chip_" + variant + "_gui.png");

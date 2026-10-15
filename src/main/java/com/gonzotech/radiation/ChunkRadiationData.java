@@ -113,7 +113,7 @@ public class ChunkRadiationData extends SavedData {
                 placed.remove(key);
                 placedPos.remove(key);
                 if (oldBaseline != 0.0 || oldContamination != 0.0 || oldPlaced != 0.0 || oldSources > 0) {
-                    RadiationTrace.log(level, null, "ЧАНК → ОЧИЩЕНИЕ",
+                    RadiationTrace.logChunk(level, cx, cz, "ЧАНК → ОЧИЩЕНИЕ",
                             "purge: чанк [" + cx + "," + cz + "]; baseline=" + RadiationTrace.rate(oldBaseline)
                                     + "; contamination=" + RadiationTrace.rate(oldContamination)
                                     + "; placed=" + RadiationTrace.rate(oldPlaced) + "; источников=" + oldSources);
@@ -159,7 +159,7 @@ public class ChunkRadiationData extends SavedData {
         if (applied != 0.0) {
             int chunkX = ChunkPos.getX(chunkKey);
             int chunkZ = ChunkPos.getZ(chunkKey);
-            RadiationTrace.log(level, null, "ЗАРАЖЕНИЕ ЧАНКА",
+            RadiationTrace.logChunk(level, chunkX, chunkZ, "ЗАРАЖЕНИЕ ЧАНКА",
                     "чанк [" + chunkX + "," + chunkZ + "]; причина=" + cause
                             + "; requested=" + RadiationTrace.rate(deltaNzt)
                             + "; actual=" + RadiationTrace.rate(applied)
@@ -207,7 +207,7 @@ public class ChunkRadiationData extends SavedData {
             v = computeBaseline(level, chunkKey);
             baseline.put(chunkKey, v);
             setDirty();
-            RadiationTrace.log(level, null, "ПРИРОДНЫЙ ФОН ЧАНКА",
+            RadiationTrace.logChunk(level, ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey), "ПРИРОДНЫЙ ФОН ЧАНКА",
                     "чанк [" + ChunkPos.getX(chunkKey) + "," + ChunkPos.getZ(chunkKey)
                             + "]; baseline=" + RadiationTrace.rate(v));
         }
@@ -257,7 +257,6 @@ public class ChunkRadiationData extends SavedData {
      * </ol>
      */
     public void maintain(ServerLevel level) {
-        boolean tracing = RadiationTrace.isActive(level);
         // Before feeding contamination, reconcile the registry with the world.
         // A piston can move a source without firing the player break/place path;
         // a bounded local search preserves that source at its new position.
@@ -275,10 +274,12 @@ public class ChunkRadiationData extends SavedData {
             double before = contamination.get(key);
             double c = Math.max(0.0, before + (target - before) * PLACED_CONVERGE);
             contamination.put(key, c);
-            if (tracing && c != before) {
+            int chunkX = ChunkPos.getX(key);
+            int chunkZ = ChunkPos.getZ(key);
+            if (c != before && RadiationTrace.isActiveChunk(level, chunkX, chunkZ)) {
                 LongOpenHashSet sources = placedPos.get(key);
-                RadiationTrace.log(level, null, "ИСТОЧНИКИ БЛОКОВ → ЗАРАЖЕНИЕ ЧАНКА",
-                        "чанк [" + ChunkPos.getX(key) + "," + ChunkPos.getZ(key) + "]; источников="
+                RadiationTrace.logChunk(level, chunkX, chunkZ, "ИСТОЧНИКИ БЛОКОВ → ЗАРАЖЕНИЕ ЧАНКА",
+                        "чанк [" + chunkX + "," + chunkZ + "]; источников="
                                 + (sources == null ? 0 : sources.size())
                                 + "; emissions=" + RadiationTrace.rate(emitted)
                                 + "; contourFactor=" + RadiationTrace.number(screen)
@@ -302,9 +303,11 @@ public class ChunkRadiationData extends SavedData {
             } else {
                 e.setValue(v);
             }
-            if (tracing && v != before) {
-                RadiationTrace.log(level, null, "РАСПАД ЗАРАЖЕНИЯ ЧАНКА",
-                        "чанк [" + ChunkPos.getX(key) + "," + ChunkPos.getZ(key) + "]; contamination="
+            int chunkX = ChunkPos.getX(key);
+            int chunkZ = ChunkPos.getZ(key);
+            if (v != before && RadiationTrace.isActiveChunk(level, chunkX, chunkZ)) {
+                RadiationTrace.logChunk(level, chunkX, chunkZ, "РАСПАД ЗАРАЖЕНИЯ ЧАНКА",
+                        "чанк [" + chunkX + "," + chunkZ + "]; contamination="
                                 + RadiationTrace.rate(before) + "→" + RadiationTrace.rate(v)
                                 + (removed ? "; запись удалена после порога" : "; decay=" + RadiationTrace.number(DECAY)));
             }
@@ -334,8 +337,9 @@ public class ChunkRadiationData extends SavedData {
                     if (flow > 0.0) { // только отдаём; «приём» посчитает сосед из своего снимка
                         delta.addTo(key, -flow);
                         delta.addTo(nk, flow);
-                        if (tracing) {
-                            RadiationTrace.log(level, null, "ДИФФУЗИЯ ЧАНК → ЧАНК",
+                        if (RadiationTrace.isActiveChunkTransfer(level, x, z, x + dx, z + dz)) {
+                            RadiationTrace.logChunkTransfer(level, x, z, x + dx, z + dz,
+                                    "ДИФФУЗИЯ ЧАНК → ЧАНК",
                                     "[" + x + "," + z + "] → [" + (x + dx) + "," + (z + dz)
                                             + "]; transfer=" + RadiationTrace.rate(flow)
                                             + "; snapshot=" + RadiationTrace.rate(self)
@@ -517,7 +521,7 @@ public class ChunkRadiationData extends SavedData {
             double seed = Math.min(80.0, 10.0 + ores * 5.0); // 10–80 nZt один раз
             double before = contamination.get(chunkKey);
             contamination.addTo(chunkKey, seed);
-            RadiationTrace.log(level, null, "УРАНОВАЯ РУДА → ЗАРАЖЕНИЕ ЧАНКА",
+            RadiationTrace.logChunk(level, cp.x, cp.z, "УРАНОВАЯ РУДА → ЗАРАЖЕНИЕ ЧАНКА",
                     "чанк [" + cp.x + "," + cp.z + "]; найдено руд=" + ores
                             + "; посев=" + RadiationTrace.rate(seed)
                             + "; contamination=" + RadiationTrace.rate(before)
