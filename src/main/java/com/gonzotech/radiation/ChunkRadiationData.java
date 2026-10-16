@@ -53,6 +53,8 @@ public class ChunkRadiationData extends SavedData {
 
     /** Скорость логистического сближения с уровнем поставленных блоков за проход обслуживания. */
     private static final double PLACED_CONVERGE = 0.05;
+    /** Шаг обслуживания поставленных радиоактивных блоков — 20 секунд. */
+    public static final int PLACED_UPDATE_PERIOD_TICKS = 20 * 20;
 
     /** Затухание заражения за обслуживание (применяется ВСЕГДА, автор 21.09). */
     private static final double DECAY = 0.99;
@@ -165,6 +167,25 @@ public class ChunkRadiationData extends SavedData {
                             + "; actual=" + RadiationTrace.rate(applied)
                             + "; contamination=" + RadiationTrace.rate(before)
                             + "→" + RadiationTrace.rate(next));
+        }
+    }
+
+    /**
+     * Питать радиоактивный BlockItem на полу/в рамке с тем же сближением 5% за 20 с,
+     * что и зарегистрированный поставленный блок. Цель уже умножена на фактор контура
+     * в позиции сущности.
+     */
+    public void convergePlacedLikeEntitySource(ServerLevel level, long chunkKey,
+                                               double targetNzt, long elapsedTicks) {
+        if (targetNzt <= 0.0D || elapsedTicks <= 0L) return;
+        long boundedTicks = Math.min(elapsedTicks, PLACED_UPDATE_PERIOD_TICKS);
+        double rate = 1.0D - Math.pow(1.0D - PLACED_CONVERGE,
+                boundedTicks / (double) PLACED_UPDATE_PERIOD_TICKS);
+        double before = contamination.get(chunkKey);
+        double transfer = (targetNzt - before) * rate;
+        if (transfer != 0.0D) {
+            addContamination(level, chunkKey, transfer,
+                    "радиоактивный BlockItem на полу/в рамке → модель поставленного блока");
         }
     }
 

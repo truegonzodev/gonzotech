@@ -123,6 +123,11 @@ assert "RadiationTrace.start(player)" in command
 assert "RadiationTrace.tick(event.getServer())" in system
 assert "RadiationTrace.clearAll()" in system
 assert "inventoryContribution=" in system and "strongestOtherSource=" in system
+assert "inducedBefore += storedInduced * count;" in system
+assert "double totalNzt = 0.0D;" in system
+assert "for (List<ItemStack> part : compartments)" in system and "RadSources.emissionDeep(stack);" in system
+assert '"ИНВЕНТАРЬ ИГРОКА → ЧАНК"' in system
+assert "inventoryDoseEmission=" in system
 assert '"ДОЗА ИГРОКА"' in system
 assert '"ДИФФУЗИЯ ЧАНК → ЧАНК"' in chunk
 assert '"ИСТОЧНИКИ БЛОКОВ → ЗАРАЖЕНИЕ ЧАНКА"' in chunk

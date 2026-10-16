@@ -39,23 +39,44 @@ assert firebox.index("if (be.blastFormed) {") < firebox.index("CAMPFIRE_COSY_SMO
 # litTime-- остался вне гейта (горение не зависит от дыма)
 assert "be.litTime--;" in firebox
 
-# ── 4) радиация пола и рамок ──
-assert "scanDroppedItemsInto(level, chunkKey)" in rad
-# 0.3.108: блочные предметы на полу/в рамках фонят КАК ПОСТАВЛЕННЫЙ БЛОК
-# (полная эмиссия блока, без ставки россыпи) — по решению автора
-assert "private static double[] scanDroppedItemsInto(ServerLevel level, long chunkKey)" in rad
+# ── 4) радиация инвентаря, контейнеров, россыпи и радиоактивных BlockItem ──
+assert "scanContainersInto(level, chunkKey, data, nowTick)" in rad
+assert "claimContentScan(level, chunkKey, nowTick)" in rad       # несколько игроков не сканируют чанк каждый
+assert "private static FloorScan scanDroppedItemsInto(ServerLevel level, long chunkKey," in rad
 assert "private static void classifyFloorStack(" in rad
-assert "double be = blockEmission(bi.getBlock());" in rad
-assert "double transfer = be * stack.getCount();" in rad
-assert "out[1] += transfer;" in rad
-assert "double target = found * CHEST_TO_CHUNK_RATE + placedLike;" in rad
+assert "ItemRadioactivity.decayInducedDeepLazily(stack, nowTick)" in rad
+assert "double blockEmission = blockEmission(blockItem.getBlock());" in rad
+assert "convergePlacedLikeEntitySource(level, chunkKey, floor.blockLikeTarget(), floorElapsed)" in rad
+assert "Containment.factor(level, pos)" in rad
+assert "INVENTORY_TO_CHUNK_RATE = 0.01" in rad
+assert "totalNzt, INVENTORY_TO_CHUNK_RATE * inventoryContourFactor" in rad
+assert "double totalNzt = 0.0D;" in rad             # post-tick full sum; no top-level induced double count
+assert "CHEST_TO_CHUNK_RATE = 0.01" in rad
+assert "CHEST_TO_CHUNK_RATE * contourFactor" in rad # normal containers/final floor items
+assert "CONTENT_CHUNK_FACTOR" in rad
+assert "effectiveEmission, CHEST_TO_CHUNK_RATE" in rad # exact lead formula: 0.01×max(0.2×M×F−C,0)
+assert "blockEmission * stack.getCount() * contourFactor" in rad
+assert "elapsedFloorBlockScanTicks" in rad
+assert "PLACED_UPDATE_PERIOD_TICKS" in rad
+assert "Math.pow(1.0D - PLACED_CONVERGE" in (ROOT / "src/main/java/com/gonzotech/radiation/ChunkRadiationData.java").read_text()
+lead_be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/ThirdLeadChestBlockEntity.java").read_text()
+lead_block = (ROOT / "src/main/java/com/gonzotech/machines/block/ThirdLeadChestBlock.java").read_text()
+assert "serverTick" not in lead_be and "BlockEntityTicker" not in lead_block
+assert "decayInducedDeepLazily" in rad       # same lazy no-source rate as inventory, no peer irradiation
 assert "ItemEntity.class, box," in rad
 assert "ItemFrame.class, box," in rad
-# 0.3.108: вызовы emissionDeep ушли в classifyFloorStack (пол/рамки: блоки —
-# полной ставкой, остальное — россыпью)
 assert "double emission = RadSources.emissionDeep(stack);" in rad
-assert "out[0] += emission;" in rad
+assert "out[0] += transfer;" in rad
 assert "level.getMinY(), cz << 4," in rad                            # AABB чанка
+
+# The exact rate laws remain observable and numerical: contour scales finite-source
+# transfer, while lead-box contour scales the target before its 1% difference.
+def toward(chunk, source, rate):
+    return max(source - chunk, 0.0) * rate
+assert toward(2.0, 12.0, 0.01 * 0.25) == 0.025
+assert abs(toward(0.2, 12.0 * 0.2 * 0.25, 0.01) - 0.004) < 1.0e-12
+assert abs(1.0 - (1.0 - 0.05) ** 1 - 0.05) < 1.0e-12
+assert 1.0 - (1.0 - 0.05) ** 20 >= 0.64
 
 # ── 5) portPlaced: один seed вместо 7 (сборка узлов-кандидатов роняла сервер) ──
 for name in ("turbine/TurbineStructure.java", "steamgen/SteamGenStructure.java"):

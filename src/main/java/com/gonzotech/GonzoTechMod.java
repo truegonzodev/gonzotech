@@ -239,6 +239,7 @@ public class GonzoTechMod {
         com.gonzotech.machines.network.PipeFlowNetwork.register(registrar);
 
         com.gonzotech.space.SpaceSkyNetwork.register(registrar);
+        com.gonzotech.music.MusicDebugNetwork.register(registrar);
 
         // Суневеты: nextEventDay/lastEventDay/suneventDays на клиент.
         com.gonzotech.sunevent.SunEventNetwork.register(registrar);

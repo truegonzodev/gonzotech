@@ -27,7 +27,7 @@ HISTORICAL = {
 }
 PLANNED = {"docs/RADIATION.md"}
 # ссылка: docs/...md либо голое имя файла (NAME + .md)
-LINK = re.compile(r"(?:docs/)?[A-Za-z0-9_\-./]*[A-Za-z0-9_\-]+\.md")
+LINK = re.compile(r"(?:docs/)?[A-Za-z0-9_\-./]*[A-Za-z0-9_\-]+\.md(?![A-Za-z0-9_\-])")
 
 problems, checked, info = [], 0, []
 for root, dirs, files in os.walk(ROOT):
