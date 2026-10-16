@@ -6,7 +6,7 @@ import _ver
 
 ROOT = Path(__file__).resolve().parents[1]
 JAVA = ROOT / "src/main/java/com/gonzotech"
-_ver.at_least("0.3.230", "server music debug roll")
+_ver.at_least("0.3.233", "context-aware music replacement and server music debug roll")
 
 command = (JAVA / "radiation/RadiationDebugCommand.java").read_text(encoding="utf-8")
 network = (JAVA / "music/MusicDebugNetwork.java").read_text(encoding="utf-8")
@@ -27,6 +27,15 @@ assert "playOst(minecraft, selected)" in client
 assert "GT_OST_BITTER" in client and "GT_OST_CRADLE" in client
 assert "GT_OST_ETHEREAL" in client and "GT_OST_RAIDIN_BONES" in client
 assert "GT_OST_40000FT" in client
+assert "MUSIC_SURFACE_HEIGHT = 44.0D" in client
+assert "OVERWORLD_BITTER_CHANCE_PERCENT = 37" in client
+assert "UNDERGROUND_REPLACEMENT_CHANCE_PERCENT = 37" in client
+assert "CRADLE_BIOME_CHANCE_PERCENT = 50" in client
+assert "maybeReplaceVanillaTrack" in mixin and "maybeReplaceVanillaTrack" in client
+assert "y > MUSIC_SURFACE_HEIGHT" in client and "y < MUSIC_SURFACE_HEIGHT" in client
+assert "dimension.equals(Level.OVERWORLD) || isMoonOrMars(dimension)" in client
+assert "raidinBonesDimension && y >= MUSIC_SURFACE_HEIGHT && y <= 154.0D" in client
+assert "!player.getAbilities().instabuild" in client
 assert "GonzoMusicClient.shouldSuppressMusicStart(Minecraft.getInstance())" in mixin
 
 print("Music debug command/network/client roll checks passed")

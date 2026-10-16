@@ -7,8 +7,9 @@
 - `videoplaybak.ogg` — звук видео на доске учёного;
 - `ost/gt_ost_40000ft.ogg`, `ost/gt_ost_bitter.ogg`, `ost/gt_ost_cradle.ogg`,
   `ost/gt_ost_ethereal.ogg`, `ost/gt_ost_raidin_bones.ogg` — стерео-OST, зарегистрированные как
-  музыкальные события со стримингом (`stream: true`). Их расписание и пулы описаны в
-  `GonzoMusicClient` и в `data/gonzotech/worldgen/biome/*.json`.
+  музыкальные события со стримингом (`stream: true`). Их расписание и взаимодействие с ванильной
+  музыкой собраны в [таблице музыкальных контекстов](../../../../../../docs/MUSIC-CONTEXTS-0.3.233.md),
+  а biome music-пулы заданы в `data/gonzotech/worldgen/biome/*.json`.
 
 Для нового звука `example.ogg`:
 1. В `ModSounds` объявить статическое поле `EXAMPLE = sound("example")` (тип `DeferredHolder<SoundEvent, SoundEvent>`).
