@@ -65,11 +65,23 @@ for source in source_sheets:
     assert neo.is_file(), f"missing NEO copy for {source.name}"
     assert dimensions(neo) == dimensions(source), f"NEO canvas must match {source.name}"
 
-# Keep the submitted boiler NEO art intact; the remaining 60 large placeholder
-# sheets retain the initial pure-red canvas. Filter NEO sheets are user-provided copies.
+# Preserve the author-provided boiler NEO art and the newer 82ee30a updates;
+# the other 56 large NEO sheets retain the initial pure-red placeholder canvas.
+user_art_sources = {
+    "accumulator_gui.png",
+    "accumulator_gui_bg.png",
+    "alloy_foundry_gui.png",
+    "alloy_foundry_gui_bg.png",
+    "boiler_gui.png",
+    "boiler_gui_bg.png",
+}
+red_template = (GUI_DIR / "blast_furnace_gui_neo.png").read_bytes()
 for source in machine_sheets:
-    if source.name not in {"boiler_gui.png", "boiler_gui_bg.png"}:
-        assert_solid_red_rgba(source.with_name(source.stem + "_neo.png"))
+    neo = source.with_name(source.stem + "_neo.png")
+    if source.name in user_art_sources:
+        assert neo.read_bytes() != red_template, f"user artwork was replaced by the red placeholder: {neo.name}"
+    else:
+        assert_solid_red_rgba(neo)
 for source in filter_sheets:
     assert source.with_name(source.stem + "_neo.png").stat().st_size > 0
 

@@ -3,6 +3,8 @@
 from pathlib import Path
 import math
 
+import _ver
+
 ROOT = Path(__file__).resolve().parents[1]
 JAVA = ROOT / "src/main/java/com/gonzotech"
 
@@ -23,7 +25,6 @@ pentacin = read("radiation/PentacinItem.java")
 cysteamine = read("radiation/CysteamineItem.java")
 absorbent = read("radiation/RadAbsorbentItem.java")
 docs = (ROOT / "docs/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
-version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
 
 # Inventory dose is rebuilt after the tick, so direct induced activity is counted once.
 assert "double totalNzt = 0.0D;" in system
@@ -91,6 +92,6 @@ for phrase in ("ДТПА — отдельно", "Пентасин", "Цисте�
                "текущую дозу не уменьшает", "не передаются в чанк",
                "RadCleanse", "0.01 × max(0.2 × M × F_ящика − C, 0)"):
     assert phrase in docs, phrase
-assert "mod_version=0.3.232" in version
+_ver.at_least("0.3.232", "radiation behavior contracts")
 
 print("radiation 0.3.232 flows, convergence, medication table and chunk-shed contracts passed")

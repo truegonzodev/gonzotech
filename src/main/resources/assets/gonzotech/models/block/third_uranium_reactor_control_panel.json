@@ -1,8 +1,6 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "top": "gonzotech:block/steamgen/second_steamgen_casing",
-    "side": "gonzotech:block/turbine/first_turbine_casing",
-    "front": "gonzotech:block/first/uranium_reactor_control_panel"
+    "all": "gonzotech:block/third_1reactor/third_1reactor_control_panel"
   }
 }

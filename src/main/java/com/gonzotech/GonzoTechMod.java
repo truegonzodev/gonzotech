@@ -97,8 +97,14 @@ public class GonzoTechMod {
             com.gonzotech.machines.network.PipeFlowLedger.clearAll();
             com.gonzotech.machines.turbine.TurbineStructure.clearAll();
             com.gonzotech.machines.steamgen.SteamGenStructure.clearAll();
+            com.gonzotech.machines.reactor.ReactorStructure.clearAll();
             com.gonzotech.machines.litho.SiliconFactoryStructure.clearAll();
         });
+
+        // Реактор: размещение/слом любого блока перепроверяет только близкие контроллеры;
+        // внутренняя вода и запрещённые клетки тоже меняют formed-состояние.
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.reactor.ReactorStructure::onBlockPlace);
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.reactor.ReactorStructure::onBlockBreak);
 
         // Литография: постановка игроком любого блока-участника может достроить структуру 3×3×2.
         NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.litho.SiliconFactoryStructure::onBlockPlace);

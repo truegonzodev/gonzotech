@@ -1,0 +1,11 @@
+{
+  "loader": "gonzotech:smart_ctm",
+  "ambientocclusion": false,
+  "textures": {
+    "base": "gonzotech:block/third_1reactor/third_1reactor_casting_formed",
+    "line": "gonzotech:block/third_1reactor/1reactor_ctm_line",
+    "outer_corner": "gonzotech:block/third_1reactor/1reactor_ctm_outer_corner",
+    "inner_corner": "gonzotech:block/third_1reactor/1reactor_ctm_inner_corner",
+    "particle": "gonzotech:block/third_1reactor/third_1reactor_casting_formed"
+  }
+}

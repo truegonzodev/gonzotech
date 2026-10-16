@@ -1,5 +1,7 @@
 {
+  "__comment": "Smart CTM: the unformed block is a plain cube; formed casing uses its own base, edge and corner textures.",
   "variants": {
-    "": { "model": "gonzotech:block/third_uranium_reactor_casing" }
+    "formed=false": { "model": "gonzotech:block/third_uranium_reactor_casing" },
+    "formed=true": { "model": "gonzotech:block/third_uranium_reactor_casing_ctm" }
   }
 }

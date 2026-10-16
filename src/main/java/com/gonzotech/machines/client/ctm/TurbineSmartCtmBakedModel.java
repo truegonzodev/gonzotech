@@ -1,5 +1,6 @@
 package com.gonzotech.machines.client.ctm;
 
+import com.gonzotech.core.block.ReactorCasingBlock;
 import com.gonzotech.machines.block.SteamGenCasingBlock;
 import com.gonzotech.machines.block.SteamGenPartBlock;
 import com.gonzotech.machines.block.TurbineCasingBlock;
@@ -26,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Texture-only Smart CTM for formed shells (turbine casing, steamgen, fireclay).
+ * Texture-only Smart CTM for formed shells (reactor, turbine, steamgen, fireclay).
  *
  * <p>At chunk mesh build time {@link #getModelData(BlockAndTintGetter,
  * BlockPos, BlockState, ModelData)} calculates the eight face-local neighbours
@@ -229,10 +230,13 @@ public final class TurbineSmartCtmBakedModel implements IDynamicBakedModel {
 
     /**
      * Сформированный ли корпус в {@code state} — для ЛЮБОЙ семьи Smart CTM
-     * (турбина/парогенератор). У каждой семьи СВОЙ экземпляр BooleanProperty
+     * (реактор/турбина/парогенератор/шамотная печь). У каждой семьи СВОЙ экземпляр BooleanProperty
      * «formed», поэтому чтение property строго по типу блока.
      */
     private static boolean isFormedCasing(BlockState state) {
+        if (state.getBlock() instanceof ReactorCasingBlock) {
+            return state.getValue(ReactorCasingBlock.FORMED);
+        }
         if (state.getBlock() instanceof TurbineCasingBlock) {
             return state.getValue(TurbinePartBlock.FORMED);
         }

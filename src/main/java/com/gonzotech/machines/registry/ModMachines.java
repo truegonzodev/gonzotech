@@ -13,6 +13,7 @@ import com.gonzotech.machines.block.ElectricFurnaceBlock;
 import com.gonzotech.machines.block.FermentationVatBlock;
 import com.gonzotech.machines.block.FireboxBlock;
 import com.gonzotech.machines.block.NuclearFireboxBlock;
+import com.gonzotech.core.block.ReactorCasingBlock;
 import com.gonzotech.core.block.ReactorControlPanelBlock;
 import com.gonzotech.core.block.ReactorFuelSheathBlock;
 import com.gonzotech.machines.block.PumpBlock;
@@ -135,9 +136,9 @@ public final class ModMachines {
     public static final DeferredBlock<NuclearFireboxBlock> SECOND_NUCLEAR_FIREBOX =
         BLOCKS.registerBlock("second_nuclear_firebox", NuclearFireboxBlock::new, machineMetal());
 
-    // First-generation uranium reactor foundation; runtime structure logic is a later stage.
-    public static final DeferredBlock<Block> THIRD_URANIUM_REACTOR_CASING =
-        BLOCKS.registerSimpleBlock("third_uranium_reactor_casing", machineMetal());
+    // First-generation uranium reactor shell; formed casing switches to Smart CTM.
+    public static final DeferredBlock<ReactorCasingBlock> THIRD_URANIUM_REACTOR_CASING =
+        BLOCKS.registerBlock("third_uranium_reactor_casing", ReactorCasingBlock::new, machineMetal());
     public static final DeferredBlock<ReactorControlPanelBlock> THIRD_URANIUM_REACTOR_CONTROL_PANEL =
         BLOCKS.registerBlock("third_uranium_reactor_control_panel", ReactorControlPanelBlock::new, machineMetal());
     public static final DeferredBlock<ReactorFuelSheathBlock> THIRD_URANIUM_REACTOR_FUEL_SHEATH =
