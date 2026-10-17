@@ -48,5 +48,6 @@ public final class MachineClient {
         event.register(ModMenus.PCFSOZ.get(), PcfsozScreen::new);
         event.register(ModMenus.THIRD_DISPENSING_TAP.get(), DispensingTapScreen::new);
         event.register(ModMenus.THIRD_LEAD_CHEST.get(), LeadChestScreen::new);
+        event.register(ModMenus.REACTOR.get(), ReactorScreen::new);
     }
 }

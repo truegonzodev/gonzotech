@@ -7,6 +7,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -28,7 +29,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-/** Six-way facing reactor controller; right-click is intentionally diagnostic-only for now. */
+/** Six-way reactor controller; normal clicks open its formed multiblock menu and Shift-clicks report diagnostics. */
 public final class ReactorControlPanelBlock extends Block implements EntityBlock {
 
     public static final MapCodec<ReactorControlPanelBlock> CODEC = simpleCodec(ReactorControlPanelBlock::new);
@@ -97,6 +98,9 @@ public final class ReactorControlPanelBlock extends Block implements EntityBlock
                             BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())) {
             ReactorStructure.partRemoved(level, pos);
+            if (level.getBlockEntity(pos) instanceof ReactorControlPanelBlockEntity panel) {
+                Containers.dropContents(level, pos, panel);
+            }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
@@ -104,18 +108,26 @@ public final class ReactorControlPanelBlock extends Block implements EntityBlock
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
-        return reportStatus(level, pos, player);
+        return interact(level, pos, player);
     }
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        return reportStatus(level, pos, player);
+        return interact(level, pos, player);
     }
 
-    private static InteractionResult reportStatus(Level level, BlockPos pos, Player player) {
-        if (!level.isClientSide()) {
-            player.displayClientMessage(Component.literal(ReactorStructure.debugReport(level, pos)), false);
+    private static InteractionResult interact(Level level, BlockPos pos, Player player) {
+        if (!level.isClientSide()
+            && level.getBlockEntity(pos) instanceof ReactorControlPanelBlockEntity panel) {
+            if (!player.isShiftKeyDown() && panel.isFormedController()) {
+                player.openMenu(panel, buffer -> {
+                    buffer.writeBlockPos(pos);
+                    buffer.writeVarInt(panel.fuelSlotCount());
+                });
+            } else {
+                player.displayClientMessage(Component.literal(ReactorStructure.debugReport(level, pos)), false);
+            }
         }
         return InteractionResult.SUCCESS;
     }

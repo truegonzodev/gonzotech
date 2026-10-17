@@ -558,7 +558,7 @@ public final class ReactorStructure {
     private static void applyFormedVisuals(ServerLevel level,
                                            ReactorControlPanelBlockEntity panel,
                                            StructureInfo info) {
-        panel.configureStructure(info.min(), info.max());
+        panel.configureStructure(info.min(), info.max(), info.sheaths());
         indexStructure(level, panel.getBlockPos(), info.min(), info.max());
         for (int x = info.min().getX(); x <= info.max().getX(); x++) {
             for (int y = info.min().getY(); y <= info.max().getY(); y++) {
