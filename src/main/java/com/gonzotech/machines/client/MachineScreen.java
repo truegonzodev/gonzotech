@@ -12,14 +12,15 @@ import net.minecraft.world.entity.player.Inventory;
 /**
  * Общая база экранов машин — «слоёный пирог» под рисованный PNG-GUI.
  *
- * <h2>Слои (сверху вниз по Z)</h2>
+ * <h2>Слои (от нижнего к верхнему)</h2>
  * <pre>
- *   Z3  Предметы + тултипы .............. ванила, самый верх
- *   Z2  Предметы в слотах / подсветка ... ванила
- *   Z1  PNG-ОКНО С ДЫРКАМИ ............... {@link #foregroundTexture()}  (маскирует шкалы)
- *   Z0  ПРОЯВЛЯЮЩИЕСЯ ШКАЛЫ ............. {@link #drawMachine} (текстура-заливка)
- *   Z-1 PNG-ФОН (под шкалами) ........... {@link #backgroundTexture()}
- *   Z-2 Затемнение мира ................. движок ({@link #renderBackground})
+ *   Z0  PNG-ФОН .......................... {@link #backgroundTexture()}
+ *   Z1  ПРОЯВЛЯЮЩИЕСЯ ШКАЛЫ ............. {@link #drawMachine} (текстура-заливка)
+ *   Z2  PNG-ОКНО С ДЫРКАМИ ............... {@link #foregroundTexture()} (маскирует шкалы)
+ *   Z3  Дополнительные рамки слотов ...... {@link #drawAfterForeground} (если нужны)
+ *   Z4  Подсветка/слотовые оверлеи ........ ванильный контейнер
+ *   Z5  Предметы в слотах ................. ванильный контейнер
+ *   Z6  Тултипы ........................... ванильный контейнер
  * </pre>
  *
  * <h2>Стандарт меню (512×512 @ −128,−128)</h2>
@@ -92,12 +93,12 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
 
     // ─────────────────── Настройки PNG-листа (переопределяемые) ───────────────────
 
-    /** Задний PNG (Z-1), под шкалами. По умолчанию нет — переопредели в наследнике. */
+    /** Задний PNG (Z0), под шкалами. По умолчанию нет — переопредели в наследнике. */
     protected ResourceLocation backgroundTexture() {
         return null;
     }
 
-    /** Передний PNG с дырками (Z1), над шкалами. По умолчанию нет. */
+    /** Передний PNG с дырками (Z2), над шкалами. По умолчанию нет. */
     protected ResourceLocation foregroundTexture() {
         return null;
     }
@@ -137,14 +138,21 @@ public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractC
         int x = this.leftPos;
         int y = this.topPos;
 
-        // Z-1: задний PNG-фон.
+        // Z0: задний PNG-фон.
         blitSheet(g, backgroundTexture(), x, y);
 
-        // Z0: проявляющиеся шкалы (только заливка).
+        // Z1: проявляющиеся шкалы (только заливка).
         drawMachine(g, x, y, mouseX, mouseY);
 
-        // Z1: передний PNG с дырками — маскирует лишнее у шкал.
+        // Z2: передний PNG с дырками — маскирует лишнее у шкал.
         blitSheet(g, foregroundTexture(), x, y);
+
+        // Z3: динамические оверлеи, например дополнительные слоты реактора.
+        drawAfterForeground(g, x, y, mouseX, mouseY);
+    }
+
+    /** Optional overlay above the foreground sheet and below vanilla slots/items. */
+    protected void drawAfterForeground(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
     }
 
     /** Блит всего листа PNG в угол окна с учётом размера листа и смещения. */

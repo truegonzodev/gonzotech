@@ -1,40 +1,524 @@
 package com.gonzotech.machines.reactor;
 
+import com.gonzotech.core.block.ReactorCasingBlock;
+import com.gonzotech.core.block.ReactorControlPanelBlock;
 import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.machines.block.entity.ReactorControlPanelBlockEntity;
 import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.event.level.BlockEvent;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
- * Minimal validator for the first-generation uranium reactor's outer cube.
+ * Event-driven validator and formed-visual initializer for the first uranium reactor.
  *
- * <p>This stage only checks geometry and material classes; it does not run
- * neutron/thermal calculations. A valid structure is a cube from 4x4x4 to
- * 10x10x10 whose shell is made of casing/panel/nodes and whose interior has
- * no air and only the allowed moderator/absorber/fuel blocks.</p>
+ * <p>The 4..16 limit is measured on the outside of the cubic casing. The shell is
+ * one block thick. Its only permitted parts are casing, one control panel, and
+ * shielded third-tier output nodes. The filled interior is deliberately a strict
+ * whitelist; air and unknown blocks prevent formation.</p>
+ *
+ * <p>Shift diagnostics can evaluate the archived dimensionless matrix model over
+ * the live interior. This is not a runtime simulation: fuel burnup, reactor heat
+ * production, and GTH generation remain unimplemented.</p>
  */
 public final class ReactorStructure {
+
+    public static final int MIN_SIZE = 4;
+    public static final int MAX_SIZE = 16;
+    private static final int MAX_SHELL_PARTS = 1_600;
+
+    /** Loaded controller panels used only to discover unformed reactors after block placement. */
+    private static final Map<Level, Set<Long>> PANEL_POSITIONS =
+        Collections.synchronizedMap(new WeakHashMap<>());
+
+    /** Every cell in a formed reactor's saved bounds -> its persistent panel controller. */
+    private static final Map<Level, Map<Long, BlockPos>> MEMBER_INDEX =
+        Collections.synchronizedMap(new WeakHashMap<>());
 
     private ReactorStructure() {
     }
 
-    public static String describe(Level level, BlockPos panelPos) {
-        for (int size = 4; size <= 10; size++) {
-            for (int dx = -(size - 1); dx <= 0; dx++) {
-                for (int dy = -(size - 1); dy <= 0; dy++) {
-                    for (int dz = -(size - 1); dz <= 0; dz++) {
-                        BlockPos min = panelPos.offset(dx, dy, dz);
-                        BlockPos max = min.offset(size - 1, size - 1, size - 1);
-                        if (!contains(min, max, panelPos)) continue;
-                        Result result = validate(level, min, max);
-                        if (result != null) return result.describe();
+    /** Only a placement event may initialize an unformed reactor. */
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        if (!event.isCanceled() && event.getLevel() instanceof ServerLevel level) {
+            partChanged(level, event.getPos());
+        }
+    }
+
+    /** Breaking a member may invalidate a formed snapshot, but never initializes a new one. */
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level) || event.isCanceled()) return;
+        if (event.getState().is(ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH.get())) {
+            if (!ReactorFuelStorage.canSafelyRemoveSheath(level, event.getPos())) {
+                event.setCanceled(true);
+                event.getPlayer().displayClientMessage(Component.literal(
+                    "Нельзя сломать ТВЭЛ-чехол, пока не загружены все чанки его реакторной зоны."), false);
+            }
+            // The sheath block performs fuel reallocation only after removal is certain.
+            return;
+        }
+        partRemoved(level, event.getPos());
+    }
+
+    /** Register a loaded panel and restore only a structure that was already saved as formed. */
+    public static void panelLoaded(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        PANEL_POSITIONS.computeIfAbsent(level, ignored -> new HashSet<>())
+            .add(panel.getBlockPos().asLong());
+        if (panel.isFormedController()) {
+            restorePanel(level, panel);
+        } else {
+            panel.clearValidationPending();
+        }
+    }
+
+    public static void panelUnloaded(Level level, BlockPos pos) {
+        Set<Long> panels = PANEL_POSITIONS.get(level);
+        if (panels != null) {
+            panels.remove(pos.asLong());
+            if (panels.isEmpty()) PANEL_POSITIONS.remove(level);
+        }
+        removeIndexForRoot(level, pos);
+    }
+
+    /** Transient loaded-panel and formed-member indexes are rebuilt from saved panel bounds. */
+    public static void clearAll() {
+        PANEL_POSITIONS.clear();
+        MEMBER_INDEX.clear();
+    }
+
+    /** A placement revalidates its formed member or tries to initialize a nearby unformed panel. */
+    public static void partChanged(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return;
+        registerPanelIfPresent(server, pos);
+        revalidateOrForm(server, pos);
+    }
+
+    /** Removal only invalidates a formed snapshot; it deliberately does not retry formation. */
+    public static void partRemoved(Level level, BlockPos pos) {
+        if (level instanceof ServerLevel server) {
+            invalidateAt(server, pos);
+        }
+    }
+
+    /** Restore saved bounds after load; an unformed panel is never initialized by chunk loading. */
+    public static void restorePanel(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        if (!panel.isFormedController()) {
+            panel.clearValidationPending();
+            return;
+        }
+        revalidateFormedPanel(level, panel, null);
+    }
+
+    /** Diagnose current geometry. A valid but unformed reactor remains unformed until a placement event. */
+    public static String debugReport(Level level, BlockPos panelPos) {
+        if (!(level instanceof ServerLevel server)) {
+            return "Реактор: диагностика доступна на серверной стороне.";
+        }
+        if (!server.hasChunkAt(panelPos)
+            || !(server.getBlockState(panelPos).getBlock() instanceof ReactorControlPanelBlock)
+            || !(server.getBlockEntity(panelPos) instanceof ReactorControlPanelBlockEntity panel)) {
+            return "Реактор не собран: на позиции панели нет её BlockEntity.";
+        }
+
+        PANEL_POSITIONS.computeIfAbsent(server, ignored -> new HashSet<>()).add(panelPos.asLong());
+        boolean wasFormed = panel.isFormedController();
+        Validation validation = wasFormed
+            ? revalidateFormedPanel(server, panel, null)
+            : inspectFromPanel(server, panelPos, null);
+        if (validation.incomplete()) {
+            return "Реактор: проверка отложена — не все чанки куба загружены; принудительная загрузка не выполнялась.";
+        }
+        if (validation.structure() == null) {
+            return "Реактор не сформирован: " + validation.failure()
+                + (wasFormed && !panel.isFormedController() ? " (сохранённая форма снята)." : ".");
+        }
+        if (!panel.isFormedController()) {
+            return "Реактор: геометрия корректна, но он не сформирован. Разместите блок внутри куба или на его оболочке, чтобы запустить инициализацию.";
+        }
+        StructureInfo info = validation.structure();
+        String summary = "Реактор I поколения сформирован: внешний куб " + info.size() + "³"
+            + ", обшивок=" + info.casingBlocks()
+            + ", ТВЭЛ-чехлов=" + info.sheaths()
+            + ", узел ГТХ=" + info.heatNodes()
+            + ", узел мультижидкости=" + info.fluidNodes()
+            + ", универсальных узлов=" + info.universalNodes()
+            + ", графита=" + info.graphite()
+            + ", бора=" + info.boron()
+            + ", бария=" + info.barium()
+            + ", воды=" + info.water() + ".";
+        try {
+            ReactorMatrix.Diagnostic matrix = ReactorMatrix.evaluate(server, panel);
+            MatrixCoefficients.Coefficients coefficients = matrix.coefficients();
+            int loadedTvels = ReactorFuelStorage.totalTvels(server, panel);
+            double tvelsPerSheath = matrix.fuelSheaths() == 0
+                ? 0.0 : (double) loadedTvels / matrix.fuelSheaths();
+            String report = summary
+                + " ТВЭЛов в чехлах=" + loadedTvels
+                + ", чехлов=" + matrix.fuelSheaths()
+                + ", среднее содержимое на чехол=" + String.format(Locale.ROOT, "%.4f", tvelsPerSheath)
+                + " · сухой тепловой коэффициент [H=" + String.format(Locale.ROOT, "%.6f", coefficients.heat()) + "]"
+                + " · сухой пиковый поток утечки [L=" + String.format(Locale.ROOT, "%.6f", coefficients.peakLeak())
+                + "; " + String.format(Locale.ROOT, "%.2f", coefficients.peakLeak() * 100.0) + "%]";
+            return report + " Цикл расхода топлива и генерации ГТХ ещё не реализован.";
+        } catch (RuntimeException exception) {
+            return summary + " Матрица коэффициентов не рассчитана: " + exception.getMessage();
+        }
+    }
+
+    /** Same diagnostics with the two matrix outputs visually distinguished in chat. */
+    public static Component debugReportComponent(Level level, BlockPos panelPos) {
+        String report = debugReport(level, panelPos);
+        int heatStart = report.indexOf("[H=");
+        int heatEnd = heatStart < 0 ? -1 : report.indexOf(']', heatStart);
+        int leakStart = heatEnd < 0 ? -1 : report.indexOf("[L=", heatEnd);
+        int leakEnd = leakStart < 0 ? -1 : report.indexOf(']', leakStart);
+        if (heatStart < 0 || heatEnd < 0 || leakStart < 0 || leakEnd < 0) {
+            return Component.literal(report).withStyle(ChatFormatting.GOLD);
+        }
+        return Component.literal(report.substring(0, heatStart)).withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(report.substring(heatStart, heatEnd + 1)).withStyle(ChatFormatting.GOLD))
+            .append(Component.literal(report.substring(heatEnd + 1, leakStart)).withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(report.substring(leakStart, leakEnd + 1)).withStyle(ChatFormatting.AQUA))
+            .append(Component.literal(report.substring(leakEnd + 1)).withStyle(ChatFormatting.GRAY));
+    }
+
+    private static void registerPanelIfPresent(ServerLevel level, BlockPos pos) {
+        if (level.getBlockState(pos).getBlock() instanceof ReactorControlPanelBlock
+            && level.getBlockEntity(pos) instanceof ReactorControlPanelBlockEntity) {
+            PANEL_POSITIONS.computeIfAbsent(level, ignored -> new HashSet<>()).add(pos.asLong());
+        }
+    }
+
+    private static void revalidateOrForm(ServerLevel level, BlockPos changed) {
+        BlockPos indexedRoot = controllerAt(level, changed);
+        if (indexedRoot != null) {
+            if (level.getBlockEntity(indexedRoot) instanceof ReactorControlPanelBlockEntity panel
+                && panel.isFormedController()) {
+                revalidateFormedPanel(level, panel, null);
+            } else {
+                removeIndexForRoot(level, indexedRoot);
+            }
+            return;
+        }
+
+        Set<Long> indexedPanels = PANEL_POSITIONS.get(level);
+        if (indexedPanels == null || indexedPanels.isEmpty()) return;
+        for (long packedPanel : Set.copyOf(indexedPanels)) {
+            BlockPos panelPos = BlockPos.of(packedPanel);
+            if (!near(changed, panelPos)) continue;
+            if (!level.hasChunkAt(panelPos)
+                || !(level.getBlockState(panelPos).getBlock() instanceof ReactorControlPanelBlock)) {
+                panelUnloaded(level, panelPos);
+                continue;
+            }
+            if (!(level.getBlockEntity(panelPos) instanceof ReactorControlPanelBlockEntity panel)) continue;
+
+            if (panel.isFormedController()) {
+                // A formed reactor owns a fixed box. Adjacent shell-looking blocks
+                // cannot expand or replace that snapshot.
+                if (panel.contains(changed)) {
+                    revalidateFormedPanel(level, panel, null);
+                }
+                continue;
+            }
+            tryFormFromPlacement(level, panel, changed);
+        }
+    }
+
+    private static void tryFormFromPlacement(ServerLevel level,
+                                             ReactorControlPanelBlockEntity panel,
+                                             BlockPos placedPos) {
+        if (panel.isFormedController()) return;
+        Validation validation = inspectFromPanel(level, panel.getBlockPos(), null);
+        if (validation.incomplete() || validation.structure() == null
+            || !contains(validation.structure(), placedPos)) {
+            return;
+        }
+        applyFormedVisuals(level, panel, validation.structure());
+    }
+
+    private static boolean contains(StructureInfo structure, BlockPos pos) {
+        return pos.getX() >= structure.min().getX() && pos.getX() <= structure.max().getX()
+            && pos.getY() >= structure.min().getY() && pos.getY() <= structure.max().getY()
+            && pos.getZ() >= structure.min().getZ() && pos.getZ() <= structure.max().getZ();
+    }
+
+    private static boolean near(BlockPos a, BlockPos b) {
+        int reach = MAX_SIZE - 1;
+        return Math.abs((long) a.getX() - b.getX()) <= reach
+            && Math.abs((long) a.getY() - b.getY()) <= reach
+            && Math.abs((long) a.getZ() - b.getZ()) <= reach;
+    }
+
+    private static Validation revalidateFormedPanel(ServerLevel level,
+                                                    ReactorControlPanelBlockEntity panel,
+                                                    BlockPos ignoredPos) {
+        if (!panel.isFormedController()) {
+            return Validation.failure("панель не хранит сформированную структуру");
+        }
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        if (!chunksLoaded(level, min, max)) {
+            panel.markValidationPending();
+            return Validation.incompleteResult();
+        }
+
+        Validation validation = validateBox(level, panel.getBlockPos(), new Bounds(min, max), ignoredPos);
+        if (validation.incomplete()) {
+            panel.markValidationPending();
+            return validation;
+        }
+        panel.clearValidationPending();
+        if (validation.structure() != null) {
+            applyFormedVisuals(level, panel, validation.structure());
+        } else {
+            invalidateController(level, panel, ignoredPos);
+        }
+        return validation;
+    }
+
+    private static void invalidateAt(ServerLevel level, BlockPos member) {
+        BlockPos root = controllerAt(level, member);
+        if (root == null) return;
+        if (level.getBlockEntity(root) instanceof ReactorControlPanelBlockEntity panel
+            && panel.isFormedController()) {
+            revalidateFormedPanel(level, panel, member);
+        } else {
+            removeIndexForRoot(level, root);
+        }
+    }
+
+    private static void invalidateController(ServerLevel level,
+                                             ReactorControlPanelBlockEntity panel,
+                                             BlockPos ignoredPos) {
+        if (!panel.isFormedController()) return;
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        if (!chunksLoaded(level, min, max)) {
+            panel.markValidationPending();
+            return;
+        }
+        removeIndexForRoot(level, panel.getBlockPos());
+        for (int x = min.getX(); x <= max.getX(); x++) {
+            for (int y = min.getY(); y <= max.getY(); y++) {
+                for (int z = min.getZ(); z <= max.getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (pos.equals(ignoredPos) || !onBoundary(pos, min, max)) continue;
+                    BlockState state = level.getBlockState(pos);
+                    if (state.getBlock() instanceof ReactorCasingBlock
+                        && state.getValue(ReactorCasingBlock.FORMED)) {
+                        level.setBlock(pos, state.setValue(ReactorCasingBlock.FORMED, false), Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+        }
+        panel.clearStructure();
+    }
+
+    private static BlockPos controllerAt(ServerLevel level, BlockPos pos) {
+        Map<Long, BlockPos> index = MEMBER_INDEX.get(level);
+        return index == null ? null : index.get(pos.asLong());
+    }
+
+    private static void indexStructure(ServerLevel level, BlockPos controller, BlockPos min, BlockPos max) {
+        removeIndexForRoot(level, controller);
+        Map<Long, BlockPos> index = MEMBER_INDEX.computeIfAbsent(level, ignored -> new HashMap<>());
+        BlockPos root = controller.immutable();
+        for (int x = min.getX(); x <= max.getX(); x++) {
+            for (int y = min.getY(); y <= max.getY(); y++) {
+                for (int z = min.getZ(); z <= max.getZ(); z++) {
+                    index.put(new BlockPos(x, y, z).asLong(), root);
+                }
+            }
+        }
+    }
+
+    private static void removeIndexForRoot(Level level, BlockPos root) {
+        Map<Long, BlockPos> index = MEMBER_INDEX.get(level);
+        if (index == null) return;
+        index.entrySet().removeIf(entry -> root.equals(entry.getValue()));
+        if (index.isEmpty()) MEMBER_INDEX.remove(level);
+    }
+
+    private static Validation inspectFromPanel(ServerLevel level, BlockPos panelPos, BlockPos ignoredPos) {
+        if (panelPos.equals(ignoredPos)) {
+            return Validation.failure("панель управления вынута из оболочки");
+        }
+        if (!level.hasChunkAt(panelPos)) {
+            return Validation.incompleteResult();
+        }
+        if (!(level.getBlockState(panelPos).getBlock() instanceof ReactorControlPanelBlock)) {
+            return Validation.failure("панель управления должна находиться на внешней оболочке");
+        }
+
+        ComponentResult component = collectShellComponent(level, panelPos, ignoredPos);
+        if (component.tooLarge()) {
+            return Validation.failure("связная оболочка превышает защитный лимит деталей");
+        }
+        if (component.incomplete()) {
+            return Validation.incompleteResult();
+        }
+        if (component.positions().isEmpty()) {
+            return Validation.failure("не найдена связная оболочка из обшивки, панели и экранированных узлов");
+        }
+        Bounds bounds = boundsOf(component.positions());
+        int sizeX = bounds.max().getX() - bounds.min().getX() + 1;
+        int sizeY = bounds.max().getY() - bounds.min().getY() + 1;
+        int sizeZ = bounds.max().getZ() - bounds.min().getZ() + 1;
+        if (sizeX != sizeY || sizeX != sizeZ) {
+            return Validation.failure("корпус должен быть кубическим, найдено "
+                + sizeX + "×" + sizeY + "×" + sizeZ);
+        }
+        if (sizeX < MIN_SIZE || sizeX > MAX_SIZE) {
+            return Validation.failure("внешняя сторона куба должна быть от "
+                + MIN_SIZE + " до " + MAX_SIZE + ", найдено " + sizeX);
+        }
+        if (!onBoundary(panelPos, bounds.min(), bounds.max())) {
+            return Validation.failure("панель управления должна стоять во внешнем слое оболочки");
+        }
+        if (!chunksLoaded(level, bounds.min(), bounds.max())) {
+            return Validation.incompleteResult();
+        }
+        return validateBox(level, panelPos, bounds, ignoredPos);
+    }
+
+    private static ComponentResult collectShellComponent(ServerLevel level,
+                                                         BlockPos seed,
+                                                         BlockPos ignoredPos) {
+        if (seed.equals(ignoredPos) || !isShellPart(level.getBlockState(seed))) {
+            return new ComponentResult(List.of(), false, false);
+        }
+
+        List<BlockPos> positions = new ArrayList<>();
+        Set<Long> seen = new HashSet<>();
+        Deque<BlockPos> pending = new ArrayDeque<>();
+        boolean incomplete = false;
+        pending.add(seed.immutable());
+        seen.add(seed.asLong());
+
+        while (!pending.isEmpty()) {
+            BlockPos pos = pending.removeFirst();
+            positions.add(pos);
+            if (positions.size() > MAX_SHELL_PARTS) {
+                return new ComponentResult(List.of(), true, false);
+            }
+            for (Direction direction : Direction.values()) {
+                BlockPos next = pos.relative(direction);
+                long packed = next.asLong();
+                if ((ignoredPos != null && next.equals(ignoredPos)) || seen.contains(packed)) {
+                    continue;
+                }
+                if (!level.hasChunkAt(next)) {
+                    incomplete = true;
+                    continue;
+                }
+                if (!next.equals(seed) && controllerAt(level, next) != null) continue;
+                if (!isShellPart(level.getBlockState(next))) continue;
+                seen.add(packed);
+                pending.addLast(next.immutable());
+            }
+        }
+        return new ComponentResult(List.copyOf(positions), false, incomplete);
+    }
+
+    private static Validation validateBox(ServerLevel level,
+                                          BlockPos panelPos,
+                                          Bounds bounds,
+                                          BlockPos ignoredPos) {
+        int size = bounds.max().getX() - bounds.min().getX() + 1;
+        if (!chunksLoaded(level, bounds.min(), bounds.max())) return Validation.incompleteResult();
+
+        int casing = 0;
+        int panels = 0;
+        int heatNodes = 0;
+        int fluidNodes = 0;
+        int universalNodes = 0;
+        int sheaths = 0;
+        int graphite = 0;
+        int boron = 0;
+        int barium = 0;
+        int water = 0;
+
+        for (int x = bounds.min().getX(); x <= bounds.max().getX(); x++) {
+            for (int y = bounds.min().getY(); y <= bounds.max().getY(); y++) {
+                for (int z = bounds.min().getZ(); z <= bounds.max().getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    BlockState state = stateAt(level, pos, ignoredPos);
+                    Block block = state.getBlock();
+                    boolean shell = onBoundary(pos, bounds.min(), bounds.max());
+                    if (shell) {
+                        if (block instanceof ReactorCasingBlock) {
+                            casing++;
+                        } else if (block instanceof ReactorControlPanelBlock) {
+                            panels++;
+                        } else if (block == ModMachines.THIRD_HEAT_NODE.get()) {
+                            heatNodes++;
+                        } else if (block == ModMachines.THIRD_UNIVERSAL_FLUID_NODE.get()) {
+                            fluidNodes++;
+                        } else if (block == ModMachines.THIRD_UNIVERSAL_NODE.get()) {
+                            universalNodes++;
+                        } else {
+                            return Validation.failure("оболочка не заполнена обшивкой, панелью и разрешёнными экранированными узлами: "
+                                + pos.toShortString());
+                        }
+                    } else {
+                        if (state.isAir()) {
+                            return Validation.failure("внутри оболочки есть воздух: " + pos.toShortString());
+                        }
+                        if (!isAllowedInterior(block)) {
+                            return Validation.failure("недозволенный блок внутри оболочки: "
+                                + BuiltInRegistries.BLOCK.getKey(block) + " в " + pos.toShortString());
+                        }
+                        if (block == ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH.get()) sheaths++;
+                        else if (block == ModBlocks.GRAPHITE_BLOCK.get()) graphite++;
+                        else if (isMetalBlock(block, "boron_block")) boron++;
+                        else if (isMetalBlock(block, "barium_block")) barium++;
+                        else if (block == Blocks.WATER) water++;
+                    }
+                }
+            }
+        }
+
+        if (panels != 1 || !panelPos.equals(findPanelPosition(level, bounds, ignoredPos))) {
+            return Validation.failure("во внешней оболочке должна быть ровно одна панель управления");
+        }
+        if (universalNodes < 1 && (heatNodes < 1 || fluidNodes < 1)) {
+            return Validation.failure("нужен один экранированный универсальный узел либо одновременно узел ГТХ и узел мультижидкости");
+        }
+
+        return Validation.success(new StructureInfo(bounds.min(), bounds.max(), size,
+            casing, sheaths, heatNodes, fluidNodes, universalNodes,
+            graphite, boron, barium, water));
+    }
+
+    private static BlockPos findPanelPosition(ServerLevel level, Bounds bounds, BlockPos ignoredPos) {
+        for (int x = bounds.min().getX(); x <= bounds.max().getX(); x++) {
+            for (int y = bounds.min().getY(); y <= bounds.max().getY(); y++) {
+                for (int z = bounds.min().getZ(); z <= bounds.max().getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (!pos.equals(ignoredPos) && onBoundary(pos, bounds.min(), bounds.max())
+                        && level.getBlockState(pos).getBlock() instanceof ReactorControlPanelBlock) {
+                        return pos;
                     }
                 }
             }
@@ -42,115 +526,116 @@ public final class ReactorStructure {
         return null;
     }
 
-    private static boolean contains(BlockPos min, BlockPos max, BlockPos pos) {
-        return pos.getX() >= min.getX() && pos.getX() <= max.getX()
-            && pos.getY() >= min.getY() && pos.getY() <= max.getY()
-            && pos.getZ() >= min.getZ() && pos.getZ() <= max.getZ();
+    private static boolean isShellPart(BlockState state) {
+        Block block = state.getBlock();
+        return block instanceof ReactorCasingBlock
+            || block instanceof ReactorControlPanelBlock
+            || block == ModMachines.THIRD_HEAT_NODE.get()
+            || block == ModMachines.THIRD_UNIVERSAL_FLUID_NODE.get()
+            || block == ModMachines.THIRD_UNIVERSAL_NODE.get();
     }
 
-    private static Result validate(Level level, BlockPos min, BlockPos max) {
-        int size = max.getX() - min.getX() + 1;
-        if (size < 4 || size > 10) return null;
-        if (max.getY() - min.getY() + 1 != size) return null;
-        if (max.getZ() - min.getZ() + 1 != size) return null;
+    private static boolean isAllowedInterior(Block block) {
+        return block == ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH.get()
+            || block == ModBlocks.GRAPHITE_BLOCK.get()
+            || isMetalBlock(block, "boron_block")
+            || isMetalBlock(block, "barium_block")
+            || block == Blocks.WATER;
+    }
 
-        int sheaths = 0;
-        int heatNodes = 0;
-        int fluidNodes = 0;
-        int panels = 0;
-        int graphite = 0;
-        int barium = 0;
-        int boron = 0;
-        int water = 0;
+    private static boolean isMetalBlock(Block block, String path) {
+        var key = BuiltInRegistries.BLOCK.getKey(block);
+        return key != null && "gonzotech".equals(key.getNamespace()) && path.equals(key.getPath());
+    }
 
-        for (int x = min.getX(); x <= max.getX(); x++) {
-            for (int y = min.getY(); y <= max.getY(); y++) {
-                for (int z = min.getZ(); z <= max.getZ(); z++) {
-                    BlockPos p = new BlockPos(x, y, z);
-                    BlockState state = level.getBlockState(p);
-                    boolean shell = x == min.getX() || x == max.getX()
-                        || y == min.getY() || y == max.getY()
-                        || z == min.getZ() || z == max.getZ();
+    private static BlockState stateAt(ServerLevel level, BlockPos pos, BlockPos ignoredPos) {
+        return pos.equals(ignoredPos) ? Blocks.AIR.defaultBlockState() : level.getBlockState(pos);
+    }
 
-                    if (shell) {
-                        Block block = state.getBlock();
-                        if (block == ModMachines.THIRD_URANIUM_REACTOR_CASING.get()) {
-                            // casing
-                        } else if (block == ModMachines.THIRD_URANIUM_REACTOR_CONTROL_PANEL.get()) {
-                            panels++;
-                        } else if (block == ModMachines.THIRD_HEAT_NODE.get()) {
-                            heatNodes++;
-                        } else if (block == ModMachines.THIRD_UNIVERSAL_FLUID_NODE.get()) {
-                            fluidNodes++;
-                        } else {
-                            return null;
-                        }
-                    } else {
-                        if (state.isAir()) return null;
-                        Block block = state.getBlock();
-                        if (block == ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH.get()) {
-                            sheaths++;
-                        } else if (block == ModBlocks.GRAPHITE_BLOCK.get()) {
-                            graphite++;
-                        } else if (isMetalBlock(state, "barium_block")) {
-                            barium++;
-                        } else if (isMetalBlock(state, "boron_block")) {
-                            boron++;
-                        } else if (block == Blocks.WATER) {
-                            water++;
-                        } else {
-                            return null;
-                        }
+    private static boolean onBoundary(BlockPos pos, BlockPos min, BlockPos max) {
+        return pos.getX() == min.getX() || pos.getX() == max.getX()
+            || pos.getY() == min.getY() || pos.getY() == max.getY()
+            || pos.getZ() == min.getZ() || pos.getZ() == max.getZ();
+    }
+
+    private static Bounds boundsOf(List<BlockPos> positions) {
+        int minX = Integer.MAX_VALUE;
+        int minY = Integer.MAX_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxY = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (BlockPos pos : positions) {
+            minX = Math.min(minX, pos.getX());
+            minY = Math.min(minY, pos.getY());
+            minZ = Math.min(minZ, pos.getZ());
+            maxX = Math.max(maxX, pos.getX());
+            maxY = Math.max(maxY, pos.getY());
+            maxZ = Math.max(maxZ, pos.getZ());
+        }
+        return new Bounds(new BlockPos(minX, minY, minZ), new BlockPos(maxX, maxY, maxZ));
+    }
+
+    private static boolean chunksLoaded(ServerLevel level, BlockPos min, BlockPos max) {
+        int minChunkX = min.getX() >> 4;
+        int maxChunkX = max.getX() >> 4;
+        int minChunkZ = min.getZ() >> 4;
+        int maxChunkZ = max.getZ() >> 4;
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                BlockPos check = new BlockPos((chunkX << 4) + 8, min.getY(), (chunkZ << 4) + 8);
+                if (!level.hasChunkAt(check)) return false;
+            }
+        }
+        return true;
+    }
+
+    private static void applyFormedVisuals(ServerLevel level,
+                                           ReactorControlPanelBlockEntity panel,
+                                           StructureInfo info) {
+        int storedFuel = ReactorFuelStorage.bindStructure(
+            level, info.min(), info.max(), panel.copyLegacyFuelItems());
+        if (info.sheaths() > 0 && storedFuel >= 0) panel.clearLegacyFuelItems();
+        panel.configureStructure(info.min(), info.max(), info.sheaths(), Math.max(0, storedFuel));
+        indexStructure(level, panel.getBlockPos(), info.min(), info.max());
+        for (int x = info.min().getX(); x <= info.max().getX(); x++) {
+            for (int y = info.min().getY(); y <= info.max().getY(); y++) {
+                for (int z = info.min().getZ(); z <= info.max().getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (!onBoundary(pos, info.min(), info.max())) continue;
+                    BlockState state = level.getBlockState(pos);
+                    if (state.getBlock() instanceof ReactorCasingBlock
+                        && !state.getValue(ReactorCasingBlock.FORMED)) {
+                        level.setBlock(pos, state.setValue(ReactorCasingBlock.FORMED, true), Block.UPDATE_CLIENTS);
                     }
                 }
             }
         }
-
-        if (panels < 1 || heatNodes < 1 || fluidNodes < 1) return null;
-
-        return new Result(size, sheaths, heatNodes, fluidNodes, panels, graphite, barium, boron, water);
     }
 
-
-    private static boolean isMetalBlock(BlockState state, String path) {
-        return BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath().equals(path);
+    private record Bounds(BlockPos min, BlockPos max) {
     }
 
+    private record ComponentResult(List<BlockPos> positions, boolean tooLarge, boolean incomplete) {
+    }
 
-    private static final class Result {
-        final int size;
-        final int sheaths;
-        final int heatNodes;
-        final int fluidNodes;
-        final int panels;
-        final int graphite;
-        final int barium;
-        final int boron;
-        final int water;
+    private record StructureInfo(BlockPos min, BlockPos max, int size,
+                                 int casingBlocks, int sheaths,
+                                 int heatNodes, int fluidNodes, int universalNodes,
+                                 int graphite, int boron, int barium, int water) {
+    }
 
-        Result(int size, int sheaths, int heatNodes, int fluidNodes, int panels,
-               int graphite, int barium, int boron, int water) {
-            this.size = size;
-            this.sheaths = sheaths;
-            this.heatNodes = heatNodes;
-            this.fluidNodes = fluidNodes;
-            this.panels = panels;
-            this.graphite = graphite;
-            this.barium = barium;
-            this.boron = boron;
-            this.water = water;
+    private record Validation(StructureInfo structure, String failure, boolean incomplete) {
+        static Validation success(StructureInfo structure) {
+            return new Validation(structure, null, false);
         }
 
-        String describe() {
-            return "Реактор I поколения: куб " + size + "x" + size + "x" + size
-                + ", чехлов=" + sheaths
-                + ", теплоузлов=" + heatNodes
-                + ", жидкостных узлов=" + fluidNodes
-                + ", панелей=" + panels
-                + ", графита=" + graphite
-                + ", бария=" + barium
-                + ", бора=" + boron
-                + ", воды=" + water;
+        static Validation failure(String reason) {
+            return new Validation(null, reason, false);
+        }
+
+        static Validation incompleteResult() {
+            return new Validation(null, null, true);
         }
     }
 }

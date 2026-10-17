@@ -5,10 +5,13 @@ import com.gonzotech.core.registry.ModSounds;
 import com.gonzotech.mixin.client.MusicManagerAccessor;
 import com.gonzotech.space.SpaceDimensions;
 import com.gonzotech.sunevent.client.SunEventClient;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicInfo;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
@@ -21,9 +24,10 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
+import java.util.List;
 import java.util.UUID;
 
-/** Client-side music pool additions and the two conditional OST triggers. */
+/** Client-side music pools, conditional OST triggers, and the debug music roll. */
 @EventBusSubscriber(modid = GonzoTechMod.MOD_ID, value = Dist.CLIENT)
 public final class GonzoMusicClient {
 
@@ -32,6 +36,19 @@ public final class GonzoMusicClient {
     private static final long UNDERGROUND_CHECK_INTERVAL_TICKS = 1_200L;
     private static final long DEFAULT_MUSIC_WINDOW_NANOS = 5L * 60L * 1_000_000_000L;
     private static final long RAIDIN_BONES_WINDOW_NANOS = 8L * 60L * 1_000_000_000L;
+    private static final double MUSIC_SURFACE_HEIGHT = 44.0D;
+    private static final int OVERWORLD_BITTER_CHANCE_PERCENT = 37;
+    private static final int UNDERGROUND_REPLACEMENT_CHANCE_PERCENT = 37;
+    private static final int RAIDIN_BONES_CHANCE_PERCENT = 20;
+    private static final int CRADLE_BIOME_CHANCE_PERCENT = 50;
+    private static final int UNDERGROUND_CHANCE_PERCENT = 10;
+
+    private record MusicRoll(List<DeferredHolder<SoundEvent, SoundEvent>> pool, int chancePercent) {
+    }
+
+    private record VanillaMusicReplacement(DeferredHolder<SoundEvent, SoundEvent> sound,
+                                           int chancePercent) {
+    }
 
     private static long musicWindowUntilNanos;
     private static Object trackedConnection;
@@ -96,17 +113,104 @@ public final class GonzoMusicClient {
         musicWindowUntilNanos = System.nanoTime() + window;
     }
 
-    /**
-     * Add Bitter as an equal-weight alternative to an ordinary Overworld song.
-     * Replacing the MusicInfo passed to vanilla keeps the MusicManager's normal
-     * scheduling, pause handling and music-channel playback intact.
-     */
-    public static MusicInfo maybeAddOverworldBitter(MusicInfo vanillaMusic) {
+    /** Run one context-appropriate music roll requested by the server debug command. */
+    public static void debugTriggerMusic() {
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
-        if (vanillaMusic == null || minecraft.level == null || player == null
-                || !minecraft.level.dimension().equals(Level.OVERWORLD)
-                || player.getAbilities().instabuild
+        ClientLevel level = minecraft.level;
+        if (player == null || level == null) {
+            return;
+        }
+
+        MusicRoll roll = debugMusicRoll(level, player);
+        // Выполняем именно бросок даже при занятом плеере: блокировка playback
+        // меняет итог на провал, но не скрывает шанс/пул тестируемого броска.
+        boolean chanceSucceeded = player.getRandom().nextInt(100) < roll.chancePercent();
+        String failureReason = musicStartBlockReason(minecraft);
+        boolean success = false;
+        if (failureReason == null && roll.pool().isEmpty()) {
+            failureReason = "нет подходящей музыки в текущем контексте";
+        } else if (failureReason == null && chanceSucceeded) {
+            DeferredHolder<SoundEvent, SoundEvent> selected =
+                    roll.pool().get(player.getRandom().nextInt(roll.pool().size()));
+            playOst(minecraft, selected);
+            success = true;
+        }
+
+        String result = success ? "успех" : "провал";
+        if (failureReason != null) {
+            result += " (причина: " + failureReason + ")";
+        }
+        player.displayClientMessage(Component.literal("Попытка создать музыку — "
+                + roll.chancePercent() + "% шанс — " + result)
+                .withStyle(success ? ChatFormatting.GREEN : ChatFormatting.RED), false);
+        String pool = roll.pool().isEmpty() ? "(пусто)" : String.join(", ", roll.pool().stream()
+                .map(sound -> BuiltInRegistries.SOUND_EVENT.getKey(sound.get()).toString())
+                .toList());
+        player.displayClientMessage(Component.literal("Пул музыки для этого броска был: " + pool)
+                .withStyle(ChatFormatting.GRAY), false);
+        if (roll.pool().contains(ModSounds.GT_OST_BITTER)
+                || roll.pool().contains(ModSounds.GT_OST_40000FT)) {
+            player.displayClientMessage(Component.literal(
+                    "Показан кастомный кандидат на замену; ванильная альтернатива в этой строке не перечислена.")
+                    .withStyle(ChatFormatting.GRAY), false);
+        }
+        if (roll.pool().contains(ModSounds.GT_OST_CRADLE)) {
+            player.displayClientMessage(Component.literal(
+                    "В реальном биомном пуле Cradle делит вес 1:1 с minecraft:music.game.")
+                    .withStyle(ChatFormatting.GRAY), false);
+        }
+        if (roll.pool().contains(ModSounds.GT_OST_40000FT)) {
+            player.displayClientMessage(Component.literal(
+                    "Отдельный таймер 40000FT: 10% раз в 1200 тиков при свободной музыке и без cooldown.")
+                    .withStyle(ChatFormatting.GRAY), false);
+        }
+    }
+
+    /**
+     * Report the context-specific custom-track roll. The 40000FT debug roll tests
+     * the 37% vanilla-start replacement; its separate 10%-per-1200-tick attempt
+     * remains an independent trigger in normal play.
+     */
+    private static MusicRoll debugMusicRoll(ClientLevel level, Player player) {
+        ResourceKey<Level> dimension = level.dimension();
+        if (dimension.equals(SpaceDimensions.SOLAR_ORBIT)
+                || dimension.equals(SpaceDimensions.ALPHA_CENTAURI_ORBIT)) {
+            return new MusicRoll(List.of(ModSounds.GT_OST_CRADLE), CRADLE_BIOME_CHANCE_PERCENT);
+        }
+        if (dimension.equals(SpaceDimensions.DEEP_SPACE)
+                || dimension.equals(SpaceDimensions.BLACKHOLE_YX989_K2)
+                || dimension.equals(SpaceDimensions.BLACKHOLE_ZANGLER_11)) {
+            return new MusicRoll(List.of(ModSounds.GT_OST_ETHEREAL), 100);
+        }
+
+        double y = player.getY();
+        boolean raidinBonesDimension = isRaidinBonesDimension(dimension);
+        if (raidinBonesDimension && y >= MUSIC_SURFACE_HEIGHT && y <= 154.0D
+                && SunEventClient.nextEventDay > 0 && SunEventClient.crimsonSunWindow(level)) {
+            return new MusicRoll(List.of(ModSounds.GT_OST_RAIDIN_BONES), RAIDIN_BONES_CHANCE_PERCENT);
+        }
+
+        VanillaMusicReplacement replacement = vanillaMusicReplacement(level, player);
+        if (replacement != null) {
+            return new MusicRoll(List.of(replacement.sound()), replacement.chancePercent());
+        }
+        return new MusicRoll(List.of(), 0);
+    }
+
+    private static String musicStartBlockReason(Minecraft minecraft) {
+        if (isMusicPlayingFromManager(minecraft)) {
+            return "музыка уже играет";
+        }
+        return isMusicCooldownActive() ? "кд" : null;
+    }
+
+    /** Replace an eligible vanilla music request with its context-specific custom OST. */
+    public static MusicInfo maybeReplaceVanillaTrack(MusicInfo vanillaMusic) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Player player = minecraft.player;
+        ClientLevel level = minecraft.level;
+        if (vanillaMusic == null || level == null || player == null
                 || isOurOst(vanillaMusic.music().getEvent().value())) {
             return vanillaMusic;
         }
@@ -116,24 +220,56 @@ public final class GonzoMusicClient {
         if (selectedMusicId == null || !"minecraft".equals(selectedMusicId.getNamespace())
                 || !("music.game".equals(selectedMusicId.getPath())
                 || selectedMusicId.getPath().startsWith("music.overworld."))) {
-            return vanillaMusic; // Keep underwater, creative, menu and other special music untouched.
+            return vanillaMusic; // Leave menus, underwater and other special tracks untouched.
         }
 
-        if (player.getRandom().nextBoolean()) {
-            Music vanilla = vanillaMusic.music();
-            Music bitter = new Music(ModSounds.GT_OST_BITTER,
-                    vanilla.getMinDelay(), vanilla.getMaxDelay(), vanilla.replaceCurrentMusic());
-            return new MusicInfo(bitter, vanillaMusic.volume());
+        VanillaMusicReplacement replacement = vanillaMusicReplacement(level, player);
+        if (replacement == null
+                || player.getRandom().nextInt(100) >= replacement.chancePercent()) {
+            return vanillaMusic;
         }
-        return vanillaMusic;
+
+        Music vanilla = vanillaMusic.music();
+        Music custom = new Music(replacement.sound(), vanilla.getMinDelay(), vanilla.getMaxDelay(),
+                vanilla.replaceCurrentMusic());
+        return new MusicInfo(custom, vanillaMusic.volume());
+    }
+
+    private static VanillaMusicReplacement vanillaMusicReplacement(ClientLevel level, Player player) {
+        ResourceKey<Level> dimension = level.dimension();
+        double y = player.getY();
+        if (dimension.equals(Level.OVERWORLD)
+                && y > MUSIC_SURFACE_HEIGHT
+                && !player.getAbilities().instabuild) {
+            return new VanillaMusicReplacement(ModSounds.GT_OST_BITTER,
+                    OVERWORLD_BITTER_CHANCE_PERCENT);
+        }
+        if (isUndergroundMusicDimension(dimension) && y < MUSIC_SURFACE_HEIGHT) {
+            return new VanillaMusicReplacement(ModSounds.GT_OST_40000FT,
+                    UNDERGROUND_REPLACEMENT_CHANCE_PERCENT);
+        }
+        return null;
+    }
+
+    private static boolean isUndergroundMusicDimension(ResourceKey<Level> dimension) {
+        return dimension.equals(Level.OVERWORLD) || isMoonOrMars(dimension)
+                || dimension.equals(SpaceDimensions.EUROPA);
+    }
+
+    private static boolean isRaidinBonesDimension(ResourceKey<Level> dimension) {
+        return dimension.equals(Level.OVERWORLD) || isMoonOrMars(dimension);
+    }
+
+    private static boolean isMoonOrMars(ResourceKey<Level> dimension) {
+        return dimension.equals(SpaceDimensions.MOON) || dimension.equals(SpaceDimensions.MARS);
     }
 
     /** True while a MusicManager track is active or its programmed minimum window remains. */
     public static boolean isMusicPlaying(Minecraft minecraft) {
-        if (isMusicPlayingFromManager(minecraft)) {
-            return true;
-        }
+        return isMusicPlayingFromManager(minecraft) || isMusicCooldownActive();
+    }
 
+    private static boolean isMusicCooldownActive() {
         long until = musicWindowUntilNanos;
         return until != 0L && System.nanoTime() - until < 0L;
     }
@@ -156,20 +292,17 @@ public final class GonzoMusicClient {
         handledCrimsonEventDay = eventDay;
         ResourceKey<Level> dimension = level.dimension();
         double y = player.getY();
-        boolean moonOrMars = dimension.equals(SpaceDimensions.MOON)
-                || dimension.equals(SpaceDimensions.MARS);
-        if (moonOrMars && y >= 54.0D && y <= 124.0D
-                && !isMusicPlaying(minecraft) && player.getRandom().nextFloat() < 0.20F) {
+        boolean raidinBonesDimension = isRaidinBonesDimension(dimension);
+        if (raidinBonesDimension && y >= MUSIC_SURFACE_HEIGHT && y <= 154.0D
+                && !isMusicPlaying(minecraft)
+                && player.getRandom().nextFloat() < RAIDIN_BONES_CHANCE_PERCENT / 100.0F) {
             playOst(minecraft, ModSounds.GT_OST_RAIDIN_BONES);
         }
     }
 
     private static void checkUndergroundAttempt(Minecraft minecraft, ClientLevel level, Player player) {
         ResourceKey<Level> dimension = level.dimension();
-        boolean supportedDimension = dimension.equals(SpaceDimensions.MOON)
-                || dimension.equals(SpaceDimensions.MARS)
-                || dimension.equals(SpaceDimensions.EUROPA);
-        if (!supportedDimension || player.getY() >= 54.0D) {
+        if (!isUndergroundMusicDimension(dimension) || player.getY() >= MUSIC_SURFACE_HEIGHT) {
             undergroundDimension = null;
             nextUndergroundAttemptTick = Long.MIN_VALUE;
             return;
@@ -188,7 +321,8 @@ public final class GonzoMusicClient {
         }
 
         nextUndergroundAttemptTick = gameTime + UNDERGROUND_CHECK_INTERVAL_TICKS;
-        if (!isMusicPlaying(minecraft) && player.getRandom().nextFloat() < 0.10F) {
+        if (!isMusicPlaying(minecraft)
+                && player.getRandom().nextFloat() < UNDERGROUND_CHANCE_PERCENT / 100.0F) {
             playOst(minecraft, ModSounds.GT_OST_40000FT);
         }
     }

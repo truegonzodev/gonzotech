@@ -14,6 +14,7 @@ import com.gonzotech.machines.menu.FireboxMenu;
 import com.gonzotech.machines.menu.NuclearFireboxMenu;
 import com.gonzotech.machines.menu.PumpMenu;
 import com.gonzotech.machines.menu.RectifierMenu;
+import com.gonzotech.machines.menu.ReactorMenu;
 import com.gonzotech.machines.menu.SnaketypeCondenserMenu;
 import com.gonzotech.machines.menu.SteamGenMenu;
 import com.gonzotech.machines.menu.StirlingMenu;
@@ -145,6 +146,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<com.gonzotech.machines.menu.ThirdLeadChestMenu>> THIRD_LEAD_CHEST =
         MENUS.register("third_lead_chest", () -> IMenuTypeExtension.create(com.gonzotech.machines.menu.ThirdLeadChestMenu::new));
+
+    public static final Supplier<MenuType<ReactorMenu>> REACTOR =
+        MENUS.register("third_uranium_reactor", () -> IMenuTypeExtension.create(ReactorMenu::new));
 
     public static void register(IEventBus modEventBus) {
         MENUS.register(modEventBus);

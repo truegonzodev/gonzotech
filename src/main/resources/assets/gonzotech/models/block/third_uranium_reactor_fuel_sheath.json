@@ -1,7 +1,6 @@
 {
-  "parent": "minecraft:block/cube_column",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "side": "gonzotech:block/fullmetall/steel_block",
-    "end": "gonzotech:block/fullmetall/uranium_block"
+    "all": "gonzotech:block/third_1reactor/third_1reactor_fuel_sheath"
   }
 }

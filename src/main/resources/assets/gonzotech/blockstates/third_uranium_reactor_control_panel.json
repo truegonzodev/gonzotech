@@ -1,10 +1,10 @@
 {
   "variants": {
     "facing=north": { "model": "gonzotech:block/third_uranium_reactor_control_panel" },
-    "facing=east":  { "model": "gonzotech:block/third_uranium_reactor_control_panel", "y": 90 },
-    "facing=south": { "model": "gonzotech:block/third_uranium_reactor_control_panel", "y": 180 },
-    "facing=west":  { "model": "gonzotech:block/third_uranium_reactor_control_panel", "y": 270 },
-    "facing=up":    { "model": "gonzotech:block/third_uranium_reactor_control_panel", "x": 270 },
-    "facing=down":  { "model": "gonzotech:block/third_uranium_reactor_control_panel", "x": 90 }
+    "facing=east":  { "model": "gonzotech:block/third_uranium_reactor_control_panel" },
+    "facing=south": { "model": "gonzotech:block/third_uranium_reactor_control_panel" },
+    "facing=west":  { "model": "gonzotech:block/third_uranium_reactor_control_panel" },
+    "facing=up":    { "model": "gonzotech:block/third_uranium_reactor_control_panel" },
+    "facing=down":  { "model": "gonzotech:block/third_uranium_reactor_control_panel" }
   }
 }

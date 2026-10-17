@@ -14,6 +14,8 @@ import com.gonzotech.machines.block.entity.ElectricFurnaceBlockEntity;
 import com.gonzotech.machines.block.entity.FermentationVatBlockEntity;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.block.entity.NuclearFireboxBlockEntity;
+import com.gonzotech.machines.block.entity.ReactorControlPanelBlockEntity;
+import com.gonzotech.machines.block.entity.ReactorFuelSheathBlockEntity;
 import com.gonzotech.machines.block.entity.RectifierBlockEntity;
 import com.gonzotech.machines.block.entity.SnaketypeCondenserBlockEntity;
 import com.gonzotech.core.block.entity.TungstenAbsorberBlockEntity;
@@ -54,6 +56,16 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<NuclearFireboxBlockEntity>> SECOND_NUCLEAR_FIREBOX =
         BLOCK_ENTITIES.register("second_nuclear_firebox", () -> new BlockEntityType<>(
             NuclearFireboxBlockEntity::new, false, ModMachines.SECOND_NUCLEAR_FIREBOX.get()));
+
+    /** Persistent bounds and formed-state marker for the Generation-I uranium reactor panel. */
+    public static final Supplier<BlockEntityType<ReactorControlPanelBlockEntity>> THIRD_URANIUM_REACTOR_CONTROL_PANEL =
+        BLOCK_ENTITIES.register("third_uranium_reactor_control_panel", () -> new BlockEntityType<>(
+            ReactorControlPanelBlockEntity::new, false, ModMachines.THIRD_URANIUM_REACTOR_CONTROL_PANEL.get()));
+
+    /** Persistent per-block fuel storage for reactor sheaths. */
+    public static final Supplier<BlockEntityType<ReactorFuelSheathBlockEntity>> THIRD_URANIUM_REACTOR_FUEL_SHEATH =
+        BLOCK_ENTITIES.register("third_uranium_reactor_fuel_sheath", () -> new BlockEntityType<>(
+            ReactorFuelSheathBlockEntity::new, false, ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH.get()));
 
     /** One timer-bearing overlay entity type shared by both liquid-fire variants. */
     public static final Supplier<BlockEntityType<LiquidFireBlockEntity>> LIQUID_FIRE =

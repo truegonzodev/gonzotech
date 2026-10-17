@@ -47,13 +47,13 @@ def assert_solid_red_rgba(path: Path) -> None:
         assert row[0] == 0 and row[1:] == expected_row, f"non-red or transparent pixel in {path}, row {y}"
 
 
-_ver.at_least("0.3.229", "machine/filter GUI selector, scoped source trace, and TNT texture orientation")
+_ver.at_least("0.3.236", "reactor GUI assets, machine/filter GUI selector, and unchanged theme behavior")
 
 machine_sheets = {
     path for path in GUI_DIR.glob("*.png")
     if path.name.endswith(("_gui.png", "_gui_bg.png")) and dimensions(path) == (512, 512)
 }
-assert len(machine_sheets) == 62, f"expected 62 source machine sheets, found {len(machine_sheets)}"
+assert len(machine_sheets) == 64, f"expected 64 source machine sheets, found {len(machine_sheets)}"
 filter_sheets = {GUI_DIR / "item_filter_gui.png", GUI_DIR / "second_item_filter_gui.png"}
 assert all(dimensions(path) == (176, 184) for path in filter_sheets)
 source_sheets = machine_sheets | filter_sheets
@@ -65,11 +65,25 @@ for source in source_sheets:
     assert neo.is_file(), f"missing NEO copy for {source.name}"
     assert dimensions(neo) == dimensions(source), f"NEO canvas must match {source.name}"
 
-# Keep the submitted boiler NEO art intact; the remaining 60 large placeholder
-# sheets retain the initial pure-red canvas. Filter NEO sheets are user-provided copies.
+# Preserve author-provided art and the reactor's transparent NEO sheets;
+# the other 56 large NEO sheets retain the initial pure-red placeholder canvas.
+user_art_sources = {
+    "accumulator_gui.png",
+    "accumulator_gui_bg.png",
+    "alloy_foundry_gui.png",
+    "alloy_foundry_gui_bg.png",
+    "boiler_gui.png",
+    "boiler_gui_bg.png",
+    "third_uranium_reactor_gui.png",
+    "third_uranium_reactor_gui_bg.png",
+}
+red_template = (GUI_DIR / "blast_furnace_gui_neo.png").read_bytes()
 for source in machine_sheets:
-    if source.name not in {"boiler_gui.png", "boiler_gui_bg.png"}:
-        assert_solid_red_rgba(source.with_name(source.stem + "_neo.png"))
+    neo = source.with_name(source.stem + "_neo.png")
+    if source.name in user_art_sources:
+        assert neo.read_bytes() != red_template, f"user artwork was replaced by the red placeholder: {neo.name}"
+    else:
+        assert_solid_red_rgba(neo)
 for source in filter_sheets:
     assert source.with_name(source.stem + "_neo.png").stat().st_size > 0
 

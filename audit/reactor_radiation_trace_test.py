@@ -21,9 +21,9 @@ def load(path: Path):
     return json.loads(read(path))
 
 
-_ver.at_least("0.3.229", "filter GUI theme selector and highlighted contour radiation trace")
+_ver.at_least("0.3.234", "reactor structure initialization, textures, and highlighted contour radiation trace")
 
-# The first implementation intentionally supplies components only, not a running multiblock.
+# Reactor components now have an event-driven formed-state initializer, but not a fuel/thermal runtime.
 machines = read(JAVA / "com/gonzotech/machines/registry/ModMachines.java")
 tabs = read(JAVA / "com/gonzotech/core/registry/ModCreativeTabs.java")
 blocks = (
@@ -43,8 +43,13 @@ for name in blocks:
     assert loot["pools"][0]["entries"][0]["name"] == f"gonzotech:{name}"
 
 panel = read(JAVA / "com/gonzotech/core/block/ReactorControlPanelBlock.java")
+assert "implements EntityBlock" in panel
 assert "BlockStateProperties.FACING" in panel
 assert "context.getNearestLookingDirection().getOpposite()" in panel
+assert "new ReactorControlPanelBlockEntity(pos, state)" in panel
+assert "protected InteractionResult useWithoutItem(" in panel
+assert "protected InteractionResult useItemOn(ItemStack stack" in panel
+assert "ReactorStructure.debugReportComponent(level, pos)" in panel
 panel_states = load(ASSETS / "blockstates/third_uranium_reactor_control_panel.json")["variants"]
 assert set(panel_states) == {f"facing={direction}" for direction in ("down", "up", "north", "south", "east", "west")}
 assert all(entry["model"] == "gonzotech:block/third_uranium_reactor_control_panel" for entry in panel_states.values())
@@ -93,7 +98,10 @@ for key in (
 
 # New 16×16 sprites are real RGBA PNGs, not missing placeholder paths.
 for texture in (
-    ASSETS / "textures/block/first/uranium_reactor_control_panel.png",
+    ASSETS / "textures/block/third_1reactor/third_1reactor_casting.png",
+    ASSETS / "textures/block/third_1reactor/third_1reactor_casting_formed.png",
+    ASSETS / "textures/block/third_1reactor/third_1reactor_control_panel.png",
+    ASSETS / "textures/block/third_1reactor/third_1reactor_fuel_sheath.png",
     ASSETS / "textures/item/heat_exchanger_cell.png",
 ):
     image = texture.read_bytes()
@@ -123,6 +131,11 @@ assert "RadiationTrace.start(player)" in command
 assert "RadiationTrace.tick(event.getServer())" in system
 assert "RadiationTrace.clearAll()" in system
 assert "inventoryContribution=" in system and "strongestOtherSource=" in system
+assert "inducedBefore += storedInduced * count;" in system
+assert "double totalNzt = 0.0D;" in system
+assert "for (List<ItemStack> part : compartments)" in system and "RadSources.emissionDeep(stack);" in system
+assert '"ИНВЕНТАРЬ ИГРОКА → ЧАНК"' in system
+assert "inventoryDoseEmission=" in system
 assert '"ДОЗА ИГРОКА"' in system
 assert '"ДИФФУЗИЯ ЧАНК → ЧАНК"' in chunk
 assert '"ИСТОЧНИКИ БЛОКОВ → ЗАРАЖЕНИЕ ЧАНКА"' in chunk

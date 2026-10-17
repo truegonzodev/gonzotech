@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Пины раунда 11 (0.3.111): свинцовый ящик + 14-связный контур.
 
-Ящик = копия ванильной бочки: 9 слотов, без двойных сцепок, третий эпоха,
-фулл-гейт «Открытие 3». Сам НЕ замыкает контур и без экранирующего свойства;
-содержимое действует на чанк (заражение + визуальные источники) на 80% слабее.
+Ящик = копия ванильной бочки: 9 слотов, без двойных сцепок, третья эпоха,
+фулл-гейт «Открытие 3». Сам НЕ замыкает контур; наведёнка содержимого затухает
+обычно, а эмиссия для чанка сначала умножается на 0.2 и только затем на контур.
 """
 from pathlib import Path
 
@@ -26,7 +26,7 @@ b = (SRC / "machines/block/ThirdLeadChestBlock.java").read_text()
 pin("extends Block implements EntityBlock" in b, "самостоятельный блок-контейнер")
 pin("BlockStateProperties.FACING" in b, "полная ориентация (вверх/вниз), как бочка")
 pin("BlockStateProperties.OPEN" in b, "свойство открытой крышки")
-pin("CONTENT_CHUNK_FACTOR = 0.2" in b, "содержимое −80%")
+pin("CONTENT_CHUNK_FACTOR = 0.2" in b, "эмиссия содержимого ×0.2 до контура")
 pin("getRedstoneSignalFromBlockEntity" in b, "компаратор как у контейнера")
 pin("Containers.dropContents" in b, "высыпание содержимого при сломе")
 pin("tooltip.gonzotech.lead_chest" in b, "лор по ГОСТ — в классе, не event")
@@ -40,6 +40,8 @@ pin(f'"{ID}"' not in tag, "не замыкает контур (не в contour_s
 be = (SRC / "machines/block/entity/ThirdLeadChestBlockEntity.java").read_text()
 pin("SLOT_COUNT = 9" in be, "9 слотов, не 27")
 pin("implements WorldlyContainer, MenuProvider" in be, "WorldlyContainer + MenuProvider")
+pin("getTicker" not in b and "serverTick" not in be,
+    "затухание содержимого обрабатывается общим сканером без тика каждого ящика")
 pin("startOpen" in be and "stopOpen" in be and "BARREL_OPEN" in be, "крышка/звуки как у бочки")
 pin("ContainerHelper.saveAllItems" in be and "ContainerHelper.loadAllItems" in be, "NBT содержимого")
 pin("new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8}" in be, "автоматизация: все 9 слотов в обе стороны")
@@ -82,6 +84,12 @@ pin(f'"gonzotech:{ID}"' in r.split('"result"')[1], "результат")
 # ── 5. Рад-хуки: заражение чанка и визуальные источники ×0.2 ──
 sys_ = (SRC / "radiation/RadiationSystem.java").read_text()
 pin("ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR" in sys_, "скан контейнеров: ×0.2")
+pin("effectiveEmission, CHEST_TO_CHUNK_RATE" in sys_,
+    "свинцовый ящик передаёт 1% max(0.2×M×F−C,0)")
+pin("preContourEmission = mine" in sys_ and "effectiveEmission = preContourEmission * contourFactor" in sys_,
+    "источник ×0,2 применяется до контура")
+pin("ItemRadioactivity.decayInducedDeepLazily(stack, nowTick)" in sys_,
+    "наведёнка содержимого затухает с общей обычной скоростью 1×")
 chunk = (SRC / "radiation/ChunkRadiationData.java").read_text()
 i_vis = chunk.find("ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR")
 i_srcs = chunk.find("visualSources")

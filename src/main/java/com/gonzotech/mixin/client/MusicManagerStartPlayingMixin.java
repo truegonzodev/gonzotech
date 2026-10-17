@@ -36,8 +36,8 @@ public abstract class MusicManagerStartPlayingMixin {
             at = @At("HEAD"),
             argsOnly = true,
             ordinal = 0)
-    private MusicInfo gonzotech$maybeAddOverworldBitter(MusicInfo requestedMusic) {
-        return GonzoMusicClient.maybeAddOverworldBitter(requestedMusic);
+    private MusicInfo gonzotech$maybeReplaceVanillaTrack(MusicInfo requestedMusic) {
+        return GonzoMusicClient.maybeReplaceVanillaTrack(requestedMusic);
     }
 
     @Inject(

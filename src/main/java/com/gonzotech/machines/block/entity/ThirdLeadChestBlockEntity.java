@@ -18,14 +18,14 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Блок-сущность свинцового ящика: ровно 9 слотов (один ряд), автоматизация —
- * все слоты в обе стороны (копия бочки). Счётчик зрителей управляет свойством
- * OPEN и звуками крышки, как у ванильной бочки.
+ * все слоты в обе стороны (копия бочки). Наведёнка содержимого лениво затухает
+ * при радиационном скане с обычным темпом; предметы друг друга не облучают,
+ * постоянная эмиссия не меняется. Счётчик зрителей управляет OPEN и звуками крышки.
  */
 public class ThirdLeadChestBlockEntity extends BlockEntity implements WorldlyContainer, MenuProvider {
 

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "gonzotech:block/third_1reactor/casing"
+    "all": "gonzotech:block/third_1reactor/third_1reactor_casting"
   }
 }
