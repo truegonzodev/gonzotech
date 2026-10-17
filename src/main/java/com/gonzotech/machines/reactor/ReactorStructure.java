@@ -19,6 +19,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,32 +43,40 @@ public final class ReactorStructure {
     public static final int MAX_SIZE = 16;
     private static final int MAX_SHELL_PARTS = 1_600;
 
-    /** Loaded controller panels only; persisted bounds live in the panel BE. */
+    /** Loaded controller panels used only to discover unformed reactors after block placement. */
     private static final Map<Level, Set<Long>> PANEL_POSITIONS =
+        Collections.synchronizedMap(new WeakHashMap<>());
+
+    /** Every cell in a formed reactor's saved bounds -> its persistent panel controller. */
+    private static final Map<Level, Map<Long, BlockPos>> MEMBER_INDEX =
         Collections.synchronizedMap(new WeakHashMap<>());
 
     private ReactorStructure() {
     }
 
-    /** A player placed any block; revalidate only reactors within the fixed 16-block limit. */
+    /** Only a placement event may initialize an unformed reactor. */
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getLevel() instanceof ServerLevel level) {
+        if (!event.isCanceled() && event.getLevel() instanceof ServerLevel level) {
             partChanged(level, event.getPos());
         }
     }
 
-    /** A player broke any block; treat the broken position as air before the game removes it. */
+    /** Breaking a member may invalidate a formed snapshot, but never initializes a new one. */
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         if (event.getLevel() instanceof ServerLevel level && !event.isCanceled()) {
             partRemoved(level, event.getPos());
         }
     }
 
-    /** Called by the panel BE on load and after its initial block placement. */
+    /** Register a loaded panel and restore only a structure that was already saved as formed. */
     public static void panelLoaded(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         PANEL_POSITIONS.computeIfAbsent(level, ignored -> new HashSet<>())
             .add(panel.getBlockPos().asLong());
-        restorePanel(level, panel);
+        if (panel.isFormedController()) {
+            restorePanel(level, panel);
+        } else {
+            panel.clearValidationPending();
+        }
     }
 
     public static void panelUnloaded(Level level, BlockPos pos) {
@@ -76,42 +85,39 @@ public final class ReactorStructure {
             panels.remove(pos.asLong());
             if (panels.isEmpty()) PANEL_POSITIONS.remove(level);
         }
+        removeIndexForRoot(level, pos);
     }
 
-    /** One transient index per loaded level; saved structure bounds remain in the panel BE. */
+    /** Transient loaded-panel and formed-member indexes are rebuilt from saved panel bounds. */
     public static void clearAll() {
         PANEL_POSITIONS.clear();
+        MEMBER_INDEX.clear();
     }
 
-    /** Called for shell/interior block callbacks and placement events. */
+    /** A placement revalidates its formed member or tries to initialize a nearby unformed panel. */
     public static void partChanged(Level level, BlockPos pos) {
         if (!(level instanceof ServerLevel server)) return;
         registerPanelIfPresent(server, pos);
-        revalidateNearbyPanels(server, pos, null);
+        revalidateOrForm(server, pos);
     }
 
-    /** Called before removal; {@code pos} is validated as air to avoid stale formed visuals. */
+    /** Removal only invalidates a formed snapshot; it deliberately does not retry formation. */
     public static void partRemoved(Level level, BlockPos pos) {
-        if (!(level instanceof ServerLevel server)) return;
-        revalidateNearbyPanels(server, pos, pos);
+        if (level instanceof ServerLevel server) {
+            invalidateAt(server, pos);
+        }
     }
 
-    /**
-     * Validate a panel after its chunk loads or when a pending shell check is
-     * retried. If any required chunk is not loaded yet, its lightweight ticker
-     * retries later rather than force-loading chunks or treating them as air.
-     */
+    /** Restore saved bounds after load; an unformed panel is never initialized by chunk loading. */
     public static void restorePanel(ServerLevel level, ReactorControlPanelBlockEntity panel) {
-        if (panel.isFormedController() && !chunksLoaded(level, panel.min(), panel.max())) {
-            panel.markValidationPending();
+        if (!panel.isFormedController()) {
+            panel.clearValidationPending();
             return;
         }
-        // Unformed panels can also have a pending check when shell discovery
-        // reached an unloaded neighbour; retry them after that chunk is loaded.
-        revalidatePanel(level, panel, null);
+        revalidateFormedPanel(level, panel, null);
     }
 
-    /** Right-click on the panel runs a full diagnostic and ensures the formed state is current. */
+    /** Diagnose current geometry. A valid but unformed reactor remains unformed until a placement event. */
     public static String debugReport(Level level, BlockPos panelPos) {
         if (!(level instanceof ServerLevel server)) {
             return "Реактор: диагностика доступна на серверной стороне.";
@@ -123,13 +129,19 @@ public final class ReactorStructure {
         }
 
         PANEL_POSITIONS.computeIfAbsent(server, ignored -> new HashSet<>()).add(panelPos.asLong());
-        Validation validation = revalidatePanel(server, panel, null);
+        boolean wasFormed = panel.isFormedController();
+        Validation validation = wasFormed
+            ? revalidateFormedPanel(server, panel, null)
+            : inspectFromPanel(server, panelPos, null);
         if (validation.incomplete()) {
             return "Реактор: проверка отложена — не все чанки куба загружены; принудительная загрузка не выполнялась.";
         }
         if (validation.structure() == null) {
             return "Реактор не сформирован: " + validation.failure()
-                + (panel.isFormedController() ? " (сохранённая форма снята)." : ".");
+                + (wasFormed && !panel.isFormedController() ? " (сохранённая форма снята)." : ".");
+        }
+        if (!panel.isFormedController()) {
+            return "Реактор: геометрия корректна, но он не сформирован. Разместите блок внутри куба или на его оболочке, чтобы запустить инициализацию.";
         }
         StructureInfo info = validation.structure();
         return "Реактор I поколения сформирован: внешний куб " + info.size() + "³"
@@ -153,23 +165,58 @@ public final class ReactorStructure {
         }
     }
 
-    private static void revalidateNearbyPanels(ServerLevel level, BlockPos changed, BlockPos ignoredPos) {
-        Set<Long> indexed = PANEL_POSITIONS.get(level);
-        if (indexed == null || indexed.isEmpty()) return;
+    private static void revalidateOrForm(ServerLevel level, BlockPos changed) {
+        BlockPos indexedRoot = controllerAt(level, changed);
+        if (indexedRoot != null) {
+            if (level.getBlockEntity(indexedRoot) instanceof ReactorControlPanelBlockEntity panel
+                && panel.isFormedController()) {
+                revalidateFormedPanel(level, panel, null);
+            } else {
+                removeIndexForRoot(level, indexedRoot);
+            }
+            return;
+        }
 
-        // Copy before validation: de-forming a panel can mutate the loaded index.
-        for (long packedPos : Set.copyOf(indexed)) {
-            BlockPos panelPos = BlockPos.of(packedPos);
+        Set<Long> indexedPanels = PANEL_POSITIONS.get(level);
+        if (indexedPanels == null || indexedPanels.isEmpty()) return;
+        for (long packedPanel : Set.copyOf(indexedPanels)) {
+            BlockPos panelPos = BlockPos.of(packedPanel);
             if (!near(changed, panelPos)) continue;
             if (!level.hasChunkAt(panelPos)
                 || !(level.getBlockState(panelPos).getBlock() instanceof ReactorControlPanelBlock)) {
                 panelUnloaded(level, panelPos);
                 continue;
             }
-            if (level.getBlockEntity(panelPos) instanceof ReactorControlPanelBlockEntity panel) {
-                revalidatePanel(level, panel, ignoredPos);
+            if (!(level.getBlockEntity(panelPos) instanceof ReactorControlPanelBlockEntity panel)) continue;
+
+            if (panel.isFormedController()) {
+                // A formed reactor owns a fixed box. Adjacent shell-looking blocks
+                // cannot expand or replace that snapshot.
+                if (panel.contains(changed)) {
+                    revalidateFormedPanel(level, panel, null);
+                }
+                continue;
             }
+            tryFormFromPlacement(level, panel, changed);
         }
+    }
+
+    private static void tryFormFromPlacement(ServerLevel level,
+                                             ReactorControlPanelBlockEntity panel,
+                                             BlockPos placedPos) {
+        if (panel.isFormedController()) return;
+        Validation validation = inspectFromPanel(level, panel.getBlockPos(), null);
+        if (validation.incomplete() || validation.structure() == null
+            || !contains(validation.structure(), placedPos)) {
+            return;
+        }
+        applyFormedVisuals(level, panel, validation.structure());
+    }
+
+    private static boolean contains(StructureInfo structure, BlockPos pos) {
+        return pos.getX() >= structure.min().getX() && pos.getX() <= structure.max().getX()
+            && pos.getY() >= structure.min().getY() && pos.getY() <= structure.max().getY()
+            && pos.getZ() >= structure.min().getZ() && pos.getZ() <= structure.max().getZ();
     }
 
     private static boolean near(BlockPos a, BlockPos b) {
@@ -179,15 +226,20 @@ public final class ReactorStructure {
             && Math.abs((long) a.getZ() - b.getZ()) <= reach;
     }
 
-    private static Validation revalidatePanel(ServerLevel level,
-                                               ReactorControlPanelBlockEntity panel,
-                                               BlockPos ignoredPos) {
-        if (panel.isFormedController() && !chunksLoaded(level, panel.min(), panel.max())) {
+    private static Validation revalidateFormedPanel(ServerLevel level,
+                                                    ReactorControlPanelBlockEntity panel,
+                                                    BlockPos ignoredPos) {
+        if (!panel.isFormedController()) {
+            return Validation.failure("панель не хранит сформированную структуру");
+        }
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        if (!chunksLoaded(level, min, max)) {
             panel.markValidationPending();
             return Validation.incompleteResult();
         }
 
-        Validation validation = inspectFromPanel(level, panel.getBlockPos(), ignoredPos);
+        Validation validation = validateBox(level, panel.getBlockPos(), new Bounds(min, max), ignoredPos);
         if (validation.incomplete()) {
             panel.markValidationPending();
             return validation;
@@ -195,10 +247,73 @@ public final class ReactorStructure {
         panel.clearValidationPending();
         if (validation.structure() != null) {
             applyFormedVisuals(level, panel, validation.structure());
-        } else if (panel.isFormedController()) {
-            clearFormedVisuals(level, panel, ignoredPos);
+        } else {
+            invalidateController(level, panel, ignoredPos);
         }
         return validation;
+    }
+
+    private static void invalidateAt(ServerLevel level, BlockPos member) {
+        BlockPos root = controllerAt(level, member);
+        if (root == null) return;
+        if (level.getBlockEntity(root) instanceof ReactorControlPanelBlockEntity panel
+            && panel.isFormedController()) {
+            revalidateFormedPanel(level, panel, member);
+        } else {
+            removeIndexForRoot(level, root);
+        }
+    }
+
+    private static void invalidateController(ServerLevel level,
+                                             ReactorControlPanelBlockEntity panel,
+                                             BlockPos ignoredPos) {
+        if (!panel.isFormedController()) return;
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        if (!chunksLoaded(level, min, max)) {
+            panel.markValidationPending();
+            return;
+        }
+        removeIndexForRoot(level, panel.getBlockPos());
+        for (int x = min.getX(); x <= max.getX(); x++) {
+            for (int y = min.getY(); y <= max.getY(); y++) {
+                for (int z = min.getZ(); z <= max.getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (pos.equals(ignoredPos) || !onBoundary(pos, min, max)) continue;
+                    BlockState state = level.getBlockState(pos);
+                    if (state.getBlock() instanceof ReactorCasingBlock
+                        && state.getValue(ReactorCasingBlock.FORMED)) {
+                        level.setBlock(pos, state.setValue(ReactorCasingBlock.FORMED, false), Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+        }
+        panel.clearStructure();
+    }
+
+    private static BlockPos controllerAt(ServerLevel level, BlockPos pos) {
+        Map<Long, BlockPos> index = MEMBER_INDEX.get(level);
+        return index == null ? null : index.get(pos.asLong());
+    }
+
+    private static void indexStructure(ServerLevel level, BlockPos controller, BlockPos min, BlockPos max) {
+        removeIndexForRoot(level, controller);
+        Map<Long, BlockPos> index = MEMBER_INDEX.computeIfAbsent(level, ignored -> new HashMap<>());
+        BlockPos root = controller.immutable();
+        for (int x = min.getX(); x <= max.getX(); x++) {
+            for (int y = min.getY(); y <= max.getY(); y++) {
+                for (int z = min.getZ(); z <= max.getZ(); z++) {
+                    index.put(new BlockPos(x, y, z).asLong(), root);
+                }
+            }
+        }
+    }
+
+    private static void removeIndexForRoot(Level level, BlockPos root) {
+        Map<Long, BlockPos> index = MEMBER_INDEX.get(level);
+        if (index == null) return;
+        index.entrySet().removeIf(entry -> root.equals(entry.getValue()));
+        if (index.isEmpty()) MEMBER_INDEX.remove(level);
     }
 
     private static Validation inspectFromPanel(ServerLevel level, BlockPos panelPos, BlockPos ignoredPos) {
@@ -273,6 +388,7 @@ public final class ReactorStructure {
                     incomplete = true;
                     continue;
                 }
+                if (!next.equals(seed) && controllerAt(level, next) != null) continue;
                 if (!isShellPart(level.getBlockState(next))) continue;
                 seen.add(packed);
                 pending.addLast(next.immutable());
@@ -443,6 +559,7 @@ public final class ReactorStructure {
                                            ReactorControlPanelBlockEntity panel,
                                            StructureInfo info) {
         panel.configureStructure(info.min(), info.max());
+        indexStructure(level, panel.getBlockPos(), info.min(), info.max());
         for (int x = info.min().getX(); x <= info.max().getX(); x++) {
             for (int y = info.min().getY(); y <= info.max().getY(); y++) {
                 for (int z = info.min().getZ(); z <= info.max().getZ(); z++) {
@@ -456,32 +573,6 @@ public final class ReactorStructure {
                 }
             }
         }
-    }
-
-    private static void clearFormedVisuals(ServerLevel level,
-                                           ReactorControlPanelBlockEntity panel,
-                                           BlockPos ignoredPos) {
-        if (!panel.isFormedController()) return;
-        BlockPos min = panel.min();
-        BlockPos max = panel.max();
-        if (!chunksLoaded(level, min, max)) {
-            panel.markValidationPending();
-            return;
-        }
-        for (int x = min.getX(); x <= max.getX(); x++) {
-            for (int y = min.getY(); y <= max.getY(); y++) {
-                for (int z = min.getZ(); z <= max.getZ(); z++) {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    if (pos.equals(ignoredPos) || !onBoundary(pos, min, max)) continue;
-                    BlockState state = level.getBlockState(pos);
-                    if (state.getBlock() instanceof ReactorCasingBlock
-                        && state.getValue(ReactorCasingBlock.FORMED)) {
-                        level.setBlock(pos, state.setValue(ReactorCasingBlock.FORMED, false), Block.UPDATE_CLIENTS);
-                    }
-                }
-            }
-        }
-        panel.clearStructure();
     }
 
     private record Bounds(BlockPos min, BlockPos max) {

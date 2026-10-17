@@ -82,7 +82,7 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity {
         super.setRemoved();
     }
 
-    /** Retry a deferred structure check after the relevant chunk boundary loads. */
+    /** Retry validation of this saved formed structure after its remaining chunks load. */
     public void serverTick() {
         if (!validationPending || !(level instanceof ServerLevel serverLevel)
             || serverLevel.getGameTime() % 20L != 0L) {
