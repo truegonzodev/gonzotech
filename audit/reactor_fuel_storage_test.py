@@ -26,6 +26,8 @@ structure = read("machines/reactor/ReactorStructure.java")
 assert "implements Container" in sheath_be
 assert "ContainerHelper.saveAllItems(tag, fuelItems, registries)" in sheath_be
 assert "ContainerHelper.loadAllItems(tag, fuelItems, registries)" in sheath_be
+assert "boolean stillValid(Player player)" in sheath_be
+assert "Container.stillValidBlockEntity(this, player)" in sheath_be
 assert "private final NonNullList<ItemStack> fuelItems" in sheath_be
 assert "legacyFuelItems" in panel_be
 assert "copyLegacyFuelItems()" in panel_be and "clearLegacyFuelItems()" in panel_be

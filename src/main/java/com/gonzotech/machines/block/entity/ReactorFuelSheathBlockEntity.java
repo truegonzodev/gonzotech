@@ -137,6 +137,11 @@ public final class ReactorFuelSheathBlockEntity extends BlockEntity implements C
     }
 
     @Override
+    public boolean stillValid(Player player) {
+        return Container.stillValidBlockEntity(this, player);
+    }
+
+    @Override
     public void clearContent() {
         for (int slot = 0; slot < fuelItems.size(); slot++) fuelItems.set(slot, ItemStack.EMPTY);
         setChanged();
