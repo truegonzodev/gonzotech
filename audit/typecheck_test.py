@@ -91,6 +91,8 @@ real_files = [
     NET / "UniversalNodeBlock.java",
     ROOT / "src/main/java/com/gonzotech/machines/energy/SecondTierDefs.java",
     NET / "UniversalNodeComparator.java",
+    # 0.3.237: pure-Java coefficient solver is compiled in the repository typecheck too.
+    ROOT / "src/main/java/com/gonzotech/machines/reactor/MatrixCoefficients.java",
 ]
 for f in real_files:
     assert f.is_file(), f"нет файла сетевого пакета: {f}"
@@ -145,4 +147,5 @@ assert 'radiation/RadMaterials.java' in _self, "RadMaterials выпал из с�
 assert 'machines/processing/PressRecipes.java' in _self, "PressRecipes выпал из списка typecheck"
 assert 'machines/client/SteamGenScreen.java' in _self, "SteamGenScreen выпал из списка typecheck"
 assert 'machines/steamgen/SteamGenMath.java' in _self, "SteamGenMath выпал из списка typecheck"
+assert 'machines/reactor/MatrixCoefficients.java' in _self, "MatrixCoefficients выпал из списка typecheck"
 print(f"typecheck ok: {len(real_files)} реальных файлов + {len(stub_files)} стабов, 0 ошибок")

@@ -60,6 +60,15 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
         return Math.min(MAX_FUEL_SLOTS, Math.max(0, fuelSlotCount));
     }
 
+    /** Count every TVEL stack stored in the controller, including slots temporarily hidden after deformation. */
+    public int loadedTvelCount() {
+        int total = 0;
+        for (ItemStack stack : fuelItems) {
+            if (stack.is(ModItems.UF_TVEL.get())) total += stack.getCount();
+        }
+        return total;
+    }
+
     public boolean contains(BlockPos pos) {
         return isFormedController()
             && pos.getX() >= min.getX() && pos.getX() <= max.getX()

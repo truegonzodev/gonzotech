@@ -17,7 +17,7 @@ ASSETS = {
 }
 
 
-def parse_transparent_rgba(path: Path, expected_size: tuple[int, int]) -> None:
+def parse_visible_rgba(path: Path, expected_size: tuple[int, int]) -> None:
     data = path.read_bytes()
     assert data.startswith(b"\x89PNG\r\n\x1a\n"), f"{path.name}: invalid PNG signature"
     offset = 8
@@ -46,14 +46,43 @@ def parse_transparent_rgba(path: Path, expected_size: tuple[int, int]) -> None:
     raw = zlib.decompress(compressed)
     row_bytes = width * 4
     assert len(raw) == height * (row_bytes + 1), f"{path.name}: unexpected decoded data length"
+
+    def paeth(a: int, b: int, c: int) -> int:
+        p = a + b - c
+        distances = (abs(p - a), abs(p - b), abs(p - c))
+        return (a, b, c)[distances.index(min(distances))]
+
+    previous = bytearray(row_bytes)
+    visible = False
     for row in range(height):
         row_start = row * (row_bytes + 1)
-        assert raw[row_start] == 0, f"{path.name}: only filter-0 placeholder rows are expected"
-        assert not any(raw[row_start + 1:row_start + 1 + row_bytes]), f"{path.name}: placeholder must be fully transparent RGBA"
+        filter_type = raw[row_start]
+        encoded = raw[row_start + 1:row_start + 1 + row_bytes]
+        decoded = bytearray(row_bytes)
+        for index, value in enumerate(encoded):
+            left = decoded[index - 4] if index >= 4 else 0
+            up = previous[index]
+            upper_left = previous[index - 4] if index >= 4 else 0
+            if filter_type == 0:
+                predictor = 0
+            elif filter_type == 1:
+                predictor = left
+            elif filter_type == 2:
+                predictor = up
+            elif filter_type == 3:
+                predictor = (left + up) // 2
+            elif filter_type == 4:
+                predictor = paeth(left, up, upper_left)
+            else:
+                raise AssertionError(f"{path.name}: unknown PNG filter {filter_type}")
+            decoded[index] = (value + predictor) & 0xFF
+        visible = visible or any(decoded[3::4])
+        previous = decoded
+    assert visible, f"{path.name}: texture must contain at least one visible pixel"
 
 
 for filename, size in ASSETS.items():
-    parse_transparent_rgba(GUI / filename, size)
+    parse_visible_rgba(GUI / filename, size)
 
 panel_block = (ROOT / "src/main/java/com/gonzotech/core/block/ReactorControlPanelBlock.java").read_text()
 panel_be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/ReactorControlPanelBlockEntity.java").read_text()
@@ -66,7 +95,9 @@ client_registry = (ROOT / "src/main/java/com/gonzotech/machines/client/MachineCl
 
 assert "player.openMenu(panel" in panel_block
 assert "!player.isShiftKeyDown() && panel.isFormedController()" in panel_block
-assert "ReactorStructure.debugReport(level, pos)" in panel_block
+assert "ReactorStructure.debugReportComponent(level, pos)" in panel_block
+assert "[H=" in structure and "[L=" in structure
+assert "ChatFormatting.GOLD" in structure and "ChatFormatting.AQUA" in structure
 assert "Containers.dropContents(level, pos, panel)" in panel_block
 
 assert "implements WorldlyContainer, MenuProvider" in panel_be
@@ -103,6 +134,6 @@ assert '"third_uranium_reactor_gui_slot.png"' in screen
 assert '"third_uranium_reactor_gui_slot_neo1.png"' in screen
 
 version = (ROOT / "gradle.properties").read_text()
-assert "mod_version=0.3.236" in version
+assert "mod_version=0.3.237" in version
 
-print(f"PASS reactor GUI: {len(ASSETS)} transparent RGBA placeholders, menu, NBT inventory, dynamic slots, Z-order and registrations")
+print(f"PASS reactor GUI: {len(ASSETS)} visible RGBA textures, menu, NBT inventory, dynamic slots, Z-order and registrations")

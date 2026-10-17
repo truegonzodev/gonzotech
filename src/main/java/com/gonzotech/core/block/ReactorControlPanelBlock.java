@@ -6,7 +6,6 @@ import com.gonzotech.machines.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -126,7 +125,7 @@ public final class ReactorControlPanelBlock extends Block implements EntityBlock
                     buffer.writeVarInt(panel.fuelSlotCount());
                 });
             } else {
-                player.displayClientMessage(Component.literal(ReactorStructure.debugReport(level, pos)), false);
+                player.displayClientMessage(ReactorStructure.debugReportComponent(level, pos), false);
             }
         }
         return InteractionResult.SUCCESS;

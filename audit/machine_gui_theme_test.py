@@ -47,7 +47,7 @@ def assert_solid_red_rgba(path: Path) -> None:
         assert row[0] == 0 and row[1:] == expected_row, f"non-red or transparent pixel in {path}, row {y}"
 
 
-_ver.at_least("0.3.236", "reactor GUI placeholders, machine/filter GUI selector, and unchanged theme behavior")
+_ver.at_least("0.3.236", "reactor GUI assets, machine/filter GUI selector, and unchanged theme behavior")
 
 machine_sheets = {
     path for path in GUI_DIR.glob("*.png")

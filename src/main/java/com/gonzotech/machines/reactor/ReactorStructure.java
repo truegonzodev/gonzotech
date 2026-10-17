@@ -8,6 +8,8 @@ import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -22,6 +24,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -34,8 +37,9 @@ import java.util.WeakHashMap;
  * shielded third-tier output nodes. The filled interior is deliberately a strict
  * whitelist; air and unknown blocks prevent formation.</p>
  *
- * <p>This is structure initialization only. It does not implement fuel slots,
- * burnup, neutron transport, heat, or GTH generation.</p>
+ * <p>Shift diagnostics can evaluate the archived dimensionless matrix model over
+ * the live interior. This is not a runtime simulation: fuel burnup, reactor heat
+ * production, and GTH generation remain unimplemented.</p>
  */
 public final class ReactorStructure {
 
@@ -144,7 +148,7 @@ public final class ReactorStructure {
             return "Реактор: геометрия корректна, но он не сформирован. Разместите блок внутри куба или на его оболочке, чтобы запустить инициализацию.";
         }
         StructureInfo info = validation.structure();
-        return "Реактор I поколения сформирован: внешний куб " + info.size() + "³"
+        String summary = "Реактор I поколения сформирован: внешний куб " + info.size() + "³"
             + ", обшивок=" + info.casingBlocks()
             + ", ТВЭЛ-чехлов=" + info.sheaths()
             + ", узел ГТХ=" + info.heatNodes()
@@ -153,9 +157,41 @@ public final class ReactorStructure {
             + ", графита=" + info.graphite()
             + ", бора=" + info.boron()
             + ", бария=" + info.barium()
-            + ", воды=" + info.water()
-            + ", свинцовых поршней=" + info.leadPistons() + "."
-            + " Работающий топливный/тепловой цикл ещё не реализован.";
+            + ", воды=" + info.water() + ".";
+        try {
+            ReactorMatrix.Diagnostic matrix = ReactorMatrix.evaluate(server, panel);
+            MatrixCoefficients.Coefficients coefficients = matrix.coefficients();
+            String report = summary
+                + " ТВЭЛов в контейнере=" + matrix.loadedTvels()
+                + ", чехлов=" + matrix.fuelSheaths()
+                + ", средняя загрузка на чехол=" + String.format(Locale.ROOT, "%.4f", matrix.tvelsPerSheath())
+                + " · тепловой коэффициент [H=" + String.format(Locale.ROOT, "%.6f", coefficients.heat()) + "]"
+                + " · пиковый поток утечки [L=" + String.format(Locale.ROOT, "%.6f", coefficients.peakLeak())
+                + "; " + String.format(Locale.ROOT, "%.2f", coefficients.peakLeak() * 100.0) + "%]";
+            if (matrix.fuelSheaths() == 0 && matrix.loadedTvels() > 0) {
+                report += " ВНИМАНИЕ: ТВЭЛы нельзя распределить — в активной зоне нет чехлов.";
+            }
+            return report + " Цикл расхода топлива и генерации ГТХ ещё не реализован.";
+        } catch (RuntimeException exception) {
+            return summary + " Матрица коэффициентов не рассчитана: " + exception.getMessage();
+        }
+    }
+
+    /** Same diagnostics with the two matrix outputs visually distinguished in chat. */
+    public static Component debugReportComponent(Level level, BlockPos panelPos) {
+        String report = debugReport(level, panelPos);
+        int heatStart = report.indexOf("[H=");
+        int heatEnd = heatStart < 0 ? -1 : report.indexOf(']', heatStart);
+        int leakStart = heatEnd < 0 ? -1 : report.indexOf("[L=", heatEnd);
+        int leakEnd = leakStart < 0 ? -1 : report.indexOf(']', leakStart);
+        if (heatStart < 0 || heatEnd < 0 || leakStart < 0 || leakEnd < 0) {
+            return Component.literal(report).withStyle(ChatFormatting.GOLD);
+        }
+        return Component.literal(report.substring(0, heatStart)).withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(report.substring(heatStart, heatEnd + 1)).withStyle(ChatFormatting.GOLD))
+            .append(Component.literal(report.substring(heatEnd + 1, leakStart)).withStyle(ChatFormatting.GRAY))
+            .append(Component.literal(report.substring(leakStart, leakEnd + 1)).withStyle(ChatFormatting.AQUA))
+            .append(Component.literal(report.substring(leakEnd + 1)).withStyle(ChatFormatting.GRAY));
     }
 
     private static void registerPanelIfPresent(ServerLevel level, BlockPos pos) {
@@ -414,7 +450,6 @@ public final class ReactorStructure {
         int boron = 0;
         int barium = 0;
         int water = 0;
-        int leadPistons = 0;
 
         for (int x = bounds.min().getX(); x <= bounds.max().getX(); x++) {
             for (int y = bounds.min().getY(); y <= bounds.max().getY(); y++) {
@@ -451,7 +486,6 @@ public final class ReactorStructure {
                         else if (isMetalBlock(block, "boron_block")) boron++;
                         else if (isMetalBlock(block, "barium_block")) barium++;
                         else if (block == Blocks.WATER) water++;
-                        else if (isLeadPiston(block)) leadPistons++;
                     }
                 }
             }
@@ -466,7 +500,7 @@ public final class ReactorStructure {
 
         return Validation.success(new StructureInfo(bounds.min(), bounds.max(), size,
             casing, sheaths, heatNodes, fluidNodes, universalNodes,
-            graphite, boron, barium, water, leadPistons));
+            graphite, boron, barium, water));
     }
 
     private static BlockPos findPanelPosition(ServerLevel level, Bounds bounds, BlockPos ignoredPos) {
@@ -498,14 +532,7 @@ public final class ReactorStructure {
             || block == ModBlocks.GRAPHITE_BLOCK.get()
             || isMetalBlock(block, "boron_block")
             || isMetalBlock(block, "barium_block")
-            || block == Blocks.WATER
-            || isLeadPiston(block);
-    }
-
-    private static boolean isLeadPiston(Block block) {
-        return block == ModMachines.THIRD_LEAD_PISTON.get()
-            || block == ModMachines.THIRD_STICKY_LEAD_PISTON.get()
-            || block == ModMachines.THIRD_LEAD_PISTON_HEAD.get();
+            || block == Blocks.WATER;
     }
 
     private static boolean isMetalBlock(Block block, String path) {
@@ -584,8 +611,7 @@ public final class ReactorStructure {
     private record StructureInfo(BlockPos min, BlockPos max, int size,
                                  int casingBlocks, int sheaths,
                                  int heatNodes, int fluidNodes, int universalNodes,
-                                 int graphite, int boron, int barium, int water,
-                                 int leadPistons) {
+                                 int graphite, int boron, int barium, int water) {
     }
 
     private record Validation(StructureInfo structure, String failure, boolean incomplete) {
