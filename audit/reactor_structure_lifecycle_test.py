@@ -75,6 +75,11 @@ assert "if (!panel.isFormedController())" in restore
 assert "return;" in restore.split("if (!panel.isFormedController())", 1)[1].split("}", 1)[0]
 assert "revalidateFormedPanel(level, panel, null)" in restore
 assert "if (panel.isFormedController())" in method(structure, "public static void panelLoaded(")
+unloaded = method(structure, "public static void panelUnloaded(")
+assert "getBlockEntity(" not in unloaded
+removed_be = method(panel_be, "public void setRemoved()")
+assert "ReactorMatrix.invalidate(this)" in removed_be
+assert "ReactorStructure.panelUnloaded(serverLevel, getBlockPos())" in removed_be
 report = method(structure, "public static List<Component> debugReportComponents(")
 assert "inspectFromPanel(server, panelPos, null)" in report
 assert "applyFormedVisuals" not in report

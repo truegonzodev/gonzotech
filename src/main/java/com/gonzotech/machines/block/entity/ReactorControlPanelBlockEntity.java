@@ -1,6 +1,7 @@
 package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.machines.menu.ReactorMenu;
+import com.gonzotech.machines.reactor.ReactorMatrix;
 import com.gonzotech.machines.reactor.ReactorStructure;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -137,6 +138,9 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
     @Override
     public void setRemoved() {
         if (level instanceof ServerLevel serverLevel) {
+            // Invalidate by this live BE reference; the chunk may already be unloading,
+            // so a world lookup by position here can deadlock the server thread.
+            ReactorMatrix.invalidate(this);
             ReactorStructure.panelUnloaded(serverLevel, getBlockPos());
         }
         super.setRemoved();

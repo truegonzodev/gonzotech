@@ -93,9 +93,8 @@ public final class ReactorStructure {
     }
 
     public static void panelUnloaded(Level level, BlockPos pos) {
-        if (level.getBlockEntity(pos) instanceof ReactorControlPanelBlockEntity panel) {
-            ReactorMatrix.invalidate(panel);
-        }
+        // Called while a chunk is clearing its block entities: do not query the
+        // level here, or getBlockEntity may synchronously request the chunk being unloaded.
         Set<Long> panels = PANEL_POSITIONS.get(level);
         if (panels != null) {
             panels.remove(pos.asLong());

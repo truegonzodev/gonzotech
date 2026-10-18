@@ -147,6 +147,6 @@ assert '"third_uranium_reactor_gui_slot.png"' in screen
 assert '"third_uranium_reactor_gui_slot_neo1.png"' in screen
 
 version = (ROOT / "gradle.properties").read_text()
-assert "mod_version=0.3.239" in version
+assert "mod_version=0.3.240" in version
 
 print(f"PASS reactor GUI: {len(ASSETS)} visible RGBA textures, menu, NBT inventory, dynamic slots, Z-order and registrations")
