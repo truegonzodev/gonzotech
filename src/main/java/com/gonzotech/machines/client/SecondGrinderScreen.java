@@ -20,12 +20,12 @@ public final class SecondGrinderScreen extends MachineScreen<SecondGrinderMenu> 
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("second_grinder_gui_bg.png");
+        return machineGui("second_grinder_gui_bg.png", "second_grinder_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("second_grinder_gui.png");
+        return machineGui("second_grinder_gui.png", "second_grinder_gui_neo.png");
     }
 
     @Override

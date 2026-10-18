@@ -28,12 +28,12 @@ public class WortKettleScreen extends MachineScreen<WortKettleMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_wort_kettle_gui_bg.png");
+        return machineGui("third_wort_kettle_gui_bg.png", "third_wort_kettle_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_wort_kettle_gui.png");
+        return machineGui("third_wort_kettle_gui.png", "third_wort_kettle_gui_neo.png");
     }
 
     @Override

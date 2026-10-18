@@ -8,12 +8,12 @@ ROOT = Path(__file__).resolve().parents[1]
 GUI = ROOT / "src/main/resources/assets/gonzotech/textures/gui"
 
 ASSETS = {
-    "third_uranium_reactor_gui.png": (512, 512),
-    "third_uranium_reactor_gui_bg.png": (512, 512),
-    "third_uranium_reactor_gui_neo.png": (512, 512),
-    "third_uranium_reactor_gui_bg_neo.png": (512, 512),
-    "third_uranium_reactor_gui_slot.png": (18, 18),
-    "third_uranium_reactor_gui_slot_neo1.png": (18, 18),
+    "classic/third_uranium_reactor_gui.png": (512, 512),
+    "classic/third_uranium_reactor_gui_bg.png": (512, 512),
+    "neo/third_uranium_reactor_gui_neo.png": (512, 512),
+    "neo/third_uranium_reactor_gui_bg_neo.png": (512, 512),
+    "classic/third_uranium_reactor_gui_slot.png": (18, 18),
+    "neo/third_uranium_reactor_gui_slot_neo1.png": (18, 18),
 }
 
 
@@ -142,11 +142,13 @@ layer_order = [
 ]
 positions = [render_body.index(token) for token in layer_order]
 assert positions == sorted(positions), "machine GUI Z0–Z3 ordering changed"
+assert 'GUI_DIR + "classic/"' in machine_screen and 'GUI_DIR + "neo/"' in machine_screen
+assert 'machineGui("third_uranium_reactor_gui.png", "third_uranium_reactor_gui_neo.png")' in screen
 assert "for (int slot = 3; slot < menu.activeFuelSlots(); slot++)" in screen
 assert '"third_uranium_reactor_gui_slot.png"' in screen
 assert '"third_uranium_reactor_gui_slot_neo1.png"' in screen
 
 version = (ROOT / "gradle.properties").read_text()
-assert "mod_version=0.3.240" in version
+assert "mod_version=0.3.241" in version
 
 print(f"PASS reactor GUI: {len(ASSETS)} visible RGBA textures, menu, NBT inventory, dynamic slots, Z-order and registrations")

@@ -21,12 +21,12 @@ public class CrusherScreen extends MachineScreen<CrusherMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("crusher_gui_bg.png");
+        return machineGui("crusher_gui_bg.png", "crusher_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("crusher_gui.png");
+        return machineGui("crusher_gui.png", "crusher_gui_neo.png");
     }
 
     @Override

@@ -20,12 +20,12 @@ public final class SecondLumberScreen extends MachineScreen<SecondLumberMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("second_lumber_gui_bg.png");
+        return machineGui("second_lumber_gui_bg.png", "second_lumber_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("second_lumber_gui.png");
+        return machineGui("second_lumber_gui.png", "second_lumber_gui_neo.png");
     }
 
     @Override

@@ -103,8 +103,8 @@ pin((ASSETS / f"items/{ID}.json").is_file(), "items")
 pin((DATA / f"loot_table/blocks/{ID}.json").is_file(), "loot")
 for tex in ("lead_chest_side", "lead_chest_top", "lead_chest_bottom", "lead_chest_open"):
     pin((ASSETS / f"textures/block/third/{tex}.png").is_file(), f"текстура {tex}")
-pin((ASSETS / "textures/gui/lead_chest_gui_bg.png").is_file(), "GUI bg 512×512")
-pin((ASSETS / "textures/gui/lead_chest_gui.png").is_file(), "GUI fg")
+pin((ASSETS / "textures/gui/classic/lead_chest_gui_bg.png").is_file(), "GUI bg 512×512")
+pin((ASSETS / "textures/gui/classic/lead_chest_gui.png").is_file(), "GUI fg")
 for lang in ("ru_ru", "en_us"):
     L = (ASSETS / f"lang/{lang}.json").read_text()
     pin(f'"block.gonzotech.{ID}"' in L, f"lang/{lang}: имя")

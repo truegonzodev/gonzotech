@@ -1,6 +1,10 @@
 # Текущий аудит Gonzo Tech
 
-**Обновлён:** 18.10.2026 · **Ревизия:** 0.3.240.
+**Обновлён:** 18.10.2026 · **Ревизия:** 0.3.241.
+
+**0.3.241 — новые пути и уникальные NEO GUI станков.** Машинные листы используют `textures/gui/classic/` и `textures/gui/neo/`; экраны указывают оба ресурса явно. Classic-лист разрешено переиспользовать при совпадающем дизайне, NEO-файл отдельный для каждого станка и уровня. First/second accumulator делят classic-лист, но имеют собственные NEO-пары; у разливного крана также отдельный NEO-путь. Служебные `bar_*` и другие не-машинные GUI остаются в корне. [Правило путей GUI](GUI-TEXTURE-CONVENTION.md).
+
+Проверки 0.3.241: `audit/machine_gui_theme_test.py`, `audit/reactor_gui_test.py`, `audit/jei_display_test.py`, `audit/pcfsoz_test.py`, `audit/lead_chest_test.py`, `audit/second_lumber_test.py` — PASS; `audit/run_all.py` — 48 PASS / 18 SKIP / 0 FAIL (66 suites); `audit/validate.py` — 3213 JSON, 1155 EN/RU entries, 0 ошибок/предупреждений; `audit/doc_links.py` — 405 ссылок / 0 битых; `git diff --check` — чисто. SKIP требуют отсутствующие JDK и/или Pillow; Java/Gradle-компиляция не подтверждена.
 
 **0.3.240 — safe unload панели реактора.** `panelUnloaded` больше не вызывает `Level.getBlockEntity` во время очистки чанка; `ReactorControlPanelBlockEntity.setRemoved` инвалидирует кэш по `this`, затем очищает сохранённые индексы. Это устраняет блокировку серверного потока при остановке интегрированного мира.
 

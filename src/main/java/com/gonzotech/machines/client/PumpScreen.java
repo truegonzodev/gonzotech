@@ -18,12 +18,12 @@ public class PumpScreen extends MachineScreen<PumpMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("pump_gui_bg.png");
+        return machineGui("pump_gui_bg.png", "pump_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("pump_gui.png");
+        return machineGui("pump_gui.png", "pump_gui_neo.png");
     }
 
     @Override

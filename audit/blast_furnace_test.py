@@ -218,8 +218,8 @@ assert "BlastFurnaceStructure.openMenu(level, pos, player)" in fireclay_block
 # меню/экран: 5 FuelSlot в ряд 44..116 @53, шкалы по раскладке автора
 assert "addSlot(new FuelSlot(firebox, FireboxBlockEntity.FUEL_SLOTS[i], 44 + i * 18, 53, inventory));" in menu
 assert "addPlayerInventory(inventory, 8, 84);" in menu
-assert 'gui("blast_furnace_gui_bg.png")' in screen
-assert 'gui("blast_furnace_gui.png")' in screen
+assert 'machineGui("blast_furnace_gui_bg.png", "blast_furnace_gui_bg_neo.png")' in screen
+assert 'machineGui("blast_furnace_gui.png", "blast_furnace_gui_neo.png")' in screen
 assert "drawVBarTex(graphics, burnX, burnY, 16, 16, lit, BAR_BURNUP);" in screen
 assert "drawVBarTex(graphics, barX, barY, barW, barH, gth, BAR_GTH);" in screen
 assert "MachineDefs.BLAST_FURNACE_GTH_CAPACITY / 1_000" in screen
@@ -244,7 +244,7 @@ for tex in ("fireclay.png", "fireclay_formed.png", "fireclay_ctm_line.png",
             "fireclay_ctm_outer_corner.png", "fireclay_ctm_inner_corner.png"):
     assert (ROOT / f"src/main/resources/assets/gonzotech/textures/block/fireclay/{tex}").is_file(), tex
 for gui in ("blast_furnace_gui_bg.png", "blast_furnace_gui.png"):
-    assert (ROOT / f"src/main/resources/assets/gonzotech/textures/gui/{gui}").is_file(), gui
+    assert (ROOT / f"src/main/resources/assets/gonzotech/textures/gui/classic/{gui}").is_file(), gui
 recipe = (ROOT / "src/main/resources/data/gonzotech/recipe/fireclay.json").read_text()
 for ing in ("minecraft:bricks", "minecraft:clay_ball", "minecraft:bone_meal", "minecraft:wheat", "minecraft:calcite"):
     assert ing in recipe, ing

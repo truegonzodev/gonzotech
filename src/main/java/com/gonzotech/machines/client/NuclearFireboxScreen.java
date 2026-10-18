@@ -18,12 +18,12 @@ public final class NuclearFireboxScreen extends MachineScreen<NuclearFireboxMenu
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("nuclear_firebox_gui_bg.png");
+        return machineGui("nuclear_firebox_gui_bg.png", "nuclear_firebox_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("nuclear_firebox_gui.png");
+        return machineGui("nuclear_firebox_gui.png", "nuclear_firebox_gui_neo.png");
     }
 
     @Override

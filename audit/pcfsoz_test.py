@@ -52,7 +52,7 @@ assert "ModMachines.PCFSOZ_ITEM.get()" in tabs
 menu = (MAIN / "com/gonzotech/machines/menu/PcfsozMenu.java").read_text()
 assert "ModMenus.PCFSOZ.get()" in menu and "OutputOnlySlot" in menu
 screen = (MAIN / "com/gonzotech/machines/client/PcfsozScreen.java").read_text()
-assert 'gui("pcfsoz_gui.png")' in screen and "gui.gonzotech.third_pcfsoz.separation_progress" in screen
+assert 'machineGui("pcfsoz_gui.png", "pcfsoz_gui_neo.png")' in screen and "gui.gonzotech.third_pcfsoz.separation_progress" in screen
 assert "PCFSOZ_HOT_WATER_CAPACITY" in screen and "PCFSOZ_GTU_CAPACITY" in screen
 
 # ── рецепты разделения: жёлтый кек -> U-238 + 10 % U-235 ──
@@ -84,14 +84,14 @@ assert craft["key"]["E"] == "gonzotech:energy_module" and craft["key"]["N"] == "
 assert (RES / "assets/gonzotech/items/yellow_cake.json").is_file()
 assert (RES / "assets/gonzotech/textures/item/yellow_cake.png").is_file()
 assert (RES / "assets/gonzotech/textures/block/pcfsoz/side.png").is_file()
-assert (RES / "assets/gonzotech/textures/gui/pcfsoz_gui.png").is_file()
-assert (RES / "assets/gonzotech/textures/gui/pcfsoz_gui_bg.png").is_file()
+assert (RES / "assets/gonzotech/textures/gui/classic/pcfsoz_gui.png").is_file()
+assert (RES / "assets/gonzotech/textures/gui/classic/pcfsoz_gui_bg.png").is_file()
 # 0.3.109: текстуры СВОИ (не копии ЦФ1УР) — плейсхолдер-перекраска (автор)
 import hashlib
 def md5(path): return hashlib.md5(path.read_bytes()).hexdigest()
 assert md5(RES / "assets/gonzotech/textures/block/pcfsoz/side.png") != md5(RES / "assets/gonzotech/textures/block/second/second_centrifuge.png")
 assert md5(RES / "assets/gonzotech/textures/block/pcfsoz/top.png") != md5(RES / "assets/gonzotech/textures/block/second/centrifuge_top.png")
-assert md5(RES / "assets/gonzotech/textures/gui/pcfsoz_gui.png") != md5(RES / "assets/gonzotech/textures/gui/centrifuge_gui.png")
+assert md5(RES / "assets/gonzotech/textures/gui/classic/pcfsoz_gui.png") != md5(RES / "assets/gonzotech/textures/gui/classic/centrifuge_gui.png")
 for lang in ("ru_ru", "en_us"):
     data = json.loads((RES / f"assets/gonzotech/lang/{lang}.json").read_text())
     assert data["block.gonzotech.third_pcfsoz"] and data["item.gonzotech.yellow_cake"]

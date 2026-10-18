@@ -29,8 +29,8 @@ def data(path):
     return json.loads((RES / path).read_text())
 
 
-fg = Image.open(RES / 'assets/gonzotech/textures/gui/third_air_filter_gui.png').convert('RGBA')
-bg = Image.open(RES / 'assets/gonzotech/textures/gui/third_air_filter_gui_bg.png').convert('RGBA')
+fg = Image.open(RES / 'assets/gonzotech/textures/gui/classic/third_air_filter_gui.png').convert('RGBA')
+bg = Image.open(RES / 'assets/gonzotech/textures/gui/classic/third_air_filter_gui_bg.png').convert('RGBA')
 check(fg.size == bg.size == (512, 512), '512 sheets')
 for x, y, w, h in [(136, 145, 16, 52), (190, 145, 52, 16), (190, 181, 52, 16)]:
     opening = ImageChops.invert(fg.crop((x, y, x+w, y+h)).getchannel('A'))

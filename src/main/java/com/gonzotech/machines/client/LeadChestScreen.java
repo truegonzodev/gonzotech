@@ -15,12 +15,12 @@ public class LeadChestScreen extends MachineScreen<ThirdLeadChestMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("lead_chest_gui_bg.png");
+        return machineGui("lead_chest_gui_bg.png", "lead_chest_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("lead_chest_gui.png");
+        return machineGui("lead_chest_gui.png", "lead_chest_gui_neo.png");
     }
 
     @Override

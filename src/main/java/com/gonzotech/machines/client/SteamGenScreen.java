@@ -20,12 +20,12 @@ public final class SteamGenScreen extends MachineScreen<SteamGenMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("steamgen_gui_bg.png");
+        return machineGui("steamgen_gui_bg.png", "steamgen_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("steamgen_gui.png");
+        return machineGui("steamgen_gui.png", "steamgen_gui_neo.png");
     }
 
     @Override

@@ -18,12 +18,12 @@ public class AccumulatorScreen extends MachineScreen<AccumulatorMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("accumulator_gui_bg.png");
+        return machineGui("accumulator_gui_bg.png", "first_accumulator_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("accumulator_gui.png");
+        return machineGui("accumulator_gui.png", "first_accumulator_gui_neo.png");
     }
 
     @Override

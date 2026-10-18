@@ -55,14 +55,20 @@ public final class SiliconFactoryScreen extends MachineScreen<SiliconFactoryMenu
         resolvedVariant = variant;
         resolvedClassic = classic;
         if (variant >= 1 && variant <= 3) {
-            ResourceLocation bg = gui("silicon_factory_chip_" + variant + "_gui_bg.png");
-            ResourceLocation fg = gui("silicon_factory_chip_" + variant + "_gui.png");
+            ResourceLocation bg = machineGui(
+                "silicon_factory_chip_" + variant + "_gui_bg.png",
+                "silicon_factory_chip_" + variant + "_gui_bg_neo.png");
+            ResourceLocation fg = machineGui(
+                "silicon_factory_chip_" + variant + "_gui.png",
+                "silicon_factory_chip_" + variant + "_gui_neo.png");
             var resources = Minecraft.getInstance().getResourceManager();
-            background = resources.getResource(bg).isPresent() ? bg : gui("silicon_factory_gui_bg.png");
-            foreground = resources.getResource(fg).isPresent() ? fg : gui("silicon_factory_gui.png");
+            background = resources.getResource(bg).isPresent() ? bg
+                : machineGui("silicon_factory_gui_bg.png", "silicon_factory_gui_bg_neo.png");
+            foreground = resources.getResource(fg).isPresent() ? fg
+                : machineGui("silicon_factory_gui.png", "silicon_factory_gui_neo.png");
         } else {
-            background = gui("silicon_factory_gui_bg.png");
-            foreground = gui("silicon_factory_gui.png");
+            background = machineGui("silicon_factory_gui_bg.png", "silicon_factory_gui_bg_neo.png");
+            foreground = machineGui("silicon_factory_gui.png", "silicon_factory_gui_neo.png");
         }
     }
 

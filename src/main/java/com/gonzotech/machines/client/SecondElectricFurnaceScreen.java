@@ -19,12 +19,12 @@ public final class SecondElectricFurnaceScreen extends MachineScreen<SecondElect
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("second_electric_furnace_gui_bg.png");
+        return machineGui("second_electric_furnace_gui_bg.png", "second_electric_furnace_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("second_electric_furnace_gui.png");
+        return machineGui("second_electric_furnace_gui.png", "second_electric_furnace_gui_neo.png");
     }
 
     @Override

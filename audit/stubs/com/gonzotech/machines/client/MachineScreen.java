@@ -17,6 +17,9 @@ public abstract class MachineScreen<T> {
     protected static ResourceLocation gui(String path) {
         return ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/" + path);
     }
+    protected static ResourceLocation machineGui(String classicFile, String neoFile) {
+        return ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/neo/" + neoFile);
+    }
     protected ResourceLocation backgroundTexture() { return null; }
     protected ResourceLocation foregroundTexture() { return null; }
     protected abstract void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY);

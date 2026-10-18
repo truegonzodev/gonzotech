@@ -22,12 +22,12 @@ public class CentrifugeScreen extends MachineScreen<CentrifugeMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("centrifuge_gui_bg.png");
+        return machineGui("centrifuge_gui_bg.png", "centrifuge_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("centrifuge_gui.png");
+        return machineGui("centrifuge_gui.png", "centrifuge_gui_neo.png");
     }
 
     @Override

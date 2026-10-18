@@ -19,8 +19,8 @@ public final class AirFilterScreen extends MachineScreen<AirFilterMenu> {
     public AirFilterScreen(AirFilterMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
     }
-    @Override protected ResourceLocation backgroundTexture() { return gui("third_air_filter_gui_bg.png"); }
-    @Override protected ResourceLocation foregroundTexture() { return gui("third_air_filter_gui.png"); }
+    @Override protected ResourceLocation backgroundTexture() { return machineGui("third_air_filter_gui_bg.png", "third_air_filter_gui_bg_neo.png"); }
+    @Override protected ResourceLocation foregroundTexture() { return machineGui("third_air_filter_gui.png", "third_air_filter_gui_neo.png"); }
 
     @Override
     protected void drawMachine(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {

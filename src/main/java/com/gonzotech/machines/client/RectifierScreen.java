@@ -27,12 +27,12 @@ public class RectifierScreen extends MachineScreen<RectifierMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_rectifier_gui_bg.png");
+        return machineGui("third_rectifier_gui_bg.png", "third_rectifier_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_rectifier_gui.png");
+        return machineGui("third_rectifier_gui.png", "third_rectifier_gui_neo.png");
     }
 
     @Override

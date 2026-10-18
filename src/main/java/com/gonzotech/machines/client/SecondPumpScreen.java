@@ -19,12 +19,12 @@ public final class SecondPumpScreen extends MachineScreen<SecondPumpMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("second_pump_gui_bg.png");
+        return machineGui("second_pump_gui_bg.png", "second_pump_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("second_pump_gui.png");
+        return machineGui("second_pump_gui.png", "second_pump_gui_neo.png");
     }
 
     @Override

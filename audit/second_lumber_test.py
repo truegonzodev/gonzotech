@@ -115,7 +115,7 @@ blockstate = json.loads(text(ASSETS / "blockstates/second_lumber.json"))["varian
 check(len(blockstate) == 8 and all("active=" in key for key in blockstate),
       "all facings render for both redstone states")
 for name in ["second_lumber_gui_bg.png", "second_lumber_gui.png"]:
-    data = (ASSETS / "textures/gui" / name).read_bytes()
+    data = (ASSETS / "textures/gui/classic" / name).read_bytes()
     width, height = struct.unpack(">II", data[16:24])
     check(data[:8] == b"\x89PNG\r\n\x1a\n" and (width, height) == (512, 512),
           f"dedicated GUI sheet is valid 512x512 PNG: {name}")

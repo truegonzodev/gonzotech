@@ -254,13 +254,13 @@ assert "withStyle(ChatFormatting.WHITE)" in recipes
 
 # All machine GUI layers remain complete 512px sheets and each visible category has its own art.
 for texture in textures:
-    path = RES / f"assets/gonzotech/textures/gui/{texture}_gui.png"
+    path = RES / f"assets/gonzotech/textures/gui/classic/{texture}_gui.png"
     assert path.is_file(), f"missing machine GUI foreground: {path}"
     with path.open("rb") as image:
         image.seek(16)
         width, height = struct.unpack(">II", image.read(8))
     assert (width, height) == (512, 512), f"unexpected GUI sheet dimensions: {path}"
-    background = RES / f"assets/gonzotech/textures/gui/{texture}_gui_bg.png"
+    background = RES / f"assets/gonzotech/textures/gui/classic/{texture}_gui_bg.png"
     assert background.is_file(), f"missing machine GUI background: {background}"
     with background.open("rb") as image:
         image.seek(16)
@@ -323,7 +323,7 @@ assert "hideRecipes" not in plugin + recipes
 assert "RecipeUnlocks" not in recipes, "machine JEI recipes must not be progression-filtered"
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert "mod_version=0.3.240" in version
+assert "mod_version=0.3.241" in version
 inventory = (ROOT / "docs/JEI-RECIPE-INVENTORY.md").read_text(encoding="utf-8")
 docs = (ROOT / "docs/JEI-MACHINES.md").read_text(encoding="utf-8")
 assert "23 категории" in inventory and "**292**" in inventory and "**293**" in inventory

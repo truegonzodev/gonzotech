@@ -25,12 +25,12 @@ public class ChemicalPlantScreen extends MachineScreen<ChemicalPlantMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_chemical_plant_gui_bg.png");
+        return machineGui("third_chemical_plant_gui_bg.png", "third_chemical_plant_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_chemical_plant_gui.png");
+        return machineGui("third_chemical_plant_gui.png", "third_chemical_plant_gui_neo.png");
     }
 
     @Override

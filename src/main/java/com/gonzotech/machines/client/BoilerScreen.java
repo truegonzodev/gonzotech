@@ -18,12 +18,12 @@ public class BoilerScreen extends MachineScreen<BoilerMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("boiler_gui_bg.png");
+        return machineGui("boiler_gui_bg.png", "boiler_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("boiler_gui.png");
+        return machineGui("boiler_gui.png", "boiler_gui_neo.png");
     }
 
     @Override

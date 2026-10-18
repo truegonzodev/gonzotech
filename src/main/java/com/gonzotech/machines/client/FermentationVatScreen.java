@@ -27,12 +27,12 @@ public class FermentationVatScreen extends MachineScreen<FermentationVatMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_fermentation_vat_gui_bg.png");
+        return machineGui("third_fermentation_vat_gui_bg.png", "third_fermentation_vat_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_fermentation_vat_gui.png");
+        return machineGui("third_fermentation_vat_gui.png", "third_fermentation_vat_gui_neo.png");
     }
 
     @Override

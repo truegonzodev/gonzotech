@@ -24,12 +24,12 @@ public final class BlastFurnaceScreen extends MachineScreen<BlastFurnaceMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("blast_furnace_gui_bg.png");
+        return machineGui("blast_furnace_gui_bg.png", "blast_furnace_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("blast_furnace_gui.png");
+        return machineGui("blast_furnace_gui.png", "blast_furnace_gui_neo.png");
     }
 
     @Override

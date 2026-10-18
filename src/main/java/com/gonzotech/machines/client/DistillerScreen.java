@@ -29,12 +29,12 @@ public class DistillerScreen extends MachineScreen<DistillerMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_distiller_gui_bg.png");
+        return machineGui("third_distiller_gui_bg.png", "third_distiller_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_distiller_gui.png");
+        return machineGui("third_distiller_gui.png", "third_distiller_gui_neo.png");
     }
 
     @Override

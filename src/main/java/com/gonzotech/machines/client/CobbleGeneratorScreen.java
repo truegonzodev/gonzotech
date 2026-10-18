@@ -22,12 +22,12 @@ public class CobbleGeneratorScreen extends MachineScreen<CobbleGeneratorMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("cobble_generator_gui_bg.png");
+        return machineGui("cobble_generator_gui_bg.png", "cobble_generator_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("cobble_generator_gui.png");
+        return machineGui("cobble_generator_gui.png", "cobble_generator_gui_neo.png");
     }
 
     @Override

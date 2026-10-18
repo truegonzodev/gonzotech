@@ -22,12 +22,12 @@ public class PcfsozScreen extends MachineScreen<PcfsozMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("pcfsoz_gui_bg.png");
+        return machineGui("pcfsoz_gui_bg.png", "pcfsoz_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("pcfsoz_gui.png");
+        return machineGui("pcfsoz_gui.png", "pcfsoz_gui_neo.png");
     }
 
     @Override

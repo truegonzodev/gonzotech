@@ -16,12 +16,12 @@ public final class ReactorScreen extends MachineScreen<ReactorMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_uranium_reactor_gui_bg.png");
+        return machineGui("third_uranium_reactor_gui_bg.png", "third_uranium_reactor_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_uranium_reactor_gui.png");
+        return machineGui("third_uranium_reactor_gui.png", "third_uranium_reactor_gui_neo.png");
     }
 
     @Override
@@ -33,9 +33,8 @@ public final class ReactorScreen extends MachineScreen<ReactorMenu> {
     protected void drawAfterForeground(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
         if (menu.activeFuelSlots() <= 3) return;
 
-        ResourceLocation slotFrame = usesClassicMachineGuis()
-            ? gui("third_uranium_reactor_gui_slot.png")
-            : gui("third_uranium_reactor_gui_slot_neo1.png");
+        ResourceLocation slotFrame = machineGui(
+            "third_uranium_reactor_gui_slot.png", "third_uranium_reactor_gui_slot_neo1.png");
 
         // The first sheath's three frames are part of gui.png; only later slots
         // are overlaid here, above that sheet and below vanilla slot tints/items.

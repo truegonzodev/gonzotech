@@ -20,12 +20,12 @@ public final class SecondPressScreen extends MachineScreen<SecondPressMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("second_press_gui_bg.png");
+        return machineGui("second_press_gui_bg.png", "second_press_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("second_press_gui.png");
+        return machineGui("second_press_gui.png", "second_press_gui_neo.png");
     }
 
     @Override

@@ -21,12 +21,12 @@ public final class AlloyFoundryScreen extends MachineScreen<AlloyFoundryMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("alloy_foundry_gui_bg.png");
+        return machineGui("alloy_foundry_gui_bg.png", "alloy_foundry_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("alloy_foundry_gui.png");
+        return machineGui("alloy_foundry_gui.png", "alloy_foundry_gui_neo.png");
     }
 
     @Override

@@ -27,27 +27,35 @@ import net.minecraft.world.entity.player.Inventory;
  * Лист PNG — {@code 512×512}, блитится в {@code (leftPos−128, topPos−128)}, так
  * что интерактивное окно 176×166 (слоты/клики) оказывается в ЦЕНТРЕ листа (его
  * координаты 128,128). Рисунок может торчать за окно до 128 px во все стороны —
- * меню выглядит крупным, а геометрия слотов остаётся стандартной. Слои
- * {@code *_gui_bg.png} и {@code *_gui.png} берутся из ресурсов конкретной машины;
- * классическая или NEO-версия выбирается клиентской настройкой.
+ * меню выглядит крупным, а геометрия слотов остаётся стандартной. Classic-листы
+ * лежат в {@code textures/gui/classic/}, NEO-листы — в {@code textures/gui/neo/};
+ * {@link #machineGui(String, String)} задаёт отдельный NEO-файл для каждого станка,
+ * при этом классический лист может переиспользоваться.
  *
  * Шкалы ограничены только своей заданной в коде областью и долей заполнения.
  * PNG не читается на CPU: непрозрачные части переднего слоя визуально закрывают заливку.
  */
 public abstract class MachineScreen<T extends BaseMachineMenu> extends AbstractContainerScreen<T> {
 
-    /** Каталог текстур GUI машин. */
+    /** Root for GUI art; utility textures such as bars remain directly in this directory. */
     public static final String GUI_DIR = "textures/gui/";
+    private static final String CLASSIC_GUI_DIR = GUI_DIR + "classic/";
+    private static final String NEO_GUI_DIR = GUI_DIR + "neo/";
+
+    /** Non-machine GUI assets (bars, overlays, etc.) stay at the GUI root. */
     protected static ResourceLocation gui(String file) {
-        String selected = file;
-        if (isMachineGuiSheet(file) && !usesClassicMachineGuis()) {
-            selected = file.substring(0, file.length() - ".png".length()) + "_neo.png";
-        }
-        return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + selected);
+        return ResourceLocation.fromNamespaceAndPath("gonzotech", GUI_DIR + file);
     }
 
-    private static boolean isMachineGuiSheet(String file) {
-        return file.endsWith("_gui.png") || file.endsWith("_gui_bg.png");
+    /**
+     * Resolve a machine sheet from its theme directory. The NEO filename is always
+     * explicit so two machines may share classic art without sharing NEO resources.
+     */
+    protected static ResourceLocation machineGui(String classicFile, String neoFile) {
+        boolean classic = usesClassicMachineGuis();
+        String directory = classic ? CLASSIC_GUI_DIR : NEO_GUI_DIR;
+        String file = classic ? classicFile : neoFile;
+        return ResourceLocation.fromNamespaceAndPath("gonzotech", directory + file);
     }
 
     /** If the config has not loaded yet, retain the default NEO selection. */

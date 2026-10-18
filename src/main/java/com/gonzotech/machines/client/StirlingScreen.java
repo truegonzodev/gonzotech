@@ -18,12 +18,12 @@ public class StirlingScreen extends MachineScreen<StirlingMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("stirling_gui_bg.png");
+        return machineGui("stirling_gui_bg.png", "stirling_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("stirling_gui.png");
+        return machineGui("stirling_gui.png", "stirling_gui_neo.png");
     }
 
     @Override

@@ -19,12 +19,12 @@ public final class SecondAccumulatorScreen extends MachineScreen<SecondAccumulat
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("accumulator_gui_bg.png");
+        return machineGui("accumulator_gui_bg.png", "second_accumulator_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("accumulator_gui.png");
+        return machineGui("accumulator_gui.png", "second_accumulator_gui_neo.png");
     }
 
     @Override

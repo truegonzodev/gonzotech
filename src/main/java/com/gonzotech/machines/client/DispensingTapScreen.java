@@ -28,12 +28,12 @@ public class DispensingTapScreen extends MachineScreen<DispensingTapMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("pump_gui_bg.png");
+        return machineGui("pump_gui_bg.png", "third_dispensing_tap_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("pump_gui.png");
+        return machineGui("pump_gui.png", "third_dispensing_tap_gui_neo.png");
     }
 
     @Override

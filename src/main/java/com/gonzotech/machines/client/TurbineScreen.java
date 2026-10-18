@@ -19,12 +19,12 @@ public final class TurbineScreen extends MachineScreen<TurbineMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("turbine_gui_bg.png");
+        return machineGui("turbine_gui_bg.png", "turbine_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("turbine_gui.png");
+        return machineGui("turbine_gui.png", "turbine_gui_neo.png");
     }
 
     @Override

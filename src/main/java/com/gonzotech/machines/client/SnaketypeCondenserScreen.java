@@ -28,12 +28,12 @@ public class SnaketypeCondenserScreen extends MachineScreen<SnaketypeCondenserMe
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_snaketype_condenser_gui_bg.png");
+        return machineGui("third_snaketype_condenser_gui_bg.png", "third_snaketype_condenser_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_snaketype_condenser_gui.png");
+        return machineGui("third_snaketype_condenser_gui.png", "third_snaketype_condenser_gui_neo.png");
     }
 
     @Override

@@ -22,8 +22,8 @@ def check(ok, message):
 
 menu = (SRC / 'machines/menu/ChemicalPlantMenu.java').read_text()
 screen = (SRC / 'machines/client/ChemicalPlantScreen.java').read_text()
-fg = Image.open(GUI / 'third_chemical_plant_gui.png').convert('RGBA')
-bg = Image.open(GUI / 'third_chemical_plant_gui_bg.png').convert('RGBA')
+fg = Image.open(GUI / 'classic/third_chemical_plant_gui.png').convert('RGBA')
+bg = Image.open(GUI / 'classic/third_chemical_plant_gui_bg.png').convert('RGBA')
 check(fg.size == bg.size == (512, 512), '512x512 author sheets')
 slots = {int(i): (int(x)+128, int(y)+128) for i, x, y in
          re.findall(r'new Slot\(be, (\d+), (\d+), (\d+)\)', menu)}

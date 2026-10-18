@@ -18,12 +18,12 @@ public class FireboxScreen extends MachineScreen<FireboxMenu> {
 
     @Override
     protected net.minecraft.resources.ResourceLocation backgroundTexture() {
-        return gui("firebox_gui_bg.png");
+        return machineGui("firebox_gui_bg.png", "firebox_gui_bg_neo.png");
     }
 
     @Override
     protected net.minecraft.resources.ResourceLocation foregroundTexture() {
-        return gui("firebox_gui.png");
+        return machineGui("firebox_gui.png", "firebox_gui_neo.png");
     }
 
     @Override

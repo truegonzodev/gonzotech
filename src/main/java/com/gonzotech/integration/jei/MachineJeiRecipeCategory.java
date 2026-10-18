@@ -35,9 +35,9 @@ public final class MachineJeiRecipeCategory implements IRecipeCategory<MachineJe
             this.machineGuiForeground = null;
         } else {
             ResourceLocation backgroundTexture = ResourceLocation.fromNamespaceAndPath(
-                "gonzotech", "textures/gui/" + definition.texture() + "_gui_bg.png");
+                "gonzotech", "textures/gui/classic/" + definition.texture() + "_gui_bg.png");
             ResourceLocation foregroundTexture = ResourceLocation.fromNamespaceAndPath(
-                "gonzotech", "textures/gui/" + definition.texture() + "_gui.png");
+                "gonzotech", "textures/gui/classic/" + definition.texture() + "_gui.png");
             this.machineGuiBackground = guiHelper.drawableBuilder(
                     backgroundTexture, definition.textureX(), definition.textureY(), definition.width(), definition.height())
                 .setTextureSize(512, 512)

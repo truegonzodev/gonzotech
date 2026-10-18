@@ -37,12 +37,12 @@ public class FillerScreen extends MachineScreen<FillerMenu> {
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return gui("third_filler_gui_bg.png");
+        return machineGui("third_filler_gui_bg.png", "third_filler_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return gui("third_filler_gui.png");
+        return machineGui("third_filler_gui.png", "third_filler_gui_neo.png");
     }
 
     @Override
