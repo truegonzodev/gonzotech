@@ -131,7 +131,9 @@ public final class ReactorControlPanelBlock extends Block implements EntityBlock
                     });
                 }
             } else {
-                player.displayClientMessage(ReactorStructure.debugReportComponent(level, pos), false);
+                for (net.minecraft.network.chat.Component line : ReactorStructure.debugReportComponents(level, pos)) {
+                    player.displayClientMessage(line, false);
+                }
             }
         }
         return InteractionResult.SUCCESS;

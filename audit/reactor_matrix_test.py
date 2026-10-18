@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile and run the imported coefficient model and its independent Java oracles."""
+"""Compile the coefficient engine, ReaCalc operating layer, and their Java oracles."""
 import shutil
 import subprocess
 import sys
@@ -8,7 +8,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MAIN = ROOT / "src/main/java/com/gonzotech/machines/reactor/MatrixCoefficients.java"
+OPERATING = ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorOperatingMetrics.java"
 TEST = ROOT / "audit/MatrixCoefficientsTest.java"
+OPERATING_TEST = ROOT / "audit/ReactorOperatingMetricsTest.java"
 
 javac = shutil.which("javac")
 java = shutil.which("java")
@@ -18,7 +20,7 @@ if not javac or not java:
 
 with tempfile.TemporaryDirectory(prefix="gonzotech-reactor-matrix-") as out:
     compile_result = subprocess.run(
-        [javac, "-encoding", "UTF-8", "-d", out, str(MAIN), str(TEST)],
+        [javac, "-encoding", "UTF-8", "-d", out, str(MAIN), str(OPERATING), str(TEST), str(OPERATING_TEST)],
         text=True, capture_output=True,
     )
     if compile_result.returncode:

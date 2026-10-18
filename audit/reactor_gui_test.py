@@ -101,11 +101,11 @@ block_entities = (ROOT / "src/main/java/com/gonzotech/machines/registry/ModBlock
 
 assert "player.openMenu(panel" in panel_block
 assert "!player.isShiftKeyDown() && panel.isFormedController()" in panel_block
-assert "ReactorStructure.debugReportComponent(level, pos)" in panel_block
+assert "ReactorStructure.debugReportComponents(level, pos)" in panel_block
 assert "canOpenFuelInventory" in panel_block
-assert "[H=" in structure and "[L=" in structure
-assert "сухой тепловой коэффициент" in structure and "сухой пиковый поток утечки" in structure
-assert "ChatFormatting.GOLD" in structure and "ChatFormatting.AQUA" in structure
+assert "rawH=" in structure and "rawL=" in structure
+assert "Pнагрева=" in structure and "Pполезный=" in structure
+assert "ChatFormatting.RED" in structure and "ChatFormatting.GREEN" in structure
 assert "Containers.dropContents(level, pos, panel)" in panel_block
 
 assert "implements Container, MenuProvider" in panel_be
@@ -147,6 +147,6 @@ assert '"third_uranium_reactor_gui_slot.png"' in screen
 assert '"third_uranium_reactor_gui_slot_neo1.png"' in screen
 
 version = (ROOT / "gradle.properties").read_text()
-assert "mod_version=0.3.238" in version
+assert "mod_version=0.3.239" in version
 
 print(f"PASS reactor GUI: {len(ASSETS)} visible RGBA textures, menu, NBT inventory, dynamic slots, Z-order and registrations")

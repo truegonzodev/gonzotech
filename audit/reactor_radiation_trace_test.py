@@ -49,7 +49,7 @@ assert "context.getNearestLookingDirection().getOpposite()" in panel
 assert "new ReactorControlPanelBlockEntity(pos, state)" in panel
 assert "protected InteractionResult useWithoutItem(" in panel
 assert "protected InteractionResult useItemOn(ItemStack stack" in panel
-assert "ReactorStructure.debugReportComponent(level, pos)" in panel
+assert "ReactorStructure.debugReportComponents(level, pos)" in panel
 panel_states = load(ASSETS / "blockstates/third_uranium_reactor_control_panel.json")["variants"]
 assert set(panel_states) == {f"facing={direction}" for direction in ("down", "up", "north", "south", "east", "west")}
 assert all(entry["model"] == "gonzotech:block/third_uranium_reactor_control_panel" for entry in panel_states.values())

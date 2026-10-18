@@ -36,6 +36,15 @@ assert "y > MUSIC_SURFACE_HEIGHT" in client and "y < MUSIC_SURFACE_HEIGHT" in cl
 assert "dimension.equals(Level.OVERWORLD) || isMoonOrMars(dimension)" in client
 assert "raidinBonesDimension && y >= MUSIC_SURFACE_HEIGHT && y <= 154.0D" in client
 assert "!player.getAbilities().instabuild" in client
-assert "GonzoMusicClient.shouldSuppressMusicStart(Minecraft.getInstance())" in mixin
+assert "GonzoMusicClient.shouldSuppressMusicStart(Minecraft.getInstance(), requestedMusic)" in mixin
+assert "DEFAULT_MUSIC_WINDOW_NANOS = 5L * 60L * 1_000_000_000L" in client
+assert "RAIDIN_BONES_WINDOW_NANOS = 8L * 60L * 1_000_000_000L" in client
+assert "FORTY_THOUSAND_FEET_COOLDOWN_NANOS = 10L * 60L * 1_000_000_000L" in client
+assert "fortyThousandFeetCooldownUntilNanos = startedAtNanos + FORTY_THOUSAND_FEET_COOLDOWN_NANOS" in client
+assert "requestsFortyThousandFeet(requestedMusic) && isFortyThousandFeetCooldownActive()" in client
+assert "isTrackCooldownActive(replacement.sound())" in client
+assert "!isFortyThousandFeetCooldownActive()" in client
+assert "fortyThousandFeetCooldownUntilNanos = 0L" in client
+assert "10 минут с момента старта" in client
 
 print("Music debug command/network/client roll checks passed")

@@ -10,19 +10,80 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Builds dry, structure-only coefficient inputs from the formed reactor's live interior blocks. */
+import java.util.Map;
+import java.util.WeakHashMap;
+
+/** Builds and caches dry and loaded statistics for a formed reactor. */
 public final class ReactorMatrix {
 
     private static final MatrixCoefficients ENGINE = MatrixCoefficients.balancedDefault();
+    private static final Map<ReactorControlPanelBlockEntity, CacheEntry> CACHE = new WeakHashMap<>();
 
-    /** Structural coefficient result; fuel loading is intentionally not an input. */
-    public record Diagnostic(int fuelSheaths, MatrixCoefficients.Coefficients coefficients) {
+    /** Structural coefficient result; fuel loading is intentionally not part of the dry solve. */
+    public record Diagnostic(int fuelSheaths, MatrixCoefficients.Analysis analysis) {
+        public MatrixCoefficients.Coefficients coefficients() {
+            return analysis.coefficients();
+        }
+    }
+
+    public record OperatingSnapshot(Diagnostic diagnostic, int loadedTvels,
+                                    ReactorOperatingMetrics.Values metrics) {
+    }
+
+    private record CacheEntry(Diagnostic diagnostic, int loadedTvels,
+                              ReactorOperatingMetrics.Values metrics) {
     }
 
     private ReactorMatrix() {
     }
 
+    /** Cached dry analysis; callers must invalidate it when the formed geometry/materials change. */
     public static Diagnostic evaluate(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        synchronized (CACHE) {
+            CacheEntry cached = CACHE.get(panel);
+            if (cached != null && cached.diagnostic() != null) return cached.diagnostic();
+            Diagnostic diagnostic = calculate(level, panel);
+            CACHE.put(panel, new CacheEntry(diagnostic, -1, null));
+            return diagnostic;
+        }
+    }
+
+    /** Reuse the matrix solve and operating values until the structure or loaded count changes. */
+    public static OperatingSnapshot operatingSnapshot(ServerLevel level,
+                                                       ReactorControlPanelBlockEntity panel) {
+        if (!panel.isFormedController()) {
+            throw new IllegalStateException("Cannot evaluate a reactor without a formed controller");
+        }
+        int loadedTvels = ReactorFuelStorage.totalTvels(level, panel);
+        synchronized (CACHE) {
+            CacheEntry cached = CACHE.get(panel);
+            if (cached != null && cached.diagnostic() != null
+                && cached.loadedTvels() == loadedTvels && cached.metrics() != null) {
+                return new OperatingSnapshot(cached.diagnostic(), loadedTvels, cached.metrics());
+            }
+            Diagnostic diagnostic = cached != null && cached.diagnostic() != null
+                ? cached.diagnostic() : calculate(level, panel);
+            ReactorOperatingMetrics.Values metrics = ReactorOperatingMetrics.calculate(
+                diagnostic.analysis(), loadedTvels);
+            CACHE.put(panel, new CacheEntry(diagnostic, loadedTvels, metrics));
+            return new OperatingSnapshot(diagnostic, loadedTvels, metrics);
+        }
+    }
+
+    /** Drop both dry and loaded values after a structure mutation or panel unload. */
+    public static void invalidate(ReactorControlPanelBlockEntity panel) {
+        synchronized (CACHE) {
+            CACHE.remove(panel);
+        }
+    }
+
+    public static void clearCache() {
+        synchronized (CACHE) {
+            CACHE.clear();
+        }
+    }
+
+    private static Diagnostic calculate(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         if (!panel.isFormedController()) {
             throw new IllegalStateException("Cannot evaluate a reactor without a formed controller");
         }
@@ -69,7 +130,7 @@ public final class ReactorMatrix {
             }
         }
 
-        return new Diagnostic(fuelSheaths, ENGINE.evaluate(grid));
+        return new Diagnostic(fuelSheaths, ENGINE.analyzeDetailed(grid));
     }
 
     private static boolean isMetalBlock(Block block, String path) {

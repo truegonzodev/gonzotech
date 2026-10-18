@@ -126,13 +126,24 @@ public final class MatrixCoefficients {
         return new MatrixCoefficients(r,calibrate(r,referenceLayout(),.70,.10));
     }
     public Coefficients evaluate(Grid grid) {
-        Raw r=analyze(Objects.requireNonNull(grid),rules);
-        return new Coefficients(r.peakLoad/calibration.heatBudget,
-                r.peakEscape/(r.peakEscape+calibration.leakHalfScale));
+        return analyzeDetailed(grid).coefficients();
     }
 
-    // Internal fields are retained here only for validation and debugging.
-    static record Raw(double[] heatProduction,double[] load,double[] escapeFaces,
+    /** Full solver result; callers treat the grid and returned arrays as read-only after construction. */
+    public Analysis analyzeDetailed(Grid grid) {
+        Grid input = Objects.requireNonNull(grid);
+        Raw raw = analyze(input, rules);
+        Coefficients coefficients = new Coefficients(
+            raw.peakLoad / calibration.heatBudget,
+            raw.peakEscape / (raw.peakEscape + calibration.leakHalfScale));
+        return new Analysis(input, raw, coefficients, calibration);
+    }
+
+    public record Analysis(Grid grid, Raw raw, Coefficients coefficients, Calibration calibration) {
+    }
+
+    /** Solver output retained so loaded operating statistics reuse the dry solve. */
+    public record Raw(double[] heatProduction,double[] load,double[] escapeFaces,
                       double emitted,double absorbed,double escaped,double peakLoad,double peakEscape,
                       int hotCell,int leakCell,int leakFace,int transportIterations,int thermalIterations,double residual,int edges) {}
 

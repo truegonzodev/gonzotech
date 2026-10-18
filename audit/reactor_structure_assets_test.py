@@ -48,7 +48,7 @@ assert "BlockEvent.BreakEvent" in structure
 panel = read(JAVA / "core/block/ReactorControlPanelBlock.java")
 panel_be = read(JAVA / "machines/block/entity/ReactorControlPanelBlockEntity.java")
 casing = read(JAVA / "core/block/ReactorCasingBlock.java")
-assert "ReactorStructure.debugReportComponent(level, pos)" in panel
+assert "ReactorStructure.debugReportComponents(level, pos)" in panel
 assert "new ReactorControlPanelBlockEntity(pos, state)" in panel
 assert "ReactorStructure.panelLoaded" in panel_be and "StructureMin" in panel_be
 assert "markValidationPending" in panel_be and "ReactorStructure.restorePanel(serverLevel, this)" in panel_be

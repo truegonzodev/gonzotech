@@ -323,7 +323,7 @@ assert "hideRecipes" not in plugin + recipes
 assert "RecipeUnlocks" not in recipes, "machine JEI recipes must not be progression-filtered"
 
 version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert "mod_version=0.3.238" in version
+assert "mod_version=0.3.239" in version
 inventory = (ROOT / "docs/JEI-RECIPE-INVENTORY.md").read_text(encoding="utf-8")
 docs = (ROOT / "docs/JEI-MACHINES.md").read_text(encoding="utf-8")
 assert "23 категории" in inventory and "**292**" in inventory and "**293**" in inventory

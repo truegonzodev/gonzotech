@@ -75,7 +75,7 @@ assert "if (!panel.isFormedController())" in restore
 assert "return;" in restore.split("if (!panel.isFormedController())", 1)[1].split("}", 1)[0]
 assert "revalidateFormedPanel(level, panel, null)" in restore
 assert "if (panel.isFormedController())" in method(structure, "public static void panelLoaded(")
-report = method(structure, "public static String debugReport(")
+report = method(structure, "public static List<Component> debugReportComponents(")
 assert "inspectFromPanel(server, panelPos, null)" in report
 assert "applyFormedVisuals" not in report
 assert "tryFormFromPlacement" not in report

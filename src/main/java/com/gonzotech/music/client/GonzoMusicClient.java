@@ -36,6 +36,7 @@ public final class GonzoMusicClient {
     private static final long UNDERGROUND_CHECK_INTERVAL_TICKS = 1_200L;
     private static final long DEFAULT_MUSIC_WINDOW_NANOS = 5L * 60L * 1_000_000_000L;
     private static final long RAIDIN_BONES_WINDOW_NANOS = 8L * 60L * 1_000_000_000L;
+    private static final long FORTY_THOUSAND_FEET_COOLDOWN_NANOS = 10L * 60L * 1_000_000_000L;
     private static final double MUSIC_SURFACE_HEIGHT = 44.0D;
     private static final int OVERWORLD_BITTER_CHANCE_PERCENT = 37;
     private static final int UNDERGROUND_REPLACEMENT_CHANCE_PERCENT = 37;
@@ -51,6 +52,7 @@ public final class GonzoMusicClient {
     }
 
     private static long musicWindowUntilNanos;
+    private static long fortyThousandFeetCooldownUntilNanos;
     private static Object trackedConnection;
     private static UUID trackedPlayer;
     private static long handledCrimsonEventDay = Long.MIN_VALUE;
@@ -100,17 +102,27 @@ public final class GonzoMusicClient {
         return isMusicPlaying(minecraft);
     }
 
-    /** Start a track-specific cooldown after MusicManager actually starts playback. */
+    /** Suppress only a 40000ft request during its own ten-minute cooldown. */
+    public static boolean shouldSuppressMusicStart(Minecraft minecraft, MusicInfo requestedMusic) {
+        return isMusicPlaying(minecraft)
+                || requestsFortyThousandFeet(requestedMusic) && isFortyThousandFeetCooldownActive();
+    }
+
+    /** Start cooldowns from the moment MusicManager actually starts playback, not when it ends. */
     public static void recordMusicStart(Minecraft minecraft, MusicInfo startedMusic) {
         if (startedMusic == null || !isMusicPlayingFromManager(minecraft)) {
             return;
         }
 
         SoundEvent sound = startedMusic.music().getEvent().value();
+        long startedAtNanos = System.nanoTime();
         long window = sound == ModSounds.GT_OST_RAIDIN_BONES.get()
                 ? RAIDIN_BONES_WINDOW_NANOS
                 : DEFAULT_MUSIC_WINDOW_NANOS;
-        musicWindowUntilNanos = System.nanoTime() + window;
+        musicWindowUntilNanos = startedAtNanos + window;
+        if (sound == ModSounds.GT_OST_40000FT.get()) {
+            fortyThousandFeetCooldownUntilNanos = startedAtNanos + FORTY_THOUSAND_FEET_COOLDOWN_NANOS;
+        }
     }
 
     /** Run one context-appropriate music roll requested by the server debug command. */
@@ -127,6 +139,10 @@ public final class GonzoMusicClient {
         // меняет итог на провал, но не скрывает шанс/пул тестируемого броска.
         boolean chanceSucceeded = player.getRandom().nextInt(100) < roll.chancePercent();
         String failureReason = musicStartBlockReason(minecraft);
+        if (failureReason == null && roll.pool().contains(ModSounds.GT_OST_40000FT)
+                && isFortyThousandFeetCooldownActive()) {
+            failureReason = "кд 40000ft (10 минут с момента старта)";
+        }
         boolean success = false;
         if (failureReason == null && roll.pool().isEmpty()) {
             failureReason = "нет подходящей музыки в текущем контексте";
@@ -162,7 +178,7 @@ public final class GonzoMusicClient {
         }
         if (roll.pool().contains(ModSounds.GT_OST_40000FT)) {
             player.displayClientMessage(Component.literal(
-                    "Отдельный таймер 40000FT: 10% раз в 1200 тиков при свободной музыке и без cooldown.")
+                    "Отдельный таймер 40000FT: 10% раз в 1200 тиков при свободной музыке; cooldown — 10 минут от старта трека.")
                     .withStyle(ChatFormatting.GRAY), false);
         }
     }
@@ -224,7 +240,7 @@ public final class GonzoMusicClient {
         }
 
         VanillaMusicReplacement replacement = vanillaMusicReplacement(level, player);
-        if (replacement == null
+        if (replacement == null || isTrackCooldownActive(replacement.sound())
                 || player.getRandom().nextInt(100) >= replacement.chancePercent()) {
             return vanillaMusic;
         }
@@ -267,6 +283,20 @@ public final class GonzoMusicClient {
     /** True while a MusicManager track is active or its programmed minimum window remains. */
     public static boolean isMusicPlaying(Minecraft minecraft) {
         return isMusicPlayingFromManager(minecraft) || isMusicCooldownActive();
+    }
+
+    private static boolean isTrackCooldownActive(DeferredHolder<SoundEvent, SoundEvent> sound) {
+        return sound == ModSounds.GT_OST_40000FT && isFortyThousandFeetCooldownActive();
+    }
+
+    private static boolean requestsFortyThousandFeet(MusicInfo musicInfo) {
+        return musicInfo != null
+                && musicInfo.music().getEvent().value() == ModSounds.GT_OST_40000FT.get();
+    }
+
+    private static boolean isFortyThousandFeetCooldownActive() {
+        long until = fortyThousandFeetCooldownUntilNanos;
+        return until != 0L && System.nanoTime() - until < 0L;
     }
 
     private static boolean isMusicCooldownActive() {
@@ -321,7 +351,7 @@ public final class GonzoMusicClient {
         }
 
         nextUndergroundAttemptTick = gameTime + UNDERGROUND_CHECK_INTERVAL_TICKS;
-        if (!isMusicPlaying(minecraft)
+        if (!isMusicPlaying(minecraft) && !isFortyThousandFeetCooldownActive()
                 && player.getRandom().nextFloat() < UNDERGROUND_CHANCE_PERCENT / 100.0F) {
             playOst(minecraft, ModSounds.GT_OST_40000FT);
         }
@@ -349,5 +379,6 @@ public final class GonzoMusicClient {
         undergroundDimension = null;
         nextUndergroundAttemptTick = Long.MIN_VALUE;
         musicWindowUntilNanos = 0L;
+        fortyThousandFeetCooldownUntilNanos = 0L;
     }
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contracts for dry structural H/L diagnostics and per-sheath TVEL ownership."""
+"""Contracts for cached ReaCalc 1.2 operating metrics and per-sheath TVEL ownership."""
 from pathlib import Path
 
 import _ver
@@ -26,6 +26,7 @@ def method(source: str, signature: str) -> str:
 
 matrix = (JAVA / "machines/reactor/ReactorMatrix.java").read_text(encoding="utf-8")
 engine = (JAVA / "machines/reactor/MatrixCoefficients.java").read_text(encoding="utf-8")
+operating = (JAVA / "machines/reactor/ReactorOperatingMetrics.java").read_text(encoding="utf-8")
 panel_be = (JAVA / "machines/block/entity/ReactorControlPanelBlockEntity.java").read_text(encoding="utf-8")
 sheath_be = (JAVA / "machines/block/entity/ReactorFuelSheathBlockEntity.java").read_text(encoding="utf-8")
 sheath_block = (JAVA / "core/block/ReactorFuelSheathBlock.java").read_text(encoding="utf-8")
@@ -34,20 +35,34 @@ inventory = (JAVA / "machines/reactor/ReactorFuelInventory.java").read_text(enco
 structure = (JAVA / "machines/reactor/ReactorStructure.java").read_text(encoding="utf-8")
 panel_block = (JAVA / "core/block/ReactorControlPanelBlock.java").read_text(encoding="utf-8")
 
-# Matrix reads actual saved interior blocks but deliberately never looks at the loaded fuel count.
+# The dry solve reads actual interior blocks once; loaded metrics reuse its raw per-cell outputs.
 evaluate = method(matrix, "public static Diagnostic evaluate(")
-assert "panel.min()" in evaluate and "panel.max()" in evaluate
-assert "max.getX() - min.getX() - 1" in evaluate
-assert "level.getBlockState(worldPos)" in evaluate
-assert "MatrixCoefficients.referenceLayout()" not in evaluate
-assert "MatrixCoefficients.Material.GRAPHITE" in evaluate
-assert "MatrixCoefficients.Material.BORON" in evaluate
-assert "MatrixCoefficients.Material.BARIUM" in evaluate
-assert "MatrixCoefficients.Material.WATER" in evaluate
-assert "grid.set(x, y, z, MatrixCoefficients.Material.FUEL)" in evaluate
-assert "loadedTvel" not in evaluate and "setFuelStrength" not in evaluate
+calculate = method(matrix, "private static Diagnostic calculate(")
+assert "CACHE" in evaluate and "calculate(level, panel)" in evaluate
+assert "panel.min()" in calculate and "panel.max()" in calculate
+assert "max.getX() - min.getX() - 1" in calculate
+assert "level.getBlockState(worldPos)" in calculate
+assert "MatrixCoefficients.referenceLayout()" not in calculate
+assert "MatrixCoefficients.Material.GRAPHITE" in calculate
+assert "MatrixCoefficients.Material.BORON" in calculate
+assert "MatrixCoefficients.Material.BARIUM" in calculate
+assert "MatrixCoefficients.Material.WATER" in calculate
+assert "grid.set(x, y, z, MatrixCoefficients.Material.FUEL)" in calculate
+assert "loadedTvel" not in calculate and "setFuelStrength" not in calculate
+assert "ENGINE.analyzeDetailed(grid)" in calculate
+assert "new WeakHashMap" in matrix and "loadedTvels() == loadedTvels" in matrix
+assert "ReactorOperatingMetrics.calculate" in matrix
+assert "public static void invalidate(" in matrix
 assert "Per-cell model source weight" in engine
 assert "fuelStrengths[i]=material==Material.FUEL?1.0:0.0" in engine
+assert "POWER_SCALE = 100.0" in operating
+assert "TARGET_H = .99999" in operating
+assert "TEMP_SCALE = 2838.43365245" in operating
+assert "TEMP_EXPONENT = 1.37798040865" in operating
+assert "scaledLeak(double rawL, double ratio)" in operating
+assert "step < 80" in operating and "WATER_REMOVAL * units" in operating
+assert "Pнагрева" in structure and "Pполезный" in structure
+assert "ChatFormatting.RED" in structure and "ChatFormatting.GREEN" in structure
 
 allowed_interior = method(structure, "private static boolean isAllowedInterior(")
 assert "isLeadPiston" not in allowed_interior
@@ -78,15 +93,26 @@ assert "event.setCanceled(true)" in break_handler
 assert "return;" in break_handler
 assert "canOpenFuelInventory" in panel_block
 
-# H/L are structural values; the report prints loading separately and labels both numbers dry.
-report = method(structure, "public static String debugReport(")
-assert "ReactorMatrix.evaluate(server, panel)" in report
-assert "ReactorFuelStorage.totalTvels(server, panel)" in report
-assert "сухой тепловой коэффициент" in report and "сухой пиковый поток утечки" in report
-assert ' [H="' in report and ' [L="' in report
-assert "Locale.ROOT" in report
-styled = method(structure, "public static Component debugReportComponent(")
-assert "ChatFormatting.GOLD" in styled and "ChatFormatting.AQUA" in styled
-assert "ReactorStructure.debugReportComponent(level, pos)" in panel_block
+# Shift+ПКМ sends the complete static operating report as separate, styled chat lines.
+report = method(structure, "public static List<Component> debugReportComponents(")
+assert "ReactorMatrix.operatingSnapshot(server, panel)" in report
+assert "ReactorOperatingMetrics.Values" in report
+assert "rawH=" in report and "rawL=" in report and "Htv=" in report and "Ltv=" in report and "S=" in report
+assert "Целевой rawH*=" in report and "ΔH=" in report
+assert "Средний Htv=" in report and "T горячей точки=" in report
+assert "T топлива max=" in report and "T реактора средняя=" in report
+assert "qDry=" in report and "Pнагрева=" in report
+assert "W=" in report and "Tw=" in report and "p=" in report and "feedback=" in report
+assert "Pтеплообмен=" in report and "Pполезный=" in report and "Эффективность=" in report and "Режим=" in report
+assert "Статический расчёт ReaCalc 1.2" in report
+plain = method(structure, "public static String debugReport(")
+assert "debugReportComponents(level, panelPos)" in plain
+assert "Locale.ROOT" in structure
+styled = method(structure, "private static Component stat(String label, String value,")
+assert "withStyle(color)" in styled
+assert "ChatFormatting.RED" in report and "ChatFormatting.GREEN" in report
+assert "for (net.minecraft.network.chat.Component line : ReactorStructure.debugReportComponents(level, pos))" in panel_block
+assert "player.displayClientMessage(line, false)" in panel_block
+assert "ReactorMatrix.invalidate(panel)" in structure and "ReactorMatrix.clearCache()" in structure
 
-print("PASS reactor matrix integration: dry H/L, live interior mapping, per-sheath fuel, ceil(T/S) break reallocation, lead pistons excluded")
+print("PASS reactor operating metrics: ReaCalc 1.2 parity layer, cached dry solve, complete styled Shift+ПКМ report, per-sheath fuel, lead pistons excluded")

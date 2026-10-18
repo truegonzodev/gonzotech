@@ -24,7 +24,7 @@ public abstract class MusicManagerStartPlayingMixin {
             cancellable = true)
     private void gonzotech$preventOverlappingStart(MusicInfo requestedMusic, CallbackInfo callback) {
         gonzotech$recordStartPending = false;
-        if (GonzoMusicClient.shouldSuppressMusicStart(Minecraft.getInstance())) {
+        if (GonzoMusicClient.shouldSuppressMusicStart(Minecraft.getInstance(), requestedMusic)) {
             callback.cancel();
             return;
         }

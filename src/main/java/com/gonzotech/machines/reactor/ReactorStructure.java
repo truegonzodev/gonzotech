@@ -92,6 +92,9 @@ public final class ReactorStructure {
     }
 
     public static void panelUnloaded(Level level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof ReactorControlPanelBlockEntity panel) {
+            ReactorMatrix.invalidate(panel);
+        }
         Set<Long> panels = PANEL_POSITIONS.get(level);
         if (panels != null) {
             panels.remove(pos.asLong());
@@ -104,6 +107,7 @@ public final class ReactorStructure {
     public static void clearAll() {
         PANEL_POSITIONS.clear();
         MEMBER_INDEX.clear();
+        ReactorMatrix.clearCache();
     }
 
     /** A placement revalidates its formed member or tries to initialize a nearby unformed panel. */
@@ -129,15 +133,17 @@ public final class ReactorStructure {
         revalidateFormedPanel(level, panel, null);
     }
 
-    /** Diagnose current geometry. A valid but unformed reactor remains unformed until a placement event. */
-    public static String debugReport(Level level, BlockPos panelPos) {
+    /** Diagnose the current geometry and show every static operating metric from ReaCalc 1.2. */
+    public static List<Component> debugReportComponents(Level level, BlockPos panelPos) {
         if (!(level instanceof ServerLevel server)) {
-            return "Реактор: диагностика доступна на серверной стороне.";
+            return List.of(Component.literal("Реактор: диагностика доступна на серверной стороне.")
+                .withStyle(ChatFormatting.GOLD));
         }
         if (!server.hasChunkAt(panelPos)
             || !(server.getBlockState(panelPos).getBlock() instanceof ReactorControlPanelBlock)
             || !(server.getBlockEntity(panelPos) instanceof ReactorControlPanelBlockEntity panel)) {
-            return "Реактор не собран: на позиции панели нет её BlockEntity.";
+            return List.of(Component.literal("Реактор не собран: на позиции панели нет её BlockEntity.")
+                .withStyle(ChatFormatting.GOLD));
         }
 
         PANEL_POSITIONS.computeIfAbsent(server, ignored -> new HashSet<>()).add(panelPos.asLong());
@@ -146,15 +152,19 @@ public final class ReactorStructure {
             ? revalidateFormedPanel(server, panel, null)
             : inspectFromPanel(server, panelPos, null);
         if (validation.incomplete()) {
-            return "Реактор: проверка отложена — не все чанки куба загружены; принудительная загрузка не выполнялась.";
+            return List.of(Component.literal("Реактор: проверка отложена — не все чанки куба загружены; принудительная загрузка не выполнялась.")
+                .withStyle(ChatFormatting.GOLD));
         }
         if (validation.structure() == null) {
-            return "Реактор не сформирован: " + validation.failure()
-                + (wasFormed && !panel.isFormedController() ? " (сохранённая форма снята)." : ".");
+            return List.of(Component.literal("Реактор не сформирован: " + validation.failure()
+                + (wasFormed && !panel.isFormedController() ? " (сохранённая форма снята)." : "."))
+                .withStyle(ChatFormatting.RED));
         }
         if (!panel.isFormedController()) {
-            return "Реактор: геометрия корректна, но он не сформирован. Разместите блок внутри куба или на его оболочке, чтобы запустить инициализацию.";
+            return List.of(Component.literal("Реактор: геометрия корректна, но он не сформирован. Разместите блок внутри куба или на его оболочке, чтобы запустить инициализацию.")
+                .withStyle(ChatFormatting.GOLD));
         }
+
         StructureInfo info = validation.structure();
         String summary = "Реактор I поколения сформирован: внешний куб " + info.size() + "³"
             + ", обшивок=" + info.casingBlocks()
@@ -166,40 +176,132 @@ public final class ReactorStructure {
             + ", бора=" + info.boron()
             + ", бария=" + info.barium()
             + ", воды=" + info.water() + ".";
+        List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal(summary).withStyle(ChatFormatting.GRAY));
         try {
-            ReactorMatrix.Diagnostic matrix = ReactorMatrix.evaluate(server, panel);
-            MatrixCoefficients.Coefficients coefficients = matrix.coefficients();
-            int loadedTvels = ReactorFuelStorage.totalTvels(server, panel);
-            double tvelsPerSheath = matrix.fuelSheaths() == 0
-                ? 0.0 : (double) loadedTvels / matrix.fuelSheaths();
-            String report = summary
-                + " ТВЭЛов в чехлах=" + loadedTvels
-                + ", чехлов=" + matrix.fuelSheaths()
-                + ", среднее содержимое на чехол=" + String.format(Locale.ROOT, "%.4f", tvelsPerSheath)
-                + " · сухой тепловой коэффициент [H=" + String.format(Locale.ROOT, "%.6f", coefficients.heat()) + "]"
-                + " · сухой пиковый поток утечки [L=" + String.format(Locale.ROOT, "%.6f", coefficients.peakLeak())
-                + "; " + String.format(Locale.ROOT, "%.2f", coefficients.peakLeak() * 100.0) + "%]";
-            return report + " Цикл расхода топлива и генерации ГТХ ещё не реализован.";
+            ReactorMatrix.OperatingSnapshot snapshot = ReactorMatrix.operatingSnapshot(server, panel);
+            ReactorMatrix.Diagnostic matrix = snapshot.diagnostic();
+            ReactorOperatingMetrics.Values values = snapshot.metrics();
+            int capacity = matrix.fuelSheaths() == 0 ? 0 : Math.min(matrix.fuelSheaths() + 2, 18);
+            lines.add(joinStats(
+                stat("R=" + values.rods() + " ТВЭЛов", ChatFormatting.GOLD),
+                stat("N=" + values.sleeves() + " чехлов", ChatFormatting.GOLD),
+                stat("слотов=" + capacity, ChatFormatting.GRAY),
+                stat("R/N=" + format(values.ratio(), 5), ChatFormatting.AQUA)));
+            lines.add(joinStats(
+                stat("rawH=", format(values.rawH(), 5), ChatFormatting.GOLD),
+                stat("rawL=", format(values.rawL() * 100.0, 3) + " %", ChatFormatting.AQUA)));
+            lines.add(joinStats(
+                stat("Htv=", format(values.htv(), 5), ChatFormatting.GOLD),
+                stat("Ltv=", format(values.ltv() * 100.0, 3) + " %", ChatFormatting.AQUA),
+                stat("S=", values.overheat() ? "Перегрев" : format(values.score(), 2), ChatFormatting.LIGHT_PURPLE)));
+            lines.add(joinStats(
+                stat("Целевой rawH*=", format(values.targetRawH(), 5), ChatFormatting.GOLD),
+                stat("ΔH=", formatSigned(values.deltaRawH(), 5), ChatFormatting.GRAY)));
+            lines.add(joinStats(
+                stat("Средний Htv=", format(values.meanH(), 5), ChatFormatting.GOLD),
+                stat("T горячей точки=", formatTemperature(values.hotTemperature()), ChatFormatting.GOLD)));
+            lines.add(joinStats(
+                stat("T топлива max=", formatTemperature(values.fuelTemperature()), ChatFormatting.GOLD),
+                stat("T реактора средняя=", formatTemperature(values.meanTemperature()), ChatFormatting.GOLD)));
+            lines.add(joinStats(
+                stat("qDry=", format(values.qDry(), 4), ChatFormatting.GRAY),
+                stat("Pнагрева=", format(values.power(), 2) + " ед/тик", ChatFormatting.RED)));
+            lines.add(joinStats(
+                stat("W=", values.waterUnits() + " ед.", ChatFormatting.AQUA),
+                stat("Tw=", formatTemperature(values.waterTemperature()), ChatFormatting.AQUA),
+                stat("p=", pressure(values), ChatFormatting.AQUA),
+                stat("feedback=", feedback(values), ChatFormatting.AQUA)));
+            lines.add(joinStats(
+                stat("Pтеплообмен=", output(values.output()), ChatFormatting.GRAY),
+                stat("Pполезный=", output(values.usefulOutput()), ChatFormatting.GREEN)));
+            lines.add(joinStats(
+                stat("Эффективность=", values.overheat() ? "NaN" : format(values.efficiency(), 1) + " %", ChatFormatting.GOLD),
+                stat("Режим=", values.regime(), ChatFormatting.GOLD)));
+            lines.add(Component.literal("Статический расчёт ReaCalc 1.2; разгон, расход топлива, динамика ГТХ и аварийное поведение не моделируются.")
+                .withStyle(ChatFormatting.DARK_GRAY));
         } catch (RuntimeException exception) {
-            return summary + " Матрица коэффициентов не рассчитана: " + exception.getMessage();
+            try {
+                ReactorMatrix.Diagnostic matrix = ReactorMatrix.evaluate(server, panel);
+                int loadedTvels = ReactorFuelStorage.totalTvels(server, panel);
+                lines.add(joinStats(
+                    stat("rawH=", format(matrix.coefficients().heat(), 5), ChatFormatting.GOLD),
+                    stat("rawL=", format(matrix.coefficients().peakLeak() * 100.0, 3) + " %", ChatFormatting.AQUA),
+                    stat("R=" + loadedTvels + " ТВЭЛов", ChatFormatting.GOLD)));
+            } catch (RuntimeException ignored) {
+                // Keep the original error visible even if a secondary dry diagnostic also fails.
+            }
+            lines.add(Component.literal("Рабочие статы не рассчитаны: " + exception.getMessage())
+                .withStyle(ChatFormatting.RED));
         }
+        return List.copyOf(lines);
     }
 
-    /** Same diagnostics with the two matrix outputs visually distinguished in chat. */
+    /** Plain-text form retained for logs and audit tools. */
+    public static String debugReport(Level level, BlockPos panelPos) {
+        return String.join("\n", debugReportComponents(level, panelPos).stream()
+            .map(Component::getString).toList());
+    }
+
+    /** Backward-compatible single-component form; Shift+ПКМ sends the lines separately. */
     public static Component debugReportComponent(Level level, BlockPos panelPos) {
-        String report = debugReport(level, panelPos);
-        int heatStart = report.indexOf("[H=");
-        int heatEnd = heatStart < 0 ? -1 : report.indexOf(']', heatStart);
-        int leakStart = heatEnd < 0 ? -1 : report.indexOf("[L=", heatEnd);
-        int leakEnd = leakStart < 0 ? -1 : report.indexOf(']', leakStart);
-        if (heatStart < 0 || heatEnd < 0 || leakStart < 0 || leakEnd < 0) {
-            return Component.literal(report).withStyle(ChatFormatting.GOLD);
+        Component combined = Component.empty();
+        boolean first = true;
+        for (Component line : debugReportComponents(level, panelPos)) {
+            if (!first) combined.append(Component.literal("\n"));
+            combined.append(line);
+            first = false;
         }
-        return Component.literal(report.substring(0, heatStart)).withStyle(ChatFormatting.GRAY)
-            .append(Component.literal(report.substring(heatStart, heatEnd + 1)).withStyle(ChatFormatting.GOLD))
-            .append(Component.literal(report.substring(heatEnd + 1, leakStart)).withStyle(ChatFormatting.GRAY))
-            .append(Component.literal(report.substring(leakStart, leakEnd + 1)).withStyle(ChatFormatting.AQUA))
-            .append(Component.literal(report.substring(leakEnd + 1)).withStyle(ChatFormatting.GRAY));
+        return combined;
+    }
+
+    private static Component stat(String label, String value, ChatFormatting color) {
+        return Component.literal(label).withStyle(ChatFormatting.GRAY)
+            .append(Component.literal(value).withStyle(color));
+    }
+
+    private static Component stat(String text, ChatFormatting color) {
+        return Component.literal(text).withStyle(color);
+    }
+
+    private static Component joinStats(Component... stats) {
+        Component line = Component.empty();
+        for (int i = 0; i < stats.length; i++) {
+            if (i > 0) line.append(Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY));
+            line.append(stats[i]);
+        }
+        return line;
+    }
+
+    private static String format(double value, int digits) {
+        return Double.isFinite(value)
+            ? String.format(Locale.ROOT, "%." + digits + "f", value)
+            : "—";
+    }
+
+    private static String formatSigned(double value, int digits) {
+        return Double.isFinite(value)
+            ? String.format(Locale.ROOT, "%+." + digits + "f", value)
+            : "—";
+    }
+
+    private static String formatTemperature(double value) {
+        return Double.isFinite(value) ? format(value, 1) + " °C" : "NaN · перегрев";
+    }
+
+    private static String pressure(ReactorOperatingMetrics.Values values) {
+        return Double.isFinite(values.pressure())
+            ? format(values.pressure(), 3) + " усл." : "NaN · перегрев";
+    }
+
+    private static String feedback(ReactorOperatingMetrics.Values values) {
+        return Double.isFinite(values.pressureFeedback())
+            ? "× " + format(values.pressureFeedback(), 3) : "NaN";
+    }
+
+    private static String output(double value) {
+        return Double.isFinite(value)
+            ? format(value, 2) + " ед/тик" : "NaN · перегрев";
     }
 
     private static void registerPanelIfPresent(ServerLevel level, BlockPos pos) {
@@ -214,6 +316,7 @@ public final class ReactorStructure {
         if (indexedRoot != null) {
             if (level.getBlockEntity(indexedRoot) instanceof ReactorControlPanelBlockEntity panel
                 && panel.isFormedController()) {
+                ReactorMatrix.invalidate(panel);
                 revalidateFormedPanel(level, panel, null);
             } else {
                 removeIndexForRoot(level, indexedRoot);
@@ -302,6 +405,7 @@ public final class ReactorStructure {
         if (root == null) return;
         if (level.getBlockEntity(root) instanceof ReactorControlPanelBlockEntity panel
             && panel.isFormedController()) {
+            ReactorMatrix.invalidate(panel);
             revalidateFormedPanel(level, panel, member);
         } else {
             removeIndexForRoot(level, root);
@@ -312,6 +416,7 @@ public final class ReactorStructure {
                                              ReactorControlPanelBlockEntity panel,
                                              BlockPos ignoredPos) {
         if (!panel.isFormedController()) return;
+        ReactorMatrix.invalidate(panel);
         BlockPos min = panel.min();
         BlockPos max = panel.max();
         if (!chunksLoaded(level, min, max)) {
