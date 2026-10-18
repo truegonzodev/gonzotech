@@ -107,6 +107,8 @@ assert "Pтеплообмен=" in report and "Pполезный=" in report and
 assert "Статический расчёт ReaCalc 1.2" in report
 plain = method(structure, "public static String debugReport(")
 assert "debugReportComponents(level, panelPos)" in plain
+assert "MutableComponent combined = Component.empty()" in structure
+assert "MutableComponent line = Component.empty()" in structure
 assert "Locale.ROOT" in structure
 styled = method(structure, "private static Component stat(String label, String value,")
 assert "withStyle(color)" in styled

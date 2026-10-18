@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -245,7 +246,7 @@ public final class ReactorStructure {
 
     /** Backward-compatible single-component form; Shift+ПКМ sends the lines separately. */
     public static Component debugReportComponent(Level level, BlockPos panelPos) {
-        Component combined = Component.empty();
+        MutableComponent combined = Component.empty();
         boolean first = true;
         for (Component line : debugReportComponents(level, panelPos)) {
             if (!first) combined.append(Component.literal("\n"));
@@ -265,7 +266,7 @@ public final class ReactorStructure {
     }
 
     private static Component joinStats(Component... stats) {
-        Component line = Component.empty();
+        MutableComponent line = Component.empty();
         for (int i = 0; i < stats.length; i++) {
             if (i > 0) line.append(Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY));
             line.append(stats[i]);
