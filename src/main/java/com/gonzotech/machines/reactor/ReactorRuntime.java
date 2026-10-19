@@ -8,6 +8,8 @@ import com.gonzotech.machines.energy.Sinks;
 import com.gonzotech.machines.network.PipeRouting;
 import com.gonzotech.machines.network.PipeType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 
@@ -18,10 +20,21 @@ import java.util.Set;
 /** Persistent water/GTH buffers and ReaCalc 1.7 server-time simulation for one reactor. */
 public final class ReactorRuntime {
 
-    public static final int MENU_DATA_COUNT = 16;
+    public static final int MENU_DATA_COUNT = 20;
+    /** GTH-шкала выше 97% добавляет выработку/2000 °C за тик отдельным слоем. */
+    public static final double GTH_BACKPRESSURE_FILL = 0.97;
+    public static final double GTH_BACKPRESSURE_DIVISOR = 2000.0;
+    /** Слой перегрева не постоянный: при снятии условия полностью увядает за 20 сек. */
+    public static final int GTH_BACKPRESSURE_FADE_TICKS = 400;
+    /** Запитанная панель + GTH >99.9% открывает клапан: гейзер и сброс 20% за 1.75 сек. */
+    public static final double VALVE_TRIGGER_FILL = 0.999;
+    public static final int VALVE_VENT_TICKS = 35;
+    public static final int VALVE_VENT_FIFTHS = 5;
     private static final int ENERGY_SYNC_BASE = 10_000;
     private static final int MAX_SYNC_PART = Short.MAX_VALUE;
     private static final long MAX_SYNC_TEMPERATURE_TENTHS =
+        (long) MAX_SYNC_PART * ENERGY_SYNC_BASE + ENERGY_SYNC_BASE - 1L;
+    private static final long MAX_SYNC_RATE_TENTHS =
         (long) MAX_SYNC_PART * ENERGY_SYNC_BASE + ENERGY_SYNC_BASE - 1L;
 
     private ResourceBuffer water = new ResourceBuffer(0);
@@ -29,6 +42,7 @@ public final class ReactorRuntime {
     private int zoneSide;
     private long[] heatPorts = new long[0];
     private long[] waterPorts = new long[0];
+    private long[] valvePorts = new long[0];
     private Set<Long> heatPortSet = Set.of();
     private Set<Long> waterPortSet = Set.of();
 
@@ -45,6 +59,13 @@ public final class ReactorRuntime {
     private boolean snapshotDirty = true;
     private double generationRate;
     private double usefulGenerationRate;
+    private double modelWaterTemperature = ReactorOperatingMetrics.AMBIENT;
+    private double modelWaterPressureIndex = 1.0;
+    private double backpressureBonus;
+    private double backpressureFadePerTick;
+    private int fuelAgeTicks;
+    private int ventTicksRemaining;
+    private long ventRemainingMilli;
 
     public record Metrics(double hotTemperature, double meanTemperature,
                           double generationRate, double usefulGenerationRate,
@@ -57,18 +78,21 @@ public final class ReactorRuntime {
     }
 
     /** Called only after structure validation; buffers retain their contents when capacity changes. */
-    public void configure(int side, long[] heatPorts, long[] waterPorts) {
+    public void configure(int side, long[] heatPorts, long[] waterPorts, long[] valvePorts) {
         int nextSide = Math.max(0, side);
         long[] nextHeatPorts = heatPorts == null ? new long[0] : heatPorts.clone();
         long[] nextWaterPorts = waterPorts == null ? new long[0] : waterPorts.clone();
+        long[] nextValvePorts = valvePorts == null ? new long[0] : valvePorts.clone();
         boolean changed = zoneSide != nextSide
             || !Arrays.equals(this.heatPorts, nextHeatPorts)
-            || !Arrays.equals(this.waterPorts, nextWaterPorts);
+            || !Arrays.equals(this.waterPorts, nextWaterPorts)
+            || !Arrays.equals(this.valvePorts, nextValvePorts);
 
         if (zoneSide != nextSide) resizeBuffers(nextSide);
         zoneSide = nextSide;
         this.heatPorts = nextHeatPorts;
         this.waterPorts = nextWaterPorts;
+        this.valvePorts = nextValvePorts;
         heatPortSet = positionsOf(nextHeatPorts);
         waterPortSet = positionsOf(nextWaterPorts);
         if (changed || lastSnapshot == null) snapshotDirty = true;
@@ -78,6 +102,7 @@ public final class ReactorRuntime {
     public void deconfigure() {
         heatPorts = new long[0];
         waterPorts = new long[0];
+        valvePorts = new long[0];
         heatPortSet = Set.of();
         waterPortSet = Set.of();
         lastAnalysis = null;
@@ -128,8 +153,14 @@ public final class ReactorRuntime {
     }
 
     public Metrics metrics() {
-        return new Metrics(heat.temperature(), heat.meanTemperature(), generationRate,
+        double hot = hotWithBackpressure();
+        return new Metrics(hot, heat.meanTemperature(hot), generationRate,
             usefulGenerationRate, neutronMetrics, Math.max(0, lastLoadedTvels), heat.phase());
+    }
+
+    /** Integrator reading plus the GTH back-pressure layer shown on the temperature gauge. */
+    private double hotWithBackpressure() {
+        return heat.temperature() + Math.max(0.0, backpressureBonus);
     }
 
     /** One server tick: sample fuel/geometry, integrate temperature, generate GTH, then route it. */
@@ -143,12 +174,117 @@ public final class ReactorRuntime {
         if (lastSnapshot == null) return;
 
         boolean changed = heat.advance(1.0);
-        ReactorHeatOutputCurve.Output output = heat.output();
+        ReactorHeatOutputCurve.Output output = heat.output(Math.max(0.0, backpressureBonus));
         generationRate = output.exchange();
         usefulGenerationRate = output.useful();
+        applyModelBath(output);
+        if (updateBackpressureLayer()) changed = true;
         if (accumulateGeneration(generationRate)) changed = true;
         if (pushGth(level, gameTime)) changed = true;
+        if (valveVentTick(level, panel)) changed = true;
+        if (++fuelAgeTicks >= 20) {
+            fuelAgeTicks = 0;
+            if (ReactorFuelStorage.ageLoadedFuel(level, panel)) changed = true;
+        }
         if (changed) panel.setChanged();
+    }
+
+    /** The archived water bath readings of the current output point. */
+    private void applyModelBath(ReactorHeatOutputCurve.Output output) {
+        modelWaterTemperature = output.waterTemperature();
+        modelWaterPressureIndex = output.pressureIndex();
+    }
+
+    /**
+     * GTH-шкала выше 97% добавляет выработку/2000 °C за тик отдельным слоем
+     * нагрева поверх плато (и тем самым поднимает выработку). Слой не
+     * перманентный: при падении заполнения ниже 97% или после выемки ТВЭЛов
+     * он за 20 секунд полностью увядает.
+     */
+    private boolean updateBackpressureLayer() {
+        double before = backpressureBonus;
+        if (backpressureFadePerTick > 0.0) {
+            backpressureBonus = Math.max(0.0, backpressureBonus - backpressureFadePerTick);
+            if (backpressureBonus <= 0.0) backpressureFadePerTick = 0.0;
+        } else if (gthFillFraction() > GTH_BACKPRESSURE_FILL) {
+            backpressureBonus += generationRate / GTH_BACKPRESSURE_DIVISOR;
+        } else if (backpressureBonus > 0.0) {
+            startBackpressureFade();
+            backpressureBonus = Math.max(0.0, backpressureBonus - backpressureFadePerTick);
+        }
+        return backpressureBonus != before;
+    }
+
+    private void startBackpressureFade() {
+        if (backpressureFadePerTick > 0.0 || backpressureBonus <= 0.0) return;
+        backpressureFadePerTick = backpressureBonus / GTH_BACKPRESSURE_FADE_TICKS;
+    }
+
+    private double gthFillFraction() {
+        long capacityMilli = gthCapacityMilli(zoneSide);
+        return capacityMilli <= 0L ? 0.0
+            : Math.min(1.0, (double) gth.amountAsLong() / (double) capacityMilli);
+    }
+
+    /**
+     * Запитанная редстоуном панель + GTH >99.9% открывает клапаны: гейзер
+     * poof-частиц наружу противоположно активной зоне (как у очистителя
+     * воздуха, но быстрее) и за 1.75 сек сбрасывает 20% текущего GTH.
+     */
+    private boolean valveVentTick(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        if (valvePorts.length == 0) return false;
+        if (ventTicksRemaining <= 0) {
+            if (!level.hasNeighborSignal(panel.getBlockPos())) return false;
+            if (gthFillFraction() <= VALVE_TRIGGER_FILL) return false;
+            long ventTotal = gth.amountAsLong() / VALVE_VENT_FIFTHS;
+            if (ventTotal <= 0L) return false;
+            ventRemainingMilli = ventTotal;
+            ventTicksRemaining = VALVE_VENT_TICKS;
+        }
+        long take = ventRemainingMilli;
+        if (ventTicksRemaining > 1) {
+            take = (ventRemainingMilli + ventTicksRemaining - 1) / ventTicksRemaining;
+        }
+        gth.extract(take, false);
+        ventRemainingMilli = Math.max(0L, ventRemainingMilli - take);
+        ventTicksRemaining--;
+        spawnValveGeysers(level, panel);
+        return true;
+    }
+
+    private void spawnValveGeysers(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        if (min == null || max == null) return;
+        for (long packed : valvePorts) {
+            BlockPos pos = BlockPos.of(packed);
+            Direction outward = outwardDirection(pos, min, max);
+            // count=0 — точная скорость (не гауссова), как у очистителя воздуха, но выше.
+            double speed = 0.45;
+            double vx = outward.getStepX() * speed;
+            double vy = outward.getStepY() * speed;
+            double vz = outward.getStepZ() * speed;
+            for (int i = 0; i < 3; i++) {
+                level.sendParticles(ParticleTypes.POOF,
+                    pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 0.4
+                        + outward.getStepX() * 0.55,
+                    pos.getY() + 0.5 + (level.random.nextDouble() - 0.5) * 0.4
+                        + outward.getStepY() * 0.55,
+                    pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 0.4
+                        + outward.getStepZ() * 0.55,
+                    0, vx, vy, vz, 1.0);
+            }
+        }
+    }
+
+    /** Наружу из куба — противоположно активной зоне, мимо которой стоит клапан. */
+    private static Direction outwardDirection(BlockPos pos, BlockPos min, BlockPos max) {
+        if (pos.getX() == max.getX()) return Direction.EAST;
+        if (pos.getX() == min.getX()) return Direction.WEST;
+        if (pos.getY() == max.getY()) return Direction.UP;
+        if (pos.getY() == min.getY()) return Direction.DOWN;
+        if (pos.getZ() == max.getZ()) return Direction.SOUTH;
+        return Direction.NORTH;
     }
 
     private void refreshSnapshot(ServerLevel level, ReactorControlPanelBlockEntity panel, long gameTime) {
@@ -163,6 +299,10 @@ public final class ReactorRuntime {
         if (matrixChanged || fuelChanged || firstConfiguration) {
             if (matrixChanged || outputCurve == null) {
                 outputCurve = new ReactorHeatOutputCurve(analysis);
+            }
+            if (fuelChanged && snapshot.loadedTvels() < lastLoadedTvels) {
+                // Вынутые ТВЭЛы: плато падает, а слой от полной шкалы гаснет за 20 сек.
+                startBackpressureFade();
             }
             heat.configure(ReactorHeatDynamics.parameters(analysis, snapshot.metrics(), outputCurve));
             neutronMetrics = ReactorNeutronMetrics.calculate(analysis, snapshot.metrics());
@@ -224,33 +364,42 @@ public final class ReactorRuntime {
         return movedAnything;
     }
 
-    /** Values synchronized by ContainerData; split long-like values into safe short-sized parts. */
+    /** Values synchronized by ContainerData; long-like readings use signed-short-safe parts. */
     public int menuData(int index) {
-        int waterAmount = water.amount();
-        int waterCap = water.capacity();
-        int gthAmount = gth.amountUnitsInt();
-        int gthCap = gth.capacityUnitsInt();
-        long hotTenths = temperatureTenths(heat.temperature());
-        long meanTenths = temperatureTenths(heat.meanTemperature());
+        long gthAmountTenths = gth.amountAsLong() / 100L;
+        long gthCapacityTenths = gthCapacityMilli(zoneSide) / 100L;
+        double hot = hotWithBackpressure();
+        long hotTenths = temperatureTenths(hot);
+        long meanTenths = temperatureTenths(heat.meanTemperature(hot));
+        long rateTenths = rateTenths(generationRate);
+        long waterTemperatureTenths = temperatureTenths(modelWaterTemperature);
         return switch (index) {
-            case 0 -> waterAmount;
-            case 1 -> waterCap;
-            case 2 -> gthAmount % ENERGY_SYNC_BASE;
-            case 3 -> gthAmount / ENERGY_SYNC_BASE;
-            case 4 -> gthCap % ENERGY_SYNC_BASE;
-            case 5 -> gthCap / ENERGY_SYNC_BASE;
+            case 0 -> water.amount();
+            case 1 -> water.capacity();
+            case 2 -> (int) (gthAmountTenths % ENERGY_SYNC_BASE);
+            case 3 -> shortPart(gthAmountTenths / ENERGY_SYNC_BASE);
+            case 4 -> (int) (gthCapacityTenths % ENERGY_SYNC_BASE);
+            case 5 -> shortPart(gthCapacityTenths / ENERGY_SYNC_BASE);
             case 6 -> (int) (hotTenths % ENERGY_SYNC_BASE);
-            case 7 -> (int) Math.min(MAX_SYNC_PART, hotTenths / ENERGY_SYNC_BASE);
+            case 7 -> shortPart(hotTenths / ENERGY_SYNC_BASE);
             case 8 -> (int) (meanTenths % ENERGY_SYNC_BASE);
-            case 9 -> (int) Math.min(MAX_SYNC_PART, meanTenths / ENERGY_SYNC_BASE);
+            case 9 -> shortPart(meanTenths / ENERGY_SYNC_BASE);
             case 10 -> percentTenths(neutronMetrics.strongestFlow());
             case 11 -> percentTenths(neutronMetrics.averageFlow());
             case 12 -> percentTenths(neutronMetrics.strongestLeak());
             case 13 -> percentTenths(neutronMetrics.averageLeak());
-            case 14 -> rateUnits(generationRate);
-            case 15 -> Math.max(0, lastLoadedTvels);
+            case 14 -> (int) (rateTenths % ENERGY_SYNC_BASE);
+            case 15 -> shortPart(rateTenths / ENERGY_SYNC_BASE);
+            case 16 -> Math.max(0, lastLoadedTvels);
+            case 17 -> (int) (waterTemperatureTenths % ENERGY_SYNC_BASE);
+            case 18 -> shortPart(waterTemperatureTenths / ENERGY_SYNC_BASE);
+            case 19 -> pressureTenthsMpa(modelWaterPressureIndex);
             default -> 0;
         };
+    }
+
+    private static int shortPart(long value) {
+        return (int) Math.min(MAX_SYNC_PART, Math.max(0L, value));
     }
 
     private static long temperatureTenths(double temperature) {
@@ -265,10 +414,17 @@ public final class ReactorRuntime {
         return (int) Math.min(MAX_SYNC_PART, Math.round(fraction * 1_000.0));
     }
 
-    /** Display GTH/t as a rounded whole value so it fits one signed-short menu slot. */
-    private static int rateUnits(double rate) {
-        if (!Double.isFinite(rate) || rate <= 0.0) return 0;
-        return (int) Math.min(MAX_SYNC_PART, Math.round(rate));
+    private static long rateTenths(double rate) {
+        if (!Double.isFinite(rate) || rate <= 0.0) return 0L;
+        double tenths = rate * 10.0;
+        return tenths >= MAX_SYNC_RATE_TENTHS
+            ? MAX_SYNC_RATE_TENTHS : Math.max(0L, Math.round(tenths));
+    }
+
+    private static int pressureTenthsMpa(double pressureIndex) {
+        if (!Double.isFinite(pressureIndex) || pressureIndex <= 0.0) return 0;
+        // One ReaCalc conditional pressure unit equals 0.1 MPa, or one tenth-MPa.
+        return (int) Math.min(MAX_SYNC_PART, Math.round(pressureIndex));
     }
 
     public void save(CompoundTag tag) {
@@ -276,6 +432,11 @@ public final class ReactorRuntime {
         water.save(tag, "ReactorWater");
         gth.save(tag, "ReactorGth");
         tag.putDouble("ReactorGthRemainderMilli", gthRemainderMilli);
+        tag.putDouble("ReactorBackpressureBonus", backpressureBonus);
+        tag.putDouble("ReactorBackpressureFade", backpressureFadePerTick);
+        tag.putInt("ReactorFuelAgeTicks", fuelAgeTicks);
+        tag.putInt("ReactorValveVentTicks", ventTicksRemaining);
+        tag.putLong("ReactorValveVentRemaining", ventRemainingMilli);
         ReactorHeatDynamics.Saved saved = heat.save();
         tag.putBoolean("ReactorHeatConfigured", saved.configured());
         tag.putDouble("ReactorHeatH", saved.h());
@@ -295,9 +456,15 @@ public final class ReactorRuntime {
         gth.load(tag, "ReactorGth");
         double remainder = tag.getDouble("ReactorGthRemainderMilli");
         gthRemainderMilli = Double.isFinite(remainder) ? Math.max(0.0, Math.min(0.999999999, remainder)) : 0.0;
+        backpressureBonus = finiteOr(tag.getDouble("ReactorBackpressureBonus"), 0.0);
+        backpressureFadePerTick = finiteOr(tag.getDouble("ReactorBackpressureFade"), 0.0);
+        fuelAgeTicks = Math.max(0, Math.min(19, tag.getInt("ReactorFuelAgeTicks")));
+        ventTicksRemaining = Math.max(0, tag.getInt("ReactorValveVentTicks"));
+        ventRemainingMilli = Math.max(0L, tag.getLong("ReactorValveVentRemaining"));
 
         heatPorts = new long[0];
         waterPorts = new long[0];
+        valvePorts = new long[0];
         heatPortSet = Set.of();
         waterPortSet = Set.of();
         boolean hasHeatState = tag.contains("ReactorHeatBase");
@@ -319,6 +486,12 @@ public final class ReactorRuntime {
         snapshotDirty = true;
         generationRate = 0.0;
         usefulGenerationRate = 0.0;
+        modelWaterTemperature = ReactorOperatingMetrics.AMBIENT;
+        modelWaterPressureIndex = 1.0;
         outputPortCursor = 0;
+    }
+
+    private static double finiteOr(double value, double fallback) {
+        return Double.isFinite(value) ? Math.max(0.0, value) : fallback;
     }
 }

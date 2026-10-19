@@ -3,10 +3,15 @@ package com.gonzotech.machines.reactor;
 /** Fixed-geometry ReaCalc 1.7 temperature-to-output curve. TVEL count is not an input. */
 public final class ReactorHeatOutputCurve {
 
-    public record Output(double exchange, double useful) {
+    public record Output(double exchange, double useful,
+                         double waterTemperature, double pressureIndex) {
+        public Output(double exchange, double useful) {
+            this(exchange, useful, ReactorOperatingMetrics.AMBIENT, 1.0);
+        }
     }
 
-    public static final Output ZERO = new Output(0.0, 0.0);
+    public static final Output ZERO = new Output(0.0, 0.0,
+        ReactorOperatingMetrics.AMBIENT, 1.0);
 
     private final double rawH;
     private final double rawL;
@@ -67,7 +72,8 @@ public final class ReactorHeatOutputCurve {
         ReactorOperatingMetrics.Water water = ReactorOperatingMetrics.water(
             power, leak, waterUnits, meanTemperature(temperature));
         double exchange = ReactorOperatingMetrics.OUTPUT_GAIN * water.output();
-        return new Output(exchange, exchange * ReactorOperatingMetrics.quality(water.temperature()));
+        return new Output(exchange, exchange * ReactorOperatingMetrics.quality(water.temperature()),
+            water.temperature(), water.pressure());
     }
 
     /**
@@ -79,6 +85,9 @@ public final class ReactorHeatOutputCurve {
         if (temperature <= anchorTemperature) return equilibrium(temperature);
         double scale = (temperature - ReactorOperatingMetrics.AMBIENT)
             / (anchorTemperature - ReactorOperatingMetrics.AMBIENT);
-        return new Output(anchor.exchange() * scale, anchor.useful() * scale);
+        // ReaCalc 1.7 defines linear output continuation above the reference
+        // point, but no new water equilibrium; expose the last finite bath state.
+        return new Output(anchor.exchange() * scale, anchor.useful() * scale,
+            anchor.waterTemperature(), anchor.pressureIndex());
     }
 }

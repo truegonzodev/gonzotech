@@ -132,6 +132,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_URANIUM_REACTOR_CASING_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_URANIUM_REACTOR_CONTROL_PANEL_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_URANIUM_REACTOR_VALVE_ITEM.get());
                 // Эпоха III (Открытие 3): линейка брожения
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_FERMENTATION_VAT_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_WORT_KETTLE_ITEM.get());

@@ -326,10 +326,12 @@ public class ModItems {
     /** Основа ТВЭЛа, изготавливаемая по shaped-рецепту. */
     public static final DeferredItem<Item> TVEL =
         ITEMS.registerItem("tvel", props -> new Item(props.stacksTo(1)));
-    /** Сборка ТВЭЛа на урановом топливе; загрузка топлива и поведение реактора не добавляются. */
+    /** Прочность топливного ТВЭЛа: 1 единица/сек в реакторе, 12608 ед. ≈ 3.5 часа. */
+    public static final int UF_TVEL_DURABILITY = 12_608;
+    /** Сборка ТВЭЛа на урановом топливе; теряет прочность в реакторе и выгорает в отработанный ТВЭЛ. */
     public static final DeferredItem<Item> UF_TVEL =
-        ITEMS.registerItem("uf_tvel", props -> new Item(props.stacksTo(1)));
-    /** Отработанный урановый ТВЭЛ; механики выгорания и обращения не добавляются. */
+        ITEMS.registerItem("uf_tvel", props -> new Item(props.stacksTo(1).durability(UF_TVEL_DURABILITY)));
+    /** Отработанный урановый ТВЭЛ; получается при полном выгорании топливного ТВЭЛа в реакторе. */
     public static final DeferredItem<Item> DEPRESSED_UF_TVEL =
         ITEMS.registerItem("depressed_uf_tvel", props -> new Item(props.stacksTo(1)));
 

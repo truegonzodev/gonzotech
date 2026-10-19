@@ -602,6 +602,7 @@ public final class ReactorStructure {
         int heatNodes = 0;
         int fluidNodes = 0;
         int universalNodes = 0;
+        int valves = 0;
         int sheaths = 0;
         int graphite = 0;
         int boron = 0;
@@ -609,6 +610,7 @@ public final class ReactorStructure {
         int water = 0;
         List<Long> heatPorts = new ArrayList<>();
         List<Long> waterPorts = new ArrayList<>();
+        List<Long> valvePorts = new ArrayList<>();
 
         for (int x = bounds.min().getX(); x <= bounds.max().getX(); x++) {
             for (int y = bounds.min().getY(); y <= bounds.max().getY(); y++) {
@@ -628,6 +630,14 @@ public final class ReactorStructure {
                             fluidNodes++;
                         } else if (block == ModMachines.THIRD_UNIVERSAL_NODE.get()) {
                             universalNodes++;
+                        } else if (block instanceof com.gonzotech.core.block.ReactorValveBlock) {
+                            if (!valveFacesZone(state, pos, bounds.min(), bounds.max())) {
+                                return Validation.failure("клапан должен стоять на грани обшивки, "
+                                    + "а его face или back — смотреть на активную зону: "
+                                    + pos.toShortString());
+                            }
+                            valves++;
+                            valvePorts.add(pos.asLong());
                         } else {
                             return Validation.failure("оболочка не заполнена обшивкой, панелью и разрешёнными экранированными узлами: "
                                 + pos.toShortString());
@@ -662,10 +672,33 @@ public final class ReactorStructure {
         }
 
         return Validation.success(new StructureInfo(bounds.min(), bounds.max(), size,
-            casing, sheaths, heatNodes, fluidNodes, universalNodes,
+            casing, sheaths, heatNodes, fluidNodes, universalNodes, valves,
             graphite, boron, barium, water,
             heatPorts.stream().mapToLong(Long::longValue).toArray(),
-            waterPorts.stream().mapToLong(Long::longValue).toArray()));
+            waterPorts.stream().mapToLong(Long::longValue).toArray(),
+            valvePorts.stream().mapToLong(Long::longValue).toArray()));
+    }
+
+    /**
+     * Клапан валиден только на ГРАНИ (не ребре и не угле) обшивки, и его
+     * face/back должен быть перпендикулярен этой грани — то есть смотреть
+     * внутрь активной зоны или наружу из реактора.
+     */
+    private static boolean valveFacesZone(net.minecraft.world.level.block.state.BlockState state,
+                                          BlockPos pos, BlockPos min, BlockPos max) {
+        int boundaryAxes = 0;
+        net.minecraft.core.Direction.Axis boundaryAxis = null;
+        for (net.minecraft.core.Direction.Axis axis : net.minecraft.core.Direction.Axis.values()) {
+            int value = axis.choose(pos.getX(), pos.getY(), pos.getZ());
+            int low = axis.choose(min.getX(), min.getY(), min.getZ());
+            int high = axis.choose(max.getX(), max.getY(), max.getZ());
+            if (value == low || value == high) {
+                boundaryAxes++;
+                boundaryAxis = axis;
+            }
+        }
+        return boundaryAxes == 1
+            && state.getValue(com.gonzotech.core.block.ReactorValveBlock.FACING).getAxis() == boundaryAxis;
     }
 
     private static BlockPos findPanelPosition(ServerLevel level, Bounds bounds, BlockPos ignoredPos) {
@@ -689,7 +722,8 @@ public final class ReactorStructure {
             || block instanceof ReactorControlPanelBlock
             || block == ModMachines.THIRD_HEAT_NODE.get()
             || block == ModMachines.THIRD_UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.THIRD_UNIVERSAL_NODE.get();
+            || block == ModMachines.THIRD_UNIVERSAL_NODE.get()
+            || block instanceof com.gonzotech.core.block.ReactorValveBlock;
     }
 
     private static boolean isAllowedInterior(Block block) {
@@ -756,7 +790,7 @@ public final class ReactorStructure {
         long[] heatPorts = info.heatPorts();
         long[] waterPorts = info.waterPorts();
         panel.configureStructure(info.min(), info.max(), info.sheaths(), Math.max(0, storedFuel),
-            heatPorts, waterPorts);
+            heatPorts, waterPorts, info.valvePorts());
         indexStructure(level, panel.getBlockPos(), info.min(), info.max());
         List<BlockPos> ports = new ArrayList<>(heatPorts.length + waterPorts.length);
         for (long port : heatPorts) ports.add(BlockPos.of(port));
@@ -786,11 +820,13 @@ public final class ReactorStructure {
     private record StructureInfo(BlockPos min, BlockPos max, int size,
                                  int casingBlocks, int sheaths,
                                  int heatNodes, int fluidNodes, int universalNodes,
+                                 int valves,
                                  int graphite, int boron, int barium, int water,
-                                 long[] heatPorts, long[] waterPorts) {
+                                 long[] heatPorts, long[] waterPorts, long[] valvePorts) {
         private StructureInfo {
             heatPorts = heatPorts.clone();
             waterPorts = waterPorts.clone();
+            valvePorts = valvePorts.clone();
         }
 
         public long[] heatPorts() {
@@ -799,6 +835,10 @@ public final class ReactorStructure {
 
         public long[] waterPorts() {
             return waterPorts.clone();
+        }
+
+        public long[] valvePorts() {
+            return valvePorts.clone();
         }
     }
 

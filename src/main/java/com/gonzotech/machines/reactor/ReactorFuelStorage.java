@@ -55,7 +55,7 @@ public final class ReactorFuelStorage {
         if (sheaths.isEmpty()) return -1;
 
         List<ItemStack> allFuel = collectFuelItems(sheaths);
-        appendFreshTvels(allFuel, legacyPanelItems);
+        appendSingleTvels(allFuel, legacyPanelItems);
         // Preserve every item from legacy/malformed NBT; the normal GUI can create at most 18.
         redistribute(allFuel, sheaths, min, max);
         return allFuel.size();
@@ -63,18 +63,34 @@ public final class ReactorFuelStorage {
 
     public static int totalTvels(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         if (level == null || panel == null || !panel.isFormedController()) return 0;
-        return countFuelItems(collectFuelItems(collectSheaths(level, panel.min(), panel.max())));
+        return countActiveTvels(collectFuelItems(collectSheaths(level, panel.min(), panel.max())));
     }
 
     public static int totalTvels(List<ReactorFuelSheathBlockEntity> sheaths) {
-        return countFuelItems(collectFuelItems(sheaths));
+        return countActiveTvels(collectFuelItems(sheaths));
+    }
+
+    /** Both fueled and spent TVELs occupy fuel slots; only fueled ones count as load. */
+    static boolean isFuelSlotItem(ItemStack stack) {
+        return stack != null && !stack.isEmpty()
+            && (stack.is(ModItems.UF_TVEL.get()) || stack.is(ModItems.DEPRESSED_UF_TVEL.get()));
+    }
+
+    /** Adds one durability point per loaded TVEL; exhausted rods become spent TVELs. */
+    public static boolean ageLoadedFuel(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        if (level == null || panel == null || !panel.isFormedController()) return false;
+        boolean changed = false;
+        for (ReactorFuelSheathBlockEntity sheath : collectSheaths(level, panel.min(), panel.max())) {
+            changed |= sheath.ageFuel();
+        }
+        return changed;
     }
 
     public static List<ItemStack> collectFuelItems(List<ReactorFuelSheathBlockEntity> sheaths) {
         List<ItemStack> result = new ArrayList<>();
         for (ReactorFuelSheathBlockEntity sheath : sheaths) {
             for (ItemStack stack : sheath.copyFuelItems()) {
-                if (stack.is(ModItems.UF_TVEL.get())) appendFreshTvels(result, List.of(stack));
+                if (isFuelSlotItem(stack)) appendSingleTvels(result, List.of(stack));
             }
         }
         return result;
@@ -156,7 +172,7 @@ public final class ReactorFuelStorage {
         for (int i = 0; i < sheaths.size(); i++) assigned.add(new ArrayList<>());
         for (int i = 0; i < items.size(); i++) {
             ItemStack stack = items.get(i);
-            if (stack.isEmpty() || !stack.is(ModItems.UF_TVEL.get())) continue;
+            if (!isFuelSlotItem(stack)) continue;
             int sheathIndex = i % sheaths.size();
             assigned.get(sheathIndex).add(stack.copyWithCount(1));
         }
@@ -167,16 +183,26 @@ public final class ReactorFuelStorage {
         }
     }
 
-    private static void appendFreshTvels(List<ItemStack> destination, List<ItemStack> source) {
+    private static void appendSingleTvels(List<ItemStack> destination, List<ItemStack> source) {
         for (ItemStack stack : source) {
-            if (stack == null || stack.isEmpty() || !stack.is(ModItems.UF_TVEL.get())) continue;
+            if (!isFuelSlotItem(stack)) continue;
             for (int count = 0; count < stack.getCount(); count++) {
                 destination.add(stack.copyWithCount(1));
             }
         }
     }
 
+    /** Counts every fuel-slot item, including spent TVELs that still occupy a slot. */
     private static int countFuelItems(List<ItemStack> items) {
+        int total = 0;
+        for (ItemStack stack : items) {
+            if (isFuelSlotItem(stack)) total += stack.getCount();
+        }
+        return total;
+    }
+
+    /** Counts only fueled TVELs — the matrix load and the GUI "loaded" reading. */
+    private static int countActiveTvels(List<ItemStack> items) {
         int total = 0;
         for (ItemStack stack : items) {
             if (stack.is(ModItems.UF_TVEL.get())) total += stack.getCount();

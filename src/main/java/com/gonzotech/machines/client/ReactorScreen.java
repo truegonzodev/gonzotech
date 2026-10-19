@@ -2,22 +2,23 @@ package com.gonzotech.machines.client;
 
 import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.menu.ReactorMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
-import java.util.Locale;
 
 /** Panel-driven reactor menu with live GTH/water/temperature/neutron indicators. */
 public final class ReactorScreen extends MachineScreen<ReactorMenu> {
 
     private static final int TEMP_COLOR = 0xED3261;
     private static final int NEUTRON_COLOR = 0x6C54E3;
-    private static final long MAX_SYNC_TEMPERATURE_TENTHS = 327_679_999L;
+    private static final int PRESSURE_COLOR = 0x6A89A3;
 
     public ReactorScreen(ReactorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -51,35 +52,46 @@ public final class ReactorScreen extends MachineScreen<ReactorMenu> {
 
         if (inRect(mouseX, mouseY, gthX, barY, 16, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                GtUnits.gthPair(menu.gthAmount(), menu.gthCapacity()),
-                Component.translatable("gui.gonzotech.reactor.generation",
-                    formatRate(menu.generationGthPerTick()))
-                    .withStyle(Style.EMPTY.withColor(GtUnits.GTH)),
-                Component.translatable("gui.gonzotech.reactor.loaded_tvels", menu.loadedTvels())
+                GtUnits.gthPair(GtUnits.x1(menu.gthAmountTenths() / 10.0),
+                    GtUnits.x1(menu.gthCapacityTenths() / 10.0)),
+                white("gui.gonzotech.reactor.generation",
+                    Component.literal(GtUnits.x1(menu.generationTenthsGthPerTick() / 10.0) + " GTH")
+                        .withColor(GtUnits.GTH)
+                        .append(Component.translatable(GtUnits.K_PER_TICK)
+                            .withStyle(ChatFormatting.WHITE))),
+                white("gui.gonzotech.reactor.loaded_tvels",
+                    GtUnits.x1(menu.loadedTvels()))
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, waterX, barY, 16, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                GtUnits.waterPair(menu.waterAmount(), menu.waterCapacity()),
+                GtUnits.waterPair(GtUnits.x1(menu.waterAmount()), GtUnits.x1(menu.waterCapacity())),
+                white("gui.gonzotech.reactor.model_water_temperature",
+                    Component.literal(GtUnits.x1(menu.modelWaterTemperatureTenths() / 10.0) + " °C")
+                        .withColor(TEMP_COLOR)),
+                white("gui.gonzotech.reactor.model_water_pressure",
+                    Component.translatable("gui.gonzotech.reactor.pressure_value",
+                        GtUnits.x1(menu.modelWaterPressureTenthsMpa() / 10.0))
+                        .withColor(PRESSURE_COLOR)),
                 Component.translatable("gui.gonzotech.reactor.water_buffer")
                     .withStyle(Style.EMPTY.withColor(0xA0A0A0))
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, temperatureX, barY, 7, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                colored("gui.gonzotech.reactor.hot_temperature",
-                    formatTemperature(menu.hottestTemperatureTenths()), TEMP_COLOR),
-                colored("gui.gonzotech.reactor.mean_temperature",
-                    formatTemperature(menu.meanTemperatureTenths()), TEMP_COLOR)
+                white("gui.gonzotech.reactor.hot_temperature",
+                    temperatureValue(menu.hottestTemperatureTenths())),
+                white("gui.gonzotech.reactor.mean_temperature",
+                    temperatureValue(menu.meanTemperatureTenths()))
             ), mouseX, mouseY);
         } else if (inRect(mouseX, mouseY, neutronsX, barY, 7, barH)) {
             graphics.renderComponentTooltip(this.font, List.of(
-                colored("gui.gonzotech.reactor.strongest_flow",
-                    formatPercent(menu.strongestFlowTenthsPercent()), NEUTRON_COLOR),
-                colored("gui.gonzotech.reactor.average_flow",
-                    formatPercent(menu.averageFlowTenthsPercent()), NEUTRON_COLOR),
-                colored("gui.gonzotech.reactor.strongest_leak",
-                    formatPercent(menu.strongestLeakTenthsPercent()), NEUTRON_COLOR),
-                colored("gui.gonzotech.reactor.average_leak",
-                    formatPercent(menu.averageLeakTenthsPercent()), NEUTRON_COLOR)
+                white("gui.gonzotech.reactor.strongest_flow",
+                    percentValue(menu.strongestFlowTenthsPercent())),
+                white("gui.gonzotech.reactor.average_flow",
+                    percentValue(menu.averageFlowTenthsPercent())),
+                white("gui.gonzotech.reactor.strongest_leak",
+                    percentValue(menu.strongestLeakTenthsPercent())),
+                white("gui.gonzotech.reactor.average_leak",
+                    percentValue(menu.averageLeakTenthsPercent()))
             ), mouseX, mouseY);
         }
     }
@@ -101,20 +113,17 @@ public final class ReactorScreen extends MachineScreen<ReactorMenu> {
         }
     }
 
-    private static Component colored(String key, Object value, int rgb) {
-        return Component.translatable(key, value).withStyle(Style.EMPTY.withColor(rgb));
+    /** Whole tooltip text is &f; only the measured value keeps its accent color. */
+    private static Component white(String key, Object value) {
+        return Component.translatable(key, value).withStyle(ChatFormatting.WHITE);
     }
 
-    private static String formatTemperature(long tenths) {
-        if (tenths >= MAX_SYNC_TEMPERATURE_TENTHS) return "≥32767999.9 °C";
-        return String.format(Locale.ROOT, "%.1f °C", tenths / 10.0);
+    private static MutableComponent temperatureValue(long tenths) {
+        // Last synced reading doubles as the saturation marker of the short field.
+        return Component.literal(GtUnits.x1(tenths / 10.0) + " °C").withColor(TEMP_COLOR);
     }
 
-    private static String formatPercent(int tenthsPercent) {
-        return String.format(Locale.ROOT, "%.1f%%", tenthsPercent / 10.0);
-    }
-
-    private static String formatRate(int gthPerTick) {
-        return Integer.toString(gthPerTick);
+    private static MutableComponent percentValue(int tenthsPercent) {
+        return Component.literal(GtUnits.x1(tenthsPercent / 10.0) + "%").withColor(NEUTRON_COLOR);
     }
 }

@@ -65,11 +65,11 @@ public final class ReactorMenu extends BaseMachineMenu {
         return data.get(1);
     }
 
-    public long gthAmount() {
+    public long gthAmountTenths() {
         return data.get(2) + (long) data.get(3) * 10_000L;
     }
 
-    public long gthCapacity() {
+    public long gthCapacityTenths() {
         return data.get(4) + (long) data.get(5) * 10_000L;
     }
 
@@ -97,17 +97,25 @@ public final class ReactorMenu extends BaseMachineMenu {
         return data.get(13);
     }
 
-    public int generationGthPerTick() {
-        return data.get(14);
+    public long generationTenthsGthPerTick() {
+        return data.get(14) + (long) data.get(15) * 10_000L;
     }
 
     public int loadedTvels() {
-        return data.get(15);
+        return data.get(16);
+    }
+
+    public long modelWaterTemperatureTenths() {
+        return data.get(17) + (long) data.get(18) * 10_000L;
+    }
+
+    public int modelWaterPressureTenthsMpa() {
+        return data.get(19);
     }
 
     public float gthFraction() {
-        long capacity = gthCapacity();
-        return capacity <= 0L ? 0.0F : (float) gthAmount() / capacity;
+        long capacity = gthCapacityTenths();
+        return capacity <= 0L ? 0.0F : (float) gthAmountTenths() / capacity;
     }
 
     public float waterFraction() {

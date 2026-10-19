@@ -75,4 +75,17 @@ for total in range(19):
         assert sum(drops) == total, (total, sheaths, drops)
         assert all(0 <= dropped <= total for dropped in drops)
 
+# Spent TVELs keep their slots through collect/redistribute; only fueled TVELs
+# count as reactor load. Aging adds one durability point per second and an
+# exhausted rod is replaced by the spent item.
+assert "stack.is(ModItems.UF_TVEL.get()) || stack.is(ModItems.DEPRESSED_UF_TVEL.get())" in storage
+assert "private static int countActiveTvels(" in storage
+assert "return countActiveTvels(collectFuelItems(" in storage
+assert "public static boolean ageLoadedFuel(" in storage
+assert "sheath.ageFuel()" in storage
+assert "public boolean ageFuel()" in sheath_be
+assert "fuelItems.set(slot, new ItemStack(ModItems.DEPRESSED_UF_TVEL.get()))" in sheath_be
+assert "stack.setDamageValue(damage)" in sheath_be
+assert "!stack.isEmpty() && !stack.is(ModItems.UF_TVEL.get())" in sheath_be  # GUI still refuses spent insert
+
 print("PASS reactor fuel storage: sheath-owned NBT, legacy migration, panel proxy, ceil(T/S) and no-duplication cases")

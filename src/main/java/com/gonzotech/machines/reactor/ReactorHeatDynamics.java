@@ -138,9 +138,14 @@ public final class ReactorHeatDynamics {
         }
 
         public double meanTemperature() {
+            return meanTemperature(temperature());
+        }
+
+        /** Mean reading for an explicit hot temperature (extra layers stack on the integrator). */
+        public double meanTemperature(double hotTemperature) {
             return parameters != null && parameters.outputCurve() != null
-                ? parameters.outputCurve().meanTemperature(temperature())
-                : temperature();
+                ? parameters.outputCurve().meanTemperature(hotTemperature)
+                : hotTemperature;
         }
 
         public boolean cooling() {
@@ -175,6 +180,24 @@ public final class ReactorHeatDynamics {
                 cachedOutput = curve.at(current);
             }
             return cachedOutput;
+        }
+
+        /** Output at the integrator reading plus an extra temperature layer (GTH back-pressure). */
+        public ReactorHeatOutputCurve.Output output(double extraHeat) {
+            double extra = Double.isFinite(extraHeat) ? Math.max(0.0, extraHeat) : 0.0;
+            return extra == 0.0 ? output() : outputAt(temperature() + extra);
+        }
+
+        /** Output at an explicit hot temperature without touching the cached reading. */
+        public ReactorHeatOutputCurve.Output outputAt(double hotTemperature) {
+            if (parameters == null) return ReactorHeatOutputCurve.ZERO;
+            ReactorHeatOutputCurve curve = parameters.outputCurve();
+            if (curve == null) {
+                return new ReactorHeatOutputCurve.Output(
+                    Math.max(0.0, hotTemperature - AMBIENT) * exchangeSlope,
+                    Math.max(0.0, hotTemperature - AMBIENT) * usefulSlope);
+            }
+            return curve.at(hotTemperature);
         }
 
         public double exchange() {

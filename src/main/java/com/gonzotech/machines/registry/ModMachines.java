@@ -16,6 +16,7 @@ import com.gonzotech.machines.block.NuclearFireboxBlock;
 import com.gonzotech.core.block.ReactorCasingBlock;
 import com.gonzotech.core.block.ReactorControlPanelBlock;
 import com.gonzotech.core.block.ReactorFuelSheathBlock;
+import com.gonzotech.core.block.ReactorValveBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.RectifierBlock;
 import com.gonzotech.machines.block.SnaketypeCondenserBlock;
@@ -143,6 +144,9 @@ public final class ModMachines {
         BLOCKS.registerBlock("third_uranium_reactor_control_panel", ReactorControlPanelBlock::new, machineMetal());
     public static final DeferredBlock<ReactorFuelSheathBlock> THIRD_URANIUM_REACTOR_FUEL_SHEATH =
         BLOCKS.registerBlock("third_uranium_reactor_fuel_sheath", ReactorFuelSheathBlock::new, machineMetal());
+    /** Предохранительный клапан на грани обшивки; валиден только лицом/спиной к активной зоне. */
+    public static final DeferredBlock<ReactorValveBlock> THIRD_URANIUM_REACTOR_VALVE =
+        BLOCKS.registerBlock("third_uranium_reactor_valve", ReactorValveBlock::new, machineMetal());
 
     public static final DeferredBlock<BoilerBlock> BOILER =
         BLOCKS.registerBlock("boiler", BoilerBlock::new, machineMetalCustomShape());
@@ -462,6 +466,8 @@ public final class ModMachines {
         ITEMS.registerSimpleBlockItem("third_uranium_reactor_control_panel", THIRD_URANIUM_REACTOR_CONTROL_PANEL);
     public static final DeferredItem<BlockItem> THIRD_URANIUM_REACTOR_FUEL_SHEATH_ITEM =
         ITEMS.registerSimpleBlockItem("third_uranium_reactor_fuel_sheath", THIRD_URANIUM_REACTOR_FUEL_SHEATH);
+    public static final DeferredItem<BlockItem> THIRD_URANIUM_REACTOR_VALVE_ITEM =
+        ITEMS.registerSimpleBlockItem("third_uranium_reactor_valve", THIRD_URANIUM_REACTOR_VALVE);
 
     public static final DeferredItem<BlockItem> BOILER_ITEM =
         ITEMS.registerSimpleBlockItem("boiler", BOILER);

@@ -59,6 +59,29 @@ public final class ReactorFuelSheathBlockEntity extends BlockEntity implements C
         return total;
     }
 
+    /**
+     * Одна единица прочности в секунду на каждый топливный ТВЭЛ. Кончивший
+     * ТВЭЛ превращается в отработанный (компонент прочности — как у инструментов).
+     */
+    public boolean ageFuel() {
+        boolean changed = false;
+        for (int slot = 0; slot < fuelItems.size(); slot++) {
+            ItemStack stack = fuelItems.get(slot);
+            if (!stack.is(ModItems.UF_TVEL.get())) continue;
+            int maxDurability = stack.getMaxDamage();
+            if (maxDurability <= 0) continue;
+            int damage = stack.getDamageValue() + 1;
+            if (damage >= maxDurability) {
+                fuelItems.set(slot, new ItemStack(ModItems.DEPRESSED_UF_TVEL.get()));
+            } else {
+                stack.setDamageValue(damage);
+            }
+            changed = true;
+        }
+        if (changed) setChanged();
+        return changed;
+    }
+
     /** Copies the concrete item stacks so a controller menu never owns the persistent fuel. */
     public List<ItemStack> copyFuelItems() {
         List<ItemStack> result = new ArrayList<>();

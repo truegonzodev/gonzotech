@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "gonzotech:block/third_1reactor/third_uranium_reactor_valve_face",
+    "side": "gonzotech:block/third_1reactor/third_uranium_reactor_valve_side",
+    "top": "gonzotech:block/third_1reactor/third_uranium_reactor_valve_end",
+    "particle": "gonzotech:block/third_1reactor/third_uranium_reactor_valve_side"
+  }
+}

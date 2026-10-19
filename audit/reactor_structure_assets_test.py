@@ -132,4 +132,31 @@ inner_hash = png_info(REACTOR_TEXTURES / "1reactor_ctm_inner_corner.png")[2]
 if outer_hash == inner_hash:
     print("NOTE: outer/inner CTM corner PNGs are byte-identical; kept as separate required slots, not shared by block models")
 
+# The relief valve is a pillar-like shell part: oriented face plus side/end
+# textures, six facing variants, and an ordinary self-drop loot table.
+valve_blockstate = load(ASSETS / "blockstates/third_uranium_reactor_valve.json")["variants"]
+assert set(valve_blockstate) == {
+    "facing=north", "facing=south", "facing=east", "facing=west", "facing=up", "facing=down",
+}
+valve_model = load(ASSETS / "models/block/third_uranium_reactor_valve.json")
+assert valve_model["parent"] == "minecraft:block/orientable"
+valve_textures = set(valve_model["textures"].values())
+assert len(valve_textures) == 3, "valve model must reference exactly three owned textures"
+valve_roles = valve_model["textures"]
+assert valve_roles["front"].endswith("third_uranium_reactor_valve_face")
+assert valve_roles["side"].endswith("third_uranium_reactor_valve_side")
+assert valve_roles["top"].endswith("third_uranium_reactor_valve_end")
+valve_png_hashes = set()
+for role in ("face", "side", "end"):
+    path = REACTOR_TEXTURES / f"third_uranium_reactor_valve_{role}.png"
+    assert path.is_file(), path
+    assert png_info(path)[:2] == (16, 16), path
+    valve_png_hashes.add(png_info(path)[2])
+assert len(valve_png_hashes) == 3, "valve textures must not be duplicates"
+valve_loot = load(ROOT / "src/main/resources/data/gonzotech/loot_table/blocks/third_uranium_reactor_valve.json")
+assert valve_loot["pools"][0]["entries"][0]["name"] == "gonzotech:third_uranium_reactor_valve"
+valve_java = read(JAVA / "core/block/ReactorValveBlock.java")
+assert "FACING = BlockStateProperties.FACING" in valve_java
+assert "getStateForPlacement" in valve_java and "getNearestLookingDirection().getOpposite()" in valve_java
+
 print("Reactor structure, formed CTM, and owned texture contracts passed")

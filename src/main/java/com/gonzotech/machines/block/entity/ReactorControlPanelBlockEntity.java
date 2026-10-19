@@ -128,13 +128,13 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
 
     /** Called only after the entire outer shell and interior pass validation. */
     public void configureStructure(BlockPos min, BlockPos max, int sheathCount, int storedFuel,
-                                   long[] heatPorts, long[] waterPorts) {
+                                   long[] heatPorts, long[] waterPorts, long[] valvePorts) {
         this.min = min.immutable();
         this.max = max.immutable();
         this.fuelSlotCount = fuelSlotsForSheaths(sheathCount, storedFuel);
         this.formed = true;
         this.validationPending = false;
-        runtime.configure(max.getX() - min.getX() - 1, heatPorts, waterPorts);
+        runtime.configure(max.getX() - min.getX() - 1, heatPorts, waterPorts, valvePorts);
         setChanged();
     }
 
