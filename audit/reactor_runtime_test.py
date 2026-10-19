@@ -49,7 +49,7 @@ tick = method(runtime, "public void serverTick(")
 assert "if (!panel.isRuntimeReady()) return;" in tick
 assert "refreshSnapshot(level, panel, gameTime)" in tick
 assert "heat.advance(1.0)" in tick
-assert "accumulateGeneration(Math.max(0.0, generationRate - PARASITIC_GTH_PER_TICK))" in tick
+assert "accumulateGeneration(generationRate)" in tick and "drainParasiticLoss()" in tick
 assert "pushGth(level, gameTime)" in tick
 assert "double gaugeFill = coolantFill();" in tick
 assert "output.exchange() * outputFactor(gaugeFill)" in tick
@@ -202,8 +202,8 @@ assert "new ItemStack(ModItems.DEPRESSED_UF_TVEL.get())" in read("machines/block
 # 0.3.244: the water gauge ties into heat exchange and output (explicit game
 # rule): 100% unchanged, 50% -> output x0.6 with an intensified bath, 0% -> x0.1.
 # The valve additionally vents 20% of current water, its trigger stays GTH-only
-# (no self-runaway temperature trigger), a parasitic 1 GTH/t loss subtracts from
-# production before the buffer, and the GTH buffer is 5484 x side^2 / 2.3.
+# (no self-runaway temperature trigger), a parasitic 1 GTH/t loss drains the
+# buffer every tick (since 0.3.247), and the GTH buffer is 5484 x side^2 / 2.3.
 _ver.at_least("0.3.244", "water-gauge heat exchange link, valve water vent, 16^3 active zone")
 
 assert "public static double outputFactor(double fill)" in runtime
@@ -248,7 +248,8 @@ accident_data = read("machines/reactor/ReactorAccidentData.java")
 dust_particle = read("core/client/particle/ReactorDustParticle.java")
 
 assert "MELTDOWN_TEMPERATURE = 10_000.0" in runtime
-assert "if (hotWithBackpressure() >= MELTDOWN_TEMPERATURE)" in runtime
+assert "double hotNow = hotWithBackpressure();" in runtime
+assert "if (hotNow >= MELTDOWN_TEMPERATURE)" in runtime
 assert "clearGaugesForAccident" in runtime and "triggerAccident" in runtime
 assert "heat.restore(new ReactorHeatDynamics.Saved(false, 0.0," in runtime
 assert "neutronMetrics = ReactorNeutronMetrics.Values.ZERO" in runtime
@@ -276,10 +277,33 @@ assert "LevelTickEvent.Post" in accident
 assert "ACCIDENT_DOSE_NZT = 5.0 * com.gonzotech.radiation.RadUnits.MILLI" in accident
 assert "addContamination" in accident_data and "ACCIDENT_DOSE_NZT" in accident_data
 assert "gonzotech_reactor_accidents" in accident_data
-assert "MIN_SIZE = 1.0F" in dust_particle and "MAX_SIZE = 4.0F" in dust_particle
-assert "MIN_LIFETIME_TICKS = 200" in dust_particle and "MAX_LIFETIME_TICKS = 300" in dust_particle
+assert "MIN_SIZE = 0.5F" in dust_particle and "MAX_SIZE = 3.0F" in dust_particle
+assert "MIN_LIFETIME_TICKS = 60" in dust_particle and "MAX_LIFETIME_TICKS = 100" in dust_particle
 assert "setColor(1.0F, 1.0F, 1.0F)" in dust_particle
 assert "REACTOR_DUST" in read("core/registry/ModParticles.java")
 assert "ReactorDustParticle.Provider::new" in read("core/client/particle/ModParticleClient.java")
 
-print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability")
+# 0.3.247: meltdown polish — the hottest point and graphite melt into MOLTEN
+# corium; a one-shot 1alarm.ogg siren (pitch 0.9-1.1, volume 16, ~128 blocks)
+# fires exactly when the temperature crosses 9608 C upward; reactor dust is
+# 0.5-3 blocks and lives 3-5 s; slime buckshot flies 3-10 blocks and drops
+# nothing on an unsuitable landing; the parasitic loss is a visible 1 GTH/t
+# buffer self-discharge.
+_ver.at_least("0.3.247", "meltdown polish: molten corium, 9608 C siren, dust/slime tuning, visible parasitic drain")
+
+assert "ALARM_TEMPERATURE = 9608.0" in runtime
+assert "ALARM_VOLUME = 16.0F" in runtime
+assert "ALARM_PITCH_MIN = 0.9F" in runtime and "ALARM_PITCH_MAX = 1.1F" in runtime
+assert "ModSounds.REACTOR_ALARM" in runtime and "SoundSource.BLOCKS" in runtime
+assert "alarmArmed" in runtime and "ReactorAlarmArmed" in runtime
+assert "REACTOR_ALARM" in read("core/registry/ModSounds.java")
+assert "1alarm" in json.loads((ROOT / "src/main/resources/assets/gonzotech/sounds.json").read_text(encoding="utf-8"))
+assert "private boolean drainParasiticLoss(" in runtime
+assert "PARASITIC_GTH_PER_TICK * MachineDefs.MILLI" in runtime
+core_repl = method(accident, "private static BlockState coreReplacement(")
+assert "GRAPHITE_BLOCK" in core_repl and "MOLTEN_CORIUM" in core_repl
+assert "ModBlocks.MOLTEN_CORIUM.get().defaultBlockState(), 3)" in accident
+assert "dropItem = false" in accident
+assert "FALLING_SPEED_MIN = 0.2" in accident and "FALLING_SPEED_MAX = 0.7" in accident
+
+print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability")

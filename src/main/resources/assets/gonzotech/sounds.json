@@ -119,5 +119,13 @@
         "weight": 1
       }
     ]
+  },
+  "1alarm": {
+    "subtitle": "subtitles.gonzotech.1alarm",
+    "sounds": [
+      {
+        "name": "gonzotech:1alarm"
+      }
+    ]
   }
 }

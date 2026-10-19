@@ -9,17 +9,17 @@ import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 
 /**
- * Аварийная пыль реактора (0.3.246): белое облако 1–4 блока, почти статично и
+ * Аварийная пыль реактора (0.3.246): белое облако 0.5–3 блока, почти статично и
  * медленно оседает, плавно проявляется из прозрачности и плавно гаснет; чем
- * крупнее частица, тем дольше живёт (10–15 с). Спрайт — gonzotech:dust.
+ * крупнее частица, тем дольше живёт (3–5 с). Спрайт — gonzotech:dust.
  */
 public final class ReactorDustParticle extends TextureSheetParticle {
-    public static final float MIN_SIZE = 1.0F;
-    public static final float MAX_SIZE = 4.0F;
-    public static final int MIN_LIFETIME_TICKS = 200;
-    public static final int MAX_LIFETIME_TICKS = 300;
-    public static final int FADE_IN_TICKS = 20;
-    public static final int FADE_OUT_TICKS = 60;
+    public static final float MIN_SIZE = 0.5F;
+    public static final float MAX_SIZE = 3.0F;
+    public static final int MIN_LIFETIME_TICKS = 60;
+    public static final int MAX_LIFETIME_TICKS = 100;
+    public static final int FADE_IN_TICKS = 12;
+    public static final int FADE_OUT_TICKS = 24;
     public static final float MAX_ALPHA = 0.55F;
 
     private final SpriteSet sprites;

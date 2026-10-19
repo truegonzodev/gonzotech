@@ -1,5 +1,6 @@
 package com.gonzotech.machines.reactor;
 
+import com.gonzotech.core.registry.ModSounds;
 import com.gonzotech.machines.block.entity.ReactorControlPanelBlockEntity;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.MachineDefs;
@@ -12,6 +13,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -37,10 +39,15 @@ public final class ReactorRuntime {
     /** Каждый клапан добавляет 20% сброса за цикл; дольше VALVE_SCALING_CAP не складываются. */
     public static final int VALVE_VENT_FIFTHS = 5;
     public static final int VALVE_SCALING_CAP = 4;
-    /** Паразитная потеря контура: 1 GTH/т вычитается из выработки до накопления в буфер. */
+    /** Паразитная потеря контура: каждый тик буфер GTH теряет 1 GTH (саморазряд), не ниже нуля. */
     public static final double PARASITIC_GTH_PER_TICK = 1.0;
     /** Порог аварии (0.3.246): шкала температуры полна — 10 000 °C. */
     public static final double MELTDOWN_TEMPERATURE = 10_000.0;
+    /** Тревога (0.3.247): один звук 1alarm.ogg при преодолении 9608 °C вверх, слышно за 128 блоков. */
+    public static final double ALARM_TEMPERATURE = 9608.0;
+    public static final float ALARM_VOLUME = 16.0F;
+    public static final float ALARM_PITCH_MIN = 0.9F;
+    public static final float ALARM_PITCH_MAX = 1.1F;
     private static final int ENERGY_SYNC_BASE = 10_000;
     private static final int MAX_SYNC_PART = Short.MAX_VALUE;
     private static final long MAX_SYNC_TEMPERATURE_TENTHS =
@@ -79,6 +86,7 @@ public final class ReactorRuntime {
     private long ventRemainingMilli;
     private long ventRemainingWater;
     private boolean accidentQueued;
+    private boolean alarmArmed = true;
 
     public record Metrics(double hotTemperature, double meanTemperature,
                           double generationRate, double usefulGenerationRate,
@@ -114,6 +122,7 @@ public final class ReactorRuntime {
     /** Stop I/O immediately when the shell becomes invalid; preserve stored resources and thermal state. */
     public void deconfigure() {
         accidentQueued = false;
+        alarmArmed = true;
         heatPorts = new long[0];
         waterPorts = new long[0];
         valvePorts = new long[0];
@@ -218,9 +227,18 @@ public final class ReactorRuntime {
             refreshSnapshot(level, panel, gameTime);
         }
         if (lastSnapshot == null) return;
-        if (hotWithBackpressure() >= MELTDOWN_TEMPERATURE) {
+        double hotNow = hotWithBackpressure();
+        if (hotNow >= MELTDOWN_TEMPERATURE) {
             triggerAccident(level, panel);
             return;
+        }
+        if (hotNow >= ALARM_TEMPERATURE) {
+            if (alarmArmed) {
+                alarmArmed = false;
+                playAlarm(level, panel);
+            }
+        } else {
+            alarmArmed = true;
         }
 
         boolean changed = heat.advance(1.0);
@@ -230,7 +248,8 @@ public final class ReactorRuntime {
         usefulGenerationRate = output.useful() * outputFactor(gaugeFill);
         applyModelBath(output, gaugeFill);
         if (updateBackpressureLayer()) changed = true;
-        if (accumulateGeneration(Math.max(0.0, generationRate - PARASITIC_GTH_PER_TICK))) changed = true;
+        if (accumulateGeneration(generationRate)) changed = true;
+        if (drainParasiticLoss()) changed = true;
         if (pushGth(level, gameTime)) changed = true;
         if (valveVentTick(level, panel)) changed = true;
         if (++fuelAgeTicks >= 20) {
@@ -281,6 +300,7 @@ public final class ReactorRuntime {
         modelWaterPressureIndex = 1.0;
         backpressureBonus = 0.0;
         backpressureFadePerTick = 0.0;
+        alarmArmed = true;
         neutronMetrics = ReactorNeutronMetrics.Values.ZERO;
         heat.restore(new ReactorHeatDynamics.Saved(false, 0.0,
             ReactorHeatDynamics.AMBIENT, 0.0, 0.0, 0.0, -1.0));
@@ -311,6 +331,21 @@ public final class ReactorRuntime {
         int y = (best / nx) % ny;
         int z = best / (nx * ny);
         return new BlockPos(min.getX() + x + 1, min.getY() + y + 1, min.getZ() + z + 1);
+    }
+
+    /** Тревога при преодолении 9608 °C: один звук 1alarm.ogg из реактора, питч 0.9–1.1. */
+    private void playAlarm(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        BlockPos pos = panel.getBlockPos();
+        level.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+            ModSounds.REACTOR_ALARM.get(), SoundSource.BLOCKS, ALARM_VOLUME,
+            ALARM_PITCH_MIN + level.random.nextFloat() * (ALARM_PITCH_MAX - ALARM_PITCH_MIN));
+    }
+
+    /** Паразитная потеря: каждый тик буфер GTH теряет ровно 1 GTH (саморазряд), не ниже нуля. */
+    private boolean drainParasiticLoss() {
+        if (gth.isEmpty()) return false;
+        long lossMilli = (long) (PARASITIC_GTH_PER_TICK * MachineDefs.MILLI);
+        return gth.extract(lossMilli, false) > 0L;
     }
 
     /**
@@ -573,6 +608,7 @@ public final class ReactorRuntime {
         tag.putLong("ReactorValveVentRemaining", ventRemainingMilli);
         tag.putLong("ReactorValveVentWater", ventRemainingWater);
         tag.putBoolean("ReactorAccidentQueued", accidentQueued);
+        tag.putBoolean("ReactorAlarmArmed", alarmArmed);
         ReactorHeatDynamics.Saved saved = heat.save();
         tag.putBoolean("ReactorHeatConfigured", saved.configured());
         tag.putDouble("ReactorHeatH", saved.h());
@@ -599,6 +635,7 @@ public final class ReactorRuntime {
         ventRemainingMilli = Math.max(0L, tag.getLong("ReactorValveVentRemaining"));
         ventRemainingWater = Math.max(0L, tag.getLong("ReactorValveVentWater"));
         accidentQueued = tag.getBoolean("ReactorAccidentQueued");
+        alarmArmed = !tag.contains("ReactorAlarmArmed") || tag.getBoolean("ReactorAlarmArmed");
 
         heatPorts = new long[0];
         waterPorts = new long[0];

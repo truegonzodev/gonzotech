@@ -16,6 +16,9 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> SWORD_IMPACT = sound("sword_impact");
     public static final DeferredHolder<SoundEvent, SoundEvent> SWORD_READY = sound("sword_ready");
 
+    /** Тревога реактора при 9608 °C (ogg кладётся автором в sounds/1alarm.ogg). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> REACTOR_ALARM = sound("1alarm");
+
     public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_40000FT = sound("gt_ost_40000ft");
     public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_BITTER = sound("gt_ost_bitter");
     public static final DeferredHolder<SoundEvent, SoundEvent> GT_OST_CRADLE = sound("gt_ost_cradle");

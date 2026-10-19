@@ -1073,6 +1073,7 @@
   "item.gonzotech.netherite_greatsword": "Большой незеритовый меч",
   "item.gonzotech.alloy_greatsword": "Большой меч из пользовательского сплава",
   "hud.gonzotech.greatsword_charge": "Заряд: %s%%",
+  "subtitles.gonzotech.1alarm": "Сирена реактора",
   "subtitles.gonzotech.sword_impact": "Удар большого меча",
   "subtitles.gonzotech.sword_ready": "Большой меч заряжен",
   "block.gonzotech.raw_calcite_block": "Блок сырого кальцита",

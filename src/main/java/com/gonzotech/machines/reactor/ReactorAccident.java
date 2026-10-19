@@ -33,15 +33,16 @@ import java.util.Set;
  *   <li>T1 — вода в радиусе 4 от пролома → мёртвая слизь 80 % / радиоактивная
  *       слизь 20 %;</li>
  *   <li>T2 — хаотичная сфера радиуса 2 от самой горячей точки: не вода и не
- *       воздух → кориум/лава (чехлы и графит → кориум, барий и бор → лава);
+ *       воздух → кориум/лава (чехлы → кориум, графит → расплавленный кориум,
+ *       барий и бор → лава); самая горячая точка всегда → расплавленный кориум;
  *       обшивка, узлы и т.д. у пролома → лава 30 % в радиусе 2; сам пролом →
  *       кориум 100 %; из пролома — explosion_emitter и взрыв силой 2 (как TNT);</li>
  *   <li>T3 — из пролома: гейзер как у клапана, но в 2–3 раза быстрее, плюс
  *       lava-частицы (как выстреливает из лавы), плюс хаотичная дробь из
- *       падающих блоков мёртвой слизи (летят 5–20 блоков и приземляются
- *       блоками);</li>
+ *       падающих блоков мёртвой слизи (летят 3–10 блоков и приземляются
+ *       блоками; на неподходящей поверхности дропа нет);</li>
  *   <li>T1..T5 — белая dust-пыль в радиусе 0–3 от пролома: 1–5 частиц за тик,
- *       ближе к пролому — плотнее; размер 1–4 блока, жизнь 10–15 с по размеру.</li>
+ *       ближе к пролому — плотнее; размер 0.5–3 блока, жизнь 3–5 с по размеру.</li>
  * </ul>
  */
 public final class ReactorAccident {
@@ -62,11 +63,11 @@ public final class ReactorAccident {
     public static final double GEYSER_SPEED = 1.15;
     public static final int GEYSER_POOF_COUNT = 8;
     public static final int GEYSER_LAVA_COUNT = 8;
-    /** T3: дробь из падающих блоков мёртвой слизи, летят 5–20 блоков. */
+    /** T3: дробь из падающих блоков мёртвой слизи, летят 3–10 блоков. */
     public static final int FALLING_SLIME_MIN = 8;
     public static final int FALLING_SLIME_MAX = 16;
-    public static final double FALLING_SPEED_MIN = 0.35;
-    public static final double FALLING_SPEED_MAX = 1.2;
+    public static final double FALLING_SPEED_MIN = 0.2;
+    public static final double FALLING_SPEED_MAX = 0.7;
     /** Пыль: 1–5 частиц/тик в радиусе 0–3 от пролома (ближе — плотнее). */
     public static final int DUST_MIN_PER_TICK = 1;
     public static final int DUST_MAX_PER_TICK = 5;
@@ -183,6 +184,11 @@ public final class ReactorAccident {
             }
         }
 
+        // Самая горячая точка — всегда расплавленный кориум (плавится первой).
+        if (level.setBlock(hot, ModBlocks.MOLTEN_CORIUM.get().defaultBlockState(), 3)) {
+            touched.add(hot.asLong());
+        }
+
         // Обшивка, узлы и т.д. у пролома: лава 30 % (слой T1 не трогаем).
         for (BlockPos pos : BlockPos.betweenClosed(
             breach.offset(-SHELL_LAVA_RADIUS, -SHELL_LAVA_RADIUS, -SHELL_LAVA_RADIUS),
@@ -211,11 +217,13 @@ public final class ReactorAccident {
             EXPLOSION_POWER, Level.ExplosionInteraction.BLOCK);
     }
 
-    /** Чехлы и графит → кориум; барий и бор → лава; прочее → кориум/лава. */
+    /** Чехлы → кориум; графит → расплавленный кориум; барий и бор → лава; прочее → кориум/лава. */
     private static BlockState coreReplacement(Block block, RandomSource random) {
-        if (block == ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH.get()
-            || block == ModBlocks.GRAPHITE_BLOCK.get()) {
+        if (block == ModMachines.THIRD_URANIUM_REACTOR_FUEL_SHEATH.get()) {
             return ModBlocks.CORIUM.get().defaultBlockState();
+        }
+        if (block == ModBlocks.GRAPHITE_BLOCK.get()) {
+            return ModBlocks.MOLTEN_CORIUM.get().defaultBlockState();
         }
         if (ReactorMatrix.isMetalBlock(block, "boron_block")
             || ReactorMatrix.isMetalBlock(block, "barium_block")) {
@@ -263,6 +271,8 @@ public final class ReactorAccident {
             FallingBlockEntity falling = FallingBlockEntity.fall(
                 level, spawn, ModBlocks.DEAD_SLIME_BLOCK.get().defaultBlockState());
             if (falling == null) continue;
+            // На неподходящей поверхности слизь не дропается (ни блоком, ни ведром).
+            falling.dropItem = false;
             double speed = FALLING_SPEED_MIN
                 + random.nextDouble() * (FALLING_SPEED_MAX - FALLING_SPEED_MIN);
             falling.setDeltaMovement(
