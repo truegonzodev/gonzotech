@@ -27,13 +27,16 @@ public final class ReactorRuntime {
     /** Слой перегрева не постоянный: при снятии условия полностью увядает за 20 сек. */
     public static final int GTH_BACKPRESSURE_FADE_TICKS = 400;
     /**
-     * Запитанная панель + GTH >99.9% открывает клапан: гейзер и сброс 20% GTH
-     * и 20% текущей воды за 1.75 сек. Триггер — только шкала GTH: саморазгон
-     * по температуре (слой перегрева) клапан НЕ открывает.
+     * Запитанная панель + GTH >99.9% открывает клапаны: гейзер и сброс 20% GTH
+     * и 20% текущей воды за 1.75 сек С КАЖДОГО клапана (до потолка). Триггер —
+     * только шкала GTH: саморазгон по температуре (слой перегрева) клапан НЕ
+     * открывает.
      */
     public static final double VALVE_TRIGGER_FILL = 0.999;
     public static final int VALVE_VENT_TICKS = 35;
+    /** Каждый клапан добавляет 20% сброса за цикл; дольше VALVE_SCALING_CAP не складываются. */
     public static final int VALVE_VENT_FIFTHS = 5;
+    public static final int VALVE_SCALING_CAP = 4;
     /** Паразитная потеря контура: 1 GTH/т вычитается из выработки до накопления в буфер. */
     public static final double PARASITIC_GTH_PER_TICK = 1.0;
     private static final int ENERGY_SYNC_BASE = 10_000;
@@ -273,19 +276,23 @@ public final class ReactorRuntime {
     /**
      * Запитанная редстоуном панель + GTH >99.9% открывает клапаны: гейзер
      * poof-частиц наружу противоположно активной зоне (как у очистителя
-     * воздуха, но быстрее) и за 1.75 сек сбрасывает 20% текущего GTH и 20%
-     * текущей воды. Триггер — только шкала GTH: саморазгон по температуре
-     * (слой перегрева) клапан НЕ открывает.
+     * воздуха, но быстрее) и за 1.75 сек сбрасывает 20%×N текущего GTH и
+     * 20%×N текущей воды, где N — число клапанов (до VALVE_SCALING_CAP):
+     * клапаны складывают поток сброса, но цикл не укорачивают. Триггер —
+     * только шкала GTH: саморазгон по температуре (слой перегрева) клапан
+     * НЕ открывает. Выработка за время цикла не сворачивается — недобор
+     * клапанов оставляет шкалу полной и жжёт воду.
      */
     private boolean valveVentTick(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         if (valvePorts.length == 0) return false;
         if (ventTicksRemaining <= 0) {
             if (!level.hasNeighborSignal(panel.getBlockPos())) return false;
             if (gthFillFraction() <= VALVE_TRIGGER_FILL) return false;
-            long ventTotal = gth.amountAsLong() / VALVE_VENT_FIFTHS;
+            int valves = ventValves();
+            long ventTotal = gth.amountAsLong() * valves / VALVE_VENT_FIFTHS;
             if (ventTotal <= 0L) return false;
             ventRemainingMilli = ventTotal;
-            ventRemainingWater = water.amount() / VALVE_VENT_FIFTHS;
+            ventRemainingWater = (long) water.amount() * valves / VALVE_VENT_FIFTHS;
             ventTicksRemaining = VALVE_VENT_TICKS;
         }
         long take = ventRemainingMilli;
@@ -301,6 +308,11 @@ public final class ReactorRuntime {
         ventTicksRemaining--;
         spawnValveGeysers(level, panel);
         return true;
+    }
+
+    /** Клапаны складывают пропускную способность сброса, но не выше потолка. */
+    private int ventValves() {
+        return Math.min(valvePorts.length, VALVE_SCALING_CAP);
     }
 
     private void spawnValveGeysers(ServerLevel level, ReactorControlPanelBlockEntity panel) {

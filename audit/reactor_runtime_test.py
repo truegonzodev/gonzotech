@@ -167,13 +167,14 @@ assert "heat.output(Math.max(0.0, backpressureBonus))" in runtime
 assert "public ReactorHeatOutputCurve.Output output(double extraHeat)" in dynamics
 
 # Redstone-powered panel + GTH >99.9% opens the valve: air-cleaner-style poof
-# geyser outward from the active zone and 20% of the bar released over 1.75 s.
+# geyser outward from the active zone and 20% of the bar per valve released
+# over 1.75 s (shared cycle, valve count scales the amount).
 assert "VALVE_TRIGGER_FILL = 0.999" in runtime
 assert "VALVE_VENT_TICKS = 35" in runtime
 assert "VALVE_VENT_FIFTHS = 5" in runtime
 assert "gthFillFraction() <= VALVE_TRIGGER_FILL" in runtime
 assert "level.hasNeighborSignal(panel.getBlockPos())" in runtime
-assert "gth.amountAsLong() / VALVE_VENT_FIFTHS" in runtime
+assert "gth.amountAsLong() * valves / VALVE_VENT_FIFTHS" in vent
 assert "ParticleTypes.POOF" in runtime and "spawnValveGeysers" in runtime
 assert "outwardDirection(pos, min, max)" in runtime
 valve_block = read("core/block/ReactorValveBlock.java")
@@ -210,11 +211,21 @@ assert "2.0 - outputFactor(fill)" in runtime
 assert "boostedBathTemperature(output.waterTemperature(), gaugeFill)" in runtime
 assert "ReactorOperatingMetrics.pressure(modelWaterTemperature)" in runtime
 assert "usefulGenerationRate = output.useful() * outputFactor(gaugeFill)" in runtime
-assert "water.amount() / VALVE_VENT_FIFTHS" in vent
+assert "water.amount() * valves / VALVE_VENT_FIFTHS" in vent
 assert "water.extract(takeWater, false)" in vent
 assert "ReactorValveVentWater" in runtime
 assert "temperature" not in vent.lower() and "heat" not in vent.lower()
 assert "gthFillFraction() <= VALVE_TRIGGER_FILL" in vent
 assert "MIN_SIZE = 4" in structure and "MAX_SIZE = 18" in structure
 
-print("PASS reactor runtime: thermal dynamics, nonfatal 10,000 C rule, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, relief valve with water vent, TVEL durability")
+# 0.3.245: valve count scales the relief — 20% x N of GTH and of water per
+# 1.75 s cycle (cap 4 valves), no production overpower: the "bar stays full,
+# valve wastes water" regime remains the default for undersized relief.
+_ver.at_least("0.3.245", "multi-valve relief scaling without overpower")
+
+assert "VALVE_SCALING_CAP = 4" in runtime
+assert "private int ventValves()" in runtime
+assert "Math.min(valvePorts.length, VALVE_SCALING_CAP)" in runtime
+assert "generationRate" not in vent and "PARASITIC_GTH_PER_TICK" not in vent
+
+print("PASS reactor runtime: thermal dynamics, nonfatal 10,000 C rule, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability")
