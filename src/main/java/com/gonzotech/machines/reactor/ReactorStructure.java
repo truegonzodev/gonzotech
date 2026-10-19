@@ -4,6 +4,10 @@ import com.gonzotech.core.block.ReactorCasingBlock;
 import com.gonzotech.core.block.ReactorControlPanelBlock;
 import com.gonzotech.core.registry.ModBlocks;
 import com.gonzotech.machines.block.entity.ReactorControlPanelBlockEntity;
+import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.network.NodeClumpIndex;
+import com.gonzotech.machines.network.PipeCarrier;
+import com.gonzotech.machines.network.PipeType;
 import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,9 +42,9 @@ import java.util.WeakHashMap;
  * shielded third-tier output nodes. The filled interior is deliberately a strict
  * whitelist; air and unknown blocks prevent formation.</p>
  *
- * <p>Shift diagnostics can evaluate the archived dimensionless matrix model over
- * the live interior. This is not a runtime simulation: fuel burnup, reactor heat
- * production, and GTH generation remain unimplemented.</p>
+ * <p>The validated matrix feeds the ReaCalc 1.7 thermal runtime; integrated
+ * third-tier nodes are water inputs and GTH outputs. Stored buffer water is not
+ * consumed by, or connected to, the simulation.</p>
  */
 public final class ReactorStructure {
 
@@ -133,7 +137,7 @@ public final class ReactorStructure {
         revalidateFormedPanel(level, panel, null);
     }
 
-    /** Diagnose the current geometry and show every static operating metric from ReaCalc 1.2. */
+    /** Diagnose the current geometry, static ReaCalc values, and live ReaCalc 1.7 runtime. */
     public static List<Component> debugReportComponents(Level level, BlockPos panelPos) {
         if (!(level instanceof ServerLevel server)) {
             return List.of(Component.literal("Реактор: диагностика доступна на серверной стороне.")
@@ -182,6 +186,8 @@ public final class ReactorStructure {
             ReactorMatrix.OperatingSnapshot snapshot = ReactorMatrix.operatingSnapshot(server, panel);
             ReactorMatrix.Diagnostic matrix = snapshot.diagnostic();
             ReactorOperatingMetrics.Values values = snapshot.metrics();
+            ReactorRuntime.Metrics runtime = panel.runtimeMetrics();
+            ReactorNeutronMetrics.Values neutron = runtime.neutrons();
             int capacity = matrix.fuelSheaths() == 0 ? 0 : Math.min(matrix.fuelSheaths() + 2, 18);
             lines.add(joinStats(
                 stat("R=" + values.rods() + " ТВЭЛов", ChatFormatting.GOLD),
@@ -194,16 +200,22 @@ public final class ReactorStructure {
             lines.add(joinStats(
                 stat("Htv=", format(values.htv(), 5), ChatFormatting.GOLD),
                 stat("Ltv=", format(values.ltv() * 100.0, 3) + " %", ChatFormatting.AQUA),
-                stat("S=", values.overheat() ? "Перегрев" : format(values.score(), 2), ChatFormatting.LIGHT_PURPLE)));
+                stat("S=", values.overheat() ? "Саморазгон · Htv ≥ 1" : format(values.score(), 2), ChatFormatting.LIGHT_PURPLE)));
             lines.add(joinStats(
                 stat("Целевой rawH*=", format(values.targetRawH(), 5), ChatFormatting.GOLD),
                 stat("ΔH=", formatSigned(values.deltaRawH(), 5), ChatFormatting.GRAY)));
             lines.add(joinStats(
                 stat("Средний Htv=", format(values.meanH(), 5), ChatFormatting.GOLD),
-                stat("T горячей точки=", formatTemperature(values.hotTemperature()), ChatFormatting.GOLD)));
+                stat("T горячей точки=", formatTemperature(runtime.hotTemperature()), ChatFormatting.GOLD)));
             lines.add(joinStats(
                 stat("T топлива max=", formatTemperature(values.fuelTemperature()), ChatFormatting.GOLD),
-                stat("T реактора средняя=", formatTemperature(values.meanTemperature()), ChatFormatting.GOLD)));
+                stat("T реактора средняя=", formatTemperature(runtime.meanTemperature()), ChatFormatting.GOLD),
+                stat("Фаза=", runtime.phase(), ChatFormatting.LIGHT_PURPLE)));
+            lines.add(joinStats(
+                stat("Поток max/средний=", format(neutron.strongestFlow() * 100.0, 2) + " / "
+                    + format(neutron.averageFlow() * 100.0, 2) + " %", ChatFormatting.LIGHT_PURPLE),
+                stat("Утечка max/средняя=", format(neutron.strongestLeak() * 100.0, 2) + " / "
+                    + format(neutron.averageLeak() * 100.0, 2) + " %", ChatFormatting.AQUA)));
             lines.add(joinStats(
                 stat("qDry=", format(values.qDry(), 4), ChatFormatting.GRAY),
                 stat("Pнагрева=", format(values.power(), 2) + " ед/тик", ChatFormatting.RED)));
@@ -213,12 +225,14 @@ public final class ReactorStructure {
                 stat("p=", pressure(values), ChatFormatting.AQUA),
                 stat("feedback=", feedback(values), ChatFormatting.AQUA)));
             lines.add(joinStats(
-                stat("Pтеплообмен=", output(values.output()), ChatFormatting.GRAY),
-                stat("Pполезный=", output(values.usefulOutput()), ChatFormatting.GREEN)));
+                stat("Pтеплообмен=", format(values.output(), 2) + " ед/тик", ChatFormatting.RED),
+                stat("Pполезный=", format(values.usefulOutput(), 2) + " ед/тик", ChatFormatting.GREEN),
+                stat("Эффективность=", format(values.efficiency(), 2) + " %", ChatFormatting.LIGHT_PURPLE),
+                stat("Режим=", values.regime(), ChatFormatting.AQUA)));
             lines.add(joinStats(
-                stat("Эффективность=", values.overheat() ? "NaN" : format(values.efficiency(), 1) + " %", ChatFormatting.GOLD),
-                stat("Режим=", values.regime(), ChatFormatting.GOLD)));
-            lines.add(Component.literal("Статический расчёт ReaCalc 1.2; разгон, расход топлива, динамика ГТХ и аварийное поведение не моделируются.")
+                stat("GTH выработка=", format(runtime.generationRate(), 2) + " GTH/т", ChatFormatting.RED),
+                stat("GTH полезное=", format(runtime.usefulGenerationRate(), 2) + " GTH/т", ChatFormatting.GREEN)));
+            lines.add(Component.literal("Статический расчёт ReaCalc 1.2 + динамика ReaCalc 1.7: 10000 °C — предел шкалы, не порог аварии. ТВЭЛы пока не расходуются; буфер воды хранится отдельно и не влияет на симуляцию.")
                 .withStyle(ChatFormatting.DARK_GRAY));
         } catch (RuntimeException exception) {
             try {
@@ -445,6 +459,36 @@ public final class ReactorStructure {
         return index == null ? null : index.get(pos.asLong());
     }
 
+    /** Virtual water receiver on an integrated fluid/universal node of a formed reactor. */
+    public static Transfer.Receiver waterReceiverAt(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return null;
+        BlockPos root = controllerAt(server, pos);
+        if (root == null
+            || !(server.getBlockEntity(root) instanceof ReactorControlPanelBlockEntity panel)
+            || !panel.isWaterPort(pos)) {
+            return null;
+        }
+        return (amount, simulate) -> panel.receiveWaterFromPort(pos, amount, simulate);
+    }
+
+    /** True for all positions inside the currently indexed reactor, including its controller. */
+    public static boolean isMember(Level level, BlockPos pos) {
+        return level instanceof ServerLevel server && controllerAt(server, pos) != null;
+    }
+
+    /** Per-port heat output follows the integrated node's nominal throughput and factor. */
+    public static long gthPortLimit(Level level, BlockPos pos) {
+        if (level == null || pos == null || !level.hasChunkAt(pos)) return 0L;
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof PipeCarrier carrier)
+            || !carrier.carries(state, PipeType.HEAT)) return 0L;
+        long base = carrier.throughputLimit(state, PipeType.HEAT);
+        double factor = carrier.throughputFactor(state, PipeType.HEAT);
+        if (base <= 0L || !Double.isFinite(factor) || factor <= 0.0D) return 0L;
+        double scaled = base * factor;
+        return scaled >= Long.MAX_VALUE ? Long.MAX_VALUE : Math.max(1L, (long) Math.floor(scaled));
+    }
+
     private static void indexStructure(ServerLevel level, BlockPos controller, BlockPos min, BlockPos max) {
         removeIndexForRoot(level, controller);
         Map<Long, BlockPos> index = MEMBER_INDEX.computeIfAbsent(level, ignored -> new HashMap<>());
@@ -563,6 +607,8 @@ public final class ReactorStructure {
         int boron = 0;
         int barium = 0;
         int water = 0;
+        List<Long> heatPorts = new ArrayList<>();
+        List<Long> waterPorts = new ArrayList<>();
 
         for (int x = bounds.min().getX(); x <= bounds.max().getX(); x++) {
             for (int y = bounds.min().getY(); y <= bounds.max().getY(); y++) {
@@ -585,6 +631,10 @@ public final class ReactorStructure {
                         } else {
                             return Validation.failure("оболочка не заполнена обшивкой, панелью и разрешёнными экранированными узлами: "
                                 + pos.toShortString());
+                        }
+                        if (block instanceof PipeCarrier carrier) {
+                            if (carrier.carries(state, PipeType.HEAT)) heatPorts.add(pos.asLong());
+                            if (carrier.carries(state, PipeType.WATER)) waterPorts.add(pos.asLong());
                         }
                     } else {
                         if (state.isAir()) {
@@ -613,7 +663,9 @@ public final class ReactorStructure {
 
         return Validation.success(new StructureInfo(bounds.min(), bounds.max(), size,
             casing, sheaths, heatNodes, fluidNodes, universalNodes,
-            graphite, boron, barium, water));
+            graphite, boron, barium, water,
+            heatPorts.stream().mapToLong(Long::longValue).toArray(),
+            waterPorts.stream().mapToLong(Long::longValue).toArray()));
     }
 
     private static BlockPos findPanelPosition(ServerLevel level, Bounds bounds, BlockPos ignoredPos) {
@@ -701,8 +753,15 @@ public final class ReactorStructure {
         int storedFuel = ReactorFuelStorage.bindStructure(
             level, info.min(), info.max(), panel.copyLegacyFuelItems());
         if (info.sheaths() > 0 && storedFuel >= 0) panel.clearLegacyFuelItems();
-        panel.configureStructure(info.min(), info.max(), info.sheaths(), Math.max(0, storedFuel));
+        long[] heatPorts = info.heatPorts();
+        long[] waterPorts = info.waterPorts();
+        panel.configureStructure(info.min(), info.max(), info.sheaths(), Math.max(0, storedFuel),
+            heatPorts, waterPorts);
         indexStructure(level, panel.getBlockPos(), info.min(), info.max());
+        List<BlockPos> ports = new ArrayList<>(heatPorts.length + waterPorts.length);
+        for (long port : heatPorts) ports.add(BlockPos.of(port));
+        for (long port : waterPorts) ports.add(BlockPos.of(port));
+        NodeClumpIndex.detachPorts(level, ports);
         for (int x = info.min().getX(); x <= info.max().getX(); x++) {
             for (int y = info.min().getY(); y <= info.max().getY(); y++) {
                 for (int z = info.min().getZ(); z <= info.max().getZ(); z++) {
@@ -727,7 +786,20 @@ public final class ReactorStructure {
     private record StructureInfo(BlockPos min, BlockPos max, int size,
                                  int casingBlocks, int sheaths,
                                  int heatNodes, int fluidNodes, int universalNodes,
-                                 int graphite, int boron, int barium, int water) {
+                                 int graphite, int boron, int barium, int water,
+                                 long[] heatPorts, long[] waterPorts) {
+        private StructureInfo {
+            heatPorts = heatPorts.clone();
+            waterPorts = waterPorts.clone();
+        }
+
+        public long[] heatPorts() {
+            return heatPorts.clone();
+        }
+
+        public long[] waterPorts() {
+            return waterPorts.clone();
+        }
     }
 
     private record Validation(StructureInfo structure, String failure, boolean incomplete) {

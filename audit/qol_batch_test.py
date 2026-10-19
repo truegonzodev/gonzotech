@@ -6,6 +6,8 @@ from pathlib import Path
 import re
 import struct
 
+import _ver
+
 ROOT = Path(__file__).resolve().parents[1]
 JAVA = ROOT / "src/main/java/com/gonzotech"
 RES = ROOT / "src/main/resources"
@@ -83,6 +85,5 @@ deferred = (ROOT / "docs/DEFERRED-2026-09-22.md").read_text(encoding="utf-8")
 assert "отдельной цены нет" in deferred and "смерть" in deferred and "перманентна" in deferred
 assert "Туннельный TNT" in load(ASSETS / "lang/ru_ru.json").values()
 
-version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert "mod_version=0.3.241" in version
+_ver.at_least("0.3.241", "QOL batch")
 print("QOL batch checks passed: fog, sound, 21 plastic pairs, TNT item protection and design notes")

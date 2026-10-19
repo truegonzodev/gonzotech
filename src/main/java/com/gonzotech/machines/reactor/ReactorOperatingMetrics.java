@@ -1,15 +1,15 @@
 package com.gonzotech.machines.reactor;
 
 /**
- * Static loaded-reactor metrics used by the Shift diagnostics. The equations and
- * fictional equilibrium model intentionally mirror ReaCalc 1.2 OperatingMetrics;
- * this class does not advance time or model reactor transients.
+ * Static loaded-reactor metrics shared by the ReaCalc 1.7 runtime and Shift diagnostics.
+ * This class evaluates a snapshot; {@link ReactorHeatDynamics} advances it in game time.
  */
 public final class ReactorOperatingMetrics {
     public static final double TARGET_H = .99999;
     public static final double AMBIENT = 20.0;
     public static final double POWER_SCALE = 100.0;
     public static final double WATER_REMOVAL = .15;
+    public static final double OUTPUT_GAIN = 1.84;
     public static final double TEMP_SCALE = 2838.43365245;
     public static final double TEMP_EXPONENT = 1.37798040865;
 
@@ -93,8 +93,10 @@ public final class ReactorOperatingMetrics {
         double score = overheat ? Double.NaN : sleeves * Math.pow(htv, 1.5) * (1.0 - ltv);
         double hotTemperature = overheat ? Double.NaN : temperature(htv);
         double fuelTemperature = overheat ? Double.NaN : temperature(fuelPeak);
-        double usefulOutput = water.output() * quality(water.temperature());
-        double efficiency = overheat ? Double.NaN : power > 0.0 ? 100.0 * usefulOutput / power : 0.0;
+        double output = OUTPUT_GAIN * water.output();
+        double usefulOutput = output * quality(water.temperature());
+        double efficiency = overheat ? Double.NaN
+            : power > 0.0 ? 100.0 * usefulOutput / (OUTPUT_GAIN * power) : 0.0;
         String regime = overheat ? "Перегрев" : rods == 0 ? "Нет топлива"
             : water.temperature() < 90.0 ? "Неэффективно"
             : water.temperature() < 100.0 ? "Переход"
@@ -103,7 +105,7 @@ public final class ReactorOperatingMetrics {
         return new Values(sleeves, rods, ratio, dry.heat(), dry.peakLeak(), htv, ltv,
             score, target, delta, qDry, power, waterUnits, meanH, hotTemperature,
             fuelTemperature, meanTemperature, water.temperature(), water.pressure(),
-            water.feedback(), water.output(), usefulOutput, efficiency, overheat, regime);
+            water.feedback(), output, usefulOutput, efficiency, overheat, regime);
     }
 
     public static int countFuel(MatrixCoefficients.Grid grid) {

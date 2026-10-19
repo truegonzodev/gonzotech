@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile the coefficient engine, ReaCalc operating layer, and their Java oracles."""
+"""Compile the matrix, loaded metrics, ReaCalc 1.7 dynamics, and Java oracles."""
 import shutil
 import subprocess
 import sys
@@ -11,6 +11,10 @@ MAIN = ROOT / "src/main/java/com/gonzotech/machines/reactor/MatrixCoefficients.j
 OPERATING = ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorOperatingMetrics.java"
 TEST = ROOT / "audit/MatrixCoefficientsTest.java"
 OPERATING_TEST = ROOT / "audit/ReactorOperatingMetricsTest.java"
+HEAT_CURVE = ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorHeatOutputCurve.java"
+HEAT_DYNAMICS = ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorHeatDynamics.java"
+NEUTRONS = ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorNeutronMetrics.java"
+DYNAMICS_TEST = ROOT / "audit/ReactorHeatDynamicsTest.java"
 
 javac = shutil.which("javac")
 java = shutil.which("java")
@@ -20,7 +24,9 @@ if not javac or not java:
 
 with tempfile.TemporaryDirectory(prefix="gonzotech-reactor-matrix-") as out:
     compile_result = subprocess.run(
-        [javac, "-encoding", "UTF-8", "-d", out, str(MAIN), str(OPERATING), str(TEST), str(OPERATING_TEST)],
+        [javac, "-encoding", "UTF-8", "-d", out, str(MAIN), str(OPERATING),
+         str(HEAT_CURVE), str(HEAT_DYNAMICS), str(NEUTRONS), str(TEST),
+         str(OPERATING_TEST), str(DYNAMICS_TEST)],
         text=True, capture_output=True,
     )
     if compile_result.returncode:

@@ -4,6 +4,8 @@ from pathlib import Path
 import struct
 import zlib
 
+import _ver
+
 ROOT = Path(__file__).resolve().parents[1]
 GUI = ROOT / "src/main/resources/assets/gonzotech/textures/gui"
 
@@ -14,6 +16,8 @@ ASSETS = {
     "neo/third_uranium_reactor_gui_bg_neo.png": (512, 512),
     "classic/third_uranium_reactor_gui_slot.png": (18, 18),
     "neo/third_uranium_reactor_gui_slot_neo1.png": (18, 18),
+    "bar_temp.png": (16, 16),
+    "bar_neutrons.png": (16, 16),
 }
 
 
@@ -81,8 +85,33 @@ def parse_visible_rgba(path: Path, expected_size: tuple[int, int]) -> None:
     assert visible, f"{path.name}: texture must contain at least one visible pixel"
 
 
+def rgba_palette(path: Path) -> set[tuple[int, int, int, int]]:
+    data = path.read_bytes()
+    offset = 8
+    compressed = bytearray()
+    while offset < len(data):
+        length = struct.unpack_from(">I", data, offset)[0]
+        kind = data[offset + 4:offset + 8]
+        payload = data[offset + 8:offset + 8 + length]
+        if kind == b"IDAT":
+            compressed.extend(payload)
+        offset += 12 + length
+    raw = zlib.decompress(compressed)
+    width, height = struct.unpack_from(">II", data, 16)
+    colors = set()
+    for y in range(height):
+        row = y * (width * 4 + 1)
+        assert raw[row] == 0, f"{path.name}: expected a simple placeholder PNG filter"
+        for x in range(width):
+            start = row + 1 + x * 4
+            colors.add(tuple(raw[start:start + 4]))
+    return colors
+
+
 for filename, size in ASSETS.items():
     parse_visible_rgba(GUI / filename, size)
+assert (0xED, 0x32, 0x61, 0xFF) in rgba_palette(GUI / "bar_temp.png")
+assert (0x6C, 0x54, 0xE3, 0xFF) in rgba_palette(GUI / "bar_neutrons.png")
 
 panel_block = (ROOT / "src/main/java/com/gonzotech/core/block/ReactorControlPanelBlock.java").read_text()
 panel_be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/ReactorControlPanelBlockEntity.java").read_text()
@@ -116,7 +145,7 @@ assert "legacyFuelItems" in panel_be
 assert "ContainerHelper.saveAllItems(tag, legacyFuelItems, registries)" in panel_be
 assert "ContainerHelper.loadAllItems(tag, legacyFuelItems, registries)" in panel_be
 assert "new ReactorMenu(id, inventory, this, fuelSlotCount())" in panel_be
-assert "panel.configureStructure(info.min(), info.max(), info.sheaths(), Math.max(0, storedFuel))" in structure
+assert "panel.configureStructure(info.min(), info.max(), info.sheaths(), Math.max(0, storedFuel)," in structure
 
 assert "implements Container" in sheath_be and "MAX_TVEL_SLOTS = 18" in sheath_be
 assert "ContainerHelper.saveAllItems(tag, fuelItems, registries)" in sheath_be
@@ -148,7 +177,6 @@ assert "for (int slot = 3; slot < menu.activeFuelSlots(); slot++)" in screen
 assert '"third_uranium_reactor_gui_slot.png"' in screen
 assert '"third_uranium_reactor_gui_slot_neo1.png"' in screen
 
-version = (ROOT / "gradle.properties").read_text()
-assert "mod_version=0.3.241" in version
+_ver.at_least("0.3.242", "live reactor resource/temperature/neutron GUI")
 
-print(f"PASS reactor GUI: {len(ASSETS)} visible RGBA textures, menu, NBT inventory, dynamic slots, Z-order and registrations")
+print(f"PASS reactor GUI: {len(ASSETS)} visible RGBA textures, menu, NBT inventory, dynamic slots, live gauges, Z-order and registrations")

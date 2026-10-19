@@ -1,6 +1,6 @@
 package com.gonzotech.machines.reactor;
 
-/** Independent regression checks for the ReaCalc 1.2 loaded operating-metric layer. */
+/** Independent regression checks for the ReaCalc 1.7 loaded operating-metric layer. */
 final class ReactorOperatingMetricsTest {
     private static void check(boolean value, String text) {
         MatrixCoefficientsTest.check(value, text);
@@ -29,6 +29,9 @@ final class ReactorOperatingMetricsTest {
         check(full.waterUnits() == 3 && full.meanTemperature() <= full.hotTemperature(),
             "water capacity and average-temperature bounds");
         check(full.fuelTemperature() <= full.hotTemperature(), "fuel temperature below global hot spot");
+        near(full.efficiency(), 100.0 * full.usefulOutput()
+            / (ReactorOperatingMetrics.OUTPUT_GAIN * full.power()), 1e-12,
+            "efficiency removes the output-unit gain from its denominator");
 
         // The loaded H/L layer must equal a direct solve with the same per-sheath source scaling.
         var scaledRules = new MatrixCoefficients.Rules(full.ratio(), .05, .15, .05, 1.0, 2000, 1e-10);

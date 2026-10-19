@@ -2,6 +2,8 @@
 """Static contract checks for the all-biome surface ruin and waste generators."""
 from pathlib import Path
 
+import _ver
+
 ROOT = Path(__file__).resolve().parents[1]
 JAVA = ROOT / "src/main/java/com/gonzotech"
 
@@ -99,8 +101,7 @@ check("ModBlocks.WASTE_BARREL.get()" in radiation and "chunk.getBlockState(mp).i
 check("(1.0 + rnd.nextDouble() * 9.0) * RadUnits.MILLI" in radiation,
       "waste-bearing chunk baseline is not 1–10 mZt/t")
 
-version = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-check("mod_version=0.3.241" in version, "content-change version was not bumped")
+_ver.at_least("0.3.241", "surface worldgen and radiation baseline")
 
 if failures:
     for failure in failures:

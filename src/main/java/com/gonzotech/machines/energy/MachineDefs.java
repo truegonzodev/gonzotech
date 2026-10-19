@@ -337,6 +337,18 @@ public final class MachineDefs {
     /** Паразитная потеря пара: mB за тик, пока бак не пуст. */
     public static final int STEAMGEN_STEAM_LOSS = 1;
 
+    // ═══════════════════════ УРАНОВЫЙ РЕАКТОР I ПОКОЛЕНИЯ ═══════════════════════
+    // Вода в этом буфере пока только хранится: ReaCalc runtime не потребляет её.
+
+    /** Буфер воды на одну сторону активной зоны, mB. */
+    public static final int REACTOR_WATER_CAPACITY_PER_ZONE_SIDE = 1_024;
+    /** Буфер GTH на одну сторону активной зоны, целых GTH (в BE хранится в milli). */
+    public static final int REACTOR_GTH_CAPACITY_PER_ZONE_SIDE = 5_484;
+    /** Предохранитель: не более восьми BFS-маршрутов выдачи GTH за тик. */
+    public static final int REACTOR_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
+    /** Частота перепроверки суммарной загрузки чехлов, тиков. */
+    public static final int REACTOR_FUEL_SNAPSHOT_INTERVAL = 5;
+
     // ═══════════════════════════ ЭЛЕКТРОПЕЧЬ (Electric Furnace) ═══════════════════════════
     // GTU → переплавка (160% ванили). Работает при примыкающем стирлинге.
 

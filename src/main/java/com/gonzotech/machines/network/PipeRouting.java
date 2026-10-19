@@ -1,6 +1,7 @@
 package com.gonzotech.machines.network;
 
 import com.gonzotech.machines.energy.Transfer;
+import com.gonzotech.machines.reactor.ReactorStructure;
 import com.gonzotech.machines.steamgen.SteamGenStructure;
 import com.gonzotech.machines.turbine.TurbineStructure;
 import net.minecraft.core.BlockPos;
@@ -350,10 +351,13 @@ public final class PipeRouting {
             // ДЕШЁВАЯ проверка порта, и только затем дорогой buildPath (0.3.90).
             Transfer.Receiver portRaw = switch (type) {
                 case STEAM -> TurbineStructure.steamReceiverAt(level, pipe);
-                case WATER -> SteamGenStructure.waterReceiverAt(level, pipe);
+                case WATER -> {
+                    Transfer.Receiver steamGen = SteamGenStructure.waterReceiverAt(level, pipe);
+                    yield steamGen != null ? steamGen : ReactorStructure.waterReceiverAt(level, pipe);
+                }
                 case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);
-                // Виртуальные порты есть только у трёх типов выше; провода,
-                // жидкости и предметы принимают обычные BlockEntity-машины.
+                // Виртуальные порты есть у steamgen/turbine/reactor; прочие
+                // ресурсные приёмники представлены обычными BlockEntity-машинами.
                 default -> null;
             };
             if (portRaw != null) {

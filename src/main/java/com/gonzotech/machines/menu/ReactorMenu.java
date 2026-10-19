@@ -7,7 +7,6 @@ import com.gonzotech.machines.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -39,7 +38,7 @@ public final class ReactorMenu extends BaseMachineMenu {
                         ReactorControlPanelBlockEntity panel,
                         int activeFuelSlots,
                         ReactorFuelInventory fuelInventory) {
-        super(ModMenus.REACTOR.get(), id, fuelInventory, new SimpleContainerData(0), clampSlots(activeFuelSlots));
+        super(ModMenus.REACTOR.get(), id, fuelInventory, panel.menuData(), clampSlots(activeFuelSlots));
         this.panel = panel;
         this.activeFuelSlots = clampSlots(activeFuelSlots);
         panel.syncMenuFuelSlotCount(this.activeFuelSlots);
@@ -56,6 +55,72 @@ public final class ReactorMenu extends BaseMachineMenu {
 
     public int activeFuelSlots() {
         return activeFuelSlots;
+    }
+
+    public int waterAmount() {
+        return data.get(0);
+    }
+
+    public int waterCapacity() {
+        return data.get(1);
+    }
+
+    public long gthAmount() {
+        return data.get(2) + (long) data.get(3) * 10_000L;
+    }
+
+    public long gthCapacity() {
+        return data.get(4) + (long) data.get(5) * 10_000L;
+    }
+
+    public long hottestTemperatureTenths() {
+        return data.get(6) + (long) data.get(7) * 10_000L;
+    }
+
+    public long meanTemperatureTenths() {
+        return data.get(8) + (long) data.get(9) * 10_000L;
+    }
+
+    public int strongestFlowTenthsPercent() {
+        return data.get(10);
+    }
+
+    public int averageFlowTenthsPercent() {
+        return data.get(11);
+    }
+
+    public int strongestLeakTenthsPercent() {
+        return data.get(12);
+    }
+
+    public int averageLeakTenthsPercent() {
+        return data.get(13);
+    }
+
+    public int generationGthPerTick() {
+        return data.get(14);
+    }
+
+    public int loadedTvels() {
+        return data.get(15);
+    }
+
+    public float gthFraction() {
+        long capacity = gthCapacity();
+        return capacity <= 0L ? 0.0F : (float) gthAmount() / capacity;
+    }
+
+    public float waterFraction() {
+        int capacity = waterCapacity();
+        return capacity <= 0 ? 0.0F : (float) waterAmount() / capacity;
+    }
+
+    public float temperatureFraction() {
+        return hottestTemperatureTenths() / 100_000.0F;
+    }
+
+    public float neutronFraction() {
+        return strongestFlowTenthsPercent() / 1_000.0F;
     }
 
     public static int fuelSlotX(int slot) {

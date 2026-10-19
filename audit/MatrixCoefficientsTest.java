@@ -174,6 +174,7 @@ public final class MatrixCoefficientsTest {
         System.out.printf(Locale.ROOT,"Boron shell: %s%nBarium shell: %s%nGraphite shell: %s%n",engine.evaluate(shieldB),engine.evaluate(shieldBa),engine.evaluate(shieldG));
         System.out.printf(Locale.ROOT,"Calibration heatBudget=%.12f leakHalfScale=%.12f%n",engine.calibration().heatBudget(),engine.calibration().leakHalfScale());
         ReactorOperatingMetricsTest.run();
+        ReactorHeatDynamicsTest.run();
         System.out.println("PASS: "+checks+" assertions");
     }
 }

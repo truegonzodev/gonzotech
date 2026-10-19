@@ -2,6 +2,7 @@ package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.machines.menu.ReactorMenu;
 import com.gonzotech.machines.reactor.ReactorMatrix;
+import com.gonzotech.machines.reactor.ReactorRuntime;
 import com.gonzotech.machines.reactor.ReactorStructure;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -16,6 +17,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,6 +37,29 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
     private BlockPos min;
     private BlockPos max;
     private int fuelSlotCount;
+    private final ReactorRuntime runtime = new ReactorRuntime();
+    private final int[] clientMenuData = new int[ReactorRuntime.MENU_DATA_COUNT];
+    private final ContainerData menuData = new ContainerData() {
+        @Override
+        public int get(int index) {
+            if (index < 0 || index >= ReactorRuntime.MENU_DATA_COUNT) return 0;
+            return getLevel() != null && getLevel().isClientSide
+                ? clientMenuData[index] : runtime.menuData(index);
+        }
+
+        @Override
+        public void set(int index, int value) {
+            if (index >= 0 && index < ReactorRuntime.MENU_DATA_COUNT
+                && getLevel() != null && getLevel().isClientSide) {
+                clientMenuData[index] = value;
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return ReactorRuntime.MENU_DATA_COUNT;
+        }
+    };
 
     public ReactorControlPanelBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.THIRD_URANIUM_REACTOR_CONTROL_PANEL.get(), pos, state);
@@ -53,6 +78,33 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
 
     public boolean isFormedController() {
         return formed && min != null && max != null;
+    }
+
+    public boolean isValidationPending() {
+        return validationPending;
+    }
+
+    public boolean isRuntimeReady() {
+        return isFormedController() && !validationPending;
+    }
+
+    public ContainerData menuData() {
+        return menuData;
+    }
+
+    public ReactorRuntime.Metrics runtimeMetrics() {
+        return runtime.metrics();
+    }
+
+    public boolean isWaterPort(BlockPos pos) {
+        return isRuntimeReady() && runtime.isWaterPort(pos);
+    }
+
+    public long receiveWaterFromPort(BlockPos port, long amount, boolean simulate) {
+        if (!isRuntimeReady()) return 0L;
+        long accepted = runtime.receiveWater(port, amount, simulate);
+        if (!simulate && accepted > 0L) setChanged();
+        return accepted;
     }
 
     public BlockPos min() {
@@ -75,12 +127,14 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
     }
 
     /** Called only after the entire outer shell and interior pass validation. */
-    public void configureStructure(BlockPos min, BlockPos max, int sheathCount, int storedFuel) {
+    public void configureStructure(BlockPos min, BlockPos max, int sheathCount, int storedFuel,
+                                   long[] heatPorts, long[] waterPorts) {
         this.min = min.immutable();
         this.max = max.immutable();
         this.fuelSlotCount = fuelSlotsForSheaths(sheathCount, storedFuel);
         this.formed = true;
         this.validationPending = false;
+        runtime.configure(max.getX() - min.getX() - 1, heatPorts, waterPorts);
         setChanged();
     }
 
@@ -96,6 +150,7 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
         min = null;
         max = null;
         fuelSlotCount = 0;
+        runtime.deconfigure();
         setChanged();
     }
 
@@ -146,13 +201,16 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
         super.setRemoved();
     }
 
-    /** Retry validation of this saved formed structure after its remaining chunks load. */
+    /** Restore saved bounds when possible, then advance the ReaCalc simulation each server tick. */
     public void serverTick() {
-        if (!validationPending || !(level instanceof ServerLevel serverLevel)
-            || serverLevel.getGameTime() % 20L != 0L) {
+        if (!(level instanceof ServerLevel serverLevel)) return;
+        if (validationPending) {
+            if (serverLevel.getGameTime() % 20L == 0L) {
+                ReactorStructure.restorePanel(serverLevel, this);
+            }
             return;
         }
-        ReactorStructure.restorePanel(serverLevel, this);
+        if (isFormedController()) runtime.serverTick(serverLevel, this);
     }
 
     // These Container methods exist only to migrate/drop old 0.3.237 panel NBT. New menus use ReactorFuelInventory.
@@ -237,6 +295,7 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
         tag.putInt("FuelSlotCount", fuelSlotCount());
         if (min != null) tag.putLong("StructureMin", min.asLong());
         if (max != null) tag.putLong("StructureMax", max.asLong());
+        runtime.save(tag);
     }
 
     @Override
@@ -248,6 +307,7 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
         fuelSlotCount = Math.min(MAX_FUEL_SLOTS, Math.max(0, tag.getInt("FuelSlotCount")));
         min = tag.contains("StructureMin") ? BlockPos.of(tag.getLong("StructureMin")) : null;
         max = tag.contains("StructureMax") ? BlockPos.of(tag.getLong("StructureMax")) : null;
+        runtime.load(tag);
         validationPending = formed;
         if (!formed || min == null || max == null
             || min.getX() > max.getX() || min.getY() > max.getY() || min.getZ() > max.getZ()) {
