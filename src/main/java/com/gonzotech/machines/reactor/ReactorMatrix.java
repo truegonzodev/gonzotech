@@ -133,7 +133,7 @@ public final class ReactorMatrix {
         return new Diagnostic(fuelSheaths, ENGINE.analyzeDetailed(grid));
     }
 
-    private static boolean isMetalBlock(Block block, String path) {
+    static boolean isMetalBlock(Block block, String path) {
         var key = BuiltInRegistries.BLOCK.getKey(block);
         return key != null && "gonzotech".equals(key.getNamespace()) && path.equals(key.getPath());
     }

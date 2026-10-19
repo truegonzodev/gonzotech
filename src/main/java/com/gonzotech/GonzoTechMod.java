@@ -137,6 +137,8 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.AchievementEvents.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.ExplosiveEffects.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.machines.blastfurnace.BlastFurnaceEvents.class);
+        // Авария реактора (0.3.246): последовательность 10 000 °C живёт на уровне.
+        NeoForge.EVENT_BUS.register(com.gonzotech.machines.reactor.ReactorAccident.class);
         // Радиация (спека 2026-09-20): доза шкалы, наведённый фон предметов,
         // динамический фон чанков, учёт поставленных радио-блоков.
         NeoForge.EVENT_BUS.register(com.gonzotech.radiation.RadiationSystem.class);

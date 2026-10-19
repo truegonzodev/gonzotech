@@ -233,7 +233,7 @@ public final class ReactorStructure {
             lines.add(joinStats(
                 stat("GTH выработка=", format(runtime.generationRate(), 2) + " GTH/т", ChatFormatting.RED),
                 stat("GTH полезное=", format(runtime.usefulGenerationRate(), 2) + " GTH/т", ChatFormatting.GREEN)));
-            lines.add(Component.literal("Статический расчёт ReaCalc 1.2 + динамика ReaCalc 1.7: 10000 °C — предел шкалы, не порог аварии. ТВЭЛы пока не расходуются; шкала воды привязана к теплообмену и выработке, воду убирает только клапан.")
+            lines.add(Component.literal("Статический расчёт ReaCalc 1.2 + динамика ReaCalc 1.7: 10000 °C — порог аварии (сброс показаний, слизь, кориум и взрыв). ТВЭЛы пока не расходуются; шкала воды привязана к теплообмену и выработке, воду убирает только клапан.")
                 .withStyle(ChatFormatting.DARK_GRAY));
         } catch (RuntimeException exception) {
             try {

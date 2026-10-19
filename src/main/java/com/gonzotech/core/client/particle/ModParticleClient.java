@@ -16,6 +16,7 @@ public final class ModParticleClient {
         event.registerSpecial(ModParticles.INDUSTRIAL_TNT_EXPLOSION_EMITTER.get(),
             new ScaledExplosionEmitterParticle.Provider(ScaledExplosionEmitterParticle.INDUSTRIAL_TNT_SIZE_SCALE));
         event.registerSpriteSet(ModParticles.DUST.get(), IndustrialBlastDustParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.REACTOR_DUST.get(), ReactorDustParticle.Provider::new);
         event.registerSpriteSet(ModParticles.RADIATION_MIST.get(), RadiationMistParticle.Provider::new);
         event.registerSpriteSet(ModParticles.HOT_PIPE.get(), HotPipeParticle.Provider::new);
         event.registerSpriteSet(ModParticles.ETHANOL_FIRE_DUST.get(),

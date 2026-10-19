@@ -61,8 +61,9 @@ assert "ReactorStructure::isMember" in runtime
 assert "drainFromMultiblockPort" in runtime
 assert "gth.extract(moved, false)" in runtime
 
-# ReaCalc 1.7 target/tau/quadratic acceleration are present; the explicit game
-# rule makes 10,000 C a display scale, not a shutdown/destruction threshold.
+# ReaCalc 1.7 target/tau/quadratic acceleration are present. The dynamics core
+# itself stays free of failure logic; since 0.3.246 the runtime treats 10,000 C
+# as the meltdown trigger and hands the accident to ReactorAccident (level-side).
 assert "TEMP_SCALE = 2838.43365245" in operating
 assert "TEMP_EXPONENT = 1.37798040865" in operating
 assert "Math.max(0.001, K * Math.max(1, mass) * (target - AMBIENT) / values.power())" in dynamics
@@ -85,9 +86,11 @@ assert "scaledEscape / (scaledEscape + halfScale)" in neutrons
 receive_water = method(runtime, "public long receiveWater(")
 assert "waterPortSet.contains(port.asLong())" in receive_water
 assert "water.receive(amount, simulate)" in receive_water
-# Вода уходит ТОЛЬКО через клапанный сброс (20% за 1.75 сек), не через симуляцию.
+# Вода уходит ТОЛЬКО через клапанный сброс (20%×N за 1.75 сек) и через обнуление
+# показаний в суб-тике аварии; симуляция воду не расходует.
 vent = method(runtime, "private boolean valveVentTick(")
-assert runtime.count("water.extract(") == 1 and "water.extract(takeWater, false)" in vent
+assert runtime.count("water.extract(") == 2 and "water.extract(takeWater, false)" in vent
+assert "water.extract(water.amount(), false)" in method(runtime, "void clearGaugesForAccident(")
 assert "water.save(tag, \"ReactorWater\")" in runtime
 assert "water.load(tag, \"ReactorWater\")" in runtime
 assert "tag.putDouble(\"ReactorHeatBase\"" in runtime
@@ -228,4 +231,55 @@ assert "private int ventValves()" in runtime
 assert "Math.min(valvePorts.length, VALVE_SCALING_CAP)" in runtime
 assert "generationRate" not in vent and "PARASITIC_GTH_PER_TICK" not in vent
 
-print("PASS reactor runtime: thermal dynamics, nonfatal 10,000 C rule, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability")
+# 0.3.246: meltdown scenario at 10,000 C. Sub-tick T0 clears the GTH/water/
+# temperature/flow gauges ("already 100%, nothing happened yet") and queues the
+# accident on the level (it survives structure and panel destruction): T1 water
+# -> dead/radioactive slime 80/20 in radius 4 from the breach; T2 chaotic core
+# sphere radius 2 -> corium/lava (sheaths+graphite -> corium, barium+boron ->
+# lava), shell/nodes radius 2 -> lava 30%, breach -> corium 100%, then
+# explosion_emitter + TNT-power-2 blast; T3 outward geyser 2-3x faster than the
+# valve + lava particles + buckshot of falling dead-slime blocks (5-20 blocks,
+# they land as blocks); white dust particles (1-5/tick, radius 0-3, size 1-4,
+# 10-15 s) for the accident ticks + 2 more; chunk gets a one-time +5 mZt dose.
+_ver.at_least("0.3.246", "reactor meltdown accident scenario at 10,000 C")
+
+accident = read("machines/reactor/ReactorAccident.java")
+accident_data = read("machines/reactor/ReactorAccidentData.java")
+dust_particle = read("core/client/particle/ReactorDustParticle.java")
+
+assert "MELTDOWN_TEMPERATURE = 10_000.0" in runtime
+assert "if (hotWithBackpressure() >= MELTDOWN_TEMPERATURE)" in runtime
+assert "clearGaugesForAccident" in runtime and "triggerAccident" in runtime
+assert "heat.restore(new ReactorHeatDynamics.Saved(false, 0.0," in runtime
+assert "neutronMetrics = ReactorNeutronMetrics.Values.ZERO" in runtime
+assert "accidentQueued" in runtime and "ReactorAccidentQueued" in runtime
+assert "accidentQueued = false;" in method(runtime, "public void deconfigure(")
+assert "ReactorAccident.nearestShellBlock(hottest, min, max)" in runtime
+assert "raw().heatProduction()" in runtime
+
+assert "WATER_SLIME_RADIUS = 4" in accident and "DEAD_SLIME_CHANCE = 0.8" in accident
+assert "CORE_SPHERE_RADIUS = 2.0" in accident
+assert "SHELL_LAVA_RADIUS = 2" in accident and "SHELL_LAVA_CHANCE = 0.3" in accident
+assert "EXPLOSION_POWER = 2.0F" in accident
+assert "GEYSER_SPEED = 1.15" in accident
+assert "FALLING_SLIME_MIN = 8" in accident and "FALLING_SLIME_MAX = 16" in accident
+assert "DUST_MIN_PER_TICK = 1" in accident and "DUST_MAX_PER_TICK = 5" in accident
+assert "DUST_RADIUS = 3" in accident and "DUST_TICKS = 5" in accident
+assert "ModBlocks.DEAD_SLIME_BLOCK" in accident and "ModBlocks.RADIOACTIVE_SLIME_BLOCK" in accident
+assert "ModBlocks.CORIUM" in accident and "Blocks.LAVA" in accident
+assert "isMetalBlock(block, \"boron_block\")" in accident and "isMetalBlock(block, \"barium_block\")" in accident
+assert "ParticleTypes.EXPLOSION_EMITTER" in accident
+assert "Level.ExplosionInteraction.BLOCK" in accident
+assert "FallingBlockEntity.fall(" in accident and "setDeltaMovement(" in accident
+assert "ParticleTypes.LAVA" in accident and "ParticleTypes.POOF" in accident
+assert "LevelTickEvent.Post" in accident
+assert "ACCIDENT_DOSE_NZT = 5.0 * com.gonzotech.radiation.RadUnits.MILLI" in accident
+assert "addContamination" in accident_data and "ACCIDENT_DOSE_NZT" in accident_data
+assert "gonzotech_reactor_accidents" in accident_data
+assert "MIN_SIZE = 1.0F" in dust_particle and "MAX_SIZE = 4.0F" in dust_particle
+assert "MIN_LIFETIME_TICKS = 200" in dust_particle and "MAX_LIFETIME_TICKS = 300" in dust_particle
+assert "setColor(1.0F, 1.0F, 1.0F)" in dust_particle
+assert "REACTOR_DUST" in read("core/registry/ModParticles.java")
+assert "ReactorDustParticle.Provider::new" in read("core/client/particle/ModParticleClient.java")
+
+print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability")

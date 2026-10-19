@@ -39,6 +39,8 @@ public final class ReactorRuntime {
     public static final int VALVE_SCALING_CAP = 4;
     /** Паразитная потеря контура: 1 GTH/т вычитается из выработки до накопления в буфер. */
     public static final double PARASITIC_GTH_PER_TICK = 1.0;
+    /** Порог аварии (0.3.246): шкала температуры полна — 10 000 °C. */
+    public static final double MELTDOWN_TEMPERATURE = 10_000.0;
     private static final int ENERGY_SYNC_BASE = 10_000;
     private static final int MAX_SYNC_PART = Short.MAX_VALUE;
     private static final long MAX_SYNC_TEMPERATURE_TENTHS =
@@ -76,6 +78,7 @@ public final class ReactorRuntime {
     private int ventTicksRemaining;
     private long ventRemainingMilli;
     private long ventRemainingWater;
+    private boolean accidentQueued;
 
     public record Metrics(double hotTemperature, double meanTemperature,
                           double generationRate, double usefulGenerationRate,
@@ -110,6 +113,7 @@ public final class ReactorRuntime {
 
     /** Stop I/O immediately when the shell becomes invalid; preserve stored resources and thermal state. */
     public void deconfigure() {
+        accidentQueued = false;
         heatPorts = new long[0];
         waterPorts = new long[0];
         valvePorts = new long[0];
@@ -207,12 +211,17 @@ public final class ReactorRuntime {
     /** One server tick: sample fuel/geometry, integrate temperature, generate GTH, then route it. */
     public void serverTick(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         if (!panel.isRuntimeReady()) return;
+        if (accidentQueued) return;
         long gameTime = level.getGameTime();
         if (snapshotDirty || lastSnapshot == null || lastSnapshotTick == Long.MIN_VALUE
             || gameTime - lastSnapshotTick >= MachineDefs.REACTOR_FUEL_SNAPSHOT_INTERVAL) {
             refreshSnapshot(level, panel, gameTime);
         }
         if (lastSnapshot == null) return;
+        if (hotWithBackpressure() >= MELTDOWN_TEMPERATURE) {
+            triggerAccident(level, panel);
+            return;
+        }
 
         boolean changed = heat.advance(1.0);
         double gaugeFill = coolantFill();
@@ -240,6 +249,68 @@ public final class ReactorRuntime {
         modelWaterPressureIndex = Double.isFinite(modelWaterTemperature)
             ? ReactorOperatingMetrics.pressure(modelWaterTemperature)
             : output.pressureIndex();
+    }
+
+    /**
+     * Авария при 10 000 °C (0.3.246). Сначала в первом суб-тике обнуляются
+     * показания GTH/воды/температуры/потока — «шкала уже 100 %, но ещё ничего
+     * не произошло»; затем последовательность разрушения ведёт ReactorAccident
+     * на уровне (переживает разрушение структуры и панели).
+     */
+    private void triggerAccident(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        clearGaugesForAccident();
+        accidentQueued = true;
+        panel.setChanged();
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        if (min == null || max == null) return;
+        BlockPos hottest = hottestCell(min);
+        BlockPos breach = ReactorAccident.nearestShellBlock(hottest, min, max);
+        ReactorAccidentData.get(level).enqueue(level,
+            new ReactorAccident(breach, hottest, min, max, level.getGameTime()));
+    }
+
+    /** Суб-тик перед аварией: показания GTH, воды, температуры и потока обнуляются. */
+    void clearGaugesForAccident() {
+        gth.set(0L);
+        water.extract(water.amount(), false);
+        gthRemainderMilli = 0.0;
+        generationRate = 0.0;
+        usefulGenerationRate = 0.0;
+        modelWaterTemperature = ReactorOperatingMetrics.AMBIENT;
+        modelWaterPressureIndex = 1.0;
+        backpressureBonus = 0.0;
+        backpressureFadePerTick = 0.0;
+        neutronMetrics = ReactorNeutronMetrics.Values.ZERO;
+        heat.restore(new ReactorHeatDynamics.Saved(false, 0.0,
+            ReactorHeatDynamics.AMBIENT, 0.0, 0.0, 0.0, -1.0));
+    }
+
+    /**
+     * Локализация самой горячей точки по сборке в момент аварии: argmax
+     * локального тепловыделения матрицы (клетка с максимальным выделением).
+     */
+    private BlockPos hottestCell(BlockPos min) {
+        MatrixCoefficients.Grid grid = lastAnalysis == null ? null : lastAnalysis.grid();
+        double[] heatCells = lastAnalysis == null ? null : lastAnalysis.raw().heatProduction();
+        BlockPos fallback = new BlockPos(min.getX() + zoneSide / 2 + 1,
+            min.getY() + zoneSide / 2 + 1, min.getZ() + zoneSide / 2 + 1);
+        if (grid == null || heatCells == null || heatCells.length == 0) return fallback;
+        int best = 0;
+        double bestValue = -1.0;
+        for (int i = 0; i < heatCells.length && i < grid.size; i++) {
+            if (heatCells[i] > bestValue) {
+                bestValue = heatCells[i];
+                best = i;
+            }
+        }
+        if (bestValue <= 0.0) return fallback;
+        int nx = grid.nx;
+        int ny = grid.ny;
+        int x = best % nx;
+        int y = (best / nx) % ny;
+        int z = best / (nx * ny);
+        return new BlockPos(min.getX() + x + 1, min.getY() + y + 1, min.getZ() + z + 1);
     }
 
     /**
@@ -341,7 +412,7 @@ public final class ReactorRuntime {
     }
 
     /** Наружу из куба — противоположно активной зоне, мимо которой стоит клапан. */
-    private static Direction outwardDirection(BlockPos pos, BlockPos min, BlockPos max) {
+    static Direction outwardDirection(BlockPos pos, BlockPos min, BlockPos max) {
         if (pos.getX() == max.getX()) return Direction.EAST;
         if (pos.getX() == min.getX()) return Direction.WEST;
         if (pos.getY() == max.getY()) return Direction.UP;
@@ -501,6 +572,7 @@ public final class ReactorRuntime {
         tag.putInt("ReactorValveVentTicks", ventTicksRemaining);
         tag.putLong("ReactorValveVentRemaining", ventRemainingMilli);
         tag.putLong("ReactorValveVentWater", ventRemainingWater);
+        tag.putBoolean("ReactorAccidentQueued", accidentQueued);
         ReactorHeatDynamics.Saved saved = heat.save();
         tag.putBoolean("ReactorHeatConfigured", saved.configured());
         tag.putDouble("ReactorHeatH", saved.h());
@@ -526,6 +598,7 @@ public final class ReactorRuntime {
         ventTicksRemaining = Math.max(0, tag.getInt("ReactorValveVentTicks"));
         ventRemainingMilli = Math.max(0L, tag.getLong("ReactorValveVentRemaining"));
         ventRemainingWater = Math.max(0L, tag.getLong("ReactorValveVentWater"));
+        accidentQueued = tag.getBoolean("ReactorAccidentQueued");
 
         heatPorts = new long[0];
         waterPorts = new long[0];

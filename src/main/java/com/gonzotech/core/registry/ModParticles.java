@@ -27,6 +27,10 @@ public final class ModParticles {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> DUST =
             PARTICLE_TYPES.register("dust", () -> new SimpleParticleType(true));
 
+    /** Аварийная пыль реактора: белая, 1–4 блока, живёт 10–15 с (тот же спрайт). */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> REACTOR_DUST =
+            PARTICLE_TYPES.register("reactor_dust", () -> new SimpleParticleType(true));
+
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> RADIATION_MIST =
             PARTICLE_TYPES.register("radiation_mist", () -> new SimpleParticleType(true));
 
