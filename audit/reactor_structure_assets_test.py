@@ -32,7 +32,7 @@ def png_info(path: Path):
 
 
 structure = read(JAVA / "machines/reactor/ReactorStructure.java")
-assert "MIN_SIZE = 4" in structure and "MAX_SIZE = 16" in structure
+assert "MIN_SIZE = 4" in structure and "MAX_SIZE = 18" in structure
 assert "state.isAir()" in structure and "isAllowedInterior(block)" in structure
 assert "THIRD_HEAT_NODE.get()" in structure
 assert "THIRD_UNIVERSAL_FLUID_NODE.get()" in structure

@@ -308,7 +308,7 @@
   "gui.gonzotech.water": "%s: %s / %s %s",
   "gui.gonzotech.reactor.generation": "Выработка модели: %s",
   "gui.gonzotech.reactor.loaded_tvels": "Загружено ТВЭЛов: %s",
-  "gui.gonzotech.reactor.water_buffer": "Запас воды не расходуется и не влияет на симуляцию",
+  "gui.gonzotech.reactor.water_buffer": "Запас воды не расходуется симуляцией и теряется только при сбросе через клапан; уровень шкалы снижает выработку и усиливает теплообмен",
   "gui.gonzotech.reactor.hot_temperature": "Температура горячей точки: %s",
   "gui.gonzotech.reactor.mean_temperature": "Средняя температура реактора: %s",
   "gui.gonzotech.reactor.model_water_temperature": "Температура: %s",

@@ -42,15 +42,18 @@ menu = read("machines/menu/ReactorMenu.java")
 screen = read("machines/client/ReactorScreen.java")
 
 # Runtime automatically samples a formed controller, advances heat, fills GTH,
-# and sends it through integrated heat-pipe ports. The stored water buffer is not
-# referenced in the simulation tick at all.
+# and sends it through integrated heat-pipe ports. Since 0.3.244 the water gauge
+# modulates output and heat exchange (explicit game rule), but the simulation
+# still never consumes stored water — only the relief valve removes it.
 tick = method(runtime, "public void serverTick(")
 assert "if (!panel.isRuntimeReady()) return;" in tick
 assert "refreshSnapshot(level, panel, gameTime)" in tick
 assert "heat.advance(1.0)" in tick
-assert "accumulateGeneration(generationRate)" in tick
+assert "accumulateGeneration(Math.max(0.0, generationRate - PARASITIC_GTH_PER_TICK))" in tick
 assert "pushGth(level, gameTime)" in tick
-assert "water" not in tick.lower(), "stored reactor water must stay outside simulation"
+assert "double gaugeFill = coolantFill();" in tick
+assert "output.exchange() * outputFactor(gaugeFill)" in tick
+assert "water.extract(" not in tick and "water.receive(" not in tick
 assert "MachineDefs.REACTOR_FUEL_SNAPSHOT_INTERVAL" in tick
 assert "private boolean accumulateGeneration(" in runtime and "gth.receive(wholeMilli, false)" in runtime
 assert "PipeType.HEAT" in runtime and "sink::receiveGth" in runtime
@@ -82,7 +85,9 @@ assert "scaledEscape / (scaledEscape + halfScale)" in neutrons
 receive_water = method(runtime, "public long receiveWater(")
 assert "waterPortSet.contains(port.asLong())" in receive_water
 assert "water.receive(amount, simulate)" in receive_water
-assert "water.extract(" not in runtime
+# Вода уходит ТОЛЬКО через клапанный сброс (20% за 1.75 сек), не через симуляцию.
+vent = method(runtime, "private boolean valveVentTick(")
+assert runtime.count("water.extract(") == 1 and "water.extract(takeWater, false)" in vent
 assert "water.save(tag, \"ReactorWater\")" in runtime
 assert "water.load(tag, \"ReactorWater\")" in runtime
 assert "tag.putDouble(\"ReactorHeatBase\"" in runtime
@@ -92,6 +97,8 @@ assert "runtime.serverTick(serverLevel, this)" in panel
 
 assert "REACTOR_WATER_CAPACITY_PER_ZONE_SIDE = 1_024" in defs
 assert "REACTOR_GTH_CAPACITY_PER_ZONE_SIDE = 5_484" in defs
+assert "REACTOR_GTH_CAPACITY_ZONE_DIVISOR = 2.3" in defs
+assert "zone * zone / MachineDefs.REACTOR_GTH_CAPACITY_ZONE_DIVISOR" in runtime
 assert "REACTOR_MAX_OUTPUT_ROUTE_ATTEMPTS = 8" in defs
 assert "heatPorts.stream().mapToLong" in structure
 assert "waterPorts.stream().mapToLong" in structure
@@ -188,4 +195,26 @@ assert "public boolean ageFuel()" in read("machines/block/entity/ReactorFuelShea
 assert "stack.getDamageValue() + 1" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
 assert "new ItemStack(ModItems.DEPRESSED_UF_TVEL.get())" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
 
-print("PASS reactor runtime: thermal dynamics, nonfatal 10,000 C rule, GTH output, isolated water storage, neutron metrics, pipe routing, GUI contracts, back-pressure layer, relief valve, TVEL durability")
+# 0.3.244: the water gauge ties into heat exchange and output (explicit game
+# rule): 100% unchanged, 50% -> output x0.6 with an intensified bath, 0% -> x0.1.
+# The valve additionally vents 20% of current water, its trigger stays GTH-only
+# (no self-runaway temperature trigger), a parasitic 1 GTH/t loss subtracts from
+# production before the buffer, and the GTH buffer is 5484 x side^2 / 2.3.
+_ver.at_least("0.3.244", "water-gauge heat exchange link, valve water vent, 16^3 active zone")
+
+assert "public static double outputFactor(double fill)" in runtime
+assert "public static double exchangeFactor(double fill)" in runtime
+out_factor = method(runtime, "public static double outputFactor(")
+assert "0.1 + gauge" in out_factor and "0.6 + (gauge - 0.5) * 0.8" in out_factor
+assert "2.0 - outputFactor(fill)" in runtime
+assert "boostedBathTemperature(output.waterTemperature(), gaugeFill)" in runtime
+assert "ReactorOperatingMetrics.pressure(modelWaterTemperature)" in runtime
+assert "usefulGenerationRate = output.useful() * outputFactor(gaugeFill)" in runtime
+assert "water.amount() / VALVE_VENT_FIFTHS" in vent
+assert "water.extract(takeWater, false)" in vent
+assert "ReactorValveVentWater" in runtime
+assert "temperature" not in vent.lower() and "heat" not in vent.lower()
+assert "gthFillFraction() <= VALVE_TRIGGER_FILL" in vent
+assert "MIN_SIZE = 4" in structure and "MAX_SIZE = 18" in structure
+
+print("PASS reactor runtime: thermal dynamics, nonfatal 10,000 C rule, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, relief valve with water vent, TVEL durability")

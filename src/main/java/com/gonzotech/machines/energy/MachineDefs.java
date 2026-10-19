@@ -342,8 +342,12 @@ public final class MachineDefs {
 
     /** Буфер воды на одну сторону активной зоны, mB. */
     public static final int REACTOR_WATER_CAPACITY_PER_ZONE_SIDE = 1_024;
-    /** Буфер GTH на одну сторону активной зоны, целых GTH (в BE хранится в milli). */
+    /**
+     * Буфер GTH на одну сторону активной зоны, целых GTH (в BE хранится в milli).
+     * Итоговая ёмкость = 5484 × side² / 2.3 (0.3.244): база × «сторона/2.3».
+     */
     public static final int REACTOR_GTH_CAPACITY_PER_ZONE_SIDE = 5_484;
+    public static final double REACTOR_GTH_CAPACITY_ZONE_DIVISOR = 2.3;
     /** Предохранитель: не более восьми BFS-маршрутов выдачи GTH за тик. */
     public static final int REACTOR_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
     /** Частота перепроверки суммарной загрузки чехлов, тиков. */

@@ -49,7 +49,8 @@ import java.util.WeakHashMap;
 public final class ReactorStructure {
 
     public static final int MIN_SIZE = 4;
-    public static final int MAX_SIZE = 16;
+    /** Внешняя сторона: активная зона 16³ максимум + обшивка = 18³ (0.3.244). */
+    public static final int MAX_SIZE = 18;
     private static final int MAX_SHELL_PARTS = 1_600;
 
     /** Loaded controller panels used only to discover unformed reactors after block placement. */
@@ -232,7 +233,7 @@ public final class ReactorStructure {
             lines.add(joinStats(
                 stat("GTH выработка=", format(runtime.generationRate(), 2) + " GTH/т", ChatFormatting.RED),
                 stat("GTH полезное=", format(runtime.usefulGenerationRate(), 2) + " GTH/т", ChatFormatting.GREEN)));
-            lines.add(Component.literal("Статический расчёт ReaCalc 1.2 + динамика ReaCalc 1.7: 10000 °C — предел шкалы, не порог аварии. ТВЭЛы пока не расходуются; буфер воды хранится отдельно и не влияет на симуляцию.")
+            lines.add(Component.literal("Статический расчёт ReaCalc 1.2 + динамика ReaCalc 1.7: 10000 °C — предел шкалы, не порог аварии. ТВЭЛы пока не расходуются; шкала воды привязана к теплообмену и выработке, воду убирает только клапан.")
                 .withStyle(ChatFormatting.DARK_GRAY));
         } catch (RuntimeException exception) {
             try {

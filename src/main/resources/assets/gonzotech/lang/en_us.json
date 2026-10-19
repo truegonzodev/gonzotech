@@ -308,7 +308,7 @@
   "gui.gonzotech.water": "%s: %s / %s %s",
   "gui.gonzotech.reactor.generation": "Model output: %s",
   "gui.gonzotech.reactor.loaded_tvels": "Loaded TVELs: %s",
-  "gui.gonzotech.reactor.water_buffer": "Stored water is not consumed or used by the simulation",
+  "gui.gonzotech.reactor.water_buffer": "Stored water is not consumed by the simulation and is only lost through the relief valve; a lower gauge level reduces output and intensifies heat exchange",
   "gui.gonzotech.reactor.hot_temperature": "Hot-spot temperature: %s",
   "gui.gonzotech.reactor.mean_temperature": "Mean reactor temperature: %s",
   "gui.gonzotech.reactor.model_water_temperature": "Temperature: %s",

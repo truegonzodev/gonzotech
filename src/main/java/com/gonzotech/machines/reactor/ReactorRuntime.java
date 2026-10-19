@@ -26,10 +26,16 @@ public final class ReactorRuntime {
     public static final double GTH_BACKPRESSURE_DIVISOR = 2000.0;
     /** Слой перегрева не постоянный: при снятии условия полностью увядает за 20 сек. */
     public static final int GTH_BACKPRESSURE_FADE_TICKS = 400;
-    /** Запитанная панель + GTH >99.9% открывает клапан: гейзер и сброс 20% за 1.75 сек. */
+    /**
+     * Запитанная панель + GTH >99.9% открывает клапан: гейзер и сброс 20% GTH
+     * и 20% текущей воды за 1.75 сек. Триггер — только шкала GTH: саморазгон
+     * по температуре (слой перегрева) клапан НЕ открывает.
+     */
     public static final double VALVE_TRIGGER_FILL = 0.999;
     public static final int VALVE_VENT_TICKS = 35;
     public static final int VALVE_VENT_FIFTHS = 5;
+    /** Паразитная потеря контура: 1 GTH/т вычитается из выработки до накопления в буфер. */
+    public static final double PARASITIC_GTH_PER_TICK = 1.0;
     private static final int ENERGY_SYNC_BASE = 10_000;
     private static final int MAX_SYNC_PART = Short.MAX_VALUE;
     private static final long MAX_SYNC_TEMPERATURE_TENTHS =
@@ -66,6 +72,7 @@ public final class ReactorRuntime {
     private int fuelAgeTicks;
     private int ventTicksRemaining;
     private long ventRemainingMilli;
+    private long ventRemainingWater;
 
     public record Metrics(double hotTemperature, double meanTemperature,
                           double generationRate, double usefulGenerationRate,
@@ -130,9 +137,40 @@ public final class ReactorRuntime {
         return Math.max(0, side) * MachineDefs.REACTOR_WATER_CAPACITY_PER_ZONE_SIDE;
     }
 
+    /**
+     * GTH-ёмкость буфера: 5484 × side² / 2.3 (0.3.244 — база на сторону зоны
+     * дополнительно помножается на «сторона/2.3»); хранится в milli.
+     */
     public static long gthCapacityMilli(int side) {
-        return (long) Math.max(0, side)
-            * MachineDefs.REACTOR_GTH_CAPACITY_PER_ZONE_SIDE * MachineDefs.MILLI;
+        int zone = Math.max(0, side);
+        double units = (double) MachineDefs.REACTOR_GTH_CAPACITY_PER_ZONE_SIDE
+            * zone * zone / MachineDefs.REACTOR_GTH_CAPACITY_ZONE_DIVISOR;
+        return (long) Math.round(units * MachineDefs.MILLI);
+    }
+
+    /** Шкала воды → выработка GTH: 100% → ×1.0, 50% → ×0.6, 0% → ×0.1. */
+    public static double outputFactor(double fill) {
+        double gauge = Math.max(0.0, Math.min(1.0, fill));
+        return gauge <= 0.5 ? 0.1 + gauge : 0.6 + (gauge - 0.5) * 0.8;
+    }
+
+    /** Шкала воды → теплообмен: падение воды разгоняет ванну модели, ×(2 − outputFactor). */
+    public static double exchangeFactor(double fill) {
+        return 2.0 - outputFactor(fill);
+    }
+
+    /** Доля заполненности шкалы воды. */
+    private double coolantFill() {
+        return water.capacity() > 0 ? (double) water.amount() / water.capacity() : 0.0;
+    }
+
+    /** Меньше воды в шкале — горячее ванна теплообмена: избыток температуры × exchangeFactor. */
+    private static double boostedBathTemperature(double bathTemperature, double fill) {
+        if (!Double.isFinite(bathTemperature)) {
+            return bathTemperature;
+        }
+        return ReactorOperatingMetrics.AMBIENT
+            + Math.max(0.0, bathTemperature - ReactorOperatingMetrics.AMBIENT) * exchangeFactor(fill);
     }
 
     private static Set<Long> positionsOf(long[] positions) {
@@ -174,12 +212,13 @@ public final class ReactorRuntime {
         if (lastSnapshot == null) return;
 
         boolean changed = heat.advance(1.0);
+        double gaugeFill = coolantFill();
         ReactorHeatOutputCurve.Output output = heat.output(Math.max(0.0, backpressureBonus));
-        generationRate = output.exchange();
-        usefulGenerationRate = output.useful();
-        applyModelBath(output);
+        generationRate = output.exchange() * outputFactor(gaugeFill);
+        usefulGenerationRate = output.useful() * outputFactor(gaugeFill);
+        applyModelBath(output, gaugeFill);
         if (updateBackpressureLayer()) changed = true;
-        if (accumulateGeneration(generationRate)) changed = true;
+        if (accumulateGeneration(Math.max(0.0, generationRate - PARASITIC_GTH_PER_TICK))) changed = true;
         if (pushGth(level, gameTime)) changed = true;
         if (valveVentTick(level, panel)) changed = true;
         if (++fuelAgeTicks >= 20) {
@@ -189,10 +228,15 @@ public final class ReactorRuntime {
         if (changed) panel.setChanged();
     }
 
-    /** The archived water bath readings of the current output point. */
-    private void applyModelBath(ReactorHeatOutputCurve.Output output) {
-        modelWaterTemperature = output.waterTemperature();
-        modelWaterPressureIndex = output.pressureIndex();
+    /**
+     * The archived water bath readings of the current output point. Падение
+     * шкалы воды разгоняет теплообмен: температура и давление ванны растут.
+     */
+    private void applyModelBath(ReactorHeatOutputCurve.Output output, double gaugeFill) {
+        modelWaterTemperature = boostedBathTemperature(output.waterTemperature(), gaugeFill);
+        modelWaterPressureIndex = Double.isFinite(modelWaterTemperature)
+            ? ReactorOperatingMetrics.pressure(modelWaterTemperature)
+            : output.pressureIndex();
     }
 
     /**
@@ -229,7 +273,9 @@ public final class ReactorRuntime {
     /**
      * Запитанная редстоуном панель + GTH >99.9% открывает клапаны: гейзер
      * poof-частиц наружу противоположно активной зоне (как у очистителя
-     * воздуха, но быстрее) и за 1.75 сек сбрасывает 20% текущего GTH.
+     * воздуха, но быстрее) и за 1.75 сек сбрасывает 20% текущего GTH и 20%
+     * текущей воды. Триггер — только шкала GTH: саморазгон по температуре
+     * (слой перегрева) клапан НЕ открывает.
      */
     private boolean valveVentTick(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         if (valvePorts.length == 0) return false;
@@ -239,14 +285,19 @@ public final class ReactorRuntime {
             long ventTotal = gth.amountAsLong() / VALVE_VENT_FIFTHS;
             if (ventTotal <= 0L) return false;
             ventRemainingMilli = ventTotal;
+            ventRemainingWater = water.amount() / VALVE_VENT_FIFTHS;
             ventTicksRemaining = VALVE_VENT_TICKS;
         }
         long take = ventRemainingMilli;
+        long takeWater = ventRemainingWater;
         if (ventTicksRemaining > 1) {
             take = (ventRemainingMilli + ventTicksRemaining - 1) / ventTicksRemaining;
+            takeWater = (ventRemainingWater + ventTicksRemaining - 1) / ventTicksRemaining;
         }
         gth.extract(take, false);
+        int drainedWater = water.extract(takeWater, false);
         ventRemainingMilli = Math.max(0L, ventRemainingMilli - take);
+        ventRemainingWater = Math.max(0L, ventRemainingWater - drainedWater);
         ventTicksRemaining--;
         spawnValveGeysers(level, panel);
         return true;
@@ -437,6 +488,7 @@ public final class ReactorRuntime {
         tag.putInt("ReactorFuelAgeTicks", fuelAgeTicks);
         tag.putInt("ReactorValveVentTicks", ventTicksRemaining);
         tag.putLong("ReactorValveVentRemaining", ventRemainingMilli);
+        tag.putLong("ReactorValveVentWater", ventRemainingWater);
         ReactorHeatDynamics.Saved saved = heat.save();
         tag.putBoolean("ReactorHeatConfigured", saved.configured());
         tag.putDouble("ReactorHeatH", saved.h());
@@ -461,6 +513,7 @@ public final class ReactorRuntime {
         fuelAgeTicks = Math.max(0, Math.min(19, tag.getInt("ReactorFuelAgeTicks")));
         ventTicksRemaining = Math.max(0, tag.getInt("ReactorValveVentTicks"));
         ventRemainingMilli = Math.max(0L, tag.getLong("ReactorValveVentRemaining"));
+        ventRemainingWater = Math.max(0L, tag.getLong("ReactorValveVentWater"));
 
         heatPorts = new long[0];
         waterPorts = new long[0];
