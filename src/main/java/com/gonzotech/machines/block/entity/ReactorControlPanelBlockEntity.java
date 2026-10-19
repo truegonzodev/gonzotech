@@ -96,6 +96,11 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
         return runtime.metrics();
     }
 
+    /** Авария уже случилась: панель мертва, диагностика объясняет, что делать. */
+    public boolean accidentTriggered() {
+        return runtime.accidentTriggered();
+    }
+
     public boolean isWaterPort(BlockPos pos) {
         return isRuntimeReady() && runtime.isWaterPort(pos);
     }

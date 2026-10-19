@@ -55,6 +55,8 @@ public final class ReactorRuntime {
     private static final long MAX_SYNC_RATE_TENTHS =
         (long) MAX_SYNC_PART * ENERGY_SYNC_BASE + ENERGY_SYNC_BASE - 1L;
 
+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
+
     private ResourceBuffer water = new ResourceBuffer(0);
     private GtBuffer gth = new GtBuffer(0);
     private int zoneSide;
@@ -209,7 +211,20 @@ public final class ReactorRuntime {
     public Metrics metrics() {
         double hot = hotWithBackpressure();
         return new Metrics(hot, heat.meanTemperature(hot), generationRate,
-            usefulGenerationRate, neutronMetrics, Math.max(0, lastLoadedTvels), heat.phase());
+            usefulGenerationRate, neutronMetrics, Math.max(0, lastLoadedTvels), phaseLabel(hot));
+    }
+
+    /** Правда для GUI/диагностики: авария, тревога и перегрев по давлению важнее фазы интегратора. */
+    private String phaseLabel(double hot) {
+        if (accidentQueued) return "Авария · реактор уничтожен";
+        if (hot >= ALARM_TEMPERATURE) return "ТРЕВОГА · порог 9608 °C";
+        if (hot - heat.temperature() > 10.0) return "Перегрев по давлению GTH";
+        return heat.phase();
+    }
+
+    /** Авария уже случилась: панель мертва, показания обнулены. */
+    public boolean accidentTriggered() {
+        return accidentQueued;
     }
 
     /** Integrator reading plus the GTH back-pressure layer shown on the temperature gauge. */
@@ -252,7 +267,8 @@ public final class ReactorRuntime {
         if (drainParasiticLoss()) changed = true;
         if (pushGth(level, gameTime)) changed = true;
         if (valveVentTick(level, panel)) changed = true;
-        if (++fuelAgeTicks >= 20) {
+        // ТВЭЛы тикают на работающей реакции: на холодном простое стержни не стареют.
+        if (generationRate > 0.0 && ++fuelAgeTicks >= 20) {
             fuelAgeTicks = 0;
             if (ReactorFuelStorage.ageLoadedFuel(level, panel)) changed = true;
         }
@@ -277,12 +293,14 @@ public final class ReactorRuntime {
      * на уровне (переживает разрушение структуры и панели).
      */
     private void triggerAccident(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        // Геометрия нужна ДО постановки в очередь: без неё авария не запускается,
+        // и панель не должна замерзать в accidentQueued без сценария.
+        if (min == null || max == null) return;
         clearGaugesForAccident();
         accidentQueued = true;
         panel.setChanged();
-        BlockPos min = panel.min();
-        BlockPos max = panel.max();
-        if (min == null || max == null) return;
         BlockPos hottest = hottestCell(min);
         BlockPos breach = ReactorAccident.nearestShellBlock(hottest, min, max);
         ReactorAccidentData.get(level).enqueue(level,
@@ -459,26 +477,36 @@ public final class ReactorRuntime {
     private void refreshSnapshot(ServerLevel level, ReactorControlPanelBlockEntity panel, long gameTime) {
         lastSnapshotTick = gameTime;
         snapshotDirty = false;
-        ReactorMatrix.OperatingSnapshot snapshot = ReactorMatrix.operatingSnapshot(level, panel);
-        MatrixCoefficients.Analysis analysis = snapshot.diagnostic().analysis();
-        boolean matrixChanged = analysis != lastAnalysis;
-        boolean fuelChanged = snapshot.loadedTvels() != lastLoadedTvels;
-        boolean firstConfiguration = lastSnapshot == null;
+        try {
+            ReactorMatrix.OperatingSnapshot snapshot = ReactorMatrix.operatingSnapshot(level, panel);
+            MatrixCoefficients.Analysis analysis = snapshot.diagnostic().analysis();
+            boolean matrixChanged = analysis != lastAnalysis;
+            boolean fuelChanged = snapshot.loadedTvels() != lastLoadedTvels;
+            boolean firstConfiguration = lastSnapshot == null;
 
-        if (matrixChanged || fuelChanged || firstConfiguration) {
-            if (matrixChanged || outputCurve == null) {
-                outputCurve = new ReactorHeatOutputCurve(analysis);
+            if (matrixChanged || fuelChanged || firstConfiguration) {
+                if (matrixChanged || outputCurve == null) {
+                    outputCurve = new ReactorHeatOutputCurve(analysis);
+                }
+                if (fuelChanged && snapshot.loadedTvels() < lastLoadedTvels) {
+                    // Вынутые ТВЭЛы: плато падает, а слой от полной шкалы гаснет за 20 сек.
+                    startBackpressureFade();
+                }
+                heat.configure(ReactorHeatDynamics.parameters(analysis, snapshot.metrics(), outputCurve));
+                neutronMetrics = ReactorNeutronMetrics.calculate(analysis, snapshot.metrics());
+                lastAnalysis = analysis;
+                lastLoadedTvels = snapshot.loadedTvels();
             }
-            if (fuelChanged && snapshot.loadedTvels() < lastLoadedTvels) {
-                // Вынутые ТВЭЛы: плато падает, а слой от полной шкалы гаснет за 20 сек.
-                startBackpressureFade();
-            }
-            heat.configure(ReactorHeatDynamics.parameters(analysis, snapshot.metrics(), outputCurve));
-            neutronMetrics = ReactorNeutronMetrics.calculate(analysis, snapshot.metrics());
-            lastAnalysis = analysis;
-            lastLoadedTvels = snapshot.loadedTvels();
+            lastSnapshot = snapshot;
+        } catch (RuntimeException exception) {
+            // Нештатная зона (вычерпана вода, модифицирован блок, не сошлась матрица)
+            // не должна ронять серверный тик: снимаем форму и ставим повторную проверку.
+            LOGGER.warn("Реактор: матрица не рассчитана, форма снята — {}", exception.toString());
+            lastSnapshot = null;
+            lastAnalysis = null;
+            panel.clearStructure();
+            panel.markValidationPending();
         }
-        lastSnapshot = snapshot;
     }
 
     private boolean accumulateGeneration(double gthPerTick) {

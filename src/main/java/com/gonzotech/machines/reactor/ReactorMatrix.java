@@ -63,8 +63,13 @@ public final class ReactorMatrix {
             }
             Diagnostic diagnostic = cached != null && cached.diagnostic() != null
                 ? cached.diagnostic() : calculate(level, panel);
+            // Слоты GUI могут превышать расчётную ёмкость (миграция/переделка зоны):
+            // лишние ТВЭЛы не участвуют в матрице, но остаются видимыми в чехлах.
+            int capacity = diagnostic.fuelSheaths() <= 0 ? 0
+                : Math.min(diagnostic.fuelSheaths() + 2, ReactorControlPanelBlockEntity.MAX_FUEL_SLOTS);
+            int effectiveTvels = Math.min(loadedTvels, capacity);
             ReactorOperatingMetrics.Values metrics = ReactorOperatingMetrics.calculate(
-                diagnostic.analysis(), loadedTvels);
+                diagnostic.analysis(), effectiveTvels);
             CACHE.put(panel, new CacheEntry(diagnostic, loadedTvels, metrics));
             return new OperatingSnapshot(diagnostic, loadedTvels, metrics);
         }

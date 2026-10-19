@@ -50,13 +50,22 @@ public final class ReactorFuelStorage {
     public static int bindStructure(ServerLevel level,
                                     BlockPos min,
                                     BlockPos max,
+                                    BlockPos dropPos,
                                     List<ItemStack> legacyPanelItems) {
         List<ReactorFuelSheathBlockEntity> sheaths = collectSheaths(level, min, max);
         if (sheaths.isEmpty()) return -1;
 
         List<ItemStack> allFuel = collectFuelItems(sheaths);
         appendSingleTvels(allFuel, legacyPanelItems);
-        // Preserve every item from legacy/malformed NBT; the normal GUI can create at most 18.
+        // Preserve every item from legacy/malformed NBT up to the physical sheath
+        // capacity; overflow leaves as items at the panel instead of failing formation.
+        int capacity = sheaths.size() * ReactorFuelSheathBlockEntity.MAX_TVEL_SLOTS;
+        if (allFuel.size() > capacity) {
+            List<ItemStack> overflow = new ArrayList<>(allFuel.subList(capacity, allFuel.size()));
+            allFuel = new ArrayList<>(allFuel.subList(0, capacity));
+            BlockPos at = dropPos == null ? min : dropPos;
+            dropItems(level, at, overflow);
+        }
         redistribute(allFuel, sheaths, min, max);
         return allFuel.size();
     }

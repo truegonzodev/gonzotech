@@ -190,10 +190,12 @@ assert "heatPorts, waterPorts, info.valvePorts());" in structure
 assert "runtime.configure(max.getX() - min.getX() - 1, heatPorts, waterPorts, valvePorts)" in panel
 
 # TVELs carry a vanilla durability component (12608) and lose 1 point per second
-# inside the reactor; an exhausted rod is replaced by the spent TVEL item.
+# of reaction time — since 0.3.248 only while the reactor actually generates
+# GTH (a cold idle reactor no longer burns rods); an exhausted rod is replaced
+# by the spent TVEL item.
 assert "UF_TVEL_DURABILITY = 12_608" in read("core/registry/ModItems.java")
 assert "props.stacksTo(1).durability(UF_TVEL_DURABILITY)" in read("core/registry/ModItems.java")
-assert "if (++fuelAgeTicks >= 20)" in tick
+assert "generationRate > 0.0 && ++fuelAgeTicks >= 20" in tick
 assert "public static boolean ageLoadedFuel(" in read("machines/reactor/ReactorFuelStorage.java")
 assert "public boolean ageFuel()" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
 assert "stack.getDamageValue() + 1" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
@@ -306,4 +308,31 @@ assert "ModBlocks.MOLTEN_CORIUM.get().defaultBlockState(), 3)" in accident
 assert "dropItem = false" in accident
 assert "FALLING_SPEED_MIN = 0.2" in accident and "FALLING_SPEED_MAX = 0.7" in accident
 
-print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability")
+# 0.3.248: reactor layer hardening and honesty. Two tick-crash loops are
+# closed: over-capacity TVEL loads are clamped to the slot capacity at the
+# matrix boundary (the metrics API keeps its reject contract), and any matrix
+# failure (bucket-picked interior water, modified zone, non-convergence)
+# deforms the reactor instead of crashing the server tick. The panel explains
+# the post-accident state; the phase label reports GTH back-pressure overheat
+# and the 9608 C alarm window; fuel ages only while generating.
+_ver.at_least("0.3.248", "reactor layer hardening: overload clamp, safe matrix failure, accident/overheat honesty")
+
+matrix = read("machines/reactor/ReactorMatrix.java")
+assert "int effectiveTvels = Math.min(loadedTvels, capacity);" in matrix
+assert "ReactorOperatingMetrics.calculate(" in matrix and "effectiveTvels)" in matrix
+refresh = method(runtime, "private void refreshSnapshot(")
+assert "catch (RuntimeException exception)" in refresh
+assert "panel.clearStructure();" in refresh and "panel.markValidationPending();" in refresh
+assert "public boolean accidentTriggered(" in runtime and "public boolean accidentTriggered(" in panel
+assert "Авария · реактор уничтожен" in runtime
+assert "ТРЕВОГА · порог 9608 °C" in runtime
+assert "Перегрев по давлению GTH" in runtime
+assert "Реактор уничтожен аварией" in structure
+assert "Перегрузка ТВЭЛами: " in structure
+assert "лишние видимы в чехлах, но не участвуют в матрице" in structure
+assert "ТВЭЛы тикают на выработке" in structure
+storage = read("machines/reactor/ReactorFuelStorage.java")
+assert "dropPos" in storage and "int capacity = sheaths.size() * ReactorFuelSheathBlockEntity.MAX_TVEL_SLOTS;" in storage
+assert "panel.getBlockPos(), panel.copyLegacyFuelItems()" in structure
+
+print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening")

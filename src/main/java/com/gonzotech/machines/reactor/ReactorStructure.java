@@ -169,6 +169,10 @@ public final class ReactorStructure {
             return List.of(Component.literal("Реактор: геометрия корректна, но он не сформирован. Разместите блок внутри куба или на его оболочке, чтобы запустить инициализацию.")
                 .withStyle(ChatFormatting.GOLD));
         }
+        if (panel.accidentTriggered()) {
+            return List.of(Component.literal("Реактор уничтожен аварией: показания обнулены навсегда. Выньте кориум и лаву из активной зоны и замените панель управления, чтобы собрать новый реактор.")
+                .withStyle(ChatFormatting.RED));
+        }
 
         StructureInfo info = validation.structure();
         String summary = "Реактор I поколения сформирован: внешний куб " + info.size() + "³"
@@ -191,10 +195,16 @@ public final class ReactorStructure {
             ReactorNeutronMetrics.Values neutron = runtime.neutrons();
             int capacity = matrix.fuelSheaths() == 0 ? 0 : Math.min(matrix.fuelSheaths() + 2, 18);
             lines.add(joinStats(
-                stat("R=" + values.rods() + " ТВЭЛов", ChatFormatting.GOLD),
+                stat("R=" + snapshot.loadedTvels() + " ТВЭЛов", ChatFormatting.GOLD),
                 stat("N=" + values.sleeves() + " чехлов", ChatFormatting.GOLD),
                 stat("слотов=" + capacity, ChatFormatting.GRAY),
                 stat("R/N=" + format(values.ratio(), 5), ChatFormatting.AQUA)));
+            if (snapshot.loadedTvels() > capacity) {
+                lines.add(joinStats(
+                    stat("Перегрузка ТВЭЛами: ", ChatFormatting.RED),
+                    stat(snapshot.loadedTvels() + "/" + capacity
+                        + " — лишние видимы в чехлах, но не участвуют в матрице", ChatFormatting.GOLD)));
+            }
             lines.add(joinStats(
                 stat("rawH=", format(values.rawH(), 5), ChatFormatting.GOLD),
                 stat("rawL=", format(values.rawL() * 100.0, 3) + " %", ChatFormatting.AQUA)));
@@ -233,7 +243,7 @@ public final class ReactorStructure {
             lines.add(joinStats(
                 stat("GTH выработка=", format(runtime.generationRate(), 2) + " GTH/т", ChatFormatting.RED),
                 stat("GTH полезное=", format(runtime.usefulGenerationRate(), 2) + " GTH/т", ChatFormatting.GREEN)));
-            lines.add(Component.literal("Статический расчёт ReaCalc 1.2 + динамика ReaCalc 1.7: 10000 °C — порог аварии (сброс показаний, слизь, кориум и взрыв). ТВЭЛы пока не расходуются; шкала воды привязана к теплообмену и выработке, воду убирает только клапан.")
+            lines.add(Component.literal("Статический расчёт ReaCalc 1.2 + динамика ReaCalc 1.7: 10000 °C — порог аварии (сброс показаний, слизь, кориум и взрыв). ТВЭЛы тикают на выработке (1 ед. прочности в секунду на стержень); шкала воды привязана к теплообмену и выработке, воду убирает только клапан.")
                 .withStyle(ChatFormatting.DARK_GRAY));
         } catch (RuntimeException exception) {
             try {
@@ -786,7 +796,7 @@ public final class ReactorStructure {
                                            ReactorControlPanelBlockEntity panel,
                                            StructureInfo info) {
         int storedFuel = ReactorFuelStorage.bindStructure(
-            level, info.min(), info.max(), panel.copyLegacyFuelItems());
+            level, info.min(), info.max(), panel.getBlockPos(), panel.copyLegacyFuelItems());
         if (info.sheaths() > 0 && storedFuel >= 0) panel.clearLegacyFuelItems();
         long[] heatPorts = info.heatPorts();
         long[] waterPorts = info.waterPorts();

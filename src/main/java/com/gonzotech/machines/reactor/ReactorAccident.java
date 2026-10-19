@@ -282,7 +282,7 @@ public final class ReactorAccident {
         }
     }
 
-    /** Пыль T1..T5: ближе к пролому — плотнее; частицы живут 10–15 с. */
+    /** Пыль T1..T5: ближе к пролому — плотнее; частицы живут 3–5 с по размеру. */
     private void spawnDust(ServerLevel level) {
         RandomSource random = level.random;
         BlockPos breach = breachPos();
