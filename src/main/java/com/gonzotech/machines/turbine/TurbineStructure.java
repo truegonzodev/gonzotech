@@ -365,32 +365,25 @@ public final class TurbineStructure {
     public static boolean isCandidateBlock(Block block) {
         return block == ModMachines.FIRST_TURBINE_CASING.get()
             || block == ModMachines.FIRST_TURBINE_ROTOR.get()
-            || block == ModMachines.STEAM_NODE.get()
-            || block == ModMachines.UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.WIRE_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get()
-            || block == ModMachines.SECOND_STEAM_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.SECOND_WIRE_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
+            || com.gonzotech.machines.network.NodeKinds.isSteam(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversalFluid(block)
+            || com.gonzotech.machines.network.NodeKinds.isWire(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversal(block);
     }
 
+    /** Пар: паровая, универсальная жидкостная или универсальная нода любого поколения (0.3.255). */
     private static boolean isSteamPort(BlockState state) {
         Block block = state.getBlock();
-        return block == ModMachines.STEAM_NODE.get()
-            || block == ModMachines.UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get()
-            || block == ModMachines.SECOND_STEAM_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
+        return com.gonzotech.machines.network.NodeKinds.isSteam(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversalFluid(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversal(block);
     }
 
+    /** Вывод GTU: провод или универсальный узел любого поколения (0.3.255). */
     private static boolean isWirePort(BlockState state) {
         Block block = state.getBlock();
-        return block == ModMachines.WIRE_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get()
-            || block == ModMachines.SECOND_WIRE_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
+        return com.gonzotech.machines.network.NodeKinds.isWire(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversal(block);
     }
 
     private static long[] toLongArray(List<BlockPos> positions) {

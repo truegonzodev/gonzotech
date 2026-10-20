@@ -406,44 +406,39 @@ public final class SteamGenStructure {
             || isHeatPortBlock(block);
     }
 
-    /** Паровой выход: паровая нода, универсальная жидкостная нода или универсальная нода. */
+    /**
+     * Паровой выход: паровая нода, универсальная жидкостная нода или
+     * универсальная нода — ЛЮБОГО поколения (правило 0.3.255, автор).
+     */
     private static boolean isSteamPort(BlockState state) {
         return isSteamPortBlock(state.getBlock());
     }
 
     private static boolean isSteamPortBlock(Block block) {
-        return block == ModMachines.STEAM_NODE.get()
-            || block == ModMachines.SECOND_STEAM_NODE.get()
-            || block == ModMachines.UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
+        return com.gonzotech.machines.network.NodeKinds.isSteam(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversalFluid(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversal(block);
     }
 
-    /** Водный вход: водная нода, универсальная жидкостная нода или универсальная нода. */
+    /** Водный вход: водная, универсальная жидкостная или универсальная нода любого поколения. */
     private static boolean isWaterPort(BlockState state) {
         return isWaterPortBlock(state.getBlock());
     }
 
     private static boolean isWaterPortBlock(Block block) {
-        return block == ModMachines.WATER_NODE.get()
-            || block == ModMachines.SECOND_WATER_NODE.get()
-            || block == ModMachines.UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_FLUID_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
+        return com.gonzotech.machines.network.NodeKinds.isWater(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversalFluid(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversal(block);
     }
 
-    /** Тепловой вход (GTH): тепловая нода или универсальная нода. */
+    /** Тепловой вход (GTH): тепловая нода или универсальная нода любого поколения. */
     private static boolean isHeatPort(BlockState state) {
         return isHeatPortBlock(state.getBlock());
     }
 
     private static boolean isHeatPortBlock(Block block) {
-        return block == ModMachines.HEAT_NODE.get()
-            || block == ModMachines.SECOND_HEAT_NODE.get()
-            || block == ModMachines.UNIVERSAL_NODE.get()
-            || block == ModMachines.SECOND_UNIVERSAL_NODE.get();
+        return com.gonzotech.machines.network.NodeKinds.isHeat(block)
+            || com.gonzotech.machines.network.NodeKinds.isUniversal(block);
     }
 
     private static long[] toLongArray(List<BlockPos> positions) {

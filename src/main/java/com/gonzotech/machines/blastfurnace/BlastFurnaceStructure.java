@@ -1,6 +1,7 @@
 package com.gonzotech.machines.blastfurnace;
 
 import com.gonzotech.machines.block.FireclayBlock;
+import com.gonzotech.machines.network.NodeKinds;
 import com.gonzotech.machines.block.entity.FireboxBlockEntity;
 import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,8 @@ import java.util.List;
  * <p>
  * Геометрия — {@link BlastFurnaceLayout}: фундамент 9× шамот, в середине —
  * топка (контроллер) с узлами теплотруб по серединам рёбер, сверху — котёл.
- * Узлы принимаются любого тепло-типа: T1/T2 или универсальные T1/T2.
+ * Узлы принимаются ЛЮБОГО поколения (правило 0.3.255, автор): теплотруба
+ * или универсальный узел — обычные, экранированные и будущие тир-99.
  * <p>
  * При сборке шамотные блоки получают флаг {@code FORMED} — клиентский
  * Smart CTM рисует бесшовную обшивку (как у турбины и парогена). Контроллер —
@@ -34,10 +36,7 @@ public final class BlastFurnaceStructure {
     private static boolean matches(BlockState state, BlastFurnaceLayout.Role role) {
         return switch (role) {
             case FIRECLAY -> state.getBlock() instanceof FireclayBlock;
-            case HEAT_NODE -> state.is(ModMachines.HEAT_NODE.get())
-                || state.is(ModMachines.SECOND_HEAT_NODE.get())
-                || state.is(ModMachines.UNIVERSAL_NODE.get())
-                || state.is(ModMachines.SECOND_UNIVERSAL_NODE.get());
+            case HEAT_NODE -> NodeKinds.isHeat(state) || NodeKinds.isUniversal(state);
             case FIREBOX -> state.is(ModMachines.FIREBOX.get());
             case CAULDRON -> state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON);
             case OUTSIDE -> false;
