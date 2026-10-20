@@ -85,8 +85,9 @@ public class ScholarNotesScreen extends Screen {
     private static final int SKETCH_FADE_TICKS = 10 * 20;
     /** One new frame per client tick: four and a half seconds of 91-frame video. */
     private static final int SKETCH_VIDEO_FRAME_COUNT = 91;
-    private static final int SKETCH_VIDEO_FRAME_WIDTH = 128;
-    private static final int SKETCH_VIDEO_FRAME_HEIGHT = 72;
+    /** 0.3.252: автор поднял разрешение клипа с 128×72 до 256×144. */
+    private static final int SKETCH_VIDEO_FRAME_WIDTH = 256;
+    private static final int SKETCH_VIDEO_FRAME_HEIGHT = 144;
     /** Render after item icons, which use a positive GUI z-offset. */
     private static final int SKETCH_OVERLAY_Z = (int) (GuiGraphics.MAX_GUI_Z - 1.0F);
     private static final ResourceLocation TEX_SKETCH_VIDEO =

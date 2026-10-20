@@ -114,14 +114,22 @@ pin("SKETCH_OVERLAY_Z = (int) (GuiGraphics.MAX_GUI_Z - 1.0F)" in screen
 
 png_path = ASSETS / "textures/gui/videoplaybak.png"
 png = png_path.read_bytes()
+# Автор 19.10.2026: разрешение клипа поднято с 128x72 до 256x144; 91 кадр и
+# один кадр в тик сохранены. Константы рендера обязаны следовать ассету.
 pin(png.startswith(b"\x89PNG\r\n\x1a\n")
-    and struct.unpack(">II", png[16:24]) == (128, 91 * 72),
-    "the supplied vertical PNG contains exactly 91 frames of 128x72 pixels")
+    and struct.unpack(">II", png[16:24]) == (256, 91 * 144),
+    "the supplied vertical PNG contains exactly 91 frames of 256x144 pixels")
 metadata = json.loads((ASSETS / "textures/gui/videoplaybak.png.mcmeta").read_text(
     encoding="utf-8"))["animation"]
-pin(metadata.get("width") == 128 and metadata.get("height") == 72
+pin(metadata.get("width") == 256 and metadata.get("height") == 144
     and metadata.get("frametime") == 1 and metadata.get("frames") == list(range(91)),
     "the PNG metadata selects each of the 91 frames for one tick")
+# Код и ассет не должны расходиться: именно этим дрейфом проекция кадра на
+# экран ломалась после замены клипа (константы оставались 128x72).
+pin(f"SKETCH_VIDEO_FRAME_WIDTH = {metadata.get('width')}" in screen
+    and f"SKETCH_VIDEO_FRAME_HEIGHT = {metadata.get('height')}" in screen
+    and f"SKETCH_VIDEO_FRAME_COUNT = {len(metadata.get('frames', []))}" in screen,
+    "the render constants follow the supplied clip: width, height and frame count")
 
 sound_json = json.loads((ASSETS / "sounds.json").read_text(encoding="utf-8"))
 sound_entries = sound_json.get("videoplaybak", {}).get("sounds", [])
