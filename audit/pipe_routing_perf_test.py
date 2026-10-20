@@ -48,6 +48,20 @@ assert "default -> null;" in r
 for api in ("public static long drain(", "drainFromTurbinePort(", "drainFromMultiblockPort("):
     assert api in r, api
 
+# ── Пин 0.3.251: симметрия виртуальных приёмников портов (репорт автора) ──
+# Раньше только collectLanes знал виртуальные порты: слив из порта многоблока
+# (реактор → GTH через drainFromMultiblockPort) не видел приёмник парогена, и
+# «реактор не передаёт GTH в пароген» при работающих блочных станках и других
+# источниках. Оба обхода обязаны распознавать одни и те же виртуальные порты.
+import _ver
+_ver.at_least("0.3.251", "multiblock-port drain sees steamgen/turbine virtual receivers")
+assert r.count("case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);") == 2
+assert r.count("TurbineStructure.steamReceiverAt(level, pipe)") >= 2
+assert r.count("SteamGenStructure.waterReceiverAt(level, pipe)") >= 2
+drain_port_section = r.split("drainFromMultiblockPort(Level level, BlockPos port", 1)[1]
+assert "case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);" in drain_port_section
+assert "case WATER -> {" in drain_port_section
+
 # ── Пины 0.3.92: красная подсветка дорогих узлов (автор 04.10) ──
 w = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeFlowWarnings.java").read_text()
 assert "HOT_LANE_THRESHOLD = 400" in w                # число автора

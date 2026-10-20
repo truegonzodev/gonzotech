@@ -237,16 +237,24 @@ public final class PipeRouting {
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
             BlockState pstate = level.getBlockState(pipe);
-            // Виртуальный приёмник встроенного порта (паровой порт турбины) —
-            // нода сама является и трубой, и входом машины. Без этой проверки
-            // парогенератор не смог бы кормить турбину: для BFS чужая нода —
-            // просто ещё одна труба.
-            if (type == PipeType.STEAM) {
-                Transfer.Receiver portRaw = TurbineStructure.steamReceiverAt(level, pipe);
-                if (portRaw != null) {
-                    addPortLane(level, pipe, port, PipeType.STEAM, portRaw,
-                        buildPath(level, pipe, pipe, parent), direct, lanes, diagnostics);
+            // Виртуальные приёмники встроенных портов — нода сама является и
+            // трубой, и входом установки. Без этой проверки парогенератор не
+            // смог бы кормить турбину (пар), а реактор — парогенератор (GTH):
+            // для BFS чужая нода — просто ещё одна труба. Полный свитч как в
+            // collectLanes (0.3.251: репорт автора «реактор не передаёт GTH
+            // в пароген» — case HEAT отсутствовал именно здесь).
+            Transfer.Receiver portRaw = switch (type) {
+                case STEAM -> TurbineStructure.steamReceiverAt(level, pipe);
+                case WATER -> {
+                    Transfer.Receiver steamGen = SteamGenStructure.waterReceiverAt(level, pipe);
+                    yield steamGen != null ? steamGen : ReactorStructure.waterReceiverAt(level, pipe);
                 }
+                case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);
+                default -> null;
+            };
+            if (portRaw != null) {
+                addPortLane(level, pipe, port, type, portRaw,
+                    buildPath(level, pipe, pipe, parent), direct, lanes, diagnostics);
             }
             PipeMode mode = modeOf(pstate, type);
             for (Direction dir : Direction.values()) {
