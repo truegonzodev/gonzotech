@@ -52,7 +52,7 @@ public final class MarkerDebugCommand {
 
         // Колонна 1×1 под игроком вниз до самого низа мира.
         Set<Item> found = new LinkedHashSet<>();
-        int minY = level.getMinBuildHeight();
+        int minY = level.getMinY();
         for (int y = feet.getY() - 1; y >= minY; y--) {
             BlockState state = level.getBlockState(new BlockPos(feet.getX(), y, feet.getZ()));
             if (!state.isAir() && MinerOres.isOre(state)) {

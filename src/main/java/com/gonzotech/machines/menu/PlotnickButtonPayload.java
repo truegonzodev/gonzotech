@@ -8,6 +8,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /**
  * C2S «нажата кнопка GUI Плотника» (0.3.256): ванильный
@@ -20,7 +21,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 public record PlotnickButtonPayload(int menuId, int buttonId) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<PlotnickButtonPayload> TYPE =
-        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MODID, "plotnick_button"));
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "plotnick_button"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, PlotnickButtonPayload> STREAM_CODEC =
         StreamCodec.composite(
@@ -33,7 +34,7 @@ public record PlotnickButtonPayload(int menuId, int buttonId) implements CustomP
         return TYPE;
     }
 
-    public static void handle(PlotnickButtonPayload payload, net.neoforged.neoforge.network.registration.IPayloadContext context) {
+    public static void handle(PlotnickButtonPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
             AbstractContainerMenu menu = player.containerMenu;

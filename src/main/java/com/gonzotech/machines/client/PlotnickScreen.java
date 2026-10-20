@@ -6,6 +6,7 @@ import com.gonzotech.machines.energy.PlotnickDefs;
 import com.gonzotech.machines.menu.PlotnickButtonPayload;
 import com.gonzotech.machines.menu.PlotnickMenu;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -63,7 +64,7 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
         // Шкала GTU (7,17) 18×54, интерьер (8,18) 16×52 (замер автора).
-        int capacity = MachineDefs.toUnits(PlotnickDefs.GTU_CAPACITY_MILLI);
+        int capacity = MachineDefs.toUnits((int) PlotnickDefs.GTU_CAPACITY_MILLI);
         int gtuX = x + 8;
         int barY = y + 18;
         float gtu = capacity == 0 ? 0f : (float) menu.gtu() / capacity;
@@ -71,7 +72,7 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
 
         // Шесть кнопок: флажок-маркер действия в центре каждой 18×18.
         for (int[] rect : BUTTON_RECTS) {
-            g.blit(BUTTON_ICON, x + rect[0] + 2, y + rect[1] + 2, 0, 0, 14, 14, 14, 14);
+            g.blit(RenderType::guiTextured, BUTTON_ICON, x + rect[0] + 2, y + rect[1] + 2, 0f, 0f, 14, 14, 14, 14);
         }
 
         if (inRect(mouseX, mouseY, gtuX, barY, 16, 52)) {

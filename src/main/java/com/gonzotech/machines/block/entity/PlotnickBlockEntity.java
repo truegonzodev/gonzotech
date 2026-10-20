@@ -7,6 +7,7 @@ import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.PlotnickMenu;
 import com.gonzotech.machines.miner.MarkerService;
 import com.gonzotech.machines.miner.MinerMarker;
+import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
