@@ -6,12 +6,14 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemAbilities;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.ItemAbilities;
+import net.neoforged.neoforge.common.ItemAbility;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +44,11 @@ public class SandpaperItem extends Item {
 
     public SandpaperItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public boolean canPerformAction(ItemStack stack, ItemAbility itemAbility) {
+        return itemAbility == ItemAbilities.AXE_STRIP;
     }
 
     @Override
