@@ -239,7 +239,8 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
         // Мастерство ключа (0.3.253, автор): поворот пучка без ключа в руке.
         if (WrenchItem.hasMastery(player) && player.isSecondaryUseActive()) {
-            return CompositePipeBlock.rotateLayerAt(level, pos, state, hit.getLocation());
+            return CompositePipeBlock.rotateLayerAt(level, pos, state, hit.getLocation())
+                    ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
 
         // Добавление универсальной жидк.трубы: занимает весь FLUID-угол (вода+пар),

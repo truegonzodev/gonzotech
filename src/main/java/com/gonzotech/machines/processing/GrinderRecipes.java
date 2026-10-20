@@ -32,7 +32,7 @@ public final class GrinderRecipes {
         java.util.List<Map.Entry<Item, Output>> entries = new java.util.ArrayList<>(RECIPES.entrySet());
         entries.sort(java.util.Comparator.comparing(entry ->
             net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()).toString()));
-        for (Map.Entry<Item, Item> entry : entries) {
+        for (Map.Entry<Item, Output> entry : entries) {
             String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()).toString();
             displays.add(new ProcessingRecipeDisplay(id,
                 java.util.List.of(java.util.List.of(new ItemStack(entry.getKey()))),
