@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Рендер меток-вымпелов автошахтера (0.3.256, спека автора):
  * <ul>
- *   <li>квад метки 4×7 под текстуру 20×35 (5 px/блок), билборд по yaw;</li>
+ *   <li>квад метки 1,0×1,75 блока под текстуру 20×35, билборд по yaw;</li>
  *   <li>квад метки — блендинг 80 % непрозрачности;</li>
  *   <li>«слот» дисплея 14×14 на канве в пикселе (3,3) — 100 % непрозрачности:
  *       marker_flag.png (красный флажок) либо изометрия блока руды, как в GUI;</li>
@@ -41,14 +41,17 @@ public final class MarkerRenderer {
     private MarkerRenderer() {
     }
 
-    /** 5 пикселей текстуры на блок: 20×35 px = 4×7 блоков. */
-    public static final float PX = 1F / 5F;
-    /** Квад: 4 блока в ширину, 7 в высоту; остриё внизу по центру. */
-    public static final float QUAD_HALF_W = 2F;
-    public static final float QUAD_H = 7F;
-    /** Слот дисплея: пиксель (3,3) канвы, 14×14 px. */
-    public static final float SLOT_OFFSET = 3F * PX;
-    public static final float SLOT_SIZE = 14F * PX;
+    /**
+     * Канва текстуры 20×35 px отображается без искажения пропорций на квад
+     * 1,0×1,75 блока: 20 пикселей на блок по обеим осям.
+     */
+    public static final float QUAD_HALF_W = 0.5F;
+    public static final float QUAD_H = 1.75F;
+    /** Слот дисплея: пиксель (3,3) канвы 20×35, размер иконки 14×14 px. */
+    public static final float SLOT_OFFSET_X = (3F / 20F) * (QUAD_HALF_W * 2F);
+    public static final float SLOT_OFFSET_Y = (3F / 35F) * QUAD_H;
+    public static final float SLOT_SIZE_X = (14F / 20F) * (QUAD_HALF_W * 2F);
+    public static final float SLOT_SIZE_Y = (14F / 35F) * QUAD_H;
     /** Прозрачность квада метки — 80 % (автор). */
     public static final float QUAD_ALPHA = 0.8F;
     /** Листание руд — 3 секунды на руду (автор). */
@@ -59,14 +62,17 @@ public final class MarkerRenderer {
     private static final ResourceLocation FLAG_TEXTURE =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/marker_flag.png");
 
-    /** Масштаб изометрии руды под слот 14×14 (тюнится по вкусу). */
-    private static final float ORE_SCALE = 2.6F;
+    /** Масштаб изометрии руды под физический слот 0,7×0,7 блока. */
+    private static final float ORE_SCALE = 0.65F;
     /** Дистанция отсечения — 32 чанка = 512 блоков (маркер не виден на любой дистанции). */
     private static final double MAX_DISTANCE_SQR = 512.0 * 512.0;
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+        // AFTER_PARTICLES: для полупрозрачных «частицеподобных» квадов это надёжнее,
+        // чем AFTER_TRANSLUCENT_BLOCKS (там сортировка/таргеты прозрачной геометрии
+        // могут давать визуальные артефакты, особенно на Fabulous-графике).
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         Minecraft mc = Minecraft.getInstance();
         Level level = mc.level;
         if (level == null) return;
@@ -89,11 +95,16 @@ public final class MarkerRenderer {
 
             float yawDeg = (float) Math.toDegrees(Mth.atan2(-dx, -dz));
 
-            // 1) Квад метки (4×7) — 80 % непрозрачности.
+            // 1) Квад метки (1,0×1,75 блока) — 80 % непрозрачности.
+            // Блендинг оставляем включённым и для флажка: в обеих текстурах есть
+            // прозрачные пиксели, иначе они рисуются чёрными полями.
             RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR);
             RenderSystem.setShaderTexture(0, MARKER_TEXTURE);
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
+            RenderSystem.enableDepthTest();
+            RenderSystem.depthMask(false);
+            RenderSystem.disableCull();
             pose.pushPose();
             pose.translate(dx, dy, dz);
             pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yawDeg));
@@ -101,16 +112,16 @@ public final class MarkerRenderer {
                 .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             addQuad(buf, pose, -QUAD_HALF_W, 0F, QUAD_HALF_W, QUAD_H, 0F, QUAD_ALPHA);
             BufferUploader.drawWithShader(buf.buildOrThrow());
-            RenderSystem.disableBlend();
 
-            // 2) Дисплей в слоте (3,3) 14×14 — 100 % непрозрачности.
-            float slotLeft = -QUAD_HALF_W + SLOT_OFFSET;
-            float slotTop = QUAD_H - SLOT_OFFSET;
-            float slotBottom = slotTop - SLOT_SIZE;
+            // 2) Дисплей в слоте (пиксель 3,3 канвы, иконка 14×14) — 100 % непрозрачности.
+            float slotLeft = -QUAD_HALF_W + SLOT_OFFSET_X;
+            float slotTop = QUAD_H - SLOT_OFFSET_Y;
+            float slotBottom = slotTop - SLOT_SIZE_Y;
+            float slotRight = slotLeft + SLOT_SIZE_X;
             if (!marker.ores().isEmpty()) {
                 int index = (int) ((gameTime / ORE_CYCLE_TICKS) % marker.ores().size());
                 Item ore = marker.ores().get(index);
-                float cx = 0F;
+                float cx = (slotLeft + slotRight) / 2F;
                 float cy = (slotTop + slotBottom) / 2F;
                 pose.pushPose();
                 pose.translate(cx, cy, 0.02F);
@@ -125,10 +136,13 @@ public final class MarkerRenderer {
                 RenderSystem.setShaderTexture(0, FLAG_TEXTURE);
                 BufferBuilder flag = Tesselator.getInstance()
                     .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                addQuad(flag, pose, slotLeft, slotBottom, slotLeft + SLOT_SIZE, slotTop, 0.02F, 1F);
+                addQuad(flag, pose, slotLeft, slotBottom, slotRight, slotTop, 0.02F, 1F);
                 BufferUploader.drawWithShader(flag.buildOrThrow());
             }
             pose.popPose();
+            RenderSystem.enableCull();
+            RenderSystem.depthMask(true);
+            RenderSystem.disableBlend();
         }
     }
 

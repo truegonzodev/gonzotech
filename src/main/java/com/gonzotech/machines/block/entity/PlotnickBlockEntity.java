@@ -17,6 +17,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
@@ -31,6 +32,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,7 +43,9 @@ import java.util.List;
  * (кнопка выдачи в воронки/трубы — пакет добычи). Два слота — карты памяти.</p>
  *
  * <p>Кнопка «Отметить» (id 4) на этом этапе = «выставить разметку»: 9 меток-
- * вымпелов в сетке 3×3 чанка (свой чанк + 8 соседних), как на схеме автора.</p>
+ * вымпелов в сетке 3×3 чанка (свой чанк + 8 соседних), как на схеме автора.
+ * Кнопка «Свернуться» (id 2) пока убирает эту разметку; сбор оборудования —
+ * пакет завершения.</p>
  */
 public final class PlotnickBlockEntity extends BlockEntity
     implements GtuSink, WorldlyContainer, MenuProvider {
@@ -72,6 +76,9 @@ public final class PlotnickBlockEntity extends BlockEntity
         NonNullList.withSize(CONTAINER_SIZE, ItemStack.EMPTY);
     private final NonNullList<ItemStack> virtual =
         NonNullList.withSize(VIRTUAL_SLOTS, ItemStack.EMPTY);
+
+    /** Id принадлежащих именно этому Плотнику секторных меток. */
+    private final List<Long> sectorMarkerIds = new ArrayList<>(9);
 
     private long intakeBudgetTick = Long.MIN_VALUE;
     private int acceptedGtuThisTick;
@@ -131,43 +138,74 @@ public final class PlotnickBlockEntity extends BlockEntity
     public boolean handleButton(int id) {
         if (!(level instanceof ServerLevel server)) return false;
         return switch (id) {
+            case BTN_PACK_UP -> clearSectorMarks(server);
             case BTN_MARK -> placeSectorMarks(server);
-            default -> false; // бурить/сеть/свернуться/сейсмо/динамит — пакеты 2-4
+            default -> false; // бурить/сеть/сейсмо/динамит — пакеты 2-4
         };
     }
 
     /**
      * «Выставить разметку»: 9 меток-вымпелов — по одной в каждом чанке сектора
-     * 3×3 (свой чанк и 8 соседних). В соседних чанках — ближайший к Плотнику
-     * столбец поверхности; в своём — столбец вплотную рядом (схема автора).
+     * 3×3 (свой чанк и 8 соседних). В соседних чанках — ближайший именно к
+     * Плотнику столбец поверхности (clamp XZ Плотника в целевой чанк); поэтому
+     * 8 внешних меток стоят сразу за соответствующими границами сектора. В
+     * своём чанке — столбец вплотную рядом, но никогда не уходящий за его
+     * границу, если Плотник стоит в последнем столбце.
      */
     private boolean placeSectorMarks(ServerLevel server) {
         MarkerService service = MarkerService.get(server);
+        clearSectorMarks(server, service);
+
         BlockPos base = worldPosition;
-        int chunkMinX = base.getX() & ~15;
-        int chunkMinZ = base.getZ() & ~15;
-        int chunkMaxX = chunkMinX + 15;
-        int chunkMaxZ = chunkMinZ + 15;
+        int ownChunkMinX = (base.getX() >> 4) << 4;
+        int ownChunkMinZ = (base.getZ() >> 4) << 4;
         List<Item> noOres = List.of();
+
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
+                int targetChunkMinX = ownChunkMinX + dx * 16;
+                int targetChunkMinZ = ownChunkMinZ + dz * 16;
                 int x;
                 int z;
                 if (dx == 0 && dz == 0) {
-                    x = base.getX() + 1;
+                    int localX = base.getX() - ownChunkMinX;
+                    x = localX < 15 ? base.getX() + 1 : base.getX() - 1;
                     z = base.getZ();
                 } else {
-                    x = dx == 0 ? base.getX() : (dx < 0 ? chunkMinX - 1 : chunkMaxX + 1);
-                    z = dz == 0 ? base.getZ() : (dz < 0 ? chunkMinZ - 1 : chunkMaxZ + 1);
+                    x = Mth.clamp(base.getX(), targetChunkMinX, targetChunkMinX + 15);
+                    z = Mth.clamp(base.getZ(), targetChunkMinZ, targetChunkMinZ + 15);
                 }
+
                 BlockPos surface = server.getHeightmapPos(
                     net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    new BlockPos(x, base.getY() + 16, z)).below();
-                service.add(server, surface, MinerMarker.Kind.STATION, 0, noOres);
+                    new BlockPos(x, base.getY(), z)).below();
+                MinerMarker marker = service.add(
+                    server, surface, MinerMarker.Kind.STATION, 0, noOres);
+                sectorMarkerIds.add(marker.id());
             }
         }
         setChanged();
         return true;
+    }
+
+    /**
+     * Убрать разметку этого Плотника. Для записанных в BE меток удаление
+     * точечное по id. Если id нет (метки поставлены первой версией 0.3.256),
+     * убираем все STATION-метки в секторе этого Плотника.
+     */
+    private boolean clearSectorMarks(ServerLevel server) {
+        boolean changed = clearSectorMarks(server, MarkerService.get(server));
+        if (changed) setChanged();
+        return changed;
+    }
+
+    private boolean clearSectorMarks(ServerLevel server, MarkerService service) {
+        if (!sectorMarkerIds.isEmpty()) {
+            boolean changed = service.removeAll(server, sectorMarkerIds);
+            sectorMarkerIds.clear();
+            return changed;
+        }
+        return service.removeStationMarkersInSector(server, worldPosition);
     }
 
     // ─────────────────────────── хранилище ───────────────────────────
@@ -304,25 +342,26 @@ public final class PlotnickBlockEntity extends BlockEntity
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         gtu.save(tag, "Gtu");
-        ListTag active = new ListTag();
-        for (ItemStack stack : items) {
-            active.add(stack.save(registries));
-        }
-        tag.put("Items", active);
+        ContainerHelper.saveAllItems(tag, items, registries);
         ListTag virtualTag = new ListTag();
         for (ItemStack stack : virtual) {
             if (!stack.isEmpty()) virtualTag.add(stack.save(registries));
         }
         tag.put("Virtual", virtualTag);
+        if (!sectorMarkerIds.isEmpty()) {
+            tag.putLongArray("SectorMarkers", sectorMarkerIds.stream()
+                .mapToLong(Long::longValue).toArray());
+        }
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         gtu.load(tag, "Gtu");
-        ListTag active = tag.getList("Items", Tag.TAG_COMPOUND);
-        for (int i = 0; i < Math.min(active.size(), CONTAINER_SIZE); i++) {
-            items.set(i, ItemStack.parseOptional(registries, active.getCompound(i)));
+        ContainerHelper.loadAllItems(tag, items, registries);
+        sectorMarkerIds.clear();
+        for (long markerId : tag.getLongArray("SectorMarkers")) {
+            sectorMarkerIds.add(markerId);
         }
         ListTag virtualTag = tag.getList("Virtual", Tag.TAG_COMPOUND);
         for (int i = 0; i < VIRTUAL_SLOTS; i++) {
@@ -330,6 +369,14 @@ public final class PlotnickBlockEntity extends BlockEntity
                 ? ItemStack.parseOptional(registries, virtualTag.getCompound(i))
                 : ItemStack.EMPTY);
         }
+    }
+
+    /** Слом Плотника: сначала убрать его секторную разметку, затем выронить содержимое. */
+    public void onBroken() {
+        if (level instanceof ServerLevel server) {
+            clearSectorMarks(server);
+        }
+        dropContentsForBreak();
     }
 
     public void dropContentsForBreak() {

@@ -105,6 +105,43 @@ public final class MarkerService extends SavedData {
         return false;
     }
 
+    /** Удалить набор меток одним снимком клиентам. */
+    public boolean removeAll(ServerLevel level, Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) return false;
+        boolean changed = false;
+        for (Long id : ids) {
+            if (id != null && markers.remove(id) != null) {
+                changed = true;
+            }
+        }
+        if (changed) {
+            setDirty();
+            MarkerNetwork.broadcast(level, this);
+        }
+        return changed;
+    }
+
+    /**
+     * Удалить STATION-метки сектора 3×3 чанка вокруг якоря. Нужно как
+     * совместимый путь для меток первого выпуска Плотника, где BE ещё не
+     * хранил id своих меток.
+     */
+    public boolean removeStationMarkersInSector(ServerLevel level, BlockPos sectorAnchor) {
+        int minX = ((sectorAnchor.getX() >> 4) - 1) << 4;
+        int minZ = ((sectorAnchor.getZ() >> 4) - 1) << 4;
+        int maxXExclusive = minX + 48;
+        int maxZExclusive = minZ + 48;
+        boolean changed = markers.values().removeIf(marker ->
+            marker.kind() == MinerMarker.Kind.STATION
+                && marker.pos().getX() >= minX && marker.pos().getX() < maxXExclusive
+                && marker.pos().getZ() >= minZ && marker.pos().getZ() < maxZExclusive);
+        if (changed) {
+            setDirty();
+            MarkerNetwork.broadcast(level, this);
+        }
+        return changed;
+    }
+
     /** Добавить метку; ttl=0 — бессрочно. Возвращает созданную метку. */
     public MinerMarker add(ServerLevel level, BlockPos pos, MinerMarker.Kind kind, long ttl, List<Item> ores) {
         long id = nextId++;

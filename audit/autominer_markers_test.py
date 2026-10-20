@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Pins 0.3.256 — метки автошахтера и Плотник.
 
-Держит: вымпел-метку (квад 4×7 под 20×35, 80% прозрачности, дисплей 14×14
-в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
+Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
+дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
 1×1 до низа мира, тестовая метка 20 с), GUI Плотника по замеру автора и
 хранилище 9×512 активных + 54×512 виртуальных.
 """
@@ -43,15 +43,19 @@ for name in ("plotnick_gui.png", "plotnick_gui_bg.png"):
 
 # ── 3. Рендер метки (MarkerRenderer) ──
 ren = (ROOT / "src/main/java/com/gonzotech/machines/client/MarkerRenderer.java").read_text(encoding="utf-8")
-assert "QUAD_HALF_W = 2F" in ren, "полуширина канвы != 2 (квад 4 единицы = 4 px по 5px/блок)"
-assert "QUAD_H = 7F" in ren, "высота канвы != 7"
-assert "PX = 1F / 5F" in ren, "масштаб != 5 px/блок"
+assert "QUAD_HALF_W = 0.5F" in ren, "полуширина канвы != 0.5 (квад 1.0 блока)"
+assert "QUAD_H = 1.75F" in ren, "высота канвы != 1.75 блока (пропорция 20:35)"
 assert "QUAD_ALPHA = 0.8F" in ren, "альфа канвы != 0.8"
-assert "SLOT_SIZE = 14F * PX" in ren, "дисплей != 14 пикселей"
-assert "SLOT_OFFSET = 3F * PX" in ren, "слот дисплея не в (3,3) канвы"
+assert "SLOT_OFFSET_X = (3F / 20F)" in ren, "слот дисплея не в пикселе (3,3) канвы 20×35"
+assert "SLOT_SIZE_X = (14F / 20F)" in ren, "иконка дисплея не 14×14 пикселей"
+assert "SLOT_SIZE_Y = (14F / 35F)" in ren, "высота иконки не 14 пикселей канвы"
+assert "ORE_SCALE = 0.65F" in ren, "изометрия руды не вписана в слот 0.7 блока"
+assert "RenderSystem.depthMask(false)" in ren, "прозрачные края метки пишут глубину"
+assert "прозрачные пиксели, иначе они рисуются чёрными полями" in ren, "фикс блендинга флажка потерян"
 assert "ORE_CYCLE_TICKS = 60L" in ren, "листание руд != 60 тиков (3 с)"
 assert "ItemDisplayContext.GUI" in ren, "руда не рисуется изометрией GUI"
-assert "AFTER_TRANSLUCENT_BLOCKS" in ren, "вымпелы не после полупрозрачных блоков"
+assert "AFTER_PARTICLES" in ren, "полупрозрачные вымпелы не на стадии AFTER_PARTICLES"
+assert "RenderSystem.disableCull()" in ren, "билборд метки зависит от одностороннего culling"
 assert "MAX_DISTANCE_SQR = 512.0 * 512.0" in ren, "отсечение не 32 чанка (512 блоков)"
 
 # ── 4. Виды меток и сеть ──
@@ -59,6 +63,8 @@ kind = (ROOT / "src/main/java/com/gonzotech/machines/miner/MinerMarker.java").re
 assert re.search(r"enum Kind\s*\{[^}]*STATION[^}]*ORE[^}]*TEST", kind), "Kind != STATION/ORE/TEST"
 service = (ROOT / "src/main/java/com/gonzotech/machines/miner/MarkerService.java").read_text(encoding="utf-8")
 assert "gonzotech_miner_markers" in service, "имя SavedData сдвинулось"
+assert "removeAll(ServerLevel level, Collection<Long> ids)" in service, "нет пакетного удаления меток по id"
+assert "removeStationMarkersInSector" in service, "нет уборки legacy-меток сектора"
 net = (ROOT / "src/main/java/com/gonzotech/machines/miner/MarkerNetwork.java").read_text(encoding="utf-8")
 assert "MarkersPayload" in net and "broadcast" in net and "snapshot" in net, "MarkerNetwork потерял API"
 
@@ -77,8 +83,18 @@ assert "VIRTUAL_SLOTS = 54" in be, "виртуальных стаков != 54"
 assert "MAX_STACK = 512" in be, "стак Плотника != 512"
 assert be.index("SLOTS_ACTIVE") < be.index("VIRTUAL_SLOTS"), "порядок констант сбился"
 assert "BTN_MARK = 4" in be, "кнопка «Отметить» != id 4"
+assert "case BTN_PACK_UP -> clearSectorMarks(server);" in be, "«Свернуться» не убирает разметку"
 assert "placeSectorMarks" in be, "разметка сектора 3×3 чанка пропала"
 assert "Kind.STATION" in be, "метки разметки не STATION"
+assert "Mth.clamp(base.getX(), targetChunkMinX, targetChunkMinX + 15)" in be, "X метки не ближайший столбец целевого чанка"
+assert "Mth.clamp(base.getZ(), targetChunkMinZ, targetChunkMinZ + 15)" in be, "Z метки не ближайший столбец целевого чанка"
+assert "localX < 15 ? base.getX() + 1 : base.getX() - 1" in be, "центральная метка может уйти в соседний чанк"
+assert "sectorMarkerIds.add(marker.id())" in be, "Плотник не запоминает свои метки"
+assert '"SectorMarkers"' in be, "id меток Плотника не персистентны"
+assert "ContainerHelper.saveAllItems(tag, items, registries)" in be, "пустые активные слоты снова кодируются вручную"
+assert "ContainerHelper.loadAllItems(tag, items, registries)" in be, "загрузка активных слотов не парная сохранению"
+plotnick_block = (ROOT / "src/main/java/com/gonzotech/machines/block/PlotnickBlock.java").read_text(encoding="utf-8")
+assert "plotnick.onBroken();" in plotnick_block, "слом Плотника не убирает его разметку"
 
 # ── 7. GUI Плотника по замеру автора ──
 menu = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")

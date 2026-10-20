@@ -46,7 +46,7 @@ public final class PlotnickBlock extends MachineBlock {
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())
             && level.getBlockEntity(pos) instanceof PlotnickBlockEntity plotnick) {
-            plotnick.dropContentsForBreak();
+            plotnick.onBroken();
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
