@@ -30,6 +30,7 @@ public final class MachineClient {
         event.register(ModMenus.SECOND_COBBLE_GENERATOR.get(), SecondCobbleGeneratorScreen::new);
         event.register(ModMenus.ALLOY_FOUNDRY.get(), AlloyFoundryScreen::new);
         event.register(ModMenus.SECOND_GRINDER.get(), SecondGrinderScreen::new);
+        event.register(ModMenus.REPROCESSING_GRINDER.get(), ReprocessingGrinderScreen::new);
         event.register(ModMenus.SECOND_LUMBER.get(), SecondLumberScreen::new);
         event.register(ModMenus.SECOND_PRESS.get(), SecondPressScreen::new);
         event.register(ModMenus.SECOND_CRUSHER.get(), CrusherScreen::new);

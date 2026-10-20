@@ -21,6 +21,7 @@ import com.gonzotech.machines.menu.StirlingMenu;
 import com.gonzotech.machines.menu.SecondAccumulatorMenu;
 import com.gonzotech.machines.menu.SecondCobbleGeneratorMenu;
 import com.gonzotech.machines.menu.SecondElectricFurnaceMenu;
+import com.gonzotech.machines.menu.ReprocessingGrinderMenu;
 import com.gonzotech.machines.menu.SecondGrinderMenu;
 import com.gonzotech.machines.menu.SecondLumberMenu;
 import com.gonzotech.machines.menu.SecondPressMenu;
@@ -94,6 +95,8 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<SecondGrinderMenu>> SECOND_GRINDER =
         MENUS.register("second_grinder", () -> IMenuTypeExtension.create(SecondGrinderMenu::new));
+    public static final Supplier<MenuType<ReprocessingGrinderMenu>> REPROCESSING_GRINDER =
+        MENUS.register("reprocessing_grinder", () -> IMenuTypeExtension.create(ReprocessingGrinderMenu::new));
 
     public static final Supplier<MenuType<SecondLumberMenu>> SECOND_LUMBER =
         MENUS.register("second_lumber", () -> IMenuTypeExtension.create(SecondLumberMenu::new));

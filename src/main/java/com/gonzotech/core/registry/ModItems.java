@@ -310,6 +310,18 @@ public class ModItems {
         ITEMS.registerSimpleItem("plutonium_242");
     public static final DeferredItem<Item> THORIUM_229 =
         ITEMS.registerSimpleItem("thorium_229");
+
+    /** Переработка отработки (0.3.250): шлаки измельчения отработанных ТВЭЛов. */
+    public static final DeferredItem<Item> EXTREMELY_DANGEROUS_SLAG =
+        ITEMS.registerSimpleItem("extremely_dangerous_slag");
+    public static final DeferredItem<Item> MODERATELY_DANGEROUS_SLAG =
+        ITEMS.registerSimpleItem("moderately_dangerous_slag");
+    /** Оксид циркония — продукт разделения крайне опасных шлаков. */
+    public static final DeferredItem<Item> ZIRCONIUM_OXIDE =
+        ITEMS.registerSimpleItem("zirconium_oxide");
+    /** Пустой корпус — расходник измельчителя отработки, на выходе становится бочкой отходов. */
+    public static final DeferredItem<Item> EMPTY_HULL =
+        ITEMS.registerSimpleItem("empty_hull");
     public static final DeferredItem<Item> URANIUM_FUEL =
         ITEMS.registerSimpleItem("uranium_fuel");
     /** СО — смесь оксидов (MOX). */

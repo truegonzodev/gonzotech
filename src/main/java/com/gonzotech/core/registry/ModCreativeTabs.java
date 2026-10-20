@@ -118,6 +118,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.REPROCESSING_GRINDER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PRESS_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_LUMBER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
@@ -360,6 +361,10 @@ public class ModCreativeTabs {
                 output.accept(ModItems.TVEL.get());
                 output.accept(ModItems.UF_TVEL.get());
                 output.accept(ModItems.DEPRESSED_UF_TVEL.get());
+                output.accept(ModItems.EMPTY_HULL.get());
+                output.accept(ModItems.EXTREMELY_DANGEROUS_SLAG.get());
+                output.accept(ModItems.MODERATELY_DANGEROUS_SLAG.get());
+                output.accept(ModItems.ZIRCONIUM_OXIDE.get());
                 // Реакторный компонент сохраняет состав и свойства пользовательского сплава.
                 output.accept(ModItems.HEAT_EXCHANGER_CELL.get());
                 // Полимеры Эпохи III — продукты химзавода (часть применений ещё в плане).

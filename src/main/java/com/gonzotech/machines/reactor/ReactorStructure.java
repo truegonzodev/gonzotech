@@ -487,17 +487,18 @@ public final class ReactorStructure {
         return level instanceof ServerLevel server && controllerAt(server, pos) != null;
     }
 
-    /** Per-port heat output follows the integrated node's nominal throughput and factor. */
+    /**
+     * Выдача реактора на один вывод — 16 364 GTH/т (0.3.250): потолок самого
+     * реактора, а не узла. Экранированный узел в обшивке — формовочный блок,
+     * обозначающий вывод тепла; дальше ограничивают только трубы, и вторая
+     * независимая сеть на другом выводе получает свой собственный потолок.
+     */
     public static long gthPortLimit(Level level, BlockPos pos) {
         if (level == null || pos == null || !level.hasChunkAt(pos)) return 0L;
         BlockState state = level.getBlockState(pos);
         if (!(state.getBlock() instanceof PipeCarrier carrier)
             || !carrier.carries(state, PipeType.HEAT)) return 0L;
-        long base = carrier.throughputLimit(state, PipeType.HEAT);
-        double factor = carrier.throughputFactor(state, PipeType.HEAT);
-        if (base <= 0L || !Double.isFinite(factor) || factor <= 0.0D) return 0L;
-        double scaled = base * factor;
-        return scaled >= Long.MAX_VALUE ? Long.MAX_VALUE : Math.max(1L, (long) Math.floor(scaled));
+        return com.gonzotech.machines.energy.MachineDefs.REACTOR_GTH_PER_PORT_MILLI;
     }
 
     private static void indexStructure(ServerLevel level, BlockPos controller, BlockPos min, BlockPos max) {

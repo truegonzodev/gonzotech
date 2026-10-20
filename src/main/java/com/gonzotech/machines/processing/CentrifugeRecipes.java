@@ -77,7 +77,15 @@ public final class CentrifugeRecipes {
         explicit(main(vanilla(Items.EMERALD), 2), List.of(block(Blocks.EMERALD_ORE), block(Blocks.DEEPSLATE_EMERALD_ORE)),
             b(vanilla(Items.SLIME_BALL), 300), b(dust("aluminum_dust"), 200), none()),
         explicit(main(vanilla(Items.QUARTZ), 3), List.of(block(Blocks.NETHER_QUARTZ_ORE)),
-            b(vanilla(Items.AMETHYST_SHARD), 300), b(nugget("copper_nugget"), 50), none())
+            b(vanilla(Items.AMETHYST_SHARD), 300), b(nugget("copper_nugget"), 50), none()),
+
+        // Переработка отработки (0.3.250): разделение шлаков измельчения ТВЭЛов.
+        // Крайне опасные шлаки дают больше и включают оксид циркония.
+        explicit(main(modItem(ModItems.URANIUM_238), 2), List.of(modItem(ModItems.EXTREMELY_DANGEROUS_SLAG)),
+            b(dust("plutonium_dust"), 450), b(modItem(ModItems.ZIRCONIUM_OXIDE), 350), none()),
+        // В меру опасные — только плутоний и уран-238, в меньших количествах.
+        explicit(main(modItem(ModItems.URANIUM_238)), List.of(modItem(ModItems.MODERATELY_DANGEROUS_SLAG)),
+            b(dust("plutonium_dust"), 250), none(), none())
     );
 
     private CentrifugeRecipes() {

@@ -347,4 +347,10 @@ assert "hotTemperature <= 4800.0" in burn
 assert "hotTemperature <= 7200.0" in burn
 assert "return 4;" in burn
 
-print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening, temperature-tiered burn")
+# 0.3.250: the reactor gives at most 16,364 GTH/t through ONE output port —
+# the shielded node is a forming block marking the heat outlet, not a bottleneck.
+_ver.at_least("0.3.250", "16,364 GTH/t per-port reactor output cap")
+assert "REACTOR_GTH_PER_PORT_MILLI = 16_364 * MILLI" in defs
+assert "MachineDefs.REACTOR_GTH_PER_PORT_MILLI" in structure
+
+print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening, temperature-tiered burn, per-port output cap")

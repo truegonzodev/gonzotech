@@ -23,6 +23,7 @@ import com.gonzotech.machines.processing.CentrifugeRecipes;
 import com.gonzotech.machines.processing.ChemicalPlantRecipes;
 import com.gonzotech.machines.processing.CrusherRecipes;
 import com.gonzotech.machines.processing.GrinderRecipes;
+import com.gonzotech.machines.processing.ReprocessingRecipes;
 import com.gonzotech.machines.processing.PCFSOZRecipes;
 import com.gonzotech.machines.processing.PressRecipes;
 import com.gonzotech.machines.processing.ProcessingRecipeDisplay;
@@ -75,6 +76,7 @@ public final class MachineJeiRecipes {
             PCFSOZRecipes.displayRecipes(), 62, 35, FOUR_OUTPUT_SLOTS, List.of());
         addItemProcessor(recipes, MachineJeiCategories.SECOND_GRINDER,
             GrinderRecipes.displayRecipes(), 44, 35, new int[][] {{116, 35}}, List.of());
+        addReprocessingRecipes(recipes);
         addPressRecipes(recipes);
         addAlloyRecipes(recipes);
         addChemicalPlantRecipes(recipes);
@@ -184,6 +186,12 @@ public final class MachineJeiRecipes {
                     operationEnergyTooltip((long) SecondTierDefs.GRINDER_GTU_MILLI_PER_TICK
                         * SecondTierDefs.GRINDER_TICKS, false)),
                 gauge(63, 36, 50, 14, barTexture("bar_smelting"), horizontal, produce,
+                    durationTooltip("grinding", SecondTierDefs.GRINDER_TICKS)));
+            case "reprocessing_grinder" -> List.of(
+                gauge(8, 17, 16, 52, gtu, vertical, consume,
+                    operationEnergyTooltip((long) SecondTierDefs.GRINDER_GTU_MILLI_PER_TICK
+                        * SecondTierDefs.GRINDER_TICKS, false)),
+                gauge(63, 35, 50, 14, barTexture("bar_smelting"), horizontal, produce,
                     durationTooltip("grinding", SecondTierDefs.GRINDER_TICKS)));
             default -> List.of();
         };
@@ -484,6 +492,27 @@ public final class MachineJeiRecipes {
             }
             target.get(definition.id()).add(new MachineJeiRecipe(
                 recipeId(definition, display.id()), slots, notes, processorGauges(definition.id())));
+        }
+    }
+
+    /** Измельчитель отработки: два входа (ТВЭЛ и корпус) и два выхода. */
+    private static void addReprocessingRecipes(Map<String, List<MachineJeiRecipe>> target) {
+        for (ProcessingRecipeDisplay display : ReprocessingRecipes.displayRecipes()) {
+            List<List<ItemStack>> inputSlots = display.inputSlots();
+            if (inputSlots.size() < 2) continue;
+            List<MachineJeiRecipe.Slot> slots = new ArrayList<>();
+            slots.add(MachineJeiRecipe.items(INPUT, 35, 26, inputSlots.get(0)));
+            slots.add(MachineJeiRecipe.items(INPUT, 35, 44, inputSlots.get(1)));
+            List<ProcessingRecipeDisplay.Output> outputs = display.outputs();
+            for (int index = 0; index < outputs.size() && index < 2; index++) {
+                int[] position = index == 0 ? new int[] {116, 26} : new int[] {116, 44};
+                ProcessingRecipeDisplay.Output output = outputs.get(index);
+                slots.add(MachineJeiRecipe.item(OUTPUT, position[0], position[1], output.stack())
+                    .withChance(output.chancePermille()));
+            }
+            target.get(MachineJeiCategories.REPROCESSING_GRINDER.id()).add(new MachineJeiRecipe(
+                recipeId(MachineJeiCategories.REPROCESSING_GRINDER, display.id()), slots, List.of(),
+                processorGauges(MachineJeiCategories.REPROCESSING_GRINDER.id())));
         }
     }
 

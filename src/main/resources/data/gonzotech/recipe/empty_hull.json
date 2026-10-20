@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "gonzotech:zirconium_plate",
+    "L": "gonzotech:lead_ingot"
+  },
+  "pattern": [
+    "PLP",
+    "L L",
+    "PLP"
+  ],
+  "result": {
+    "id": "gonzotech:empty_hull",
+    "count": 1
+  },
+  "group": "empty_hull"
+}

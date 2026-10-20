@@ -1,0 +1,56 @@
+package com.gonzotech.machines.client;
+
+import com.gonzotech.core.text.GtUnits;
+import com.gonzotech.machines.energy.MachineDefs;
+import com.gonzotech.machines.energy.SecondTierDefs;
+import com.gonzotech.machines.menu.ReprocessingGrinderMenu;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+
+import java.util.List;
+
+/**
+ * Измельчитель отработки (0.3.250). Листы — пара bg/fg по общему соглашению;
+ * классический лист пока заглушка-копия измельчителя под слоты 2×2 (финальную
+ * графику рисует автор).
+ */
+public final class ReprocessingGrinderScreen extends MachineScreen<ReprocessingGrinderMenu> {
+
+    public ReprocessingGrinderScreen(ReprocessingGrinderMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
+    }
+
+    @Override
+    protected ResourceLocation backgroundTexture() {
+        return machineGui("reprocessing_grinder_gui_bg.png", "reprocessing_grinder_gui_bg_neo.png");
+    }
+
+    @Override
+    protected ResourceLocation foregroundTexture() {
+        return machineGui("reprocessing_grinder_gui.png", "reprocessing_grinder_gui_neo.png");
+    }
+
+    @Override
+    protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
+        int capacity = MachineDefs.toUnits(SecondTierDefs.GRINDER_GTU_CAPACITY);
+        int gtuX = x + 8;
+        int barY = y + 17;
+        int progressX = x + 63;
+        int progressY = y + 35;
+        float gtu = capacity == 0 ? 0f : (float) menu.gtu() / capacity;
+        float progress = menu.grindTotal() == 0 ? 0f : (float) menu.grindProgress() / menu.grindTotal();
+        drawVBarTex(g, gtuX, barY, 16, 52, gtu, BAR_GTU);
+        drawHBarTex(g, progressX, progressY, 50, 14, progress, BAR_SMELTING);
+
+        if (inRect(mouseX, mouseY, gtuX, barY, 16, 52)) {
+            g.renderComponentTooltip(font, List.of(
+                GtUnits.gtuPair(menu.gtu(), capacity)), mouseX, mouseY);
+        } else if (inRect(mouseX, mouseY, progressX, progressY, 50, 14)) {
+            g.renderComponentTooltip(font, List.of(
+                Component.translatable("gui.gonzotech.grinder.grinding_progress", menu.grindProgressPercent())),
+                mouseX, mouseY);
+        }
+    }
+}

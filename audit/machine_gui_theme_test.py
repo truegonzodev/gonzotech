@@ -34,7 +34,7 @@ classic_sheets = {
     path for path in CLASSIC_DIR.glob("*.png")
     if path.name.endswith(("_gui.png", "_gui_bg.png")) and dimensions(path) == (512, 512)
 }
-assert len(classic_sheets) == 64, f"expected 64 512px classic sheets, found {len(classic_sheets)}"
+assert len(classic_sheets) == 66, f"expected 66 512px classic sheets, found {len(classic_sheets)}"
 filter_classic = {
     "item_filter_gui.png": "item_filter_gui_neo.png",
     "second_item_filter_gui.png": "second_item_filter_gui_neo.png",

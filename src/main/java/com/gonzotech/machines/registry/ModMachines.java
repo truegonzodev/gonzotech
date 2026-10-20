@@ -24,6 +24,7 @@ import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
 import com.gonzotech.machines.block.SecondElectricFurnaceBlock;
 import com.gonzotech.machines.block.SolarPanelBlock;
+import com.gonzotech.machines.block.ReprocessingGrinderBlock;
 import com.gonzotech.machines.block.SecondGrinderBlock;
 import com.gonzotech.machines.block.SecondLumberBlock;
 import com.gonzotech.machines.block.SecondPressBlock;
@@ -396,6 +397,10 @@ public final class ModMachines {
     public static final DeferredBlock<SecondGrinderBlock> SECOND_GRINDER =
         BLOCKS.registerBlock("second_grinder", SecondGrinderBlock::new, machineMetal());
 
+    /** Измельчитель отработки (0.3.250): отработанный ТВЭЛ + пустой корпус → шлаки + бочка отходов. */
+    public static final DeferredBlock<ReprocessingGrinderBlock> REPROCESSING_GRINDER =
+        BLOCKS.registerBlock("reprocessing_grinder", ReprocessingGrinderBlock::new, machineMetal());
+
     /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
@@ -661,6 +666,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_GRINDER_ITEM =
         ITEMS.registerSimpleBlockItem("second_grinder", SECOND_GRINDER);
+
+    public static final DeferredItem<BlockItem> REPROCESSING_GRINDER_ITEM =
+        ITEMS.registerSimpleBlockItem("reprocessing_grinder", REPROCESSING_GRINDER);
 
     public static final DeferredItem<BlockItem> SECOND_PRESS_ITEM =
         ITEMS.registerSimpleBlockItem("second_press", SECOND_PRESS);

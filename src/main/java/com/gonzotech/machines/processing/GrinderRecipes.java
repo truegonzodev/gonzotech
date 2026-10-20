@@ -102,6 +102,9 @@ public final class GrinderRecipes {
         put(recipes, Items.MANGROVE_LOG, resinSawdust);
         put(recipes, Items.STRIPPED_MANGROVE_LOG, resinSawdust);
 
+        // Отработка (0.3.250): отработанный ТВЭЛ измельчается в крайне опасные шлаки.
+        put(recipes, ModItems.DEPRESSED_UF_TVEL.get(), ModItems.EXTREMELY_DANGEROUS_SLAG.get());
+
         return Map.copyOf(recipes);
     }
 

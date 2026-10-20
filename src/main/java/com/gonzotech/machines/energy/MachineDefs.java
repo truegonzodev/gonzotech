@@ -348,6 +348,10 @@ public final class MachineDefs {
      */
     public static final int REACTOR_GTH_CAPACITY_PER_ZONE_SIDE = 5_484;
     public static final double REACTOR_GTH_CAPACITY_ZONE_DIVISOR = 2.3;
+    /** Выдача реактора I поколения на ОДИН вывод: 16 364 GTH/т (0.3.250, автор).
+     *  Потолок самого реактора: экранированный узел в обшивке — формовочный блок
+     *  обозначающий вывод тепла, своей пропускной способностью вывод не капает. */
+    public static final int REACTOR_GTH_PER_PORT_MILLI = 16_364 * MILLI;
     /** Предохранитель: не более восьми BFS-маршрутов выдачи GTH за тик. */
     public static final int REACTOR_MAX_OUTPUT_ROUTE_ATTEMPTS = 8;
     /** Частота перепроверки суммарной загрузки чехлов, тиков. */

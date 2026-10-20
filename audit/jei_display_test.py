@@ -18,7 +18,7 @@ expected_categories = {
     "third_silicon_factory", "third_fermentation_vat", "third_wort_kettle",
     "third_distiller", "third_rectifier", "third_dispensing_tap", "firebox",
     "second_nuclear_firebox", "boiler", "stirling_generator", "second_steamgen_core",
-    "first_turbine_rotor", "crimson_obsidian",
+    "first_turbine_rotor", "crimson_obsidian", "reprocessing_grinder",
 }
 
 categories = (JAVA / "integration/jei/MachineJeiCategories.java").read_text(encoding="utf-8")
@@ -31,7 +31,7 @@ assert category_ids == expected_categories, (
     f"JEI categories differ: missing={expected_categories - category_ids}, "
     f"extra={category_ids - expected_categories}"
 )
-assert len(category_fields) == 22 and len(text_fields) == 1
+assert len(category_fields) == 23 and len(text_fields) == 1
 
 all_block = categories.split("public static final List<Definition> ALL = List.of(", 1)[1].split(");", 1)[0]
 listed_fields = set(re.findall(r"\b[A-Z][A-Z0-9_]*\b", all_block))
@@ -39,7 +39,7 @@ assert listed_fields == {field for field, _ in category_fields + text_fields}, "
 
 textures = re.findall(
     r'define(?:Aligned)?\(\s*"[a-z0-9_]+"\s*,\s*"([a-z0-9_]+)"', categories)
-assert len(textures) == 22 and len(set(textures)) == len(textures)
+assert len(textures) == 23 and len(set(textures)) == len(textures)
 assert "CATEGORY_HEIGHT = 167" in categories
 assert 'return define(id, texture, station, 128, 127, CATEGORY_HEIGHT, 1);' in categories
 assert '"second_alloy_foundry", "alloy_foundry", () -> ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get(),\n        128, 128, 166, 0' in categories

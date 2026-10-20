@@ -26,6 +26,7 @@ import com.gonzotech.machines.block.entity.SolarPanelBlockEntity;
 import com.gonzotech.machines.block.entity.SecondAccumulatorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondCobbleGeneratorBlockEntity;
 import com.gonzotech.machines.block.entity.SecondElectricFurnaceBlockEntity;
+import com.gonzotech.machines.block.entity.ReprocessingGrinderBlockEntity;
 import com.gonzotech.machines.block.entity.SecondGrinderBlockEntity;
 import com.gonzotech.machines.block.entity.SecondLumberBlockEntity;
 import com.gonzotech.machines.block.entity.SecondPressBlockEntity;
@@ -139,6 +140,10 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<SecondGrinderBlockEntity>> SECOND_GRINDER =
         BLOCK_ENTITIES.register("second_grinder", () -> new BlockEntityType<>(
             SecondGrinderBlockEntity::new, false, ModMachines.SECOND_GRINDER.get()));
+
+    public static final Supplier<BlockEntityType<ReprocessingGrinderBlockEntity>> REPROCESSING_GRINDER =
+        BLOCK_ENTITIES.register("reprocessing_grinder", () -> new BlockEntityType<>(
+            ReprocessingGrinderBlockEntity::new, false, ModMachines.REPROCESSING_GRINDER.get()));
 
     public static final Supplier<BlockEntityType<SecondLumberBlockEntity>> SECOND_LUMBER =
         BLOCK_ENTITIES.register("second_lumber", () -> new BlockEntityType<>(
