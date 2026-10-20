@@ -60,17 +60,19 @@ public final class ReactorFuelSheathBlockEntity extends BlockEntity implements C
     }
 
     /**
-     * Одна единица прочности в секунду на каждый топливный ТВЭЛ. Кончивший
-     * ТВЭЛ превращается в отработанный (компонент прочности — как у инструментов).
+     * 1–4 единицы прочности в секунду на каждый топливный ТВЭЛ (ступени от
+     * температуры шкалы, 0.3.249). Кончившийся ТВЭЛ превращается в
+     * отработанный (компонент прочности — как у инструментов).
      */
-    public boolean ageFuel() {
+    public boolean ageFuel(int damagePerSecond) {
+        int step = Math.max(1, damagePerSecond);
         boolean changed = false;
         for (int slot = 0; slot < fuelItems.size(); slot++) {
             ItemStack stack = fuelItems.get(slot);
             if (!stack.is(ModItems.UF_TVEL.get())) continue;
             int maxDurability = stack.getMaxDamage();
             if (maxDurability <= 0) continue;
-            int damage = stack.getDamageValue() + 1;
+            int damage = stack.getDamageValue() + step;
             if (damage >= maxDurability) {
                 fuelItems.set(slot, new ItemStack(ModItems.DEPRESSED_UF_TVEL.get()));
             } else {

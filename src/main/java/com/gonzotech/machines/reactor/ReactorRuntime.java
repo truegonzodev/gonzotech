@@ -267,10 +267,11 @@ public final class ReactorRuntime {
         if (drainParasiticLoss()) changed = true;
         if (pushGth(level, gameTime)) changed = true;
         if (valveVentTick(level, panel)) changed = true;
-        // ТВЭЛы тикают на работающей реакции: на холодном простое стержни не стареют.
+        // ТВЭЛы тикают на работающей реакции: на холодном простое стержни не
+        // стареют. Расход — ступенями от температуры шкалы (0.3.249).
         if (generationRate > 0.0 && ++fuelAgeTicks >= 20) {
             fuelAgeTicks = 0;
-            if (ReactorFuelStorage.ageLoadedFuel(level, panel)) changed = true;
+            if (ReactorFuelStorage.ageLoadedFuel(level, panel, fuelBurnRate(hotNow))) changed = true;
         }
         if (changed) panel.setChanged();
     }
@@ -364,6 +365,19 @@ public final class ReactorRuntime {
         if (gth.isEmpty()) return false;
         long lossMilli = (long) (PARASITIC_GTH_PER_TICK * MachineDefs.MILLI);
         return gth.extract(lossMilli, false) > 0L;
+    }
+
+    /**
+     * Расход топлива от температуры шкалы (0.3.249, идея автора): 0–2400 °C —
+     * 1 прочность/с, 2400–4800 — 2, 4800–7200 — 3, 7200–10 000 — 4. Малый
+     * горячий реактор жжёт стержни быстрее большого холодного на том же
+     * выходе; «посиделки на 9000 °C» тают в 4 раза быстрее.
+     */
+    public static int fuelBurnRate(double hotTemperature) {
+        if (!Double.isFinite(hotTemperature) || hotTemperature <= 2400.0) return 1;
+        if (hotTemperature <= 4800.0) return 2;
+        if (hotTemperature <= 7200.0) return 3;
+        return 4;
     }
 
     /**

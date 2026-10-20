@@ -28,7 +28,17 @@ docs = (ROOT / "docs/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
 
 # Inventory dose is rebuilt after the tick, so direct induced activity is counted once.
 assert "double totalNzt = 0.0D;" in system
-assert "totalNzt, INVENTORY_TO_CHUNK_RATE * inventoryContourFactor" in system
+# 0.3.249 (idea of the author): induced activity self-discharges to a ~10 mZt
+# plateau (the higher the dose the harder the fall), and the inventory cannot
+# contaminate the chunk above the strongest stack's own emission — the
+# "items -> chunk -> items" loop no longer amplifies. The author's report:
+# a chunk above 30 mZt plus 2+ occupied slots used to be a 100% infinite dupe.
+_ver.at_least("0.3.249", "induced plateau discharge and strongest-stack chunk cap")
+assert "INVENTORY_TO_CHUNK_RATE * inventoryContourFactor * INVENTORY_TRANSFER_EFFICIENCY" in system
+assert "double inventoryTarget = Math.min(totalNzt, strongestStackNzt);" in system
+assert "INDUCED_PLATEAU = 10.0 * RadUnits.MILLI" in item_rad
+assert "PLATEAU_DISCHARGE = 0.5" in item_rad
+assert "plateauDischarge(next)" in item_rad
 assert "double inventoryContourFactor = tracing || totalNzt > contam" in system
 assert "RadSources.emissionDeep(stack);" in system
 

@@ -82,8 +82,8 @@ assert "stack.is(ModItems.UF_TVEL.get()) || stack.is(ModItems.DEPRESSED_UF_TVEL.
 assert "private static int countActiveTvels(" in storage
 assert "return countActiveTvels(collectFuelItems(" in storage
 assert "public static boolean ageLoadedFuel(" in storage
-assert "sheath.ageFuel()" in storage
-assert "public boolean ageFuel()" in sheath_be
+assert "sheath.ageFuel(damagePerSecond)" in storage
+assert "public boolean ageFuel(int damagePerSecond)" in sheath_be
 assert "fuelItems.set(slot, new ItemStack(ModItems.DEPRESSED_UF_TVEL.get()))" in sheath_be
 assert "stack.setDamageValue(damage)" in sheath_be
 assert "!stack.isEmpty() && !stack.is(ModItems.UF_TVEL.get())" in sheath_be  # GUI still refuses spent insert

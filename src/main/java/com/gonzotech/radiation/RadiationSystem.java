@@ -84,9 +84,14 @@ public final class RadiationSystem {
     /** Предметы фонят от чанка только если он ОЧЕНЬ горячий (п.4: >30mZt). */
     private static final double ITEM_FROM_CHUNK_MIN = 30.0 * RadUnits.MILLI;
     /** Доля текущей полной эмиссии инвентаря, уходящая в чанк за секунду как
-     *  часть оставшейся разницы до суммы инвентаря. Цель не ограничивается
-     *  эмиссией сильнейшего стака. */
+     *  часть оставшейся разницы до ЦЕЛИ. С 0.3.249 цель переноса — не сумма
+     *  инвентаря, а эмиссия СИЛЬНЕЙШЕГО стака: предметы инвентаря не могут
+     *  заразить чанк сильнее значения, которое они выдают (идея автора:
+     *  плато по самому сильному источнику, сильный источник не греет чанк
+     *  выше себя). */
     private static final double INVENTORY_TO_CHUNK_RATE = 0.01;
+    /** Погрешность передачи в меньшую сторону (0.3.249): в чанк уходит 95 % расчёта. */
+    private static final double INVENTORY_TRANSFER_EFFICIENCY = 0.95;
     /** Ставка «контейнеры/обычные предметы в чанке → чанк»: 1% оставшейся
      *  разницы с суммарной эмиссией за каждую секунду сканирования. */
     private static final double CHEST_TO_CHUNK_RATE = 0.01;
@@ -267,6 +272,7 @@ public final class RadiationSystem {
         // верхний стак входит ровно раз; виртуальная наведёнка активной руки
         // подменяет старый NBT, не записываясь в carried stack во время use.
         double totalNzt = 0.0D;
+        double strongestStackNzt = 0.0D;
         for (List<ItemStack> part : compartments) {
             for (ItemStack stack : part) {
                 double stackEmission = RadSources.emissionDeep(stack);
@@ -279,7 +285,9 @@ public final class RadiationSystem {
                                 * Math.max(1, stack.getCount());
                     }
                 }
-                totalNzt += Math.max(0.0D, stackEmission);
+                double clampedEmission = Math.max(0.0D, stackEmission);
+                totalNzt += clampedEmission;
+                if (clampedEmission > strongestStackNzt) strongestStackNzt = clampedEmission;
             }
         }
 
@@ -379,8 +387,13 @@ public final class RadiationSystem {
         double contam = data.contaminationOf(chunkKey);
         double inventoryContourFactor = tracing || totalNzt > contam
                 ? Containment.factor(level, player.blockPosition()) : 1.0D;
+        // 0.3.249: чанк не может быть заражён инвентарём сильнее значения,
+        // которое выдаёт сильнейший стак (цель — не вся сумма), и передача
+        // теряет 5 %: петля «предметы → чанк → предметы» больше не набирает силу.
+        double inventoryTarget = Math.min(totalNzt, strongestStackNzt);
         double inventoryTransfer = transferTowardChunk(
-                contam, totalNzt, INVENTORY_TO_CHUNK_RATE * inventoryContourFactor);
+                contam, inventoryTarget,
+                INVENTORY_TO_CHUNK_RATE * inventoryContourFactor * INVENTORY_TRANSFER_EFFICIENCY);
         if (inventoryTransfer > 0.0) {
             data.addContamination(level, chunkKey, inventoryTransfer, "радиоактивный инвентарь игрока → чанк");
         }

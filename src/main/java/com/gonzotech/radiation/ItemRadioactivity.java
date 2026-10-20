@@ -29,6 +29,10 @@ public final class ItemRadioactivity {
     private static final int PER_ITEM_MODEL = 1;
     public static final double GROWTH = 1.25;
     public static final double INDUCED_CAP = 5.0 * RadUnits.UNIT;
+    /** Плато самоподдерживающейся наведёнки (0.3.249): эффективный уровень ~10 mZt. */
+    public static final double INDUCED_PLATEAU = 10.0 * RadUnits.MILLI;
+    /** Отдача сверх плато: половина избытка гасится каждую секунду (0.3.249). */
+    public static final double PLATEAU_DISCHARGE = 0.5;
     public static final double CLEANUP_FLOOR = 1.0;
 
     private ItemRadioactivity() {
@@ -89,13 +93,35 @@ public final class ItemRadioactivity {
         double intrinsic = stack.getItem() instanceof CarrierItem
                 ? 0.0 : RadSources.emissionOfStack(stack);
         double target = Math.min(Math.max(0.0, sourceNzt - intrinsic) / count, INDUCED_CAP);
+        double next;
         if (hasSource && target >= 1.0 && factor > 0.0) {
-            if (current > target) return current / GROWTH;
-            double seeded = Math.max(current, 1.0 / count);
-            double next = seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor;
-            return Math.min(next, target);
+            if (current > target) {
+                next = current / GROWTH;
+            } else {
+                double seeded = Math.max(current, 1.0 / count);
+                next = Math.min(
+                    seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor,
+                    target);
+            }
+        } else {
+            next = current > 0.0 ? current / GROWTH : 0.0;
         }
-        return current > 0.0 ? current / GROWTH : 0.0;
+        return plateauDischarge(next);
+    }
+
+    /**
+     * Саморазряд наведёнки (0.3.249, идея автора): чем больше доза, тем выше
+     * отдача. Всё сверх {@link #INDUCED_PLATEAU} гасится на
+     * {@link #PLATEAU_DISCHARGE} за секунду — даже предмет с 5 Zt наведёнки за
+     * единицы секунд остывает до плато ~10 mZt, и вечная нейтральная петля
+     * «предметы держат друг друга на любом уровне» перестаёт существовать.
+     * Ниже плато действуют прежние правила (рост к цели, затухание без
+     * источника): слабый источник держит цель ниже плато, плато не подмешивает.
+     */
+    private static double plateauDischarge(double value) {
+        return value > INDUCED_PLATEAU
+                ? INDUCED_PLATEAU + (value - INDUCED_PLATEAU) * (1.0 - PLATEAU_DISCHARGE)
+                : value;
     }
 
     /**

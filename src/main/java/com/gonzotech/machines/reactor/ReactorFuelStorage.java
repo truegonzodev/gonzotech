@@ -85,12 +85,13 @@ public final class ReactorFuelStorage {
             && (stack.is(ModItems.UF_TVEL.get()) || stack.is(ModItems.DEPRESSED_UF_TVEL.get()));
     }
 
-    /** Adds one durability point per loaded TVEL; exhausted rods become spent TVELs. */
-    public static boolean ageLoadedFuel(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+    /** Adds the temperature-tiered damage (1–4/s since 0.3.249) per loaded TVEL; exhausted rods become spent TVELs. */
+    public static boolean ageLoadedFuel(ServerLevel level, ReactorControlPanelBlockEntity panel,
+                                        int damagePerSecond) {
         if (level == null || panel == null || !panel.isFormedController()) return false;
         boolean changed = false;
         for (ReactorFuelSheathBlockEntity sheath : collectSheaths(level, panel.min(), panel.max())) {
-            changed |= sheath.ageFuel();
+            changed |= sheath.ageFuel(damagePerSecond);
         }
         return changed;
     }

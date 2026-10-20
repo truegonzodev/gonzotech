@@ -49,7 +49,11 @@ assert "double blockEmission = blockEmission(blockItem.getBlock());" in rad
 assert "convergePlacedLikeEntitySource(level, chunkKey, floor.blockLikeTarget(), floorElapsed)" in rad
 assert "Containment.factor(level, pos)" in rad
 assert "INVENTORY_TO_CHUNK_RATE = 0.01" in rad
-assert "totalNzt, INVENTORY_TO_CHUNK_RATE * inventoryContourFactor" in rad
+# 0.3.249: the inventory cannot contaminate the chunk above the strongest
+# stack's emission (target is not the sum) and every transfer loses 5%.
+assert "INVENTORY_TO_CHUNK_RATE * inventoryContourFactor * INVENTORY_TRANSFER_EFFICIENCY" in rad
+assert "double inventoryTarget = Math.min(totalNzt, strongestStackNzt);" in rad
+assert "INVENTORY_TRANSFER_EFFICIENCY = 0.95" in rad
 assert "double totalNzt = 0.0D;" in rad             # post-tick full sum; no top-level induced double count
 assert "CHEST_TO_CHUNK_RATE = 0.01" in rad
 assert "CHEST_TO_CHUNK_RATE * contourFactor" in rad # normal containers/final floor items

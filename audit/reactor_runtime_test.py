@@ -196,9 +196,10 @@ assert "runtime.configure(max.getX() - min.getX() - 1, heatPorts, waterPorts, va
 assert "UF_TVEL_DURABILITY = 12_608" in read("core/registry/ModItems.java")
 assert "props.stacksTo(1).durability(UF_TVEL_DURABILITY)" in read("core/registry/ModItems.java")
 assert "generationRate > 0.0 && ++fuelAgeTicks >= 20" in tick
-assert "public static boolean ageLoadedFuel(" in read("machines/reactor/ReactorFuelStorage.java")
-assert "public boolean ageFuel()" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
-assert "stack.getDamageValue() + 1" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
+assert "ageLoadedFuel(level, panel, fuelBurnRate(hotNow))" in tick
+assert "public static boolean ageLoadedFuel(ServerLevel level, ReactorControlPanelBlockEntity panel," in read("machines/reactor/ReactorFuelStorage.java")
+assert "public boolean ageFuel(int damagePerSecond)" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
+assert "stack.getDamageValue() + step" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
 assert "new ItemStack(ModItems.DEPRESSED_UF_TVEL.get())" in read("machines/block/entity/ReactorFuelSheathBlockEntity.java")
 
 # 0.3.244: the water gauge ties into heat exchange and output (explicit game
@@ -335,4 +336,15 @@ storage = read("machines/reactor/ReactorFuelStorage.java")
 assert "dropPos" in storage and "int capacity = sheaths.size() * ReactorFuelSheathBlockEntity.MAX_TVEL_SLOTS;" in storage
 assert "panel.getBlockPos(), panel.copyLegacyFuelItems()" in structure
 
-print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening")
+# 0.3.249: TVEL burn scales with the gauge temperature in the author's linear
+# steps: 0-2400 C -> 1 durability/s, 2400-4800 -> 2, 4800-7200 -> 3,
+# 7200-10000 -> 4. A small hot reactor eats rods faster than a big cool one
+# at the same output; sitting at 9000 C burns 4/s.
+_ver.at_least("0.3.249", "temperature-tiered TVEL burn rate")
+burn = method(runtime, "public static int fuelBurnRate(")
+assert "hotTemperature <= 2400.0" in burn
+assert "hotTemperature <= 4800.0" in burn
+assert "hotTemperature <= 7200.0" in burn
+assert "return 4;" in burn
+
+print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening, temperature-tiered burn")
