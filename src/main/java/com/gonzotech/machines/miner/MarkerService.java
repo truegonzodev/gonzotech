@@ -84,6 +84,27 @@ public final class MarkerService extends SavedData {
         return markers.values();
     }
 
+    /** Удалить метки по позиции (слом Плотника / сброс кнопкой внутри Плотника). */
+    public boolean remove(ServerLevel level, BlockPos pos) {
+        boolean changed = markers.values().removeIf(marker -> marker.pos().equals(pos));
+        if (changed) {
+            setDirty();
+            MarkerNetwork.broadcast(level, this);
+        }
+        return changed;
+    }
+
+    /** Удалить метку по id. */
+    public boolean remove(ServerLevel level, long id) {
+        MinerMarker removed = markers.remove(id);
+        if (removed != null) {
+            setDirty();
+            MarkerNetwork.broadcast(level, this);
+            return true;
+        }
+        return false;
+    }
+
     /** Добавить метку; ttl=0 — бессрочно. Возвращает созданную метку. */
     public MinerMarker add(ServerLevel level, BlockPos pos, MinerMarker.Kind kind, long ttl, List<Item> ores) {
         long id = nextId++;

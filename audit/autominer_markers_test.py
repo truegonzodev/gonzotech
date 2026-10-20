@@ -52,6 +52,7 @@ assert "SLOT_OFFSET = 3F * PX" in ren, "слот дисплея не в (3,3) к
 assert "ORE_CYCLE_TICKS = 60L" in ren, "листание руд != 60 тиков (3 с)"
 assert "ItemDisplayContext.GUI" in ren, "руда не рисуется изометрией GUI"
 assert "AFTER_TRANSLUCENT_BLOCKS" in ren, "вымпелы не после полупрозрачных блоков"
+assert "MAX_DISTANCE_SQR = 512.0 * 512.0" in ren, "отсечение не 32 чанка (512 блоков)"
 
 # ── 4. Виды меток и сеть ──
 kind = (ROOT / "src/main/java/com/gonzotech/machines/miner/MinerMarker.java").read_text(encoding="utf-8")

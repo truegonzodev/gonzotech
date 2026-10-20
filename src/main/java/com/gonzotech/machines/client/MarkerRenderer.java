@@ -61,8 +61,8 @@ public final class MarkerRenderer {
 
     /** Масштаб изометрии руды под слот 14×14 (тюнится по вкусу). */
     private static final float ORE_SCALE = 2.6F;
-    /** Дистанция отсечения, блоков. */
-    private static final double MAX_DISTANCE_SQR = 128.0 * 128.0;
+    /** Дистанция отсечения — 32 чанка = 512 блоков (маркер не виден на любой дистанции). */
+    private static final double MAX_DISTANCE_SQR = 512.0 * 512.0;
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
