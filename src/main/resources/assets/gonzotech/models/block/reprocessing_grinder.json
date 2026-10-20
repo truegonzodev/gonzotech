@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/cube_bottom_top",
-  "textures": {
-    "top": "gonzotech:block/second/reprocessing_grinder_top",
-    "bottom": "gonzotech:block/second/reprocessing_grinder_top",
-    "side": "gonzotech:block/second/reprocessing_grinder"
-  }
-}

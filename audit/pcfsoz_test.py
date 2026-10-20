@@ -58,8 +58,16 @@ assert "PCFSOZ_HOT_WATER_CAPACITY" in screen and "PCFSOZ_GTU_CAPACITY" in screen
 # ── рецепты разделения: жёлтый кек -> U-238 + 10 % U-235 ──
 rec = (MAIN / "com/gonzotech/machines/processing/PCFSOZRecipes.java").read_text()
 assert "YELLOW_CAKE.get()" in rec and "URANIUM_238.get()" in rec
-assert "new Byproduct(() -> ModItems.URANIUM_235.get(), 100)" in rec  # 10 %
-assert "random.nextInt(CHANCE_SCALE) < chancePermille" in rec        # единственный бросок
+assert "Byproduct.of(() -> ModItems.URANIUM_235.get(), 100)" in rec  # 10 %
+assert "random.nextInt(CHANCE_SCALE) >= chancePermille" in rec       # единственный бросок
+# 0.3.253 (автор): шлаки измельчения ТВЭЛов разделяются ИМЕННО в ПЦФСОЗ.
+assert "EXTREMELY_DANGEROUS_SLAG.get())" in rec
+assert "Byproduct.ranged(() -> ModItems.URANIUM_238.get(), CHANCE_SCALE, 1, 2)" in rec
+assert "MODERATELY_DANGEROUS_SLAG.get())" in rec
+assert "Byproduct.of(() -> ModItems.DUST_ITEMS.get(\"plutonium_dust\").get(), 150)" in rec
+assert "Byproduct.ranged(() -> ModItems.NUGGET_ITEMS.get(\"plutonium_nugget\").get(), CHANCE_SCALE, 1, 2)" in rec
+assert "public static Byproduct ranged(ItemRef item, int chancePermille, int minCount, int maxCount)" in rec
+assert "item.stack(maxCount)" in rec  # резерв output-слотов по максимуму
 
 # ── жёлтый кек: предмет + пресет радиации ──
 items = (MAIN / "com/gonzotech/core/registry/ModItems.java").read_text()

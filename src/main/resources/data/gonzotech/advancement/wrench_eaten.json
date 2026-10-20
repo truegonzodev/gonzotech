@@ -1,0 +1,22 @@
+{
+  "parent": "gonzotech:root",
+  "display": {
+    "icon": {
+      "id": "gonzotech:wrench"
+    },
+    "title": {
+      "translate": "advancements.gonzotech.wrench_eaten.title"
+    },
+    "description": {
+      "translate": "advancements.gonzotech.wrench_eaten.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "wrench_eaten": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

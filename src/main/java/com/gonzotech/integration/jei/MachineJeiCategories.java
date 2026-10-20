@@ -25,8 +25,8 @@ public final class MachineJeiCategories {
         "third_pcfsoz", "pcfsoz", () -> ModMachines.PCFSOZ_ITEM.get());
     public static final Definition SECOND_GRINDER = define(
         "second_grinder", "second_grinder", () -> ModMachines.SECOND_GRINDER_ITEM.get());
-    public static final Definition REPROCESSING_GRINDER = define(
-        "reprocessing_grinder", "reprocessing_grinder", () -> ModMachines.REPROCESSING_GRINDER_ITEM.get());
+    public static final Definition THIRD_GRINDER = define(
+        "third_grinder", "third_grinder", () -> ModMachines.THIRD_GRINDER_ITEM.get());
     public static final Definition SECOND_PRESS = define(
         "second_press", "second_press", () -> ModMachines.SECOND_PRESS_ITEM.get());
     public static final Definition SECOND_ALLOY_FOUNDRY = define(
@@ -74,7 +74,7 @@ public final class MachineJeiCategories {
         SECOND_CENTRIFUGE,
         THIRD_PCFSOZ,
         SECOND_GRINDER,
-        REPROCESSING_GRINDER,
+        THIRD_GRINDER,
         SECOND_PRESS,
         SECOND_ALLOY_FOUNDRY,
         THIRD_CHEMICAL_PLANT,

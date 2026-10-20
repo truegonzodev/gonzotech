@@ -1,8 +1,0 @@
-{
-  "variants": {
-    "facing=north": { "model": "gonzotech:block/reprocessing_grinder" },
-    "facing=east":  { "model": "gonzotech:block/reprocessing_grinder", "y": 90 },
-    "facing=south": { "model": "gonzotech:block/reprocessing_grinder", "y": 180 },
-    "facing=west":  { "model": "gonzotech:block/reprocessing_grinder", "y": 270 }
-  }
-}

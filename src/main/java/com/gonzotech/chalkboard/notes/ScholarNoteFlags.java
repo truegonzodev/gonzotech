@@ -37,6 +37,12 @@ public final class ScholarNoteFlags {
      */
     public static final String SUN_EVENT = "sun_event";
 
+    /**
+     * Игрок СЪЕЛ гаечный ключ (0.3.253, автор) — «Собаку съел в автоматике...».
+     * Навсегда включает мастерство ключа (функции без ключа в руке).
+     */
+    public static final String WRENCH_EATEN = "wrench_eaten";
+
     private ScholarNoteFlags() {
     }
 }

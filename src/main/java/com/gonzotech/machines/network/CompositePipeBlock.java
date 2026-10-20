@@ -227,7 +227,7 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        if (stack.getItem() instanceof WrenchItem) {
+        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
             PipeType part = partAt(state, pos, hit);
             if (part == null) return InteractionResult.PASS;
             if (!level.isClientSide()) {
@@ -235,6 +235,11 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
                 level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
             }
             return InteractionResult.SUCCESS;
+        }
+
+        // Мастерство ключа (0.3.253, автор): поворот пучка без ключа в руке.
+        if (WrenchItem.hasMastery(player) && player.isSecondaryUseActive()) {
+            return CompositePipeBlock.rotateLayerAt(level, pos, state, hit.getLocation());
         }
 
         // Добавление универсальной жидк.трубы: занимает весь FLUID-угол (вода+пар),

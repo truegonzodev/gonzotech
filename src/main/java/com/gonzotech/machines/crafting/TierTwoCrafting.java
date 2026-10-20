@@ -55,8 +55,8 @@ public final class TierTwoCrafting {
         "gonzotech:plate_form",
         "gonzotech:core_form",
         "gonzotech:second_grinder",
-        "gonzotech:reprocessing_grinder",
         "gonzotech:empty_hull",
+        "gonzotech:sandpapy",
         "gonzotech:second_press",
         "gonzotech:second_lumber",
         "gonzotech:second_cobble_generator",
@@ -164,8 +164,8 @@ public final class TierTwoCrafting {
             || item == ModItems.PLATE_FORM.get()
             || item == ModItems.CORE_FORM.get()
             || item == ModMachines.SECOND_GRINDER_ITEM.get()
-            || item == ModMachines.REPROCESSING_GRINDER_ITEM.get()
             || item == ModItems.EMPTY_HULL.get()
+            || item == ModItems.SANDPAPY.get()
             || item == ModMachines.SECOND_PRESS_ITEM.get()
             || item == ModMachines.SECOND_LUMBER_ITEM.get()
             || item == ModMachines.SECOND_COBBLE_GENERATOR_ITEM.get()

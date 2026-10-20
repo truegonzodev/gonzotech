@@ -211,7 +211,7 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
         if (!level.isClientSide() && com.gonzotech.machines.FormedMenus.open(level, pos, player)) {
             return InteractionResult.SUCCESS;
         }
-        if (stack.getItem() instanceof WrenchItem) {
+        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE).next();
                 level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);

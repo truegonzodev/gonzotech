@@ -24,17 +24,17 @@ public final class ReprocessingGrinderScreen extends MachineScreen<ReprocessingG
 
     @Override
     protected ResourceLocation backgroundTexture() {
-        return machineGui("reprocessing_grinder_gui_bg.png", "reprocessing_grinder_gui_bg_neo.png");
+        return machineGui("third_grinder_gui_bg.png", "third_grinder_gui_bg_neo.png");
     }
 
     @Override
     protected ResourceLocation foregroundTexture() {
-        return machineGui("reprocessing_grinder_gui.png", "reprocessing_grinder_gui_neo.png");
+        return machineGui("third_grinder_gui.png", "third_grinder_gui_neo.png");
     }
 
     @Override
     protected void drawMachine(GuiGraphics g, int x, int y, int mouseX, int mouseY) {
-        int capacity = MachineDefs.toUnits(SecondTierDefs.GRINDER_GTU_CAPACITY);
+        int capacity = MachineDefs.toUnits(SecondTierDefs.GRINDER2_GTU_CAPACITY);
         int gtuX = x + 8;
         int barY = y + 17;
         int progressX = x + 63;

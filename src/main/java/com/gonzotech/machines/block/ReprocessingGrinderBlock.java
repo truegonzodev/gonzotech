@@ -34,7 +34,7 @@ public final class ReprocessingGrinderBlock extends MachineBlock {
         Level level, BlockState state, BlockEntityType<T> type
     ) {
         if (level.isClientSide()) return null;
-        return FireboxBlock.createTickerHelper(type, ModBlockEntities.REPROCESSING_GRINDER.get(),
+        return FireboxBlock.createTickerHelper(type, ModBlockEntities.THIRD_GRINDER.get(),
             ReprocessingGrinderBlockEntity::serverTick);
     }
 

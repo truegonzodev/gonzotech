@@ -11,7 +11,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "gonzotech:reprocessing_grinder"
+          "name": "gonzotech:third_grinder"
         }
       ]
     }

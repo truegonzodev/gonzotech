@@ -141,9 +141,9 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("second_grinder", () -> new BlockEntityType<>(
             SecondGrinderBlockEntity::new, false, ModMachines.SECOND_GRINDER.get()));
 
-    public static final Supplier<BlockEntityType<ReprocessingGrinderBlockEntity>> REPROCESSING_GRINDER =
-        BLOCK_ENTITIES.register("reprocessing_grinder", () -> new BlockEntityType<>(
-            ReprocessingGrinderBlockEntity::new, false, ModMachines.REPROCESSING_GRINDER.get()));
+    public static final Supplier<BlockEntityType<ReprocessingGrinderBlockEntity>> THIRD_GRINDER =
+        BLOCK_ENTITIES.register("third_grinder", () -> new BlockEntityType<>(
+            ReprocessingGrinderBlockEntity::new, false, ModMachines.THIRD_GRINDER.get()));
 
     public static final Supplier<BlockEntityType<SecondLumberBlockEntity>> SECOND_LUMBER =
         BLOCK_ENTITIES.register("second_lumber", () -> new BlockEntityType<>(

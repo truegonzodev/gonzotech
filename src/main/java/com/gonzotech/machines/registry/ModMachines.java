@@ -398,8 +398,8 @@ public final class ModMachines {
         BLOCKS.registerBlock("second_grinder", SecondGrinderBlock::new, machineMetal());
 
     /** Измельчитель отработки (0.3.250): отработанный ТВЭЛ + пустой корпус → шлаки + бочка отходов. */
-    public static final DeferredBlock<ReprocessingGrinderBlock> REPROCESSING_GRINDER =
-        BLOCKS.registerBlock("reprocessing_grinder", ReprocessingGrinderBlock::new, machineMetal());
+    public static final DeferredBlock<ReprocessingGrinderBlock> THIRD_GRINDER =
+        BLOCKS.registerBlock("third_grinder", ReprocessingGrinderBlock::new, machineMetal());
 
     /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
@@ -667,8 +667,8 @@ public final class ModMachines {
     public static final DeferredItem<BlockItem> SECOND_GRINDER_ITEM =
         ITEMS.registerSimpleBlockItem("second_grinder", SECOND_GRINDER);
 
-    public static final DeferredItem<BlockItem> REPROCESSING_GRINDER_ITEM =
-        ITEMS.registerSimpleBlockItem("reprocessing_grinder", REPROCESSING_GRINDER);
+    public static final DeferredItem<BlockItem> THIRD_GRINDER_ITEM =
+        ITEMS.registerSimpleBlockItem("third_grinder", THIRD_GRINDER);
 
     public static final DeferredItem<BlockItem> SECOND_PRESS_ITEM =
         ITEMS.registerSimpleBlockItem("second_press", SECOND_PRESS);

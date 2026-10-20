@@ -18,7 +18,7 @@ expected_categories = {
     "third_silicon_factory", "third_fermentation_vat", "third_wort_kettle",
     "third_distiller", "third_rectifier", "third_dispensing_tap", "firebox",
     "second_nuclear_firebox", "boiler", "stirling_generator", "second_steamgen_core",
-    "first_turbine_rotor", "crimson_obsidian", "reprocessing_grinder",
+    "first_turbine_rotor", "crimson_obsidian", "third_grinder",
 }
 
 categories = (JAVA / "integration/jei/MachineJeiCategories.java").read_text(encoding="utf-8")

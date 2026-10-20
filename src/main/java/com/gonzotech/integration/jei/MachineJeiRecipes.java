@@ -187,12 +187,12 @@ public final class MachineJeiRecipes {
                         * SecondTierDefs.GRINDER_TICKS, false)),
                 gauge(63, 36, 50, 14, barTexture("bar_smelting"), horizontal, produce,
                     durationTooltip("grinding", SecondTierDefs.GRINDER_TICKS)));
-            case "reprocessing_grinder" -> List.of(
+            case "third_grinder" -> List.of(
                 gauge(8, 17, 16, 52, gtu, vertical, consume,
-                    operationEnergyTooltip((long) SecondTierDefs.GRINDER_GTU_MILLI_PER_TICK
-                        * SecondTierDefs.GRINDER_TICKS, false)),
+                    operationEnergyTooltip((long) SecondTierDefs.GRINDER2_GTU_MILLI_PER_TICK
+                        * SecondTierDefs.GRINDER2_TICKS, false)),
                 gauge(63, 35, 50, 14, barTexture("bar_smelting"), horizontal, produce,
-                    durationTooltip("grinding", SecondTierDefs.GRINDER_TICKS)));
+                    durationTooltip("grinding", SecondTierDefs.GRINDER2_TICKS)));
             default -> List.of();
         };
     }
@@ -495,8 +495,26 @@ public final class MachineJeiRecipes {
         }
     }
 
-    /** Измельчитель отработки: два входа (ТВЭЛ и корпус) и два выхода. */
+    /**
+     * Измельчитель II: вся таблица измельчителя (один вход/выход, корпуса не
+     * тратятся) плюс рецепт с пустым корпусом (ТВЭЛ + корпус → шлаки + бочка).
+     */
     private static void addReprocessingRecipes(Map<String, List<MachineJeiRecipe>> target) {
+        for (ProcessingRecipeDisplay display : GrinderRecipes.displayRecipes()) {
+            List<List<ItemStack>> inputSlots = display.inputSlots();
+            if (inputSlots.isEmpty()) continue;
+            List<MachineJeiRecipe.Slot> slots = new ArrayList<>();
+            slots.add(MachineJeiRecipe.items(INPUT, 35, 26, inputSlots.getFirst()));
+            List<ProcessingRecipeDisplay.Output> outputs = display.outputs();
+            if (!outputs.isEmpty()) {
+                ProcessingRecipeDisplay.Output output = outputs.getFirst();
+                slots.add(MachineJeiRecipe.item(OUTPUT, 116, 26, output.stack())
+                    .withChance(output.chancePermille()));
+            }
+            target.get(MachineJeiCategories.THIRD_GRINDER.id()).add(new MachineJeiRecipe(
+                recipeId(MachineJeiCategories.THIRD_GRINDER, display.id()), slots, List.of(),
+                processorGauges(MachineJeiCategories.THIRD_GRINDER.id())));
+        }
         for (ProcessingRecipeDisplay display : ReprocessingRecipes.displayRecipes()) {
             List<List<ItemStack>> inputSlots = display.inputSlots();
             if (inputSlots.size() < 2) continue;
@@ -510,9 +528,9 @@ public final class MachineJeiRecipes {
                 slots.add(MachineJeiRecipe.item(OUTPUT, position[0], position[1], output.stack())
                     .withChance(output.chancePermille()));
             }
-            target.get(MachineJeiCategories.REPROCESSING_GRINDER.id()).add(new MachineJeiRecipe(
-                recipeId(MachineJeiCategories.REPROCESSING_GRINDER, display.id()), slots, List.of(),
-                processorGauges(MachineJeiCategories.REPROCESSING_GRINDER.id())));
+            target.get(MachineJeiCategories.THIRD_GRINDER.id()).add(new MachineJeiRecipe(
+                recipeId(MachineJeiCategories.THIRD_GRINDER, display.id()), slots, List.of(),
+                processorGauges(MachineJeiCategories.THIRD_GRINDER.id())));
         }
     }
 

@@ -169,8 +169,7 @@ public final class WrenchHud {
         if (player == null || mc.level == null) return;
         if (mc.options.hideGui) return;
 
-        if (!(player.getMainHandItem().getItem() instanceof WrenchItem)
-            && !(player.getOffhandItem().getItem() instanceof WrenchItem)) {
+        if (!com.gonzotech.machines.item.WrenchItem.isActive(player)) {
             return;
         }
 

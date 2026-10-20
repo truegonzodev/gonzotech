@@ -26,7 +26,7 @@ public final class ReprocessingGrinderMenu extends BaseMachineMenu {
     }
 
     public ReprocessingGrinderMenu(int id, Inventory inventory, ReprocessingGrinderBlockEntity be, ContainerData data) {
-        super(ModMenus.REPROCESSING_GRINDER.get(), id, be, data, MACHINE_SLOTS);
+        super(ModMenus.THIRD_GRINDER.get(), id, be, data, MACHINE_SLOTS);
         this.be = be;
         addSlot(new InputSlot(be, ReprocessingGrinderBlockEntity.SLOT_TVEL_INPUT, 35, 26));
         addSlot(new InputSlot(be, ReprocessingGrinderBlockEntity.SLOT_HULL_INPUT, 35, 44));

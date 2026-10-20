@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public final class GrinderRecipes {
 
-    private static final Map<Item, Item> RECIPES = buildRecipes();
+    private static final Map<Item, Output> RECIPES = buildRecipes();
 
     private GrinderRecipes() {
     }
@@ -29,14 +29,14 @@ public final class GrinderRecipes {
     /** Read-only item recipe view for client recipe integrations. */
     public static java.util.List<ProcessingRecipeDisplay> displayRecipes() {
         java.util.List<ProcessingRecipeDisplay> displays = new java.util.ArrayList<>();
-        java.util.List<Map.Entry<Item, Item>> entries = new java.util.ArrayList<>(RECIPES.entrySet());
+        java.util.List<Map.Entry<Item, Output>> entries = new java.util.ArrayList<>(RECIPES.entrySet());
         entries.sort(java.util.Comparator.comparing(entry ->
             net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()).toString()));
         for (Map.Entry<Item, Item> entry : entries) {
             String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entry.getKey()).toString();
             displays.add(new ProcessingRecipeDisplay(id,
                 java.util.List.of(java.util.List.of(new ItemStack(entry.getKey()))),
-                java.util.List.of(new ProcessingRecipeDisplay.Output(new ItemStack(entry.getValue()), 1_000))));
+                java.util.List.of(new ProcessingRecipeDisplay.Output(entry.getValue().stack(), 1_000))));
         }
 
         java.util.List<ItemStack> wool = new java.util.ArrayList<>();
@@ -59,8 +59,8 @@ public final class GrinderRecipes {
     public static ItemStack find(ItemStack input) {
         if (input.isEmpty()) return null;
         if (input.is(ItemTags.WOOL)) return new ItemStack(Items.STRING, 3);
-        Item output = RECIPES.get(input.getItem());
-        return output == null ? null : new ItemStack(output);
+        Output output = RECIPES.get(input.getItem());
+        return output == null ? null : output.stack();
     }
 
     /** Shared by the machine's GUI slot and every automated insertion path. */
@@ -68,8 +68,8 @@ public final class GrinderRecipes {
         return find(input) != null;
     }
 
-    private static Map<Item, Item> buildRecipes() {
-        Map<Item, Item> recipes = new LinkedHashMap<>();
+    private static Map<Item, Output> buildRecipes() {
+        Map<Item, Output> recipes = new LinkedHashMap<>();
 
         // The material registry is the source of truth: a matching dust must
         // already be registered before an ingot can be accepted by the Grinder.
@@ -105,6 +105,17 @@ public final class GrinderRecipes {
         // Отработка (0.3.250): отработанный ТВЭЛ измельчается в крайне опасные шлаки.
         put(recipes, ModItems.DEPRESSED_UF_TVEL.get(), ModItems.EXTREMELY_DANGEROUS_SLAG.get());
 
+        // 0.3.253 (автор): новые рецепты обоих измельчителей.
+        put(recipes, Items.RAW_IRON, ModItems.CORUNDUM_GRAIN.get());
+        put(recipes, Items.FLINT, ModItems.SILICON_CRUMBS.get());
+        put(recipes, Items.DIAMOND, ModItems.DIAMOND_DUST.get());
+        put(recipes, Items.BREAD, ModItems.THE_PROTO_MASH.get(), 2);
+        put(recipes, Items.ICE, Items.SNOWBALL, 5);
+        put(recipes, Items.PACKED_ICE, Items.SNOWBALL, 5);
+        put(recipes, Items.GLOWSTONE, Items.GLOWSTONE_DUST, 3);
+        put(recipes, Items.NETHER_BRICKS, Items.SOUL_SAND);
+        put(recipes, Items.BLAZE_ROD, Items.BLAZE_POWDER, 3);
+
         return Map.copyOf(recipes);
     }
 
@@ -115,9 +126,21 @@ public final class GrinderRecipes {
         return item.get();
     }
 
-    private static void put(Map<Item, Item> recipes, Item input, Item output) {
-        if (recipes.put(input, output) != null) {
+    private static void put(Map<Item, Output> recipes, Item input, Item output) {
+        put(recipes, input, output, 1);
+    }
+
+    private static void put(Map<Item, Output> recipes, Item input, Item output, int count) {
+        if (count <= 0) throw new IllegalArgumentException("Grinder output count must be positive");
+        if (recipes.put(input, new Output(output, count)) != null) {
             throw new IllegalStateException("Duplicate grinder input: " + input);
+        }
+    }
+
+    /** Выход измельчения: предмет и их число за одну операцию (0.3.253). */
+    private record Output(Item item, int count) {
+        ItemStack stack() {
+            return new ItemStack(item, count);
         }
     }
 }

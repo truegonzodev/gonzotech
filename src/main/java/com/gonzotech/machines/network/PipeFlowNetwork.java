@@ -191,6 +191,32 @@ public final class PipeFlowNetwork {
     }
 
     /** Регистрация всех пакетов. Вызывается из {@code GonzoTechMod#registerPayloads}. */
+    /**
+     * 0.3.253 (автор): статус «мастерства ключа» (съеден однажды) — клиенту,
+     * чтобы подсказки труб и поворот пучков работали без ключа в руке.
+     */
+    public record WrenchMasteryPayload(boolean mastered) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<WrenchMasteryPayload> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "wrench_mastery"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, WrenchMasteryPayload> STREAM_CODEC =
+            StreamCodec.composite(
+                ByteBufCodecs.BOOL, WrenchMasteryPayload::mastered,
+                WrenchMasteryPayload::new);
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /** При входе в мир (реальный статус) и сразу после поедания ключа. */
+    public static void sendWrenchMastery(ServerPlayer player) {
+        var progress = player.getData(com.gonzotech.chalkboard.progress.ModAttachments.CHALKBOARD_PROGRESS.get());
+        boolean mastered = progress.hasNoteFlag(com.gonzotech.chalkboard.notes.ScholarNoteFlags.WRENCH_EATEN);
+        PacketDistributor.sendToPlayer(player, new WrenchMasteryPayload(mastered));
+    }
+
     public static void register(PayloadRegistrar registrar) {
         registrar.playToServer(
             RequestPayload.TYPE,
@@ -251,6 +277,12 @@ public final class PipeFlowNetwork {
             TungstenAbsorberPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() ->
                 com.gonzotech.machines.client.WrenchHud.acceptTungstenAbsorber(payload)));
+
+        registrar.playToClient(
+            WrenchMasteryPayload.TYPE,
+            WrenchMasteryPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                com.gonzotech.machines.item.WrenchItem.setClientMastery(payload.mastered())));
     }
 
     /** Максимальная дистанция (блоков), в пределах которой отвечаем на запрос. */

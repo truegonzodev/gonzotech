@@ -5,7 +5,9 @@ import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.ReprocessingGrinderMenu;
+import com.gonzotech.machines.processing.GrinderRecipes;
 import com.gonzotech.machines.processing.ReprocessingRecipes;
+import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,7 +42,7 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
     private static final int[] INPUT_SLOTS = { SLOT_TVEL_INPUT, SLOT_HULL_INPUT };
     private static final int[] OUTPUT_SLOTS = { SLOT_SLAG_OUTPUT, SLOT_BARREL_OUTPUT };
 
-    private final GtBuffer gtu = new GtBuffer((long) SecondTierDefs.GRINDER_GTU_CAPACITY);
+    private final GtBuffer gtu = new GtBuffer((long) SecondTierDefs.GRINDER2_GTU_CAPACITY);
     private ItemStack pendingSlag = ItemStack.EMPTY;
     private ItemStack pendingBarrel = ItemStack.EMPTY;
     private int grindProgress;
@@ -79,7 +81,7 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
     };
 
     public ReprocessingGrinderBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.REPROCESSING_GRINDER.get(), pos, state, 4);
+        super(ModBlockEntities.THIRD_GRINDER.get(), pos, state, 4);
     }
 
     public GtBuffer gtuBuffer() {
@@ -93,7 +95,7 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
     @Override
     public long receiveGtu(long amount, boolean simulate) {
         resetIntakeLedgerIfNeeded();
-        long remaining = Math.max(0L, (long) SecondTierDefs.GRINDER_GTU_INTAKE - acceptedGtuThisTick);
+        long remaining = Math.max(0L, (long) SecondTierDefs.GRINDER2_GTU_INTAKE - acceptedGtuThisTick);
         long accepted = gtu.receive(Math.min(amount, remaining), simulate);
         if (!simulate) acceptedGtuThisTick += (int) accepted;
         return accepted;
@@ -116,22 +118,35 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
         if (changed) be.setChanged();
     }
 
-    /** Reserves both outputs and a first work tick before consuming one TVEL and one hull. */
+    /**
+     * С корпусом в слоте корпусов — «в меру опасные шлаки» + бочка отходов
+     * (1 корпус тратится); без корпуса — как обычный измельчитель: вся таблица
+     * {@link GrinderRecipes}, включая крайне опасные шлаки из отработанного
+     * ТВЭЛа. Корпуса стакаются по 64 и не тратятся на обычных рецептах.
+     */
     private boolean tryStartGrinding() {
-        ReprocessingRecipes.Outputs outputs =
-            ReprocessingRecipes.find(items.get(SLOT_TVEL_INPUT), items.get(SLOT_HULL_INPUT));
-        if (outputs == null
-            || !canStore(SLOT_SLAG_OUTPUT, outputs.slag())
-            || !canStore(SLOT_BARREL_OUTPUT, outputs.barrel())
-            || !gtu.has(SecondTierDefs.GRINDER_GTU_MILLI_PER_TICK)) {
+        ItemStack tvel = items.get(SLOT_TVEL_INPUT);
+        ItemStack hull = items.get(SLOT_HULL_INPUT);
+        boolean withHull = ReprocessingRecipes.acceptsTvel(tvel) && ReprocessingRecipes.acceptsHull(hull);
+        ItemStack slag;
+        ItemStack barrel = ItemStack.EMPTY;
+        if (withHull) {
+            slag = new ItemStack(ModItems.MODERATELY_DANGEROUS_SLAG.get());
+            barrel = new ItemStack(ModItems.WASTE_BARREL_ITEM.get());
+        } else {
+            slag = GrinderRecipes.find(tvel);
+            if (slag == null) return false;
+        }
+        if (!canStore(SLOT_SLAG_OUTPUT, slag) || !canStore(SLOT_BARREL_OUTPUT, barrel)
+            || !gtu.has(SecondTierDefs.GRINDER2_GTU_MILLI_PER_TICK)) {
             return false;
         }
-        items.get(SLOT_TVEL_INPUT).shrink(1);
-        items.get(SLOT_HULL_INPUT).shrink(1);
-        pendingSlag = outputs.slag();
-        pendingBarrel = outputs.barrel();
+        tvel.shrink(1);
+        if (withHull) hull.shrink(1);
+        pendingSlag = slag;
+        pendingBarrel = barrel;
         grindProgress = 0;
-        grindTotal = SecondTierDefs.GRINDER_TICKS;
+        grindTotal = SecondTierDefs.GRINDER2_TICKS;
         return true;
     }
 
@@ -144,9 +159,9 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
             return true;
         }
         if (grindProgress >= grindTotal) return tryFinishGrinding();
-        if (!gtu.has(SecondTierDefs.GRINDER_GTU_MILLI_PER_TICK)) return false;
+        if (!gtu.has(SecondTierDefs.GRINDER2_GTU_MILLI_PER_TICK)) return false;
 
-        gtu.extract(SecondTierDefs.GRINDER_GTU_MILLI_PER_TICK, false);
+        gtu.extract(SecondTierDefs.GRINDER2_GTU_MILLI_PER_TICK, false);
         grindProgress++;
         if (grindProgress >= grindTotal) return tryFinishGrinding();
         return true;
@@ -188,7 +203,7 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        return (slot == SLOT_TVEL_INPUT && ReprocessingRecipes.acceptsTvel(stack))
+        return (slot == SLOT_TVEL_INPUT && GrinderRecipes.accepts(stack))
             || (slot == SLOT_HULL_INPUT && ReprocessingRecipes.acceptsHull(stack));
     }
 
@@ -237,7 +252,7 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
             grindProgress = 0;
             grindTotal = 0;
         } else {
-            grindTotal = SecondTierDefs.GRINDER_TICKS;
+            grindTotal = SecondTierDefs.GRINDER2_TICKS;
             grindProgress = Math.min(grindProgress, grindTotal);
         }
     }

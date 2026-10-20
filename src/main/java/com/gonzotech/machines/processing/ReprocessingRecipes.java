@@ -40,7 +40,7 @@ public final class ReprocessingRecipes {
 
     /** Read-only recipe view for client recipe integrations. */
     public static List<ProcessingRecipeDisplay> displayRecipes() {
-        return List.of(new ProcessingRecipeDisplay("reprocessing_grinder",
+        return List.of(new ProcessingRecipeDisplay("third_grinder",
             List.of(
                 List.of(new ItemStack(ModItems.DEPRESSED_UF_TVEL.get())),
                 List.of(new ItemStack(ModItems.EMPTY_HULL.get()))),

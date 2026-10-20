@@ -26,8 +26,25 @@ public final class PCFSOZRecipes {
         new Recipe(
             List.of(() -> ModItems.YELLOW_CAKE.get()),
             new Result(() -> ModItems.URANIUM_238.get(), 1),
-            new Byproduct(() -> ModItems.URANIUM_235.get(), 100), // 10 %
-            Byproduct.NONE, Byproduct.NONE));
+            Byproduct.of(() -> ModItems.URANIUM_235.get(), 100), // 10 %
+            Byproduct.NONE, Byproduct.NONE),
+        // 0.3.253 (автор): разделение шлаков измельчения отработанных ТВЭЛов.
+        // Крайне опасные: оксид циркония 2, уран-238 1-2, пыль реакторного
+        // плутония-239 1.
+        new Recipe(
+            List.of(() -> ModItems.EXTREMELY_DANGEROUS_SLAG.get()),
+            new Result(() -> ModItems.ZIRCONIUM_OXIDE.get(), 2),
+            Byproduct.ranged(() -> ModItems.URANIUM_238.get(), CHANCE_SCALE, 1, 2),
+            Byproduct.of(() -> ModItems.DUST_ITEMS.get("plutonium_dust").get(), CHANCE_SCALE),
+            Byproduct.NONE),
+        // В меру опасные: уран-238 1, пыль плутония-239 1 (15 %), самородок
+        // плутония-239 1-2. Меньше и без циркония.
+        new Recipe(
+            List.of(() -> ModItems.MODERATELY_DANGEROUS_SLAG.get()),
+            new Result(() -> ModItems.URANIUM_238.get(), 1),
+            Byproduct.of(() -> ModItems.DUST_ITEMS.get("plutonium_dust").get(), 150),
+            Byproduct.ranged(() -> ModItems.NUGGET_ITEMS.get("plutonium_nugget").get(), CHANCE_SCALE, 1, 2),
+            Byproduct.NONE));
 
     private PCFSOZRecipes() {
     }
@@ -82,8 +99,8 @@ public final class PCFSOZRecipes {
     }
 
     /** Побочный результат своего слота; {@code item == null} — пустой слот. */
-    public record Byproduct(ItemRef item, int chancePermille) {
-        public static final Byproduct NONE = new Byproduct(null, 0);
+    public record Byproduct(ItemRef item, int chancePermille, int minCount, int maxCount) {
+        public static final Byproduct NONE = new Byproduct(null, 0, 1, 1);
 
         public Byproduct {
             if (chancePermille < 0 || chancePermille > CHANCE_SCALE) {
@@ -92,14 +109,30 @@ public final class PCFSOZRecipes {
             if (item == null && chancePermille != 0) {
                 throw new IllegalArgumentException("ПЦФСОЗ: пустой output не может иметь шанс");
             }
+            if (minCount <= 0 || maxCount < minCount) {
+                throw new IllegalArgumentException("ПЦФСОЗ: количество вне порядка");
+            }
         }
 
+        /**0.3.253: ровно один предмет. */
+        public static Byproduct of(ItemRef item, int chancePermille) {
+            return new Byproduct(item, chancePermille, 1, 1);
+        }
+
+        /** 0.3.253 (автор): случайное число предметов в диапазоне [min, max]. */
+        public static Byproduct ranged(ItemRef item, int chancePermille, int minCount, int maxCount) {
+            return new Byproduct(item, chancePermille, minCount, maxCount);
+        }
+
+        /** Для резерва output-слотов нужен МАКСИМУМ диапазона. */
         public ItemStack preview() {
-            return item == null ? ItemStack.EMPTY : item.stack(1);
+            return item == null ? ItemStack.EMPTY : item.stack(maxCount);
         }
 
         public ItemStack roll(RandomSource random) {
-            return item != null && random.nextInt(CHANCE_SCALE) < chancePermille ? item.stack(1) : ItemStack.EMPTY;
+            if (item == null || random.nextInt(CHANCE_SCALE) >= chancePermille) return ItemStack.EMPTY;
+            int count = minCount == maxCount ? minCount : minCount + random.nextInt(maxCount - minCount + 1);
+            return item.stack(count);
         }
     }
 

@@ -117,7 +117,9 @@ public final class RecipeUnlocks {
             "gonzotech:tongs",
             "gonzotech:ladle",
             // Магнит: и рецепт в книге, и физический крафт закрыты до Открытия 2.
-            "gonzotech:magnet"
+            "gonzotech:magnet",
+            // Наждачкис (0.3.253, автор): фулл-гейт «Открытия 2».
+            "gonzotech:sandpapy"
         ),
         6, List.of(
             // Физически крафтится всегда, в книге появляется с Открытием 6.

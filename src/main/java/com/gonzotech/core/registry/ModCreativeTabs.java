@@ -118,7 +118,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.REPROCESSING_GRINDER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_GRINDER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PRESS_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_LUMBER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
@@ -375,6 +375,12 @@ public class ModCreativeTabs {
                 output.accept(ModItems.RESIN.get());
                 output.accept(ModItems.RESINOUS_SAWDUST.get());
                 output.accept(ModItems.HARD_RESINOUS_SAWDUST.get());
+                // Продукты измельчителей (0.3.253, автор) и абразивный наждачкис.
+                output.accept(ModItems.CORUNDUM_GRAIN.get());
+                output.accept(ModItems.CORUNDUM_ABRASIVE.get());
+                output.accept(ModItems.SILICON_CRUMBS.get());
+                output.accept(ModItems.DIAMOND_DUST.get());
+                output.accept(ModItems.SANDPAPY.get());
                 // Химические продукты и реагенты (автор 23-24.09).
                 // (Ампулы и вёдра перенесены во вкладку «Приспособления», автор 24.09.)
                 output.accept(ModItems.EDTA.get());

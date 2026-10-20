@@ -78,6 +78,11 @@ public class ModAdvancements {
         awardAchievement(player, "forbidden_bath");
     }
 
+    /** 0.3.253 (автор): «Собаку съел в автоматике...» за поедание гаечного ключа. */
+    public static void awardWrenchEaten(ServerPlayer player) {
+        awardAchievement(player, "wrench_eaten");
+    }
+
     /** Idempotently grants all remaining criteria for a code-driven achievement. */
     private static void awardAchievement(ServerPlayer player, String path) {
         if (player == null || player.getServer() == null) return;
@@ -102,6 +107,8 @@ public class ModAdvancements {
             RecipeUnlocks.grantAfterTwentyMinutesPlayed(serverPlayer);
             // Фаза 3: восстановить видимость рецептов машин для уже открытых «Открытий».
             RecipeUnlocks.grantForUnlockedTiers(serverPlayer);
+            // Мастерство ключа (0.3.253): подсказки труб/пучков без ключа в руке.
+            com.gonzotech.machines.network.PipeFlowNetwork.sendWrenchMastery(serverPlayer);
         }
     }
 }

@@ -79,6 +79,13 @@ public final class SecondTierDefs {
     /** Одна операция измельчения занимает ровно 35 оплачиваемых тиков. */
     public static final int GRINDER_TICKS = 160;
 
+    /** Измельчитель II (0.3.253, автор): все статы ×1.66 от измельчителя.
+     *  Скорость ×1.66 → 160/1.66 ≈ 96 тиков; затраты/ёмкость/приём ×1.66. */
+    public static final int GRINDER2_GTU_CAPACITY = 1069 * MachineDefs.MILLI;
+    public static final int GRINDER2_GTU_INTAKE = 80 * MachineDefs.MILLI;
+    public static final int GRINDER2_GTU_MILLI_PER_TICK = (int) Math.round(900 * 1.66);
+    public static final int GRINDER2_TICKS = (int) Math.round(160 / 1.66);
+
     // ─────────────────────────── пресс ───────────────────────────
 
     /** Буфер пресса (mGTU: 2482 GTU). */

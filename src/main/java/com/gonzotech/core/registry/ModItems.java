@@ -322,6 +322,19 @@ public class ModItems {
     /** Пустой корпус — расходник измельчителя отработки, на выходе становится бочкой отходов. */
     public static final DeferredItem<Item> EMPTY_HULL =
         ITEMS.registerSimpleItem("empty_hull");
+
+    /** 0.3.253: абразивная линейка (автор): крупица → абразив → наждачкис. */
+    public static final DeferredItem<Item> CORUNDUM_GRAIN =
+        ITEMS.registerSimpleItem("corundum_grain");
+    public static final DeferredItem<Item> CORUNDUM_ABRASIVE =
+        ITEMS.registerSimpleItem("corundum_abrasive");
+    public static final DeferredItem<Item> SILICON_CRUMBS =
+        ITEMS.registerSimpleItem("silicon_crumbs");
+    public static final DeferredItem<Item> DIAMOND_DUST =
+        ITEMS.registerSimpleItem("diamond_dust");
+    /** Наждачкис: бесконечный компонент — обтёсывает брёвна и полирует камень. */
+    public static final DeferredItem<Item> SANDPAPY =
+        ITEMS.registerItem("sandpapy", com.gonzotech.machines.item.SandpaperItem::new);
     public static final DeferredItem<Item> URANIUM_FUEL =
         ITEMS.registerSimpleItem("uranium_fuel");
     /** СО — смесь оксидов (MOX). */

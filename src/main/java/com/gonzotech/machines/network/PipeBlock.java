@@ -205,7 +205,7 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
         }
         // Ключ — прокрутить режим этой трубы. Никаких сообщений в action-bar:
         // тип/режим/поток и так живьём висят над прицелом (WrenchHud).
-        if (stack.getItem() instanceof WrenchItem) {
+        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
             if (!level.isClientSide()) {
                 PipeMode nextMode = state.getValue(MODE).next();
                 level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
