@@ -112,6 +112,8 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
         // Радиационная диагностика: /gonzotech debug purge|getdose.
         NeoForge.EVENT_BUS.addListener(com.gonzotech.radiation.RadiationDebugCommand::onRegisterCommands);
+        // Метки автошахтера: /gonzotech debug marker (0.3.256).
+        NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.miner.MarkerDebugCommand::onRegisterCommands);
         // Админ-команды психики: /gonzotech debug psyche add|remove|set|trigger (автор 22.09).
         NeoForge.EVENT_BUS.addListener(com.gonzotech.core.psyche.command.PsycheCommand::onRegisterCommands);
 
@@ -136,6 +138,8 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
         // «Улучшение ванили» (0.3.254): генератор туфа и кальцит из костного блока.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.VanillaPolishEvents.class);
+        // Метки автошахтера (0.3.256): TTL, рассылка снапшотов, вход игроков.
+        NeoForge.EVENT_BUS.register(com.gonzotech.machines.miner.MarkerEvents.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.AchievementEvents.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.ExplosiveEffects.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.machines.blastfurnace.BlastFurnaceEvents.class);
@@ -198,6 +202,8 @@ public class GonzoTechMod {
             modEventBus.addListener(com.gonzotech.space.client.SpaceClient::onRegisterDimensionEffects);
             // Фаза 4 — рендерер горизонта событий Чёрных Дыр.
             NeoForge.EVENT_BUS.register(com.gonzotech.space.client.BlackHoleRenderer.class);
+            // Автошахтер (0.3.256): мировой рендер меток-вымпелов (как у Чёрных Дыр).
+            NeoForge.EVENT_BUS.register(com.gonzotech.machines.client.MarkerRenderer.class);
             // Фаза 4 — авто-подтверждение ванильного предупреждения об
             // «экспериментальных настройках» (наши измерения = эксперим. датапак).
             NeoForge.EVENT_BUS.addListener(
@@ -225,6 +231,19 @@ public class GonzoTechMod {
                 }
             })
         );
+
+        // Кнопки GUI Плотника (0.3.256) — C2S id кнопки.
+        registrar.playToServer(
+            com.gonzotech.machines.menu.PlotnickButtonPayload.TYPE,
+            com.gonzotech.machines.menu.PlotnickButtonPayload.STREAM_CODEC,
+            com.gonzotech.machines.menu.PlotnickButtonPayload::handle);
+
+        // Снимок меток автошахтера (0.3.256) — S2C в клиентский кэш.
+        registrar.playToClient(
+            com.gonzotech.machines.miner.MarkerNetwork.MarkersPayload.TYPE,
+            com.gonzotech.machines.miner.MarkerNetwork.MarkersPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(
+                () -> com.gonzotech.machines.client.MarkerClient.accept(payload)));
 
         ChalkboardNetwork.register(registrar);
         com.gonzotech.core.tooltip.GateTooltipNetwork.register(registrar);

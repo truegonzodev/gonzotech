@@ -245,6 +245,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("third_lead_chest", () -> new BlockEntityType<>(
             com.gonzotech.machines.block.entity.ThirdLeadChestBlockEntity::new, false, ModMachines.THIRD_LEAD_CHEST.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.PlotnickBlockEntity>> PLOTNICK =
+        BLOCK_ENTITIES.register("plotnick", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.PlotnickBlockEntity::new, false, ModMachines.PLOTNICK.get()));
+
     public static final Supplier<BlockEntityType<com.gonzotech.core.block.entity.CanisterBlockEntity>> CANISTER =
         BLOCK_ENTITIES.register("canister", () -> new BlockEntityType<>(
             com.gonzotech.core.block.entity.CanisterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.CANISTER.get()));

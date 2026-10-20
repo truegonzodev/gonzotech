@@ -17,6 +17,7 @@ import com.gonzotech.core.block.ReactorCasingBlock;
 import com.gonzotech.core.block.ReactorControlPanelBlock;
 import com.gonzotech.core.block.ReactorFuelSheathBlock;
 import com.gonzotech.core.block.ReactorValveBlock;
+import com.gonzotech.machines.block.PlotnickBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.RectifierBlock;
 import com.gonzotech.machines.block.SnaketypeCondenserBlock;
@@ -401,6 +402,10 @@ public final class ModMachines {
     public static final DeferredBlock<ReprocessingGrinderBlock> THIRD_GRINDER =
         BLOCKS.registerBlock("third_grinder", ReprocessingGrinderBlock::new, machineMetal());
 
+    /** Плотник автошахтера (0.3.256, автор): метки-разметка и хранилище сектора. */
+    public static final DeferredBlock<PlotnickBlock> PLOTNICK =
+        BLOCKS.registerBlock("plotnick", PlotnickBlock::new, machineMetal());
+
     /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
@@ -669,6 +674,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> THIRD_GRINDER_ITEM =
         ITEMS.registerSimpleBlockItem("third_grinder", THIRD_GRINDER);
+
+    public static final DeferredItem<BlockItem> PLOTNICK_ITEM =
+        ITEMS.registerSimpleBlockItem("plotnick", PLOTNICK);
 
     public static final DeferredItem<BlockItem> SECOND_PRESS_ITEM =
         ITEMS.registerSimpleBlockItem("second_press", SECOND_PRESS);

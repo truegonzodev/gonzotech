@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/plotnick" },
+    "facing=east":  { "model": "gonzotech:block/plotnick", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/plotnick", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/plotnick", "y": 270 }
+  }
+}
