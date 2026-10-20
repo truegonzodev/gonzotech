@@ -70,6 +70,40 @@ public final class ChemicalPlantRecipes {
         }
     }
 
+    /**
+     * Несколько равнозначных форм одного ингредиента (0.3.254): кальций/магний
+     * принимаются и слитком, и пылью.
+     */
+    public record AnyFormMatcher(List<Supplier<? extends Item>> forms, int count) implements IngredientMatcher {
+        @SafeVarargs
+        public AnyFormMatcher(int count, Supplier<? extends Item>... forms) {
+            this(List.of(forms), count);
+        }
+
+        @Override
+        public boolean matches(ItemStack stack) {
+            if (stack.isEmpty()) return false;
+            for (Supplier<? extends Item> form : forms) {
+                if (stack.is(form.get())) return true;
+            }
+            return false;
+        }
+
+        @Override
+        public int count() {
+            return count;
+        }
+
+        @Override
+        public List<ItemStack> displayStacks() {
+            List<ItemStack> stacks = new ArrayList<>(forms.size());
+            for (Supplier<? extends Item> form : forms) {
+                stacks.add(new ItemStack(form.get(), count));
+            }
+            return stacks;
+        }
+    }
+
     public record AmpouleMatcher(String fluid, int count) implements IngredientMatcher {
         @Override
         public boolean matches(ItemStack stack) {
@@ -208,6 +242,27 @@ public final class ChemicalPlantRecipes {
             new ItemMatcher(ModItems.VODKA_BOTTLE::get, 1),
             new ItemMatcher(Items.GOLD_NUGGET, 1)
         ), () -> new ItemStack(ModItems.PENTACIN.get(), 1)));
+
+        // 0.3.254 (автор): кальцит из костного блока «под воздействием нагрева» —
+        // как графит, без катализаторов. 1 костный блок -> 1 кальцит.
+        RECIPES.add(new ChemicalRecipe("calcite_from_bone", List.of(
+            new ItemMatcher(Items.BONE_BLOCK, 1)
+        ), () -> new ItemStack(Items.CALCITE, 1),
+            0, false, 120, 560L));
+
+        // 0.3.254 (автор): оксид циркония + кальций + магний (слиток или пыль)
+        // -> 1 циркониевый слиток. Энергия — ×1.2 от пакета «3 слитка в 3 сплава»
+        // завода сплавов (313.6 GTU -> 376.32 GTU = 240 т × 1.568 GTU/т).
+        RECIPES.add(new ChemicalRecipe("zirconium_from_oxide", List.of(
+            new ItemMatcher(ModItems.ZIRCONIUM_OXIDE::get, 1),
+            new AnyFormMatcher(1,
+                () -> ModItems.INGOT_ITEMS.get("calcium_ingot").get(),
+                () -> ModItems.DUST_ITEMS.get("calcium_dust").get()),
+            new AnyFormMatcher(1,
+                () -> ModItems.INGOT_ITEMS.get("magnesium_ingot").get(),
+                () -> ModItems.DUST_ITEMS.get("magnesium_dust").get())
+        ), () -> new ItemStack(ModItems.INGOT_ITEMS.get("zirconium_ingot").get(), 1),
+            3, false, 240, 1_568L));
 
         // 11. ДТПА: 2 ЭДТА + 1 хлорид кальция + 2 сырого йода + 1 водка + 1 морской огурец = 1 ДТПА
         RECIPES.add(new ChemicalRecipe("dtpa", List.of(

@@ -79,6 +79,8 @@ public final class TierThreeCrafting {
         "gonzotech:third_pcfsoz",
         // Измельчитель II (0.3.253, автор): крафт-гейт и рецепт — Открытие 3.
         "gonzotech:third_grinder",
+        // Материнская плата (0.3.254, автор): фулл-гейт Открытия 3.
+        "gonzotech:motherboard",
         // Экранированная семья (0.3.110, автор): фулл-гейт «Открытия 3».
         "gonzotech:third_wire",
         "gonzotech:third_heat_pipe",
@@ -198,6 +200,7 @@ public final class TierThreeCrafting {
         || item == com.gonzotech.machines.registry.ModMachines.THIRD_CHEMICAL_PLANT_ITEM.get()
         || item == com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get()
         || item == com.gonzotech.machines.registry.ModMachines.THIRD_GRINDER_ITEM.get()
+        || item == ModItems.MOTHERBOARD.get()
         // Литография (автор 28.09.2026): вся цепочка — полный гейт «Открытия 3».
         // Чипы chip_1/2/3 пока без JSON-рецептов (их выдаст машина литографии) —
         // крафт-гейт уже стоит, в книгу рецептов они попадут вместе с рецептами машины.

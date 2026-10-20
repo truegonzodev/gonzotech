@@ -324,6 +324,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.PHOTORESIST.get());
                 output.accept(ModItems.CHIP_BLANKY.get());
                 output.accept(ModItems.CHIP_SOUP.get());
+                output.accept(ModItems.MOTHERBOARD.get());
                 output.accept(ModItems.CHIP_1.get());
                 output.accept(ModItems.CHIP_2.get());
                 output.accept(ModItems.CHIP_3.get());

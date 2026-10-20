@@ -1,0 +1,35 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "gonzotech:chip_1"
+    },
+    {
+      "item": "gonzotech:chip_2"
+    },
+    {
+      "item": "gonzotech:chip_3"
+    },
+    {
+      "item": "gonzotech:energy_module"
+    },
+    {
+      "item": "gonzotech:energy_module"
+    },
+    {
+      "item": "gonzotech:transistor"
+    },
+    {
+      "item": "gonzotech:rubber"
+    },
+    {
+      "item": "gonzotech:celluloid"
+    }
+  ],
+  "result": {
+    "id": "gonzotech:motherboard",
+    "count": 1
+  },
+  "group": "motherboard"
+}

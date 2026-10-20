@@ -108,6 +108,7 @@ public final class GrinderRecipes {
         // 0.3.253 (автор): новые рецепты обоих измельчителей.
         put(recipes, Items.RAW_IRON, ModItems.CORUNDUM_GRAIN.get());
         put(recipes, Items.FLINT, ModItems.SILICON_CRUMBS.get());
+        put(recipes, ModItems.SILICON.get(), ModItems.SILICON_CRUMBS.get()); // чистый кремень гонзо (0.3.254)
         put(recipes, Items.DIAMOND, ModItems.DIAMOND_DUST.get());
         put(recipes, Items.BREAD, ModItems.THE_PROTO_MASH.get(), 2);
         put(recipes, Items.ICE, Items.SNOWBALL, 5);

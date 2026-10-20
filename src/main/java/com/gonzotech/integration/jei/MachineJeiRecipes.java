@@ -643,6 +643,8 @@ public final class MachineJeiRecipes {
             case "sulfuric_acid" -> fillerProcessGauges(90, 20, 9);
             case "ethylene" -> fillerProcessGauges(150, 32, 3);
             case "calcite_dissolution" -> fillerProcessGauges(FillerBlockEntity.CALCITE_DISSOLUTION_TICKS, 0, 0);
+            case "bone_calcite" -> fillerProcessGauges(FillerBlockEntity.CALCITE_FROM_BONE_TICKS_PER_BLOCK,
+                FillerBlockEntity.CALCITE_FROM_BONE_GTH_PER_BLOCK / FillerBlockEntity.CALCITE_FROM_BONE_TICKS_PER_BLOCK, 0);
             case "salt_evaporation" -> fillerProcessGauges(FillerBlockEntity.SALT_EVAPORATION_TICKS_PER_ITEM,
                 FillerBlockEntity.SALT_EVAPORATION_GTH_PER_TICK, 0);
             case "aminoblazeethanol" -> fillerProcessGauges(270, 2, 12);
@@ -743,6 +745,13 @@ public final class MachineJeiRecipes {
                 MachineJeiRecipe.items(INPUT, 134, 35,
                     List.of(new ItemStack(item(ModItems.DUST_ITEMS, "aluminum_dust"))))),
             List.of(), fillerGauges("ethylene")));
+
+        recipes.add(new MachineJeiRecipe(recipeId(MachineJeiCategories.THIRD_FILLER, "reaction/bone_calcite"),
+            List.of(
+                MachineJeiRecipe.fluid(INPUT, 55, 35, net.minecraft.world.level.material.Fluids.WATER, 128),
+                MachineJeiRecipe.items(INPUT, 134, 17, List.of(new ItemStack(Items.BONE_BLOCK, 1))),
+                MachineJeiRecipe.item(OUTPUT, 62, 53, Items.CALCITE)),
+            List.of(), fillerGauges("bone_calcite")));
 
         recipes.add(new MachineJeiRecipe(recipeId(MachineJeiCategories.THIRD_FILLER, "reaction/calcite_dissolution"),
             List.of(

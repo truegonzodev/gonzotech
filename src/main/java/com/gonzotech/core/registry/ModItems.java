@@ -150,6 +150,11 @@ public class ModItems {
     public static final DeferredItem<Item> CHIP_2 = ITEMS.registerSimpleItem("chip_2");
     /** Микроконтроллер (chip_3) — выход литографии; рецепт будет у литографической фабрики. */
     public static final DeferredItem<Item> CHIP_3 = ITEMS.registerSimpleItem("chip_3");
+    /**
+     * Материнская плата (0.3.254, автор) — компонент «Открытия 3»: три чипа,
+     * два энергетических модуля, транзистор, резина и целлулоид.
+     */
+    public static final DeferredItem<Item> MOTHERBOARD = ITEMS.registerSimpleItem("motherboard");
     /** Литографическая фабрика — BlockItem контроллера многоблока 3×3×2 (автор 28.09.2026). */
     public static final DeferredItem<BlockItem> THIRD_SILICON_FACTORY =
         ITEMS.registerSimpleBlockItem("third_silicon_factory", ModBlocks.THIRD_SILICON_FACTORY);

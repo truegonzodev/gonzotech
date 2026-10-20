@@ -60,6 +60,12 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     public static final int YELLOW_CAKE_TICKS = 240;
     public static final int YELLOW_CAKE_ACID_TOTAL = 512;
 
+    // Кальцит из костных блоков (0.3.254, автор): 1–6 блоков × (128 mB воды +
+    // 128 GTH) = 128–768 / 128–768, по 32 тика на блок (4 mB/t + 4 GTH/t).
+    public static final int CALCITE_FROM_BONE_WATER_MB = 128;
+    public static final int CALCITE_FROM_BONE_GTH_PER_BLOCK = 128;
+    public static final int CALCITE_FROM_BONE_TICKS_PER_BLOCK = 32;
+
     public static final int FLUID_EMPTY = 0;
     public static final int FLUID_WATER = 1;
     public static final int FLUID_RECTIFICATE = 2;
@@ -775,6 +781,31 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
     private boolean handleReactions() {
         if (activeRecipe == 0) {
             // Поиск подходящего рецепта
+            // 9. Кальцит из костных блоков (0.3.254, автор): 1–6 костных блоков
+            //    + 128 mB воды и 128 GTH на каждый -> столько же кальцита.
+            //    Нагрев GTH, без GTU; длительность 32 тика на блок (4 mB/t воды
+            //    и 4 GTH/t на блок — ровно 128/128 суммарно).
+            int boneCount = Math.min(6, countGridItem(Items.BONE_BLOCK));
+            if (boneCount >= 1) {
+                int boneWaterTotal = boneCount * CALCITE_FROM_BONE_WATER_MB;
+                boolean boneIsRight = false;
+                boolean boneHasWater = false;
+                if (leftFluidType == FLUID_WATER && leftFluidAmount >= boneWaterTotal) {
+                    boneHasWater = true;
+                } else if (rightFluidType == FLUID_WATER && rightFluidAmount >= boneWaterTotal) {
+                    boneHasWater = true;
+                    boneIsRight = true;
+                }
+                if (boneHasWater && currentGthMilli >= (long) boneCount * CALCITE_FROM_BONE_GTH_PER_BLOCK * MachineDefs.MILLI) {
+                    consumeFromGrid(Items.BONE_BLOCK, boneCount);
+                    activeRecipe = 9;
+                    targetTankIsRight = boneIsRight;
+                    smeltProgress = 0;
+                    smeltTotal = boneCount * CALCITE_FROM_BONE_TICKS_PER_BLOCK;
+                    return true;
+                }
+            }
+
             // 7. Хлорид кальция: Вода (>=12) + соль + кальцит + кальций -> нижний слот
             boolean targetIsRight = false;
             boolean hasWater = false;
@@ -1098,6 +1129,39 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
                 smeltProgress++;
                 if (smeltProgress >= smeltTotal) {
                     addOutputItem(targetTankIsRight ? 3 : 1, new ItemStack(ModItems.YELLOW_CAKE.get()));
+                }
+            }
+            case 9 -> { // Кальцит: 4 GTH/t и 4 mB воды на блок, 32 тика на блок
+                int batch = smeltTotal / CALCITE_FROM_BONE_TICKS_PER_BLOCK;
+                long gthPerTick = (long) batch * CALCITE_FROM_BONE_GTH_PER_BLOCK * MachineDefs.MILLI
+                    / CALCITE_FROM_BONE_TICKS_PER_BLOCK;
+                int waterPerTick = batch * CALCITE_FROM_BONE_WATER_MB / CALCITE_FROM_BONE_TICKS_PER_BLOCK;
+                if (currentGthMilli < gthPerTick) {
+                    return false;
+                }
+                currentGthMilli -= gthPerTick;
+                if (targetTankIsRight) {
+                    if (rightFluidType == FLUID_WATER && rightFluidAmount > 0) {
+                        rightFluidAmount -= Math.min(waterPerTick, rightFluidAmount);
+                        if (rightFluidAmount <= 0) {
+                            rightFluidAmount = 0;
+                            rightFluidType = FLUID_EMPTY;
+                            rightSaltMb = 0;
+                        }
+                    }
+                } else {
+                    if (leftFluidType == FLUID_WATER && leftFluidAmount > 0) {
+                        leftFluidAmount -= Math.min(waterPerTick, leftFluidAmount);
+                        if (leftFluidAmount <= 0) {
+                            leftFluidAmount = 0;
+                            leftFluidType = FLUID_EMPTY;
+                            leftSaltMb = 0;
+                        }
+                    }
+                }
+                smeltProgress++;
+                if (smeltProgress >= smeltTotal) {
+                    addOutputItem(targetTankIsRight ? 3 : 1, new ItemStack(Items.CALCITE, batch));
                 }
             }
         }

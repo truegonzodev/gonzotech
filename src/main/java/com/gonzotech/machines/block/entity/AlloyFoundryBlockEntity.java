@@ -154,7 +154,11 @@ public final class AlloyFoundryBlockEntity extends BaseMachineBlockEntity
         }
         pendingOutput = batch.output();
         alloyProgress = 0;
-        alloyTotal = SecondTierDefs.alloyFoundryTicksForIngredients(batch.ingredientItemCount());
+        // Пакеты с точной стоимостью (0.3.254: цирконий = пакет «3 слитка в
+        // 3 сплава» × порции) переопределяют общую формулу длительности.
+        alloyTotal = batch.workTicks() > 0
+            ? batch.workTicks()
+            : SecondTierDefs.alloyFoundryTicksForIngredients(batch.ingredientItemCount());
         return true;
     }
 

@@ -83,8 +83,24 @@ public final class AlloyFoundryRecipes {
                 preset.outputIngotId(), inputSlots,
                 List.of(new ProcessingRecipeDisplay.Output(output, 1_000))));
         }
+        displays.add(zirconiumFromOxideDisplay());
         displays.add(customAlloyDisplay());
         return List.copyOf(displays);
+    }
+
+    /** JEI: оксид циркония + кальций/магний (слиток ↔ пыль) → цирконий (0.3.254). */
+    private static ProcessingRecipeDisplay zirconiumFromOxideDisplay() {
+        List<ItemStack> oxide = List.of(new ItemStack(ModItems.ZIRCONIUM_OXIDE.get(), 1));
+        List<ItemStack> calcium = List.of(
+            new ItemStack(ModItems.INGOT_ITEMS.get("calcium_ingot").get(), 1),
+            new ItemStack(ModItems.DUST_ITEMS.get("calcium_dust").get(), 1));
+        List<ItemStack> magnesium = List.of(
+            new ItemStack(ModItems.INGOT_ITEMS.get("magnesium_ingot").get(), 1),
+            new ItemStack(ModItems.DUST_ITEMS.get("magnesium_dust").get(), 1));
+        ItemStack output = new ItemStack(ModItems.INGOT_ITEMS.get("zirconium_ingot").get(), 1);
+        return new ProcessingRecipeDisplay("zirconium_from_oxide",
+            List.of(oxide, calcium, magnesium),
+            List.of(new ProcessingRecipeDisplay.Output(output, 1_000)));
     }
 
     /**
@@ -138,6 +154,11 @@ public final class AlloyFoundryRecipes {
      * equal one portion. A generic alloy needs at least two distinct materials.
      */
     public static Batch find(Iterable<ItemStack> contents) {
+        // 0.3.254 (автор): оксид циркония + кальций + магний (слиток или пыль)
+        // -> циркониевый слиток; кратные пакеты. Оксид не каталожный материал.
+        Batch zirconium = findZirconiumFromOxide(contents);
+        if (zirconium != null) return zirconium;
+
         Input input = Input.collect(contents);
         if (input == null || input.materialUnits.isEmpty()) return null;
 
@@ -170,10 +191,19 @@ public final class AlloyFoundryRecipes {
         return new Batch(output, input.byItem);
     }
 
-    /** An already validated transaction; all listed input item forms are consumed. */
-    public record Batch(ItemStack output, Map<Item, Integer> ingredients) {
+    /**
+     * An already validated transaction; all listed input item forms are consumed.
+     * {@code workTicks > 0} переопределяет длительность (точная стоимость
+     * пакета «3 слитка в 3 сплава»: 112 тиков × 2.8 GTU/т = 313.6 GTU на порцию).
+     */
+    public record Batch(ItemStack output, Map<Item, Integer> ingredients, int workTicks) {
+        public Batch(ItemStack output, Map<Item, Integer> ingredients) {
+            this(output, ingredients, 0);
+        }
+
         public Batch {
             if (output.isEmpty() || ingredients.isEmpty()) throw new IllegalArgumentException("Invalid alloy batch");
+            if (workTicks < 0) throw new IllegalArgumentException("Invalid alloy work ticks");
             output = output.copy();
             ingredients = Map.copyOf(ingredients);
         }
@@ -186,6 +216,35 @@ public final class AlloyFoundryRecipes {
             }
             return count;
         }
+    }
+
+    /**
+     * Оксид циркония + кальций + магний (слиток/пыль) → цирконий (0.3.254).
+     * Пакет кратный: n оксида + n кальция + n магния → n слитков. Длительность —
+     * 112 тиков на порцию (стоимость пакета стали «3 слитка → 3 сплава»).
+     */
+    private static Batch findZirconiumFromOxide(Iterable<ItemStack> contents) {
+        Item oxide = ModItems.ZIRCONIUM_OXIDE.get();
+        Item calciumIngot = ModItems.INGOT_ITEMS.get("calcium_ingot").get();
+        Item calciumDust = ModItems.DUST_ITEMS.get("calcium_dust").get();
+        Item magnesiumIngot = ModItems.INGOT_ITEMS.get("magnesium_ingot").get();
+        Item magnesiumDust = ModItems.DUST_ITEMS.get("magnesium_dust").get();
+        int oxideCount = 0;
+        int calciumCount = 0;
+        int magnesiumCount = 0;
+        Map<Item, Integer> byItem = new LinkedHashMap<>();
+        for (ItemStack stack : contents) {
+            if (stack.isEmpty()) continue;
+            Item item = stack.getItem();
+            if (item == oxide) oxideCount += stack.getCount();
+            else if (item == calciumIngot || item == calciumDust) calciumCount += stack.getCount();
+            else if (item == magnesiumIngot || item == magnesiumDust) magnesiumCount += stack.getCount();
+            else return null;
+            byItem.merge(item, stack.getCount(), Integer::sum);
+        }
+        if (oxideCount == 0 || oxideCount != calciumCount || oxideCount != magnesiumCount) return null;
+        ItemStack output = new ItemStack(ModItems.INGOT_ITEMS.get("zirconium_ingot").get(), oxideCount);
+        return new Batch(output, byItem, 112 * oxideCount);
     }
 
     private record Preset(String outputIngotId, int outputCount, Map<ResourceLocation, Integer> ratio) {

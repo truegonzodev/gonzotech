@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "gonzotech:monolith"
+    },
+    {
+      "item": "gonzotech:monolith"
+    },
+    {
+      "item": "gonzotech:monolith"
+    },
+    {
+      "item": "gonzotech:monolith"
+    },
+    {
+      "item": "minecraft:water_bucket"
+    }
+  ],
+  "result": {
+    "id": "minecraft:deepslate",
+    "count": 16
+  },
+  "group": "deepslate_from_monolith"
+}

@@ -134,6 +134,8 @@ public class GonzoTechMod {
 
         // Фаза 3 — «мелкие фишки»: гейт крафта, свинец в ванильных печах, эффекты в воде.
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.Phase3Events.class);
+        // «Улучшение ванили» (0.3.254): генератор туфа и кальцит из костного блока.
+        NeoForge.EVENT_BUS.register(com.gonzotech.core.event.VanillaPolishEvents.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.AchievementEvents.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.core.event.ExplosiveEffects.class);
         NeoForge.EVENT_BUS.register(com.gonzotech.machines.blastfurnace.BlastFurnaceEvents.class);
