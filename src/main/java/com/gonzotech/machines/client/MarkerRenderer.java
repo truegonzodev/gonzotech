@@ -70,6 +70,8 @@ public final class MarkerRenderer {
     private static final float ORE_TOP_SHADE = 1.0F;
     private static final float ORE_RIGHT_SHADE = 0.8F;
     private static final float ORE_LEFT_SHADE = 0.6F;
+    /** Размер изометрии внутри слота: 65% (на 35% меньше полной рамки). */
+    private static final float ORE_ICON_SCALE = 0.65F;
     /** Все три грани иконки лежат в одной плоскости дисплея, без толщины 3D-модели. */
     private static final float DISPLAY_Z = 0.02F;
     /** Дистанция отсечения — 32 чанка = 512 блоков (маркер не виден на любой дистанции). */
@@ -177,6 +179,12 @@ public final class MarkerRenderer {
 
         float centerX = (left + right) / 2F;
         float centerY = (bottom + top) / 2F;
+        float halfWidth = (right - left) * ORE_ICON_SCALE / 2F;
+        float halfHeight = (top - bottom) * ORE_ICON_SCALE / 2F;
+        left = centerX - halfWidth;
+        right = centerX + halfWidth;
+        bottom = centerY - halfHeight;
+        top = centerY + halfHeight;
         float sideTopY = centerY + (top - bottom) / 4F;
         float sideBottomY = centerY - (top - bottom) / 4F;
 
