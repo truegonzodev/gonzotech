@@ -6,11 +6,11 @@ package com.gonzotech.machines.energy;
  */
 public final class PlotnickDefs {
 
-    /** Вместимость GTU: 4096 ед. */
-    public static final long GTU_CAPACITY_MILLI = 4_096L * MachineDefs.MILLI;
+    /** Буфер Плотника: 32 082 GTU (точная цифра автора, 0.3.260). */
+    public static final long GTU_CAPACITY_MILLI = 32_082L * MachineDefs.MILLI;
 
-    /** Приём GTU за тик: 96 ед./т (как у измельчителя отработки). */
-    public static final long GTU_INTAKE_MILLI = 96L * MachineDefs.MILLI;
+    /** Приём GTU за тик: 512 ед./т (0.3.260, автор). */
+    public static final long GTU_INTAKE_MILLI = 512L * MachineDefs.MILLI;
 
     /** Каждый работающий бур тратит 6.5 GTU/т (0.3.258, автор). */
     public static final long DRILL_GTU_MILLI = 6_500L;

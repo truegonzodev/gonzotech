@@ -1233,5 +1233,11 @@
   "gui.gonzotech.plotnick.button.network.lmb": "Для полной постройки сети (требует %s буров и %s рабочих блоков)",
   "gui.gonzotech.plotnick.button.network.rmb": "Для подсоединения буров (найдено %s) (требует %s рабочих блоков)",
   "message.gonzotech.plotnick.network.nodrills": "В секторе не найдено ни одной буровой установки",
-  "message.gonzotech.plotnick.network.linked": "Подключаю буры: %s рабочих блоков, найдено %s буров, взято под управление %s"
+  "message.gonzotech.plotnick.network.linked": "Подключаю буры: %s рабочих блоков, найдено %s буров, взято под управление %s",
+  "message.gonzotech.plotnick.drill.nopoints": "Точек бурения нет: сначала «Разметка» руд — или поставьте буры сами и соедините их «Постройкой»",
+  "message.gonzotech.plotnick.drill.nopipes": "В хранилище нет скваженных труб: крепить скважины нечем",
+  "message.gonzotech.plotnick.drill.nolink": "Ни один бур не примыкает к сети рабочих блоков: проложите «Постройку»",
+  "message.gonzotech.plotnick.drill.stuck": "Все связанные буры упёрлись в непроходимую породу (%s) — бурение стоит",
+  "message.gonzotech.plotnick.drill.started": "Бурение начато: %s скважин, расход %s GTU/сек",
+  "message.gonzotech.plotnick.drill.lowgtu": "Бурение взведено, но баланса не хватает: %s скважинам нужно %s GTU/сек"
 }

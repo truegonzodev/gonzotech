@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pins 0.3.256-0.3.259 — метки автошахтера, Плотник, сеть, сейсмика и буры.
+"""Pins 0.3.256-0.3.260 — метки автошахтера, Плотник, сеть, сейсмика и буры.
 
 Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
 дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.259$", props, re.M), "mod_version != 0.3.259"
+assert re.search(r"^mod_version=0\.3\.260$", props, re.M), "mod_version != 0.3.260"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -297,7 +297,7 @@ for needle in ("tickDrills(server)", "drillCellAt", "deepestTargetY", "isImmovab
 assert "BlockPos drillCell = drillCellAt(server, point);" in be, \
     "в цикле буров потеряно объявление drillCell (краш компиляции 0.3.258)"
 assert "gtu.extract(want, true) < want" in be, "энергия не симулируется перед списанием"
-assert "PlotnickDefs.DRILL_GTU_MILLI * running.size()" in be, "энергия считается не по числу работающих буров"
+assert "PlotnickDefs.DRILL_GTU_MILLI * run.running().size()" in be, "энергия считается не по числу работающих буров"
 assert "hardness < 0F || hardness >= 50F" in be, "нет правила упора в бедрок/обсидиан/барьер"
 assert "server.destroyBlock(pos, false, null)" in be, "руда не всасывается (drop=false) в Плотник"
 assert "for (int dx = -2; dx <= 2; dx++)" in be, "всас 5×5 вокруг трубы отсутствует"
@@ -384,6 +384,28 @@ for lang_name in ("ru_ru.json", "en_us.json"):
     lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
     for key in ("gui.gonzotech.plotnick.button.network.lmb", "gui.gonzotech.plotnick.button.network.rmb",
                 "message.gonzotech.plotnick.network.nodrills", "message.gonzotech.plotnick.network.linked"):
+        assert key in lang, f"в {lang_name} нет ключа {key}"
+
+# ── 13. Срез 0.3.260: отклик «Начать бурение», числа ГТУ Плотника ──
+assert "GTU_CAPACITY_MILLI = 32_082L * MachineDefs.MILLI" in defs, \
+    "буфер Плотника не 32 082 GTU (автор)"
+assert "GTU_INTAKE_MILLI = 512L * MachineDefs.MILLI" in defs, \
+    "приём Плотника не 512 GTU/т (автор)"
+assert "case BTN_DRILL -> startDrilling(server, requester)" in be, \
+    "«Начать бурение» снова ничего не делает"
+assert "private boolean drilling" in be, "нет флага запущенного бурения"
+assert "if (!drilling || drillPoints.isEmpty()) return;" in be, \
+    "движок буров не слушается флага"
+assert '"Drilling"' in be, "флаг бурения не персистентен"
+assert "private DrillRun planDrillRun(ServerLevel server)" in be, "перекличка скважин не выделена"
+assert "drilling = false;" in be[be.index("private boolean packUp"):], "свернуться не глушит бурение"
+for key in ("drill.nopoints", "drill.nopipes", "drill.nolink", "drill.stuck",
+            "drill.started", "drill.lowgtu"):
+    assert f'"message.gonzotech.plotnick.{key}"' in be, f"нет отчёта {key}"
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    for key in ("message.gonzotech.plotnick.drill.started", "message.gonzotech.plotnick.drill.nopipes",
+                "message.gonzotech.plotnick.drill.lowgtu"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 print("autominer_markers_test passed")

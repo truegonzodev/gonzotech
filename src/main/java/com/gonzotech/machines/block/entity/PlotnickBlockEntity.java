@@ -145,6 +145,9 @@ public final class PlotnickBlockEntity extends BlockEntity
     /** Кэш связной сети рабочих блоков для проверки живости бура (раз в цикл). */
     private Set<BlockPos> drillRegion = Set.of();
 
+    /** Флаг «Начать бурение» (0.3.260): движок молчит, пока кнопка не нажата. */
+    private boolean drilling;
+
     // Числа тултипа «Постройки» (0.3.259): пересчитываются, пока открыт GUI.
     private int menuViewers;
     private boolean networkStatsDirty = true;
@@ -314,7 +317,8 @@ public final class PlotnickBlockEntity extends BlockEntity
             case BTN_SEISMO -> seismicImpulse(server, requester);
             case BTN_DYNAMITE -> rigTnt(server, requester);
             case BTN_NETWORK_LINK -> linkExistingDrills(server, requester);
-            default -> false; // бурение — следующий пакет добычи
+            case BTN_DRILL -> startDrilling(server, requester);
+            default -> false;
         };
     }
 
@@ -935,41 +939,97 @@ public final class PlotnickBlockEntity extends BlockEntity
             drillRegion = NetworkPlanner.connectedWorkRegion(
                 server, worldPosition, collectSurfaceWorkCells(server));
         }
-        if (drillPoints.isEmpty()) return;
-        // Нет скваженных труб в хранилище — скважины стоят (требование автора).
-        int pipesAvailable = countStored(ModMachines.BORE_PIPE.get().asItem());
-        if (pipesAvailable == 0) return;
-
-        List<BlockPos> running = new ArrayList<>();
-        for (BlockPos point : drillPoints) {
-            BlockPos drillCell = drillCellAt(server, point);
-            if (drillCell == null) continue; // бур ещё не доложен/разобран
-            boolean linked = drillCell.distManhattan(worldPosition) <= 1
-                || NetworkPlanner.touching(drillCell, drillRegion);
-            if (!linked) continue;
-            int targetY = drillTargetY.computeIfAbsent(drillCell,
-                cell -> deepestTargetY(server, cell));
-            BlockPos target = new BlockPos(drillCell.getX(), targetY, drillCell.getZ());
-            if (isImmovable(server.getBlockState(target), server, target)) continue;
-            running.add(drillCell);
-        }
-        // Каждый активный бур тратит на цикл ровно одну трубу — платим
-        // только за те скважины, которым труб и так хватает.
-        if (running.size() > pipesAvailable) {
-            running = new ArrayList<>(running.subList(0, pipesAvailable));
-        }
-        if (running.isEmpty()) return;
+        if (!drilling || drillPoints.isEmpty()) return;
+        DrillRun run = planDrillRun(server);
+        if (run.running().isEmpty()) return;
 
         // Равномерное деление не нужно: просто цифровой вычет баланса
         // (6.5 GTU/т × число работающих буров). Нечем платить — цикл стоит.
-        long want = PlotnickDefs.DRILL_GTU_MILLI * running.size();
+        long want = PlotnickDefs.DRILL_GTU_MILLI * run.running().size();
         if (gtu.extract(want, true) < want) return;
         gtu.extract(want, false);
 
-        for (BlockPos drillCell : running) {
+        for (BlockPos drillCell : run.running()) {
             if (cycleStart) digStep(server, drillCell);
             collectOreRow(server, drillCell);
         }
+    }
+
+    /**
+     * Перекличка скважин: бур жив, если стоит, примыкает к сети (или к
+     * самому Плотнику), не упёрся и обеспечен трубой со склада. Каждый
+     * активный бур тратит на цикл ровно одну трубу — платим только за те
+     * скважины, которым труб хватает.
+     */
+    private DrillRun planDrillRun(ServerLevel server) {
+        int pipesAvailable = countStored(ModMachines.BORE_PIPE.get().asItem());
+        List<BlockPos> candidates = new ArrayList<>();
+        int linked = 0;
+        int stuck = 0;
+        for (BlockPos point : drillPoints) {
+            BlockPos drillCell = drillCellAt(server, point);
+            if (drillCell == null) continue; // бур ещё не доложен/разобран
+            boolean alive = drillCell.distManhattan(worldPosition) <= 1
+                || NetworkPlanner.touching(drillCell, drillRegion);
+            if (!alive) continue;
+            linked++;
+            int targetY = drillTargetY.computeIfAbsent(drillCell,
+                cell -> deepestTargetY(server, cell));
+            BlockPos target = new BlockPos(drillCell.getX(), targetY, drillCell.getZ());
+            if (isImmovable(server.getBlockState(target), server, target)) {
+                stuck++;
+                continue;
+            }
+            candidates.add(drillCell);
+        }
+        List<BlockPos> running = candidates.size() > pipesAvailable
+            ? new ArrayList<>(candidates.subList(0, Math.max(0, pipesAvailable)))
+            : candidates;
+        return new DrillRun(running, linked, stuck, pipesAvailable);
+    }
+
+    /** Итог переклички: что бурит, что мешается. */
+    private record DrillRun(List<BlockPos> running, int linked, int stuck, int pipes) {
+    }
+
+    /**
+     * «Начать бурение» (0.3.260): либо старт с числом скважин и ставкой,
+     * либо честный ответ, чего не хватает — молча кнопка работать не должна.
+     */
+    private boolean startDrilling(ServerLevel server, ServerPlayer requester) {
+        if (drillPoints.isEmpty()) {
+            report(requester, "message.gonzotech.plotnick.drill.nopoints");
+            return true;
+        }
+        // region-кэш мог протухнуть между нажатиями — освежаем на ход кнопки
+        drillRegion = NetworkPlanner.connectedWorkRegion(
+            server, worldPosition, collectSurfaceWorkCells(server));
+        DrillRun run = planDrillRun(server);
+        if (run.pipes() == 0) {
+            report(requester, "message.gonzotech.plotnick.drill.nopipes");
+            return true;
+        }
+        if (run.linked() == 0) {
+            report(requester, "message.gonzotech.plotnick.drill.nolink");
+            return true;
+        }
+        if (run.running().isEmpty() && run.stuck() > 0) {
+            report(requester, "message.gonzotech.plotnick.drill.stuck", run.stuck());
+            return true;
+        }
+        drilling = true;
+        drillTick = 0;
+        setChanged();
+        int n = Math.max(1, run.running().size());
+        long want = PlotnickDefs.DRILL_GTU_MILLI * run.running().size();
+        // Ставка в отчёте — GTU в секунду (6.5 GTU/т × 20), целое без потерь.
+        long costPerSecond = PlotnickDefs.DRILL_GTU_MILLI * n * 20L / MachineDefs.MILLI;
+        if (gtu.extract(want, true) < want) {
+            report(requester, "message.gonzotech.plotnick.drill.lowgtu", n, costPerSecond);
+        } else {
+            report(requester, "message.gonzotech.plotnick.drill.started", n, costPerSecond);
+        }
+        return true;
     }
 
     /** Стоит ли бур именно в этой клетке (точка разметки или блок над ней). */
@@ -1095,6 +1155,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             return true;
         }
         networkStatsDirty = true;
+        drilling = false;
         dismantleQueue.clear();
         dismantleQueue.addAll(lootable);
         dismantleReturned = 0;
@@ -1484,6 +1545,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             tag.put("BuildQueue", queue);
         }
         if (placeCooldown > 0) tag.putInt("PlaceCooldown", placeCooldown);
+        if (drilling) tag.putBoolean("Drilling", true);
         savePosList(tag, "DismantleQueue", dismantleQueue);
         savePosList(tag, "TntQueue", tntQueue);
     }
@@ -1581,6 +1643,7 @@ public final class PlotnickBlockEntity extends BlockEntity
                 BlockPos.of(cell.getLong("Pos")), cell.getBoolean("Drill")));
         }
         placeCooldown = tag.getInt("PlaceCooldown");
+        drilling = tag.getBoolean("Drilling");
         loadPosList(tag, "DismantleQueue", dismantleQueue);
         loadPosList(tag, "TntQueue", tntQueue);
     }
