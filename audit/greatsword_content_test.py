@@ -358,10 +358,9 @@ class GreatswordContentTest(unittest.TestCase):
                 sound_entry = sounds[sound]["sounds"]
                 self.assertEqual(len(sound_entry), 1)
                 self.assertEqual(sound_entry[0]["name"], f"gonzotech:{sound}")
-                if sound == "sword_impact":
-                    self.assertEqual(sound_entry[0].get("volume"), 0.75)
-                else:
-                    self.assertNotIn("volume", sound_entry[0])
+                expected = 0.62 if sound == "sword_impact" else 0.73
+                self.assertAlmostEqual(sound_entry[0].get("volume"), expected,
+                    msg=f"{sound}:.volume != {expected} (свод автора c984843)")
                 self.assertTrue((ASSETS / f"sounds/{sound}.ogg").read_bytes().startswith(b"OggS"))
                 self.assertIn(f'{sound.upper()} = sound("{sound}")', registry)
                 subtitle = sounds[sound]["subtitle"]

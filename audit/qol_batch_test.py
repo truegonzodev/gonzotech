@@ -38,9 +38,11 @@ assert "cameraInsideDeadSlime" in fog and "ModBlocks.DEAD_SLIME_BLOCK.get()" in 
 assert "screen_effect_freeze" not in fog
 assert "DeadSlimeFogClient.class" in entry
 
-# Sound event volume scales only the sword impact event; no source audio needs editing.
+# Sound event volume scales the sword events (author re-balance 0.62/0.73);
+# no source audio needs editing.
 sounds = load(ASSETS / "sounds.json")
-assert sounds["sword_impact"]["sounds"][0]["volume"] == 0.75
+assert sounds["sword_impact"]["sounds"][0]["volume"] == 0.62
+assert sounds["sword_ready"]["sounds"][0]["volume"] == 0.73
 
 # Plastic waste: every unordered pair of distinct inputs appears exactly once.
 materials = {

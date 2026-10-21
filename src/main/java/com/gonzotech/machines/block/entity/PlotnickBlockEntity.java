@@ -790,6 +790,7 @@ public final class PlotnickBlockEntity extends BlockEntity
 
         List<BlockPos> running = new ArrayList<>();
         for (BlockPos point : drillPoints) {
+            BlockPos drillCell = drillCellAt(server, point);
             if (drillCell == null) continue; // бур ещё не доложен/разобран
             boolean linked = drillCell.distManhattan(worldPosition) <= 1
                 || NetworkPlanner.touching(drillCell, drillRegion);

@@ -294,6 +294,8 @@ assert "isOwnSector" in be and "plotnick.ore.wrongsector" in be, "чужая к�
 for needle in ("tickDrills(server)", "drillCellAt", "deepestTargetY", "isImmovable",
                "collectOreRow", "digStep", "drillTargetY", "drillRegion"):
     assert needle in be, f"движок буров: нет {needle}"
+assert "BlockPos drillCell = drillCellAt(server, point);" in be, \
+    "в цикле буров потеряно объявление drillCell (краш компиляции 0.3.258)"
 assert "gtu.extract(want, true) < want" in be, "энергия не симулируется перед списанием"
 assert "PlotnickDefs.DRILL_GTU_MILLI * running.size()" in be, "энергия считается не по числу работающих буров"
 assert "hardness < 0F || hardness >= 50F" in be, "нет правила упора в бедрок/обсидиан/барьер"
