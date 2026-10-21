@@ -1229,5 +1229,9 @@
   "message.gonzotech.plotnick.tnt.noexplosive": "No explosives in storage: industrial or plain TNT required",
   "message.gonzotech.plotnick.tnt.planned": "TNT rigging: %s pipes, explosive stock %s",
   "message.gonzotech.plotnick.tnt.done": "TNT placed through the shafts",
-  "stat.gonzotech.wrench_eaten": "Wrench — eaten: %s"
+  "stat.gonzotech.wrench_eaten": "Wrench — eaten: %s",
+  "gui.gonzotech.plotnick.button.network.lmb": "Full network build (needs %s drills and %s work blocks)",
+  "gui.gonzotech.plotnick.button.network.rmb": "Link placed drills (found %s) (needs %s work blocks)",
+  "message.gonzotech.plotnick.network.nodrills": "No drill rigs found in the sector",
+  "message.gonzotech.plotnick.network.linked": "Linking drills: %s work blocks, %s drills found, %s adopted"
 }

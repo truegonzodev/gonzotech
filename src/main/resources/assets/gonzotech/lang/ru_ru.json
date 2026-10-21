@@ -1229,5 +1229,9 @@
   "message.gonzotech.plotnick.tnt.noexplosive": "В хранилище нет взрывчатки: нужен промышленный или обычный ТНТ",
   "message.gonzotech.plotnick.tnt.planned": "Закладка ТНТ: %s труб, взрывчатки %s",
   "message.gonzotech.plotnick.tnt.done": "ТНТ разложено по скважинам",
-  "stat.gonzotech.wrench_eaten": "Ключ — съедено: %s"
+  "stat.gonzotech.wrench_eaten": "Ключ — съедено: %s",
+  "gui.gonzotech.plotnick.button.network.lmb": "Для полной постройки сети (требует %s буров и %s рабочих блоков)",
+  "gui.gonzotech.plotnick.button.network.rmb": "Для подсоединения буров (найдено %s) (требует %s рабочих блоков)",
+  "message.gonzotech.plotnick.network.nodrills": "В секторе не найдено ни одной буровой установки",
+  "message.gonzotech.plotnick.network.linked": "Подключаю буры: %s рабочих блоков, найдено %s буров, взято под управление %s"
 }

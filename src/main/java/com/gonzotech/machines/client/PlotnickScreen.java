@@ -3,6 +3,7 @@ package com.gonzotech.machines.client;
 import com.gonzotech.core.text.GtUnits;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.PlotnickDefs;
+import com.gonzotech.machines.block.entity.PlotnickBlockEntity;
 import com.gonzotech.machines.menu.PlotnickButtonPayload;
 import com.gonzotech.machines.menu.PlotnickMenu;
 import net.minecraft.ChatFormatting;
@@ -31,6 +32,9 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
      * Прямоугольники кнопок 18×18, построчно слева направо:
      * бурение / импульс, связи / разведка, свернуться / ТНТ.
      */
+    /** Индекс кнопки «Постройка» в BUTTON_RECTS (второй ряд, слева). */
+    private static final int BTN_NETWORK_RECT = 2;
+
     private static final int[][] BUTTON_RECTS = {
         {26, 18}, {44, 18}, {26, 36}, {44, 36}, {26, 54}, {44, 54}
     };
@@ -111,6 +115,18 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
             int by = y + rect[1];
             g.blit(RenderType::guiTextured, BUTTON_ICON, bx + 2, by + 2, 0f, 0f, 14, 14, 14, 14);
             if (inRect(mouseX, mouseY, bx, by, 18, 18)) {
+                if (i == BTN_NETWORK_RECT) {
+                    // 0.3.259: ЛКМ строит всё (дороги + буры по точкам),
+                    // ПКМ лишь ведёт сеть к уже поставленным бурям.
+                    g.renderComponentTooltip(font, List.of(
+                        Component.translatable(BUTTON_TOOLTIPS[i]),
+                        clickLine("ЛКМ ", "gui.gonzotech.plotnick.button.network.lmb",
+                            menu.networkDrillsToPlace(), menu.networkRoadsFull()),
+                        clickLine("ПКМ ", "gui.gonzotech.plotnick.button.network.rmb",
+                            menu.networkDrillsFound(), menu.networkRoadsToLink())),
+                        mouseX, mouseY);
+                    continue;
+                }
                 // Режим кнопок — по состоянию Плотника (заполненная карта),
                 // не по ежесекундному скану территории.
                 String[] keys = BUTTON_DESCRIPTIONS[i];
@@ -130,11 +146,19 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+        if (button == 0 || button == 1) {
             for (int i = 0; i < BUTTON_RECTS.length; i++) {
                 int bx = leftPos + BUTTON_RECTS[i][0];
                 int by = topPos + BUTTON_RECTS[i][1];
                 if (mouseX >= bx && mouseX < bx + 18 && mouseY >= by && mouseY < by + 18) {
+                    if (button == 1) {
+                        // ПКМ понимается только кнопка «Постройка».
+                        if (i == BTN_NETWORK_RECT) {
+                            PacketDistributor.sendToServer(new PlotnickButtonPayload(
+                                menu.containerId, PlotnickBlockEntity.BTN_NETWORK_LINK));
+                        }
+                        return true;
+                    }
                     PacketDistributor.sendToServer(
                         new PlotnickButtonPayload(menu.containerId, i));
                     return true;
@@ -142,5 +166,12 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    /** Строка «&7&lЛКМ &r&7текст»: жирная серая метка клика + серый текст. */
+    private static Component clickLine(String label, String key, int first, int second) {
+        return Component.empty()
+            .append(Component.literal(label).withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD))
+            .append(Component.translatable(key, first, second).withStyle(ChatFormatting.GRAY));
     }
 }

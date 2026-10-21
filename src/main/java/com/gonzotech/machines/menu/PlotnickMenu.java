@@ -5,6 +5,7 @@ import com.gonzotech.machines.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
@@ -26,12 +27,13 @@ public final class PlotnickMenu extends BaseMachineMenu {
     public PlotnickMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
         this(id, inventory,
             MenuHelper.readBlockEntity(inventory, buffer, PlotnickBlockEntity.class),
-            new SimpleContainerData(3));
+            new SimpleContainerData(PlotnickBlockEntity.DATA_SLOTS));
     }
 
     public PlotnickMenu(int id, Inventory inventory, PlotnickBlockEntity be, ContainerData data) {
         super(ModMenus.PLOTNICK.get(), id, be, data, PlotnickBlockEntity.CONTAINER_SIZE);
         this.plotnick = be;
+        if (!inventory.player.level().isClientSide) be.menuOpened();
         for (int k = 0; k < PlotnickBlockEntity.SLOTS_ACTIVE; k++) {
             addSlot(new MaxStackSlot(be, k, 8 + 18 * k, 76));
         }
@@ -143,6 +145,80 @@ public final class PlotnickMenu extends BaseMachineMenu {
      */
     public boolean hasSectorCard() {
         return data.get(2) != 0;
+    }
+
+    /** Буров ещё поставить (по точкам разметки). */
+    public int networkDrillsToPlace() {
+        return data.get(3);
+    }
+
+    /** Рабочих блоков для полной постройки (ЛКМ). */
+    public int networkRoadsFull() {
+        return data.get(4);
+    }
+
+    /** Уже поставленных буров в секторе (ПКМ-режим). */
+    public int networkDrillsFound() {
+        return data.get(5);
+    }
+
+    /** Рабочих блоков, чтобы подсоединить найденные буры (ПКМ). */
+    public int networkRoadsToLink() {
+        return data.get(6);
+    }
+
+    @Override
+    public void removed(net.minecraft.world.entity.player.Player player) {
+        super.removed(player);
+        if (player.level().isClientSide) return;
+        plotnick.menuClosed();
+        // Уносимая в руке стопка больше лимита предмета не должна попасть
+        // ни в инвентарь, ни в ItemEntity при выходе: раскладываем излишек.
+        clampCarried(player);
+    }
+
+    /**
+     * Щелчки по слайтам вне Плотника с избыточной стопкой в руке: ванильный
+     * слот игрока принимает максимум 64, а кодек стека на диске умеет лишь
+     * 1..99. Ставим ровно лимит предмета, излишек возвращаем в руку, а если
+     * рука занята (обмен) — в инвентарь/под ноги.
+     */
+    @Override
+    public void clicked(int slotId, int button, ClickType clickType,
+            net.minecraft.world.entity.player.Player player) {
+        ItemStack carried = getCarried();
+        boolean foreign = slotId >= machineSlotCount() && slotId < slots.size();
+        int overflow = 0;
+        ItemStack template = ItemStack.EMPTY;
+        if (foreign && !carried.isEmpty() && carried.getCount() > carried.getMaxStackSize()
+                && (clickType == ClickType.PICKUP || clickType == ClickType.SWAP)) {
+            overflow = carried.getCount() - carried.getMaxStackSize();
+            template = carried.copy();
+            template.setCount(overflow);
+            carried.setCount(carried.getMaxStackSize());
+        }
+        super.clicked(slotId, button, clickType, player);
+        if (overflow <= 0 || player.level().isClientSide) return;
+        if (getCarried().isEmpty()) {
+            setCarried(template);
+        } else if (ItemStack.isSameItemSameComponents(getCarried(), template)) {
+            getCarried().grow(overflow);
+        } else if (!player.getInventory().add(template)) {
+            player.drop(template, false);
+        }
+    }
+
+    private void clampCarried(net.minecraft.world.entity.player.Player player) {
+        ItemStack carried = getCarried();
+        while (carried.getCount() > carried.getMaxStackSize()) {
+            ItemStack excess = carried.split(carried.getMaxStackSize());
+            if (!player.getInventory().add(excess)) player.drop(excess, false);
+        }
+        if (!getCarried().isEmpty() && getCarried().getCount() > getCarried().getMaxStackSize()) {
+            ItemStack excess = getCarried().split(getCarried().getCount()
+                - getCarried().getMaxStackSize());
+            if (!player.getInventory().add(excess)) player.drop(excess, false);
+        }
     }
 
     /** Кнопка GUI: сервер уже проверил id меню и доступ. */

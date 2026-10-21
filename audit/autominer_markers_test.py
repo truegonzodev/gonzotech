@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pins 0.3.256-0.3.258 — метки автошахтера, Плотник, сеть, сейсмика и буры.
+"""Pins 0.3.256-0.3.259 — метки автошахтера, Плотник, сеть, сейсмика и буры.
 
 Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
 дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.258$", props, re.M), "mod_version != 0.3.258"
+assert re.search(r"^mod_version=0\.3\.259$", props, re.M), "mod_version != 0.3.259"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -106,7 +106,7 @@ assert "Mth.clamp(base.getZ(), targetChunkMinZ, targetChunkMinZ + 15)" in be, "Z
 assert "localX < 15 ? base.getX() + 1 : base.getX() - 1" in be, "центральная метка может уйти в соседний чанк"
 assert "sectorMarkerIds.add(marker.id())" in be, "Плотник не запоминает свои метки"
 assert '"SectorMarkers"' in be, "id меток Плотника не персистентны"
-assert "ContainerHelper.saveAllItems(tag, items, registries)" in be, "пустые активные слоты снова кодируются вручную"
+assert "ContainerHelper.saveAllItems(root, copy, registries)" in be, "пустые активные слоты снова кодируются вручную"
 assert "ContainerHelper.loadAllItems(tag, items, registries)" in be, "загрузка активных слотов не парная сохранению"
 assert "instanceof SeismicSourceBlockEntity" in be, "разведка не ищет источники по чанкам"
 assert "sourcePos.above()" in be, "геофон не проверяется непосредственно над источником"
@@ -339,6 +339,51 @@ for lang_name in ("ru_ru.json", "en_us.json"):
                 "message.gonzotech.plotnick.tnt.planned", "message.gonzotech.plotnick.tnt.done",
                 "message.gonzotech.plotnick.tnt.nopipes", "message.gonzotech.plotnick.tnt.noexplosive",
                 "stat.gonzotech.wrench_eaten"):
+        assert key in lang, f"в {lang_name} нет ключа {key}"
+
+# ── 12. Срез 0.3.259: краш-защита стопок >99, ПКМ-подсоединение буров ──
+assert "SAVE_COUNT_LIMIT = 99" in be, "нет потолка count для ваниального дискового кодека"
+assert '"OversizeCounts"' in be, "размер сверх 99 не сохраняется сайдкаром"
+assert "saveAllItemsClamped(items, tag, registries, oversize, 0)" in be, \
+    "активные слоты снова пишутся ваниальным saveAllItems напрямую"
+assert "saveAllItemsClamped(virtual, virtualTag, registries, oversize, CONTAINER_SIZE)" in be, \
+    "виртуальные слоты снова сохраняются без урезания"
+assert "restoreOversizeCounts(tag)" in be, "реальные размеры стопок не возвращаются при загрузке"
+assert "rest.split(cap)" in be, "выпадение при разборе Плотника не дробится на безопасные стопки"
+
+menu = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
+assert "SimpleContainerData(PlotnickBlockEntity.DATA_SLOTS)" in menu, \
+    "клиентский ContainerData не расширен числами тултипа"
+assert "public void clicked(int slotId, int button, ClickType clickType," in menu, \
+    "нет привратника щелчков против оверстака в кармане игрока"
+assert "clampCarried(player)" in menu, "излишек в руке не раскладывается при закрытии GUI"
+assert "be.menuOpened()" in menu and "plotnick.menuClosed()" in menu, \
+    "Плотник не знает, что на него смотрит GUI"
+assert "case 6 -> netRoadsLink;" in be, "четвёртое число тултипа не синхронизируется"
+
+assert "BTN_NETWORK_LINK = 6" in be, "нет id для ПКМ-подсоединения"
+assert "case BTN_NETWORK_LINK -> linkExistingDrills(server, requester)" in be, \
+    "ПКМ-кнопка не подключена"
+for needle in ("collectSectorScan", "coversDrillCell", "findPlacedDrills" , "refreshNetworkStats"):
+    if needle == "findPlacedDrills":
+        continue  # поиск буров живёт в collectSectorScan
+    assert needle in be, f"режим подключения буров: нет {needle}"
+assert '"message.gonzotech.plotnick.network.nodrills"' in be, "нет отчёта «буров не найдено»"
+assert '"message.gonzotech.plotnick.network.linked"' in be, "нет отчёта о подсоединении"
+assert "drillPoints.add(cell); // движок буров теперь будет её пасти" in be, \
+    "найденные буры не берутся под управление движка"
+
+screen = (ROOT / "src/main/java/com/gonzotech/machines/client/PlotnickScreen.java").read_text(encoding="utf-8")
+assert "BTN_NETWORK_RECT" in screen and "PlotnickBlockEntity.BTN_NETWORK_LINK" in screen, \
+    "ПКМ по кнопке постройки не отправляет режим подключения"
+assert "gui.gonzotech.plotnick.button.network.lmb" in screen, "нет строки ЛКМ в тултипе постройки"
+assert "gui.gonzotech.plotnick.button.network.rmb" in screen, "нет строки ПКМ в тултипе постройки"
+assert 'clickLine("ЛКМ "' in screen and "ChatFormatting.BOLD" in screen, \
+    "метки кликов в тултипе не выделены жирным серым, как просил автор"
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    for key in ("gui.gonzotech.plotnick.button.network.lmb", "gui.gonzotech.plotnick.button.network.rmb",
+                "message.gonzotech.plotnick.network.nodrills", "message.gonzotech.plotnick.network.linked"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 print("autominer_markers_test passed")

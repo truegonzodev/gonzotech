@@ -89,6 +89,9 @@ public final class PlotnickBlockEntity extends BlockEntity
     /** Стак слотов Плотника — до 512 предметов одного типа (автор). */
     public static final int MAX_STACK = 512;
 
+    /** Потолок count ваниального дискового кодека ItemStack ([1;99]). */
+    public static final int SAVE_COUNT_LIMIT = 99;
+
     public static final long GTU_CAPACITY_MILLI = PlotnickDefs.GTU_CAPACITY_MILLI;
     public static final long GTU_INTAKE_MILLI = PlotnickDefs.GTU_INTAKE_MILLI;
 
@@ -103,6 +106,8 @@ public final class PlotnickBlockEntity extends BlockEntity
     public static final int BTN_MARK = 3;
     public static final int BTN_PACK_UP = 4;
     public static final int BTN_DYNAMITE = 5;
+    /** ПКМ по «Постройке»: лишь подсоединить уже поставленные буры (0.3.259). */
+    public static final int BTN_NETWORK_LINK = 6;
 
     private final GtBuffer gtu = new GtBuffer(GTU_CAPACITY_MILLI);
     private final NonNullList<ItemStack> items =
@@ -140,6 +145,14 @@ public final class PlotnickBlockEntity extends BlockEntity
     /** Кэш связной сети рабочих блоков для проверки живости бура (раз в цикл). */
     private Set<BlockPos> drillRegion = Set.of();
 
+    // Числа тултипа «Постройки» (0.3.259): пересчитываются, пока открыт GUI.
+    private int menuViewers;
+    private boolean networkStatsDirty = true;
+    private int netDrillsToPlace;
+    private int netRoadsFull;
+    private int netDrillsFound;
+    private int netRoadsLink;
+
     private long intakeBudgetTick = Long.MIN_VALUE;
     private int acceptedGtuThisTick;
 
@@ -152,6 +165,10 @@ public final class PlotnickBlockEntity extends BlockEntity
                 // Состояние GUI-тултипов: 1 — в центральном слоте заполненная
                 // карта памяти (кнопки переключаются на рудный режим).
                 case 2 -> MemoryCardItem.isFilled(items.get(SLOT_CARD_A)) ? 1 : 0;
+                case 3 -> netDrillsToPlace;
+                case 4 -> netRoadsFull;
+                case 5 -> netDrillsFound;
+                case 6 -> netRoadsLink;
                 default -> 0;
             };
         }
@@ -163,9 +180,12 @@ public final class PlotnickBlockEntity extends BlockEntity
 
         @Override
         public int getCount() {
-            return 3;
+            return DATA_SLOTS;
         }
     };
+
+    /** gtu, виртуальные стаки, карта + 4 числа тултипа «Постройки». */
+    public static final int DATA_SLOTS = 7;
 
     public PlotnickBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PLOTNICK.get(), pos, state);
@@ -177,6 +197,84 @@ public final class PlotnickBlockEntity extends BlockEntity
         be.processDismantleQueue(server);
         be.processTntQueue(server);
         be.tickDrills(server);
+        // Тултипы GUI: раз в секунду, и только когда окно открыто.
+        if (be.menuViewers > 0 && (be.networkStatsDirty || server.getGameTime() % 20 == 0)) {
+            be.networkStatsDirty = false;
+            be.refreshNetworkStats(server);
+        }
+    }
+
+    /** Кто смотрит в GUI: держим счёт, чтобы не сканировать мир вхолостую. */
+    public void menuOpened() {
+        if (menuViewers++ == 0 && level instanceof ServerLevel server) refreshNetworkStats(server);
+    }
+
+    public void menuClosed() {
+        menuViewers = Math.max(0, menuViewers - 1);
+    }
+
+    /**
+     * Числа для тултипа: БУРЫ = сколько ещё ставить (по точкам разметки),
+     * ДОРОГИ_ЛКМ = рабочих блоков для полной постройки, НАЙДЕНО = уже
+     * стоящих буров в секторе, ДОРОГИ_ПКМ = блоков, чтобы их соединить.
+     */
+    private void refreshNetworkStats(ServerLevel server) {
+        SectorScan scan = collectSectorScan(server);
+        netDrillsFound = scan.drills().size();
+        boolean drillMode = MemoryCardItem.isFilled(items.get(SLOT_CARD_A))
+            && isOwnSector(MemoryCardItem.readSector(items.get(SLOT_CARD_A)));
+        List<BlockPos> fullAnchors = new ArrayList<>();
+        int missing = 0;
+        if (drillMode) {
+            for (BlockPos point : drillPoints) {
+                BlockPos cell = drillCellFor(server, point);
+                if (cell == null) continue;
+                if (!server.getBlockState(cell).is(ModMachines.MINER_DRILL.get())) missing++;
+                fullAnchors.add(cell);
+            }
+        } else {
+            fullAnchors.addAll(findSectorSources(server));
+        }
+        netDrillsToPlace = missing;
+        netRoadsFull = NetworkPlanner.plan(server, worldPosition, scan.workCells(), fullAnchors)
+            .entries().size();
+        netRoadsLink = netDrillsFound == 0 ? 0
+            : NetworkPlanner.plan(server, worldPosition, scan.workCells(), scan.drills())
+                .entries().size();
+    }
+
+    /** Одна полновысотная pass по 9 чанкам: рабочие клетки и поставленные буры. */
+    private record SectorScan(Set<BlockPos> workCells, List<BlockPos> drills) {
+    }
+
+    private SectorScan collectSectorScan(ServerLevel server) {
+        int cx = worldPosition.getX() >> 4;
+        int cz = worldPosition.getZ() >> 4;
+        net.minecraft.world.level.block.Block work = ModMachines.WORK_BLOCK.get();
+        net.minecraft.world.level.block.Block drill = ModMachines.MINER_DRILL.get();
+        Set<BlockPos> workCells = new HashSet<>();
+        List<BlockPos> drills = new ArrayList<>();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
+                int baseX = (cx + dx) << 4;
+                int baseZ = (cz + dz) << 4;
+                for (int lx = 0; lx < 16; lx++) {
+                    for (int lz = 0; lz < 16; lz++) {
+                        for (int y = server.getMinY(); y <= server.getMaxY(); y++) {
+                            net.minecraft.world.level.block.state.BlockState st =
+                                chunk.getBlockState(new BlockPos(lx, y, lz));
+                            if (st.is(work)) {
+                                workCells.add(new BlockPos(baseX + lx, y, baseZ + lz).immutable());
+                            } else if (st.is(drill)) {
+                                drills.add(new BlockPos(baseX + lx, y, baseZ + lz).immutable());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return new SectorScan(workCells, drills);
     }
 
     public GtBuffer gtuBuffer() {
@@ -215,6 +313,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             case BTN_NETWORK -> buildNetwork(server, requester);
             case BTN_SEISMO -> seismicImpulse(server, requester);
             case BTN_DYNAMITE -> rigTnt(server, requester);
+            case BTN_NETWORK_LINK -> linkExistingDrills(server, requester);
             default -> false; // бурение — следующий пакет добычи
         };
     }
@@ -478,6 +577,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             }
         }
         setChanged();
+        networkStatsDirty = true;
         if (requester != null) {
             requester.sendSystemMessage(oreBlocks == 0
                 ? Component.translatable("message.gonzotech.plotnick.ore.none")
@@ -550,11 +650,61 @@ public final class PlotnickBlockEntity extends BlockEntity
         placeCooldown = 2;
         buildRequester = requester;
         setChanged();
+        networkStatsDirty = true;
         report(requester, "message.gonzotech.plotnick.network.planned",
             plan.targets(), plan.already(), plan.unreachable() + skipped, queue.size(),
             countStored(ModMachines.WORK_BLOCK.get().asItem())
                 + countStored(ModMachines.MINER_DRILL.get().asItem()));
         return true;
+    }
+
+    /**
+     * ПКМ по «Постройке» (0.3.259): ничего не докладываем из буров — только
+     * прокладываем дороги к уже поставленным буровым установкам в секторе и
+     * берём их под управление движком (иначе плотник «не видит» руки игрока).
+     */
+    private boolean linkExistingDrills(ServerLevel server, ServerPlayer requester) {
+        if (!buildQueue.isEmpty()) {
+            report(requester, "message.gonzotech.plotnick.network.busy", buildQueue.size());
+            return true;
+        }
+        SectorScan scan = collectSectorScan(server);
+        List<BlockPos> placed = scan.drills();
+        if (placed.isEmpty()) {
+            report(requester, "message.gonzotech.plotnick.network.nodrills");
+            return true;
+        }
+        int adopted = 0;
+        for (BlockPos cell : placed) {
+            if (!coversDrillCell(cell)) {
+                drillPoints.add(cell); // движок буров теперь будет её пасти
+                adopted++;
+            }
+        }
+        NetworkPlanner.Plan plan =
+            NetworkPlanner.plan(server, worldPosition, scan.workCells(), placed);
+        if (plan.entries().isEmpty()) {
+            networkStatsDirty = true;
+            report(requester, "message.gonzotech.plotnick.network.noneeded", plan.already());
+            return true;
+        }
+        buildQueue.clear();
+        buildQueue.addAll(plan.entries());
+        placeCooldown = 2;
+        buildRequester = requester;
+        setChanged();
+        networkStatsDirty = true;
+        report(requester, "message.gonzotech.plotnick.network.linked",
+            plan.entries().size(), placed.size(), adopted);
+        return true;
+    }
+
+    /** Есть ли уже точка разметки, для которой клетка буровая (сама или над ней). */
+    private boolean coversDrillCell(BlockPos drillCell) {
+        for (BlockPos point : drillPoints) {
+            if (point.equals(drillCell) || point.above().equals(drillCell)) return true;
+        }
+        return false;
     }
 
     /** Клетка под бур: воздух над точкой руды, либо сама точка, если она мягкая. */
@@ -624,6 +774,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         setChanged();
         placeCooldown = 4 + server.random.nextInt(5);
         if (buildQueue.isEmpty()) {
+            networkStatsDirty = true;
             if (buildRequester != null) {
                 report(buildRequester, "message.gonzotech.plotnick.network.done");
             }
@@ -664,6 +815,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         BlockParticleOption crumble = new BlockParticleOption(ParticleTypes.BLOCK, target);
         server.sendParticles(crumble, cx, cy, cz, 14, 0.22, 0.22, 0.22, 0.05D);
         server.sendParticles(crumble, cx, cy, cz, 6, 0.38, 0.38, 0.38, 0.015D);
+        networkStatsDirty = true; // числа тултипа «Постройки» поехали
     }
 
     // ─────────────────────────── сейсмический импульс ───────────────────────────
@@ -942,6 +1094,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             report(requester, "message.gonzotech.plotnick.pack.nothing");
             return true;
         }
+        networkStatsDirty = true;
         dismantleQueue.clear();
         dismantleQueue.addAll(lootable);
         dismantleReturned = 0;
@@ -1303,12 +1456,15 @@ public final class PlotnickBlockEntity extends BlockEntity
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         gtu.save(tag, "Gtu");
-        ContainerHelper.saveAllItems(tag, items, registries);
+        // Ваниальный дисковый кодек ItemStack умеет count только 1..99,
+        // а наши слоты живут по 512. Сохраняем урезанную копию, а излишек
+        // — в сайдкаре; при загрузке реальный размер возвращается.
+        ListTag oversize = new ListTag();
+        saveAllItemsClamped(items, tag, registries, oversize, 0);
         ListTag virtualTag = new ListTag();
-        for (ItemStack stack : virtual) {
-            if (!stack.isEmpty()) virtualTag.add(stack.save(registries));
-        }
+        saveAllItemsClamped(virtual, virtualTag, registries, oversize, CONTAINER_SIZE);
         tag.put("Virtual", virtualTag);
+        if (!oversize.isEmpty()) tag.put("OversizeCounts", oversize);
         if (!sectorMarkerIds.isEmpty()) {
             tag.putLongArray("SectorMarkers", sectorMarkerIds.stream()
                 .mapToLong(Long::longValue).toArray());
@@ -1330,6 +1486,53 @@ public final class PlotnickBlockEntity extends BlockEntity
         if (placeCooldown > 0) tag.putInt("PlaceCooldown", placeCooldown);
         savePosList(tag, "DismantleQueue", dismantleQueue);
         savePosList(tag, "TntQueue", tntQueue);
+    }
+
+    /** Сохраняет список стопок через ContainerHelper, урезая count до 99. */
+    private static void saveAllItemsClamped(NonNullList<ItemStack> source, CompoundTag root,
+            HolderLookup.Provider registries, ListTag oversize, int slotOffset) {
+        NonNullList<ItemStack> copy = NonNullList.create();
+        for (ItemStack stack : source) {
+            if (stack.isEmpty()) {
+                copy.add(ItemStack.EMPTY);
+                continue;
+            }
+            if (stack.getCount() > SAVE_COUNT_LIMIT) {
+                CompoundTag extra = new CompoundTag();
+                extra.putInt("Slot", slotOffset + copy.size());
+                extra.putInt("Extra", stack.getCount() - SAVE_COUNT_LIMIT);
+                oversize.add(extra);
+                ItemStack clamped = stack.copy();
+                clamped.setCount(SAVE_COUNT_LIMIT);
+                copy.add(clamped);
+            } else {
+                copy.add(stack);
+            }
+        }
+        ContainerHelper.saveAllItems(root, copy, registries);
+    }
+
+    /** Тот же порядок для виртуальных слотов (они лежат в отдельном ListTag). */
+    private static void saveAllItemsClamped(NonNullList<ItemStack> source, ListTag root,
+            HolderLookup.Provider registries, ListTag oversize, int slotOffset) {
+        CompoundTag holder = new CompoundTag();
+        saveAllItemsClamped(source, holder, registries, oversize, slotOffset);
+        ListTag saved = holder.getList("Items", Tag.TAG_COMPOUND);
+        for (int i = 0; i < saved.size(); i++) root.add(saved.get(i).copy());
+    }
+
+    /** Возвращает урезанные при сохранении размеры стопок. */
+    private void restoreOversizeCounts(CompoundTag tag) {
+        for (Tag entry : tag.getList("OversizeCounts", Tag.TAG_COMPOUND)) {
+            CompoundTag cell = (CompoundTag) entry;
+            int slot = cell.getInt("Slot");
+            int extra = cell.getInt("Extra");
+            NonNullList<ItemStack> target = slot < CONTAINER_SIZE ? items : virtual;
+            int index = slot < CONTAINER_SIZE ? slot : slot - CONTAINER_SIZE;
+            if (index < 0 || index >= target.size()) continue;
+            ItemStack stack = target.get(index);
+            if (!stack.isEmpty()) stack.grow(extra);
+        }
     }
 
     private static void savePosList(CompoundTag tag, String key, List<BlockPos> positions) {
@@ -1354,12 +1557,19 @@ public final class PlotnickBlockEntity extends BlockEntity
         for (long markerId : tag.getLongArray("SectorMarkers")) {
             sectorMarkerIds.add(markerId);
         }
+        for (int i = 0; i < VIRTUAL_SLOTS; i++) virtual.set(i, ItemStack.EMPTY);
+        // Новый формат пишет «Slot» (как ContainerHelper); старый был списком
+        // по порядку — для него индекс просто идёт последовательно.
         ListTag virtualTag = tag.getList("Virtual", Tag.TAG_COMPOUND);
-        for (int i = 0; i < VIRTUAL_SLOTS; i++) {
-            virtual.set(i, i < virtualTag.size()
-                ? ItemStack.parseOptional(registries, virtualTag.getCompound(i))
-                : ItemStack.EMPTY);
+        int seq = 0;
+        for (Tag entry : virtualTag) {
+            CompoundTag cell = (CompoundTag) entry;
+            int index = cell.contains("Slot") ? cell.getByte("Slot") & 0xFF : seq;
+            seq++;
+            if (index < 0 || index >= VIRTUAL_SLOTS) continue;
+            virtual.set(index, ItemStack.parseOptional(registries, cell));
         }
+        restoreOversizeCounts(tag);
         drillPoints.clear();
         for (long raw : tag.getLongArray("DrillPoints")) {
             drillPoints.add(BlockPos.of(raw));
@@ -1385,17 +1595,19 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     public void dropContentsForBreak() {
         if (level == null || level.isClientSide()) return;
-        for (ItemStack stack : items) {
-            if (!stack.isEmpty()) {
-                net.minecraft.world.Containers.dropItemStack(level,
-                    worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), stack.copy());
-            }
-        }
-        for (ItemStack stack : virtual) {
-            if (!stack.isEmpty()) {
-                net.minecraft.world.Containers.dropItemStack(level,
-                    worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), stack.copy());
-            }
+        for (ItemStack stack : items) dropSized(stack);
+        for (ItemStack stack : virtual) dropSized(stack);
+    }
+
+    /** Выдаёт содержимое дробными стопками ≤ лимита предмета — краш-защита. */
+    private void dropSized(ItemStack stack) {
+        if (stack.isEmpty()) return;
+        ItemStack rest = stack.copy();
+        int cap = Math.min(rest.getMaxStackSize(), SAVE_COUNT_LIMIT);
+        while (!rest.isEmpty()) {
+            ItemStack piece = rest.split(cap);
+            net.minecraft.world.Containers.dropItemStack(level,
+                worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), piece);
         }
     }
 
