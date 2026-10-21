@@ -198,8 +198,10 @@ for desc_key in ("button.drill.desc", "button.impulse.desc", "button.network.sou
 assert "menu.hasSectorCard()" in screen, "тултип не переключается на рудный режим по состоянию Плотника"
 
 planner = (ROOT / "src/main/java/com/gonzotech/machines/miner/NetworkPlanner.java").read_text(encoding="utf-8")
-assert "GRASS_BLOCK" in planner and "SNOW" in planner and "state.isAir()" in planner, \
-    "дорожка теряет правило воздух/трава/снег"
+assert "BlockTags.REPLACEABLE" in planner and "state.isAir()" in planner, \
+    "дорожка теряет правило «только воздух над опорой и заменяемое растение»"
+assert "GRASS_BLOCK" not in planner, "дорожка снова собирается замещать блоки травы"
+assert "network.add(origin)" in planner, "сеть не стартует от пустого Плотника без рабочих блоков рядом"
 assert "BFS_NODE_BUDGET" in planner, "у BFS нет лимита паутины"
 assert "connectedWorkRegion" in planner, "нет переиспользования уже построенных ветвей"
 assert "isBuildable" in planner, "solid-блоки не защищены от замены дорожкой"
@@ -209,11 +211,16 @@ assert "be.processBuildQueue(server)" in be, "тики Плотника не р�
 assert '"message.gonzotech.plotnick.network.planned"' in be, "нет отчёта о кэшированном плане постройки"
 assert "placeCooldown = 4 + server.random.nextInt(5)" in be, "между блоками нет случайной задержки 4-8 тиков"
 assert "SoundType.METAL.getPlaceSound()" in be, "установка блоков сети не озвучена"
-assert "ParticleTypes.BLOCK" in be, "установка блоков сети не посыпается частицами разрушения"
+assert "new BlockParticleOption(ParticleTypes.BLOCK, target)" in be, \
+    "краш-частицы берутся не из самого поставленного рабочего блока"
+assert "SONIC_BOOM" not in be, "SONIC_BOOM убран по требованию автора"
+assert be.count("ModSounds.GEO_IMPACT") == 1, "звук импульса должен звучать один раз на весь сектор"
+assert "consumeActive(Items.TNT, 1)" in be, "Плотник не дозирует динамит в разряженные источники"
 assert "buildQueue.add(0, entry)" in be, "нехватка рабочих блоков не сохраняет очередь на месте"
 assert '"BuildQueue"' in be and '"DrillPoints"' in be and '"PlaceCooldown"' in be, \
     "очередь постройки/точки бурения не персистентны"
 assert "MemoryCardItem.isFilled" in be, "режим кнопок не определяется состоянием карты"
+assert "moveIntoPlotnick" in menu, "shift-merge в Плотник не поднимает стопки выше 64"
 assert '"message.gonzotech.plotnick.ore.done"' in be, "нет отчёта рудной разведки"
 assert "pick < 9" in be, "на чанк приходится больше девяти точек бурения"
 assert "MinerMarker.Kind.ORE" in be, "рудные точки не помечаются ORE-метками"

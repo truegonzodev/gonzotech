@@ -38,6 +38,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -612,9 +613,15 @@ public final class PlotnickBlockEntity extends BlockEntity
         // SoundEvents.BLOCK_*_PLACE больше нет); корпус рабочих блоков — METAL.
         server.playSound(null, pos, SoundType.METAL.getPlaceSound(), SoundSource.BLOCKS,
             0.65F, 0.9F + 0.2F * server.random.nextFloat());
-        server.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, current),
-            pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-            10, 0.25, 0.25, 0.25, 0.06);
+        // Красивая «усадка»: в самой поставленной клетке — слома-частицы
+        // самого рабочего блока (block_crack по старому имени) и второй,
+        // более широкий крошащий залп. Заменённые блоки частиц не дают.
+        double cx = pos.getX() + 0.5;
+        double cy = pos.getY() + 0.5;
+        double cz = pos.getZ() + 0.5;
+        BlockParticleOption crumble = new BlockParticleOption(ParticleTypes.BLOCK, target);
+        server.sendParticles(crumble, cx, cy, cz, 14, 0.22, 0.22, 0.22, 0.05D);
+        server.sendParticles(crumble, cx, cy, cz, 6, 0.38, 0.38, 0.38, 0.015D);
     }
 
     // ─────────────────────────── сейсмический импульс ───────────────────────────
@@ -653,9 +660,18 @@ public final class PlotnickBlockEntity extends BlockEntity
                 notConnected++;
                 continue;
             }
-            if (server.getBlockEntity(sourcePos) instanceof SeismicSourceBlockEntity source
-                && source.hasDynamite()) {
-                armed.add(source);
+            if (server.getBlockEntity(sourcePos) instanceof SeismicSourceBlockEntity source) {
+                // Автозарядка: разряженный источник получает одну единицу
+                // динамита из активных слотов Плотника, если она там есть.
+                if (!source.hasDynamite() && consumeActive(Items.TNT, 1) == 1) {
+                    source.setItem(SeismicSourceBlockEntity.SLOT_DYNAMITE,
+                        new ItemStack(Items.TNT));
+                }
+                if (source.hasDynamite()) {
+                    armed.add(source);
+                } else {
+                    notLoaded++;
+                }
             } else {
                 notLoaded++;
             }
@@ -675,6 +691,10 @@ public final class PlotnickBlockEntity extends BlockEntity
             new MemoryCardItem.Sector(cx - 1, cx + 1, cz - 1, cz + 1));
         setItem(SLOT_CARD_A, card);
 
+        // Один глухой удар на весь импульс — у Плотника, а не девятикратное
+        // наслоение по источникам.
+        server.playSound(null, worldPosition, ModSounds.GEO_IMPACT.get(), SoundSource.BLOCKS,
+            1.6F, 0.95F + 0.1F * server.random.nextFloat());
         for (SeismicSourceBlockEntity source : armed) {
             source.setItem(SeismicSourceBlockEntity.SLOT_DYNAMITE, ItemStack.EMPTY);
             source.setChanged();
@@ -684,15 +704,10 @@ public final class PlotnickBlockEntity extends BlockEntity
         return true;
     }
 
-    /** Удар по площадке: сейсмический гулок и поднимающийся вокруг пол. */
+    /** Подъём пола кольцом вокруг точки источника (звук — общий, один). */
     private void spawnSeismicPulse(ServerLevel server, BlockPos sourcePos) {
         double x = sourcePos.getX() + 0.5;
-        double y = sourcePos.getY() + 1.0;
         double z = sourcePos.getZ() + 0.5;
-        server.playSound(null, x, y, z, ModSounds.GEO_IMPACT.get(), SoundSource.BLOCKS,
-            1.1F, 0.9F + 0.2F * server.random.nextFloat());
-        server.sendParticles(ParticleTypes.SONIC_BOOM, x, y + 0.4, z,
-            4, 0.35, 0.25, 0.35, 0.0);
         BlockPos ground = sourcePos.below();
         BlockState groundState = server.getBlockState(ground);
         if (groundState.isAir()) return;
@@ -789,6 +804,21 @@ public final class PlotnickBlockEntity extends BlockEntity
             if (stack.is(item)) total += stack.getCount();
         }
         return total;
+    }
+
+    /** Расход только из 9 активных слотов (карты и виртуальный буфер не трогаем). */
+    public int consumeActive(Item item, int count) {
+        int left = Math.max(0, count);
+        for (int slot = 0; slot < SLOTS_ACTIVE && left > 0; slot++) {
+            ItemStack stack = items.get(slot);
+            if (stack.isEmpty() || !stack.is(item)) continue;
+            int take = Math.min(left, stack.getCount());
+            stack.shrink(take);
+            if (stack.isEmpty()) items.set(slot, ItemStack.EMPTY);
+            left -= take;
+        }
+        if (left != count) setChanged();
+        return count - left;
     }
 
     /** @return сколько реально сняли (активные слоты расходуются первыми) */

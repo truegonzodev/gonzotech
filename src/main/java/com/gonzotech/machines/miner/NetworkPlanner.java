@@ -3,7 +3,7 @@ package com.gonzotech.machines.miner;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
@@ -55,25 +55,17 @@ public final class NetworkPlanner {
     }
 
     /**
-     * Клетку можно застроить дорожкой: это либо заменяемая поверхность
-     * (газон, снег, трава), либо воздух, у которого под опорой стоит
-     * сплошной не заменяемый блок. Никогда не проходим сквозь solid.
+     * Клетку дорожки разрешено занимать только воздухом над твёрдой опорой
+     * либо заменяемым растением (short_grass, папоротники, снежный слой —
+     * ванильный тег {@code minecraft:replaceable}). Твердые блоки — трава
+     * (grass_block), камень, бедрок — не заменяются никогда: дорога стоит
+     * ПОВЕРХ поверхности, а не врезается в неё.
      */
     public static boolean isBuildable(BlockState state, BlockState below) {
-        if (isReplaceableSurface(state)) return true;
+        if (state.is(BlockTags.REPLACEABLE)) return !below.isAir();
         if (!state.isAir()) return false;
-        return !below.isAir() && !isReplaceableSurface(below);
-    }
-
-    /** Поверхности, которые дорожка имеет право заменить. */
-    public static boolean isReplaceableSurface(BlockState state) {
-        return state.is(Blocks.GRASS_BLOCK)
-            || state.is(Blocks.SNOW)
-            || state.is(Blocks.SNOW_BLOCK)
-            || state.is(Blocks.SHORT_GRASS)
-            || state.is(Blocks.TALL_GRASS)
-            || state.is(Blocks.FERN)
-            || state.is(Blocks.LARGE_FERN);
+        // Воздух над растением относится к клетке растения: строим в его уровне.
+        return !below.isAir() && !below.is(BlockTags.REPLACEABLE);
     }
 
     /**
@@ -86,6 +78,9 @@ public final class NetworkPlanner {
     public static Plan plan(ServerLevel level, BlockPos origin, Set<BlockPos> workBlock,
                             List<BlockPos> anchors) {
         Set<BlockPos> network = connectedWorkRegion(level, origin, workBlock);
+        // Сам Плотник — корень сети: стройка стартует от него всегда, даже
+        // когда вплотную к нему ещё не лежит ни одного рабочего блока.
+        network.add(origin);
         int alreadyConnected = 0;
         List<BlockPos> pending = new ArrayList<>();
         for (BlockPos anchor : anchors) {

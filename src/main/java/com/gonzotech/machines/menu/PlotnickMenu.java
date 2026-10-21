@@ -40,7 +40,12 @@ public final class PlotnickMenu extends BaseMachineMenu {
         addPlayerInventory(inventory, 8, 98);
     }
 
-    /** Активный слот Плотника: стопка до 512 предметов одного типа (автор). */
+    /**
+     * Активный слот Плотника: стопка до 512 предметов одного типа (автор).
+     * Ваниальные слияния считают потолок как min(лимита предмета, лимита
+     * слота), поэтому shift-перенос в Плотник переопределен в меню — иначе
+     * стопка так и оставалась бы 64.
+     */
     private static final class MaxStackSlot extends Slot {
 
         private MaxStackSlot(PlotnickBlockEntity be, int index, int x, int y) {
@@ -51,6 +56,56 @@ public final class PlotnickMenu extends BaseMachineMenu {
         public int getMaxStackSize() {
             return PlotnickBlockEntity.MAX_STACK;
         }
+    }
+
+    /**
+     * Shift+ЛКМ в машину: сначала доливка в неполные стопки до 512 (мимо
+     * ванильного min с лимитом предмета), затем пустые слоты. Обратный путь
+     * (из машины в игрок) — стандартный: 512-стопка честно распадается на
+     * переносимые куски.
+     */
+    @Override
+    public ItemStack quickMoveStack(net.minecraft.world.entity.player.Player player, int index) {
+        Slot slot = slots.get(index);
+        if (slot == null || !slot.hasItem()) return ItemStack.EMPTY;
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        int machineEnd = machineSlotCount();
+        if (index < machineEnd) {
+            if (!moveItemStackTo(stack, machineEnd, slots.size(), true)) return ItemStack.EMPTY;
+        } else if (!moveIntoPlotnick(stack, machineEnd)) {
+            return ItemStack.EMPTY;
+        }
+        if (stack.isEmpty()) {
+            slot.setByPlayer(ItemStack.EMPTY);
+        } else {
+            slot.setChanged();
+        }
+        return original;
+    }
+
+    private boolean moveIntoPlotnick(ItemStack stack, int machineEnd) {
+        boolean movedAny = false;
+        for (int i = 0; i < machineEnd && !stack.isEmpty(); i++) {
+            Slot target = slots.get(i);
+            ItemStack stored = target.getItem();
+            if (stored.isEmpty() || !ItemStack.isSameItemSameComponents(stored, stack)) continue;
+            if (!target.mayPlace(stack)) continue;
+            int space = target.getMaxStackSize() - stored.getCount();
+            if (space <= 0) continue;
+            int moved = Math.min(space, stack.getCount());
+            stored.grow(moved);
+            stack.shrink(moved);
+            target.setChanged();
+            movedAny = true;
+        }
+        for (int i = 0; i < machineEnd && !stack.isEmpty(); i++) {
+            Slot target = slots.get(i);
+            if (target.hasItem() || !target.mayPlace(stack)) continue;
+            target.setByPlayer(stack.split(target.getMaxStackSize()));
+            movedAny = true;
+        }
+        return movedAny;
     }
 
     /** Слот карт памяти: одна пустая или заполненная карта, не стопка. */
