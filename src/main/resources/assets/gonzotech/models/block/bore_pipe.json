@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "gonzotech:block/second/bore_pipe_top",
+    "side": "gonzotech:block/second/bore_pipe"
+  }
+}

@@ -1201,7 +1201,7 @@
   "gui.gonzotech.plotnick.button.drill.desc": "Пробурить скважины 1×1 до бедрока в отмеченных точках руд",
   "gui.gonzotech.plotnick.button.impulse.desc": "Глухой удар по всем подключённым источникам; сектор пишется на пустую карту в центральном слоте",
   "gui.gonzotech.plotnick.button.network.sources": "Проложить рабочие дорожки от Плотника к каждому источнику колебаний",
-  "gui.gonzotech.plotnick.button.network.drills": "Проложить дорожки к бурам в точках руд; недостающие буры возьмутся из хранилища",
+  "gui.gonzotech.plotnick.button.network.drills": "Дорожки к точкам руд, буры — после сети; недостающие возьмутся из хранилища",
   "gui.gonzotech.plotnick.button.mark.sector": "Отметить чанки под сейсмоустановки: источник и геофон над ним",
   "gui.gonzotech.plotnick.button.mark.ores": "Отметить места рудных залежей — до девяти точек бурения на чанк",
   "gui.gonzotech.plotnick.button.pack_up.desc": "Убрать разметку, точки бурения и снять недостроенную сеть",
@@ -1219,5 +1219,15 @@
   "message.gonzotech.plotnick.impulse.noloaded": "Импульс заблокирован: %s источников без динамита",
   "message.gonzotech.plotnick.impulse.done": "Импульс: %s источников; сектор записан на карту памяти",
   "message.gonzotech.plotnick.ore.none": "Руд в секторе не найдено",
-  "message.gonzotech.plotnick.ore.done": "Найдено %s рудных блоков, %s точек бурения, %s меток"
+  "message.gonzotech.plotnick.ore.done": "Найдено %s рудных блоков, %s точек бурения, %s меток",
+  "block.gonzotech.bore_pipe": "Скваженная труба",
+  "message.gonzotech.plotnick.ore.wrongsector": "Карта памяти не этого сектора: Плотник размечает только свой сектор 3×3",
+  "message.gonzotech.plotnick.pack.dismantling": "Сворачивание: %s блоков в очереди разбора",
+  "message.gonzotech.plotnick.pack.nothing": "Разбирать нечего",
+  "message.gonzotech.plotnick.pack.done": "Сеть демонтирована: %s блоков возвращено",
+  "message.gonzotech.plotnick.tnt.nopipes": "Скваженных труб для закладки ТНТ не найдено",
+  "message.gonzotech.plotnick.tnt.noexplosive": "В хранилище нет взрывчатки: нужен промышленный или обычный ТНТ",
+  "message.gonzotech.plotnick.tnt.planned": "Закладка ТНТ: %s труб, взрывчатки %s",
+  "message.gonzotech.plotnick.tnt.done": "ТНТ разложено по скважинам",
+  "stat.gonzotech.wrench_eaten": "Ключ — съедено: %s"
 }

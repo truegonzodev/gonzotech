@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pins 0.3.256-0.3.257 — метки автошахтера, Плотник, сеть и сейсмика.
+"""Pins 0.3.256-0.3.258 — метки автошахтера, Плотник, сеть, сейсмика и буры.
 
 Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
 дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.257$", props, re.M), "mod_version != 0.3.257"
+assert re.search(r"^mod_version=0\.3\.258$", props, re.M), "mod_version != 0.3.258"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -96,7 +96,7 @@ assert be.index("SLOTS_ACTIVE") < be.index("VIRTUAL_SLOTS"), "порядок к�
 for button_pin in ("BTN_DRILL = 0", "BTN_SEISMO = 1", "BTN_NETWORK = 2",
                    "BTN_MARK = 3", "BTN_PACK_UP = 4", "BTN_DYNAMITE = 5"):
     assert button_pin in be, f"раскладка кнопок Плотника сбилась: {button_pin}"
-assert "case BTN_PACK_UP -> packUp(server);" in be, "«Свернуться» не убирает разметку"
+assert "case BTN_PACK_UP -> packUp(server, requester);" in be, "«Свернуться» не убирает разметку"
 assert "case BTN_NETWORK -> buildNetwork(server, requester);" in be, "«Построить связи» не запускает сеть"
 assert "case BTN_SEISMO -> seismicImpulse(server, requester);" in be, "«Произвести импульс» не подключён"
 assert "placeSectorMarks" in be, "разметка сектора 3×3 чанка пропала"
@@ -260,6 +260,83 @@ for lang_name in ("ru_ru.json", "en_us.json"):
                 "message.gonzotech.plotnick.network.planned", "message.gonzotech.plotnick.impulse.done",
                 "message.gonzotech.plotnick.ore.done", "gui.gonzotech.plotnick.button.network.drills",
                 "gui.gonzotech.plotnick.button.mark.ores"):
+        assert key in lang, f"в {lang_name} нет ключа {key}"
+
+# ── 11. Срез 0.3.258: буры, скваженные трубы, сворачивание и ТНТ-закладка ──
+defs = (ROOT / "src/main/java/com/gonzotech/machines/energy/PlotnickDefs.java").read_text(encoding="utf-8")
+assert "DRILL_GTU_MILLI = 6_500L" in defs, "ставок бура 6.5 GTU/т отсутствует"
+assert "DRILL_CYCLE_TICKS = 40" in defs, "цикл бура != 40 тиков (2 секунды)"
+assert "PACK_BLOCKS_PER_TICK = 3" in defs, "скорость 3 блока/тик не задана"
+
+# Скваженная труба: блок, предметы, все ресурсы
+machinery = (ROOT / "src/main/java/com/gonzotech/machines/registry/ModMachines.java").read_text(encoding="utf-8")
+assert 'registerBlock("bore_pipe", BorePipeBlock::new, lightMetal())' in machinery, "скваженная труба не зарегистрирована"
+assert 'registerSimpleBlockItem("bore_pipe", BORE_PIPE)' in machinery, "предмет скваженной трубы не зарегистрирован"
+bore_block = (ROOT / "src/main/java/com/gonzotech/machines/block/BorePipeBlock.java").read_text(encoding="utf-8")
+assert "simpleCodec(BorePipeBlock::new)" in bore_block, "у скваженной трубы нет codec (stall-краш datagen)"
+for res in ("blockstates/bore_pipe.json", "models/block/bore_pipe.json", "items/bore_pipe.json"):
+    assert (RES / res).is_file(), f"нет ресурса {res}"
+assert (ROOT / "src/main/resources/data/gonzotech/loot_table/blocks/bore_pipe.json").is_file(), "нет лут-скрафа скваженной трубы"
+tag_pick = (ROOT / "src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json").read_text(encoding="utf-8")
+assert "gonzotech:bore_pipe" in tag_pick, "скваженная труба не в теге pickaxe"
+for texture in ("bore_pipe.png", "bore_pipe_top.png"):
+    assert png_size(RES / "textures/block/second" / texture) == (16, 16), f"{texture} != 16x16"
+
+# Дороги строятся первыми, буры — только после сети
+idx_roads = be.index("new ArrayList<>(plan.entries())")
+idx_drills = be.index("for (BlockPos drillCell : drillSlots)")
+assert idx_roads < idx_drills, "буры снова лезут в очередь раньше дорог"
+
+# Разметка чужого сектора запрещена
+assert "isOwnSector" in be and "plotnick.ore.wrongsector" in be, "чужая карта не отсекается при разметке"
+
+# Движок буров
+for needle in ("tickDrills(server)", "drillCellAt", "deepestTargetY", "isImmovable",
+               "collectOreRow", "digStep", "drillTargetY", "drillRegion"):
+    assert needle in be, f"движок буров: нет {needle}"
+assert "gtu.extract(want, true) < want" in be, "энергия не симулируется перед списанием"
+assert "PlotnickDefs.DRILL_GTU_MILLI * running.size()" in be, "энергия считается не по числу работающих буров"
+assert "hardness < 0F || hardness >= 50F" in be, "нет правила упора в бедрок/обсидиан/барьер"
+assert "server.destroyBlock(pos, false, null)" in be, "руда не всасывается (drop=false) в Плотник"
+assert "for (int dx = -2; dx <= 2; dx++)" in be, "всас 5×5 вокруг трубы отсутствует"
+assert "countStored(ModMachines.BORE_PIPE.get().asItem())" in be, "наличие труб в хранилище не проверяется"
+assert "consumeStored(ModMachines.BORE_PIPE.get().asItem(), 1)" in be, "труба не расходуется из хранилища при углублении"
+assert "collectSurfaceWorkCells" in be, "проверка связности бура с сетью отсутствует"
+
+# «Свернуться»: полный разбор сети обратно, 3 блока/тик, всё в Плотник
+assert "case BTN_PACK_UP -> packUp(server, requester)" in be, "свертывание не получает запросчика"
+assert "collectNetworkBlocks" in be and "isPlotnickNetworkBlock" in be, "нет сбора всех блоков сети"
+assert ".distManhattan(worldPosition)).reversed()" in be, "демонтаж идёт не от дальних клеток"
+assert "processDismantleQueue" in be and "processTntQueue" in be, "очереди сворачивания/ТНТ не тикают"
+assert "server.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(state))" in be, \
+    "слом сети без партиклов/звука break"
+assert "source.hasDynamite()" in be, "динамит источника не возвращается при сворачивании"
+assert '"DismantleQueue"' in be and '"TntQueue"' in be, "очереди демонтажа/ТНТ не персистентны"
+
+# «Заменить на ТНТ»: сверху вниз, промышленный в приоритете, трубы не возвращаются
+assert "case BTN_DYNAMITE -> rigTnt(server, requester)" in be, "кнопка ТНТ не подключена"
+assert "collectPipesTopDown" in be, "нет сбора труб сверху вниз"
+assert "b.getY() - a.getY()" in be, "закладка ТНТ идёт не от бура вниз"
+assert "pickExplosive" in be and "ModItems.INDUSTRIAL_TNT_ITEM.get()" in be, "промышленный ТНТ не приоритетен"
+assert "Blocks.TNT.defaultBlockState()" in be, "ванильный ТНТ не подкладывается при недостатке промышленного"
+tnt_sec = be[be.index("private void processTntQueue"):be.index("private Item pickExplosive")]
+assert "insert(" not in tnt_sec, "ТНТ-закладка не должна возвращать трубы в Плотник"
+
+# Ключ: жрётся сколько угодно, со звуком, частицами и статистикой
+wrench = (ROOT / "src/main/java/com/gonzotech/machines/item/WrenchItem.java").read_text(encoding="utf-8")
+assert "public void onUseTick" in wrench, "жевание ключа без звука/частиц"
+assert "remainingUseDuration % 10" in wrench, "звук еды не дозируется тиками"
+assert "ParticleTypes.ITEM" in wrench and "ItemParticleOption" in wrench, "частицы еды отсутствуют"
+assert "Stats.CUSTOM.get" in wrench and "wrench_eaten" in wrench, "поедание ключа не пишется в статистику"
+use_body = wrench[wrench.index("public InteractionResult use("):wrench.index("getUseDuration")]
+assert "hasMastery" not in use_body, "повторное поедание ключа всё ещё заблокировано"
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    for key in ("block.gonzotech.bore_pipe", "message.gonzotech.plotnick.ore.wrongsector",
+                "message.gonzotech.plotnick.pack.dismantling", "message.gonzotech.plotnick.pack.done",
+                "message.gonzotech.plotnick.tnt.planned", "message.gonzotech.plotnick.tnt.done",
+                "message.gonzotech.plotnick.tnt.nopipes", "message.gonzotech.plotnick.tnt.noexplosive",
+                "stat.gonzotech.wrench_eaten"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 print("autominer_markers_test passed")

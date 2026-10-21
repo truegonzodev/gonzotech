@@ -73,5 +73,5 @@ assert "THIRD_UNIVERSAL_FLUID_NODE.get()" in reactor
 assert "NodeKinds" not in reactor
 assert "нужен один экранированный универсальный узел либо одновременно узел ГТХ и узел мультижидкости" in reactor
 
-assert _ver.version() == "0.3.257", _ver.version()
+assert _ver.version() == "0.3.258", _ver.version()
 print(f"multiblock node rules OK: {len(node_ids)} node ids, 3 multiblocks open, reactor shielded-only")

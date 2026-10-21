@@ -3,10 +3,15 @@ package com.gonzotech.machines.item;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.chalkboard.notes.ScholarNoteFlags;
+import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.advancement.ModAdvancements;
 import com.gonzotech.machines.network.CompositePipeBlock;
 import com.gonzotech.machines.network.PipeFlowNetwork;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.stats.Stats;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -71,12 +76,13 @@ public class WrenchItem extends Item {
         super(properties);
     }
 
-    /** ПКМ «в никуда» — начать трапезу. С мастерством есть больше нечего. */
+    /**
+     * ПКМ «в никуда» — начать трапезу. Ограничения «один раз» нет: мастерство
+     * идемпотентно (флаг уже закреплен за игроком), а жевать ключ можно
+     * сколько угодно — как обычную еду.
+     */
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        if (hasMastery(player)) {
-            return InteractionResult.PASS;
-        }
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;
     }
@@ -89,6 +95,24 @@ public class WrenchItem extends Item {
     @Override
     public ItemUseAnimation getUseAnimation(ItemStack stack) {
         return ItemUseAnimation.EAT;
+    }
+
+    /**
+     * Жевание: примерно раз в 10 тиков — хруст и крупинки предмета у лица,
+     * как у ванильной еды (звук generic.eat, PLAYERS-источник от имени
+     * жующего, слышен всем вокруг).
+     */
+    @Override
+    public void onUseTick(Level level, LivingEntity livingEntity, ItemStack stack,
+            int remainingUseDuration) {
+        if (level.isClientSide || remainingUseDuration % 10 != 0) return;
+        level.playSound(null, livingEntity.blockPosition(), SoundEvents.GENERIC_EAT.value(),
+            SoundSource.PLAYERS, 0.5F, 0.9F + level.random.nextFloat() * 0.2F);
+        if (level instanceof ServerLevel server) {
+            var eye = livingEntity.getEyePosition();
+            server.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, stack),
+                eye.x, eye.y - 0.1D, eye.z, 4, 0.08D, 0.06D, 0.08D, 0.02D);
+        }
     }
 
     /**
@@ -106,6 +130,10 @@ public class WrenchItem extends Item {
             ModAdvancements.awardWrenchEaten(serverPlayer);
             PipeFlowNetwork.sendWrenchMastery(serverPlayer);
         }
+        // Свой счётчик статистики («Ключ — съедено: N») + общий счётчик предмета.
+        player.awardStat(Stats.CUSTOM.get(
+            ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "wrench_eaten")));
+        player.awardStat(Stats.ITEM_USED.get(this));
         serverLevel.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EAT.value(),
             SoundSource.PLAYERS, 1.0F, 0.8F);
         if (!player.getAbilities().instabuild) {

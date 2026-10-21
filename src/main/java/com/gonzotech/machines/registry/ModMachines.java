@@ -19,6 +19,7 @@ import com.gonzotech.core.block.ReactorFuelSheathBlock;
 import com.gonzotech.core.block.ReactorValveBlock;
 import com.gonzotech.machines.block.PlotnickBlock;
 import com.gonzotech.machines.block.GeophoneBlock;
+import com.gonzotech.machines.block.BorePipeBlock;
 import com.gonzotech.machines.block.MinerDrillBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.RectifierBlock;
@@ -427,6 +428,10 @@ public final class ModMachines {
     public static final DeferredBlock<MinerDrillBlock> MINER_DRILL =
         BLOCKS.registerBlock("miner_drill", MinerDrillBlock::new, machineMetal());
 
+    /** Скваженная труба: стенка скважины 1×1, расходуется буром из хранилища. */
+    public static final DeferredBlock<BorePipeBlock> BORE_PIPE =
+        BLOCKS.registerBlock("bore_pipe", BorePipeBlock::new, lightMetal());
+
     /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
@@ -710,6 +715,9 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> MINER_DRILL_ITEM =
         ITEMS.registerSimpleBlockItem("miner_drill", MINER_DRILL);
+
+    public static final DeferredItem<BlockItem> BORE_PIPE_ITEM =
+        ITEMS.registerSimpleBlockItem("bore_pipe", BORE_PIPE);
 
     /** Карта памяти: сейсмический импульс записывает на неё сектор 3×3 чанка. */
     public static final DeferredItem<MemoryCardItem> MEMORY_CARD =

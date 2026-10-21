@@ -1,5 +1,7 @@
 package com.gonzotech.machines.block.entity;
 
+import com.gonzotech.core.registry.ModBlocks;
+import com.gonzotech.core.registry.ModItems;
 import com.gonzotech.core.registry.ModSounds;
 import com.gonzotech.machines.energy.GtBuffer;
 import com.gonzotech.machines.energy.MachineDefs;
@@ -123,6 +125,21 @@ public final class PlotnickBlockEntity extends BlockEntity
     /** Игрок, запустивший постройку: ему придёт сообщение о завершении. */
     private ServerPlayer buildRequester;
 
+    /** Очередь демонтажа при «свертывании»: от дальних клеток к Плотнику. */
+    private final List<BlockPos> dismantleQueue = new ArrayList<>();
+    /** Очередь закладки ТНТ в скваженные трубы: сверху вниз по скважинам. */
+    private final List<BlockPos> tntQueue = new ArrayList<>();
+    private ServerPlayer packRequester;
+    private ServerPlayer tntRequester;
+    private int dismantleReturned;
+
+    /** Глубина скважин: клетка бура → Y следующей закладки трубы. */
+    private final Map<BlockPos, Integer> drillTargetY = new HashMap<>();
+    /** Счетчик цикла буров: 1-й тик — проход вниз, 39 тиков — сбор руд. */
+    private int drillTick;
+    /** Кэш связной сети рабочих блоков для проверки живости бура (раз в цикл). */
+    private Set<BlockPos> drillRegion = Set.of();
+
     private long intakeBudgetTick = Long.MIN_VALUE;
     private int acceptedGtuThisTick;
 
@@ -155,7 +172,11 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, PlotnickBlockEntity be) {
-        if (level instanceof ServerLevel server) be.processBuildQueue(server);
+        if (!(level instanceof ServerLevel server)) return;
+        be.processBuildQueue(server);
+        be.processDismantleQueue(server);
+        be.processTntQueue(server);
+        be.tickDrills(server);
     }
 
     public GtBuffer gtuBuffer() {
@@ -189,11 +210,12 @@ public final class PlotnickBlockEntity extends BlockEntity
     public boolean handleButton(int id, ServerPlayer requester) {
         if (!(level instanceof ServerLevel server)) return false;
         return switch (id) {
-            case BTN_PACK_UP -> packUp(server);
+            case BTN_PACK_UP -> packUp(server, requester);
             case BTN_MARK -> placeSectorMarks(server, requester);
             case BTN_NETWORK -> buildNetwork(server, requester);
             case BTN_SEISMO -> seismicImpulse(server, requester);
-            default -> false; // бурение/ТНТ — следующие пакеты добычи
+            case BTN_DYNAMITE -> rigTnt(server, requester);
+            default -> false; // бурение — следующий пакет добычи
         };
     }
 
@@ -213,8 +235,25 @@ public final class PlotnickBlockEntity extends BlockEntity
      */
     private boolean placeSectorMarks(ServerLevel server, ServerPlayer requester) {
         ItemStack card = items.get(SLOT_CARD_A);
-        if (MemoryCardItem.isFilled(card)) return mineSurvey(server, requester, card);
+        if (MemoryCardItem.isFilled(card)) {
+            if (!isOwnSector(MemoryCardItem.readSector(card))) {
+                // Плотник размечает только свой сектор: чужая карта — повод
+                // встать, а не перекраивать чужие земли.
+                report(requester, "message.gonzotech.plotnick.ore.wrongsector");
+                return true;
+            }
+            return mineSurvey(server, requester, card);
+        }
         return markSeismicSector(server, requester);
+    }
+
+    /** Сектор карты должен совпадать с сектором 3×3 чанка вокруг этого Плотника. */
+    private boolean isOwnSector(MemoryCardItem.Sector sector) {
+        if (sector == null) return false;
+        int cx = worldPosition.getX() >> 4;
+        int cz = worldPosition.getZ() >> 4;
+        return sector.minX() == cx - 1 && sector.maxX() == cx + 1
+            && sector.minZ() == cz - 1 && sector.maxZ() == cz + 1;
     }
 
     private boolean markSeismicSector(ServerLevel server, ServerPlayer requester) {
@@ -463,6 +502,10 @@ public final class PlotnickBlockEntity extends BlockEntity
             return true;
         }
         boolean drillMode = MemoryCardItem.isFilled(items.get(SLOT_CARD_A));
+        if (drillMode && !isOwnSector(MemoryCardItem.readSector(items.get(SLOT_CARD_A)))) {
+            report(requester, "message.gonzotech.plotnick.ore.wrongsector");
+            return true;
+        }
         List<BlockPos> anchors = new ArrayList<>();
         List<BlockPos> drillSlots = new ArrayList<>();
         int skipped = 0;
@@ -493,11 +536,10 @@ public final class PlotnickBlockEntity extends BlockEntity
 
         NetworkPlanner.Plan plan =
             NetworkPlanner.plan(server, worldPosition, collectWorkCells(server), anchors);
-        List<NetworkPlanner.Entry> queue =
-            new ArrayList<>(drillSlots.size() + plan.entries().size());
-        // Буры ставятся первыми: дорожки стыкуются к уже готовому якорю.
+        // Порядок автора: сначала дорожки через рабочие блоки, буры — только
+        // после того, как сеть дошла до точек.
+        List<NetworkPlanner.Entry> queue = new ArrayList<>(plan.entries());
         for (BlockPos drillCell : drillSlots) queue.add(new NetworkPlanner.Entry(drillCell, true));
-        queue.addAll(plan.entries());
 
         if (queue.isEmpty()) {
             report(requester, "message.gonzotech.plotnick.network.noneeded", plan.already());
@@ -721,23 +763,354 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
     }
 
+    // ─────────────────────────── работа буров (0.3.258) ───────────────────────────
+
+    /**
+     * Буры живут цифровым тиком Плотника — физической сети труб не нужно,
+     * только маршрут (целостность сети рабочих блоков). Каждый работающий
+     * бур сдвигается на блок вниз раз в 2 секунды, подменяя блок под
+     * скважиной новой скваженной трубой (труба берется из хранилища), а
+     * остальные 39 тиков выкачивает руду с текущего Y пятном 5×5. Всё
+     * добытое (руда, порода, грунт) телепортируется в Плотник и не
+     * выпадает. Бур, упоршийся в бедрок/обсидиан/барьер и иные сверхпрочные
+     * блоки, не работает и энергию не жрёт.
+     */
+    private void tickDrills(ServerLevel server) {
+        drillTick = (drillTick + 1) % PlotnickDefs.DRILL_CYCLE_TICKS;
+        boolean cycleStart = drillTick == 0;
+        if (cycleStart) {
+            // «Маршрут» бура: связность сети рабочих блоков с Плотником.
+            drillRegion = NetworkPlanner.connectedWorkRegion(
+                server, worldPosition, collectSurfaceWorkCells(server));
+        }
+        if (drillPoints.isEmpty()) return;
+        // Нет скваженных труб в хранилище — скважины стоят (требование автора).
+        int pipesAvailable = countStored(ModMachines.BORE_PIPE.get().asItem());
+        if (pipesAvailable == 0) return;
+
+        List<BlockPos> running = new ArrayList<>();
+        for (BlockPos point : drillPoints) {
+            if (drillCell == null) continue; // бур ещё не доложен/разобран
+            boolean linked = drillCell.distManhattan(worldPosition) <= 1
+                || NetworkPlanner.touching(drillCell, drillRegion);
+            if (!linked) continue;
+            int targetY = drillTargetY.computeIfAbsent(drillCell,
+                cell -> deepestTargetY(server, cell));
+            BlockPos target = new BlockPos(drillCell.getX(), targetY, drillCell.getZ());
+            if (isImmovable(server.getBlockState(target), server, target)) continue;
+            running.add(drillCell);
+        }
+        // Каждый активный бур тратит на цикл ровно одну трубу — платим
+        // только за те скважины, которым труб и так хватает.
+        if (running.size() > pipesAvailable) {
+            running = new ArrayList<>(running.subList(0, pipesAvailable));
+        }
+        if (running.isEmpty()) return;
+
+        // Равномерное деление не нужно: просто цифровой вычет баланса
+        // (6.5 GTU/т × число работающих буров). Нечем платить — цикл стоит.
+        long want = PlotnickDefs.DRILL_GTU_MILLI * running.size();
+        if (gtu.extract(want, true) < want) return;
+        gtu.extract(want, false);
+
+        for (BlockPos drillCell : running) {
+            if (cycleStart) digStep(server, drillCell);
+            collectOreRow(server, drillCell);
+        }
+    }
+
+    /** Стоит ли бур именно в этой клетке (точка разметки или блок над ней). */
+    private static BlockPos drillCellAt(ServerLevel server, BlockPos point) {
+        if (server.getBlockState(point).is(ModMachines.MINER_DRILL.get())) return point;
+        BlockPos above = point.above();
+        if (server.getBlockState(above).is(ModMachines.MINER_DRILL.get())) return above;
+        return null;
+    }
+
+    /** Y первой клетки под колонной уже уложенных труб. */
+    private int deepestTargetY(ServerLevel server, BlockPos drillCell) {
+        int y = drillCell.getY() - 1;
+        while (y > server.getMinY()
+            && server.getBlockState(new BlockPos(drillCell.getX(), y, drillCell.getZ()))
+                .is(ModMachines.BORE_PIPE.get())) {
+            y--;
+        }
+        return y;
+    }
+
+    /** бедрок/обсидиан/укрепленный дипслейт/барьер и все «нелегальные» блоки. */
+    private static boolean isImmovable(BlockState state, ServerLevel server, BlockPos pos) {
+        if (state.isAir()) return false;
+        float hardness = state.getDestroySpeed(server, pos);
+        return hardness < 0F || hardness >= 50F;
+    }
+
+    private void digStep(ServerLevel server, BlockPos drillCell) {
+        int targetY = drillTargetY.getOrDefault(drillCell, drillCell.getY() - 1);
+        if (targetY < server.getMinY()) return;
+        BlockPos target = new BlockPos(drillCell.getX(), targetY, drillCell.getZ());
+        BlockState ts = server.getBlockState(target);
+        if (isImmovable(ts, server, target)) {
+            drillTargetY.remove(drillCell); // дальнейшее углубление запрещено
+            return;
+        }
+        if (consumeStored(ModMachines.BORE_PIPE.get().asItem(), 1) == 0) return;
+        server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState(),
+            net.minecraft.world.level.block.Block.UPDATE_ALL);
+        if (!ts.isAir()) {
+            // Порода/грунт сразу в Плотник — без выпадания предмета.
+            Item mined = ts.getBlock().asItem();
+            if (mined != null) insert(new ItemStack(mined));
+        }
+        drillTargetY.put(drillCell, targetY - 1);
+    }
+
+    /** Сбор руд на текущем Y скважины: квадрат 5×5 с трубой в центре. */
+    private void collectOreRow(ServerLevel server, BlockPos drillCell) {
+        int y = drillTargetY.getOrDefault(drillCell, drillCell.getY()) + 1;
+        if (y < server.getMinY() || y > server.getMaxY()) return;
+        // Всос работает только на уровне уложенной трубы: без трубы — пусто.
+        if (!server.getBlockState(new BlockPos(drillCell.getX(), y, drillCell.getZ()))
+            .is(ModMachines.BORE_PIPE.get())) {
+            return;
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                BlockPos pos = new BlockPos(drillCell.getX() + dx, y, drillCell.getZ() + dz);
+                BlockState state = server.getBlockState(pos);
+                if (state.isAir() || !MinerOres.isOre(state)) continue;
+                server.destroyBlock(pos, false, null);
+                Item item = state.getBlock().asItem();
+                if (item != null) insert(new ItemStack(item));
+            }
+        }
+    }
+
+    /** Рабочие блоки в приповерхностной ленте 9 чанков — дешевый кэш сети. */
+    private Set<BlockPos> collectSurfaceWorkCells(ServerLevel server) {
+        int cx = worldPosition.getX() >> 4;
+        int cz = worldPosition.getZ() >> 4;
+        net.minecraft.world.level.block.Block work = ModMachines.WORK_BLOCK.get();
+        Set<BlockPos> cells = new HashSet<>();
+        int y0 = Math.max(server.getMinY(), worldPosition.getY() - 8);
+        int y1 = Math.min(server.getMaxY(), worldPosition.getY() + 8);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
+                int baseX = (cx + dx) << 4;
+                int baseZ = (cz + dz) << 4;
+                for (int lx = 0; lx < 16; lx++) {
+                    for (int lz = 0; lz < 16; lz++) {
+                        for (int y = y0; y <= y1; y++) {
+                            if (chunk.getBlockState(new BlockPos(lx, y, lz)).is(work)) {
+                                cells.add(new BlockPos(baseX + lx, y, baseZ + lz).immutable());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return cells;
+    }
+
     // ─────────────────────────── сворачивание ───────────────────────────
 
-    /** «Свернуться»: разметка, точки бурения и недостроенная очередь — долой. */
-    private boolean packUp(ServerLevel server) {
+    /**
+     * «Свернуться» (работает всегда): разметка и точки бурения — долой, а
+     * вся построенная сейсмобашня (рабочие блоки, трубы, буры, геофоны,
+     * источники с их динамитом) разбирается в обратном порядке — от дальних
+     * клеток к Плотнику, максимум 3 блока в тик, с партиклами слома. Всё
+     * возвращается в хранилище: в мире остаётся один Плотник.
+     */
+    private boolean packUp(ServerLevel server, ServerPlayer requester) {
         boolean changed = clearSectorMarks(server);
-        if (!drillPoints.isEmpty()) {
-            drillPoints.clear();
-            changed = true;
-        }
         if (!buildQueue.isEmpty()) {
             buildQueue.clear();
             placeCooldown = 0;
             buildRequester = null;
             changed = true;
         }
-        if (changed) setChanged();
+        if (!drillPoints.isEmpty() || !drillTargetY.isEmpty()) {
+            drillPoints.clear();
+            drillTargetY.clear();
+            changed = true;
+        }
+        List<BlockPos> lootable = collectNetworkBlocks(server);
+        if (lootable.isEmpty()) {
+            if (changed) setChanged();
+            report(requester, "message.gonzotech.plotnick.pack.nothing");
+            return true;
+        }
+        dismantleQueue.clear();
+        dismantleQueue.addAll(lootable);
+        dismantleReturned = 0;
+        packRequester = requester;
+        setChanged();
+        report(requester, "message.gonzotech.plotnick.pack.dismantling", dismantleQueue.size());
         return true;
+    }
+
+    /** Все блоки сейсмобашни в 9 чанках, отсортированные «дальние — первые». */
+    private List<BlockPos> collectNetworkBlocks(ServerLevel server) {
+        int cx = worldPosition.getX() >> 4;
+        int cz = worldPosition.getZ() >> 4;
+        List<BlockPos> found = new ArrayList<>();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
+                int baseX = (cx + dx) << 4;
+                int baseZ = (cz + dz) << 4;
+                for (int lx = 0; lx < 16; lx++) {
+                    for (int lz = 0; lz < 16; lz++) {
+                        for (int y = server.getMinY(); y <= server.getMaxY(); y++) {
+                            BlockPos pos = new BlockPos(baseX + lx, y, baseZ + lz);
+                            if (isPlotnickNetworkBlock(server.getBlockState(pos).getBlock())) {
+                                found.add(pos.immutable());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        found.sort(java.util.Comparator
+            .comparingInt((BlockPos p) -> p.distManhattan(worldPosition)).reversed());
+        return found;
+    }
+
+    private boolean isPlotnickNetworkBlock(net.minecraft.world.level.block.Block block) {
+        return block == ModMachines.WORK_BLOCK.get()
+            || block == ModMachines.BORE_PIPE.get()
+            || block == ModMachines.MINER_DRILL.get()
+            || block == ModMachines.GEOPHONE.get()
+            || block == ModMachines.SEISMIC_SOURCE.get();
+    }
+
+    private void processDismantleQueue(ServerLevel server) {
+        if (dismantleQueue.isEmpty()) return;
+        int budget = PlotnickDefs.PACK_BLOCKS_PER_TICK;
+        while (!dismantleQueue.isEmpty() && budget-- > 0) {
+            BlockPos pos = dismantleQueue.remove(0);
+            BlockState state = server.getBlockState(pos);
+            if (!isPlotnickNetworkBlock(state.getBlock())) continue;
+            // Динамит из разряжаемого источника — тоже домой, в Плотник.
+            if (server.getBlockEntity(pos) instanceof SeismicSourceBlockEntity source
+                && source.hasDynamite()) {
+                insert(new ItemStack(Items.TNT));
+            }
+            server.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(state));
+            server.destroyBlock(pos, false, null);
+            Item item = state.getBlock().asItem();
+            if (item != null) {
+                insert(new ItemStack(item));
+                dismantleReturned++;
+            }
+        }
+        if (dismantleQueue.isEmpty() && packRequester != null) {
+            report(packRequester, "message.gonzotech.plotnick.pack.done", dismantleReturned);
+            packRequester = null;
+            dismantleReturned = 0;
+        }
+        setChanged();
+    }
+
+    // ─────────────────────────── закладка ТНТ ───────────────────────────
+
+    /**
+     * «Заменить на ТНТ»: трубы заменяются взрывчаткой сверху вниз (от бура),
+     * столько, сколько хватит динамита — сначала промышленный ТНТ из
+     * слотов, затем ванильный. Скорость — 3 блока в тик, на месте укладки
+     * — block_crack-партиклы. Заменённые трубы в Плотник не возвращаются.
+     */
+    private boolean rigTnt(ServerLevel server, ServerPlayer requester) {
+        if (!tntQueue.isEmpty() || !dismantleQueue.isEmpty()) {
+            report(requester, "message.gonzotech.plotnick.network.busy",
+                Math.max(tntQueue.size(), dismantleQueue.size()));
+            return true;
+        }
+        List<BlockPos> pipes = collectPipesTopDown(server);
+        if (pipes.isEmpty()) {
+            report(requester, "message.gonzotech.plotnick.tnt.nopipes");
+            return true;
+        }
+        int stock = countStored(ModItems.INDUSTRIAL_TNT_ITEM.get()) + countStored(Items.TNT);
+        if (stock == 0) {
+            report(requester, "message.gonzotech.plotnick.tnt.noexplosive");
+            return true;
+        }
+        tntQueue.addAll(pipes.subList(0, Math.min(pipes.size(), stock)));
+        tntRequester = requester;
+        setChanged();
+        report(requester, "message.gonzotech.plotnick.tnt.planned", tntQueue.size(), stock);
+        return true;
+    }
+
+    /** Трубы сектора сверху вниз: Y по убыванию, внутри уровня — от ближних. */
+    private List<BlockPos> collectPipesTopDown(ServerLevel server) {
+        int cx = worldPosition.getX() >> 4;
+        int cz = worldPosition.getZ() >> 4;
+        net.minecraft.world.level.block.Block pipe = ModMachines.BORE_PIPE.get();
+        List<BlockPos> found = new ArrayList<>();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
+                int baseX = (cx + dx) << 4;
+                int baseZ = (cz + dz) << 4;
+                for (int lx = 0; lx < 16; lx++) {
+                    for (int lz = 0; lz < 16; lz++) {
+                        for (int y = server.getMinY(); y <= server.getMaxY(); y++) {
+                            if (chunk.getBlockState(new BlockPos(lx, y, lz)).is(pipe)) {
+                                found.add(new BlockPos(baseX + lx, y, baseZ + lz).immutable());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        found.sort((a, b) -> a.getY() != b.getY()
+            ? b.getY() - a.getY()
+            : a.distManhattan(worldPosition) - b.distManhattan(worldPosition));
+        return found;
+    }
+
+    private void processTntQueue(ServerLevel server) {
+        if (tntQueue.isEmpty()) return;
+        int budget = PlotnickDefs.PACK_BLOCKS_PER_TICK;
+        while (!tntQueue.isEmpty() && budget-- > 0) {
+            BlockPos pos = tntQueue.remove(0);
+            if (!server.getBlockState(pos).is(ModMachines.BORE_PIPE.get())) continue;
+            Item explosive = pickExplosive();
+            if (explosive == null) {
+                tntQueue.add(0, pos);
+                break; // взрывчатка кончилась — очередь дожидается пополнения
+            }
+            consumeStored(explosive, 1);
+            BlockState tnt = explosive == ModItems.INDUSTRIAL_TNT_ITEM.get()
+                ? ModBlocks.INDUSTRIAL_TNT.get().defaultBlockState()
+                : net.minecraft.world.level.block.Blocks.TNT.defaultBlockState();
+            server.setBlock(pos, tnt, net.minecraft.world.level.block.Block.UPDATE_ALL);
+            BlockParticleOption crumble = new BlockParticleOption(ParticleTypes.BLOCK, tnt);
+            server.sendParticles(crumble, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                12, 0.24, 0.24, 0.24, 0.04D);
+            server.playSound(null, pos, SoundType.METAL.getPlaceSound(), SoundSource.BLOCKS,
+                0.7F, 0.85F + 0.2F * server.random.nextFloat());
+        }
+        if (tntQueue.isEmpty()) {
+            if (tntRequester != null) {
+                report(tntRequester, "message.gonzotech.plotnick.tnt.done");
+                tntRequester = null;
+            }
+            return;
+        }
+        setChanged();
+    }
+
+    /** Сначала промышленный ТНТ из слотов, затем ванильный. */
+    private Item pickExplosive() {
+        if (countStored(ModItems.INDUSTRIAL_TNT_ITEM.get()) > 0) {
+            return ModItems.INDUSTRIAL_TNT_ITEM.get();
+        }
+        if (countStored(Items.TNT) > 0) return Items.TNT;
+        return null;
     }
 
     private void report(ServerPlayer requester, String key, Object... args) {
@@ -954,6 +1327,21 @@ public final class PlotnickBlockEntity extends BlockEntity
             tag.put("BuildQueue", queue);
         }
         if (placeCooldown > 0) tag.putInt("PlaceCooldown", placeCooldown);
+        savePosList(tag, "DismantleQueue", dismantleQueue);
+        savePosList(tag, "TntQueue", tntQueue);
+    }
+
+    private static void savePosList(CompoundTag tag, String key, List<BlockPos> positions) {
+        if (positions.isEmpty()) return;
+        long[] raw = new long[positions.size()];
+        for (int i = 0; i < raw.length; i++) raw[i] = positions.get(i).asLong();
+        tag.putLongArray(key, raw);
+    }
+
+    private static List<BlockPos> loadPosList(CompoundTag tag, String key, List<BlockPos> into) {
+        into.clear();
+        for (long raw : tag.getLongArray(key)) into.add(BlockPos.of(raw));
+        return into;
     }
 
     @Override
@@ -982,6 +1370,8 @@ public final class PlotnickBlockEntity extends BlockEntity
                 BlockPos.of(cell.getLong("Pos")), cell.getBoolean("Drill")));
         }
         placeCooldown = tag.getInt("PlaceCooldown");
+        loadPosList(tag, "DismantleQueue", dismantleQueue);
+        loadPosList(tag, "TntQueue", tntQueue);
     }
 
     /** Слом Плотника: сначала убрать его секторную разметку, затем выронить содержимое. */

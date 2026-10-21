@@ -250,6 +250,7 @@
     "gonzotech:raw_cesium_block",
     "gonzotech:raw_iridium_block",
     "gonzotech:raw_osmium_block",
-    "gonzotech:miner_drill"
+    "gonzotech:miner_drill",
+    "gonzotech:bore_pipe"
   ]
 }

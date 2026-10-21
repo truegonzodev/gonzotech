@@ -1201,7 +1201,7 @@
   "gui.gonzotech.plotnick.button.drill.desc": "Drill 1x1 shafts down to bedrock at marked ore points",
   "gui.gonzotech.plotnick.button.impulse.desc": "Dull pulse through every linked source; the sector is written to the empty card in the center slot",
   "gui.gonzotech.plotnick.button.network.sources": "Lay work-block roads from the Plotnick to each seismic source",
-  "gui.gonzotech.plotnick.button.network.drills": "Lay roads to drills at ore points; missing drills come from storage",
+  "gui.gonzotech.plotnick.button.network.drills": "Roads to ore points first, drills after the network; missing drills come from storage",
   "gui.gonzotech.plotnick.button.mark.sector": "Mark chunks for seismic rigs: source and geophone above it",
   "gui.gonzotech.plotnick.button.mark.ores": "Mark ore deposit spots — up to nine drill points per chunk",
   "gui.gonzotech.plotnick.button.pack_up.desc": "Clear marks and drill points, drop the unfinished network queue",
@@ -1219,5 +1219,15 @@
   "message.gonzotech.plotnick.impulse.noloaded": "Impulse blocked: %s sources without dynamite",
   "message.gonzotech.plotnick.impulse.done": "Impulse: %s sources; sector written to the memory card",
   "message.gonzotech.plotnick.ore.none": "No ores found in the sector",
-  "message.gonzotech.plotnick.ore.done": "Found %s ore blocks, %s drill points, %s markers"
+  "message.gonzotech.plotnick.ore.done": "Found %s ore blocks, %s drill points, %s markers",
+  "block.gonzotech.bore_pipe": "Bore Pipe",
+  "message.gonzotech.plotnick.ore.wrongsector": "This memory card is not for this sector: the Plotnick only surveys its own 3x3 sector",
+  "message.gonzotech.plotnick.pack.dismantling": "Packing up: %s blocks queued for dismantling",
+  "message.gonzotech.plotnick.pack.nothing": "Nothing to dismantle",
+  "message.gonzotech.plotnick.pack.done": "Network dismantled: %s blocks returned",
+  "message.gonzotech.plotnick.tnt.nopipes": "No bore pipes found for TNT placement",
+  "message.gonzotech.plotnick.tnt.noexplosive": "No explosives in storage: industrial or plain TNT required",
+  "message.gonzotech.plotnick.tnt.planned": "TNT rigging: %s pipes, explosive stock %s",
+  "message.gonzotech.plotnick.tnt.done": "TNT placed through the shafts",
+  "stat.gonzotech.wrench_eaten": "Wrench — eaten: %s"
 }
