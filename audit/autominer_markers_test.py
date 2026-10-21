@@ -208,7 +208,7 @@ assert "unreachable" in planner, "заставленные цели не иск�
 assert "be.processBuildQueue(server)" in be, "тики Плотника не расходуют очередь постройки"
 assert '"message.gonzotech.plotnick.network.planned"' in be, "нет отчёта о кэшированном плане постройки"
 assert "placeCooldown = 4 + server.random.nextInt(5)" in be, "между блоками нет случайной задержки 4-8 тиков"
-assert "SoundEvents.BLOCK_METAL_PLACE" in be, "установка блоков сети не озвучена"
+assert "SoundType.METAL.getPlaceSound()" in be, "установка блоков сети не озвучена"
 assert "ParticleTypes.BLOCK" in be, "установка блоков сети не посыпается частицами разрушения"
 assert "buildQueue.add(0, entry)" in be, "нехватка рабочих блоков не сохраняет очередь на месте"
 assert '"BuildQueue"' in be and '"DrillPoints"' in be and '"PlaceCooldown"' in be, \

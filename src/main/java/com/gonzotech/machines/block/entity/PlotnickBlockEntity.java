@@ -25,8 +25,8 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -608,7 +608,9 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
         consumeStored(needed, 1);
         server.setBlock(pos, target, net.minecraft.world.level.block.Block.UPDATE_ALL);
-        server.playSound(null, pos, SoundEvents.BLOCK_METAL_PLACE, SoundSource.BLOCKS,
+        // В 1.21.4 звук размещения блока берётся из SoundType (констант
+        // SoundEvents.BLOCK_*_PLACE больше нет); корпус рабочих блоков — METAL.
+        server.playSound(null, pos, SoundType.METAL.getPlaceSound(), SoundSource.BLOCKS,
             0.65F, 0.9F + 0.2F * server.random.nextFloat());
         server.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, current),
             pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
