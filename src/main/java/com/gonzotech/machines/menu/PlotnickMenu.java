@@ -3,6 +3,7 @@ package com.gonzotech.machines.menu;
 import com.gonzotech.machines.block.entity.PlotnickBlockEntity;
 import com.gonzotech.machines.registry.ModMenus;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
@@ -51,5 +52,10 @@ public final class PlotnickMenu extends BaseMachineMenu {
     /** Кнопка GUI: сервер уже проверил id меню и доступ. */
     public void handleButtonClick(int buttonId) {
         plotnick.handleButton(buttonId);
+    }
+
+    /** Кнопка GUI с игроком-инициатором — ему уходит отчёт разведки в чат. */
+    public void handleButtonClick(int buttonId, ServerPlayer player) {
+        plotnick.handleButton(buttonId, player);
     }
 }

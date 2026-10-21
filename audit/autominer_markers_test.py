@@ -66,6 +66,8 @@ assert "ORE_CYCLE_TICKS = 60L" in ren, "листание руд != 60 тиков
 assert "AFTER_PARTICLES" in ren, "полупрозрачные вымпелы не на стадии AFTER_PARTICLES"
 assert "RenderSystem.disableCull()" in ren, "билборд метки зависит от одностороннего culling"
 assert "MAX_DISTANCE_SQR = 512.0 * 512.0" in ren, "отсечение не 32 чанка (512 блоков)"
+assert "marker.kind() == MinerMarker.Kind.STATION" in ren, "старые STATION-метки не получают иконку источника"
+assert "ModMachines.SEISMIC_SOURCE_ITEM.get()" in ren, "метка чанка не показывает источник колебаний"
 
 # ── 4. Виды меток и сеть ──
 kind = (ROOT / "src/main/java/com/gonzotech/machines/miner/MinerMarker.java").read_text(encoding="utf-8")
@@ -91,7 +93,9 @@ assert "SLOTS_ACTIVE = 9" in be, "активных слотов != 9"
 assert "VIRTUAL_SLOTS = 54" in be, "виртуальных стаков != 54"
 assert "MAX_STACK = 512" in be, "стак Плотника != 512"
 assert be.index("SLOTS_ACTIVE") < be.index("VIRTUAL_SLOTS"), "порядок констант сбился"
-assert "BTN_MARK = 4" in be, "кнопка «Отметить» != id 4"
+for button_pin in ("BTN_DRILL = 0", "BTN_SEISMO = 1", "BTN_NETWORK = 2",
+                   "BTN_MARK = 3", "BTN_PACK_UP = 4", "BTN_DYNAMITE = 5"):
+    assert button_pin in be, f"раскладка кнопок Плотника сбилась: {button_pin}"
 assert "case BTN_PACK_UP -> clearSectorMarks(server);" in be, "«Свернуться» не убирает разметку"
 assert "placeSectorMarks" in be, "разметка сектора 3×3 чанка пропала"
 assert "Kind.STATION" in be, "метки разметки не STATION"
@@ -102,6 +106,13 @@ assert "sectorMarkerIds.add(marker.id())" in be, "Плотник не запом
 assert '"SectorMarkers"' in be, "id меток Плотника не персистентны"
 assert "ContainerHelper.saveAllItems(tag, items, registries)" in be, "пустые активные слоты снова кодируются вручную"
 assert "ContainerHelper.loadAllItems(tag, items, registries)" in be, "загрузка активных слотов не парная сохранению"
+assert "instanceof SeismicSourceBlockEntity" in be, "разведка не ищет источники по чанкам"
+assert "sourcePos.above()" in be, "геофон не проверяется непосредственно над источником"
+assert "ModMachines.GEOPHONE.get()" in be, "разведка не считает геофоны"
+assert "List.of(ModMachines.SEISMIC_SOURCE_ITEM.get())" in be, "метка чанка без источника не несёт его изометрию"
+assert "List.of(ModMachines.GEOPHONE_ITEM.get())" in be, "метка неполного источника не несёт изометрию геофона"
+assert "message.gonzotech.plotnick.survey" in be, "нет отчёта разведки в чат"
+assert "requester.sendSystemMessage(message)" in be, "отчёт разведки не уходит нажавшему игроку"
 plotnick_block = (ROOT / "src/main/java/com/gonzotech/machines/block/PlotnickBlock.java").read_text(encoding="utf-8")
 assert "plotnick.onBroken();" in plotnick_block, "слом Плотника не убирает его разметку"
 
@@ -117,6 +128,13 @@ assert "return -128" in screen and "return -114" in screen, "смещение л
 for cell in ("{26, 18}", "{44, 18}", "{26, 36}", "{44, 36}", "{26, 54}", "{44, 54}"):
     assert cell in screen, f"кнопка {cell} сдвинулась"
 assert "PlotnickButtonPayload" in screen, "кнопки GUI не отправляются на сервер"
+assert "BUTTON_TOOLTIPS" in screen, "у кнопок Плотника нет названий-тултипов"
+for tooltip_key in ("button.drill", "button.impulse", "button.network",
+                    "button.mark", "button.pack_up", "button.tnt"):
+    assert tooltip_key in screen, f"нет тултипа кнопки {tooltip_key}"
+assert "Component.translatable(BUTTON_TOOLTIPS[i])" in screen, "тултип кнопки не рендерится при наведении"
+payload = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickButtonPayload.java").read_text(encoding="utf-8")
+assert "handleButtonClick(payload.buttonId(), player)" in payload, "игрок-инициатор не передаётся в отчёт разведки"
 
 # ── 8. Регистрации ──
 machines = (ROOT / "src/main/java/com/gonzotech/machines/registry/ModMachines.java").read_text(encoding="utf-8")
@@ -129,5 +147,41 @@ assert "MarkerEvents.class" in main, "события меток не подкл�
 assert "MarkerRenderer.class" in main, "рендерер меток не подключён"
 assert "MarkersPayload.TYPE" in main, "пейлоад меток не зарегистрирован"
 assert "PlotnickButtonPayload" in main, "пакет кнопок Плотника не зарегистрирован"
+
+# ── 9. Рабочий блок и сейсмическая пара «геофон над источником» ──
+for block_id in ("work_block", "seismic_source", "geophone"):
+    assert f'registerBlock("{block_id}"' in machines, f"блок {block_id} не зарегистрирован"
+    assert f'registerSimpleBlockItem("{block_id}"' in machines, f"предмет {block_id} не зарегистрирован"
+    for rel in (f"blockstates/{block_id}.json", f"models/block/{block_id}.json", f"items/{block_id}.json"):
+        assert (RES / rel).is_file(), f"нет ресурса {rel}"
+    loot = ROOT / "src/main/resources/data/gonzotech/loot_table/blocks" / f"{block_id}.json"
+    assert loot.is_file(), f"нет лута блока {block_id}"
+for texture in ("work_block.png", "seismic_source.png", "seismic_source_top.png",
+                "geophone.png", "geophone_top.png"):
+    assert png_size(RES / "textures/block/second" / texture) == (16, 16), f"{texture} != 16x16"
+for name in ("seismic_source_gui.png", "seismic_source_gui_bg.png"):
+    assert png_size(GUI / "classic" / name) == (512, 512), f"{name} != 512x512"
+    neo = GUI / "neo" / name.replace(".png", "_neo.png")
+    assert neo.is_file(), f"нет neo-копии {neo.name}"
+    assert neo.read_bytes() == (GUI / "classic" / name).read_bytes(), f"{neo.name} != classic"
+
+block_entities = (ROOT / "src/main/java/com/gonzotech/machines/registry/ModBlockEntities.java").read_text(encoding="utf-8")
+assert 'register("seismic_source"' in block_entities, "BlockEntity источника не зарегистрирован"
+assert 'register("seismic_source"' in menus, "меню источника не зарегистрировано"
+machine_client = (ROOT / "src/main/java/com/gonzotech/machines/client/MachineClient.java").read_text(encoding="utf-8")
+assert "ModMenus.SEISMIC_SOURCE.get(), SeismicSourceScreen::new" in machine_client, "экран источника не зарегистрирован"
+source_be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/SeismicSourceBlockEntity.java").read_text(encoding="utf-8")
+assert "CONTAINER_SIZE = 1" in source_be, "у источника не один слот"
+assert "stack.is(Items.TNT)" in source_be, "источник принимает не только динамит"
+assert "public int getMaxStackSize()" in source_be and "return 1;" in source_be, "слот источника вмещает больше одного динамита"
+source_menu = (ROOT / "src/main/java/com/gonzotech/machines/menu/SeismicSourceMenu.java").read_text(encoding="utf-8")
+assert "DynamiteSlot" in source_menu and "SeismicSourceBlockEntity.isDynamite(stack)" in source_menu, "GUI источника не фильтрует динамит"
+assert ", 80, 35" in source_menu, "слот источника не в центре GUI"
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    for key in ("block.gonzotech.work_block", "block.gonzotech.seismic_source",
+                "block.gonzotech.geophone", "gui.gonzotech.plotnick.button.mark",
+                "message.gonzotech.plotnick.survey"):
+        assert key in lang, f"в {lang_name} нет ключа {key}"
 
 print("autominer_markers_test passed")

@@ -18,8 +18,11 @@ import com.gonzotech.core.block.ReactorControlPanelBlock;
 import com.gonzotech.core.block.ReactorFuelSheathBlock;
 import com.gonzotech.core.block.ReactorValveBlock;
 import com.gonzotech.machines.block.PlotnickBlock;
+import com.gonzotech.machines.block.GeophoneBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.RectifierBlock;
+import com.gonzotech.machines.block.SeismicSourceBlock;
+import com.gonzotech.machines.block.WorkBlock;
 import com.gonzotech.machines.block.SnaketypeCondenserBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
@@ -406,6 +409,18 @@ public final class ModMachines {
     public static final DeferredBlock<PlotnickBlock> PLOTNICK =
         BLOCKS.registerBlock("plotnick", PlotnickBlock::new, machineMetal());
 
+    /** Рабочий блок автошахтера: будущее звено связи Плотника с установками. */
+    public static final DeferredBlock<WorkBlock> WORK_BLOCK =
+        BLOCKS.registerBlock("work_block", WorkBlock::new, machineMetal());
+
+    /** Источник колебаний: нижний блок сейсмической установки, слот на 1 динамит. */
+    public static final DeferredBlock<SeismicSourceBlock> SEISMIC_SOURCE =
+        BLOCKS.registerBlock("seismic_source", SeismicSourceBlock::new, machineMetal());
+
+    /** Геофон: ставится непосредственно над источником колебаний. */
+    public static final DeferredBlock<GeophoneBlock> GEOPHONE =
+        BLOCKS.registerBlock("geophone", GeophoneBlock::new, machineMetal());
+
     /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
@@ -677,6 +692,15 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> PLOTNICK_ITEM =
         ITEMS.registerSimpleBlockItem("plotnick", PLOTNICK);
+
+    public static final DeferredItem<BlockItem> WORK_BLOCK_ITEM =
+        ITEMS.registerSimpleBlockItem("work_block", WORK_BLOCK);
+
+    public static final DeferredItem<BlockItem> SEISMIC_SOURCE_ITEM =
+        ITEMS.registerSimpleBlockItem("seismic_source", SEISMIC_SOURCE);
+
+    public static final DeferredItem<BlockItem> GEOPHONE_ITEM =
+        ITEMS.registerSimpleBlockItem("geophone", GEOPHONE);
 
     public static final DeferredItem<BlockItem> SECOND_PRESS_ITEM =
         ITEMS.registerSimpleBlockItem("second_press", SECOND_PRESS);

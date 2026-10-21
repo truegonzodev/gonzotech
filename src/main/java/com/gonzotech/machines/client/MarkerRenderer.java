@@ -1,6 +1,7 @@
 package com.gonzotech.machines.client;
 
 import com.gonzotech.machines.miner.MinerMarker;
+import com.gonzotech.machines.registry.ModMachines;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -35,8 +36,9 @@ import java.util.List;
  *   <li>квад метки 1,0×1,75 блока под текстуру 20×35, билборд по yaw;</li>
  *   <li>квад метки — блендинг 80 % непрозрачности;</li>
  *   <li>«слот» дисплея 14×14 на канве в пикселе (3,3) — 100 % непрозрачности:
- *       marker_flag.png (красный флажок) либо плоская 2D-изометрия блока руды,
- *       собранная из трёх спрайтов граней прямо в плоскости вымпела;</li>
+ *       плоская 2D-изометрия блока (руда, источник колебаний или геофон),
+ *       собранная из трёх спрайтов граней прямо в плоскости вымпела;
+ *       красный флажок остался только запасным/тестовым изображением;</li>
  *   <li>несколько руд — листание по 3 секунды на руду.</li>
  * </ul>
  */
@@ -128,13 +130,18 @@ public final class MarkerRenderer {
             float slotTop = QUAD_H - SLOT_OFFSET_Y;
             float slotBottom = slotTop - SLOT_SIZE_Y;
             float slotRight = slotLeft + SLOT_SIZE_X;
-            boolean drewOre = false;
+            Item displayItem = null;
             if (!marker.ores().isEmpty()) {
                 int index = (int) ((gameTime / ORE_CYCLE_TICKS) % marker.ores().size());
-                drewOre = drawFlatOreIcon(mc, pose, marker.ores().get(index),
-                    slotLeft, slotBottom, slotRight, slotTop);
+                displayItem = marker.ores().get(index);
+            } else if (marker.kind() == MinerMarker.Kind.STATION) {
+                // Существовавшие до этого пакета метки Плотника не хранят иконку:
+                // по смыслу STATION-метка всегда зовёт поставить источник.
+                displayItem = ModMachines.SEISMIC_SOURCE_ITEM.get();
             }
-            if (!drewOre) {
+            boolean drewDisplay = displayItem != null && drawFlatOreIcon(
+                mc, pose, displayItem, slotLeft, slotBottom, slotRight, slotTop);
+            if (!drewDisplay) {
                 drawFlag(pose, slotLeft, slotBottom, slotRight, slotTop);
             }
             pose.popPose();
@@ -164,9 +171,9 @@ public final class MarkerRenderer {
      * одной и той же Z-координатой {@link #DISPLAY_Z}; это картинка на метке,
      * а не объект в мире.</p>
      */
-    private static boolean drawFlatOreIcon(Minecraft mc, PoseStack pose, Item ore,
+    private static boolean drawFlatOreIcon(Minecraft mc, PoseStack pose, Item displayItem,
                                            float left, float bottom, float right, float top) {
-        if (!(ore instanceof BlockItem blockItem)) return false;
+        if (!(displayItem instanceof BlockItem blockItem)) return false;
 
         BlockState state = blockItem.getBlock().defaultBlockState();
         BakedModel model = mc.getBlockRenderer().getBlockModel(state);

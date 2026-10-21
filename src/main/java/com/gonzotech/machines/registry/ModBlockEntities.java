@@ -249,6 +249,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("plotnick", () -> new BlockEntityType<>(
             com.gonzotech.machines.block.entity.PlotnickBlockEntity::new, false, ModMachines.PLOTNICK.get()));
 
+    public static final Supplier<BlockEntityType<com.gonzotech.machines.block.entity.SeismicSourceBlockEntity>> SEISMIC_SOURCE =
+        BLOCK_ENTITIES.register("seismic_source", () -> new BlockEntityType<>(
+            com.gonzotech.machines.block.entity.SeismicSourceBlockEntity::new, false, ModMachines.SEISMIC_SOURCE.get()));
+
     public static final Supplier<BlockEntityType<com.gonzotech.core.block.entity.CanisterBlockEntity>> CANISTER =
         BLOCK_ENTITIES.register("canister", () -> new BlockEntityType<>(
             com.gonzotech.core.block.entity.CanisterBlockEntity::new, false, com.gonzotech.core.registry.ModBlocks.CANISTER.get()));

@@ -22,6 +22,7 @@ import com.gonzotech.machines.menu.SecondAccumulatorMenu;
 import com.gonzotech.machines.menu.SecondCobbleGeneratorMenu;
 import com.gonzotech.machines.menu.SecondElectricFurnaceMenu;
 import com.gonzotech.machines.menu.PlotnickMenu;
+import com.gonzotech.machines.menu.SeismicSourceMenu;
 import com.gonzotech.machines.menu.ReprocessingGrinderMenu;
 import com.gonzotech.machines.menu.SecondGrinderMenu;
 import com.gonzotech.machines.menu.SecondLumberMenu;
@@ -101,6 +102,9 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<PlotnickMenu>> PLOTNICK =
         MENUS.register("plotnick", () -> IMenuTypeExtension.create(PlotnickMenu::new));
+
+    public static final Supplier<MenuType<SeismicSourceMenu>> SEISMIC_SOURCE =
+        MENUS.register("seismic_source", () -> IMenuTypeExtension.create(SeismicSourceMenu::new));
 
     public static final Supplier<MenuType<SecondLumberMenu>> SECOND_LUMBER =
         MENUS.register("second_lumber", () -> IMenuTypeExtension.create(SecondLumberMenu::new));

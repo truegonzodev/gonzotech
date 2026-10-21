@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "gonzotech:block/seismic_source" },
+    "facing=east":  { "model": "gonzotech:block/seismic_source", "y": 90 },
+    "facing=south": { "model": "gonzotech:block/seismic_source", "y": 180 },
+    "facing=west":  { "model": "gonzotech:block/seismic_source", "y": 270 }
+  }
+}

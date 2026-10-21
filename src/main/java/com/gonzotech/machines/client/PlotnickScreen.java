@@ -17,17 +17,31 @@ import java.util.List;
 /**
  * Плотник (0.3.256) — GUI по замеру {@code plotnick_gui.png} автора:
  * окно 176×180, лист 512×512 со смещением (−128,−114), шкала GTU (7,17)
- * 18×54 (заливка 16×52), шесть кнопок 18×18 в (26/44, 18/36/54) —
- * пока рабочая только «Отметить» (выставить разметку сектора).
+ * 18×54 (заливка 16×52), шесть кнопок 18×18 в (26/44, 18/36/54).
+ * Раскладка автора: бурение / импульс, связи / разведка, свернуться / ТНТ;
+ * название каждой кнопки показывает тултип при наведении.
  */
 public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
 
     /** Иконка кнопки — красный флажок автора (14×14). */
     private static final ResourceLocation BUTTON_ICON = gui("marker_flag.png");
 
-    /** Прямоугольники кнопок 18×18 (макет автора): бурить, сеть, свернуться, сейсмо, отметить, динамит. */
+    /**
+     * Прямоугольники кнопок 18×18, построчно слева направо:
+     * бурение / импульс, связи / разведка, свернуться / ТНТ.
+     */
     private static final int[][] BUTTON_RECTS = {
         {26, 18}, {44, 18}, {26, 36}, {44, 36}, {26, 54}, {44, 54}
+    };
+
+    /** Названия кнопок для тултипов, в том же порядке, что BUTTON_RECTS. */
+    private static final String[] BUTTON_TOOLTIPS = {
+        "gui.gonzotech.plotnick.button.drill",
+        "gui.gonzotech.plotnick.button.impulse",
+        "gui.gonzotech.plotnick.button.network",
+        "gui.gonzotech.plotnick.button.mark",
+        "gui.gonzotech.plotnick.button.pack_up",
+        "gui.gonzotech.plotnick.button.tnt"
     };
 
     public PlotnickScreen(PlotnickMenu menu, Inventory inventory, Component title) {
@@ -70,9 +84,17 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
         float gtu = capacity == 0 ? 0f : (float) menu.gtu() / capacity;
         drawVBarTex(g, gtuX, barY, 16, 52, gtu, BAR_GTU);
 
-        // Шесть кнопок: флажок-маркер действия в центре каждой 18×18.
-        for (int[] rect : BUTTON_RECTS) {
-            g.blit(RenderType::guiTextured, BUTTON_ICON, x + rect[0] + 2, y + rect[1] + 2, 0f, 0f, 14, 14, 14, 14);
+        // Шесть кнопок: флажок-маркер действия в центре каждой 18×18,
+        // при наведении — название кнопки.
+        for (int i = 0; i < BUTTON_RECTS.length; i++) {
+            int[] rect = BUTTON_RECTS[i];
+            int bx = x + rect[0];
+            int by = y + rect[1];
+            g.blit(RenderType::guiTextured, BUTTON_ICON, bx + 2, by + 2, 0f, 0f, 14, 14, 14, 14);
+            if (inRect(mouseX, mouseY, bx, by, 18, 18)) {
+                g.renderComponentTooltip(font, List.of(
+                    Component.translatable(BUTTON_TOOLTIPS[i])), mouseX, mouseY);
+            }
         }
 
         if (inRect(mouseX, mouseY, gtuX, barY, 16, 52)) {

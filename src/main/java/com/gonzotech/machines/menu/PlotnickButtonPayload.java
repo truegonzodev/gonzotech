@@ -41,7 +41,7 @@ public record PlotnickButtonPayload(int menuId, int buttonId) implements CustomP
             if (menu instanceof PlotnickMenu plotnickMenu
                 && plotnickMenu.containerId == payload.menuId()
                 && menu.stillValid(player)) {
-                plotnickMenu.handleButtonClick(payload.buttonId());
+                plotnickMenu.handleButtonClick(payload.buttonId(), player);
             }
         });
     }

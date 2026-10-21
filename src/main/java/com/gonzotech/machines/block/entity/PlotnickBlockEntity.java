@@ -8,6 +8,7 @@ import com.gonzotech.machines.menu.PlotnickMenu;
 import com.gonzotech.machines.miner.MarkerService;
 import com.gonzotech.machines.miner.MinerMarker;
 import com.gonzotech.machines.registry.ModBlockEntities;
+import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -17,6 +18,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -31,9 +33,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Плотник автошахтера (0.3.256, автор).
@@ -42,10 +47,11 @@ import java.util.List;
  * по 512. Добыча «капает» сначала в активные слоты, переполнение — в виртуальные
  * (кнопка выдачи в воронки/трубы — пакет добычи). Два слота — карты памяти.</p>
  *
- * <p>Кнопка «Отметить» (id 4) на этом этапе = «выставить разметку»: 9 меток-
- * вымпелов в сетке 3×3 чанка (свой чанк + 8 соседних), как на схеме автора.
- * Кнопка «Свернуться» (id 2) пока убирает эту разметку; сбор оборудования —
- * пакет завершения.</p>
+ * <p>Кнопка «Разведка (разметка)» (id 3) обследует сектор 3×3 чанка: чанки
+ * без источника колебаний получают метку с его изометрией; источники без
+ * геофона сверху — метку геофона на самом источнике; собранные пары меток
+ * не получают. Итог уходит нажавшему игроку в чат. Кнопка «Свернуться»
+ * (id 4) пока убирает разметку; сбор оборудования — пакет завершения.</p>
  */
 public final class PlotnickBlockEntity extends BlockEntity
     implements GtuSink, WorldlyContainer, MenuProvider {
@@ -63,12 +69,16 @@ public final class PlotnickBlockEntity extends BlockEntity
     public static final long GTU_CAPACITY_MILLI = PlotnickDefs.GTU_CAPACITY_MILLI;
     public static final long GTU_INTAKE_MILLI = PlotnickDefs.GTU_INTAKE_MILLI;
 
-    /** Кнопки GUI (макет автора, слева направо, сверху вниз). */
+    /**
+     * Кнопки GUI построчно, слева направо (раскладка автора):
+     * бурение / произвести импульс; построить связи / разведка (разметка);
+     * свернуться / ТНТ.
+     */
     public static final int BTN_DRILL = 0;
-    public static final int BTN_NETWORK = 1;
-    public static final int BTN_PACK_UP = 2;
-    public static final int BTN_SEISMO = 3;
-    public static final int BTN_MARK = 4;
+    public static final int BTN_SEISMO = 1;
+    public static final int BTN_NETWORK = 2;
+    public static final int BTN_MARK = 3;
+    public static final int BTN_PACK_UP = 4;
     public static final int BTN_DYNAMITE = 5;
 
     private final GtBuffer gtu = new GtBuffer(GTU_CAPACITY_MILLI);
@@ -136,55 +146,129 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /** @return кнопка обработана */
     public boolean handleButton(int id) {
+        return handleButton(id, null);
+    }
+
+    /** @param requester игрок, нажавший кнопку; ему уходит отчёт разведки */
+    public boolean handleButton(int id, ServerPlayer requester) {
         if (!(level instanceof ServerLevel server)) return false;
         return switch (id) {
             case BTN_PACK_UP -> clearSectorMarks(server);
-            case BTN_MARK -> placeSectorMarks(server);
-            default -> false; // бурить/сеть/сейсмо/динамит — пакеты 2-4
+            case BTN_MARK -> placeSectorMarks(server, requester);
+            default -> false; // бурение/импульс/связи/ТНТ — следующие пакеты
         };
     }
 
     /**
-     * «Выставить разметку»: 9 меток-вымпелов — по одной в каждом чанке сектора
-     * 3×3 (свой чанк и 8 соседних). В соседних чанках — ближайший именно к
-     * Плотнику столбец поверхности (clamp XZ Плотника в целевой чанк); поэтому
-     * 8 внешних меток стоят сразу за соответствующими границами сектора. В
-     * своём чанке — столбец вплотную рядом, но никогда не уходящий за его
-     * границу, если Плотник стоит в последнем столбце.
+     * «Разведка (разметка)»: обследует 9 чанков сектора 3×3.
+     *
+     * <p>Чанк без источника колебаний получает обычную поверхностную метку,
+     * но на дисплее вымпела вместо красного флажка — изометрия источника.
+     * Источник без геофона непосредственно сверху получает новую метку на
+     * самом источнике с изометрией геофона (вымпел стоит над ним, ровно там,
+     * куда нужно поставить второй блок). Собранная пара
+     * «геофон на источнике» метки не получает.</p>
+     *
+     * <p>В соседних чанках поверхностная метка — ближайший именно к Плотнику
+     * столбец поверхности (clamp XZ Плотника в целевой чанк); в своём чанке —
+     * столбец вплотную рядом, но никогда не уходящий за его границу.</p>
      */
-    private boolean placeSectorMarks(ServerLevel server) {
+    private boolean placeSectorMarks(ServerLevel server, ServerPlayer requester) {
         MarkerService service = MarkerService.get(server);
         clearSectorMarks(server, service);
 
         BlockPos base = worldPosition;
-        int ownChunkMinX = (base.getX() >> 4) << 4;
-        int ownChunkMinZ = (base.getZ() >> 4) << 4;
-        List<Item> noOres = List.of();
+        int ownChunkX = base.getX() >> 4;
+        int ownChunkZ = base.getZ() >> 4;
+        int ownChunkMinX = ownChunkX << 4;
+        int ownChunkMinZ = ownChunkZ << 4;
+        List<Item> sourceDisplay = List.of(ModMachines.SEISMIC_SOURCE_ITEM.get());
+        List<Item> geophoneDisplay = List.of(ModMachines.GEOPHONE_ITEM.get());
+
+        int markedChunks = 0;
+        int sourceCount = 0;
+        int assembledCount = 0;
+        boolean markedMissingGeophones = false;
+        Set<BlockPos> geophonePositions = new HashSet<>();
 
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 int targetChunkMinX = ownChunkMinX + dx * 16;
                 int targetChunkMinZ = ownChunkMinZ + dz * 16;
-                int x;
-                int z;
-                if (dx == 0 && dz == 0) {
-                    int localX = base.getX() - ownChunkMinX;
-                    x = localX < 15 ? base.getX() + 1 : base.getX() - 1;
-                    z = base.getZ();
-                } else {
-                    x = Mth.clamp(base.getX(), targetChunkMinX, targetChunkMinX + 15);
-                    z = Mth.clamp(base.getZ(), targetChunkMinZ, targetChunkMinZ + 15);
+
+                // Источники ищем по BlockEntity чанка — установка может стоять
+                // не только в расчётном поверхностном столбце.
+                LevelChunk chunk = server.getChunk(ownChunkX + dx, ownChunkZ + dz);
+                List<BlockPos> sources = new ArrayList<>();
+                for (BlockEntity chunkEntity : chunk.getBlockEntities().values()) {
+                    if (chunkEntity instanceof SeismicSourceBlockEntity) {
+                        sources.add(chunkEntity.getBlockPos().immutable());
+                    }
+                }
+                sourceCount += sources.size();
+
+                // Отдельно стоящие геофоны на поверхности тоже попадают в отчёт;
+                // парные дополнительно проверим прямо над источниками ниже.
+                for (int localX = 0; localX < 16; localX++) {
+                    for (int localZ = 0; localZ < 16; localZ++) {
+                        BlockPos surfaceTop = server.getHeightmapPos(
+                            net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                            new BlockPos(targetChunkMinX + localX, base.getY(),
+                                targetChunkMinZ + localZ)).below();
+                        if (server.getBlockState(surfaceTop).is(ModMachines.GEOPHONE.get())) {
+                            geophonePositions.add(surfaceTop.immutable());
+                        }
+                    }
                 }
 
-                BlockPos surface = server.getHeightmapPos(
-                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    new BlockPos(x, base.getY(), z)).below();
-                MinerMarker marker = service.add(
-                    server, surface, MinerMarker.Kind.STATION, 0, noOres);
-                sectorMarkerIds.add(marker.id());
+                if (sources.isEmpty()) {
+                    int x;
+                    int z;
+                    if (dx == 0 && dz == 0) {
+                        int localX = base.getX() - ownChunkMinX;
+                        x = localX < 15 ? base.getX() + 1 : base.getX() - 1;
+                        z = base.getZ();
+                    } else {
+                        x = Mth.clamp(base.getX(), targetChunkMinX, targetChunkMinX + 15);
+                        z = Mth.clamp(base.getZ(), targetChunkMinZ, targetChunkMinZ + 15);
+                    }
+                    BlockPos surface = server.getHeightmapPos(
+                        net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                        new BlockPos(x, base.getY(), z)).below();
+                    MinerMarker marker = service.add(
+                        server, surface, MinerMarker.Kind.STATION, 0, sourceDisplay);
+                    sectorMarkerIds.add(marker.id());
+                    markedChunks++;
+                    continue;
+                }
+
+                for (BlockPos sourcePos : sources) {
+                    BlockPos above = sourcePos.above();
+                    if (server.getBlockState(above).is(ModMachines.GEOPHONE.get())) {
+                        geophonePositions.add(above.immutable());
+                        assembledCount++;
+                    } else {
+                        MinerMarker marker = service.add(server, sourcePos,
+                            MinerMarker.Kind.STATION, 0, geophoneDisplay);
+                        sectorMarkerIds.add(marker.id());
+                        markedMissingGeophones = true;
+                    }
+                }
             }
         }
         setChanged();
+
+        if (requester != null) {
+            // «Отмечены» в формулировке автора — чанки без источника; метки
+            // недостающих геофонов оговариваются отдельным хвостом сообщения.
+            var message = Component.translatable("message.gonzotech.plotnick.survey",
+                9, markedChunks, sourceCount, geophonePositions.size(), assembledCount);
+            if (markedMissingGeophones) {
+                message.append(Component.translatable(
+                    "message.gonzotech.plotnick.survey.geophone_marks"));
+            }
+            requester.sendSystemMessage(message);
+        }
         return true;
     }
 

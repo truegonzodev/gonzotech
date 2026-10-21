@@ -120,6 +120,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_GRINDER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.PLOTNICK_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.WORK_BLOCK_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SEISMIC_SOURCE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.GEOPHONE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PRESS_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_LUMBER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
