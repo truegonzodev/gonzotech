@@ -11,7 +11,7 @@
     "sounds": [
       {
         "name": "gonzotech:sword_impact",
-        "volume": 0.75
+        "volume": 0.62
       }
     ]
   },
@@ -19,7 +19,8 @@
     "subtitle": "subtitles.gonzotech.sword_ready",
     "sounds": [
       {
-        "name": "gonzotech:sword_ready"
+        "name": "gonzotech:sword_ready",
+        "volume": 0.73
       }
     ]
   },
