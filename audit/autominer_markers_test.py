@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pins 0.3.256 — метки автошахтера и Плотник.
+"""Pins 0.3.256-0.3.257 — метки автошахтера, Плотник, сеть и сейсмика.
 
 Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
 дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.256$", props, re.M), "mod_version != 0.3.256"
+assert re.search(r"^mod_version=0\.3\.257$", props, re.M), "mod_version != 0.3.257"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -96,7 +96,9 @@ assert be.index("SLOTS_ACTIVE") < be.index("VIRTUAL_SLOTS"), "порядок к�
 for button_pin in ("BTN_DRILL = 0", "BTN_SEISMO = 1", "BTN_NETWORK = 2",
                    "BTN_MARK = 3", "BTN_PACK_UP = 4", "BTN_DYNAMITE = 5"):
     assert button_pin in be, f"раскладка кнопок Плотника сбилась: {button_pin}"
-assert "case BTN_PACK_UP -> clearSectorMarks(server);" in be, "«Свернуться» не убирает разметку"
+assert "case BTN_PACK_UP -> packUp(server);" in be, "«Свернуться» не убирает разметку"
+assert "case BTN_NETWORK -> buildNetwork(server, requester);" in be, "«Построить связи» не запускает сеть"
+assert "case BTN_SEISMO -> seismicImpulse(server, requester);" in be, "«Произвести импульс» не подключён"
 assert "placeSectorMarks" in be, "разметка сектора 3×3 чанка пропала"
 assert "Kind.STATION" in be, "метки разметки не STATION"
 assert "Mth.clamp(base.getX(), targetChunkMinX, targetChunkMinX + 15)" in be, "X метки не ближайший столбец целевого чанка"
@@ -182,6 +184,75 @@ for lang_name in ("ru_ru.json", "en_us.json"):
     for key in ("block.gonzotech.work_block", "block.gonzotech.seismic_source",
                 "block.gonzotech.geophone", "gui.gonzotech.plotnick.button.mark",
                 "message.gonzotech.plotnick.survey"):
+        assert key in lang, f"в {lang_name} нет ключа {key}"
+
+# ── 10. Сеть 512, рабочие блоки, буры и карта памяти (0.3.257) ──
+assert "getMaxStackSize()" in menu and "MAX_STACK" in menu, "активные слоты Плотника не поднимают стак до 512"
+assert "CardSlot" in menu and "MEMORY_CARD.get()" in menu, "слоты карт не ограничены картой памяти"
+assert "hasSectorCard()" in menu, "GUI не получает состояние Плотника для названий кнопок"
+assert "BUTTON_DESCRIPTIONS" in screen, "у кновок нет текущих описаний в тултипах"
+for desc_key in ("button.drill.desc", "button.impulse.desc", "button.network.sources",
+                 "button.network.drills", "button.mark.sector", "button.mark.ores",
+                 "button.pack_up.desc", "button.tnt.desc"):
+    assert desc_key in screen, f"нет описания кнопки {desc_key}"
+assert "menu.hasSectorCard()" in screen, "тултип не переключается на рудный режим по состоянию Плотника"
+
+planner = (ROOT / "src/main/java/com/gonzotech/machines/miner/NetworkPlanner.java").read_text(encoding="utf-8")
+assert "GRASS_BLOCK" in planner and "SNOW" in planner and "state.isAir()" in planner, \
+    "дорожка теряет правило воздух/трава/снег"
+assert "BFS_NODE_BUDGET" in planner, "у BFS нет лимита паутины"
+assert "connectedWorkRegion" in planner, "нет переиспользования уже построенных ветвей"
+assert "isBuildable" in planner, "solid-блоки не защищены от замены дорожкой"
+assert "unreachable" in planner, "заставленные цели не исключаются из плана"
+
+assert "be.processBuildQueue(server)" in be, "тики Плотника не расходуют очередь постройки"
+assert '"message.gonzotech.plotnick.network.planned"' in be, "нет отчёта о кэшированном плане постройки"
+assert "placeCooldown = 4 + server.random.nextInt(5)" in be, "между блоками нет случайной задержки 4-8 тиков"
+assert "SoundEvents.BLOCK_METAL_PLACE" in be, "установка блоков сети не озвучена"
+assert "ParticleTypes.BLOCK" in be, "установка блоков сети не посыпается частицами разрушения"
+assert "buildQueue.add(0, entry)" in be, "нехватка рабочих блоков не сохраняет очередь на месте"
+assert '"BuildQueue"' in be and '"DrillPoints"' in be and '"PlaceCooldown"' in be, \
+    "очередь постройки/точки бурения не персистентны"
+assert "MemoryCardItem.isFilled" in be, "режим кнопок не определяется состоянием карты"
+assert '"message.gonzotech.plotnick.ore.done"' in be, "нет отчёта рудной разведки"
+assert "pick < 9" in be, "на чанк приходится больше девяти точек бурения"
+assert "MinerMarker.Kind.ORE" in be, "рудные точки не помечаются ORE-метками"
+assert "ParticleTypes.DUST_PILLAR" in be, "импульс не поднимает пол вокруг источника"
+assert "ModSounds.GEO_IMPACT.get()" in be, "импульс не играет geo_impact"
+assert "source.setItem(SeismicSourceBlockEntity.SLOT_DYNAMITE, ItemStack.EMPTY)" in be, \
+    "импульс не расходует динамит источника"
+assert "MemoryCardItem.writeSector" in be, "импульс не записывает сектор на карту"
+assert "countStored(ModMachines.WORK_BLOCK.get().asItem())" in be, "постройка не считает рабочие блоки в хранилище"
+
+card = (ROOT / "src/main/java/com/gonzotech/machines/item/MemoryCardItem.java").read_text(encoding="utf-8")
+assert "MinerSector" in card and "getIntArray" in card, "сектор карты не в NBT-компоненте"
+assert "item.gonzotech.memory_card.sector" in card, "у заполненной карты нет описания сектора"
+
+for block_id in ("miner_drill",):
+    assert f'registerBlock("{block_id}"' in machines, f"блок {block_id} не зарегистрирован"
+    assert f'registerSimpleBlockItem("{block_id}"' in machines, f"предмет {block_id} не зарегистрирован"
+    for rel in (f"blockstates/{block_id}.json", f"models/block/{block_id}.json", f"items/{block_id}.json"):
+        assert (RES / rel).is_file(), f"нет ресурса {rel}"
+    assert (ROOT / "src/main/resources/data/gonzotech/loot_table/blocks" / f"{block_id}.json").is_file(), \
+        f"нет лута блока {block_id}"
+    assert f"gonzotech:{block_id}" in (ROOT / "src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json") \
+        .read_text(encoding="utf-8"), f"блок {block_id} не в теге кирки"
+assert 'registerItem("memory_card"' in machines, "карта памяти не зарегистрирована"
+assert (RES / "items/memory_card.json").is_file(), "нет item-модели карты памяти"
+assert (RES / "models/item/memory_card.json").is_file(), "нет модели предмета карты памяти"
+for texture in ("miner_drill.png", "miner_drill_top.png"):
+    assert png_size(RES / "textures/block/second" / texture) == (16, 16), f"{texture} != 16x16"
+assert png_size(RES / "textures/item/memory_card.png") == (16, 16), "memory_card.png != 16x16"
+sounds = (RES / "sounds.json").read_text(encoding="utf-8")
+assert "geo_impact" in sounds, "geo_impact не объявлен в sounds.json"
+mod_sounds = (ROOT / "src/main/java/com/gonzotech/core/registry/ModSounds.java").read_text(encoding="utf-8")
+assert 'sound("geo_impact")' in mod_sounds, "GEO_IMPACT не зарегистрирован"
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    for key in ("block.gonzotech.miner_drill", "item.gonzotech.memory_card",
+                "message.gonzotech.plotnick.network.planned", "message.gonzotech.plotnick.impulse.done",
+                "message.gonzotech.plotnick.ore.done", "gui.gonzotech.plotnick.button.network.drills",
+                "gui.gonzotech.plotnick.button.mark.ores"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 print("autominer_markers_test passed")

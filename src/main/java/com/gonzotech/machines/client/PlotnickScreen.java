@@ -5,6 +5,7 @@ import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.PlotnickDefs;
 import com.gonzotech.machines.menu.PlotnickButtonPayload;
 import com.gonzotech.machines.menu.PlotnickMenu;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
@@ -43,6 +44,24 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
         "gui.gonzotech.plotnick.button.pack_up",
         "gui.gonzotech.plotnick.button.tnt"
     };
+
+    /**
+     * Текущее описание кнопки второй строкой тултипа. Два варианта — без
+     * заполненной карты / с ней (состояние Плотника приходит через
+     * ContainerData, никаких сканов территории на клиенте).
+     */
+    private static final String[][] BUTTON_DESCRIPTIONS = {
+        {"gui.gonzotech.plotnick.button.drill.desc"},
+        {"gui.gonzotech.plotnick.button.impulse.desc"},
+        {"gui.gonzotech.plotnick.button.network.sources",
+            "gui.gonzotech.plotnick.button.network.drills"},
+        {"gui.gonzotech.plotnick.button.mark.sector",
+            "gui.gonzotech.plotnick.button.mark.ores"},
+        {"gui.gonzotech.plotnick.button.pack_up.desc"},
+        {"gui.gonzotech.plotnick.button.tnt.desc"}
+    };
+
+
 
     public PlotnickScreen(PlotnickMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -92,8 +111,14 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
             int by = y + rect[1];
             g.blit(RenderType::guiTextured, BUTTON_ICON, bx + 2, by + 2, 0f, 0f, 14, 14, 14, 14);
             if (inRect(mouseX, mouseY, bx, by, 18, 18)) {
+                // Режим кнопок — по состоянию Плотника (заполненная карта),
+                // не по ежесекундному скану территории.
+                String[] keys = BUTTON_DESCRIPTIONS[i];
+                String descKey = keys[menu.hasSectorCard() && keys.length > 1 ? 1 : 0];
                 g.renderComponentTooltip(font, List.of(
-                    Component.translatable(BUTTON_TOOLTIPS[i])), mouseX, mouseY);
+                    Component.translatable(BUTTON_TOOLTIPS[i]),
+                    Component.translatable(descKey).withStyle(ChatFormatting.GRAY)),
+                    mouseX, mouseY);
             }
         }
 

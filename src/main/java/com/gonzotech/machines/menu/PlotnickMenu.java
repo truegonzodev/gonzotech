@@ -8,6 +8,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Плотник — GUI по замеру {@code plotnick_gui.png} автора (0.3.256):
@@ -25,18 +26,49 @@ public final class PlotnickMenu extends BaseMachineMenu {
     public PlotnickMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
         this(id, inventory,
             MenuHelper.readBlockEntity(inventory, buffer, PlotnickBlockEntity.class),
-            new SimpleContainerData(2));
+            new SimpleContainerData(3));
     }
 
     public PlotnickMenu(int id, Inventory inventory, PlotnickBlockEntity be, ContainerData data) {
         super(ModMenus.PLOTNICK.get(), id, be, data, PlotnickBlockEntity.CONTAINER_SIZE);
         this.plotnick = be;
         for (int k = 0; k < PlotnickBlockEntity.SLOTS_ACTIVE; k++) {
-            addSlot(new Slot(be, k, 8 + 18 * k, 76));
+            addSlot(new MaxStackSlot(be, k, 8 + 18 * k, 76));
         }
-        addSlot(new Slot(be, PlotnickBlockEntity.SLOT_CARD_A, 98, 36));
-        addSlot(new Slot(be, PlotnickBlockEntity.SLOT_CARD_B, 116, 36));
+        addSlot(new CardSlot(be, PlotnickBlockEntity.SLOT_CARD_A, 98, 36));
+        addSlot(new CardSlot(be, PlotnickBlockEntity.SLOT_CARD_B, 116, 36));
         addPlayerInventory(inventory, 8, 98);
+    }
+
+    /** Активный слот Плотника: стопка до 512 предметов одного типа (автор). */
+    private static final class MaxStackSlot extends Slot {
+
+        private MaxStackSlot(PlotnickBlockEntity be, int index, int x, int y) {
+            super(be, index, x, y);
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return PlotnickBlockEntity.MAX_STACK;
+        }
+    }
+
+    /** Слот карт памяти: одна пустая или заполненная карта, не стопка. */
+    private static final class CardSlot extends Slot {
+
+        private CardSlot(PlotnickBlockEntity be, int index, int x, int y) {
+            super(be, index, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return stack.is(com.gonzotech.machines.registry.ModMachines.MEMORY_CARD.get());
+        }
+
+        @Override
+        public int getMaxStackSize() {
+            return 1;
+        }
     }
 
     /** GTU (единицы) для шкалы GUI. */
@@ -47,6 +79,15 @@ public final class PlotnickMenu extends BaseMachineMenu {
     /** Занятых виртуальных стаков (0..54) — тултип кнопки хранилища. */
     public int virtualUsed() {
         return data.get(1);
+    }
+
+    /**
+     * Состояние Плотника для названий кнопок: в центральном слоте лежит
+     * заполненная карта памяти (рудный режим «Разведки» и «Связей»).
+     * Синхронизируется через ContainerData, без сканирования территории.
+     */
+    public boolean hasSectorCard() {
+        return data.get(2) != 0;
     }
 
     /** Кнопка GUI: сервер уже проверил id меню и доступ. */

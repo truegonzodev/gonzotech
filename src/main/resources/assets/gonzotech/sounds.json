@@ -127,5 +127,14 @@
         "name": "gonzotech:1alarm"
       }
     ]
+  },
+  "geo_impact": {
+    "subtitle": "subtitles.gonzotech.geo_impact",
+    "sounds": [
+      {
+        "name": "gonzotech:geo_impact",
+        "volume": 1.0
+      }
+    ]
   }
 }

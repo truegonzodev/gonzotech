@@ -19,10 +19,12 @@ import com.gonzotech.core.block.ReactorFuelSheathBlock;
 import com.gonzotech.core.block.ReactorValveBlock;
 import com.gonzotech.machines.block.PlotnickBlock;
 import com.gonzotech.machines.block.GeophoneBlock;
+import com.gonzotech.machines.block.MinerDrillBlock;
 import com.gonzotech.machines.block.PumpBlock;
 import com.gonzotech.machines.block.RectifierBlock;
 import com.gonzotech.machines.block.SeismicSourceBlock;
 import com.gonzotech.machines.block.WorkBlock;
+import com.gonzotech.machines.item.MemoryCardItem;
 import com.gonzotech.machines.block.SnaketypeCondenserBlock;
 import com.gonzotech.machines.block.SecondAccumulatorBlock;
 import com.gonzotech.machines.block.SecondCobbleGeneratorBlock;
@@ -421,6 +423,10 @@ public final class ModMachines {
     public static final DeferredBlock<GeophoneBlock> GEOPHONE =
         BLOCKS.registerBlock("geophone", GeophoneBlock::new, machineMetal());
 
+    /** Бур: ставится Плотником в точке бурения; скважина — следующий пакет. */
+    public static final DeferredBlock<MinerDrillBlock> MINER_DRILL =
+        BLOCKS.registerBlock("miner_drill", MinerDrillBlock::new, machineMetal());
+
     /** Пресс (тир-2): мгновенный ход, затем 60 тиков возврата пуансона. */
     public static final DeferredBlock<SecondPressBlock> SECOND_PRESS =
         BLOCKS.registerBlock("second_press", SecondPressBlock::new, machineMetal());
@@ -701,6 +707,13 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> GEOPHONE_ITEM =
         ITEMS.registerSimpleBlockItem("geophone", GEOPHONE);
+
+    public static final DeferredItem<BlockItem> MINER_DRILL_ITEM =
+        ITEMS.registerSimpleBlockItem("miner_drill", MINER_DRILL);
+
+    /** Карта памяти: сейсмический импульс записывает на неё сектор 3×3 чанка. */
+    public static final DeferredItem<MemoryCardItem> MEMORY_CARD =
+        ITEMS.registerItem("memory_card", props -> new MemoryCardItem(props.stacksTo(16)));
 
     public static final DeferredItem<BlockItem> SECOND_PRESS_ITEM =
         ITEMS.registerSimpleBlockItem("second_press", SECOND_PRESS);
