@@ -11,18 +11,21 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CoreShaders;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import java.util.List;
 
@@ -32,7 +35,8 @@ import java.util.List;
  *   <li>квад метки 1,0×1,75 блока под текстуру 20×35, билборд по yaw;</li>
  *   <li>квад метки — блендинг 80 % непрозрачности;</li>
  *   <li>«слот» дисплея 14×14 на канве в пикселе (3,3) — 100 % непрозрачности:
- *       marker_flag.png (красный флажок) либо изометрия блока руды, как в GUI;</li>
+ *       marker_flag.png (красный флажок) либо плоская 2D-изометрия блока руды,
+ *       собранная из трёх спрайтов граней прямо в плоскости вымпела;</li>
  *   <li>несколько руд — листание по 3 секунды на руду.</li>
  * </ul>
  */
@@ -62,8 +66,12 @@ public final class MarkerRenderer {
     private static final ResourceLocation FLAG_TEXTURE =
         ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/marker_flag.png");
 
-    /** Масштаб изометрии руды под физический слот 0,7×0,7 блока. */
-    private static final float ORE_SCALE = 0.65F;
+    /** Затенение плоских граней 2D-изометрии: верх / юг / запад, как у GUI-куба. */
+    private static final float ORE_TOP_SHADE = 1.0F;
+    private static final float ORE_RIGHT_SHADE = 0.8F;
+    private static final float ORE_LEFT_SHADE = 0.6F;
+    /** Все три грани иконки лежат в одной плоскости дисплея, без толщины 3D-модели. */
+    private static final float DISPLAY_Z = 0.02F;
     /** Дистанция отсечения — 32 чанка = 512 блоков (маркер не виден на любой дистанции). */
     private static final double MAX_DISTANCE_SQR = 512.0 * 512.0;
 
@@ -118,31 +126,100 @@ public final class MarkerRenderer {
             float slotTop = QUAD_H - SLOT_OFFSET_Y;
             float slotBottom = slotTop - SLOT_SIZE_Y;
             float slotRight = slotLeft + SLOT_SIZE_X;
+            boolean drewOre = false;
             if (!marker.ores().isEmpty()) {
                 int index = (int) ((gameTime / ORE_CYCLE_TICKS) % marker.ores().size());
-                Item ore = marker.ores().get(index);
-                float cx = (slotLeft + slotRight) / 2F;
-                float cy = (slotTop + slotBottom) / 2F;
-                pose.pushPose();
-                pose.translate(cx, cy, 0.02F);
-                pose.scale(ORE_SCALE, ORE_SCALE, ORE_SCALE);
-                MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-                mc.getItemRenderer().renderStatic(new ItemStack(ore, 1), ItemDisplayContext.GUI,
-                    LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, pose, buffers, level, 0);
-                buffers.endBatch();
-                pose.popPose();
-            } else {
-                RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR);
-                RenderSystem.setShaderTexture(0, FLAG_TEXTURE);
-                BufferBuilder flag = Tesselator.getInstance()
-                    .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-                addQuad(flag, pose, slotLeft, slotBottom, slotRight, slotTop, 0.02F, 1F);
-                BufferUploader.drawWithShader(flag.buildOrThrow());
+                drewOre = drawFlatOreIcon(mc, pose, marker.ores().get(index),
+                    slotLeft, slotBottom, slotRight, slotTop);
+            }
+            if (!drewOre) {
+                drawFlag(pose, slotLeft, slotBottom, slotRight, slotTop);
             }
             pose.popPose();
             RenderSystem.enableCull();
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
+        }
+    }
+
+    private static void drawFlag(PoseStack pose, float slotLeft, float slotBottom,
+                                 float slotRight, float slotTop) {
+        RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR);
+        RenderSystem.setShaderTexture(0, FLAG_TEXTURE);
+        BufferBuilder flag = Tesselator.getInstance()
+            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        addQuad(flag, pose, slotLeft, slotBottom, slotRight, slotTop, DISPLAY_Z, 1F);
+        BufferUploader.drawWithShader(flag.buildOrThrow());
+    }
+
+    /**
+     * Плоская 2D-изометрия блока в слоте вымпела.
+     *
+     * <p>Намеренно не {@code ItemRenderer.renderStatic}: настоящая 3D-модель в
+     * мире поворачивается вместе с камерой/вымпелом, торчит из плоскости
+     * спрайта и при отключённом depth-write показывает задние грани. Здесь
+     * верх, западная и южная грани — три текстурированных параллелограмма с
+     * одной и той же Z-координатой {@link #DISPLAY_Z}; это картинка на метке,
+     * а не объект в мире.</p>
+     */
+    private static boolean drawFlatOreIcon(Minecraft mc, PoseStack pose, Item ore,
+                                           float left, float bottom, float right, float top) {
+        if (!(ore instanceof BlockItem blockItem)) return false;
+
+        BlockState state = blockItem.getBlock().defaultBlockState();
+        BakedModel model = mc.getBlockRenderer().getBlockModel(state);
+        TextureAtlasSprite fallback = model.getParticleIcon(ModelData.EMPTY);
+        if (fallback == null) return false;
+
+        TextureAtlasSprite topSprite = faceSprite(model, state, Direction.UP, fallback);
+        TextureAtlasSprite leftSprite = faceSprite(model, state, Direction.WEST, fallback);
+        TextureAtlasSprite rightSprite = faceSprite(model, state, Direction.SOUTH, fallback);
+
+        float centerX = (left + right) / 2F;
+        float centerY = (bottom + top) / 2F;
+        float sideTopY = centerY + (top - bottom) / 4F;
+        float sideBottomY = centerY - (top - bottom) / 4F;
+
+        RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR);
+        RenderSystem.setShaderTexture(0, topSprite.atlasLocation());
+        BufferBuilder buf = Tesselator.getInstance()
+            .begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+
+        // Верх: ромб (запад -> север -> восток -> юг).
+        addFlatFace(buf, pose, topSprite, ORE_TOP_SHADE,
+            new float[]{left, sideTopY, centerX, top, right, sideTopY, centerX, centerY},
+            new float[]{0F, 0F, 1F, 0F, 1F, 1F, 0F, 1F});
+        // Левая грань: параллелограмм под западной половиной верха.
+        addFlatFace(buf, pose, leftSprite, ORE_LEFT_SHADE,
+            new float[]{left, sideBottomY, centerX, bottom, centerX, centerY, left, sideTopY},
+            new float[]{0F, 1F, 1F, 1F, 1F, 0F, 0F, 0F});
+        // Правая грань: параллелограмм под восточной половиной верха.
+        addFlatFace(buf, pose, rightSprite, ORE_RIGHT_SHADE,
+            new float[]{centerX, bottom, right, sideBottomY, right, sideTopY, centerX, centerY},
+            new float[]{0F, 1F, 1F, 1F, 1F, 0F, 0F, 0F});
+
+        BufferUploader.drawWithShader(buf.buildOrThrow());
+        return true;
+    }
+
+    private static TextureAtlasSprite faceSprite(BakedModel model, BlockState state,
+                                                 Direction face, TextureAtlasSprite fallback) {
+        List<BakedQuad> quads = model.getQuads(
+            state, face, RandomSource.create(42L), ModelData.EMPTY, null);
+        if (quads == null || quads.isEmpty() || quads.getFirst().getSprite() == null) {
+            return fallback;
+        }
+        return quads.getFirst().getSprite();
+    }
+
+    /** Один плоский четырёхугольник иконки; все вершины имеют одинаковую Z. */
+    private static void addFlatFace(BufferBuilder buf, PoseStack pose, TextureAtlasSprite sprite,
+                                    float shade, float[] points, float[] uvs) {
+        com.mojang.blaze3d.vertex.PoseStack.Pose last = pose.last();
+        for (int i = 0; i < 4; i++) {
+            buf.addVertex(last.pose(), points[i * 2], points[i * 2 + 1], DISPLAY_Z)
+                .setUv(sprite.getU(uvs[i * 2]), sprite.getV(uvs[i * 2 + 1]))
+                .setColor(shade, shade, shade, 1F);
         }
     }
 
