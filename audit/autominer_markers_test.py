@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.264$", props, re.M), "mod_version != 0.3.264"
+assert re.search(r"^mod_version=0\.3\.265$", props, re.M), "mod_version != 0.3.265"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -411,6 +411,17 @@ assert "if (!mayTouchPlace(server, pos)) {\n                buildQueue.add(entry
 assert "if (!mayTouchPlace(server, pos)) {\n                tntQueue.add(0, pos);" in be, \
     "ТНТ не в депо — пауза очереди при запрете"
 assert "if (!mayTouchPlace(server, target)) return;" in be, "скважина не под гейтом постановки"
+# Компиляция автора 22.10 (0.3.264): пять несуществующих/потерянных символов — 0.3.265.
+assert "server.players()" in be and "getPlayerList" not in be, \
+    "actionActor зовёт несуществующий ServerLevel.getPlayerList()"
+assert "private static boolean isAllowedCard(int slot, ItemStack stack)" in be, \
+    "определение карточного стража потеряно при переписывании хранилища"
+mod_src = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
+assert "level.isOutsideBuildHeight(pos)" in mod_src and "Level.isOutsideBuildHeight" not in mod_src, \
+    "build height опять зовётся статически (в 1.21.4 это instance-метод)"
+assert "player instanceof net.minecraft.server.level.ServerPlayer" in plotnick_block_src \
+    and "player.sendSystemMessage" not in plotnick_block_src, \
+    "sendSystemMessage зовётся на Player — у Player его нет"
 # Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
 assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"
 assert 'if (tag.contains("BucketRest") || isLegacyVirtual(tag))' in be, "миграция не обусловлена v2-следом"

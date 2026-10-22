@@ -1778,7 +1778,7 @@ public final class PlotnickBlockEntity extends BlockEntity
     private ServerPlayer actionActor(ServerLevel server) {
         ServerPlayer best = null;
         double bestDist = Double.MAX_VALUE;
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+        for (ServerPlayer player : server.players()) {
             if (player.level() != server || player.isSpectator()) continue;
             double d = player.distanceToSqr(
                 worldPosition.getX() + 0.5, worldPosition.getY(), worldPosition.getZ() + 0.5);
@@ -1980,6 +1980,18 @@ public final class PlotnickBlockEntity extends BlockEntity
     @Override
     public boolean stillValid(Player player) {
         return Container.stillValidBlockEntity(this, player);
+    }
+
+    /**
+     * Карты памяти живут только в слотах 9/10 (0.3.263 держал это правило,
+     * v3-переписывание потеряло определение). «Не карта» в слот карт и
+     * «карта» в витринный слот — отказ; виртуальные слоты решают свои
+     * правила выше по тексту.
+     */
+    private static boolean isAllowedCard(int slot, ItemStack stack) {
+        boolean cardSlot = slot == SLOT_CARD_A || slot == SLOT_CARD_B;
+        boolean card = stack.getItem() instanceof MemoryCardItem;
+        return cardSlot == card;
     }
 
     @Override

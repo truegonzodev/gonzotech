@@ -57,8 +57,8 @@ public final class PlotnickBlock extends MachineBlock {
             Player player, BlockHitResult hit) {
         if (level.getBlockEntity(pos) instanceof PlotnickBlockEntity plotnick
             && plotnick.isHibernating()) {
-            if (!level.isClientSide) {
-                player.sendSystemMessage(
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                serverPlayer.sendSystemMessage(
                     Component.translatable("message.gonzotech.plotnick.hibernating"));
             }
             return InteractionResult.SUCCESS;

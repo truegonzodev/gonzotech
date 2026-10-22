@@ -226,7 +226,7 @@ public class GonzoTechMod {
                     // 0.3.263 (#21): сначала лимиты, потом чтение мира — иначе
                     // клиент с произвольным pos заставляет генерировать чанк
                     // ещё до отказа.
-                    if (!net.minecraft.world.level.Level.isOutsideBuildHeight(pos)
+                    if (!level.isOutsideBuildHeight(pos)
                         && pos.distToCenterSqr(player.getX(), player.getY(), player.getZ())
                            <= MAX_BLAST_REQUEST_DISTANCE * MAX_BLAST_REQUEST_DISTANCE
                         && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
