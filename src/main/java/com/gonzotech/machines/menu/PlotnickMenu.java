@@ -55,10 +55,10 @@ public final class PlotnickMenu extends BaseMachineMenu {
     }
 
     /**
-     * Активный слот Плотника: стопка до 512 предметов одного типа (автор).
-     * Ваниальные слияния считают потолок как min(лимита предмета, лимита
-     * слота), поэтому shift-перенос в Плотник переопределен в меню — иначе
-     * стопка так и оставалась бы 64.
+     * Активный слот Плотника: с 0.3.262 это витрина ячейки — физически
+     * ваниальная стопка ≤64, а «512» ёмкости ячейки добираются скрытыми
+     * продолжениями в BE (см. fillCell). Лимит держим равным ваниле,
+     * чтобы ни один путь не породил стопку, требующую сайдкара.
      */
     private static final class MaxStackSlot extends Slot {
 
@@ -119,6 +119,10 @@ public final class PlotnickMenu extends BaseMachineMenu {
             target.setByPlayer(stack.split(target.getMaxStackSize()));
             movedAny = true;
         }
+        // Хвост, не влезший ни в одну голову: отдаём ячейкам целиком —
+        // insert() дольёт в скрытые продолжения (ячейка держит 512) и в
+        // виртуальный буфер, стек игрока уменьшается на месте.
+        if (!stack.isEmpty() && plotnick.insert(stack)) movedAny = true;
         return movedAny;
     }
 
@@ -177,6 +181,13 @@ public final class PlotnickMenu extends BaseMachineMenu {
     /** Рабочих блоков, чтобы подсоединить найденные буры (ПКМ). */
     public int networkRoadsToLink() {
         return data.get(6);
+    }
+
+    /** Сколько всего предметов в активной ячейке (0.3.262, для лора слота). */
+    public int cellStored(int slot) {
+        return slot >= 0 && slot < PlotnickBlockEntity.SLOTS_ACTIVE
+            ? data.get(7 + slot)
+            : 0;
     }
 
     @Override

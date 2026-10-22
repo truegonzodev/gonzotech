@@ -6,6 +6,8 @@ import com.gonzotech.machines.energy.PlotnickDefs;
 import com.gonzotech.machines.block.entity.PlotnickBlockEntity;
 import com.gonzotech.machines.menu.PlotnickButtonPayload;
 import com.gonzotech.machines.menu.PlotnickMenu;
+import java.util.ArrayList;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
@@ -93,6 +95,35 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
     @Override
     protected int texOffsetY() {
         return -114;
+    }
+
+    /**
+     * 0.3.262: ячейка-витрина. Иконка активный слот показывает честно
+     * (стопка ≤64), а реальное содержимое ячейки до 512 — строкой лора
+     * «хранит: N шт» при наведении (просьба автора).
+     */
+    @Override
+    protected void renderTooltip(net.minecraft.client.gui.GuiGraphics g, int mouseX, int mouseY) {
+        Slot cell = hoveredGoodsSlot(mouseX, mouseY);
+        if (cell != null) {
+            List<Component> lines = new ArrayList<>();
+            lines.add(cell.getItem().getHoverName());
+            lines.add(Component.translatable("gui.gonzotech.plotnick.cell.stored",
+                menu.cellStored(cell.index)).withStyle(ChatFormatting.GRAY));
+            g.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+            return;
+        }
+        super.renderTooltip(g, mouseX, mouseY);
+    }
+
+    private Slot hoveredGoodsSlot(int mouseX, int mouseY) {
+        int lx = mouseX - this.leftPos;
+        int ly = mouseY - this.topPos;
+        for (Slot slot : this.menu.slots()) {
+            if (slot.index >= PlotnickBlockEntity.SLOTS_ACTIVE) break;
+            if (slot.hasItem() && inRect(lx, ly, slot.x, slot.y, 18, 18)) return slot;
+        }
+        return null;
     }
 
     @Override

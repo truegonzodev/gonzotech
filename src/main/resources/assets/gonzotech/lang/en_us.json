@@ -1245,5 +1245,6 @@
   "message.gonzotech.plotnick.drill.nodrills": "No drill next to the Plotnick or its network — nothing to bore with.",
   "message.gonzotech.plotnick.drill.stopped": "Drilling stopped.",
   "message.gonzotech.plotnick.drill.idle": "Drilling is already stopped.",
-  "message.gonzotech.plotnick.network.stalled": "Build stalled: out of blocks, %s entries left in queue. Restock the depot and I continue."
+  "message.gonzotech.plotnick.network.stalled": "Build stalled: out of blocks, %s entries left in queue. Restock the depot and I continue.",
+  "gui.gonzotech.plotnick.cell.stored": "holds: %s"
 }

@@ -56,8 +56,11 @@ import java.util.Set;
 /**
  * Плотник автошахтера (0.3.256-0.3.257, автор).
  *
- * <p>Хранилище: 9 активных слотов по 512 (любой предмет) + 54 виртуальных стака
- * по 512. Добыча «капает» сначала в активные слоты, переполнение — в виртуальные
+ * <p>Хранилище (с 0.3.262): 9 активных «ячеек» по 512 и 54 виртуальных ячейки
+ * по 512 — физически всё лежит ваниальными стопками по 64 (голова ячейки +
+ * 7 скрытых продолжений; виртуаль — 432 ячейки). «512» — ёмкость, а не
+ * размер стопки: сайдкар сверх-стеков больше не нужен,суммарное количество показан лором.
+ * Добыча «капает» сначала в активные слоты, переполнение — в виртуальные
  * (кнопка выдачи в воронки/трубы — пакет добычи). Два слота — карты памяти.</p>
  *
  * <p>Кнопка «Разведка» (id 3) без заполненной карты обследует сектор 3×3
@@ -84,10 +87,18 @@ public final class PlotnickBlockEntity extends BlockEntity
     public static final int SLOT_CARD_A = 9;
     public static final int SLOT_CARD_B = 10;
     public static final int CONTAINER_SIZE = 11;
-    /** 54 виртуальных стака ×512 (автор) — невидимый буфер переполнения. */
-    public static final int VIRTUAL_SLOTS = 54;
-    /** Стак слотов Плотника — до 512 предметов одного типа (автор). */
-    public static final int MAX_STACK = 512;
+    /**
+     * Виртуальный буфер переполнения (автор: 54 стака ×512). С 0.3.262 он
+     * разложен на ваниальные стопки по 64: 432 = 54×8 ячеек — ёмкость
+     * идентична, а сохранение живёт без сайдкара сверх-стеков.
+     */
+    public static final int VIRTUAL_SLOTS = 54 * CELL_STACKS;
+    /** Ваниальный размер стопки: всё хранится стоками ≤64 (0.3.262). */
+    public static final int MAX_STACK = 64;
+    /** Стопок в «ячейке» активного слота: 8×64 = 512 как хотел автор. */
+    public static final int CELL_STACKS = 8;
+    /** Логическая ёмкость активного слота — «512» теперь визуал ячейки. */
+    public static final int CELL_CAPACITY = CELL_STACKS * MAX_STACK;
 
     /** Потолок count ваниального дискового кодека ItemStack ([1;99]). */
     public static final int SAVE_COUNT_LIMIT = 99;
@@ -116,6 +127,9 @@ public final class PlotnickBlockEntity extends BlockEntity
         NonNullList.withSize(CONTAINER_SIZE, ItemStack.EMPTY);
     private final NonNullList<ItemStack> virtual =
         NonNullList.withSize(VIRTUAL_SLOTS, ItemStack.EMPTY);
+    /** Скрытые продолжения активных ячеек: 9 × (8−1) стопок по 64. */
+    private final NonNullList<ItemStack> bucketRest =
+        NonNullList.withSize(SLOTS_ACTIVE * (CELL_STACKS - 1), ItemStack.EMPTY);
 
     /** Id принадлежащих именно этому Плотнику секторных меток. */
     private final List<Long> sectorMarkerIds = new ArrayList<>(9);
@@ -181,7 +195,11 @@ public final class PlotnickBlockEntity extends BlockEntity
                 case 4 -> netRoadsFull;
                 case 5 -> netDrillsFound;
                 case 6 -> netRoadsLink;
-                default -> 0;
+                // 7..15: сколько всего предметов лежит в каждой активной
+                // ячейке (головная стопка + скрытые продолжения).
+                default -> index >= 7 && index < 7 + SLOTS_ACTIVE
+                    ? cellStored(index - 7)
+                    : 0;
             };
         }
 
@@ -196,8 +214,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
     };
 
-    /** gtu, виртуальные стаки, карта + 4 числа тултипа «Постройки». */
-    public static final int DATA_SLOTS = 7;
+    /** gtu, вирт. стаки, карта, 4 числа «Постройки» + 9 тоталов ячеек. */
+    public static final int DATA_SLOTS = 7 + SLOTS_ACTIVE;
 
     public PlotnickBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PLOTNICK.get(), pos, state);
@@ -205,6 +223,7 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, PlotnickBlockEntity be) {
         if (!(level instanceof ServerLevel server)) return;
+        be.rebalanceHeads(); // витрина активной ячейки всегда показывает стопку, пока она есть
         be.processBuildQueue(server);
         be.processDismantleQueue(server);
         be.processTntQueue(server);
@@ -1345,28 +1364,60 @@ public final class PlotnickBlockEntity extends BlockEntity
     public boolean insert(ItemStack incoming) {
         if (incoming.isEmpty()) return false;
         ItemStack rest = incoming.copy();
-        for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
-            rest = insertInto(items, slot, rest);
-            if (rest.isEmpty()) {
-                buildStalled = false; // пополнение склада будит постройку
-                setChanged();
-                return true;
-            }
+        for (int slot = 0; slot < SLOTS_ACTIVE && !rest.isEmpty(); slot++) {
+            rest = fillCell(slot, rest); // головная стопка + скрытые продолжения
         }
-        for (int slot = 0; slot < VIRTUAL_SLOTS; slot++) {
+        for (int slot = 0; slot < VIRTUAL_SLOTS && !rest.isEmpty(); slot++) {
             rest = insertInto(virtual, slot, rest);
-            if (rest.isEmpty()) {
-                buildStalled = false;
-                setChanged();
-                return true;
-            }
         }
-        if (rest.getCount() != incoming.getCount()) {
-            incoming.setCount(rest.getCount());
-            setChanged();
-            return true;
+        if (rest.getCount() == incoming.getCount()) return false;
+        incoming.setCount(rest.getCount());
+        buildStalled = false; // пополнение склада будит постройку
+        setChanged();
+        return true;
+    }
+
+    /**
+     * Пополнение активной ячейки до CELL_CAPACITY (512): доливка в
+     * головную стопку, затем в её скрытые продолжения по 64. Всё —
+     * ваниальные стопки, никаких count>64 (0.3.262).
+     */
+    private ItemStack fillCell(int slot, ItemStack incoming) {
+        ItemStack head = items.get(slot);
+        if (head.isEmpty()) {
+            // Голова пустая: ставим до 64 сразу, остальное разложим ниже.
+            items.set(slot, incoming.split(Math.min(MAX_STACK, incoming.getCount())));
+            head = items.get(slot);
+        } else if (!ItemStack.isSameItemSameComponents(head, incoming)) {
+            return incoming;
         }
-        return false;
+        int used = head.getCount();
+        for (int i = 0; i < CELL_STACKS - 1; i++) {
+            ItemStack sub = bucketRest.get(slot * (CELL_STACKS - 1) + i);
+            if (ItemStack.isSameItemSameComponents(sub, head)) used += sub.getCount();
+        }
+        int room = CELL_CAPACITY - used;
+        if (room <= 0 || incoming.isEmpty()) return incoming;
+        int moved = Math.min(room, incoming.getCount());
+        int free = MAX_STACK - head.getCount();
+        if (free > 0 && moved > 0) {
+            int toHead = Math.min(free, moved);
+            head.grow(incoming.split(toHead).getCount());
+            moved -= toHead;
+        }
+        for (int i = 0; i < CELL_STACKS - 1 && moved > 0; i++) {
+            int idx = slot * (CELL_STACKS - 1) + i;
+            ItemStack sub = bucketRest.get(idx);
+            if (!sub.isEmpty() && !ItemStack.isSameItemSameComponents(sub, incoming)) continue;
+            int sp = sub.isEmpty() ? MAX_STACK : MAX_STACK - sub.getCount();
+            if (sp <= 0) continue;
+            int m = Math.min(sp, moved);
+            ItemStack chunk = incoming.split(m);
+            if (sub.isEmpty()) bucketRest.set(idx, chunk);
+            else sub.grow(chunk.getCount());
+            moved -= m;
+        }
+        return incoming.isEmpty() ? ItemStack.EMPTY : incoming;
     }
 
     private static ItemStack insertInto(NonNullList<ItemStack> list, int slot, ItemStack incoming) {
@@ -1384,14 +1435,48 @@ public final class PlotnickBlockEntity extends BlockEntity
         return incoming.isEmpty() ? ItemStack.EMPTY : incoming;
     }
 
+    /** Сколько предметов той же вещи в ячейке вместе со скрытыми продолжениями. */
+    public int cellStored(int slot) {
+        if (slot < 0 || slot >= SLOTS_ACTIVE) return 0;
+        ItemStack head = items.get(slot);
+        if (head.isEmpty()) return 0;
+        int total = head.getCount();
+        for (int i = 0; i < CELL_STACKS - 1; i++) {
+            ItemStack sub = bucketRest.get(slot * (CELL_STACKS - 1) + i);
+            if (ItemStack.isSameItemSameComponents(sub, head)) total += sub.getCount();
+        }
+        return total;
+    }
+
+    /**
+     * Головная стопка ячейки не должна оставаться пустой, пока её
+     * продолжения полны: «витрина» поднимает первый же подстоп.
+     */
+    private void rebalanceHeads() {
+        for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
+            if (!items.get(slot).isEmpty()) continue;
+            for (int i = 0; i < CELL_STACKS - 1; i++) {
+                int idx = slot * (CELL_STACKS - 1) + i;
+                ItemStack sub = bucketRest.get(idx);
+                if (sub.isEmpty()) continue;
+                items.set(slot, sub);
+                bucketRest.set(idx, ItemStack.EMPTY);
+                break;
+            }
+        }
+    }
+
     public NonNullList<ItemStack> virtualStacks() {
         return virtual;
     }
 
-    /** Сколько предметов типа лежит в Плотнике: сначала активные слоты, затем виртуальные. */
+    /** Сколько предметов типа лежит в Плотнике: ячейки (с продолжениями), затем виртуальные. */
     public int countStored(Item item) {
         int total = 0;
         for (ItemStack stack : items) {
+            if (stack.is(item)) total += stack.getCount();
+        }
+        for (ItemStack stack : bucketRest) {
             if (stack.is(item)) total += stack.getCount();
         }
         for (ItemStack stack : virtual) {
@@ -1400,41 +1485,49 @@ public final class PlotnickBlockEntity extends BlockEntity
         return total;
     }
 
-    /** Расход только из 9 активных слотов (карты и виртуальный буфер не трогаем). */
+    /** Расход из 9 активных ячеек, включая их продолжения (карты и виртуаль — нет). */
     public int consumeActive(Item item, int count) {
         int left = Math.max(0, count);
         for (int slot = 0; slot < SLOTS_ACTIVE && left > 0; slot++) {
-            ItemStack stack = items.get(slot);
-            if (stack.isEmpty() || !stack.is(item)) continue;
-            int take = Math.min(left, stack.getCount());
-            stack.shrink(take);
-            if (stack.isEmpty()) items.set(slot, ItemStack.EMPTY);
-            left -= take;
+            left -= takeFrom(items, slot, item, left);
+            for (int i = 0; i < CELL_STACKS - 1 && left > 0; i++) {
+                int idx = slot * (CELL_STACKS - 1) + i;
+                left -= takeFrom(bucketRest, idx, item, left);
+            }
         }
-        if (left != count) setChanged();
+        if (left != count) {
+            rebalanceHeads();
+            setChanged();
+        }
         return count - left;
     }
 
-    /** @return сколько реально сняли (активные слоты расходуются первыми) */
+    /** @return сколько сняли из одной ячейки списка */
+    private static int takeFrom(NonNullList<ItemStack> list, int index, Item item, int want) {
+        ItemStack stack = list.get(index);
+        if (stack.isEmpty() || !stack.is(item)) return 0;
+        int take = Math.min(want, stack.getCount());
+        stack.shrink(take);
+        if (stack.isEmpty()) list.set(index, ItemStack.EMPTY);
+        return take;
+    }
+
+    /** @return сколько реально сняли (активные ячейки расходуются первыми) */
     public int consumeStored(Item item, int count) {
         int left = Math.max(0, count);
-        for (int slot = 0; slot < items.size() && left > 0; slot++) {
-            ItemStack stack = items.get(slot);
-            if (stack.isEmpty() || !stack.is(item)) continue;
-            int take = Math.min(left, stack.getCount());
-            stack.shrink(take);
-            if (stack.isEmpty()) items.set(slot, ItemStack.EMPTY);
-            left -= take;
+        for (int slot = 0; slot < SLOTS_ACTIVE && left > 0; slot++) {
+            left -= takeFrom(items, slot, item, left);
+            for (int i = 0; i < CELL_STACKS - 1 && left > 0; i++) {
+                left -= takeFrom(bucketRest, slot * (CELL_STACKS - 1) + i, item, left);
+            }
         }
-        for (int slot = 0; slot < virtual.size() && left > 0; slot++) {
-            ItemStack stack = virtual.get(slot);
-            if (stack.isEmpty() || !stack.is(item)) continue;
-            int take = Math.min(left, stack.getCount());
-            stack.shrink(take);
-            if (stack.isEmpty()) virtual.set(slot, ItemStack.EMPTY);
-            left -= take;
+        for (int slot = 0; slot < VIRTUAL_SLOTS && left > 0; slot++) {
+            left -= takeFrom(virtual, slot, item, left);
         }
-        if (left != count) setChanged();
+        if (left != count) {
+            rebalanceHeads();
+            setChanged();
+        }
         return count - left;
     }
 
@@ -1453,24 +1546,39 @@ public final class PlotnickBlockEntity extends BlockEntity
     @Override
     public ItemStack removeItem(int slot, int amount) {
         ItemStack result = ContainerHelper.removeItem(items, slot, amount);
-        if (!result.isEmpty()) setChanged();
+        if (!result.isEmpty()) {
+            if (slot < SLOTS_ACTIVE) rebalanceHeads();
+            setChanged();
+        }
         return result;
     }
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
-        return ContainerHelper.takeItem(items, slot);
+        ItemStack result = ContainerHelper.takeItem(items, slot);
+        if (slot < SLOTS_ACTIVE) rebalanceHeads();
+        return result;
     }
 
     @Override
     public void setItem(int slot, ItemStack stack) {
+        if (stack.getCount() > MAX_STACK) {
+            // Сторонний код (клик-мердж) не должен рождать стопку >64:
+            // излишек уезжает в хранилище, голова остаётся ваниальной.
+            ItemStack overflow = stack.split(stack.getCount() - MAX_STACK);
+            insert(overflow);
+        }
         items.set(slot, stack);
+        if (slot < SLOTS_ACTIVE) rebalanceHeads();
         setChanged();
     }
 
     @Override
     public boolean isEmpty() {
         for (ItemStack stack : items) {
+            if (!stack.isEmpty()) return false;
+        }
+        for (ItemStack stack : bucketRest) {
             if (!stack.isEmpty()) return false;
         }
         return true;
@@ -1492,6 +1600,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         for (int i = 0; i < CONTAINER_SIZE; i++) items.add(ItemStack.EMPTY);
         virtual.clear();
         for (int i = 0; i < VIRTUAL_SLOTS; i++) virtual.add(ItemStack.EMPTY);
+        bucketRest.clear();
+        for (int i = 0; i < SLOTS_ACTIVE * (CELL_STACKS - 1); i++) bucketRest.add(ItemStack.EMPTY);
     }
 
     @Override
@@ -1531,6 +1641,10 @@ public final class PlotnickBlockEntity extends BlockEntity
         ListTag virtualTag = new ListTag();
         saveAllItemsClamped(virtual, virtualTag, registries, oversize, CONTAINER_SIZE);
         tag.put("Virtual", virtualTag);
+        ListTag restTag = new ListTag();
+        saveAllItemsClamped(bucketRest, restTag, registries, oversize,
+            CONTAINER_SIZE + VIRTUAL_SLOTS);
+        tag.put("BucketRest", restTag);
         if (!oversize.isEmpty()) tag.put("OversizeCounts", oversize);
         if (!sectorMarkerIds.isEmpty()) {
             tag.putLongArray("SectorMarkers", sectorMarkerIds.stream()
@@ -1593,6 +1707,28 @@ public final class PlotnickBlockEntity extends BlockEntity
         for (int i = 0; i < saved.size(); i++) root.add(saved.get(i).copy());
     }
 
+    /**
+     * 0.3.262: внутри всё хранится стопками ≤64. Легаси-сохранения с
+     * настоящими 512-стопами распадаются здесь: головная стопка режется
+     * до 64, излишек уезжает в продолжения ячейки/виртуальный буфер.
+     */
+    private void normalizeStacks() {
+        List<ItemStack> overflow = new ArrayList<>();
+        for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
+            ItemStack stack = items.get(slot);
+            if (stack.getCount() > MAX_STACK) overflow.add(stack.split(stack.getCount() - MAX_STACK));
+        }
+        for (int slot = 0; slot < bucketRest.size(); slot++) {
+            ItemStack stack = bucketRest.get(slot);
+            if (stack.getCount() > MAX_STACK) overflow.add(stack.split(stack.getCount() - MAX_STACK));
+        }
+        for (int slot = 0; slot < VIRTUAL_SLOTS; slot++) {
+            ItemStack stack = virtual.get(slot);
+            if (stack.getCount() > MAX_STACK) overflow.add(stack.split(stack.getCount() - MAX_STACK));
+        }
+        for (ItemStack rest : overflow) insert(rest);
+    }
+
     /** Возвращает урезанные при сохранении размеры стопок. */
     private void restoreOversizeCounts(CompoundTag tag) {
         for (Tag entry : tag.getList("OversizeCounts", Tag.TAG_COMPOUND)) {
@@ -1636,12 +1772,25 @@ public final class PlotnickBlockEntity extends BlockEntity
         int seq = 0;
         for (Tag entry : virtualTag) {
             CompoundTag cell = (CompoundTag) entry;
-            int index = cell.contains("Slot") ? cell.getByte("Slot") & 0xFF : seq;
+            // «Slot» пишется ContainerHelper с глобальным оффсетом — снимаем.
+            int index = cell.contains("Slot") ? cell.getInt("Slot") - CONTAINER_SIZE : seq;
             seq++;
             if (index < 0 || index >= VIRTUAL_SLOTS) continue;
             virtual.set(index, ItemStack.parseOptional(registries, cell));
         }
+        for (int i = 0; i < bucketRest.size(); i++) bucketRest.set(i, ItemStack.EMPTY);
+        ListTag restTag = tag.getList("BucketRest", Tag.TAG_COMPOUND);
+        int restSeq = 0;
+        for (Tag entry : restTag) {
+            CompoundTag cell = (CompoundTag) entry;
+            int index = cell.contains("Slot")
+                ? cell.getInt("Slot") - (CONTAINER_SIZE + VIRTUAL_SLOTS) : restSeq;
+            restSeq++;
+            if (index < 0 || index >= bucketRest.size()) continue;
+            bucketRest.set(index, ItemStack.parseOptional(registries, cell));
+        }
         restoreOversizeCounts(tag);
+        normalizeStacks(); // легаси-стопки 512 → ванильные 64 по ячейкам/виртуали
         drillPoints.clear();
         for (long raw : tag.getLongArray("DrillPoints")) {
             drillPoints.add(BlockPos.of(raw));
@@ -1672,6 +1821,7 @@ public final class PlotnickBlockEntity extends BlockEntity
     public void dropContentsForBreak() {
         if (level == null || level.isClientSide()) return;
         for (ItemStack stack : items) dropSized(stack);
+        for (ItemStack stack : bucketRest) dropSized(stack);
         for (ItemStack stack : virtual) dropSized(stack);
     }
 

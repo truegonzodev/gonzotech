@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pins 0.3.256-0.3.261 — метки автошахтера, Плотник, сеть, сейсмика и буры.
+"""Pins 0.3.256-0.3.262 — метки автошахтера, Плотник, сеть, сейсмика и буры.
 
 Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
 дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.261$", props, re.M), "mod_version != 0.3.261"
+assert re.search(r"^mod_version=0\.3\.262$", props, re.M), "mod_version != 0.3.262"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -90,8 +90,8 @@ assert "new BlockPos(feet.getX(), y, feet.getZ())" in dbg, "скан не кол
 # ── 6. Плотник: блок/BE/хранилище ──
 be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java").read_text(encoding="utf-8")
 assert "SLOTS_ACTIVE = 9" in be, "активных слотов != 9"
-assert "VIRTUAL_SLOTS = 54" in be, "виртуальных стаков != 54"
-assert "MAX_STACK = 512" in be, "стак Плотника != 512"
+assert "VIRTUAL_SLOTS = 54 * CELL_STACKS" in be, "виртуальный буфер не 54×512 стопками по 64"
+assert "MAX_STACK = 64" in be, "стопки внутри Плотника не ваниальные 64 (0.3.262)"
 assert be.index("SLOTS_ACTIVE") < be.index("VIRTUAL_SLOTS"), "порядок констант сбился"
 for button_pin in ("BTN_DRILL = 0", "BTN_SEISMO = 1", "BTN_NETWORK = 2",
                    "BTN_MARK = 3", "BTN_PACK_UP = 4", "BTN_DYNAMITE = 5"):
@@ -187,7 +187,7 @@ for lang_name in ("ru_ru.json", "en_us.json"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 # ── 10. Сеть 512, рабочие блоки, буры и карта памяти (0.3.257) ──
-assert "getMaxStackSize()" in menu and "MAX_STACK" in menu, "активные слоты Плотника не поднимают стак до 512"
+assert "getMaxStackSize()" in menu and "MAX_STACK" in menu, "лимит слота не синхронизирован с MAX_STACK"
 assert "CardSlot" in menu and "MEMORY_CARD.get()" in menu, "слоты карт не ограничены картой памяти"
 assert "hasSectorCard()" in menu, "GUI не получает состояние Плотника для названий кнопок"
 assert "BUTTON_DESCRIPTIONS" in screen, "у кновок нет текущих описаний в тултипах"
@@ -355,7 +355,19 @@ assert "rest.split(cap)" in be, "выпадение при разборе Пло
 
 menu = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
 assert "SimpleContainerData(PlotnickBlockEntity.DATA_SLOTS)" in menu, \
-    "клиентский ContainerData не расширен числами тултипа"
+    "меню не берёт ContainerData (0.3.262: +9 тоталов ячеек)"
+# ── 15. Срез 0.3.262: хранилище стопками по 64, «512» — визуал ячейки ──
+assert "CELL_STACKS = 8" in be and "CELL_CAPACITY = CELL_STACKS * MAX_STACK" in be, \
+    "ёмкость активной ячейки не собрана из восьми стопок по 64"
+assert "bucketRest" in be, "нет скрытых продолжений активных ячеек"
+assert "private ItemStack fillCell" in be, "ячейка не доливается до 512 продолжениями"
+assert "rebalanceHeads()" in be, "пустая голова ячейки не поднимает продолжение"
+assert "normalizeStacks()" in be, "легаси-стопки 512 не распадаются при загрузке"
+assert 'tag.put("BucketRest", restTag)' in be, "продолжения ячеек не сохраняются"
+assert "cell.getInt(\"Slot\")" in be, "индекс слота читается байтом — 432 ячейки не влезают"
+assert "plotnick.insert(stack)" in menu, "shift-хвост не доливается в продолжения ячеек"
+assert "public int cellStored(int slot)" in menu, "меню не отдаёт тотал ячейки для лора"
+assert "gui.gonzotech.plotnick.cell.stored" in screen, "нет строки «хранит: N шт» при наведении"
 assert "public void clicked(int slotId, int button, ClickType clickType," in menu, \
     "нет привратника щелчков против оверстака в кармане игрока"
 assert "clampCarried(player)" in menu, "излишек в руке не раскладывается при закрытии GUI"

@@ -1245,5 +1245,6 @@
   "message.gonzotech.plotnick.drill.nodrills": "Нет бура рядом с Плотником или его сетью — бурить нечем.",
   "message.gonzotech.plotnick.drill.stopped": "Бурение остановлено.",
   "message.gonzotech.plotnick.drill.idle": "Бурение и так остановлено.",
-  "message.gonzotech.plotnick.network.stalled": "Стройка встала: блоков не хватает, в очереди осталось %s. Пополните склад — продолжу."
+  "message.gonzotech.plotnick.network.stalled": "Стройка встала: блоков не хватает, в очереди осталось %s. Пополните склад — продолжу.",
+  "gui.gonzotech.plotnick.cell.stored": "хранит: %s шт"
 }
