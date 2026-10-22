@@ -26,6 +26,18 @@ cysteamine = read("radiation/CysteamineItem.java")
 absorbent = read("radiation/RadAbsorbentItem.java")
 docs = (ROOT / "docs/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
 
+# 0.3.271 (dupe guard): physical writes freeze while a player clicks a container;
+# dose math continues from virtual values.
+watch = read("radiation/RadiationClickWatch.java")
+assert "FREEZE_TICKS" in watch and "markClick" in watch
+mixin = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java").read_text(encoding="utf-8")
+assert "handleContainerClick(Lnet/minecraft/network/protocol/play/ServerboundContainerClickPacket;)V" in mixin
+assert "clickFrozen = RadiationClickWatch.recentlyClicked(player, nowTick)" in system
+assert "clickFrozen = RadiationClickWatch.worldFrozen(level, nowTick)" in system
+assert "if (!clickFrozen) changed |=" in system, "BE-контейнеры пишут в окне клика"
+assert "!frozen && (periodicFlush || !hardUse && !inSoftCd)" in system
+assert "peekInducedAt" in item_rad and "clickFrozen\n                            ? ItemRadioactivity.peekInducedAt" in system
+
 # Inventory dose is rebuilt after the tick, so direct induced activity is counted once.
 assert "double totalNzt = 0.0D;" in system
 # 0.3.249 (idea of the author): the inventory cannot contaminate the chunk

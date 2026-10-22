@@ -177,6 +177,9 @@ public final class RadiationSystem {
             PacketDistributor.sendToPlayer(player, new RadiationVisualPayload(visual));
         }
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
+        // (0.3.271, автор 23.10) Игрок кликает по GUI — стаки не пишем: запись в
+        // окне между предсказанием клиента и обработкой клика = дюп через carried.
+        boolean clickFrozen = RadiationClickWatch.recentlyClicked(player, nowTick);
 
         // Скан полной эмиссии инвентаря; максимум и второй максимум используются
         // только для локальной логистики наведёнки предметов, не для переноса в чанк.
@@ -256,10 +259,13 @@ public final class RadiationSystem {
                 double perItem;
                 if (activeHand) {
                     perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
-                            stackSource, factor, nowTick);
+                            stackSource, factor, nowTick, clickFrozen);
                 } else {
-                    perItem = ItemRadioactivity.tickInducedAt(
-                            stack, hasSourceContext, stackSource, factor, nowTick);
+                    perItem = clickFrozen
+                            ? ItemRadioactivity.peekInducedAt(
+                                stack, hasSourceContext, stackSource, factor, nowTick)
+                            : ItemRadioactivity.tickInducedAt(
+                                stack, hasSourceContext, stackSource, factor, nowTick);
                 }
                 induced += perItem * count;
                 if (tracing && (ownEmission > 0.0 || oldInduced > 0.0 || perItem > 0.0)) {
@@ -465,17 +471,19 @@ public final class RadiationSystem {
 
     private static double tickHeldRadiation(ServerPlayer player, ItemStack stack, boolean hardUse,
                                             boolean hasSource, double sourceNzt, double factor,
-                                            long nowTick) {
+                                            long nowTick, boolean frozen) {
         InteractionHand hand = stack == player.getOffhandItem()
                 ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
         HeldKey key = new HeldKey(player.getUUID(), hand);
         int now = player.tickCount;
         HeldRadState state = HELD_RAD.get(key);
         if (state == null && !hardUse) {
-            return ItemRadioactivity.tickInducedAt(stack, hasSource, sourceNzt, factor, nowTick);
+            return frozen
+                    ? ItemRadioactivity.peekInducedAt(stack, hasSource, sourceNzt, factor, nowTick)
+                    : ItemRadioactivity.tickInducedAt(stack, hasSource, sourceNzt, factor, nowTick);
         }
         if (state == null || state.stack != stack) {
-            if (state != null) {
+            if (state != null && !frozen) {
                 ItemRadioactivity.setInduced(state.stack, state.value);
                 ItemRadioactivity.markDecayTick(state.stack, nowTick);
                 ItemRadioactivity.decayInducedDeepLazily(state.stack, nowTick);
@@ -489,7 +497,7 @@ public final class RadiationSystem {
 
         boolean inSoftCd = now - state.lastUseTick < USE_SOFT_CD_TICKS;
         boolean periodicFlush = now - state.lastFlushTick >= HELD_FLUSH_TICKS;
-        if (!hardUse && !inSoftCd || periodicFlush) {
+        if (!frozen && (periodicFlush || !hardUse && !inSoftCd)) {
             ItemRadioactivity.setInduced(stack, state.value);
             ItemRadioactivity.markDecayTick(stack, nowTick);
             ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
@@ -507,6 +515,10 @@ public final class RadiationSystem {
     private static void scanContainersInto(ServerLevel level, long chunkKey,
                                            ChunkRadiationData data, long nowTick) {
         if (!claimContentScan(level, chunkKey, nowTick)) return;
+        // (0.3.271) Пока кто-то из игроков кликает по контейнеру, содержимое BE
+        // не переписываем (эмиссии считаются по текущим стекам, разряд догонит
+        // лениво на следующем цикле) — окно drag&drop не рождает дюпы.
+        boolean clickFrozen = RadiationClickWatch.worldFrozen(level, nowTick);
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
         double contamination = data.contaminationOf(chunkKey);
         double containerTransfer = 0.0D;
@@ -520,7 +532,7 @@ public final class RadiationSystem {
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack stack = container.getItem(i);
                 if (stack.isEmpty()) continue;
-                changed |= ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
+                if (!clickFrozen) changed |= ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
                 mine += RadSources.emissionDeep(stack);
             }
             if (changed) container.setChanged();

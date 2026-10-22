@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.270$", props, re.M), "mod_version != 0.3.270"
+assert re.search(r"^mod_version=0\.3\.271$", props, re.M), "mod_version != 0.3.271"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -488,6 +488,12 @@ rm = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorMatrix.java").
 assert "totalTvelsKnown" in rm, "недогрузка чанков читается как 0 ТВЭЛов (#24)"
 rt = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorRuntime.java").read_text(encoding="utf-8")
 assert "if (snapshot == null) {" in rt, "нулевой снимок обнулит реактор вместо заморозки (#24)"
+
+# 0.3.271: стража кликов — радиация не пишет в стаки окна drag&drop (дюп-фикс).
+assert (ROOT / "src/main/java/com/gonzotech/radiation/RadiationClickWatch.java").exists(), \
+    "нет RadiationClickWatch — перераспределение наведёнки остаётся в окне клика"
+assert "ContainerClickRadiationMixin" in (ROOT / "src/main/resources/gonzotech.mixins.json") \
+    .read_text(encoding="utf-8"), "миксин кликов не зарегистрирован"
 
 # 0.3.270: авария сжигает всё топливо; unformed-продолжение; угольки.
 assert (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorEmberData.java").exists(), \

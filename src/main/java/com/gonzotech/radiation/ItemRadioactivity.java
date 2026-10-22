@@ -209,6 +209,19 @@ public final class ItemRadioactivity {
         return getInduced(stack);
     }
 
+    /**
+     * (0.3.271) Тик в окне клика: значение считается (пропущенные шаги — отдыхом,
+     * шаг источника — реально), стак не трогается. После разморозки физический
+     * NBT догоняет тем же ленивым механизмом lastDecayTick.
+     */
+    public static double peekInducedAt(ItemStack stack, boolean hasSource, double sourceNzt,
+                                       double factor, long nowTick) {
+        if (stack.isEmpty()) return 0.0D;
+        double next = nextInduced(inducedBeforeSourceStep(stack, nowTick), stack,
+                hasSource, sourceNzt, factor);
+        return Math.max(0.0D, next);
+    }
+
     /** Пропущенные пассивные интервалы перед текущим шагом источника — без записи NBT. */
     public static double inducedBeforeSourceStep(ItemStack stack, long nowTick) {
         if (stack.isEmpty()) return 0.0D;

@@ -29,7 +29,8 @@
     "MultiNoiseParameterListDesolationMixin",
     "LiveBiomeSourceDesolationMixin",
     "BiomeSourcePossibleBiomesDesolationMixin",
-    "ChunkDecorationDesolationMixin"
+    "ChunkDecorationDesolationMixin",
+    "ContainerClickRadiationMixin"
   ],
   "client": [
     "client.AdvancementTabMixin",
