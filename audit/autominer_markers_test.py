@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.269$", props, re.M), "mod_version != 0.3.269"
+assert re.search(r"^mod_version=0\.3\.270$", props, re.M), "mod_version != 0.3.270"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -488,6 +488,10 @@ rm = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorMatrix.java").
 assert "totalTvelsKnown" in rm, "недогрузка чанков читается как 0 ТВЭЛов (#24)"
 rt = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorRuntime.java").read_text(encoding="utf-8")
 assert "if (snapshot == null) {" in rt, "нулевой снимок обнулит реактор вместо заморозки (#24)"
+
+# 0.3.270: авария сжигает всё топливо; unformed-продолжение; угольки.
+assert (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorEmberData.java").exists(), \
+    "нет ReactorEmberData — снос панели остаётся бесплатным reset"
 
 # Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
 assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"

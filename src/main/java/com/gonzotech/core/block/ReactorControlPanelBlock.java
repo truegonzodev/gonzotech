@@ -1,12 +1,14 @@
 package com.gonzotech.core.block;
 
 import com.gonzotech.machines.block.entity.ReactorControlPanelBlockEntity;
+import com.gonzotech.machines.reactor.ReactorEmberData;
 import com.gonzotech.machines.reactor.ReactorFuelStorage;
 import com.gonzotech.machines.reactor.ReactorStructure;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -99,6 +101,12 @@ public final class ReactorControlPanelBlock extends Block implements EntityBlock
         if (!state.is(newState.getBlock())) {
             ReactorStructure.partRemoved(level, pos);
             if (level.getBlockEntity(pos) instanceof ReactorControlPanelBlockEntity panel) {
+                if (!movedByPiston && level instanceof ServerLevel serverLevel) {
+                    // (0.3.270, автор 22.10) Снос панели не бесплатный reset:
+                    // горячий рантайм уходит в «уголёк» — реакция продолжается
+                    // без носителя, авария приходит сама.
+                    ReactorEmberData.capture(serverLevel, panel);
+                }
                 Containers.dropContents(level, pos, panel);
             }
         }

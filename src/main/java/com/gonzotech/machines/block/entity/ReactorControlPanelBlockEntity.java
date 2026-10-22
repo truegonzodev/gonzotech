@@ -92,6 +92,40 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
         return menuData;
     }
 
+    /** (0.3.270) Границы запомнены, но форма потеряна — основание остаточной динамики. */
+    public boolean hasSavedBounds() {
+        return min != null && max != null;
+    }
+
+    /** (0.3.270) Полный NBT рантайма для уголька и его скаляры. */
+    public CompoundTag captureEmberState() {
+        CompoundTag tag = new CompoundTag();
+        runtime.save(tag);
+        return tag;
+    }
+
+    public boolean emberWorthy() {
+        return runtime.emberWorthy();
+    }
+
+    public double emberHot() {
+        return runtime.emberHot();
+    }
+
+    public double emberVelocity() {
+        return runtime.emberVelocity();
+    }
+
+    public int emberWater() {
+        return runtime.emberWater();
+    }
+
+    /** (0.3.270) Пересборка на том же месте принимает уголёк целиком. */
+    public void adoptEmber(CompoundTag emberState) {
+        runtime.load(emberState);
+        setChanged();
+    }
+
     public ReactorRuntime.Metrics runtimeMetrics() {
         return runtime.metrics();
     }
@@ -215,7 +249,10 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
             }
             return;
         }
-        if (isFormedController()) runtime.serverTick(serverLevel, this);
+        // (0.3.270) Решение «считать ли» принял сам рантайм: formed — полный
+        // цикл, unformed с границами — остаточная динамика (автор: расформировка
+        // не спасает, а забирает контроль).
+        runtime.serverTick(serverLevel, this);
     }
 
     // These Container methods exist only to migrate/drop old 0.3.237 panel NBT. New menus use ReactorFuelInventory.

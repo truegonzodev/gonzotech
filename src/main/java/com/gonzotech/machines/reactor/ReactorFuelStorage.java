@@ -160,6 +160,20 @@ public final class ReactorFuelStorage {
     }
 
     /** A player break is deferred unless all chunks holding the old share set are loaded. */
+    /**
+     * (0.3.270, автор 22.10) Авария выжигает топливо в чехлах — все до единого,
+     * без дропов: сломать чехлы после ярда и вынуть стержни назад нельзя.
+     * @return true, когда объём загружен и выжигание завершено (выгруженные
+     *         чехлы — повторная попытка на следующем тике аварии)
+     */
+    public static boolean burnAllFuel(ServerLevel level, BlockPos min, BlockPos max) {
+        if (level == null || min == null || max == null || !chunksLoaded(level, min, max)) return false;
+        for (ReactorFuelSheathBlockEntity sheath : collectSheaths(level, min, max)) {
+            if (!sheath.isEmpty()) sheath.clearContent();
+        }
+        return true;
+    }
+
     public static boolean canSafelyRemoveSheath(ServerLevel level, BlockPos pos) {
         BlockEntity entity = level.getBlockEntity(pos);
         if (!(entity instanceof ReactorFuelSheathBlockEntity sheath) || !sheath.hasReactorBounds()) return true;

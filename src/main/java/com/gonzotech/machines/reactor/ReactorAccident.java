@@ -81,6 +81,8 @@ public final class ReactorAccident {
     private final long maxPos;
     private final long startTick;
     private int fired;
+    /** (0.3.270) Авария сжигает все ТВЭЛы в чехлах; выгруженные — повтор раз в секунду. */
+    private boolean fuelBurned;
 
     ReactorAccident(BlockPos breach, BlockPos hottest, BlockPos min, BlockPos max, long startTick) {
         this.breachPos = breach.immutable().asLong();
@@ -99,6 +101,7 @@ public final class ReactorAccident {
     public static void onLevelTickPost(LevelTickEvent.Post event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
         ReactorAccidentData.get(level).tickAccidents(level, level.getGameTime());
+        ReactorEmberData.get(level).tick(level, level.getGameTime());
     }
 
     /** Ближайший блок обшивки (внешний слой куба) к точке — место пролома. */
@@ -126,6 +129,12 @@ public final class ReactorAccident {
     void tick(ServerLevel level, long gameTime) {
         long elapsed = gameTime - startTick;
         if (elapsed < 1) return;
+        if (!fuelBurned && (gameTime & 19L) == 0L) {
+            // «Твэлы буквально удаляются, все до единого» (автор 22.10): чистим
+            // и свежие, и выгоревшие — авария забирает топливо целиком.
+            fuelBurned = ReactorFuelStorage.burnAllFuel(level,
+                BlockPos.of(minPos), BlockPos.of(maxPos));
+        }
         if ((fired & 1) == 0) {
             stageWaterToSlime(level);
             fired |= 1;
@@ -312,6 +321,7 @@ public final class ReactorAccident {
         tag.putLong("Max", maxPos);
         tag.putLong("StartTick", startTick);
         tag.putInt("Fired", fired);
+        tag.putBoolean("FuelBurned", fuelBurned);
         return tag;
     }
 
@@ -323,6 +333,7 @@ public final class ReactorAccident {
             BlockPos.of(tag.getLong("Max")),
             tag.getLong("StartTick"));
         accident.fired = tag.getInt("Fired");
+        accident.fuelBurned = tag.getBoolean("FuelBurned");
         return accident;
     }
 }

@@ -46,7 +46,9 @@ screen = read("machines/client/ReactorScreen.java")
 # modulates output and heat exchange (explicit game rule), but the simulation
 # still never consumes stored water — only the relief valve removes it.
 tick = method(runtime, "public void serverTick(")
-assert "if (!panel.isRuntimeReady()) return;" in tick
+# 0.3.270: unformed panels keep cooking (formed check moved, residual gate).
+assert "boolean formed = panel.isRuntimeReady();" in tick
+assert "!panel.hasSavedBounds() || lastSnapshot == null" in tick
 assert "refreshSnapshot(level, panel, gameTime)" in tick
 assert "heat.advance(1.0)" in tick
 assert "accumulateGeneration(generationRate)" in tick and "drainParasiticLoss()" in tick
@@ -352,5 +354,21 @@ assert "return 4;" in burn
 _ver.at_least("0.3.250", "16,364 GTH/t per-port reactor output cap")
 assert "REACTOR_GTH_PER_PORT_MILLI = 16_364 * MILLI" in defs
 assert "MachineDefs.REACTOR_GTH_PER_PORT_MILLI" in structure
+
+
+# 0.3.270 (author 22.10): the accident burns every TVEL in the sheaths; unformed
+# continuation and "embers" keep the reaction alive even after the panel is gone.
+accident_src = read("machines/reactor/ReactorAccident.java")
+storage_src = read("machines/reactor/ReactorFuelStorage.java")
+block_src = read("core/block/ReactorControlPanelBlock.java")
+structure_src = read("machines/reactor/ReactorStructure.java")
+ember_src = read("machines/reactor/ReactorEmberData.java")
+assert "public static boolean burnAllFuel" in storage_src, "accident leaves fuel in sheaths"
+assert "fuelBurned = ReactorFuelStorage.burnAllFuel(level," in accident_src
+assert "ReactorEmberData.get(level).tick(level, level.getGameTime());" in accident_src
+assert "ReactorEmberData.capture(serverLevel, panel)" in block_src, "panel break free-resets the runtime"
+assert "ReactorEmberData.adopt(level, info.min(), info.max())" in structure_src, "ember state not adopted on rebuild"
+assert "MELTDOWN_TEMPERATURE" in ember_src and "0.35" in ember_src
+assert "emberWorthy" in runtime and "emberVelocity" in runtime
 
 print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening, temperature-tiered burn, per-port output cap")

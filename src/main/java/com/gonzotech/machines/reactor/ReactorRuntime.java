@@ -228,17 +228,41 @@ public final class ReactorRuntime {
     }
 
     /** Integrator reading plus the GTH back-pressure layer shown on the temperature gauge. */
+    /** (0.3.270) Есть ли у рантайма живое содержимое — основание для уголька. */
+    public boolean emberWorthy() {
+        return hotWithBackpressure() > ReactorHeatDynamics.AMBIENT + 1.0;
+    }
+
+    /** (0.3.270) Скаляры уголька: температура, инерция нагрева, вода. */
+    public double emberHot() {
+        return hotWithBackpressure();
+    }
+
+    public double emberVelocity() {
+        return heat.save().velocity();
+    }
+
+    public int emberWater() {
+        return water.amount();
+    }
+
     private double hotWithBackpressure() {
         return heat.temperature() + Math.max(0.0, backpressureBonus);
     }
 
     /** One server tick: sample fuel/geometry, integrate temperature, generate GTH, then route it. */
     public void serverTick(ServerLevel level, ReactorControlPanelBlockEntity panel) {
-        if (!panel.isRuntimeReady()) return;
         if (accidentQueued) return;
+        boolean formed = panel.isRuntimeReady();
+        // (0.3.270, автор 22.10) Экстренная расформировка не спасает и не паузит:
+        // пока панель жива и границы запомнены, реакция продолжается по последнему
+        // снимку. Порты deconfigure уже обнулил — ни подачи, ни съёма, прутья не
+        // стареют (нет генерации). Пересборка вернёт ввод/вывод; полный снос
+        // панели передаст состояние «уголькам» (ReactorEmberData).
+        if (!formed && (!panel.hasSavedBounds() || lastSnapshot == null)) return;
         long gameTime = level.getGameTime();
-        if (snapshotDirty || lastSnapshot == null || lastSnapshotTick == Long.MIN_VALUE
-            || gameTime - lastSnapshotTick >= MachineDefs.REACTOR_FUEL_SNAPSHOT_INTERVAL) {
+        if (formed && (snapshotDirty || lastSnapshot == null || lastSnapshotTick == Long.MIN_VALUE
+            || gameTime - lastSnapshotTick >= MachineDefs.REACTOR_FUEL_SNAPSHOT_INTERVAL)) {
             refreshSnapshot(level, panel, gameTime);
         }
         if (lastSnapshot == null) return;
