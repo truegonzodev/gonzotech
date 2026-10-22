@@ -60,9 +60,10 @@ public final class PlotnickMenu extends BaseMachineMenu {
 
     /**
      * Shift+ЛКМ в машину: сначала доливка в неполные стопки, затем пустые
-     * слоты, затем хвост уходит в хранилище v3 (insert). Обратный путь
-     * (из машины в игрок) — стандартный: стопка честно распадается на
-     * переносимые куски.
+     * слоты — и только они (0.3.266: хвост в невидимое хранилище не уходит,
+     * не влезло — осталось в инвентаре; без согласия игрока его вещи в склад,
+     * откуда их не достать без труб/воронок/слома, попадать не должны).
+     * Обратный путь (из машины в игрок) — стандартный.
      */
     @Override
     public ItemStack quickMoveStack(net.minecraft.world.entity.player.Player player, int index) {
@@ -105,9 +106,8 @@ public final class PlotnickMenu extends BaseMachineMenu {
             target.setByPlayer(stack.split(target.getMaxStackSize()));
             movedAny = true;
         }
-        // Хвост, не влезший в головы: отдаём хранилищу — insert() дольёт
-        // депо-стопки типа (0.3.264), стек игрока уменьшается на месте.
-        if (!stack.isEmpty() && plotnick.insert(stack)) movedAny = true;
+        // (0.3.266) Хвост в хранилище НЕ отдаём: не влез в головы — лежит
+        // у игрока. В склад вещи идут своей ходкой машины и клапанами.
         return movedAny;
     }
 

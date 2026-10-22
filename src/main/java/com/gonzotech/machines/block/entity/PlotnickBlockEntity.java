@@ -1658,37 +1658,42 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     /**
-     * Сектор 3×3 чунка — одна вотчина (автор, 0.3.264): лидер — Плотник,
-     * поставленный раньше прочих (placedAt, при равенстве — позиция);
-     * остальные спят. Перевыборы: установка нового, слом любого, тик сна.
+     * Анабиоз по пересечению покрытия (автор, 0.3.266): вотчина Плотника —
+     * сектор 3×3 чанка вокруг него, и сон накладывается, когда чужой сектор
+     * пересекается с нашим хоть на один чанк (чанки на расстоянии ≤2 по
+     * Чебышёву). Лидер — старший по placedAt (tie — позиция) из бодрствующих;
+     * сонный сосед вотчину не держит, иначе цепочка A→B→C укладывала бы спать
+     * и C, чья зона от A свободна. Переворот флага будит окрестность.
      */
     private void reelectSector(ServerLevel server) {
-        List<PlotnickBlockEntity> peers = sectorPeers(server);
-        PlotnickBlockEntity leader = null;
-        for (PlotnickBlockEntity peer : peers) {
-            if (leader == null
-                || peer.placedAt < leader.placedAt
-                || (peer.placedAt == leader.placedAt
-                    && peer.worldPosition.asLong() < leader.worldPosition.asLong())) {
-                leader = peer;
+        for (PlotnickBlockEntity peer : sectorPeers(server)) {
+            if (peer == this || peer.hibernating) continue;
+            boolean senior = peer.placedAt < placedAt
+                || (peer.placedAt == placedAt
+                    && peer.worldPosition.asLong() < worldPosition.asLong());
+            if (senior) {
+                if (!hibernating) {
+                    hibernating = true;
+                    setChanged();
+                    notifySectorChanged(server, worldPosition);
+                }
+                return;
             }
         }
-        for (PlotnickBlockEntity peer : peers) {
-            boolean shouldSleep = leader != null && peer != leader;
-            if (peer.hibernating != shouldSleep) {
-                peer.hibernating = shouldSleep;
-                peer.setChanged();
-            }
+        if (hibernating) {
+            hibernating = false;
+            setChanged();
+            notifySectorChanged(server, worldPosition);
         }
     }
 
-    /** Живые Плотники сектора (грузить чанки ради выборов не будем). */
+    /** Живые Плотники с пересекающимся покрытием: чанки ±2 (грузить не будем). */
     private List<PlotnickBlockEntity> sectorPeers(ServerLevel server) {
         int cx = worldPosition.getX() >> 4;
         int cz = worldPosition.getZ() >> 4;
         List<PlotnickBlockEntity> out = new ArrayList<>();
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
                 LevelChunk chunk = server.getChunkSource().getChunkNow(cx + dx, cz + dz);
                 if (chunk == null) continue;
                 for (BlockEntity peer : chunk.getBlockEntities().values()) {
@@ -1699,12 +1704,16 @@ public final class PlotnickBlockEntity extends BlockEntity
         return out;
     }
 
-    /** Слом/установка Плотника будят сектор: соседи перевыбирают лидера. */
+    /**
+     * Слом/установка Плотника (и чужой переход в сон) будят окрестность:
+     * перевыборы нужны всем, чьё покрытие пересекается с изменившейся клеткой —
+     * это чанки ±2.
+     */
     public static void notifySectorChanged(ServerLevel server, BlockPos near) {
         int cx = near.getX() >> 4;
         int cz = near.getZ() >> 4;
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
                 LevelChunk chunk = server.getChunkSource().getChunkNow(cx + dx, cz + dz);
                 if (chunk == null) continue;
                 for (BlockEntity peer : chunk.getBlockEntities().values()) {
@@ -2035,10 +2044,20 @@ public final class PlotnickBlockEntity extends BlockEntity
     // но вставляют строго в депо, а «добытое» умеют лишь вынимать (автор 0.3.264).
     @Override
     public int[] getSlotsForFace(Direction side) {
-        int[] slots = new int[SLOTS_ACTIVE + VIRTUAL_SLOTS];
-        for (int i = 0; i < SLOTS_ACTIVE; i++) slots[i] = i;
-        for (int v = 0; v < VIRTUAL_SLOTS; v++) slots[SLOTS_ACTIVE + v] = CONTAINER_SIZE + v;
-        return slots;
+        // (Автор, 0.3.266) Ваниальная воронка под блоком смотрит ровно в DOWN
+        // грань и canTakeItemThroughFace не спрашивает — поэтому снизу отдаём
+        // только невидимое хранилище: хотбар и карты снаружи неприкосновенны.
+        // Остальные грани — витрина для кладки («куда угодно, кроме слотов
+        // карт»): стражи сидят в canPlaceItem (карты — только карты, зона
+        // «добытое» — только отдавать, чужая ячейка — не кладётся).
+        if (side == Direction.DOWN) {
+            int[] out = new int[VIRTUAL_SLOTS];
+            for (int v = 0; v < VIRTUAL_SLOTS; v++) out[v] = CONTAINER_SIZE + v;
+            return out;
+        }
+        int[] all = new int[CONTAINER_TOTAL];
+        for (int i = 0; i < CONTAINER_TOTAL; i++) all[i] = i;
+        return all;
     }
 
     @Override
@@ -2048,11 +2067,11 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     @Override
     public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
-        if (slot >= CONTAINER_SIZE) {
-            int vi = slot - CONTAINER_SIZE;
-            return vi >= 0 && vi < VIRTUAL_SLOTS && !virtual.get(vi).isEmpty();
-        }
-        return slot >= 0 && slot < SLOTS_ACTIVE && !items.get(slot).isEmpty();
+        // Вытягивать наружу — только невидимое хранилище (0.3.266): головы и
+        // карты трубы тоже не трогают, хоть и видят их в списке граней.
+        if (slot < CONTAINER_SIZE) return false;
+        int vi = slot - CONTAINER_SIZE;
+        return vi >= 0 && vi < VIRTUAL_SLOTS && !virtual.get(vi).isEmpty();
     }
 
     // ─────────────────────────── persistence / menu ───────────────────────────

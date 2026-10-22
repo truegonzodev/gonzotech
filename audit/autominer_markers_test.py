@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.265$", props, re.M), "mod_version != 0.3.265"
+assert re.search(r"^mod_version=0\.3\.266$", props, re.M), "mod_version != 0.3.266"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -422,6 +422,20 @@ assert "level.isOutsideBuildHeight(pos)" in mod_src and "Level.isOutsideBuildHei
 assert "player instanceof net.minecraft.server.level.ServerPlayer" in plotnick_block_src \
     and "player.sendSystemMessage" not in plotnick_block_src, \
     "sendSystemMessage зовётся на Player — у Player его нет"
+# 0.3.266 (отыгрыш автора): анабиоз по пересечению покрытия, shift — только
+# в головы, хотбар/карты наружу не отдаём.
+_peers = re.search(r"private List<PlotnickBlockEntity> sectorPeers.*?\n    \}", be, re.S)
+assert _peers and "dx = -2; dx <= 2" in _peers.group(0), \
+    "sectorPeers не сканирует чанки ±2 — зоны ≤2 не пересекаются"
+_notify = re.search(r"public static void notifySectorChanged.*?\n    \}", be, re.S)
+assert _notify and "dx = -2; dx <= 2" in _notify.group(0), \
+    "notifySectorChanged не будит соседей на ±2"
+assert "if (peer == this || peer.hibernating) continue;" in be, \
+    "выборы считают сонных соседей держателями вотчины"
+assert "if (side == Direction.DOWN)" in be and "int[] out = new int[VIRTUAL_SLOTS];" in be, \
+    "воронка снизу видит больше невидимого хранилища"
+assert "if (slot < CONTAINER_SIZE) return false;" in be, \
+    "трубы могут вытянуть хотбар или карты"
 # Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
 assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"
 assert 'if (tag.contains("BucketRest") || isLegacyVirtual(tag))' in be, "миграция не обусловлена v2-следом"
@@ -429,7 +443,7 @@ assert "legacyOverflow" in be, "не влезшее при миграции не
 # GUI-меню: обычный Slot, лор «хранит» = тотал по машине.
 assert "MaxStackSlot" not in menu and "addSlot(new Slot(be, k, 8 + 18 * k, 76));" in menu, \
     "активные слоты не стали классической ванильной девяткой"
-assert "plotnick.insert(stack)" in menu, "shift-хвост не доливается в хранилище"
+assert "plotnick.insert(" not in menu, "shift-клик снова запихивает хвост игрока в невидимый склад"
 assert "public int cellStored(int slot)" in menu, "меню не отдаёт тотал предмета для лора"
 assert "gui.gonzotech.plotnick.cell.stored" in screen, "нет строки «хранит: N шт» при наведении"
 assert "public void clicked(int slotId, int button, ClickType clickType," in menu, \
