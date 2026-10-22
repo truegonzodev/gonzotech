@@ -81,24 +81,38 @@ public final class ItemRadioactivity {
         if (after != null && after.isEmpty()) stack.remove(DataComponents.CUSTOM_DATA);
     }
 
-    /** Рассчитать следующий per-item уровень без изменения ItemStack. */
+    /**
+     * Рассчитать следующий per-item уровень без изменения ItemStack.
+     *
+     * <p>Рост идёт НА ПРЕДМЕТ, а не на стопку (автор, 22.10: таблица из четырёх
+     * случаев): 1 мандарин получает 1 mZt/s — 64 мандарина получают 64 mZt/s,
+     * каждый как одиночный. Складывать/делить обработчиками не нужно:
+     * {@code gonzo_rad} хранит per-item значение, ваниль при split копирует
+     * компонент — дупа нет; merge ванильный разрешает только равным
+     * компонентам, то есть стелятся одинаковые уровни. «Стопка как щит»
+     * (случай 2) и «стопка не накапливает» (#27, случай 3) этой правкой
+     * закрыты: ни target, ни сид от размера стака не зависят.</p>
+     */
     public static double nextInduced(double current, ItemStack stack,
                                      boolean hasSource, double sourceNzt, double factor) {
-        int count = Math.max(1, stack.getCount());
         // Preset emission is a permanent floor, not an inducible part. A
-        // source may only raise a target above its own intrinsic baseline.
+        // source may only raise a target above its own intrinsic baseline —
+        // в per-item деньгах: минус собственный пресет ПРЕДМЕТА, не стака.
         // Носитель (щипцы/ковш, 0.3.83): собственного «фундамента» не имеет —
         // наведёнка растёт от ЧУЖИХ источников инвентаря/чанка; содержимое
         // свою тару не облучает (sourceLevel уже исключает сам стак).
         double intrinsic = stack.getItem() instanceof CarrierItem
-                ? 0.0 : RadSources.emissionOfStack(stack);
-        double target = Math.min(Math.max(0.0, sourceNzt - intrinsic) / count, INDUCED_CAP);
+                ? 0.0 : RadSources.emissionPerItem(stack);
+        double target = Math.min(Math.max(0.0, sourceNzt - intrinsic), INDUCED_CAP);
         double next;
         if (hasSource && target >= 1.0 && factor > 0.0) {
             if (current > target) {
                 next = current / GROWTH;
             } else {
-                double seeded = Math.max(current, 1.0 / count);
+                // Старт — 1 mZt на предмет (тот же CLEANUP_FLOOR: меньшие
+                // значения setInduced съедает, поэтому сид не может быть
+                // дробным на стаке — это и был корень #27).
+                double seeded = Math.max(current, 1.0);
                 next = Math.min(
                     seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor,
                     target);
@@ -126,9 +140,9 @@ public final class ItemRadioactivity {
 
     /**
      * Шаг роста одного предмета. {@code sourceNzt} — суммарный уровень
-     * локального источника, поэтому для большого стака наведённая часть
-     * делится на его количество. Суммарная полученная доза не зависит от
-     * размера стака и не дюпается при split.
+     * локального источника (для стоков — уже со скидкой ре-излучения,
+     * {@link #transferEmission}); деления на размер стака нет с 0.3.268:
+     * каждый предмет догоняет цель как одиночный.
      */
     public static void tickInduced(ItemStack stack, boolean hasSource, double sourceNzt, double factor) {
         double next = nextInduced(getInduced(stack), stack, hasSource, sourceNzt, factor);
@@ -274,6 +288,23 @@ public final class ItemRadioactivity {
         CompoundTag tag = data.copyTag();
         if (!tag.contains(TAG_RAD) || tag.getInt(TAG_RAD_MODEL) == PER_ITEM_MODEL) return;
         setInduced(stack, tag.getDouble(TAG_RAD) / Math.max(1, stack.getCount()));
+    }
+
+    /**
+     * (автор 22.10) Наведёнка переизлучается «на предмет» на 75 % мощности:
+     * уран (пресет, бесконечный) зарядит мандарин на 1.0, а мандарин с тем же
+     * номиналом наведёнки — на 0.75 от того же темпа. Только перенос
+     * «наведёнка → предмет»: дозы игроку и фон чанка считаются полной
+     * эмиссией.
+     */
+    public static final double INDUCED_REEMIT = 0.75;
+
+    /** Эмиссия стака в передаче «на предмет»: пресет полной мощностью,
+     *  наведёнка — с {@link #INDUCED_REEMIT}. */
+    public static double transferEmission(ItemStack stack) {
+        if (stack.isEmpty()) return 0.0;
+        return RadSources.emissionOfStack(stack)
+            + INDUCED_REEMIT * getInduced(stack) * Math.max(1, stack.getCount());
     }
 
     /** Полная эмиссия стака: preset per-item × count + induced per-item × count. */

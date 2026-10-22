@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.267$", props, re.M), "mod_version != 0.3.267"
+assert re.search(r"^mod_version=0\.3\.268$", props, re.M), "mod_version != 0.3.268"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -457,6 +457,20 @@ assert "PayloadThrottle.allow" in (ROOT / "src/main/java/com/gonzotech/GonzoTech
     "цезий не отсечён (#41)"
 assert "PayloadThrottle.forget" in (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8"), \
     "мусорка троттла на logout не подключена"
+
+# Радиация per-item (автор 22.10, таблица 4 случаев): цель роста не делится на
+# размер стака, сид 1 mZt на предмет, ре-излучение «на предмет» ×0.75.
+ir_src = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
+assert "INDUCED_REEMIT = 0.75" in ir_src, "нет коэффициента переизлучения наведёнки"
+assert "sourceNzt - intrinsic), INDUCED_CAP)" in ir_src and "intrinsic) / count" not in ir_src, \
+    "цель по-прежнему делится на размер стака — стопка снова щит (случай 2)"
+assert "Math.max(current, 1.0);" in ir_src and "1.0 / count" not in ir_src, \
+    "сид всё ещё зависит от стака — #27 вернётся"
+assert "RadSources.emissionPerItem(stack);" in ir_src, "intrinsic отнимает тотал стака, а не пресет предмета"
+rad_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadSources.java").read_text(encoding="utf-8")
+assert "public static double emissionTransfer(ItemStack stack)" in rad_src, "нет переноса «на предмет»"
+rs_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text(encoding="utf-8")
+assert "secondStackTransfer : maxStackTransfer" in rs_src, "инвентарь не скидывает наведёнку источника"
 
 # Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
 assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"

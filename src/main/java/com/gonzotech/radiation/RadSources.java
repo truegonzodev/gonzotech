@@ -181,4 +181,23 @@ public final class RadSources {
         }
         return sum;
     }
+
+    /**
+     * Эмиссия источника «на предмет» (автор 22.10): то же дерево обхода, что
+     * у {@link #emissionDeep}, но наведённая составляющая каждого стака
+     * проходит через INDUCED_REEMIT (0.75). Тултипы, доза игрока и фон чанка
+     * полной эмиссией считаются полной — скидка только на переносе
+     * «наведёнка → предмет».
+     */
+    public static double emissionTransfer(ItemStack stack) {
+        return emissionTransfer(stack, 0);
+    }
+
+    private static double emissionTransfer(ItemStack stack, int depth) {
+        double sum = ItemRadioactivity.transferEmission(stack);
+        if (depth < 4) {
+            for (ItemStack inner : contentsOf(stack)) sum += emissionTransfer(inner, depth + 1);
+        }
+        return sum;
+    }
 }

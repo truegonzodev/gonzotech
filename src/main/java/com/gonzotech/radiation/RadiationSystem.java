@@ -187,15 +187,25 @@ public final class RadiationSystem {
         double intrinsic = 0.0;
         double maxStackEmission = 0.0;     // сильнейший стак…
         double secondStackEmission = 0.0;  // …и сильнейший ДРУГОЙ (с кратностями)
+        // (автор 22.10) параллельно — те же стаки в значении «на предмет»
+        // (наведённая часть ×0.75). Разыгрыв «кто сильнее» остаётся на полной
+        // эмиссии, иначе стак со своей наведёнкой выталкивал бы сам себя в
+        // «вторые» нечестно.
+        double maxStackTransfer = 0.0;
+        double secondStackTransfer = 0.0;
         for (List<ItemStack> part : compartments) {
             for (ItemStack stack : part) {
                 double e = RadSources.emissionDeep(stack);
+                double et = RadSources.emissionTransfer(stack);
                 intrinsic += e;
                 if (e > maxStackEmission) {
                     secondStackEmission = maxStackEmission;
+                    secondStackTransfer = maxStackTransfer;
                     maxStackEmission = e;
+                    maxStackTransfer = et;
                 } else if (e > secondStackEmission) {
                     secondStackEmission = e;
+                    secondStackTransfer = et;
                 }
             }
         }
@@ -227,7 +237,7 @@ public final class RadiationSystem {
                 // (второй максимум), чанк-фон общий.
                 double ownEmission = RadSources.emissionDeep(stack);
                 double stackSource = Math.max(
-                        ownEmission >= maxStackEmission ? secondStackEmission : maxStackEmission,
+                        ownEmission >= maxStackEmission ? secondStackTransfer : maxStackTransfer,
                         chunkSource);
                 double factor = RadMaterials.itemFactor(stack);
                 int count = Math.max(1, stack.getCount());
