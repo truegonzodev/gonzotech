@@ -230,7 +230,7 @@ public class ChunkRadiationData extends SavedData {
         int minChunkX = (center.getX() - radius) >> 4, maxChunkX = (center.getX() + radius) >> 4;
         int minChunkZ = (center.getZ() - radius) >> 4, maxChunkZ = (center.getZ() + radius) >> 4;
         for (int cx = minChunkX; cx <= maxChunkX; cx++) for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-            LevelChunk chunk = level.getChunkNow(new ChunkPos(cx, cz));
+            LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
             if (chunk == null) continue; // #25: визуал не принудительная загрузка
             for (var be : chunk.getBlockEntities().values()) {
                 if (!(be instanceof Container container)) continue;
@@ -519,7 +519,7 @@ public class ChunkRadiationData extends SavedData {
         // честную 1.0 до своей очереди.
         long[] cells = set.toLongArray();
         int n = cells.length;
-        int cursor = n == 0 ? 0 : Math.floorMod(screenProbeCursor.getInt(chunkKey), n);
+        int cursor = n == 0 ? 0 : Math.floorMod(screenProbeCursor.get(chunkKey), n);
         screenProbeCursor.put(chunkKey, cursor + MAX_PROBES_PER_CHUNK);
         for (int i = 0; i < n; i++) {
             long packed = cells[Math.floorMod(cursor + i, n)];
