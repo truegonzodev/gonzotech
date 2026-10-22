@@ -28,17 +28,48 @@ docs = (ROOT / "docs/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
 
 # Inventory dose is rebuilt after the tick, so direct induced activity is counted once.
 assert "double totalNzt = 0.0D;" in system
-# 0.3.249 (idea of the author): induced activity self-discharges to a ~10 mZt
-# plateau (the higher the dose the harder the fall), and the inventory cannot
-# contaminate the chunk above the strongest stack's own emission — the
-# "items -> chunk -> items" loop no longer amplifies. The author's report:
-# a chunk above 30 mZt plus 2+ occupied slots used to be a 100% infinite dupe.
-_ver.at_least("0.3.249", "induced plateau discharge and strongest-stack chunk cap")
+# 0.3.249 (idea of the author): the inventory cannot contaminate the chunk
+# above the strongest stack's own emission — the "items -> chunk -> items" loop
+# no longer amplifies. The author's report: a chunk above 30 mZt plus 2+
+# occupied slots used to be a 100% infinite dupe.  0.3.268 (author's
+# rebalance): the hard 10 mZt plateau knife is replaced by one smooth
+# "of current" law — gain costs (1-0.00097)^L per stack dose and the loss
+# fraction is 25%*tanh(L/33).
+_ver.at_least("0.3.249", "induced self-discharge and strongest-stack chunk cap")
 assert "INVENTORY_TO_CHUNK_RATE * inventoryContourFactor * INVENTORY_TRANSFER_EFFICIENCY" in system
 assert "double inventoryTarget = Math.min(totalNzt, strongestStackNzt);" in system
-assert "INDUCED_PLATEAU = 10.0 * RadUnits.MILLI" in item_rad
-assert "PLATEAU_DISCHARGE = 0.5" in item_rad
-assert "plateauDischarge(next)" in item_rad
+assert "UPTAKE_COST = 0.00097" in item_rad
+assert "SELF_DISCHARGE = GROWTH - 1.0" in item_rad
+assert "DISCHARGE_ANCHOR = 33.0" in item_rad
+assert "1.0 - UPTAKE_COST, seeded" in item_rad
+assert "plateauDischarge" not in item_rad
+assert "restDecay(current, steps)" in item_rad
+assert "Math.pow(1.0D / GROWTH" not in item_rad
+
+# Reference numbers of the new law (mirrors the Java formulas, values in mZt).
+def _discharge(l):
+    return l * (1.0 - 0.25 * math.tanh(l / 33.0))
+
+def _step(l, src):
+    if l > src or src < 1.0:
+        return _discharge(l)
+    seed = max(l, 1.0)
+    return _discharge(min(seed + seed * 0.25 * (1.0 - seed / src) * (1.0 - 0.00097) ** seed, src))
+
+# Author's cooling row: 5 Zt -> ~3.75 -> ~2.81 -> ~2.11 within three seconds.
+assert 3600 < _discharge(5000.0) < 3900
+assert 2700 < _discharge(_discharge(5000.0)) < 2950
+# Mutual 64-stack hold converges to the author's "~33 mZt average plateau"
+# instead of running away to the cap.
+a = b = 5000.0
+for _ in range(40000):
+    a, b = _step(a, min(b * 64.0, 5000.0)), _step(b, min(a * 64.0, 5000.0))
+assert 15.0 < a < 60.0, f"mutual 64-stack hold no longer saturates: {a}"
+# Single radium billet (75 mZt) holds neighbours near 20 mZt, not hundreds.
+c = 1.0
+for _ in range(40000):
+    c = _step(c, 75.0)
+assert 10.0 < c < 40.0, 'radium-adjacent equilibrium off the author scale: %s' % c
 assert "double inventoryContourFactor = tracing || totalNzt > contam" in system
 assert "RadSources.emissionDeep(stack);" in system
 
@@ -50,7 +81,6 @@ assert "double transfer = transferTowardChunk(" in system
 assert "out[0] += transfer;" in system
 assert "container.setChanged()" in system
 assert "decayInducedSteps(stack, steps);" in item_rad
-assert "Math.pow(1.0D / GROWTH, steps)" in item_rad
 assert "ItemContainerContents.fromItems(slots)" in item_rad
 assert "`BUNDLE_CONTENTS` входит в расчёт эмиссии" in docs
 assert "их наведёнка не затухает" in docs

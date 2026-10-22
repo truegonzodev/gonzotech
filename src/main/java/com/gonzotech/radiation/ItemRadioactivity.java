@@ -29,10 +29,24 @@ public final class ItemRadioactivity {
     private static final int PER_ITEM_MODEL = 1;
     public static final double GROWTH = 1.25;
     public static final double INDUCED_CAP = 5.0 * RadUnits.UNIT;
-    /** Плато самоподдерживающейся наведёнки (0.3.249): эффективный уровень ~10 mZt. */
-    public static final double INDUCED_PLATEAU = 10.0 * RadUnits.MILLI;
-    /** Отдача сверх плато: половина избытка гасится каждую секунду (0.3.249). */
-    public static final double PLATEAU_DISCHARGE = 0.5;
+    /** (автор 22.10, баланс) Стоимость нагрева: множитель приёма
+     *  (1 − 0.00097)^L для дозы L в mZt — каждый 1 mZt снимает 0.097 %
+     *  получения наведёнки ОТ ТЕКУЩЕГО, не от потолка. При 1 Zt остаётся
+     *  ~38 % скорости (нагрев в 2.6 раза затратнее). */
+    public static final double UPTAKE_COST = 0.00097;
+    /** (автор 22.10) Полная скорость отдачи: на большой дозе предмет теряет
+     *  SELF_DISCHARGE (25 %) в секунду — авторский ряд 5→3.7→2.7→1.9. Зеркалит
+     *  скорость роста: что логистика накручивает, отдача уносит. Заменяет жёсткое
+     *  плато 0.3.249 (всё сверх 10 mZt теряло половину) — плато-обрушения нет,
+     *  отдача плавная и пропорциональна текущему. */
+    public static final double SELF_DISCHARGE = GROWTH - 1.0;
+    /** Масштаб насыщения отдачи (mZt): «среднее плато инвентаря» автора ~33 —
+     *  там отдача достигает 76 % полной скорости, ниже — спадает линейно
+     *  (~0.76 %/с на каждый 1 mZt у нуля). Наведёнка НЕ может самоподдерживающе
+     *  стоять выше ~40–70 mZt ни у какого источника: «жутко радиоактивным»
+     *  делают пресеты (стоп радия), а не накопленный фон — дюп-петли
+     *  «инвентарь ↔ инвентарь» закрываются сами, без плато-ножа. */
+    public static final double DISCHARGE_ANCHOR = 33.0;
     public static final double CLEANUP_FLOOR = 1.0;
 
     private ItemRadioactivity() {
@@ -107,35 +121,52 @@ public final class ItemRadioactivity {
         double next;
         if (hasSource && target >= 1.0 && factor > 0.0) {
             if (current > target) {
-                next = current / GROWTH;
+                next = selfDischarge(current);
             } else {
                 // Старт — 1 mZt на предмет (тот же CLEANUP_FLOOR: меньшие
                 // значения setInduced съедает, поэтому сид не может быть
                 // дробным на стаке — это и был корень #27).
                 double seeded = Math.max(current, 1.0);
-                next = Math.min(
-                    seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor,
-                    target);
+                // (автор 22.10) «Затратность» нагрева: текущая доза душит
+                // приём по геометрической (1−0.00097)^L. Равновесие ниже
+                // цели всегда — mutual-hold дюпа нет даже без жёсткого плато.
+                double uptake = Math.pow(1.0 - UPTAKE_COST, seeded);
+                // Отдача действует и на ветке роста, иначе равновесие = цель и
+                // «предметы держат друг друга» возвращается (дюп 0.3.249).
+                next = selfDischarge(Math.min(
+                    seeded + seeded * (GROWTH - 1.0) * (1.0 - seeded / target) * factor * uptake,
+                    target));
             }
         } else {
-            next = current > 0.0 ? current / GROWTH : 0.0;
+            next = current > 0.0 ? selfDischarge(current) : 0.0;
         }
-        return plateauDischarge(next);
+        return next;
     }
 
     /**
-     * Саморазряд наведёнки (0.3.249, идея автора): чем больше доза, тем выше
-     * отдача. Всё сверх {@link #INDUCED_PLATEAU} гасится на
-     * {@link #PLATEAU_DISCHARGE} за секунду — даже предмет с 5 Zt наведёнки за
-     * единицы секунд остывает до плато ~10 mZt, и вечная нейтральная петля
-     * «предметы держат друг друга на любом уровне» перестаёт существовать.
-     * Ниже плато действуют прежние правила (рост к цели, затухание без
-     * источника): слабый источник держит цель ниже плато, плато не подмешивает.
+     * Отдача «от текущего» (0.3.268, баланс автора): доля потерь за секунду
+     * = SELF_DISCHARGE × tanh(L / DISCHARGE_ANCHOR). 5 Zt → ровно ×0.75 в
+     * первую секунду (ряд 5→3.75→2.81→2.11 ≈ авторских 3.7→2.7→1.9), у нуля
+     * — мягкое стекание без обрезки, плато-ножа 0.3.249 больше нет.
      */
-    private static double plateauDischarge(double value) {
-        return value > INDUCED_PLATEAU
-                ? INDUCED_PLATEAU + (value - INDUCED_PLATEAU) * (1.0 - PLATEAU_DISCHARGE)
-                : value;
+    private static double selfDischarge(double value) {
+        return value * (1.0 - SELF_DISCHARGE * Math.tanh(value / DISCHARGE_ANCHOR));
+    }
+
+    /**
+     * Спад в покое за {@code steps} секунд (без источника: контейнеры, пол,
+     * рамки, оффлайн). Ряд сходится к floor(1 mZt) менее чем за ~800 шагов с
+     * любой высоты, поэтому длинный простой считается циклом с ограничением,
+     * а не формулой — хвостов «вечных» предметов закон tanh не оставляет.
+     */
+    public static double restDecay(double value, long steps) {
+        if (value <= 0.0D || steps <= 0L) return value;
+        long n = Math.min(steps, 1024L);
+        for (long i = 0; i < n && value >= CLEANUP_FLOOR; i++) {
+            value = selfDischarge(value);
+        }
+        if (steps > n && value >= CLEANUP_FLOOR) value = 0.0D;
+        return value;
     }
 
     /**
@@ -187,7 +218,7 @@ public final class ItemRadioactivity {
         long elapsed = nowTick - last;
         if (elapsed < 0L) return current;
         long steps = elapsed / DECAY_STEP_TICKS;
-        if (steps > 1L) current *= Math.pow(1.0D / GROWTH, steps - 1L);
+        if (steps > 1L) current = restDecay(current, steps - 1L);
         return current >= CLEANUP_FLOOR ? current : 0.0D;
     }
 
@@ -271,7 +302,7 @@ public final class ItemRadioactivity {
     private static void decayInducedSteps(ItemStack stack, long steps) {
         double current = getInduced(stack);
         if (current <= 0.0D || steps <= 0L) return;
-        double next = current * Math.pow(1.0D / GROWTH, steps);
+        double next = restDecay(current, steps);
         if (next >= CLEANUP_FLOOR) setInduced(stack, next);
         else clear(stack);
     }
