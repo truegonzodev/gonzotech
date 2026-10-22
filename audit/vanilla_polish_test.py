@@ -93,5 +93,5 @@ for lang in ("ru_ru.json", "en_us.json"):
 assert '"reaction/bone_calcite"' in jei
 assert '"bone_calcite"' in jei
 
-assert _ver.version() == "0.3.260", _ver.version()
+assert _ver.version() == "0.3.261", _ver.version()
 print("vanilla polish + component contracts OK")

@@ -108,6 +108,8 @@ public final class PlotnickBlockEntity extends BlockEntity
     public static final int BTN_DYNAMITE = 5;
     /** ПКМ по «Постройке»: лишь подсоединить уже поставленные буры (0.3.259). */
     public static final int BTN_NETWORK_LINK = 6;
+    /** ПКМ по «Бурению»: остановить движок (0.3.261). */
+    public static final int BTN_DRILL_STOP = 7;
 
     private final GtBuffer gtu = new GtBuffer(GTU_CAPACITY_MILLI);
     private final NonNullList<ItemStack> items =
@@ -147,6 +149,13 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /** Флаг «Начать бурение» (0.3.260): движок молчит, пока кнопка не нажата. */
     private boolean drilling;
+    /** Буровые установки, найденные в ленте на старте цикла (0.3.261). */
+    private List<BlockPos> cycleDrillCells = List.of();
+    /** Постройка съела дефицит: спим до пополнения склада, дырку не ждём. */
+    private boolean buildStalled;
+
+    /** Полулента 9 чанков для сканов сети: глубже дорог всё равно нет. */
+    private static final int WORK_BELT_Y = 48;
 
     // Числа тултипа «Постройки» (0.3.259): пересчитываются, пока открыт GUI.
     private int menuViewers;
@@ -200,8 +209,10 @@ public final class PlotnickBlockEntity extends BlockEntity
         be.processDismantleQueue(server);
         be.processTntQueue(server);
         be.tickDrills(server);
-        // Тултипы GUI: раз в секунду, и только когда окно открыто.
-        if (be.menuViewers > 0 && (be.networkStatsDirty || server.getGameTime() % 20 == 0)) {
+        // Тултипы GUI: пересчёт ТОЛЬКО по событиям (кнопки/постройка) и
+        // только когда окно открыто. Периодического сканирования мира тут
+        // больше нет — оно и было источником лаг-стены (0.3.261).
+        if (be.menuViewers > 0 && be.networkStatsDirty) {
             be.networkStatsDirty = false;
             be.refreshNetworkStats(server);
         }
@@ -209,7 +220,7 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /** Кто смотрит в GUI: держим счёт, чтобы не сканировать мир вхолостую. */
     public void menuOpened() {
-        if (menuViewers++ == 0 && level instanceof ServerLevel server) refreshNetworkStats(server);
+        menuViewers++; // пересчёт — только если флаг dirty от событий; сам вход легок
     }
 
     public void menuClosed() {
@@ -251,12 +262,24 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     private SectorScan collectSectorScan(ServerLevel server) {
+        return scanSurface(server, WORK_BELT_Y);
+    }
+
+    /**
+     * Лента 9 чанков вокруг Плотника: рабочие клетки и буровые установки.
+     * Сеть живёт у поверхности — полно-высотный скан 3×3 чанка (~880 тыс.
+     * чтений) был главной лаг-стеной GUI; лента в 48 уровней в обе стороны
+     * дешевле на порядок и покрывает любые разумные дороги.
+     */
+    private SectorScan scanSurface(ServerLevel server, int halfBand) {
         int cx = worldPosition.getX() >> 4;
         int cz = worldPosition.getZ() >> 4;
         net.minecraft.world.level.block.Block work = ModMachines.WORK_BLOCK.get();
         net.minecraft.world.level.block.Block drill = ModMachines.MINER_DRILL.get();
         Set<BlockPos> workCells = new HashSet<>();
         List<BlockPos> drills = new ArrayList<>();
+        int y0 = Math.max(server.getMinY(), worldPosition.getY() - halfBand);
+        int y1 = Math.min(server.getMaxY(), worldPosition.getY() + halfBand);
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
@@ -264,7 +287,7 @@ public final class PlotnickBlockEntity extends BlockEntity
                 int baseZ = (cz + dz) << 4;
                 for (int lx = 0; lx < 16; lx++) {
                     for (int lz = 0; lz < 16; lz++) {
-                        for (int y = server.getMinY(); y <= server.getMaxY(); y++) {
+                        for (int y = y0; y <= y1; y++) {
                             net.minecraft.world.level.block.state.BlockState st =
                                 chunk.getBlockState(new BlockPos(lx, y, lz));
                             if (st.is(work)) {
@@ -318,6 +341,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             case BTN_DYNAMITE -> rigTnt(server, requester);
             case BTN_NETWORK_LINK -> linkExistingDrills(server, requester);
             case BTN_DRILL -> startDrilling(server, requester);
+            case BTN_DRILL_STOP -> stopDrilling(requester);
             default -> false;
         };
     }
@@ -422,7 +446,8 @@ public final class PlotnickBlockEntity extends BlockEntity
                         net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                         new BlockPos(x, base.getY(), z)).below();
                     MinerMarker marker = service.add(
-                        server, surface, MinerMarker.Kind.STATION, 0, sourceDisplay);
+                        server, surface, MinerMarker.Kind.STATION, 0, sourceDisplay,
+                        worldPosition.asLong());
                     sectorMarkerIds.add(marker.id());
                     markedChunks++;
                     continue;
@@ -435,7 +460,8 @@ public final class PlotnickBlockEntity extends BlockEntity
                         assembledCount++;
                     } else {
                         MinerMarker marker = service.add(server, sourcePos,
-                            MinerMarker.Kind.STATION, 0, geophoneDisplay);
+                            MinerMarker.Kind.STATION, 0, geophoneDisplay,
+                            worldPosition.asLong());
                         sectorMarkerIds.add(marker.id());
                         markedMissingGeophones = true;
                     }
@@ -500,8 +526,19 @@ public final class PlotnickBlockEntity extends BlockEntity
 
         int oreBlocks = 0;
         int marks = 0;
+        int sourceMask = MemoryCardItem.readSourceMask(card);
+        int centerCx = worldPosition.getX() >> 4;
+        int centerCz = worldPosition.getZ() >> 4;
         for (int cx = sector.minX(); cx <= sector.maxX(); cx++) {
             for (int cz = sector.minZ(); cz <= sector.maxZ(); cz++) {
+                if (sourceMask != 0) {
+                    int dx = cx - centerCx;
+                    int dz = cz - centerCz;
+                    if (dx < -1 || dx > 1 || dz < -1 || dz > 1
+                        || (sourceMask & (1 << ((dx + 1) * 3 + (dz + 1)))) == 0) {
+                        continue; // чанк не простучан — информации о нём нет
+                    }
+                }
                 LevelChunk chunk = server.getChunk(cx, cz);
                 int baseX = cx << 4;
                 int baseZ = cz << 4;
@@ -572,7 +609,8 @@ public final class PlotnickBlockEntity extends BlockEntity
                     drillPoints.add(surface);
                     List<Item> display = oreItems.size() > 3 ? oreItems.subList(0, 3) : oreItems;
                     MinerMarker marker =
-                        service.add(server, surface, MinerMarker.Kind.ORE, 0, display);
+                        service.add(server, surface, MinerMarker.Kind.ORE, 0, display,
+                            worldPosition.asLong());
                     // id рудной метки в секторном списке: «Свернуться» и
                     // следующая разметка убирают их тем же механизмом.
                     sectorMarkerIds.add(marker.id());
@@ -639,11 +677,14 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
 
         NetworkPlanner.Plan plan =
-            NetworkPlanner.plan(server, worldPosition, collectWorkCells(server), anchors);
+            NetworkPlanner.plan(server, worldPosition, scanSurface(server, WORK_BELT_Y).workCells(),
+                anchors);
         // Порядок автора: сначала дорожки через рабочие блоки, буры — только
         // после того, как сеть дошла до точек.
         List<NetworkPlanner.Entry> queue = new ArrayList<>(plan.entries());
         for (BlockPos drillCell : drillSlots) queue.add(new NetworkPlanner.Entry(drillCell, true));
+        netRoadsFull = queue.size();
+        netDrillsToPlace = drillSlots.size();
 
         if (queue.isEmpty()) {
             report(requester, "message.gonzotech.plotnick.network.noneeded", plan.already());
@@ -678,17 +719,10 @@ public final class PlotnickBlockEntity extends BlockEntity
             report(requester, "message.gonzotech.plotnick.network.nodrills");
             return true;
         }
-        int adopted = 0;
-        for (BlockPos cell : placed) {
-            if (!coversDrillCell(cell)) {
-                drillPoints.add(cell); // движок буров теперь будет её пасти
-                adopted++;
-            }
-        }
         NetworkPlanner.Plan plan =
             NetworkPlanner.plan(server, worldPosition, scan.workCells(), placed);
+        netRoadsLink = plan.entries().size();
         if (plan.entries().isEmpty()) {
-            networkStatsDirty = true;
             report(requester, "message.gonzotech.plotnick.network.noneeded", plan.already());
             return true;
         }
@@ -697,18 +731,11 @@ public final class PlotnickBlockEntity extends BlockEntity
         placeCooldown = 2;
         buildRequester = requester;
         setChanged();
-        networkStatsDirty = true;
+        // Движок (0.3.261) сам пасёт любой связный бур — усыновление точками
+        // больше не нужно, ПКМ ведёт только дороги.
         report(requester, "message.gonzotech.plotnick.network.linked",
-            plan.entries().size(), placed.size(), adopted);
+            placed.size(), plan.entries().size());
         return true;
-    }
-
-    /** Есть ли уже точка разметки, для которой клетка буровая (сама или над ней). */
-    private boolean coversDrillCell(BlockPos drillCell) {
-        for (BlockPos point : drillPoints) {
-            if (point.equals(drillCell) || point.above().equals(drillCell)) return true;
-        }
-        return false;
     }
 
     /** Клетка под бур: воздух над точкой руды, либо сама точка, если она мягкая. */
@@ -741,85 +768,71 @@ public final class PlotnickBlockEntity extends BlockEntity
         return found;
     }
 
-    /** Все рабочие блоки 9 чанков сектора (flood-fill сети стартует от Плотника). */
-    private Set<BlockPos> collectWorkCells(ServerLevel server) {
-        int cx = worldPosition.getX() >> 4;
-        int cz = worldPosition.getZ() >> 4;
-        net.minecraft.world.level.block.Block work = ModMachines.WORK_BLOCK.get();
-        Set<BlockPos> cells = new HashSet<>();
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
-                int baseX = (cx + dx) << 4;
-                int baseZ = (cz + dz) << 4;
-                for (int lx = 0; lx < 16; lx++) {
-                    for (int lz = 0; lz < 16; lz++) {
-                        for (int y = server.getMinY(); y <= server.getMaxY(); y++) {
-                            if (chunk.getBlockState(new BlockPos(lx, y, lz)).is(work)) {
-                                cells.add(new BlockPos(baseX + lx, y, baseZ + lz).immutable());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return cells;
-    }
-
     /** Тик-расходование очереди: 4–8 тиков между блоками, звук и частицы на каждый. */
     private void processBuildQueue(ServerLevel server) {
-        if (buildQueue.isEmpty()) return;
+        if (buildQueue.isEmpty() || buildStalled) return;
         if (placeCooldown > 0) {
             placeCooldown--;
             return;
         }
-        NetworkPlanner.Entry entry = buildQueue.remove(0);
-        placeQueueBlock(server, entry);
-        setChanged();
-        placeCooldown = 4 + server.random.nextInt(5);
-        if (buildQueue.isEmpty()) {
-            networkStatsDirty = true;
-            if (buildRequester != null) {
-                report(buildRequester, "message.gonzotech.plotnick.network.done");
+        // Один проход по очереди: готовые/неподходящие клетки молча уходят,
+        // дефицитная — в хвост. Замерзать на первой дырке нельзя: дальние
+        // буры и объезженные участки достроятся, когда позволят блоки.
+        int cycle = buildQueue.size();
+        for (int i = 0; i < cycle; i++) {
+            NetworkPlanner.Entry entry = buildQueue.remove(0);
+            BlockState target = entry.drill()
+                ? ModMachines.MINER_DRILL.get().defaultBlockState()
+                : ModMachines.WORK_BLOCK.get().defaultBlockState();
+            BlockPos pos = entry.pos();
+            BlockState current = server.getBlockState(pos);
+            if (current.is(target.getBlock())) continue; // уже стоит
+            if (!NetworkPlanner.isBuildable(current, server.getBlockState(pos.below()))) continue;
+            Item needed = target.getBlock().asItem();
+            if (countStored(needed) == 0) {
+                buildQueue.add(entry); // нечем — переезжает в хвост
+                continue;
             }
-            buildRequester = null;
+            consumeStored(needed, 1);
+            placeQueueBlockNow(server, pos, target);
+            if (entry.drill()) {
+                netDrillsToPlace = Math.max(0, netDrillsToPlace - 1);
+            } else {
+                netRoadsFull = Math.max(0, netRoadsFull - 1);
+                netRoadsLink = Math.max(0, netRoadsLink - 1);
+            }
+            setChanged();
+            placeCooldown = 4 + server.random.nextInt(5);
+            if (buildQueue.isEmpty()) {
+                networkStatsDirty = true;
+                if (buildRequester != null) {
+                    report(buildRequester, "message.gonzotech.plotnick.network.done");
+                }
+                buildRequester = null;
+            }
+            return;
         }
+        // Цикл без единой установки — склад пуст. Спим; insert() разбудит.
+        buildStalled = true;
+        setChanged();
+        report(buildRequester, "message.gonzotech.plotnick.network.stalled", buildQueue.size());
     }
 
     /**
-     * Одна клетка очереди: уже стоит — пропускаем; solid/чужой блок — без
-     * пересчёта плана тоже пропускаем; не хватает предмета — ждём на месте
-     * (очередь сохраняется, пополнение хранилища продолжает стройку).
+     * Одна установка блока: звук из SoundType (в 1.21.4 SoundEvents.BLOCK_*_PLACE
+     * нет) и «усадка» слома-частицами самого рабочего блока (block_crack
+     * по старому имени). Заменённые блоки частиц не дают.
      */
-    private void placeQueueBlock(ServerLevel server, NetworkPlanner.Entry entry) {
-        BlockPos pos = entry.pos();
-        BlockState target = entry.drill()
-            ? ModMachines.MINER_DRILL.get().defaultBlockState()
-            : ModMachines.WORK_BLOCK.get().defaultBlockState();
-        BlockState current = server.getBlockState(pos);
-        if (current.is(target.getBlock())) return;
-        if (!NetworkPlanner.isBuildable(current, server.getBlockState(pos.below()))) return;
-        Item needed = target.getBlock().asItem();
-        if (countStored(needed) == 0) {
-            buildQueue.add(0, entry);
-            return;
-        }
-        consumeStored(needed, 1);
+    private void placeQueueBlockNow(ServerLevel server, BlockPos pos, BlockState target) {
         server.setBlock(pos, target, net.minecraft.world.level.block.Block.UPDATE_ALL);
-        // В 1.21.4 звук размещения блока берётся из SoundType (констант
-        // SoundEvents.BLOCK_*_PLACE больше нет); корпус рабочих блоков — METAL.
         server.playSound(null, pos, SoundType.METAL.getPlaceSound(), SoundSource.BLOCKS,
             0.65F, 0.9F + 0.2F * server.random.nextFloat());
-        // Красивая «усадка»: в самой поставленной клетке — слома-частицы
-        // самого рабочего блока (block_crack по старому имени) и второй,
-        // более широкий крошащий залп. Заменённые блоки частиц не дают.
         double cx = pos.getX() + 0.5;
         double cy = pos.getY() + 0.5;
         double cz = pos.getZ() + 0.5;
         BlockParticleOption crumble = new BlockParticleOption(ParticleTypes.BLOCK, target);
         server.sendParticles(crumble, cx, cy, cz, 14, 0.22, 0.22, 0.22, 0.05D);
         server.sendParticles(crumble, cx, cy, cz, 6, 0.38, 0.38, 0.38, 0.015D);
-        networkStatsDirty = true; // числа тултипа «Постройки» поехали
     }
 
     // ─────────────────────────── сейсмический импульс ───────────────────────────
@@ -847,7 +860,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             return true;
         }
         Set<BlockPos> region = NetworkPlanner.connectedWorkRegion(
-            server, worldPosition, collectWorkCells(server));
+            server, worldPosition, scanSurface(server, WORK_BELT_Y).workCells());
         List<SeismicSourceBlockEntity> armed = new ArrayList<>();
         int notConnected = 0;
         int notLoaded = 0;
@@ -885,8 +898,18 @@ public final class PlotnickBlockEntity extends BlockEntity
 
         int cx = worldPosition.getX() >> 4;
         int cz = worldPosition.getZ() >> 4;
+        // Маска: чанки, где реально сработал источник. Разметка руд later
+        // ограничится ими — карта честнее и скан дешевле (0.3.261, автор).
+        int sourceMask = 0;
+        for (SeismicSourceBlockEntity source : armed) {
+            int dx = (source.getBlockPos().getX() >> 4) - cx;
+            int dz = (source.getBlockPos().getZ() >> 4) - cz;
+            if (dx >= -1 && dx <= 1 && dz >= -1 && dz <= 1) {
+                sourceMask |= 1 << ((dx + 1) * 3 + (dz + 1));
+            }
+        }
         MemoryCardItem.writeSector(card,
-            new MemoryCardItem.Sector(cx - 1, cx + 1, cz - 1, cz + 1));
+            new MemoryCardItem.Sector(cx - 1, cx + 1, cz - 1, cz + 1), sourceMask);
         setItem(SLOT_CARD_A, card);
 
         // Один глухой удар на весь импульс — у Плотника, а не девятикратное
@@ -933,13 +956,15 @@ public final class PlotnickBlockEntity extends BlockEntity
      */
     private void tickDrills(ServerLevel server) {
         drillTick = (drillTick + 1) % PlotnickDefs.DRILL_CYCLE_TICKS;
-        boolean cycleStart = drillTick == 0;
+        boolean cycleStart = drillTick == 0 && drilling;
         if (cycleStart) {
-            // «Маршрут» бура: связность сети рабочих блоков с Плотником.
+            // «Маршрут» бура и перекличка установок — одной лентой.
+            SectorScan belt = scanSurface(server, 8);
             drillRegion = NetworkPlanner.connectedWorkRegion(
-                server, worldPosition, collectSurfaceWorkCells(server));
+                server, worldPosition, belt.workCells());
+            cycleDrillCells = belt.drills();
         }
-        if (!drilling || drillPoints.isEmpty()) return;
+        if (!drilling || cycleDrillCells.isEmpty()) return;
         DrillRun run = planDrillRun(server);
         if (run.running().isEmpty()) return;
 
@@ -956,19 +981,18 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     /**
-     * Перекличка скважин: бур жив, если стоит, примыкает к сети (или к
-     * самому Плотнику), не упёрся и обеспечен трубой со склада. Каждый
-     * активный бур тратит на цикл ровно одну трубу — платим только за те
-     * скважины, которым труб хватает.
+     * Перекличка скважин (0.3.261): бур жив, если примыкает к сети (или к
+     * самому Плотнику), не упёрся и обеспечен трубой со склада. Смотрим на
+     * фактические MINER_DRILL ленты — метки и карта не участвуют: плотник
+     * + прилегающий бур обязаны работать. Каждый активный бур тратит на
+     * цикл ровно одну трубу — платим только за обеспеченные скважины.
      */
     private DrillRun planDrillRun(ServerLevel server) {
         int pipesAvailable = countStored(ModMachines.BORE_PIPE.get().asItem());
         List<BlockPos> candidates = new ArrayList<>();
         int linked = 0;
         int stuck = 0;
-        for (BlockPos point : drillPoints) {
-            BlockPos drillCell = drillCellAt(server, point);
-            if (drillCell == null) continue; // бур ещё не доложен/разобран
+        for (BlockPos drillCell : cycleDrillCells) {
             boolean alive = drillCell.distManhattan(worldPosition) <= 1
                 || NetworkPlanner.touching(drillCell, drillRegion);
             if (!alive) continue;
@@ -993,17 +1017,19 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     /**
-     * «Начать бурение» (0.3.260): либо старт с числом скважин и ставкой,
-     * либо честный ответ, чего не хватает — молча кнопка работать не должна.
+     * ЛКМ «Начать бурение» (0.3.261): либо старт с числом скважин и ставкой,
+     * либо честный ответ, чего не хватает. ПКМ по той же кнопке — стоп.
      */
     private boolean startDrilling(ServerLevel server, ServerPlayer requester) {
-        if (drillPoints.isEmpty()) {
-            report(requester, "message.gonzotech.plotnick.drill.nopoints");
+        // Перекличка по факту мира: любой бур в ленте, а не только меченый.
+        SectorScan belt = scanSurface(server, 8);
+        drillRegion = NetworkPlanner.connectedWorkRegion(
+            server, worldPosition, belt.workCells());
+        cycleDrillCells = belt.drills();
+        if (cycleDrillCells.isEmpty()) {
+            report(requester, "message.gonzotech.plotnick.drill.nodrills");
             return true;
         }
-        // region-кэш мог протухнуть между нажатиями — освежаем на ход кнопки
-        drillRegion = NetworkPlanner.connectedWorkRegion(
-            server, worldPosition, collectSurfaceWorkCells(server));
         DrillRun run = planDrillRun(server);
         if (run.pipes() == 0) {
             report(requester, "message.gonzotech.plotnick.drill.nopipes");
@@ -1032,12 +1058,16 @@ public final class PlotnickBlockEntity extends BlockEntity
         return true;
     }
 
-    /** Стоит ли бур именно в этой клетке (точка разметки или блок над ней). */
-    private static BlockPos drillCellAt(ServerLevel server, BlockPos point) {
-        if (server.getBlockState(point).is(ModMachines.MINER_DRILL.get())) return point;
-        BlockPos above = point.above();
-        if (server.getBlockState(above).is(ModMachines.MINER_DRILL.get())) return above;
-        return null;
+    /** ПКМ «Начать бурение»: остановить движок; сети и склад не трогаем. */
+    private boolean stopDrilling(ServerPlayer requester) {
+        if (!drilling) {
+            report(requester, "message.gonzotech.plotnick.drill.idle");
+            return true;
+        }
+        drilling = false;
+        setChanged();
+        report(requester, "message.gonzotech.plotnick.drill.stopped");
+        return true;
     }
 
     /** Y первой клетки под колонной уже уложенных труб. */
@@ -1099,33 +1129,6 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
     }
 
-    /** Рабочие блоки в приповерхностной ленте 9 чанков — дешевый кэш сети. */
-    private Set<BlockPos> collectSurfaceWorkCells(ServerLevel server) {
-        int cx = worldPosition.getX() >> 4;
-        int cz = worldPosition.getZ() >> 4;
-        net.minecraft.world.level.block.Block work = ModMachines.WORK_BLOCK.get();
-        Set<BlockPos> cells = new HashSet<>();
-        int y0 = Math.max(server.getMinY(), worldPosition.getY() - 8);
-        int y1 = Math.min(server.getMaxY(), worldPosition.getY() + 8);
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
-                int baseX = (cx + dx) << 4;
-                int baseZ = (cz + dz) << 4;
-                for (int lx = 0; lx < 16; lx++) {
-                    for (int lz = 0; lz < 16; lz++) {
-                        for (int y = y0; y <= y1; y++) {
-                            if (chunk.getBlockState(new BlockPos(lx, y, lz)).is(work)) {
-                                cells.add(new BlockPos(baseX + lx, y, baseZ + lz).immutable());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return cells;
-    }
-
     // ─────────────────────────── сворачивание ───────────────────────────
 
     /**
@@ -1146,6 +1149,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         if (!drillPoints.isEmpty() || !drillTargetY.isEmpty()) {
             drillPoints.clear();
             drillTargetY.clear();
+            cycleDrillCells = List.of();
             changed = true;
         }
         List<BlockPos> lootable = collectNetworkBlocks(server);
@@ -1344,6 +1348,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
             rest = insertInto(items, slot, rest);
             if (rest.isEmpty()) {
+                buildStalled = false; // пополнение склада будит постройку
                 setChanged();
                 return true;
             }
@@ -1351,6 +1356,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         for (int slot = 0; slot < VIRTUAL_SLOTS; slot++) {
             rest = insertInto(virtual, slot, rest);
             if (rest.isEmpty()) {
+                buildStalled = false;
                 setChanged();
                 return true;
             }
@@ -1546,6 +1552,10 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
         if (placeCooldown > 0) tag.putInt("PlaceCooldown", placeCooldown);
         if (drilling) tag.putBoolean("Drilling", true);
+        // Счётчики тултипа переживают перезагрузку вместе с очередью.
+        tag.putInt("NetRoadsFull", netRoadsFull);
+        tag.putInt("NetRoadsLink", netRoadsLink);
+        tag.putInt("NetDrillsToPlace", netDrillsToPlace);
         savePosList(tag, "DismantleQueue", dismantleQueue);
         savePosList(tag, "TntQueue", tntQueue);
     }
@@ -1644,6 +1654,9 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
         placeCooldown = tag.getInt("PlaceCooldown");
         drilling = tag.getBoolean("Drilling");
+        netRoadsFull = tag.getInt("NetRoadsFull");
+        netRoadsLink = tag.getInt("NetRoadsLink");
+        netDrillsToPlace = tag.getInt("NetDrillsToPlace");
         loadPosList(tag, "DismantleQueue", dismantleQueue);
         loadPosList(tag, "TntQueue", tntQueue);
     }

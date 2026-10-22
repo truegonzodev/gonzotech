@@ -34,6 +34,8 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
      */
     /** Индекс кнопки «Постройка» в BUTTON_RECTS (второй ряд, слева). */
     private static final int BTN_NETWORK_RECT = 2;
+    /** Индекс кнопки «Начать бурение» (первый ряд, слева). */
+    private static final int BTN_DRILL_RECT = 0;
 
     private static final int[][] BUTTON_RECTS = {
         {26, 18}, {44, 18}, {26, 36}, {44, 36}, {26, 54}, {44, 54}
@@ -115,6 +117,15 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
             int by = y + rect[1];
             g.blit(RenderType::guiTextured, BUTTON_ICON, bx + 2, by + 2, 0f, 0f, 14, 14, 14, 14);
             if (inRect(mouseX, mouseY, bx, by, 18, 18)) {
+                if (i == BTN_DRILL_RECT) {
+                    // 0.3.261: явные ЛКМ — старт, ПКМ — стоп бурения.
+                    g.renderComponentTooltip(font, List.of(
+                        Component.translatable(BUTTON_TOOLTIPS[i]),
+                        clickLine("ЛКМ ", "gui.gonzotech.plotnick.button.drill.lmb"),
+                        clickLine("ПКМ ", "gui.gonzotech.plotnick.button.drill.rmb")),
+                        mouseX, mouseY);
+                    continue;
+                }
                 if (i == BTN_NETWORK_RECT) {
                     // 0.3.259: ЛКМ строит всё (дороги + буры по точкам),
                     // ПКМ лишь ведёт сеть к уже поставленным бурям.
@@ -152,10 +163,13 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
                 int by = topPos + BUTTON_RECTS[i][1];
                 if (mouseX >= bx && mouseX < bx + 18 && mouseY >= by && mouseY < by + 18) {
                     if (button == 1) {
-                        // ПКМ понимается только кнопка «Постройка».
+                        // ПКМ: «Постройка» — соединение буров, «Бурение» — стоп.
                         if (i == BTN_NETWORK_RECT) {
                             PacketDistributor.sendToServer(new PlotnickButtonPayload(
                                 menu.containerId, PlotnickBlockEntity.BTN_NETWORK_LINK));
+                        } else if (i == BTN_DRILL_RECT) {
+                            PacketDistributor.sendToServer(new PlotnickButtonPayload(
+                                menu.containerId, PlotnickBlockEntity.BTN_DRILL_STOP));
                         }
                         return true;
                     }
@@ -173,5 +187,11 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
         return Component.empty()
             .append(Component.literal(label).withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD))
             .append(Component.translatable(key, first, second).withStyle(ChatFormatting.GRAY));
+    }
+
+    private static Component clickLine(String label, String key) {
+        return Component.empty()
+            .append(Component.literal(label).withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD))
+            .append(Component.translatable(key).withStyle(ChatFormatting.GRAY));
     }
 }

@@ -25,9 +25,21 @@ public final class PlotnickMenu extends BaseMachineMenu {
     private final PlotnickBlockEntity plotnick;
 
     public PlotnickMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
-        this(id, inventory,
-            MenuHelper.readBlockEntity(inventory, buffer, PlotnickBlockEntity.class),
+        this(id, inventory, clientSideEntity(inventory, buffer),
             new SimpleContainerData(PlotnickBlockEntity.DATA_SLOTS));
+    }
+
+    /**
+     * Клиентский BE: настоящий, если уже виден; иначе отсоединённая
+     * заглушка — вылет из мира из-за гонки синхронизации недопустим.
+     */
+    private static PlotnickBlockEntity clientSideEntity(Inventory inventory,
+            RegistryFriendlyByteBuf buffer) {
+        com.gonzotech.machines.block.entity.PlotnickBlockEntity be =
+            MenuHelper.readBlockEntitySafe(inventory, buffer, PlotnickBlockEntity.class);
+        return be != null ? be
+            : new PlotnickBlockEntity(net.minecraft.core.BlockPos.ZERO,
+                com.gonzotech.machines.registry.ModMachines.PLOTNICK.get().defaultBlockState());
     }
 
     public PlotnickMenu(int id, Inventory inventory, PlotnickBlockEntity be, ContainerData data) {

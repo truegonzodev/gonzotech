@@ -30,6 +30,8 @@ public final class MemoryCardItem extends Item {
     }
 
     private static final String TAG = "MinerSector";
+    /** 9 бит: какие чанки сектора реально простучаны источниками (0.3.261). */
+    private static final String MASK_TAG = "MinerSourceMask";
 
     public MemoryCardItem(Properties properties) {
         super(properties);
@@ -57,14 +59,35 @@ public final class MemoryCardItem extends Item {
      * чанковой сетки.
      */
     public static void writeSector(ItemStack stack, Sector sector) {
+        writeSector(stack, sector, 0);
+    }
+
+    /**
+     * То же + маска простучанных чанков (бит (dx+1)*3+(dz+1) от центра
+     * сектора, dx/dz ∈ [-1;1]). 0 — «весь сектор» (наследный формат).
+     * Разметка руд затем сканирует только помеченные чанки: один источник —
+     * один чанк информации, а не девять.
+     */
+    public static void writeSector(ItemStack stack, Sector sector, int sourceMask) {
         int[] bounds = new int[] {
             sector.minX(), sector.maxX(), sector.minZ(), sector.maxZ()
         };
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
-            data -> data.update(tag -> tag.putIntArray(TAG, bounds)));
+            data -> data.update(tag -> {
+                tag.putIntArray(TAG, bounds);
+                if (sourceMask != 0) tag.putInt(MASK_TAG, sourceMask);
+                else tag.remove(MASK_TAG);
+            }));
         stack.set(DataComponents.LORE, new ItemLore(List.of(Component.translatable(
             "item.gonzotech.memory_card.sector",
             sector.maxX(), sector.maxZ(), sector.minX(), sector.minZ()))));
+    }
+
+    /** Битовая маска чанков с источниками; 0 — все 9 чанки (старая карта). */
+    public static int readSourceMask(ItemStack stack) {
+        if (stack.isEmpty()) return 0;
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
+            .copyTag().getInt(MASK_TAG);
     }
 
     public static void clear(ItemStack stack) {

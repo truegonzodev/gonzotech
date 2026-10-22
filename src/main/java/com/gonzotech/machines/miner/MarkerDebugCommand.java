@@ -37,7 +37,18 @@ public final class MarkerDebugCommand {
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("debug")
                     .then(Commands.literal("marker")
-                        .executes(MarkerDebugCommand::spawnTestMarker))));
+                        .executes(MarkerDebugCommand::spawnTestMarker)
+                        .then(Commands.literal("clear")
+                            .executes(MarkerDebugCommand::clearAll)))));
+    }
+
+    /** /gonzotech debug marker clear: снести все метки в текущем измерении. */
+    private static int clearAll(CommandContext<CommandSourceStack> context) {
+        ServerLevel level = context.getSource().getLevel();
+        int removed = MarkerService.get(level).clearAll(level);
+        context.getSource().sendSuccess(() -> Component.literal(
+            "[GonzoTech] Меток удалено: " + removed), true);
+        return removed;
     }
 
     private static int spawnTestMarker(CommandContext<CommandSourceStack> context) {

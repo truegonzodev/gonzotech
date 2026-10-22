@@ -16,8 +16,15 @@ import java.util.List;
  * @param kind           назначение метки
  * @param expiresAtTick  gameTime истечения; 0 — бессрочно
  * @param ores           найденные руды (листание по 3 с); пусто — флажок
+ * @param owner          {@code BlockPos.asLong()} Плотника-владельца; 0 —
+ *                       бесхозная (тестовая/наследная): самочистка такие не трогает
  */
-public record MinerMarker(long id, BlockPos pos, Kind kind, long expiresAtTick, List<Item> ores) {
+public record MinerMarker(long id, BlockPos pos, Kind kind, long expiresAtTick, List<Item> ores,
+                          long owner) {
+
+    public MinerMarker(long id, BlockPos pos, Kind kind, long expiresAtTick, List<Item> ores) {
+        this(id, pos, kind, expiresAtTick, ores, 0L);
+    }
 
     public enum Kind {
         /** Площадка сейсмической установки (разметка Плотника). */

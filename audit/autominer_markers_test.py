@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pins 0.3.256-0.3.260 — метки автошахтера, Плотник, сеть, сейсмика и буры.
+"""Pins 0.3.256-0.3.261 — метки автошахтера, Плотник, сеть, сейсмика и буры.
 
 Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
 дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.260$", props, re.M), "mod_version != 0.3.260"
+assert re.search(r"^mod_version=0\.3\.261$", props, re.M), "mod_version != 0.3.261"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -216,7 +216,8 @@ assert "new BlockParticleOption(ParticleTypes.BLOCK, target)" in be, \
 assert "SONIC_BOOM" not in be, "SONIC_BOOM убран по требованию автора"
 assert be.count("ModSounds.GEO_IMPACT") == 1, "звук импульса должен звучать один раз на весь сектор"
 assert "consumeActive(Items.TNT, 1)" in be, "Плотник не дозирует динамит в разряженные источники"
-assert "buildQueue.add(0, entry)" in be, "нехватка рабочих блоков не сохраняет очередь на месте"
+assert "buildQueue.add(entry); // нечем — переезжает в хвост" in be, \
+    "нехватка блоков не перекладывает клетку в хвост очереди (0.3.261)"
 assert '"BuildQueue"' in be and '"DrillPoints"' in be and '"PlaceCooldown"' in be, \
     "очередь постройки/точки бурения не персистентны"
 assert "MemoryCardItem.isFilled" in be, "режим кнопок не определяется состоянием карты"
@@ -291,11 +292,11 @@ assert idx_roads < idx_drills, "буры снова лезут в очередь
 assert "isOwnSector" in be and "plotnick.ore.wrongsector" in be, "чужая карта не отсекается при разметке"
 
 # Движок буров
-for needle in ("tickDrills(server)", "drillCellAt", "deepestTargetY", "isImmovable",
+for needle in ("tickDrills(server)", "cycleDrillCells", "deepestTargetY", "isImmovable",
                "collectOreRow", "digStep", "drillTargetY", "drillRegion"):
     assert needle in be, f"движок буров: нет {needle}"
-assert "BlockPos drillCell = drillCellAt(server, point);" in be, \
-    "в цикле буров потеряно объявление drillCell (краш компиляции 0.3.258)"
+assert "for (BlockPos drillCell : cycleDrillCells)" in be, \
+    "движок не ходит по фактическим бурам ленты (0.3.261)"
 assert "gtu.extract(want, true) < want" in be, "энергия не симулируется перед списанием"
 assert "PlotnickDefs.DRILL_GTU_MILLI * run.running().size()" in be, "энергия считается не по числу работающих буров"
 assert "hardness < 0F || hardness >= 50F" in be, "нет правила упора в бедрок/обсидиан/барьер"
@@ -303,7 +304,8 @@ assert "server.destroyBlock(pos, false, null)" in be, "руда не всасы�
 assert "for (int dx = -2; dx <= 2; dx++)" in be, "всас 5×5 вокруг трубы отсутствует"
 assert "countStored(ModMachines.BORE_PIPE.get().asItem())" in be, "наличие труб в хранилище не проверяется"
 assert "consumeStored(ModMachines.BORE_PIPE.get().asItem(), 1)" in be, "труба не расходуется из хранилища при углублении"
-assert "collectSurfaceWorkCells" in be, "проверка связности бура с сетью отсутствует"
+assert "connectedWorkRegion" in be[be.index("private void tickDrills"):], \
+    "движок не проверяет связность бура с сетью"
 
 # «Свернуться»: полный разбор сети обратно, 3 блока/тик, всё в Плотник
 assert "case BTN_PACK_UP -> packUp(server, requester)" in be, "свертывание не получает запросчика"
@@ -364,14 +366,14 @@ assert "case 6 -> netRoadsLink;" in be, "четвёртое число тулт�
 assert "BTN_NETWORK_LINK = 6" in be, "нет id для ПКМ-подсоединения"
 assert "case BTN_NETWORK_LINK -> linkExistingDrills(server, requester)" in be, \
     "ПКМ-кнопка не подключена"
-for needle in ("collectSectorScan", "coversDrillCell", "findPlacedDrills" , "refreshNetworkStats"):
+for needle in ("collectSectorScan", "scanSurface", "findPlacedDrills" , "refreshNetworkStats"):
     if needle == "findPlacedDrills":
         continue  # поиск буров живёт в collectSectorScan
     assert needle in be, f"режим подключения буров: нет {needle}"
 assert '"message.gonzotech.plotnick.network.nodrills"' in be, "нет отчёта «буров не найдено»"
 assert '"message.gonzotech.plotnick.network.linked"' in be, "нет отчёта о подсоединении"
-assert "drillPoints.add(cell); // движок буров теперь будет её пасти" in be, \
-    "найденные буры не берутся под управление движка"
+assert "drillPoints.add(cell)" not in be[be.index("linkExistingDrills"):], \
+    "ПКМ-ссылка снова усыновляет буры точками — движок и сам их пасёт (0.3.261)"
 
 screen = (ROOT / "src/main/java/com/gonzotech/machines/client/PlotnickScreen.java").read_text(encoding="utf-8")
 assert "BTN_NETWORK_RECT" in screen and "PlotnickBlockEntity.BTN_NETWORK_LINK" in screen, \
@@ -394,18 +396,82 @@ assert "GTU_INTAKE_MILLI = 512L * MachineDefs.MILLI" in defs, \
 assert "case BTN_DRILL -> startDrilling(server, requester)" in be, \
     "«Начать бурение» снова ничего не делает"
 assert "private boolean drilling" in be, "нет флага запущенного бурения"
-assert "if (!drilling || drillPoints.isEmpty()) return;" in be, \
+assert "if (!drilling || cycleDrillCells.isEmpty()) return;" in be, \
     "движок буров не слушается флага"
 assert '"Drilling"' in be, "флаг бурения не персистентен"
 assert "private DrillRun planDrillRun(ServerLevel server)" in be, "перекличка скважин не выделена"
 assert "drilling = false;" in be[be.index("private boolean packUp"):], "свернуться не глушит бурение"
-for key in ("drill.nopoints", "drill.nopipes", "drill.nolink", "drill.stuck",
+for key in ("drill.nodrills", "drill.nopipes", "drill.nolink", "drill.stuck",
             "drill.started", "drill.lowgtu"):
     assert f'"message.gonzotech.plotnick.{key}"' in be, f"нет отчёта {key}"
 for lang_name in ("ru_ru.json", "en_us.json"):
     lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
     for key in ("message.gonzotech.plotnick.drill.started", "message.gonzotech.plotnick.drill.nopipes",
                 "message.gonzotech.plotnick.drill.lowgtu"):
+        assert key in lang, f"в {lang_name} нет ключа {key}"
+
+# ── 14. Срез 0.3.261: GUI-безопасность, дешёвые сканы, автономный бур ──
+menu_helper = (ROOT / "src/main/java/com/gonzotech/machines/menu/MenuHelper.java").read_text(encoding="utf-8")
+assert "readBlockEntitySafe" in menu_helper, "нет толерентного чтения BE для клиентских меню"
+menu = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
+assert "readBlockEntitySafe" in menu and "clientSideEntity" in menu, \
+    "меню Плотника кидается при отсутствующем клиентском BE (вылет из мира)"
+assert "MenuHelper.readBlockEntity(inventory, buffer, PlotnickBlockEntity.class)" not in menu, \
+    "PlotnickMenu всё ещё использует бросковый вариант чтения BE"
+
+# никаких плановых пересчётов тултипов
+assert "server.getGameTime() % 20 == 0" not in be, "периодический скан статистики вернулся"
+assert "if (be.menuViewers > 0 && be.networkStatsDirty)" in be, \
+    "статистка не обновляется строго по событиям при открытом GUI"
+assert "menuViewers++ == 0" not in be, "вход в GUI снова запускает полный скан"
+assert "private Set<BlockPos> collectWorkCells" not in be, "полновысотный скан сети не удалён"
+assert "WORK_BELT_Y" in be and "scanSurface" in be, "скан сети не ограничен лентой"
+
+# стройка не встаёт колом
+assert "if (buildQueue.isEmpty() || buildStalled) return;" in be, "стройки без паузы на дефиците нет"
+assert "buildStalled = false; // пополнение склада будит постройку" in be, "склад не будит стройку"
+assert '"message.gonzotech.plotnick.network.stalled"' in be, "нет отчёта о вставшей стройке"
+
+# ЛКМ/ПКМ бурения
+assert "BTN_DRILL_STOP = 7" in be and "case BTN_DRILL_STOP -> stopDrilling(requester)" in be, \
+    "ПКМ-стоп бурения не подключён"
+assert '"message.gonzotech.plotnick.drill.stopped"' in be, "нет отчёта об остановке"
+assert "gui.gonzotech.plotnick.button.drill.lmb" in screen, "тултип бура не обещает ЛКМ"
+assert "gui.gonzotech.plotnick.button.drill.rmb" in screen, "тултип бура не обещает ПКМ"
+assert "PlotnickBlockEntity.BTN_DRILL_STOP" in screen, "ПКМ по кнопке бура не отправляет стоп"
+
+# карта: маска простучанных чанков
+card = (ROOT / "src/main/java/com/gonzotech/machines/item/MemoryCardItem.java").read_text(encoding="utf-8")
+assert "MinerSourceMask" in card and "readSourceMask" in card, "карта не хранит маску источников"
+assert "sourceMask |= 1 << ((dx + 1) * 3 + (dz + 1))" in be, "импульс не пишет маску чанков"
+assert "if (sourceMask != 0) {" in be, "разметка не ограничена простучанными чанками"
+
+# метки: владелец и самочистка
+marker = (ROOT / "src/main/java/com/gonzotech/machines/miner/MinerMarker.java").read_text(encoding="utf-8")
+assert "long owner" in marker, "метка не знает владельца"
+svc = (ROOT / "src/main/java/com/gonzotech/machines/miner/MarkerService.java").read_text(encoding="utf-8")
+assert "sweepOrphans" in svc and '"Owner"' in svc, "осиротевшие метки не вычищаются"
+assert "level.hasChunk" in svc, "свип может съесть метки незагруженного владельца"
+cmd = (ROOT / "src/main/java/com/gonzotech/machines/miner/MarkerDebugCommand.java").read_text(encoding="utf-8")
+assert '"clear"' in cmd and "clearAll" in cmd, "нет команды ручного сноса меток"
+assert "worldPosition.asLong()" in be, "Плотник не подписывает свои метки"
+
+# счётчики тултипа переживают рестарт
+assert '"NetRoadsFull"' in be and '"NetRoadsLink"' in be and '"NetDrillsToPlace"' in be, \
+    "числа тултипа не персистентны"
+
+# карта в креатив-табе — возле дозиметра, в начале
+tab = (ROOT / "src/main/java/com/gonzotech/core/registry/ModCreativeTabs.java").read_text(encoding="utf-8")
+i_dos = tab.index("ModItems.DOSIMETER.get()")
+i_card = tab.index("ModMachines.MEMORY_CARD.get()")
+i_plot = tab.index("ModMachines.PLOTNICK_ITEM.get()")
+assert i_dos < i_card < i_plot, "карта памяти не переехала к дозиметру"
+
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    for key in ("gui.gonzotech.plotnick.button.drill.lmb", "gui.gonzotech.plotnick.button.drill.rmb",
+                "message.gonzotech.plotnick.drill.stopped", "message.gonzotech.plotnick.drill.idle",
+                "message.gonzotech.plotnick.drill.nodrills", "message.gonzotech.plotnick.network.stalled"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 print("autominer_markers_test passed")

@@ -21,4 +21,17 @@ public final class MenuHelper {
         }
         throw new IllegalStateException("Неверный BlockEntity для меню: " + be);
     }
+
+    /**
+     * То же, но без броска: клиент ещё не видит BE (гонка переустановки
+     * блока, два Плотника в одной клетке за кадр) — меню строится с
+     * отсоединённым BE, содержимое всё равно приедет через слоты.
+     * Бросок сюда ронял соединение целиком («Не удалось открыть экран»).
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends BlockEntity> T readBlockEntitySafe(Inventory inv,
+            RegistryFriendlyByteBuf buf, Class<T> type) {
+        BlockEntity be = inv.player.level().getBlockEntity(buf.readBlockPos());
+        return type.isInstance(be) ? (T) be : null;
+    }
 }

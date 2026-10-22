@@ -54,7 +54,8 @@ public final class MarkerService extends SavedData {
             for (long oreRaw : raw) {
                 ores.add(Item.byId((int) oreRaw));
             }
-            data.markers.put(id, new MinerMarker(id, pos, kind, expires, ores));
+            long owner = entry.getLong("Owner");
+            data.markers.put(id, new MinerMarker(id, pos, kind, expires, ores, owner));
         }
         return data;
     }
@@ -74,6 +75,7 @@ public final class MarkerService extends SavedData {
             }
             entry.putLongArray("Ores", oreIds);
             entry.putInt("Kind", marker.kind().ordinal());
+            if (marker.owner() != 0L) entry.putLong("Owner", marker.owner());
             list.add(entry);
         }
         tag.put("Markers", list);
@@ -144,18 +146,57 @@ public final class MarkerService extends SavedData {
 
     /** Добавить метку; ttl=0 — бессрочно. Возвращает созданную метку. */
     public MinerMarker add(ServerLevel level, BlockPos pos, MinerMarker.Kind kind, long ttl, List<Item> ores) {
+        return add(level, pos, kind, ttl, ores, 0L);
+    }
+
+    /** Метка с владельцем: Плотник, который её поставил (для самочистки). */
+    public MinerMarker add(ServerLevel level, BlockPos pos, MinerMarker.Kind kind, long ttl,
+                           List<Item> ores, long owner) {
         long id = nextId++;
         MinerMarker marker = new MinerMarker(id, pos, kind,
-            ttl > 0 ? level.getGameTime() + ttl : 0, ores);
+            ttl > 0 ? level.getGameTime() + ttl : 0, ores, owner);
         markers.put(id, marker);
         setDirty();
         MarkerNetwork.broadcast(level, this);
         return marker;
     }
 
-    /** Истечение TTL (только для меток с дедлайном). */
+    /**
+     * Самочистка осиротевших меток (0.3.261): помеченные Плотником метки
+     * живут, пока жив их владелец. Раньше метка переживала слом Плотника,
+     * если BE не успело сохраниться (краш сейва), и оставалась навсегда —
+     * вместе с перерисовкой на каждый кадр.
+     */
+    public void sweepOrphans(ServerLevel level) {
+        if (markers.isEmpty()) return;
+        boolean changed = markers.values().removeIf(marker -> {
+            if (marker.owner() == 0L) return false;
+            BlockPos ownerPos = BlockPos.of(marker.owner());
+            // Незагруженный чанк владельца — не сиротство: ждём выгрузки обратно.
+            if (!level.hasChunk(ownerPos.getX() >> 4, ownerPos.getZ() >> 4)) return false;
+            return !(level.getBlockEntity(ownerPos)
+                instanceof com.gonzotech.machines.block.entity.PlotnickBlockEntity);
+        });
+        if (changed) {
+            setDirty();
+            MarkerNetwork.broadcast(level, this);
+        }
+    }
+
+    /** Снести все метки измерения (команда /gonzotech debug marker clear). */
+    public int clearAll(ServerLevel level) {
+        int n = markers.size();
+        if (n == 0) return 0;
+        markers.clear();
+        setDirty();
+        MarkerNetwork.broadcast(level, this);
+        return n;
+    }
+
+    /** Истечение TTL (только для меток с дедлайном) + чистка сирот раз в 5 с. */
     public void tick(ServerLevel level) {
         if (markers.isEmpty()) return;
+        if (level.getGameTime() % 100 == 0) sweepOrphans(level);
         long now = level.getGameTime();
         boolean changed = markers.values().removeIf(
             marker -> marker.expiresAtTick() > 0 && now >= marker.expiresAtTick());

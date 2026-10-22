@@ -52,6 +52,9 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.WRENCH.get());
                 output.accept(ModItems.MAGNET.get());
                 output.accept(ModItems.DOSIMETER.get());
+                // Карта памяти — прибор шахтёра, в начале у дозиметра (0.3.261),
+                // а не в хвосте блока машин.
+                output.accept(com.gonzotech.machines.registry.ModMachines.MEMORY_CARD.get());
                 // Пылемер и телифон — рядом с дозиметром как приборы контроля среды.
                 output.accept(ModItems.DUST_METER.get());
                 // Телифон — сразу за дозиметром (автор, 22.09): совмещает все приборы.
@@ -125,7 +128,6 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.GEOPHONE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.MINER_DRILL_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.BORE_PIPE_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.MEMORY_CARD.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PRESS_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_LUMBER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());

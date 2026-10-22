@@ -1233,11 +1233,17 @@
   "gui.gonzotech.plotnick.button.network.lmb": "Full network build (needs %s drills and %s work blocks)",
   "gui.gonzotech.plotnick.button.network.rmb": "Link placed drills (found %s) (needs %s work blocks)",
   "message.gonzotech.plotnick.network.nodrills": "No drill rigs found in the sector",
-  "message.gonzotech.plotnick.network.linked": "Linking drills: %s work blocks, %s drills found, %s adopted",
+  "message.gonzotech.plotnick.network.linked": "Linking %s drills: %s work blocks needed.",
   "message.gonzotech.plotnick.drill.nopoints": "No drill points: run the ore survey first, or place drills and link them",
   "message.gonzotech.plotnick.drill.nopipes": "Storage has no bore pipes to line the shafts",
   "message.gonzotech.plotnick.drill.nolink": "No drill touches the work-block network: build the links first",
   "message.gonzotech.plotnick.drill.stuck": "Every linked drill hit immovable rock (%s) - drilling is idle",
-  "message.gonzotech.plotnick.drill.started": "Drilling started: %s shafts, %s GTU/s",
-  "message.gonzotech.plotnick.drill.lowgtu": "Drilling armed, but the balance is short: %s shafts need %s GTU/s"
+  "message.gonzotech.plotnick.drill.started": "Boring %s shafts: burn %s GTU/s, 2 s cycle, one pipe per shaft per cycle.",
+  "message.gonzotech.plotnick.drill.lowgtu": "Drilling armed, but the balance is short: %s shafts need %s GTU/s",
+  "gui.gonzotech.plotnick.button.drill.lmb": "start drilling",
+  "gui.gonzotech.plotnick.button.drill.rmb": "stop drilling",
+  "message.gonzotech.plotnick.drill.nodrills": "No drill next to the Plotnick or its network — nothing to bore with.",
+  "message.gonzotech.plotnick.drill.stopped": "Drilling stopped.",
+  "message.gonzotech.plotnick.drill.idle": "Drilling is already stopped.",
+  "message.gonzotech.plotnick.network.stalled": "Build stalled: out of blocks, %s entries left in queue. Restock the depot and I continue."
 }
