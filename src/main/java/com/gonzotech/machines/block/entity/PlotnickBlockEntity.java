@@ -223,11 +223,7 @@ public final class PlotnickBlockEntity extends BlockEntity
                 case 4 -> netRoadsFull;
                 case 5 -> netDrillsFound;
                 case 6 -> netRoadsLink;
-                // 7..15: сколько всего предметов этого типа в машине
-                // (голова + все ячейки виртуала) — лор слота 0.3.264.
-                default -> index >= 7 && index < 7 + SLOTS_ACTIVE
-                    ? cellStored(index - 7)
-                    : 0;
+                default -> 0; // 0.3.267: лор-тоталы 7..15 больше не нужны
             };
         }
 
@@ -242,8 +238,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
     };
 
-    /** gtu, занято типов, карта, 4 числа «Постройки» + 9 тоталов предметов. */
-    public static final int DATA_SLOTS = 7 + SLOTS_ACTIVE;
+    /** gtu, занято типов, карта, 4 числа «Постройки». Тоталы лора ушли (0.3.267). */
+    public static final int DATA_SLOTS = 7;
 
     public PlotnickBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.PLOTNICK.get(), pos, state);
@@ -304,7 +300,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         SectorScan scan = collectSectorScan(server);
         netDrillsFound = scan.drills().size();
         boolean drillMode = MemoryCardItem.isFilled(items.get(SLOT_CARD_A))
-            && isOwnSector(MemoryCardItem.readSector(items.get(SLOT_CARD_A)));
+            && isOwnSector(MemoryCardItem.readSector(items.get(SLOT_CARD_A)))
+            && MemoryCardItem.dimensionMatches(items.get(SLOT_CARD_A), server);
         List<BlockPos> fullAnchors = new ArrayList<>();
         int missing = 0;
         if (drillMode) {
@@ -438,9 +435,10 @@ public final class PlotnickBlockEntity extends BlockEntity
     private boolean placeSectorMarks(ServerLevel server, ServerPlayer requester) {
         ItemStack card = items.get(SLOT_CARD_A);
         if (MemoryCardItem.isFilled(card)) {
-            if (!isOwnSector(MemoryCardItem.readSector(card))) {
-                // Плотник размечает только свой сектор: чужая карта — повод
-                // встать, а не перекраивать чужие земли.
+            if (!isOwnSector(MemoryCardItem.readSector(card))
+                || !MemoryCardItem.dimensionMatches(card, server)) {
+                // Плотник размечает только свой сектор своего мира: чужая
+                // карта — повод встать, а не перекраивать чужие земли.
                 report(requester, "message.gonzotech.plotnick.ore.wrongsector");
                 return true;
             }
@@ -719,7 +717,8 @@ public final class PlotnickBlockEntity extends BlockEntity
             return true;
         }
         boolean drillMode = MemoryCardItem.isFilled(items.get(SLOT_CARD_A));
-        if (drillMode && !isOwnSector(MemoryCardItem.readSector(items.get(SLOT_CARD_A)))) {
+        if (drillMode && (!isOwnSector(MemoryCardItem.readSector(items.get(SLOT_CARD_A)))
+            || !MemoryCardItem.dimensionMatches(items.get(SLOT_CARD_A), server))) {
             report(requester, "message.gonzotech.plotnick.ore.wrongsector");
             return true;
         }
@@ -1008,7 +1007,8 @@ public final class PlotnickBlockEntity extends BlockEntity
             }
         }
         MemoryCardItem.writeSector(card,
-            new MemoryCardItem.Sector(cx - 1, cx + 1, cz - 1, cz + 1), sourceMask);
+            new MemoryCardItem.Sector(cx - 1, cx + 1, cz - 1, cz + 1), sourceMask,
+            server.dimension()); // #14: карта помнит мир, где простучана
         setItem(SLOT_CARD_A, card);
 
         // Один глухой удар на весь импульс — у Плотника, а не девятикратное
@@ -1636,18 +1636,6 @@ public final class PlotnickBlockEntity extends BlockEntity
     private void dump(ItemStack stack, BlockPos near) {
         if (level != null) level.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(
             level, near.getX() + 0.5, near.getY() + 0.5, near.getZ() + 0.5, stack));
-    }
-
-    /** Сколько всего предметов вещи слота лежит в машине: голова + виртуаль. */
-    public int cellStored(int slot) {
-        if (slot < 0 || slot >= SLOTS_ACTIVE) return 0;
-        ItemStack head = items.get(slot);
-        if (head.isEmpty()) return 0;
-        int total = head.getCount();
-        for (ItemStack st : virtual) {
-            if (ItemStack.isSameItemSameComponents(st, head)) total += st.getCount();
-        }
-        return total;
     }
 
     // ─────────────────────── владение сектором и приват ───────────────────────

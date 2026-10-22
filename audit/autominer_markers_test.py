@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.266$", props, re.M), "mod_version != 0.3.266"
+assert re.search(r"^mod_version=0\.3\.267$", props, re.M), "mod_version != 0.3.267"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -436,16 +436,42 @@ assert "if (side == Direction.DOWN)" in be and "int[] out = new int[VIRTUAL_SLOT
     "воронка снизу видит больше невидимого хранилища"
 assert "if (slot < CONTAINER_SIZE) return false;" in be, \
     "трубы могут вытянуть хотбар или карты"
+# Пачка 0.3.267: карта помнит измерение (#14), связки разряжаются (#28),
+# дорогие C2S отсечены по частоте (#41).
+card_src = (ROOT / "src/main/java/com/gonzotech/machines/item/MemoryCardItem.java").read_text(encoding="utf-8")
+assert "MinerSectorDim" in card_src and "dimensionMatches" in card_src, \
+    "карта не помнит измерение (#14)"
+assert "sourceMask,\n            server.dimension())" in be, "импульс не прошивает карту миром"
+assert be.count("dimensionMatches") >= 3, "гейты карты не проверяют измерение"
+ir_src = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
+assert "BUNDLE_CONTENTS" in ir_src, "разрядка по-прежнему слепа к связкам (#28)"
+thr_src = (ROOT / "src/main/java/com/gonzotech/core/network/PayloadThrottle.java").read_text(encoding="utf-8")
+assert "WINDOW_TICKS = 20" in thr_src and "public static boolean allow" in thr_src, \
+    "троттла нет (#41)"
+for _f, _what in (("chalkboard/network/ChalkboardNetwork.java", "доска"),
+                  ("chalkboard/network/NotesNetwork.java", "записки"),
+                  ("machines/network/PipeFlowNetwork.java", "трубы")):
+    _src = (ROOT / ("src/main/java/com/gonzotech/" + _f)).read_text(encoding="utf-8")
+    assert "PayloadThrottle.allow" in _src, f"нет частотной отсечки: {_what} (#41)"
+assert "PayloadThrottle.allow" in (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8"), \
+    "цезий не отсечён (#41)"
+assert "PayloadThrottle.forget" in (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8"), \
+    "мусорка троттла на logout не подключена"
+
 # Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
 assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"
 assert 'if (tag.contains("BucketRest") || isLegacyVirtual(tag))' in be, "миграция не обусловлена v2-следом"
 assert "legacyOverflow" in be, "не влезшее при миграции не аккумулируется"
-# GUI-меню: обычный Slot, лор «хранит» = тотал по машине.
+# GUI-меню: обычный Slot; лор «хранит» убран в 0.3.267 (головы = ваниль).
 assert "MaxStackSlot" not in menu and "addSlot(new Slot(be, k, 8 + 18 * k, 76));" in menu, \
     "активные слоты не стали классической ванильной девяткой"
 assert "plotnick.insert(" not in menu, "shift-клик снова запихивает хвост игрока в невидимый склад"
-assert "public int cellStored(int slot)" in menu, "меню не отдаёт тотал предмета для лора"
-assert "gui.gonzotech.plotnick.cell.stored" in screen, "нет строки «хранит: N шт» при наведении"
+assert "cellStored" not in menu and "cellStored" not in screen, \
+    "лор «хранит» не убран из меню/экрана (0.3.267: головы — истинные стопки)"
+assert 'public static final int DATA_SLOTS = 7;' in be, "DATA не ужат до 7 слотов"
+for _lang_name in ("ru_ru.json", "en_us.json"):
+    _lang = (RES / "lang" / _lang_name).read_text(encoding="utf-8")
+    assert "plotnick.cell.stored" not in _lang, f"ключ «хранит» осиротел в {_lang_name}"
 assert "public void clicked(int slotId, int button, ClickType clickType," in menu, \
     "нет привратника щелчков против оверстака в кармане игрока"
 assert "clampCarried(player)" in menu, "излишек в руке не раскладывается при закрытии GUI"

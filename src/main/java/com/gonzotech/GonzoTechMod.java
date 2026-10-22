@@ -110,6 +110,9 @@ public class GonzoTechMod {
         NeoForge.EVENT_BUS.addListener(com.gonzotech.machines.litho.SiliconFactoryStructure::onBlockPlace);
 
         NeoForge.EVENT_BUS.addListener(ChalkboardCommand::onRegisterCommands);
+        // (#41) троттл-состояние живёт по UUID — чистим на выходе.
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) ->
+            com.gonzotech.core.network.PayloadThrottle.forget(event.getEntity().getUUID()));
         // Радиационная диагностика: /gonzotech debug purge|getdose.
         NeoForge.EVENT_BUS.addListener(com.gonzotech.radiation.RadiationDebugCommand::onRegisterCommands);
         // Метки автошахтера: /gonzotech debug marker (0.3.256).
@@ -221,6 +224,9 @@ public class GonzoTechMod {
             CesiumBlastRequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
+                    // (#41, 0.3.267) частотная отсечка: взрыв меняет мир —
+                    // не больше пары запросов на окно.
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "cesiumBlast", 2)) return;
                     ServerLevel level = player.serverLevel();
                     BlockPos pos = payload.pos();
                     // 0.3.263 (#21): сначала лимиты, потом чтение мира — иначе

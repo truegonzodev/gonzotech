@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -30,6 +31,8 @@ public final class MemoryCardItem extends Item {
     }
 
     private static final String TAG = "MinerSector";
+    /** (автор #14, 0.3.267) измерение, в котором простучан сектор. */
+    private static final String DIM_TAG = "MinerSectorDim";
     /** 9 бит: какие чанки сектора реально простучаны источниками (0.3.261). */
     private static final String MASK_TAG = "MinerSourceMask";
 
@@ -69,6 +72,16 @@ public final class MemoryCardItem extends Item {
      * один чанк информации, а не девять.
      */
     public static void writeSector(ItemStack stack, Sector sector, int sourceMask) {
+        writeSector(stack, sector, sourceMask, null);
+    }
+
+    /**
+     * То же + метка измерения (#14): карта из Ада не должна управлять
+     * сектором в обычном мире. null — «не записано», легаси-карты
+     * мигрируют молча (подходят любому миру).
+     */
+    public static void writeSector(ItemStack stack, Sector sector, int sourceMask,
+            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
         int[] bounds = new int[] {
             sector.minX(), sector.maxX(), sector.minZ(), sector.maxZ()
         };
@@ -77,10 +90,35 @@ public final class MemoryCardItem extends Item {
                 tag.putIntArray(TAG, bounds);
                 if (sourceMask != 0) tag.putInt(MASK_TAG, sourceMask);
                 else tag.remove(MASK_TAG);
+                if (dimension != null) tag.putString(DIM_TAG, dimension.location().toString());
+                else tag.remove(DIM_TAG);
             }));
         stack.set(DataComponents.LORE, new ItemLore(List.of(Component.translatable(
             "item.gonzotech.memory_card.sector",
             sector.maxX(), sector.maxZ(), sector.minX(), sector.minZ()))));
+    }
+
+    /**
+     * Измерение с карты; null — легаси-карта без метки («любой мир») или
+     * пустой слот. Грязная строка тоже трактуется как легаси, а не краш.
+     */
+    public static net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> readDimension(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (!tag.contains(DIM_TAG)) return null;
+        try {
+            return net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.DIMENSION,
+                ResourceLocation.parse(tag.getString(DIM_TAG)));
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** Легаси-карта (без метки) подходит любому миру — осознанная миграция. */
+    public static boolean dimensionMatches(ItemStack stack, net.minecraft.world.level.Level level) {
+        var dim = readDimension(stack);
+        return dim == null || dim.equals(level.dimension());
     }
 
     /** Битовая маска чанков с источниками; 0 — все 9 чанки (старая карта). */

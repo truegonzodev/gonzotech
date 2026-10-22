@@ -118,6 +118,7 @@ public final class NotesNetwork {
                 NotesRequestPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof ServerPlayer player) {
+                        if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "notesSync", 4)) return;
                         sendToPlayer(player);
                     }
                 })

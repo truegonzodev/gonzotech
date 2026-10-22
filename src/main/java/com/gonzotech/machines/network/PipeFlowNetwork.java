@@ -223,6 +223,7 @@ public final class PipeFlowNetwork {
             RequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeFlow", 8)) return;
                     respond(player, payload.pos(), payload.typeId());
                 }
             }));
@@ -238,6 +239,7 @@ public final class PipeFlowNetwork {
             ItemFlowRequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeItemFlow", 8)) return;
                     respondItemFlow(player, payload.pos());
                 }
             }));
@@ -253,6 +255,7 @@ public final class PipeFlowNetwork {
             FilterStorageRequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeFilter", 8)) return;
                     respondFilterStorage(player, payload.pos());
                 }
             }));
@@ -268,6 +271,7 @@ public final class PipeFlowNetwork {
             TungstenAbsorberRequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeTungsten", 8)) return;
                     respondTungstenAbsorber(player, payload.pos());
                 }
             }));

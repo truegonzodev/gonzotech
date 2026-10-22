@@ -1246,7 +1246,6 @@
   "message.gonzotech.plotnick.drill.stopped": "Drilling stopped.",
   "message.gonzotech.plotnick.drill.idle": "Drilling is already stopped.",
   "message.gonzotech.plotnick.network.stalled": "Build stalled: out of blocks, %s entries left in queue. Restock the depot and I continue.",
-  "gui.gonzotech.plotnick.cell.stored": "holds: %s",
   "message.gonzotech.plotnick.hibernating": "This Plotnick is dormant — the sector already belongs to another one",
   "message.gonzotech.plotnick.impulse.nogeophone": "No geophone, no impact: %s sources stand alone (a geophone must sit above each source).",
   "message.gonzotech.plotnick.drill.dismantle": "Network is being dismantled — drilling starts after it ends."

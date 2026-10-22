@@ -180,6 +180,7 @@ public class ChalkboardNetwork {
                 SyncRequestPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof ServerPlayer player) {
+                        if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "boardSync", 4)) return;
                         sendSyncToPlayer(player);
                     }
                 })
@@ -191,6 +192,7 @@ public class ChalkboardNetwork {
                 BoardPresencePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof ServerPlayer player) {
+                        if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "boardPresence", 3)) return;
                         com.gonzotech.core.psyche.PsycheStress.seenBoard(player);
                     }
                 })
@@ -203,6 +205,7 @@ public class ChalkboardNetwork {
                 SaveExprPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof ServerPlayer player) {
+                        if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "boardSave", 4)) return;
                         handleSave(player, payload);
                     }
                 })
@@ -214,6 +217,7 @@ public class ChalkboardNetwork {
                 SubmitPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof ServerPlayer player) {
+                        if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "boardSubmit", 6)) return;
                         handleSubmission(player, payload.discoveryIndex(), payload.exprJson());
                     }
                 })

@@ -168,13 +168,6 @@ public final class PlotnickMenu extends BaseMachineMenu {
         return data.get(6);
     }
 
-    /** Сколько всего предметов вещи слота лежит в машине (лор, 0.3.264). */
-    public int cellStored(int slot) {
-        return slot >= 0 && slot < PlotnickBlockEntity.SLOTS_ACTIVE
-            ? data.get(7 + slot)
-            : 0;
-    }
-
     @Override
     public void removed(net.minecraft.world.entity.player.Player player) {
         super.removed(player);

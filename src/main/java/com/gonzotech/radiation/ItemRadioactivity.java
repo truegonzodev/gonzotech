@@ -214,6 +214,16 @@ public final class ItemRadioactivity {
         if (stack.isEmpty()) return false;
         boolean changed = decayInducedLazily(stack, nowTick);
         if (depth >= 4) return changed;
+        // (автор #28, 0.3.267) Связка разряжается как шалкер: items() держит
+        // живые стопки — наведёнка правится в самих стеках, перекладывать
+        // компонент не нужно. Эмиссия (RadSources.contentsOf) этот обход уже
+        // видел; расхождение пропало.
+        var bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
+        if (bundle != null) {
+            for (ItemStack inner : bundle.items()) {
+                changed |= decayInducedDeepLazily(inner, nowTick, depth + 1);
+            }
+        }
         ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
         if (contents == null) return changed;
         List<ItemStack> slots = new ArrayList<>(contents.getSlots());

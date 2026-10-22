@@ -97,36 +97,10 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
         return -114;
     }
 
-    /**
-     * 0.3.262: ячейка-витрина. Иконка активный слот показывает честно
-     * (стопка ≤64), а реальное содержимое ячейки до 512 — строкой лора
-     * «хранит: N шт» при наведении (просьба автора).
-     */
-    @Override
-    protected void renderTooltip(net.minecraft.client.gui.GuiGraphics g, int mouseX, int mouseY) {
-        Slot cell = hoveredGoodsSlot(mouseX, mouseY);
-        if (cell != null) {
-            List<Component> lines = new ArrayList<>();
-            lines.add(cell.getItem().getHoverName());
-            lines.add(Component.translatable("gui.gonzotech.plotnick.cell.stored",
-                menu.cellStored(cell.index)).withStyle(ChatFormatting.GRAY));
-            g.renderComponentTooltip(this.font, lines, mouseX, mouseY);
-            return;
-        }
-        super.renderTooltip(g, mouseX, mouseY);
-    }
-
-    private Slot hoveredGoodsSlot(int mouseX, int mouseY) {
-        int lx = mouseX - this.leftPos;
-        int ly = mouseY - this.topPos;
-        // 1.21.4: публичного menu.slots() в экране нет — берём 9 товарных
-        // слотов через getSlot(index).
-        for (int k = 0; k < PlotnickBlockEntity.SLOTS_ACTIVE; k++) {
-            Slot slot = this.menu.getSlot(k);
-            if (slot.hasItem() && inRect(lx, ly, slot.x, slot.y, 18, 18)) return slot;
-        }
-        return null;
-    }
+    // 0.3.267: собственный тултип ячейки со строкой «хранит: N шт» удалён —
+    // с хранилищем v3 активные слоты держат истинные ванильные стопки, и
+    // второй счётчик над ними только вводит в заблуждение. Обычный тултип
+    // предмета показывает всё, что есть.
 
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
