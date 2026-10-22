@@ -471,6 +471,8 @@ rad_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadSources.java").read_
 assert "public static double emissionTransfer(ItemStack stack)" in rad_src, "нет переноса «на предмет»"
 rs_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text(encoding="utf-8")
 assert "secondStackTransfer : maxStackTransfer" in rs_src, "инвентарь не скидывает наведёнку источника"
+assert "CarrierItem.RADIOACTIVITY_FACTOR * INDUCED_REEMIT" in ir_src, \
+    "наведёнка содержимого носителя в обход двойного экрана (п.4 автора)"
 
 # Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
 assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"

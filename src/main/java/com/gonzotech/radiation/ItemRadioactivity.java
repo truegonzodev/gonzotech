@@ -300,11 +300,24 @@ public final class ItemRadioactivity {
     public static final double INDUCED_REEMIT = 0.75;
 
     /** Эмиссия стака в передаче «на предмет»: пресет полной мощностью,
-     *  наведёнка — с {@link #INDUCED_REEMIT}. */
+     *  наведёнка — с {@link #INDUCED_REEMIT}. Носитель (щипцы/ковш, автор 22.10
+     *  п.4) — двойной фильтр содержимого: пресет проходит ×0.6, наведёнка
+     *  ×0.75×0.6 — зарядившийся сток мандаринов в щипцах светит другим
+     *  предметам на 0.45 номинала, урановый слиток — на ×0.6, как и прежде. */
     public static double transferEmission(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
-        return RadSources.emissionOfStack(stack)
+        double sum = RadSources.emissionOfStack(stack)   // пресет (у носителя уже −40 %)
             + INDUCED_REEMIT * getInduced(stack) * Math.max(1, stack.getCount());
+        if (stack.getItem() instanceof CarrierItem carrier) {
+            // carriedEmission (0.3.79) проносит сквозь экран только пресет
+            // содержимого; его наведёнку добавляем здесь — оба фильтра подряд.
+            ItemStack content = carrier.previewCarried(stack);
+            if (!content.isEmpty()) {
+                sum += CarrierItem.RADIOACTIVITY_FACTOR * INDUCED_REEMIT
+                    * getInduced(content) * Math.max(1, content.getCount());
+            }
+        }
+        return sum;
     }
 
     /** Полная эмиссия стака: preset per-item × count + induced per-item × count. */
