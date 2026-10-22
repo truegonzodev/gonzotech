@@ -80,7 +80,7 @@ assert "legacyFuelItems" in panel_be and "copyLegacyFuelItems()" in panel_be
 assert "new ReactorFuelInventory(panel, activeFuelSlots)" in (JAVA / "machines/menu/ReactorMenu.java").read_text()
 assert "int sheathIndex = slot % sheaths.size()" in inventory
 assert "int localSlot = slot / sheaths.size()" in inventory
-assert "collectSheaths(server, panel.min(), panel.max())" in inventory
+assert "sheathsCached(server, panel)" in inventory
 
 # ceil(T/S) is debited from the group on sheath removal, then the remaining whole items are redistributed.
 assert "ceilDivide(total, sheathCountBeforeBreak)" in storage

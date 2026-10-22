@@ -192,7 +192,7 @@ assert "new ReactorFuelInventory(panel, activeFuelSlots)" in menu
 assert "return stack.is(ModItems.UF_TVEL.get())" in menu
 assert "int sheathIndex = slot % sheaths.size()" in fuel_inventory
 assert "int localSlot = slot / sheaths.size()" in fuel_inventory
-assert "collectSheaths(server, panel.min(), panel.max())" in fuel_inventory
+assert "sheathsCached(server, panel)" in fuel_inventory
 assert "ceilDivide(total, sheathCountBeforeBreak)" in fuel_storage
 assert "beforeSheathRemoved" in sheath_block
 assert "new ReactorFuelSheathBlockEntity(pos, state)" in sheath_block

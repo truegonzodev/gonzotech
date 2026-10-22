@@ -48,13 +48,28 @@ public final class ReactorMatrix {
         }
     }
 
-    /** Reuse the matrix solve and operating values until the structure or loaded count changes. */
+    /**
+     * Reuse the matrix solve and operating values until the structure or loaded count
+     * changes. May return {@code null} while the volume chunks are unloaded and no prior
+     * snapshot exists (0.3.269 #24): UNKNOWN must not read as "0 TVELs" — the caller
+     * keeps its previous readings instead.
+     */
     public static OperatingSnapshot operatingSnapshot(ServerLevel level,
                                                        ReactorControlPanelBlockEntity panel) {
         if (!panel.isFormedController()) {
             throw new IllegalStateException("Cannot evaluate a reactor without a formed controller");
         }
-        int loadedTvels = ReactorFuelStorage.totalTvels(level, panel);
+        int loadedTvels = ReactorFuelStorage.totalTvelsKnown(level, panel);
+        if (loadedTvels == ReactorFuelStorage.UNKNOWN) {
+            synchronized (CACHE) {
+                CacheEntry cachedUnknown = CACHE.get(panel);
+                if (cachedUnknown != null && cachedUnknown.metrics() != null) {
+                    return new OperatingSnapshot(cachedUnknown.diagnostic(),
+                        cachedUnknown.loadedTvels(), cachedUnknown.metrics());
+                }
+            }
+            return null;
+        }
         synchronized (CACHE) {
             CacheEntry cached = CACHE.get(panel);
             if (cached != null && cached.diagnostic() != null
@@ -77,6 +92,7 @@ public final class ReactorMatrix {
 
     /** Drop both dry and loaded values after a structure mutation or panel unload. */
     public static void invalidate(ReactorControlPanelBlockEntity panel) {
+        ReactorFuelStorage.invalidateSheathCache(panel);
         synchronized (CACHE) {
             CACHE.remove(panel);
         }

@@ -493,6 +493,11 @@ public final class ReactorRuntime {
         snapshotDirty = false;
         try {
             ReactorMatrix.OperatingSnapshot snapshot = ReactorMatrix.operatingSnapshot(level, panel);
+            if (snapshot == null) {
+                // (0.3.269 #24) чанки объёма выгружены и прошлого снимка нет:
+                // держим прошлые показания, реактор не «зануляется» догрузки ради.
+                return;
+            }
             MatrixCoefficients.Analysis analysis = snapshot.diagnostic().analysis();
             boolean matrixChanged = analysis != lastAnalysis;
             boolean fuelChanged = snapshot.loadedTvels() != lastLoadedTvels;

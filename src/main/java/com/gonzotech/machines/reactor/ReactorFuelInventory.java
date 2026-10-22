@@ -27,7 +27,7 @@ public final class ReactorFuelInventory implements Container {
         this.activeSlots = Math.max(0, Math.min(ReactorControlPanelBlockEntity.MAX_FUEL_SLOTS, activeSlots));
         if (panel.getLevel() instanceof ServerLevel server && panel.isFormedController()) {
             serverAuthoritative = true;
-            sheaths = ReactorFuelStorage.collectSheaths(server, panel.min(), panel.max());
+            sheaths = ReactorFuelStorage.sheathsCached(server, panel);
         } else {
             serverAuthoritative = false;
             sheaths = List.of();

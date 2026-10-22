@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.268$", props, re.M), "mod_version != 0.3.268"
+assert re.search(r"^mod_version=0\.3\.269$", props, re.M), "mod_version != 0.3.269"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -473,6 +473,21 @@ rs_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").r
 assert "secondStackTransfer : maxStackTransfer" in rs_src, "инвентарь не скидывает наведёнку источника"
 assert "CarrierItem.RADIOACTIVITY_FACTOR * INDUCED_REEMIT" in ir_src, \
     "наведёнка содержимого носителя в обход двойного экрана (п.4 автора)"
+
+# 0.3.269: вотчина BFS строго 3×3 (#12), гейты выгрузки чанков (#25),
+# ротация+заморозка экранирования (#26), триплет UNKNOWN и кэш чехлов (#24/32/37).
+np_src = (ROOT / "src/main/java/com/gonzotech/machines/miner/NetworkPlanner.java").read_text(encoding="utf-8")
+assert "minSectorX" in np_src and "maxSectorZ" in np_src, "BFS снова гуляет за край вотчины (#12)"
+crd = (ROOT / "src/main/java/com/gonzotech/radiation/ChunkRadiationData.java").read_text(encoding="utf-8")
+assert "screenProbeCursor" in crd and "screenFactorCache" in crd, "нет ротации/заморозки экранирования (#26)"
+assert "heldFrozen" in crd and "placedEmission" in crd, "reconcile забывает источники в выгрузке (#25)"
+assert "getChunkNow" in crd, "визуал принудительно грузит чанки (#25)"
+fs = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorFuelStorage.java").read_text(encoding="utf-8")
+assert "UNKNOWN = -1" in fs and "sheathsCached" in fs, "нет триплета/кэша чехлов (#24/#32)"
+rm = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorMatrix.java").read_text(encoding="utf-8")
+assert "totalTvelsKnown" in rm, "недогрузка чанков читается как 0 ТВЭЛов (#24)"
+rt = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorRuntime.java").read_text(encoding="utf-8")
+assert "if (snapshot == null) {" in rt, "нулевой снимок обнулит реактор вместо заморозки (#24)"
 
 # Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
 assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"

@@ -254,11 +254,12 @@ public final class ReactorStructure {
         } catch (RuntimeException exception) {
             try {
                 ReactorMatrix.Diagnostic matrix = ReactorMatrix.evaluate(server, panel);
-                int loadedTvels = ReactorFuelStorage.totalTvels(server, panel);
+                int loadedTvels = ReactorFuelStorage.totalTvelsKnown(server, panel);
                 lines.add(joinStats(
                     stat("rawH=", format(matrix.coefficients().heat(), 5), ChatFormatting.GOLD),
                     stat("rawL=", format(matrix.coefficients().peakLeak() * 100.0, 3) + " %", ChatFormatting.AQUA),
-                    stat("R=" + loadedTvels + " ТВЭЛов", ChatFormatting.GOLD)));
+                    stat(loadedTvels < 0 ? "R=? ТВЭЛов (чанки выгружены)"
+                        : "R=" + loadedTvels + " ТВЭЛов", ChatFormatting.GOLD)));
             } catch (RuntimeException ignored) {
                 // Keep the original error visible even if a secondary dry diagnostic also fails.
             }

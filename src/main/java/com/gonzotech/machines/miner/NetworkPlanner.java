@@ -77,6 +77,16 @@ public final class NetworkPlanner {
      */
     public static Plan plan(ServerLevel level, BlockPos origin, Set<BlockPos> workBlock,
                             List<BlockPos> anchors) {
+        // (автор 22.10, #12) Вотчина — строго 3×3 чанка вокруг Плотника: ни
+        // пересечений, ни взглядов за край. BFS режется рамкой сектора; якорь,
+        // оказавшийся вне рамки, — недостижим by design (разметка за краем
+        // уже отрезана правами #6/#7, это вторая половина того же закона).
+        int cx = origin.getX() >> 4;
+        int cz = origin.getZ() >> 4;
+        int minSectorX = (cx - 1) << 4;
+        int maxSectorX = minSectorX + 47;
+        int minSectorZ = (cz - 1) << 4;
+        int maxSectorZ = minSectorZ + 47;
         Set<BlockPos> network = connectedWorkRegion(level, origin, workBlock);
         // Сам Плотник — корень сети: стройка стартует от него всегда, даже
         // когда вплотную к нему ещё не лежит ни одного рабочего блока.
@@ -102,7 +112,8 @@ public final class NetworkPlanner {
         List<Entry> entries = new ArrayList<>();
         int unreachable = 0;
         for (BlockPos anchor : pending) {
-            List<BlockPos> path = bfsPathToAnchor(level, network, entries, anchor, minY, maxY);
+            List<BlockPos> path = bfsPathToAnchor(level, network, entries, anchor, minY, maxY,
+                minSectorX, maxSectorX, minSectorZ, maxSectorZ);
             if (path == null) {
                 unreachable++;
                 continue;
@@ -153,7 +164,9 @@ public final class NetworkPlanner {
      */
     private static List<BlockPos> bfsPathToAnchor(ServerLevel level, Set<BlockPos> network,
                                                   List<Entry> planned, BlockPos anchor,
-                                                  int minY, int maxY) {
+                                                  int minY, int maxY,
+                                                  int minSectorX, int maxSectorX,
+                                                  int minSectorZ, int maxSectorZ) {
         Map<BlockPos, BlockPos> parent = new HashMap<>();
         Set<BlockPos> visited = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
@@ -171,6 +184,10 @@ public final class NetworkPlanner {
                 BlockPos next = cell.relative(dir);
                 if (visited.contains(next)) continue;
                 if (next.getY() < minY || next.getY() > maxY) continue;
+                // Рамка вотчины (#12): XZ-выход за сектор 3×3 отрезает и обход
+                // «в обнимашку» с соседним сектором.
+                if (next.getX() < minSectorX || next.getX() > maxSectorX
+                    || next.getZ() < minSectorZ || next.getZ() > maxSectorZ) continue;
                 if (!isBuildable(level.getBlockState(next), level.getBlockState(next.below()))) continue;
                 visited.add(next);
                 parent.put(next, cell);

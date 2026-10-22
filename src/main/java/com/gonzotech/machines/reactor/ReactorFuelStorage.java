@@ -20,6 +20,49 @@ public final class ReactorFuelStorage {
     private ReactorFuelStorage() {
     }
 
+    /** (0.3.269 #24) Триплет скана: UNKNOWN отличает «чанки не догружены» от
+     *  честного «0 ТВЭЛов» — замороженный реактор не должен деградировать в нули. */
+    public static final int UNKNOWN = -1;
+
+    private static final java.util.Map<ReactorControlPanelBlockEntity,
+            List<ReactorFuelSheathBlockEntity>> SHEATH_CACHE = new java.util.WeakHashMap<>();
+
+    /** Полный обход объёма — только на сборке или инвалидации (#32). */
+    public static void invalidateSheathCache(ReactorControlPanelBlockEntity panel) {
+        synchronized (SHEATH_CACHE) {
+            SHEATH_CACHE.remove(panel);
+        }
+    }
+
+    /**
+     * Кэшированный вариант {@link #collectSheaths}: список чехлов переиспользуется,
+     * пока все его ссылки живы и на месте (проверка — size() обращений к BE, а не
+     * 5832 чтений блока). Выгруженный объём — пустой список, как и в прямом обходе.
+     */
+    public static List<ReactorFuelSheathBlockEntity> sheathsCached(ServerLevel level,
+                                                                    ReactorControlPanelBlockEntity panel) {
+        if (level == null || panel == null || !panel.isFormedController()) return List.of();
+        if (!chunksLoaded(level, panel.min(), panel.max())) return List.of();
+        List<ReactorFuelSheathBlockEntity> cached;
+        synchronized (SHEATH_CACHE) {
+            cached = SHEATH_CACHE.get(panel);
+        }
+        if (cached != null && freshSheaths(level, cached)) return cached;
+        List<ReactorFuelSheathBlockEntity> built = collectSheaths(level, panel.min(), panel.max());
+        synchronized (SHEATH_CACHE) {
+            SHEATH_CACHE.put(panel, built);
+        }
+        return built;
+    }
+
+    private static boolean freshSheaths(ServerLevel level, List<ReactorFuelSheathBlockEntity> sheaths) {
+        for (ReactorFuelSheathBlockEntity sheath : sheaths) {
+            if (sheath.isRemoved() || sheath.getLevel() != level) return false;
+            if (level.getBlockEntity(sheath.getBlockPos()) != sheath) return false;
+        }
+        return true;
+    }
+
     /** Collect only already-loaded sheath block entities in the saved reactor volume. */
     public static List<ReactorFuelSheathBlockEntity> collectSheaths(ServerLevel level,
                                                                     BlockPos min,
@@ -70,9 +113,11 @@ public final class ReactorFuelStorage {
         return allFuel.size();
     }
 
-    public static int totalTvels(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+    /** Полный счёт ТВЭЛов с триплетом: {@link #UNKNOWN} при недогруженном объёме. */
+    public static int totalTvelsKnown(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         if (level == null || panel == null || !panel.isFormedController()) return 0;
-        return countActiveTvels(collectFuelItems(collectSheaths(level, panel.min(), panel.max())));
+        if (!chunksLoaded(level, panel.min(), panel.max())) return UNKNOWN;
+        return countActiveTvels(collectFuelItems(sheathsCached(level, panel)));
     }
 
     public static int totalTvels(List<ReactorFuelSheathBlockEntity> sheaths) {
@@ -90,7 +135,7 @@ public final class ReactorFuelStorage {
                                         int damagePerSecond) {
         if (level == null || panel == null || !panel.isFormedController()) return false;
         boolean changed = false;
-        for (ReactorFuelSheathBlockEntity sheath : collectSheaths(level, panel.min(), panel.max())) {
+        for (ReactorFuelSheathBlockEntity sheath : sheathsCached(level, panel)) {
             changed |= sheath.ageFuel(damagePerSecond);
         }
         return changed;

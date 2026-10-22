@@ -2,6 +2,7 @@ package com.gonzotech.radiation;
 
 import com.gonzotech.core.registry.ModBlocks;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
@@ -74,10 +75,18 @@ public class ChunkRadiationData extends SavedData {
     private final Long2DoubleOpenHashMap placed = new Long2DoubleOpenHashMap();
     /** Позиции поставленных радио-блоков по чанкам (для экрана контура). */
     private final Long2ObjectOpenHashMap<LongOpenHashSet> placedPos = new Long2ObjectOpenHashMap<>();
+    /** (0.3.269 #25) Последняя подтверждённая эмиссия источника (posKey→nZt/с):
+     *  выгруженный чанк не «забывает» индекс и не грузится ради чтения. */
+    private final Long2DoubleOpenHashMap placedEmission = new Long2DoubleOpenHashMap();
+    /** (0.3.269 #26) Замороженный фактор контура на источник (posKey→factor). */
+    private final Long2DoubleOpenHashMap screenFactorCache = new Long2DoubleOpenHashMap();
+    /** (0.3.269 #26) Каретка ротации бюджета проб на чанк. */
+    private final Long2IntOpenHashMap screenProbeCursor = new Long2IntOpenHashMap();
 
     public ChunkRadiationData() {
         baseline.defaultReturnValue(-1.0);
         contamination.defaultReturnValue(0.0);
+        screenFactorCache.defaultReturnValue(-1.0);
         placed.defaultReturnValue(0.0);
     }
 
@@ -134,6 +143,8 @@ public class ChunkRadiationData extends SavedData {
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int x = cp.getMinBlockX(); x < cp.getMinBlockX() + 16; x++) {
             for (int z = cp.getMinBlockZ(); z < cp.getMinBlockZ() + 16; z++) {
+                // (0.3.269 #25) Диагностика не права выгружать чанки.
+                if (!level.hasChunk(x >> 4, z >> 4)) continue;
                 for (int y = minY; y < maxY; y++) {
                     pos.set(x, y, z);
                     var state = level.getBlockState(pos);
@@ -209,14 +220,18 @@ public class ChunkRadiationData extends SavedData {
             for (long raw : entry.getValue()) {
                 BlockPos pos = BlockPos.of(raw);
                 if (pos.distToCenterSqr(center.getX(), center.getY(), center.getZ()) > max) continue;
-                double emission = RadSources.blockEmission(level.getBlockState(pos));
+                // (0.3.269 #25) картинка не грузит мир: чанк выгружен — last known.
+                double emission = level.hasChunkAt(pos)
+                    ? RadSources.blockEmission(level.getBlockState(pos))
+                    : placedEmission.get(raw);
                 if (emission > 0.0) out.add(new VisualSource(pos, emission));
             }
         }
         int minChunkX = (center.getX() - radius) >> 4, maxChunkX = (center.getX() + radius) >> 4;
         int minChunkZ = (center.getZ() - radius) >> 4, maxChunkZ = (center.getZ() + radius) >> 4;
         for (int cx = minChunkX; cx <= maxChunkX; cx++) for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
-            LevelChunk chunk = level.getChunk(cx, cz);
+            LevelChunk chunk = level.getChunkNow(new ChunkPos(cx, cz));
+            if (chunk == null) continue; // #25: визуал не принудительная загрузка
             for (var be : chunk.getBlockEntities().values()) {
                 if (!(be instanceof Container container)) continue;
                 BlockPos pos = be.getBlockPos();
@@ -405,11 +420,24 @@ public class ChunkRadiationData extends SavedData {
 
         // Preserve every still-present source before looking for piston moves;
         // otherwise two stale positions could both claim the same nearby block.
+        List<Long> heldFrozen = new ArrayList<>();
         for (var entry : placedPos.long2ObjectEntrySet()) {
             for (long raw : entry.getValue()) {
                 BlockPos pos = BlockPos.of(raw);
+                if (!level.hasChunkAt(pos)) {
+                    // (0.3.269 #24/#25) UNKNOWN: чанк выгружен — это НЕ «пропал».
+                    // Индекс держим, эмиссия — последнее известное (0 для легаси
+                    // позиций без кэша — доживут до первой загрузки).
+                    if (claimed.add(raw)) {
+                        double last = placedEmission.get(raw);
+                        if (last > 0.0) known.add(new SourceRecord(pos, last));
+                        else heldFrozen.add(raw);
+                    }
+                    continue;
+                }
                 double expected = RadSources.blockEmission(level.getBlockState(pos));
                 if (expected > 0.0) {
+                    placedEmission.put(raw, expected);
                     if (claimed.add(raw)) known.add(new SourceRecord(pos, expected));
                 } else {
                     missing.add(pos);
@@ -419,12 +447,15 @@ public class ChunkRadiationData extends SavedData {
         for (BlockPos origin : missing) {
             BlockPos moved = findNearbySource(level, origin, claimed);
             if (moved == null) {
+                placedEmission.remove(origin.asLong());
                 RadiationTrace.log(level, origin, "ИСТОЧНИК ПОКИНУЛ ПОЗИЦИЮ",
                         "радиоактивный блок больше не найден рядом; индекс будет удалён");
                 continue;
             }
             double movedEmission = RadSources.blockEmission(level.getBlockState(moved));
+            placedEmission.remove(origin.asLong());
             if (movedEmission > 0.0 && claimed.add(moved.asLong())) {
+                placedEmission.put(moved.asLong(), movedEmission);
                 known.add(new SourceRecord(moved, movedEmission));
                 RadiationTrace.log(level, moved, "ПЕРЕНОС ИНДЕКСА ИСТОЧНИКА",
                         "старое положение=" + origin.getX() + "," + origin.getY() + "," + origin.getZ()
@@ -440,7 +471,11 @@ public class ChunkRadiationData extends SavedData {
             placedPos.computeIfAbsent(key, ignored -> new LongOpenHashSet()).add(source.pos().asLong());
             placed.put(key, placed.get(key) + source.emission());
         }
-        if (!known.isEmpty() || !placed.isEmpty()) setDirty();
+        for (long raw : heldFrozen) {
+            long key = new ChunkPos(BlockPos.of(raw)).toLong();
+            placedPos.computeIfAbsent(key, ignored -> new LongOpenHashSet()).add(raw);
+        }
+        if (!known.isEmpty() || !placed.isEmpty() || !heldFrozen.isEmpty()) setDirty();
     }
 
     private record SourceRecord(BlockPos pos, double emission) {}
@@ -477,7 +512,17 @@ public class ChunkRadiationData extends SavedData {
         double weighted = 0.0, weight = 0.0;
         int probed = 0;
         List<Long> stale = null;
-        for (long packed : set) {
+        // (0.3.269 #26) Ротация: за проход бюджета 16 проб обслуживаются
+        // СЛЕДУЮЩИЕ источники по каретке, а не первые — недообследованные не
+        // голодают вечно. Источник вне бюджета получает замороженный прошлый
+        // фактор (не занижаем и не завышаем защиту), никогда не меренный —
+        // честную 1.0 до своей очереди.
+        long[] cells = set.toLongArray();
+        int n = cells.length;
+        int cursor = n == 0 ? 0 : Math.floorMod(screenProbeCursor.getInt(chunkKey), n);
+        screenProbeCursor.put(chunkKey, cursor + MAX_PROBES_PER_CHUNK);
+        for (int i = 0; i < n; i++) {
+            long packed = cells[Math.floorMod(cursor + i, n)];
             BlockPos pos = BlockPos.of(packed);
             var state = level.getBlockState(pos);
             double emission = RadSources.blockEmission(state);
@@ -489,9 +534,15 @@ public class ChunkRadiationData extends SavedData {
             RadiationContour.Result contour = Containment.cachedResult(level, pos);
             if (contour == null && probed++ < MAX_PROBES_PER_CHUNK) {
                 contour = Containment.result(level, pos);
+                if (contour != null) screenFactorCache.put(packed, contour.factor());
             }
-            // Sources beyond the per-chunk probe budget keep the existing unshielded fallback.
-            double factor = contour == null ? 1.0 : contour.factor();
+            double factor;
+            if (contour != null) {
+                factor = contour.factor();
+            } else {
+                double frozen = screenFactorCache.get(packed);
+                factor = frozen < 0.0 ? 1.0 : frozen;
+            }
             double contribution = emission * factor;
             weighted += contribution;
             weight += emission;
@@ -510,7 +561,11 @@ public class ChunkRadiationData extends SavedData {
             }
         }
         if (stale != null) {
-            stale.forEach(set::remove);
+            for (long packed : stale) {
+                set.remove(packed);
+                screenFactorCache.remove(packed);
+                placedEmission.remove(packed);
+            }
             setDirty();
         }
         return weight <= 0.0 ? 1.0 : weighted / weight;
