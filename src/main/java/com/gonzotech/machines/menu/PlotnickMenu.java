@@ -14,8 +14,10 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Плотник — GUI по замеру {@code plotnick_gui.png} автора (0.3.256):
  * окно 176×180, шкала GTU (7,17) рисуется {@code MachineScreen}, 6 кнопок
- * 18×18 в (26/44, 18/36/54), карт-слоты (98,36) и (116,36), 9 активных
- * слотов по 512 в ряд y=76, инвентарь (8,98) с хотбаром на y=156.
+ * 18×18 в (26/44, 18/36/54), карт-слоты (98,36) и (116,36), 9 классических
+ * слотов по 64 в ряд y=76 (сверху — всё, что машина уместит в активные
+ * ячейки; остальное живёт в виртуале и видно лором), инвентарь (8,98)
+ * с хотбаром на y=156.
  */
 public final class PlotnickMenu extends BaseMachineMenu {
 
@@ -46,8 +48,10 @@ public final class PlotnickMenu extends BaseMachineMenu {
         super(ModMenus.PLOTNICK.get(), id, be, data, PlotnickBlockEntity.CONTAINER_SIZE);
         this.plotnick = be;
         if (!inventory.player.level().isClientSide) be.menuOpened();
+        // 0.3.264 (автор): активные слоты — обычная ванильная девятка по 64;
+        // слот-обёртка с потолком 512 и подстопки отменены вместе с ним.
         for (int k = 0; k < PlotnickBlockEntity.SLOTS_ACTIVE; k++) {
-            addSlot(new MaxStackSlot(be, k, 8 + 18 * k, 76));
+            addSlot(new Slot(be, k, 8 + 18 * k, 76));
         }
         addSlot(new CardSlot(be, PlotnickBlockEntity.SLOT_CARD_A, 98, 36));
         addSlot(new CardSlot(be, PlotnickBlockEntity.SLOT_CARD_B, 116, 36));
@@ -55,27 +59,9 @@ public final class PlotnickMenu extends BaseMachineMenu {
     }
 
     /**
-     * Активный слот Плотника: с 0.3.262 это витрина ячейки — физически
-     * ваниальная стопка ≤64, а «512» ёмкости ячейки добираются скрытыми
-     * продолжениями в BE (см. fillCell). Лимит держим равным ваниле,
-     * чтобы ни один путь не породил стопку, требующую сайдкара.
-     */
-    private static final class MaxStackSlot extends Slot {
-
-        private MaxStackSlot(PlotnickBlockEntity be, int index, int x, int y) {
-            super(be, index, x, y);
-        }
-
-        @Override
-        public int getMaxStackSize() {
-            return PlotnickBlockEntity.MAX_STACK;
-        }
-    }
-
-    /**
-     * Shift+ЛКМ в машину: сначала доливка в неполные стопки до 512 (мимо
-     * ванильного min с лимитом предмета), затем пустые слоты. Обратный путь
-     * (из машины в игрок) — стандартный: 512-стопка честно распадается на
+     * Shift+ЛКМ в машину: сначала доливка в неполные стопки, затем пустые
+     * слоты, затем хвост уходит в хранилище v3 (insert). Обратный путь
+     * (из машины в игрок) — стандартный: стопка честно распадается на
      * переносимые куски.
      */
     @Override
@@ -119,9 +105,8 @@ public final class PlotnickMenu extends BaseMachineMenu {
             target.setByPlayer(stack.split(target.getMaxStackSize()));
             movedAny = true;
         }
-        // Хвост, не влезший ни в одну голову: отдаём ячейкам целиком —
-        // insert() дольёт в скрытые продолжения (ячейка держит 512) и в
-        // виртуальный буфер, стек игрока уменьшается на месте.
+        // Хвост, не влезший в головы: отдаём хранилищу — insert() дольёт
+        // депо-стопки типа (0.3.264), стек игрока уменьшается на месте.
         if (!stack.isEmpty() && plotnick.insert(stack)) movedAny = true;
         return movedAny;
     }
@@ -149,7 +134,7 @@ public final class PlotnickMenu extends BaseMachineMenu {
         return data.get(0);
     }
 
-    /** Занятых виртуальных стаков (0..54) — тултип кнопки хранилища. */
+    /** Занятых ячеек типа в виртуале (0..54) — тултип кнопки хранилища. */
     public int virtualUsed() {
         return data.get(1);
     }
@@ -183,7 +168,7 @@ public final class PlotnickMenu extends BaseMachineMenu {
         return data.get(6);
     }
 
-    /** Сколько всего предметов в активной ячейке (0.3.262, для лора слота). */
+    /** Сколько всего предметов вещи слота лежит в машине (лор, 0.3.264). */
     public int cellStored(int slot) {
         return slot >= 0 && slot < PlotnickBlockEntity.SLOTS_ACTIVE
             ? data.get(7 + slot)

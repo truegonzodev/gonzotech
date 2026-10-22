@@ -129,5 +129,5 @@ for lang in ("ru_ru.json", "en_us.json"):
         assert key in data, f"{lang}: {key}"
     assert "block.gonzotech.reprocessing_grinder" not in data
 
-assert _ver.version() == "0.3.263", _ver.version()
+_ver.at_least("0.3.263", "пакт 0.3.263 держится и в 0.3.264")
 print("spent reprocessing + Grinder II contracts OK")

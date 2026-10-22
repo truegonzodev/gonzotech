@@ -1247,6 +1247,7 @@
   "message.gonzotech.plotnick.drill.idle": "Бурение и так остановлено.",
   "message.gonzotech.plotnick.network.stalled": "Стройка встала: блоков не хватает, в очереди осталось %s. Пополните склад — продолжу.",
   "gui.gonzotech.plotnick.cell.stored": "хранит: %s шт",
+  "message.gonzotech.plotnick.hibernating": "Этот Плотник в анабиозе: сектор уже занят другим",
   "message.gonzotech.plotnick.impulse.nogeophone": "Без геофона не стучим: %s источников стоят в одиночку (нужна пара геофон над источником).",
   "message.gonzotech.plotnick.drill.dismantle": "Идёт разборка сети — бурение включу после её окончания."
 }

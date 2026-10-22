@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.263$", props, re.M), "mod_version != 0.3.263"
+assert re.search(r"^mod_version=0\.3\.264$", props, re.M), "mod_version != 0.3.264"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -90,7 +90,8 @@ assert "new BlockPos(feet.getX(), y, feet.getZ())" in dbg, "скан не кол
 # ── 6. Плотник: блок/BE/хранилище ──
 be = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java").read_text(encoding="utf-8")
 assert "SLOTS_ACTIVE = 9" in be, "активных слотов != 9"
-assert "VIRTUAL_SLOTS = 54 * CELL_STACKS" in be, "виртуальный буфер не 54×512 стопками по 64"
+assert "VIRTUAL_SLOTS = VIRTUAL_TYPES * STACKS_PER_TYPE" in be, \
+    "виртуал не 54 типа × 4 стопки (0.3.264)"
 assert "MAX_STACK = 64" in be, "стопки внутри Плотника не ваниальные 64 (0.3.262)"
 assert be.index("SLOTS_ACTIVE") < be.index("VIRTUAL_SLOTS"), "порядок констант сбился"
 for button_pin in ("BTN_DRILL = 0", "BTN_SEISMO = 1", "BTN_NETWORK = 2",
@@ -106,8 +107,12 @@ assert "Mth.clamp(base.getZ(), targetChunkMinZ, targetChunkMinZ + 15)" in be, "Z
 assert "localX < 15 ? base.getX() + 1 : base.getX() - 1" in be, "центральная метка может уйти в соседний чанк"
 assert "sectorMarkerIds.add(marker.id())" in be, "Плотник не запоминает свои метки"
 assert '"SectorMarkers"' in be, "id меток Плотника не персистентны"
-assert "ContainerHelper.saveAllItems(root, copy, registries)" in be, "пустые активные слоты снова кодируются вручную"
-assert "ContainerHelper.loadAllItems(tag, items, registries)" in be, "загрузка активных слотов не парная сохранению"
+# 0.3.264: «Items» — тоже свой формат (int «I»); байтовый «Slot» ContainerHelper
+# для 11 слотов хоть и жив, но пара save/load обязана быть своей.
+assert 'saveStackList(items, "Items", tag, registries);' in be, \
+    "активные слоты не пишутся своим форматом"
+assert 'loadStackList(tag, "Items", items, registries);' in be, \
+    "загрузка активных слотов не парная сохранению"
 assert "instanceof SeismicSourceBlockEntity" in be, "разведка не ищет источники по чанкам"
 assert "sourcePos.above()" in be, "геофон не проверяется непосредственно над источником"
 assert "ModMachines.GEOPHONE.get()" in be, "разведка не считает геофоны"
@@ -187,7 +192,9 @@ for lang_name in ("ru_ru.json", "en_us.json"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 # ── 10. Сеть 512, рабочие блоки, буры и карта памяти (0.3.257) ──
-assert "getMaxStackSize()" in menu and "MAX_STACK" in menu, "лимит слота не синхронизирован с MAX_STACK"
+assert "MAX_STACK = 64" in be, "потолок стопки не ваниальный (0.3.264: 512 отменены)"
+assert "public int getMaxStackSize()" in be and "return MAX_STACK;" in be, \
+    "Container не объявляет лимит 64 воронкам/трубам"
 assert "CardSlot" in menu and "MEMORY_CARD.get()" in menu, "слоты карт не ограничены картой памяти"
 assert "hasSectorCard()" in menu, "GUI не получает состояние Плотника для названий кнопок"
 assert "BUTTON_DESCRIPTIONS" in screen, "у кновок нет текущих описаний в тултипах"
@@ -343,31 +350,76 @@ for lang_name in ("ru_ru.json", "en_us.json"):
                 "stat.gonzotech.wrench_eaten"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
-# ── 12. Срез 0.3.259: краш-защита стопок >99, ПКМ-подсоединение буров ──
-assert "SAVE_COUNT_LIMIT = 99" in be, "нет потолка count для ваниального дискового кодека"
-assert '"OversizeCounts"' in be, "размер сверх 99 не сохраняется сайдкаром"
-assert "saveAllItemsClamped(items, tag, registries, oversize, 0)" in be, \
-    "активные слоты снова пишутся ваниальным saveAllItems напрямую"
-assert 'saveStackList(virtual, "Virtual", tag, registries, oversize, CONTAINER_SIZE)' in be, \
-    "виртуальные слоты снова сохраняются не своим форматом с сайдкаром"
-assert "restoreOversizeCounts(tag)" in be, "реальные размеры стопок не возвращаются при загрузке"
+# ── 12. Срез 0.3.259→0.3.264: краш-защита стопок, ваниальная по 64 ──
+# 512-стопы автор отменил, поэтому потолок кодека [1;99] больше не проблема:
+# сайдкар «OversizeCounts» и кламп-обвязка удалены — и не должны вернуться.
+assert "SAVE_COUNT_LIMIT" not in be and "OversizeCounts" not in be, \
+    "сайдкары сверх-стеков должны были умереть вместе с 512"
+assert "saveAllItemsClamped" not in be, "кламп-обвязка снова ожила"
+assert 'saveStackList(virtual, "Virtual", tag, registries);' in be, \
+    "виртуальные слоты сохраняются не своим форматом"
 assert "rest.split(cap)" in be, "выпадение при разборе Плотника не дробится на безопасные стопки"
 
 menu = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
 assert "SimpleContainerData(PlotnickBlockEntity.DATA_SLOTS)" in menu, \
     "меню не берёт ContainerData (0.3.262: +9 тоталов ячеек)"
-# ── 15. Срез 0.3.262: хранилище стопками по 64, «512» — визуал ячейки ──
-assert "CELL_STACKS = 8" in be and "CELL_CAPACITY = CELL_STACKS * MAX_STACK" in be, \
-    "ёмкость активной ячейки не собрана из восьми стопок по 64"
-assert "bucketRest" in be, "нет скрытых продолжений активных ячеек"
-assert "private ItemStack fillCell" in be, "ячейка не доливается до 512 продолжениями"
-assert "rebalanceHeads()" in be, "пустая голова ячейки не поднимает продолжение"
-assert "normalizeStacks()" in be, "легаси-стопки 512 не распадаются при загрузке"
-assert 'saveStackList(bucketRest, "BucketRest"' in be, "продолжения ячеек не сохраняются"
-assert 'cell.put("Item", toSave.save(registries));' in be, \
-    "стопки длинных списков не сериализуются своим форматом"
-assert "plotnick.insert(stack)" in menu, "shift-хвост не доливается в продолжения ячеек"
-assert "public int cellStored(int slot)" in menu, "меню не отдаёт тотал ячейки для лора"
+# ── 15. Срез 0.3.264: хранилище v3, анабиоз сектора, гейт приватных правил ──
+# Хранилище: 9 классических ×64 + 54 типа × 4 стопки; зоны «добытое»/депо.
+assert "VIRTUAL_TYPES = 54" in be and "STACKS_PER_TYPE = 4" in be, "геометрия v3 сбилась"
+assert "OUT_STACKS_PER_TYPE = 2" in be, "нет разреза зон «добытое»/депо"
+assert "CELL_STACKS" not in be and "CELL_CAPACITY" not in be and "bucketRest" not in be, \
+    "«512-ячейки» с подстопками должны быть удалены (откат решения автора)"
+assert "rebalanceHeads" not in be, "витрина-пополнение heads мертва вместе с подстопками"
+assert "normalizeStacks()" in be, "легаси-стопки >64 не режутся при загрузке"
+assert 'loadStackList(tag, "Virtual", virtual, registries);' in be, "виртуаль не читается своим форматом"
+# Container-выставка: трубы/воронки видят виртуаль, депо и добытое разведены.
+assert "CONTAINER_TOTAL = CONTAINER_SIZE + VIRTUAL_SLOTS" in be, "Container не расширен виртуалем"
+assert "return CONTAINER_TOTAL;" in be, "getContainerSize не отдаёт 227"
+assert "idx % STACKS_PER_TYPE < OUT_STACKS_PER_TYPE) return false;" in be, \
+    "внешняя вставка в «добытое» не запрещена"
+assert "vi >= 0 && vi < VIRTUAL_SLOTS && !virtual.get(vi).isEmpty();" in be, \
+    "из виртуала нельзя вынимать лицом"
+# Порядок движения: вставка — головы→депо→добытое переливом; расход — тот же.
+assert "public boolean insertMined" in be, "буровой поток не отделён от материала"
+assert "int[] order = mined" in be, "нет разворота зон при буровой вставке"
+assert "for (int j = OUT_STACKS_PER_TYPE; j < STACKS_PER_TYPE && left > 0; j++)" in be, \
+    "consumeActive не питается головами и депо"
+assert "for (int pass = 0; pass < 2 && left > 0; pass++)" in be, \
+    "consumeStored не идёт голова→депо→добытое двумя проходами"
+# Анабиоз сектора 3×3 (решение автора 22.10).
+assert "private void reelectSector(ServerLevel server)" in be and "sectorPeers" in be, \
+    "перевыборы лидера сектора не реализованы"
+assert "static void notifySectorChanged" in be, "нет сигнала сектору при установке/сломе"
+assert '"PlacedAt"' in be and '"Hibernating"' in be, "анабиоз не персистентен"
+assert "if (be.hibernating) {" in be, "serverTick не глушит спящий Плотник"
+assert "public boolean isHibernating()" in be, "блок не может спросить про анабиоз"
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    assert "message.gonzotech.plotnick.hibernating" in lang, f"в {lang_name} нет текста анабиоза"
+plotnick_block_src = (ROOT / "src/main/java/com/gonzotech/machines/block/PlotnickBlock.java").read_text(encoding="utf-8")
+assert "plotnick.isHibernating()" in plotnick_block_src, "спящий Плотник открывает GUI"
+assert "notifySectorChanged(server, pos)" in plotnick_block_src, "onRemove блока не будит сектор"
+# Гейт «пути блока» — приватные правила через стандартные события.
+for anchor in ("new BlockEvent.EntityPlaceEvent(", "new BlockEvent.BreakEvent(",
+               "private boolean mayTouchPlace", "private boolean mayTouchBreak",
+               "private ServerPlayer actionActor", "touchCached("):
+    assert anchor in be, f"гейт привата не на месте: {anchor}"
+assert "if (!mayTouchBreak(server, pos)) continue;" in be, "сбор руд не под гейтом слома"
+assert "if (!mayTouchBreak(server, pos)) {" in be, "демонтаж не под гейтом слома"
+assert "if (!mayTouchPlace(server, pos)) {\n                buildQueue.add(entry);" in be, \
+    "стройка не откладывает клетку при запрете"
+assert "if (!mayTouchPlace(server, pos)) {\n                tntQueue.add(0, pos);" in be, \
+    "ТНТ не в депо — пауза очереди при запрете"
+assert "if (!mayTouchPlace(server, target)) return;" in be, "скважина не под гейтом постановки"
+# Миграция v2-сейвов: схлопнуть 432+63 в 216 правилами вставки, излишек — на землю.
+assert "migrateLegacyStorage" in be and "isLegacyVirtual" in be, "нет легаси-свёртки хранилища"
+assert 'if (tag.contains("BucketRest") || isLegacyVirtual(tag))' in be, "миграция не обусловлена v2-следом"
+assert "legacyOverflow" in be, "не влезшее при миграции не аккумулируется"
+# GUI-меню: обычный Slot, лор «хранит» = тотал по машине.
+assert "MaxStackSlot" not in menu and "addSlot(new Slot(be, k, 8 + 18 * k, 76));" in menu, \
+    "активные слоты не стали классической ванильной девяткой"
+assert "plotnick.insert(stack)" in menu, "shift-хвост не доливается в хранилище"
+assert "public int cellStored(int slot)" in menu, "меню не отдаёт тотал предмета для лора"
 assert "gui.gonzotech.plotnick.cell.stored" in screen, "нет строки «хранит: N шт» при наведении"
 assert "public void clicked(int slotId, int button, ClickType clickType," in menu, \
     "нет привратника щелчков против оверстака в кармане игрока"
@@ -492,8 +544,10 @@ for lang_name in ("ru_ru.json", "en_us.json"):
 
 # ── 16. Срез 0.3.263: дневник ревалидации (42 пункта) — loss/dupe/compile ──
 # compile: forward reference констант
-assert be.index("CELL_STACKS = 8") < be.index("VIRTUAL_SLOTS = 54 * CELL_STACKS"), \
-    "CELL_STACKS объявлен позже использования — illegal forward reference"
+assert be.index("STACKS_PER_TYPE = 4") < be.index("VIRTUAL_SLOTS = VIRTUAL_TYPES * STACKS_PER_TYPE"), \
+    "STACKS_PER_TYPE объявлен позже использования — illegal forward reference"
+assert be.index("public static final int CONTAINER_SIZE") < be.index("CONTAINER_TOTAL = CONTAINER_SIZE"), \
+    "CONTAINER_TOTAL собран до CONTAINER_SIZE — forward reference"
 # #1: собственный формат списков с int-локальным индексом
 assert 'putInt("I", i)' in be and "loadStackList" in be and "saveStackList" in be, \
     "длинные списки не переведены на свой формат с целочисленным индексом"
@@ -513,7 +567,9 @@ si = be.index("public void setItem(int slot")
 set_body = be[si:be.index("@Override", si + 10)]
 assert "rebalanceHeads();" not in set_body, "setItem пополняет голову — откат воронки затирает (#4)"
 tick_body = be[be.index("public static void serverTick"):be.index("public void menuOpened")]
-assert "rebalanceHeads" in tick_body, "витрина не пополняется тиком"
+assert "if (be.hibernating) {" in tick_body and "be.reelectSector(server);" in tick_body, \
+    "тик не проводит выборы/анабиоз сектора (0.3.264)"
+assert "be.dropLegacyOverflow();" in tick_body, "не влезшее при миграции не выгружается из тика"
 # #5: место проверяется ДО изменения мира
 assert "!hasRoom(new ItemStack(mined))" in be and "!hasRoom(new ItemStack(item))" in be, \
     "бурение/сбор руды не бронируют место перед разрушением (#5)"
@@ -537,7 +593,7 @@ mk = (ROOT / "src/main/java/com/gonzotech/machines/miner/MarkerService.java").re
 assert "marker.owner() == 0L" in mk[be and mk.index("removeStationMarkersInSector"):] \
     or "marker.owner() == 0L" in mk, "секторная миграция не фильтрует по владельцу (#15)"
 # #16/17
-assert "items.set(i, ItemStack.EMPTY)" in be and "bucketRest.set(i, ItemStack.EMPTY)" in be, \
+assert "items.set(i, ItemStack.EMPTY)" in be and "virtual.set(i, ItemStack.EMPTY)" in be, \
     "clearContent снова дёргает add() на фиксированном NonNullList (#16)"
 assert "capOf(" in be, "мердж не уважает лимит самого предмета (#17)"
 # #18
