@@ -51,7 +51,13 @@ public final class ReactorStructure {
     public static final int MIN_SIZE = 4;
     /** Внешняя сторона: активная зона 16³ максимум + обшивка = 18³ (0.3.244). */
     public static final int MAX_SIZE = 18;
-    private static final int MAX_SHELL_PARTS = 1_600;
+    /**
+     * Обшивка максимального куба: 18³ − 16³ = 1736 блока (0.3.263, #22).
+     * Предел считаем из разрешённых размеров: 1600 обрезало законную
+     * сборку 18×18×18.
+     */
+    private static final int MAX_SHELL_PARTS =
+        MAX_SIZE * MAX_SIZE * MAX_SIZE - (MAX_SIZE - 2) * (MAX_SIZE - 2) * (MAX_SIZE - 2) + 64;
 
     /** Loaded controller panels used only to discover unformed reactors after block placement. */
     private static final Map<Level, Set<Long>> PANEL_POSITIONS =

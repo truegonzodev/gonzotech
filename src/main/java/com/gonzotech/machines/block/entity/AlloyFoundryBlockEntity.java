@@ -108,6 +108,7 @@ public final class AlloyFoundryBlockEntity extends BaseMachineBlockEntity
             (long) SecondTierDefs.ALLOY_FOUNDRY_GTU_INTAKE - acceptedGtuThisTick);
         long accepted = gtu.receive(Math.min(amount, remainingBudget), simulate);
         if (!simulate) acceptedGtuThisTick += (int) accepted;
+        if (!simulate && accepted > 0) setChanged(); // #29: приём энергии помечает BE к сейву
         return accepted;
     }
 

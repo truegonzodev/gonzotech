@@ -227,6 +227,15 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
+        // Порядок веток (0.3.263, #30): сначала мастерский поворот без ключа
+        // в руке — раньше верхняя ветка съедала hasMastery и поворот был
+        // недостижим.
+        if (WrenchItem.hasMastery(player) && player.isSecondaryUseActive()
+            && !(stack.getItem() instanceof WrenchItem)) {
+            return CompositePipeBlock.rotateLayerAt(level, pos, state, hit.getLocation())
+                    ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
+
         if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
             PipeType part = partAt(state, pos, hit);
             if (part == null) return InteractionResult.PASS;
@@ -235,12 +244,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
                 level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
             }
             return InteractionResult.SUCCESS;
-        }
-
-        // Мастерство ключа (0.3.253, автор): поворот пучка без ключа в руке.
-        if (WrenchItem.hasMastery(player) && player.isSecondaryUseActive()) {
-            return CompositePipeBlock.rotateLayerAt(level, pos, state, hit.getLocation())
-                    ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
 
         // Добавление универсальной жидк.трубы: занимает весь FLUID-угол (вода+пар),

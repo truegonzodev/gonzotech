@@ -68,7 +68,9 @@ public final class SecondPumpBlockEntity extends BaseMachineBlockEntity implemen
 
     @Override
     public long receiveGtu(long amount, boolean simulate) {
-        return gtu.receive(Math.min(amount, (long) SecondTierDefs.PUMP_GTU_INTAKE), simulate);
+        long accepted = gtu.receive(Math.min(amount, (long) SecondTierDefs.PUMP_GTU_INTAKE), simulate);
+        if (!simulate && accepted > 0) setChanged(); // #29: приём энергии помечает BE к сейву
+        return accepted;
     }
 
     /** Помпа остаётся источником воды; внешний приём воды ей не нужен. */

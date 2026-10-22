@@ -125,6 +125,7 @@ public class PcfsozBlockEntity extends BaseMachineBlockEntity
         long accepted = gtu.receive(Math.min(amount,
             (long) Math.max(0, MachineDefs.PCFSOZ_GTU_INTAKE - acceptedGtuThisTick)), simulate);
         if (!simulate) acceptedGtuThisTick += (int) accepted;
+        if (!simulate && accepted > 0) setChanged(); // #29: приём энергии помечает BE к сейву
         return accepted;
     }
 

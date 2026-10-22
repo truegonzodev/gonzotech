@@ -99,6 +99,7 @@ public class CrusherBlockEntity extends BaseMachineBlockEntity implements GtuSin
         long accepted = gtu.receive(Math.min(amount,
             (long) Math.max(0, MachineDefs.CRUSHER_GTU_INTAKE - acceptedGtuThisTick)), simulate);
         if (!simulate) acceptedGtuThisTick += (int) accepted;
+        if (!simulate && accepted > 0) setChanged(); // #29: приём энергии помечает BE к сейву
         return accepted;
     }
 

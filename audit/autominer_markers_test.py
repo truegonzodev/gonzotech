@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pins 0.3.256-0.3.262 — метки автошахтера, Плотник, сеть, сейсмика и буры.
+"""Pins 0.3.256-0.3.263 — метки автошахтера, Плотник, сеть, сейсмика и буры.
 
 Держит: вымпел-метку (квад 1,0×1,75 блока под 20×35, 80% прозрачности,
 дисплей 14×14 в «слоте» (3,3) на 100%), листание руд 3 с, /gonzotech debug marker (колонна
@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.262$", props, re.M), "mod_version != 0.3.262"
+assert re.search(r"^mod_version=0\.3\.263$", props, re.M), "mod_version != 0.3.263"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -348,8 +348,8 @@ assert "SAVE_COUNT_LIMIT = 99" in be, "нет потолка count для ван
 assert '"OversizeCounts"' in be, "размер сверх 99 не сохраняется сайдкаром"
 assert "saveAllItemsClamped(items, tag, registries, oversize, 0)" in be, \
     "активные слоты снова пишутся ваниальным saveAllItems напрямую"
-assert "saveAllItemsClamped(virtual, virtualTag, registries, oversize, CONTAINER_SIZE)" in be, \
-    "виртуальные слоты снова сохраняются без урезания"
+assert 'saveStackList(virtual, "Virtual", tag, registries, oversize, CONTAINER_SIZE)' in be, \
+    "виртуальные слоты снова сохраняются не своим форматом с сайдкаром"
 assert "restoreOversizeCounts(tag)" in be, "реальные размеры стопок не возвращаются при загрузке"
 assert "rest.split(cap)" in be, "выпадение при разборе Плотника не дробится на безопасные стопки"
 
@@ -363,8 +363,9 @@ assert "bucketRest" in be, "нет скрытых продолжений акт�
 assert "private ItemStack fillCell" in be, "ячейка не доливается до 512 продолжениями"
 assert "rebalanceHeads()" in be, "пустая голова ячейки не поднимает продолжение"
 assert "normalizeStacks()" in be, "легаси-стопки 512 не распадаются при загрузке"
-assert 'tag.put("BucketRest", restTag)' in be, "продолжения ячеек не сохраняются"
-assert "cell.getInt(\"Slot\")" in be, "индекс слота читается байтом — 432 ячейки не влезают"
+assert 'saveStackList(bucketRest, "BucketRest"' in be, "продолжения ячеек не сохраняются"
+assert 'cell.put("Item", toSave.save(registries));' in be, \
+    "стопки длинных списков не сериализуются своим форматом"
 assert "plotnick.insert(stack)" in menu, "shift-хвост не доливается в продолжения ячеек"
 assert "public int cellStored(int slot)" in menu, "меню не отдаёт тотал ячейки для лора"
 assert "gui.gonzotech.plotnick.cell.stored" in screen, "нет строки «хранит: N шт» при наведении"
@@ -435,7 +436,10 @@ assert "MenuHelper.readBlockEntity(inventory, buffer, PlotnickBlockEntity.class)
 assert "server.getGameTime() % 20 == 0" not in be, "периодический скан статистики вернулся"
 assert "if (be.menuViewers > 0 && be.networkStatsDirty)" in be, \
     "статистка не обновляется строго по событиям при открытом GUI"
-assert "menuViewers++ == 0" not in be, "вход в GUI снова запускает полный скан"
+mo = be[be.index("public void menuOpened"):be.index("public void menuOpened") + 400]
+assert "refreshNetworkStats" not in mo, "вход в GUI снова сканирует мир внутри menuOpened"
+assert "if (menuViewers++ == 0) networkStatsDirty = true;" in be, \
+    "первое открытие не помечает статистику (ручные правки мира не видны, #18)"
 assert "private Set<BlockPos> collectWorkCells" not in be, "полновысотный скан сети не удалён"
 assert "WORK_BELT_Y" in be and "scanSurface" in be, "скан сети не ограничен лентой"
 
@@ -484,6 +488,92 @@ for lang_name in ("ru_ru.json", "en_us.json"):
     for key in ("gui.gonzotech.plotnick.button.drill.lmb", "gui.gonzotech.plotnick.button.drill.rmb",
                 "message.gonzotech.plotnick.drill.stopped", "message.gonzotech.plotnick.drill.idle",
                 "message.gonzotech.plotnick.drill.nodrills", "message.gonzotech.plotnick.network.stalled"):
+        assert key in lang, f"в {lang_name} нет ключа {key}"
+
+# ── 16. Срез 0.3.263: дневник ревалидации (42 пункта) — loss/dupe/compile ──
+# compile: forward reference констант
+assert be.index("CELL_STACKS = 8") < be.index("VIRTUAL_SLOTS = 54 * CELL_STACKS"), \
+    "CELL_STACKS объявлен позже использования — illegal forward reference"
+# #1: собственный формат списков с int-локальным индексом
+assert 'putInt("I", i)' in be and "loadStackList" in be and "saveStackList" in be, \
+    "длинные списки не переведены на свой формат с целочисленным индексом"
+assert "- CONTAINER_SIZE : seq" not in be, "загрузка снова вычитает несуществующий оффсет"
+# #2: один дроп при сломе
+bd = (ROOT / "src/main/java/com/gonzotech/machines/block/PlotnickBlock.java").read_text(encoding="utf-8")
+assert "plotnick.onBroken();" in bd, "слом Plotnick не идёт через onBroken"
+drop_body = be[be.index("public void dropContentsForBreak()"):]
+assert drop_body.index("clearContent();") < drop_body.index("}"), \
+    "после нашего дропа контейнер не вычищен — базовый onRemove задвоит предметы"
+# #4: никаких пополнений головы внутри remove/set (откат воронки)
+rem_body = be[be.index("public ItemStack removeItem(int slot, int amount)"):
+              be.index("public void setItem(int slot")]
+assert rem_body.count("rebalanceHeads();") == 0, \
+    "removeItem/removeItemNoUpdate снова таскают стопки внутри чужой транзакции (#4)"
+si = be.index("public void setItem(int slot")
+set_body = be[si:be.index("@Override", si + 10)]
+assert "rebalanceHeads();" not in set_body, "setItem пополняет голову — откат воронки затирает (#4)"
+tick_body = be[be.index("public static void serverTick"):be.index("public void menuOpened")]
+assert "rebalanceHeads" in tick_body, "витрина не пополняется тиком"
+# #5: место проверяется ДО изменения мира
+assert "!hasRoom(new ItemStack(mined))" in be and "!hasRoom(new ItemStack(item))" in be, \
+    "бурение/сбор руды не бронируют место перед разрушением (#5)"
+assert "insertOrDrop(" in be, "нет наземного запасного аэродрома для непоместившегося"
+# #8: TNT-трубы — колоннами, не 9 чанками
+pipes = be[be.index("private List<BlockPos> collectPipesTopDown"):]
+assert "for (int y = cell.getY() - 1; y >= server.getMinY(); y--)" in pipes[:900], \
+    "закладка TNT снова ходит по всем чанкам (#8)"
+assert "server.getMinY(); y <= server.getMaxY()" not in pipes[:900]
+# #9: режимы
+assert "tntQueue" in be[be.index("private boolean packUp"):be.index("private boolean packUp") + 2200] or \
+    "dismantleQueue.isEmpty()" in be[be.index("startDrilling(ServerLevel") + 12:be.index("startDrilling(ServerLevel") + 400], \
+    "режимы стройки/бурения/разборки по-прежнему не разведены"
+# #10: флаги и retry
+assert "stallReportedSize" in be and "% 40 == 0" in be, "стройку не будит retry/новая очередь (#10)"
+assert "buildStalled = false; // новая работа" in be and "buildStalled = false; // #10" in be
+# #13: геофон
+assert "noGeophone" in be and "impulse.nogeophone" in be
+# #15: миграция чистит только бесхозное
+mk = (ROOT / "src/main/java/com/gonzotech/machines/miner/MarkerService.java").read_text(encoding="utf-8")
+assert "marker.owner() == 0L" in mk[be and mk.index("removeStationMarkersInSector"):] \
+    or "marker.owner() == 0L" in mk, "секторная миграция не фильтрует по владельцу (#15)"
+# #16/17
+assert "items.set(i, ItemStack.EMPTY)" in be and "bucketRest.set(i, ItemStack.EMPTY)" in be, \
+    "clearContent снова дёргает add() на фиксированном NonNullList (#16)"
+assert "capOf(" in be, "мердж не уважает лимит самого предмета (#17)"
+# #18
+assert "if (menuViewers++ == 0) networkStatsDirty = true;" in be, "открытие GUI не освежает числа"
+# #21
+gtm = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
+h = gtm[gtm.index("CesiumBlastRequestPayload.TYPE"):gtm.index("CesiumBlastRequestPayload.TYPE") + 1200]
+assert "isOutsideBuildHeight" in h and "hasChunk" in h, "пакет цезия читает мир до проверок (#21)"
+assert h.index("hasChunk") < h.index("getBlockState"), "проверка загруженности идёт после чтения (#21)"
+# #22
+rs = (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorStructure.java").read_text(encoding="utf-8")
+assert "MAX_SIZE * MAX_SIZE * MAX_SIZE - (MAX_SIZE - 2)" in rs, "лимит обшивки не выведен из размеров (#22)"
+# #29: приём GTU помечает сейв во всех станках
+import glob as _glob
+missing = []
+for f in _glob.glob(str(ROOT / "src/main/java/com/gonzotech/**/*BlockEntity.java"), recursive=True):
+    t = Path(f).read_text(encoding="utf-8")
+    if "public long receiveGtu(long amount, boolean simulate)" in t:
+        for m in re.finditer(r"public long receiveGtu\(long amount, boolean simulate\) \{(.+?)\n    \}", t, re.S):
+            if "return 0;" in m.group(1):
+                continue  # заглушка-источник (Стирлинг)
+            if "setChanged" not in m.group(1):
+                missing.append(Path(f).name)
+assert not missing, "receiveGtu без setChanged: " + ", ".join(missing)
+# #20
+me = (ROOT / "src/main/java/com/gonzotech/machines/miner/MarkerEvents.java").read_text(encoding="utf-8")
+assert "PlayerChangedDimensionEvent" in me, "метрики не пересылаются при смене измерения (#20)"
+# #30
+cp = (ROOT / "src/main/java/com/gonzotech/machines/network/CompositePipeBlock.java").read_text(encoding="utf-8")
+assert cp.index("rotateLayerAt") < cp.index("PipeType part = partAt(state, pos, hit);"), \
+    "ветка мастерского поворота снова за режимным блоком (#30)"
+# lang
+for lang_name in ("ru_ru.json", "en_us.json"):
+    lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
+    for key in ("message.gonzotech.plotnick.impulse.nogeophone",
+                "message.gonzotech.plotnick.drill.dismantle"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
 
 print("autominer_markers_test passed")

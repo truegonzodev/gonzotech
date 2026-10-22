@@ -133,8 +133,11 @@ public final class MarkerService extends SavedData {
         int minZ = ((sectorAnchor.getZ() >> 4) - 1) << 4;
         int maxXExclusive = minX + 48;
         int maxZExclusive = minZ + 48;
+        // #15 (0.3.263): только бесхозные метки старых версий — свежий
+        // «плотник-малыш» не имеет права сносить размеченный чужой сектор.
         boolean changed = markers.values().removeIf(marker ->
             marker.kind() == MinerMarker.Kind.STATION
+                && marker.owner() == 0L
                 && marker.pos().getX() >= minX && marker.pos().getX() < maxXExclusive
                 && marker.pos().getZ() >= minZ && marker.pos().getZ() < maxZExclusive);
         if (changed) {

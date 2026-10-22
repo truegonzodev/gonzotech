@@ -109,7 +109,9 @@ public class ElectricFurnaceBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public long receiveGtu(long amount, boolean simulate) {
-        return gtu.receive(Math.min(amount, (long) MachineDefs.ELECTRIC_GTU_INTAKE), simulate);
+        long accepted = gtu.receive(Math.min(amount, (long) MachineDefs.ELECTRIC_GTU_INTAKE), simulate);
+        if (!simulate && accepted > 0) setChanged(); // #29: приём энергии помечает BE к сейву
+        return accepted;
     }
 
     // ─────────────────────────── тик (сервер) ───────────────────────────

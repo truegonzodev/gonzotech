@@ -27,4 +27,12 @@ public final class MarkerEvents {
             MarkerService.get(player.serverLevel()).sync(player);
         }
     }
+
+    /** Смена измерения: список меток у клиента общий — перезаполняем (#20). */
+    @SubscribeEvent
+    public static void onPlayerChangedLevel(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            MarkerService.get(player.serverLevel()).sync(player);
+        }
+    }
 }

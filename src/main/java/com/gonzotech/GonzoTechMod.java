@@ -223,9 +223,14 @@ public class GonzoTechMod {
                 if (context.player() instanceof ServerPlayer player) {
                     ServerLevel level = player.serverLevel();
                     BlockPos pos = payload.pos();
-                    if (level.getBlockState(pos).getBlock() instanceof CesiumOreBlock
+                    // 0.3.263 (#21): сначала лимиты, потом чтение мира — иначе
+                    // клиент с произвольным pos заставляет генерировать чанк
+                    // ещё до отказа.
+                    if (!net.minecraft.world.level.Level.isOutsideBuildHeight(pos)
                         && pos.distToCenterSqr(player.getX(), player.getY(), player.getZ())
-                           <= MAX_BLAST_REQUEST_DISTANCE * MAX_BLAST_REQUEST_DISTANCE) {
+                           <= MAX_BLAST_REQUEST_DISTANCE * MAX_BLAST_REQUEST_DISTANCE
+                        && level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+                        && level.getBlockState(pos).getBlock() instanceof CesiumOreBlock) {
                         CesiumOreBlock.tryBlast(level, pos);
                     }
                 }

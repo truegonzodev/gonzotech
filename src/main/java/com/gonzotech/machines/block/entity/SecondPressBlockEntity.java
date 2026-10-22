@@ -95,6 +95,7 @@ public final class SecondPressBlockEntity extends BaseMachineBlockEntity
         long remaining = Math.max(0L, (long) SecondTierDefs.PRESS_GTU_INTAKE - acceptedGtuThisTick);
         long accepted = gtu.receive(Math.min(amount, remaining), simulate);
         if (!simulate) acceptedGtuThisTick += (int) accepted;
+        if (!simulate && accepted > 0) setChanged(); // #29: приём энергии помечает BE к сейву
         return accepted;
     }
 

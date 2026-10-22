@@ -87,16 +87,17 @@ public final class PlotnickBlockEntity extends BlockEntity
     public static final int SLOT_CARD_A = 9;
     public static final int SLOT_CARD_B = 10;
     public static final int CONTAINER_SIZE = 11;
+    /** Ваниальный размер стопки: всё хранится стоками ≤64 (0.3.262). */
+    public static final int MAX_STACK = 64;
+    /** Стопок в «ячейке» активного слота: 8×64 = 512 как хотел автор. */
+    public static final int CELL_STACKS = 8;
     /**
      * Виртуальный буфер переполнения (автор: 54 стака ×512). С 0.3.262 он
      * разложен на ваниальные стопки по 64: 432 = 54×8 ячеек — ёмкость
      * идентична, а сохранение живёт без сайдкара сверх-стеков.
      */
     public static final int VIRTUAL_SLOTS = 54 * CELL_STACKS;
-    /** Ваниальный размер стопки: всё хранится стоками ≤64 (0.3.262). */
-    public static final int MAX_STACK = 64;
-    /** Стопок в «ячейке» активного слота: 8×64 = 512 как хотел автор. */
-    public static final int CELL_STACKS = 8;
+    /** Лимит ячеек списка в собственном формате — индекс int, без byte/short. */
     /** Логическая ёмкость активного слота — «512» теперь визуал ячейки. */
     public static final int CELL_CAPACITY = CELL_STACKS * MAX_STACK;
 
@@ -167,6 +168,8 @@ public final class PlotnickBlockEntity extends BlockEntity
     private List<BlockPos> cycleDrillCells = List.of();
     /** Постройка съела дефицит: спим до пополнения склада, дырку не ждём. */
     private boolean buildStalled;
+    /** Размер очереди на момент последнего «встала» — не повторять тот же текст. */
+    private int stallReportedSize = -1;
 
     /** Полулента 9 чанков для сканов сети: глубже дорог всё равно нет. */
     private static final int WORK_BELT_Y = 48;
@@ -231,6 +234,9 @@ public final class PlotnickBlockEntity extends BlockEntity
         // Тултипы GUI: пересчёт ТОЛЬКО по событиям (кнопки/постройка) и
         // только когда окно открыто. Периодического сканирования мира тут
         // больше нет — оно и было источником лаг-стены (0.3.261).
+        if (be.buildStalled && !be.buildQueue.isEmpty() && server.getGameTime() % 40 == 0) {
+            be.buildStalled = false; // редкая вежливая повторная проба (#10)
+        }
         if (be.menuViewers > 0 && be.networkStatsDirty) {
             be.networkStatsDirty = false;
             be.refreshNetworkStats(server);
@@ -239,7 +245,9 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /** Кто смотрит в GUI: держим счёт, чтобы не сканировать мир вхолостую. */
     public void menuOpened() {
-        menuViewers++; // пересчёт — только если флаг dirty от событий; сам вход легок
+        // Первый зритель: один раз освежить числа ленточным сканом; ручные
+        // правки мира вне кнопок иначе вечно держали бы устаревший план (#18).
+        if (menuViewers++ == 0) networkStatsDirty = true;
     }
 
     public void menuClosed() {
@@ -332,6 +340,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         long remaining = Math.max(0L, GTU_INTAKE_MILLI - acceptedGtuThisTick);
         long accepted = gtu.receive(Math.min(amount, remaining), simulate);
         if (!simulate) acceptedGtuThisTick += (int) accepted;
+        if (!simulate && accepted > 0) setChanged(); // #29: приём энергии помечает BE к сейву
         return accepted;
     }
 
@@ -711,6 +720,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
         buildQueue.clear();
         buildQueue.addAll(queue);
+        buildStalled = false; // новая работа — старое «спим» снимается (#10)
+        stallReportedSize = -1;
         placeCooldown = 2;
         buildRequester = requester;
         setChanged();
@@ -747,6 +758,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
         buildQueue.clear();
         buildQueue.addAll(plan.entries());
+        buildStalled = false; // #10
+        stallReportedSize = -1;
         placeCooldown = 2;
         buildRequester = requester;
         setChanged();
@@ -831,10 +844,15 @@ public final class PlotnickBlockEntity extends BlockEntity
             }
             return;
         }
-        // Цикл без единой установки — склад пуст. Спим; insert() разбудит.
+        // Цикл без единой установки — склад пуст. Спим; разбудит insert(),
+        // ручное пополнение или мягкий retry раз в 2 с (#10: клик-мердж в
+        // GUI проходит мимо insert).
         buildStalled = true;
         setChanged();
-        report(buildRequester, "message.gonzotech.plotnick.network.stalled", buildQueue.size());
+        if (buildQueue.size() != stallReportedSize) {
+            stallReportedSize = buildQueue.size();
+            report(buildRequester, "message.gonzotech.plotnick.network.stalled", buildQueue.size());
+        }
     }
 
     /**
@@ -883,11 +901,18 @@ public final class PlotnickBlockEntity extends BlockEntity
         List<SeismicSourceBlockEntity> armed = new ArrayList<>();
         int notConnected = 0;
         int notLoaded = 0;
+        int noGeophone = 0;
         for (BlockPos sourcePos : sources) {
             boolean linked = sourcePos.distManhattan(worldPosition) == 1
                 || NetworkPlanner.touching(sourcePos, region);
             if (!linked) {
                 notConnected++;
+                continue;
+            }
+            // Сборка «источник + геофон сверху» — условие записи чанка в карту
+            // (0.3.263, замечание автора #13): голый источник не стучит.
+            if (!server.getBlockState(sourcePos.above()).is(ModMachines.GEOPHONE.get())) {
+                noGeophone++;
                 continue;
             }
             if (server.getBlockEntity(sourcePos) instanceof SeismicSourceBlockEntity source) {
@@ -912,6 +937,10 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
         if (notLoaded > 0) {
             report(requester, "message.gonzotech.plotnick.impulse.noloaded", notLoaded);
+            return true;
+        }
+        if (noGeophone > 0) {
+            report(requester, "message.gonzotech.plotnick.impulse.nogeophone", noGeophone);
             return true;
         }
 
@@ -977,8 +1006,9 @@ public final class PlotnickBlockEntity extends BlockEntity
         drillTick = (drillTick + 1) % PlotnickDefs.DRILL_CYCLE_TICKS;
         boolean cycleStart = drillTick == 0 && drilling;
         if (cycleStart) {
-            // «Маршрут» бура и перекличка установок — одной лентой.
-            SectorScan belt = scanSurface(server, 8);
+            // «Маршрут» бура и перекличка установок — одной лентой, что и у
+            // планировщика сети: разная полоса рождала «невидимые» буры (#12).
+            SectorScan belt = scanSurface(server, WORK_BELT_Y);
             drillRegion = NetworkPlanner.connectedWorkRegion(
                 server, worldPosition, belt.workCells());
             cycleDrillCells = belt.drills();
@@ -1040,8 +1070,13 @@ public final class PlotnickBlockEntity extends BlockEntity
      * либо честный ответ, чего не хватает. ПКМ по той же кнопке — стоп.
      */
     private boolean startDrilling(ServerLevel server, ServerPlayer requester) {
+        if (!dismantleQueue.isEmpty()) {
+            // Разборка и бурение одновременно — противоречивые режимы (#9).
+            report(requester, "message.gonzotech.plotnick.drill.dismantle");
+            return true;
+        }
         // Перекличка по факту мира: любой бур в ленте, а не только меченый.
-        SectorScan belt = scanSurface(server, 8);
+        SectorScan belt = scanSurface(server, WORK_BELT_Y);
         drillRegion = NetworkPlanner.connectedWorkRegion(
             server, worldPosition, belt.workCells());
         cycleDrillCells = belt.drills();
@@ -1103,6 +1138,10 @@ public final class PlotnickBlockEntity extends BlockEntity
     /** бедрок/обсидиан/укрепленный дипслейт/барьер и все «нелегальные» блоки. */
     private static boolean isImmovable(BlockState state, ServerLevel server, BlockPos pos) {
         if (state.isAir()) return false;
+        // 0.3.263 (#19): блок с BlockEntity — не порода. Буру он не «добыча»:
+        // asItem() потерял бы содержимое, а destroyBlock вывалил бы его на
+        // землю. Такой шарх выводит скважину в «упёрлась» честно.
+        if (state.hasBlockEntity()) return true;
         float hardness = state.getDestroySpeed(server, pos);
         return hardness < 0F || hardness >= 50F;
     }
@@ -1116,13 +1155,14 @@ public final class PlotnickBlockEntity extends BlockEntity
             drillTargetY.remove(drillCell); // дальнейшее углубление запрещено
             return;
         }
+        Item mined = ts.isAir() ? null : ts.getBlock().asItem();
+        if (mined != null && !hasRoom(new ItemStack(mined))) return; // склад не примет — бур ждёт, порода не теряется (#5)
         if (consumeStored(ModMachines.BORE_PIPE.get().asItem(), 1) == 0) return;
         server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState(),
             net.minecraft.world.level.block.Block.UPDATE_ALL);
-        if (!ts.isAir()) {
+        if (mined != null) {
             // Порода/грунт сразу в Плотник — без выпадания предмета.
-            Item mined = ts.getBlock().asItem();
-            if (mined != null) insert(new ItemStack(mined));
+            insertOrDrop(new ItemStack(mined), target);
         }
         drillTargetY.put(drillCell, targetY - 1);
     }
@@ -1141,9 +1181,11 @@ public final class PlotnickBlockEntity extends BlockEntity
                 BlockPos pos = new BlockPos(drillCell.getX() + dx, y, drillCell.getZ() + dz);
                 BlockState state = server.getBlockState(pos);
                 if (state.isAir() || !MinerOres.isOre(state)) continue;
-                server.destroyBlock(pos, false, null);
                 Item item = state.getBlock().asItem();
-                if (item != null) insert(new ItemStack(item));
+                if (item == null) continue;
+                if (!hasRoom(new ItemStack(item))) continue; // нет места — руда ждёт в породе (#5)
+                server.destroyBlock(pos, false, null);
+                insertOrDrop(new ItemStack(item), pos);
             }
         }
     }
@@ -1163,6 +1205,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             buildQueue.clear();
             placeCooldown = 0;
             buildRequester = null;
+            buildStalled = false;
             changed = true;
         }
         if (!drillPoints.isEmpty() || !drillTargetY.isEmpty()) {
@@ -1231,15 +1274,21 @@ public final class PlotnickBlockEntity extends BlockEntity
             BlockState state = server.getBlockState(pos);
             if (!isPlotnickNetworkBlock(state.getBlock())) continue;
             // Динамит из разряжаемого источника — тоже домой, в Плотник.
+            // Берем ТОЛЬКО если приняли (insert вернул true) и до destroyBlock
+            // чистим слот: иначе MachineBlock.onRemove источника вывалит TNT
+            // ещё раз (замечание автора #3).
             if (server.getBlockEntity(pos) instanceof SeismicSourceBlockEntity source
                 && source.hasDynamite()) {
-                insert(new ItemStack(Items.TNT));
+                ItemStack tnt = new ItemStack(Items.TNT);
+                if (insert(tnt)) {
+                    source.setItem(SeismicSourceBlockEntity.SLOT_DYNAMITE, ItemStack.EMPTY);
+                }
             }
             server.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(state));
             server.destroyBlock(pos, false, null);
             Item item = state.getBlock().asItem();
             if (item != null) {
-                insert(new ItemStack(item));
+                insertOrDrop(new ItemStack(item), pos); // полный склад — на землю, не в void (#5)
                 dismantleReturned++;
             }
         }
@@ -1284,24 +1333,17 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /** Трубы сектора сверху вниз: Y по убыванию, внутри уровня — от ближних. */
     private List<BlockPos> collectPipesTopDown(ServerLevel server) {
-        int cx = worldPosition.getX() >> 4;
-        int cz = worldPosition.getZ() >> 4;
+        // 0.3.263, #8 (автор): вместо полного прохода 9 чанков (884 тыс.
+        // чтений) — только колонны 1×1 известных буров, от Y бура до низа
+        // мира. Трубы живут исключительно под бурами.
         net.minecraft.world.level.block.Block pipe = ModMachines.BORE_PIPE.get();
+        java.util.Set<BlockPos> cells = new java.util.LinkedHashSet<>(cycleDrillCells);
+        cells.addAll(collectSectorScan(server).drills());
         List<BlockPos> found = new ArrayList<>();
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                LevelChunk chunk = server.getChunk(cx + dx, cz + dz);
-                int baseX = (cx + dx) << 4;
-                int baseZ = (cz + dz) << 4;
-                for (int lx = 0; lx < 16; lx++) {
-                    for (int lz = 0; lz < 16; lz++) {
-                        for (int y = server.getMinY(); y <= server.getMaxY(); y++) {
-                            if (chunk.getBlockState(new BlockPos(lx, y, lz)).is(pipe)) {
-                                found.add(new BlockPos(baseX + lx, y, baseZ + lz).immutable());
-                            }
-                        }
-                    }
-                }
+        for (BlockPos cell : cells) {
+            for (int y = cell.getY() - 1; y >= server.getMinY(); y--) {
+                BlockPos pos = new BlockPos(cell.getX(), y, cell.getZ());
+                if (server.getBlockState(pos).is(pipe)) found.add(pos.immutable());
             }
         }
         found.sort((a, b) -> a.getY() != b.getY()
@@ -1385,8 +1427,9 @@ public final class PlotnickBlockEntity extends BlockEntity
     private ItemStack fillCell(int slot, ItemStack incoming) {
         ItemStack head = items.get(slot);
         if (head.isEmpty()) {
-            // Голова пустая: ставим до 64 сразу, остальное разложим ниже.
-            items.set(slot, incoming.split(Math.min(MAX_STACK, incoming.getCount())));
+            // Голова пустая: ставим до лимита предмета сразу, остальное разложим ниже.
+            int cap = capOf(incoming);
+            items.set(slot, incoming.split(Math.min(cap, incoming.getCount())));
             head = items.get(slot);
         } else if (!ItemStack.isSameItemSameComponents(head, incoming)) {
             return incoming;
@@ -1399,7 +1442,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         int room = CELL_CAPACITY - used;
         if (room <= 0 || incoming.isEmpty()) return incoming;
         int moved = Math.min(room, incoming.getCount());
-        int free = MAX_STACK - head.getCount();
+        int free = capOf(head) - head.getCount();
         if (free > 0 && moved > 0) {
             int toHead = Math.min(free, moved);
             head.grow(incoming.split(toHead).getCount());
@@ -1409,7 +1452,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             int idx = slot * (CELL_STACKS - 1) + i;
             ItemStack sub = bucketRest.get(idx);
             if (!sub.isEmpty() && !ItemStack.isSameItemSameComponents(sub, incoming)) continue;
-            int sp = sub.isEmpty() ? MAX_STACK : MAX_STACK - sub.getCount();
+            int sp = sub.isEmpty() ? capOf(incoming) : capOf(sub) - sub.getCount();
             if (sp <= 0) continue;
             int m = Math.min(sp, moved);
             ItemStack chunk = incoming.split(m);
@@ -1420,6 +1463,12 @@ public final class PlotnickBlockEntity extends BlockEntity
         return incoming.isEmpty() ? ItemStack.EMPTY : incoming;
     }
 
+    /** Потолок стопки: ваниальный 64, но не больше лимита самого предмета (#17). */
+    private static int capOf(ItemStack stack) {
+        int cap = stack.getMaxStackSize();
+        return cap > 0 ? Math.min(MAX_STACK, cap) : MAX_STACK;
+    }
+
     private static ItemStack insertInto(NonNullList<ItemStack> list, int slot, ItemStack incoming) {
         ItemStack current = list.get(slot);
         if (current.isEmpty()) {
@@ -1427,12 +1476,44 @@ public final class PlotnickBlockEntity extends BlockEntity
             return ItemStack.EMPTY;
         }
         if (!ItemStack.isSameItemSameComponents(current, incoming)) return incoming;
-        int space = MAX_STACK - current.getCount();
+        int space = capOf(current) - current.getCount();
         if (space <= 0) return incoming;
         int moved = Math.min(space, incoming.getCount());
         current.grow(moved);
         incoming.shrink(moved);
         return incoming.isEmpty() ? ItemStack.EMPTY : incoming;
+    }
+
+    /**
+     * Вставка с наземным запасным аэродромом: склад может не принять конкретный
+     * предмет (нет свободной ячейки/долитого типа) — тогда стопка падает у
+     * клетки, а не исчезает (замечание автора #5).
+     */
+    /**
+     * Есть ли куда положить эту стопку: пустая ячейка или недолив того же
+     * типа (0.3.263, #5): мир меняется только когда результат гарантированно
+     * куда-то денется.
+     */
+    public boolean hasRoom(ItemStack stack) {
+        if (stack.isEmpty()) return true;
+        Item item = stack.getItem();
+        for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
+            ItemStack head = items.get(slot);
+            if (head.isEmpty()) return true;
+            if (head.is(item) && cellStored(slot) < CELL_CAPACITY) return true;
+        }
+        int cap = Math.min(MAX_STACK, stack.getMaxStackSize());
+        for (ItemStack st : virtual) {
+            if (st.isEmpty()) return true;
+            if (ItemStack.isSameItemSameComponents(st, stack) && st.getCount() < cap) return true;
+        }
+        return false;
+    }
+
+    private void insertOrDrop(ItemStack stack, BlockPos near) {
+        if (stack.isEmpty() || insert(stack)) return;
+        if (level != null) level.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(
+            level, near.getX() + 0.5, near.getY() + 0.5, near.getZ() + 0.5, stack));
     }
 
     /** Сколько предметов той же вещи в ячейке вместе со скрытыми продолжениями. */
@@ -1545,31 +1626,32 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
+        // ВАЖНО (замечание автора #4): никакие пополнения головы здесь и в
+        // setItem недопустимы — воронка извлекает «пробно» и при отказе
+        // откатывает setItem(исходный стек), затёр бы поднятые 64 из
+        // продолжения. Витрину поднимает только rebalanceHeads() в тике —
+        // уже после завершения внешней операции.
         ItemStack result = ContainerHelper.removeItem(items, slot, amount);
-        if (!result.isEmpty()) {
-            if (slot < SLOTS_ACTIVE) rebalanceHeads();
-            setChanged();
-        }
+        if (!result.isEmpty()) setChanged();
         return result;
     }
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
-        ItemStack result = ContainerHelper.takeItem(items, slot);
-        if (slot < SLOTS_ACTIVE) rebalanceHeads();
-        return result;
+        return ContainerHelper.takeItem(items, slot);
     }
 
     @Override
     public void setItem(int slot, ItemStack stack) {
-        if (stack.getCount() > MAX_STACK) {
-            // Сторонний код (клик-мердж) не должен рождать стопку >64:
-            // излишек уезжает в хранилище, голова остаётся ваниальной.
-            ItemStack overflow = stack.split(stack.getCount() - MAX_STACK);
-            insert(overflow);
+        if (stack.getCount() > capOf(stack)) {
+            // Сторонний код (клик-мердж) не должен рождать стопку сверх лимита.
+            ItemStack overflow = stack.split(stack.getCount() - capOf(stack));
+            insertOrDrop(overflow, worldPosition);
         }
         items.set(slot, stack);
-        if (slot < SLOTS_ACTIVE) rebalanceHeads();
+        if (slot == SLOT_CARD_A || slot == SLOT_CARD_B) {
+            networkStatsDirty = true; // режим кнопок зависит от карты (#18-часть)
+        }
         setChanged();
     }
 
@@ -1596,12 +1678,10 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     @Override
     public void clearContent() {
-        items.clear();
-        for (int i = 0; i < CONTAINER_SIZE; i++) items.add(ItemStack.EMPTY);
-        virtual.clear();
-        for (int i = 0; i < VIRTUAL_SLOTS; i++) virtual.add(ItemStack.EMPTY);
-        bucketRest.clear();
-        for (int i = 0; i < SLOTS_ACTIVE * (CELL_STACKS - 1); i++) bucketRest.add(ItemStack.EMPTY);
+        // NonNullList.withSize фиксирован: set-петли, не clear()/add().
+        for (int i = 0; i < items.size(); i++) items.set(i, ItemStack.EMPTY);
+        for (int i = 0; i < virtual.size(); i++) virtual.set(i, ItemStack.EMPTY);
+        for (int i = 0; i < bucketRest.size(); i++) bucketRest.set(i, ItemStack.EMPTY);
     }
 
     @Override
@@ -1638,13 +1718,13 @@ public final class PlotnickBlockEntity extends BlockEntity
         // — в сайдкаре; при загрузке реальный размер возвращается.
         ListTag oversize = new ListTag();
         saveAllItemsClamped(items, tag, registries, oversize, 0);
-        ListTag virtualTag = new ListTag();
-        saveAllItemsClamped(virtual, virtualTag, registries, oversize, CONTAINER_SIZE);
-        tag.put("Virtual", virtualTag);
-        ListTag restTag = new ListTag();
-        saveAllItemsClamped(bucketRest, restTag, registries, oversize,
+        // Собственный формат (0.3.263, замечание автора #1): ContainerHelper
+        // пишет LOCAL «Slot» байтом/коротким числом — для 432 ячеек это
+        // переполнение, а наш загрузчик ещё и вычитал глобальный оффсет.
+        // Пишем свой список: int «I» = локальный индекс, стопка в «Item».
+        saveStackList(virtual, "Virtual", tag, registries, oversize, CONTAINER_SIZE);
+        saveStackList(bucketRest, "BucketRest", tag, registries, oversize,
             CONTAINER_SIZE + VIRTUAL_SLOTS);
-        tag.put("BucketRest", restTag);
         if (!oversize.isEmpty()) tag.put("OversizeCounts", oversize);
         if (!sectorMarkerIds.isEmpty()) {
             tag.putLongArray("SectorMarkers", sectorMarkerIds.stream()
@@ -1672,6 +1752,52 @@ public final class PlotnickBlockEntity extends BlockEntity
         tag.putInt("NetDrillsToPlace", netDrillsToPlace);
         savePosList(tag, "DismantleQueue", dismantleQueue);
         savePosList(tag, "TntQueue", tntQueue);
+    }
+
+    /** Свой формат длинного списка: int-локальный индекс + «Item»-стопка. */
+    private static void saveStackList(NonNullList<ItemStack> source, String key,
+            CompoundTag root, HolderLookup.Provider registries, ListTag oversize, int slotOffset) {
+        ListTag list = new ListTag();
+        for (int i = 0; i < source.size(); i++) {
+            ItemStack stack = source.get(i);
+            if (stack.isEmpty()) continue;
+            ItemStack toSave = stack;
+            if (stack.getCount() > SAVE_COUNT_LIMIT) {
+                CompoundTag extra = new CompoundTag();
+                extra.putInt("Slot", slotOffset + i);
+                extra.putInt("Extra", stack.getCount() - SAVE_COUNT_LIMIT);
+                oversize.add(extra);
+                toSave = stack.copy();
+                toSave.setCount(SAVE_COUNT_LIMIT);
+            }
+            CompoundTag cell = new CompoundTag();
+            cell.putInt("I", i);
+            cell.put("Item", toSave.save(registries));
+            list.add(cell);
+        }
+        if (!list.isEmpty()) root.put(key, list);
+    }
+
+    /**
+     * Чтение своего формата с fallback: старые записи ContainerHelper несут
+     * «Slot» — он ЛОКАЛЬНЫЙ (виртуал писался без смещения), вычитать нечего.
+     */
+    private static void loadStackList(CompoundTag root, String key, NonNullList<ItemStack> target,
+            HolderLookup.Provider registries) {
+        for (int i = 0; i < target.size(); i++) target.set(i, ItemStack.EMPTY);
+        ListTag list = root.getList(key, Tag.TAG_COMPOUND);
+        int seq = 0;
+        for (Tag entry : list) {
+            CompoundTag cell = (CompoundTag) entry;
+            int index = cell.contains("I") ? cell.getInt("I")
+                : (cell.contains("Slot") ? cell.getInt("Slot") : seq);
+            seq++;
+            if (index < 0 || index >= target.size()) continue;
+            ItemStack stack = cell.contains("Item")
+                ? ItemStack.parseOptional(registries, cell.getCompound("Item"))
+                : ItemStack.parseOptional(registries, cell);
+            if (!stack.isEmpty()) target.set(index, stack);
+        }
     }
 
     /** Сохраняет список стопок через ContainerHelper, урезая count до 99. */
@@ -1716,15 +1842,15 @@ public final class PlotnickBlockEntity extends BlockEntity
         List<ItemStack> overflow = new ArrayList<>();
         for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
             ItemStack stack = items.get(slot);
-            if (stack.getCount() > MAX_STACK) overflow.add(stack.split(stack.getCount() - MAX_STACK));
+            if (stack.getCount() > capOf(stack)) overflow.add(stack.split(stack.getCount() - capOf(stack)));
         }
         for (int slot = 0; slot < bucketRest.size(); slot++) {
             ItemStack stack = bucketRest.get(slot);
-            if (stack.getCount() > MAX_STACK) overflow.add(stack.split(stack.getCount() - MAX_STACK));
+            if (stack.getCount() > capOf(stack)) overflow.add(stack.split(stack.getCount() - capOf(stack)));
         }
         for (int slot = 0; slot < VIRTUAL_SLOTS; slot++) {
             ItemStack stack = virtual.get(slot);
-            if (stack.getCount() > MAX_STACK) overflow.add(stack.split(stack.getCount() - MAX_STACK));
+            if (stack.getCount() > capOf(stack)) overflow.add(stack.split(stack.getCount() - capOf(stack)));
         }
         for (ItemStack rest : overflow) insert(rest);
     }
@@ -1765,30 +1891,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         for (long markerId : tag.getLongArray("SectorMarkers")) {
             sectorMarkerIds.add(markerId);
         }
-        for (int i = 0; i < VIRTUAL_SLOTS; i++) virtual.set(i, ItemStack.EMPTY);
-        // Новый формат пишет «Slot» (как ContainerHelper); старый был списком
-        // по порядку — для него индекс просто идёт последовательно.
-        ListTag virtualTag = tag.getList("Virtual", Tag.TAG_COMPOUND);
-        int seq = 0;
-        for (Tag entry : virtualTag) {
-            CompoundTag cell = (CompoundTag) entry;
-            // «Slot» пишется ContainerHelper с глобальным оффсетом — снимаем.
-            int index = cell.contains("Slot") ? cell.getInt("Slot") - CONTAINER_SIZE : seq;
-            seq++;
-            if (index < 0 || index >= VIRTUAL_SLOTS) continue;
-            virtual.set(index, ItemStack.parseOptional(registries, cell));
-        }
-        for (int i = 0; i < bucketRest.size(); i++) bucketRest.set(i, ItemStack.EMPTY);
-        ListTag restTag = tag.getList("BucketRest", Tag.TAG_COMPOUND);
-        int restSeq = 0;
-        for (Tag entry : restTag) {
-            CompoundTag cell = (CompoundTag) entry;
-            int index = cell.contains("Slot")
-                ? cell.getInt("Slot") - (CONTAINER_SIZE + VIRTUAL_SLOTS) : restSeq;
-            restSeq++;
-            if (index < 0 || index >= bucketRest.size()) continue;
-            bucketRest.set(index, ItemStack.parseOptional(registries, cell));
-        }
+        loadStackList(tag, "Virtual", virtual, registries);
+        loadStackList(tag, "BucketRest", bucketRest, registries);
         restoreOversizeCounts(tag);
         normalizeStacks(); // легаси-стопки 512 → ванильные 64 по ячейкам/виртуали
         drillPoints.clear();
@@ -1820,9 +1924,12 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     public void dropContentsForBreak() {
         if (level == null || level.isClientSide()) return;
+        // Дропим ОДИН раз и гасим контейнер: MachineBlock.onRemove после
+        // super-вызова вывалил бы items повторно (замечание автора #2).
         for (ItemStack stack : items) dropSized(stack);
         for (ItemStack stack : bucketRest) dropSized(stack);
         for (ItemStack stack : virtual) dropSized(stack);
+        clearContent();
     }
 
     /** Выдаёт содержимое дробными стопками ≤ лимита предмета — краш-защита. */

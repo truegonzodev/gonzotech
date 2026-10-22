@@ -119,8 +119,10 @@ public final class PlotnickScreen extends MachineScreen<PlotnickMenu> {
     private Slot hoveredGoodsSlot(int mouseX, int mouseY) {
         int lx = mouseX - this.leftPos;
         int ly = mouseY - this.topPos;
-        for (Slot slot : this.menu.slots()) {
-            if (slot.index >= PlotnickBlockEntity.SLOTS_ACTIVE) break;
+        // 1.21.4: публичного menu.slots() в экране нет — берём 9 товарных
+        // слотов через getSlot(index).
+        for (int k = 0; k < PlotnickBlockEntity.SLOTS_ACTIVE; k++) {
+            Slot slot = this.menu.getSlot(k);
             if (slot.hasItem() && inRect(lx, ly, slot.x, slot.y, 18, 18)) return slot;
         }
         return null;
