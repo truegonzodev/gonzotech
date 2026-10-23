@@ -58,12 +58,4 @@ public final class RadiationClickWatch {
         Long mark = LAST_CLICK.get(player.getUUID());
         return mark != null && nowTick - mark < FREEZE_TICKS;
     }
-
-    /** Кто-то в мире кликает — скан BE-контейнеров в этом цикле не пишет. */
-    public static boolean worldFrozen(ServerLevel level, long nowTick) {
-        for (ServerPlayer player : level.players()) {
-            if (recentlyClicked(player, nowTick)) return true;
-        }
-        return false;
-    }
 }

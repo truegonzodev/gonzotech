@@ -14,6 +14,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -185,9 +187,18 @@ public final class RadiationSystem {
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
         // (0.3.271, автор 23.10) Игрок кликает по GUI — стаки не пишем: запись в
         // окне между предсказанием клиента и обработкой клика = дюп через carried.
-        boolean clickFrozen = RadiationClickWatch.recentlyClicked(player, nowTick);
+        // (0.3.274, раунд автора 23.10 вечер) Миксин-стража мертва: лог автора —
+        // включённый флаг, живые изменения инвентаря, ноль строк клика при том,
+        // что markClick вызывается до всякого конфига. Guard не может зависеть от
+        // трансформации, которую нельзя доказать: primary сигнал — открытое меню
+        // (окно оптимистичного предсказания 1.21.2+ живёт ровно пока меню
+        // открыто). recentlyClicked остаётся вторым слоем: если миксин оживёт
+        // (или оживает на проде), окно клика крыто и без открытого меню.
+        boolean menuOpen = player.containerMenu != player.inventoryMenu;
+        boolean clickFrozen = menuOpen || RadiationClickWatch.recentlyClicked(player, nowTick);
         boolean debugInv = GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get();
         int debugTouched = 0;
+        int debugItemCount = 0;
 
         // Скан полной эмиссии инвентаря; максимум и второй максимум используются
         // только для локальной логистики наведёнки предметов, не для переноса в чанк.
@@ -284,7 +295,10 @@ public final class RadiationSystem {
                                 stack, hasSourceContext, stackSource, factor, nowTick);
                 }
                 induced += perItem * count;
-                if (debugInv) debugTouched++;
+                if (debugInv) {
+                    debugTouched++;
+                    debugItemCount += stack.getCount();
+                }
                 if (tracing && (ownEmission > 0.0 || oldInduced > 0.0 || perItem > 0.0)) {
                     RadiationTrace.log(level, player.blockPosition(), "ПРЕДМЕТЫ ИНВЕНТАРЯ ↔ ДОЗА ИГРОКА",
                             inventoryCompartmentName(compartmentIndex) + " слот " + slot
@@ -309,9 +323,10 @@ public final class RadiationSystem {
             Long logPrevNs = LAST_PASS_LOG_NS.get(player.getUUID());
             if (logPrevNs == null || logNowNs - logPrevNs > 950_000_000L) {
                 LAST_PASS_LOG_NS.put(player.getUUID(), logNowNs);
-                RAD_INV_LOG.info("[RAD-INV] {}: проход инвентаря t={} — {} стак(ов), carried {} шт, {}{} (frozen={})",
-                    player.getGameProfile().getName(), nowTick, debugTouched,
+                RAD_INV_LOG.info("[RAD-INV] {}: проход инвентаря t={} — {} стак(ов), {} шт, carried {} шт, меню {}, {}{} (frozen={})",
+                    player.getGameProfile().getName(), nowTick, debugTouched, debugItemCount,
                     carriedStack.getCount(),
+                    menuOpen ? player.containerMenu.getClass().getSimpleName() : "нет",
                     clickFrozen ? "запись заморожена" : "запись выполнена",
                     "", clickFrozen);
             }
@@ -484,6 +499,26 @@ public final class RadiationSystem {
         };
     }
 
+    /**
+     * (0.3.274, локализация N2) Смотрит ли кто-то этот контейнер прямо сейчас:
+     * слот открытого меню указывает на SAME-экземпляр Container. Проверка по
+     * идентичности, без реестров и событий — состояние меню сервера и есть
+     * реестр. Открытый GUI = открытое окно оптимистичного предсказания клиента
+     * (stateId/setRemoteSlotNoCopy, 1.21.2+): физическая запись в просматриваемый
+     * контейнер в этом окне и рождает расхождение картинки; доза и эмиссии
+     * считаются, NBT догонит лениво после закрытия.
+     */
+    private static boolean isContainerViewed(ServerLevel level, Container container) {
+        for (ServerPlayer viewer : level.players()) {
+            AbstractContainerMenu menu = viewer.containerMenu;
+            if (menu == null || menu == viewer.inventoryMenu) continue;
+            for (Slot slot : menu.slots) {
+                if (slot.container == container) return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean hasVisualInstrument(ServerPlayer player) {
         return player.getMainHandItem().is(ModItems.DOSIMETER.get())
                 || player.getMainHandItem().is(ModItems.TELIFON.get())
@@ -548,16 +583,17 @@ public final class RadiationSystem {
     private static void scanContainersInto(ServerLevel level, long chunkKey,
                                            ChunkRadiationData data, long nowTick) {
         if (!claimContentScan(level, chunkKey, nowTick)) return;
-        // (0.3.271) Пока кто-то из игроков кликает по контейнеру, содержимое BE
-        // не переписываем (эмиссии считаются по текущим стекам, разряд догонит
-        // лениво на следующем цикле) — окно drag&drop не рождает дюпы.
-        boolean clickFrozen = RadiationClickWatch.worldFrozen(level, nowTick);
+        // (0.3.274, N2 локализация автора) Глобальная «кто-то кликает» заморозка
+        // снята: пишем запрет только тому контейнеру, который кто-то СМОТРИТ —
+        // его слоты участвуют в предсказании клиента, и окно записи там закрыто
+        // на всё время открытого GUI. Остальные контейнеры чанка не простаивают.
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
         double contamination = data.contaminationOf(chunkKey);
         double containerTransfer = 0.0D;
         double leadChestTransfer = 0.0D;
         for (BlockEntity be : chunk.getBlockEntities().values()) {
             if (!(be instanceof Container container)) continue;
+            boolean clickFrozen = isContainerViewed(level, container);
             boolean leadChest = be.getBlockState().getBlock()
                     instanceof com.gonzotech.machines.block.ThirdLeadChestBlock;
             double mine = 0.0D;

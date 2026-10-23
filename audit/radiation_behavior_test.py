@@ -46,8 +46,11 @@ mixin = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.
 # 1.21.4 play-пакеты в protocol.game; цель миксина — по имени (уникально), без хрупкого дескриптора.
 assert 'method = "handleContainerClick"' in mixin
 assert "protocol/play" not in mixin
-assert "clickFrozen = RadiationClickWatch.recentlyClicked(player, nowTick)" in system
-assert "clickFrozen = RadiationClickWatch.worldFrozen(level, nowTick)" in system
+# 0.3.274: guard не зависит от миксина — открытое меню = первичный сигнал.
+assert "boolean menuOpen = player.containerMenu != player.inventoryMenu" in system
+assert "clickFrozen = menuOpen || RadiationClickWatch.recentlyClicked(player, nowTick)" in system
+assert "boolean clickFrozen = isContainerViewed(level, container)" in system, "BE-заморозка не локализована (N2)"
+assert "slot.container == container" in system
 assert "if (!clickFrozen) changed |=" in system, "BE-контейнеры пишут в окне клика"
 assert "!frozen && (periodicFlush || !hardUse && !inSoftCd)" in system
 assert "peekInducedAt" in item_rad and "clickFrozen\n                            ? ItemRadioactivity.peekInducedAt" in system
