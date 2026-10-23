@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.275$", props, re.M), "mod_version != 0.3.275"
+assert re.search(r"^mod_version=0\.3\.276$", props, re.M), "mod_version != 0.3.276"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -510,6 +510,13 @@ _sys275 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java") 
     .read_text(encoding="utf-8")
 for _dead in ("RadiationClickWatch", "clickFrozen", "menuOpen", "isContainerViewed"):
     assert _dead not in _sys275, f"{_dead}: след паузы в RadiationSystem"
+# 0.3.276: защита всасывания changedSlots (корень дюпа 1.21.4) + тик-бэкстоп.
+assert "gonzotech$rejectInflatedClick" in _m275 and "callback.cancel()" in _m275, \
+    "reject раздутых changedSlots пропал из миксина"
+assert "ОТВЕРГНУТ" in _m275 and "broadcastFullState()" in _m275
+assert "ClickType.CLONE" in _m275, "креатив-набор будет ложно отвергнут"
+assert "раздутый стак" in _sys275 and "getMaxStackSize(stack)" in _sys275, \
+    "тик-бэкстоп раздутых стаков пропал (вторая линия без миксина)"
 for _lng in ("en_us", "ru_ru"):
     _j = _json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{_lng}.json").read_text(encoding="utf-8"))
     for _k in ("gonzotech.configuration.radiationInventoryDebug",

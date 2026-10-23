@@ -17,22 +17,32 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * (0.3.275, вердикт автора 23.10) ЧИСТАЯ ДИАГНОСТИКА: с каждого клика по
- * контейнеру печатает серверные суммы (предметы и наведённая радиация, слоты +
- * carried) до и после — это доказательный инструмент: рост суммы = физический
- * дюп, стабильная = расхождение картинки. Guard'ы-паузы (271–274) удалены:
- * «пауза — неверное вмешательство» (замороженные интервалы ленивый догон
- * считал покоем и сжигал наведёнку, а дюп живость стражи не остановила).
+ * (0.3.276) Диагностика + защитник всасывания предсказания.
  *
- * <p>Живость миксина доказана прогоном автора 23.10 (строка «ПРИМЕНЁН» +
- * mixin-debug о обоих инжекторах). Статический блок при загрузке класса
- * оставлен: он отделяет «трансформация не применилась» от «дельт не было».
- * При включённом флаге клик пишет и дельту РАДИАЦИИ (Σ per-item×count всех
- * слотов + курсор), а не только дельту предметов — обнуление carried видно
- * именно так.</p>
+ * <p>Диагностика: с каждого клика по контейнеру печатает серверные суммы
+ * (предметы и наведённая радиация, слоты + carried) до и после — рост суммы
+ * = физический дюп, стабильная = расхождение картинки. Guard'ы-паузы
+ * (271–274) удалены по вердикту автора: «пауза — неверное вмешательство»
+ * (замороженные интервалы ленивый догон считал покоем и сжигал наведёнку,
+ * а дюп живость стражи не остановила).</p>
  *
- * <p>Миксин ничего не меняет: клик-пометка (RadiationClickWatch) удалена
- * вместе с паузами — файл guard'ов больше не существует.</p>
+ * <p>Защитник (0.3.276): в 1.21.4 handleContainerClick выполняет clicked(),
+ * а ЗАТЕМ поглощает changedSlots клиента через setRemoteSlotNoCopy без каких-либо
+ * проверок — stale-копия из раздутой картинки становится серверной правдой
+ * (дюп, переживающий перезаход; тот же механизм откатывает наши NBT-записи).
+ * Легальный клик не увеличивает сумму предметов меню (крафт только уносит),
+ * CLONE — единственный штатный рост, и он исключение. Заявлено больше, чем
+ * содержит сервер, либо слот раздут выше собственного лимита — пакет
+ * отвергается ДО clicked() и клиент ресинхронизируется broadcastFullState.
+ * Отказ фиксируется unconditional-WARN (без гейта конфига): его нечем
+ * «не заметить».</p>
+ *
+ * <p>Живость трансформации доказана прогоном автора 23.10 (строка «ПРИМЕНЁН»
+ * + mixin-debug о обоих инжекторах); unconditional-блок при загрузке класса
+ * оставлен: он отделяет «трансформация не применилась» от «строк не было».
+ * Аномалию «клики drag&drop были — клик-строк ноль» (автор подтвердил клики
+ * и подвешенный carried, лог «carried 0» при этом неверен) новая unconditional
+ * WARN-строка отказа должна разрешить окончательно.</p>
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ContainerClickRadiationMixin {
@@ -76,6 +86,10 @@ public abstract class ContainerClickRadiationMixin {
             at = @At("HEAD"))
     private void gonzotech$snapshotContainerClick(ServerboundContainerClickPacket packet, CallbackInfo callback) {
         if (this.player == null) return;
+        if (this.gonzotech$rejectInflatedClick(packet)) {
+            callback.cancel();
+            return;
+        }
         if (GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get()) {
             this.gonzotech$radBefore = gonzotech$snapshot(this.player.containerMenu);
             if (gonzotech$allowClickLog()) {
@@ -115,6 +129,32 @@ public abstract class ContainerClickRadiationMixin {
             formatNzt(Double.doubleToRawLongBits(afterRad - beforeRad)),
             this.gonzotech$radBefore[2], after[2],
             this.player.containerMenu.getClass().getSimpleName());
+    }
+
+    /** Сумма-инвариант предсказания: см. javadoc. true = пакет отвергнут. */
+    @Unique
+    private boolean gonzotech$rejectInflatedClick(ServerboundContainerClickPacket packet) {
+        AbstractContainerMenu menu = this.player.containerMenu;
+        if (menu == null || menu.containerId != packet.getContainerId()) return false;
+        // CLONE — штатный «творческий» набор (middle-click): сумма легально
+        // растёт серверным clicked(), не трогаем.
+        if (packet.getClickType() == net.minecraft.world.inventory.ClickType.CLONE) return false;
+        long claimed = packet.getCarriedItem().getCount();
+        for (var entry : packet.getChangedSlots().int2ObjectEntrySet()) {
+            if (!menu.isValidSlotIndex(entry.getIntKey())) continue; // vanilla и так игнорит
+            claimed += ((ItemStack) entry.getValue()).getCount();
+        }
+        long actual = menu.getCarried().getCount();
+        for (Slot slot : menu.slots) {
+            ItemStack stack = slot.getItem();
+            if (!stack.isEmpty()) actual += stack.getCount();
+        }
+        if (claimed <= actual) return false;
+        GONZOTECH$LOG.warn("[RAD-INV] {} клик ОТВЕРГНУТ (slot={}, carried={} шт): клиент заявляет {} шт, сервер содержит {} (+{}) — поглощение раздутого предсказания запрещено, принудительный ресинк",
+            this.player.getGameProfile().getName(), packet.getSlotNum(),
+            packet.getCarriedItem().getCount(), claimed, actual, claimed - actual);
+        menu.broadcastFullState();
+        return true;
     }
 
     @Unique

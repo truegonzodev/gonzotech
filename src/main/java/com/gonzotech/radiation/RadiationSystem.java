@@ -319,6 +319,38 @@ public final class RadiationSystem {
             heldIt.remove();
         }
 
+        // (0.3.276) Тик-бэкстоп раздутых стаков — независимая от миксина
+        // линия: даже если окно всасывания (changedSlots → setRemoteSlotNoCopy
+        // ПОСЛЕ clicked, 1.21.4) пропустит аномалию, стак, физически
+        // превышающий лимит своего слота, срезается здесь же за секунду.
+        // Отрезанное не возвращается молча: WARN с item-id — это улика дюпа.
+        AbstractContainerMenu openMenu = player.containerMenu;
+        if (openMenu != null) {
+            for (Slot slot : openMenu.slots) {
+                ItemStack stack = slot.getItem();
+                if (stack.isEmpty()) continue;
+                int max = slot.getMaxStackSize(stack);
+                if (stack.getCount() > max) {
+                    RAD_INV_LOG.warn("[RAD-INV] {}: раздутый стак {} — {}→{} шт (slot {}, {}); срезано бэкстопом 0.3.276",
+                            player.getGameProfile().getName(),
+                            BuiltInRegistries.ITEM.getKey(stack.getItem()),
+                            stack.getCount(), max, slot.getSlotIndex(),
+                            slot.container.getClass().getSimpleName());
+                    stack.setCount(max);
+                    slot.set(stack);
+                }
+            }
+            ItemStack carriedNow = openMenu.getCarried();
+            if (!carriedNow.isEmpty() && carriedNow.getCount() > carriedNow.getMaxStackSize()) {
+                RAD_INV_LOG.warn("[RAD-INV] {}: раздутый carried {} — {}→{} шт; срезано бэкстопом 0.3.276",
+                        player.getGameProfile().getName(),
+                        BuiltInRegistries.ITEM.getKey(carriedNow.getItem()),
+                        carriedNow.getCount(), carriedNow.getMaxStackSize());
+                carriedNow.setCount(carriedNow.getMaxStackSize());
+                openMenu.setCarried(carriedNow);
+            }
+        }
+
         if (debugInv) {
             // (0.3.273) Реалтаймовый шлюз 1 строка/с на игрока: на tickRate 2000
             // лог с периодом 20 тиков давал 100 строк/с и сам кормил
