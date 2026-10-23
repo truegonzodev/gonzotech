@@ -42,7 +42,7 @@ public final class RadiationClickWatch {
 
     /** Кто-то в мире кликает — скан BE-контейнеров в этом цикле не пишет. */
     public static boolean worldFrozen(ServerLevel level, long nowTick) {
-        for (ServerPlayer player : level.getPlayers()) {
+        for (ServerPlayer player : level.players()) {
             if (recentlyClicked(player, nowTick)) return true;
         }
         return false;
