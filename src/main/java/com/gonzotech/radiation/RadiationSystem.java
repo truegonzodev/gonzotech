@@ -70,6 +70,8 @@ import java.util.WeakHashMap;
 public final class RadiationSystem {
     private static final org.slf4j.Logger RAD_INV_LOG =
         org.slf4j.LoggerFactory.getLogger("gonzotech/radiation-inventory");
+    /** Шлюз дебаг-лога прохода: nanos последней строки на игрока (0.3.273). */
+    private static final Map<UUID, Long> LAST_PASS_LOG_NS = new java.util.concurrent.ConcurrentHashMap<>();
 
 
     // ── доза → шкала ──
@@ -189,8 +191,16 @@ public final class RadiationSystem {
 
         // Скан полной эмиссии инвентаря; максимум и второй максимум используются
         // только для локальной логистики наведёнки предметов, не для переноса в чанк.
-        List<List<ItemStack>> compartments = List.of(
-                player.getInventory().items, player.getInventory().armor, player.getInventory().offhand);
+        // (0.3.273, раунд автора 23.10) Курсор участвует в проходе на равных:
+        // предмет, взятый в carried, излучает и получает дозу. Раньше он был вне
+        // прохода (документированное поведение N3), и автор зафиксировал это как
+        // баг: «не принимает и не излучает». Физическая запись в курсор защищена
+        // тем же clickFrozen, что и слоты: окно клика стаки не трогаем.
+        ItemStack carriedStack = player.containerMenu.getCarried();
+        List<List<ItemStack>> compartments = carriedStack.isEmpty()
+                ? List.of(player.getInventory().items, player.getInventory().armor, player.getInventory().offhand)
+                : List.of(player.getInventory().items, player.getInventory().armor, player.getInventory().offhand,
+                        List.of(carriedStack));
         // 0.3.83: суммы — с рекурсивным обходом вложенных хранилищ (шалкер/
         // связка/мод-контейнер фонят как россыпь; экран только у носителей).
         double intrinsic = 0.0;
@@ -292,10 +302,19 @@ public final class RadiationSystem {
         }
 
         if (debugInv) {
-            RAD_INV_LOG.info("[RAD-INV] {}: проход инвентаря t={} — {} стак(ов), {}{} (frozen={})",
-                player.getGameProfile().getName(), nowTick, debugTouched,
-                clickFrozen ? "запись заморожена" : "запись выполнена",
-                "", clickFrozen);
+            // (0.3.273) Реалтаймовый шлюз 1 строка/с на игрока: на tickRate 2000
+            // лог с периодом 20 тиков давал 100 строк/с и сам кормил
+            // «Can't keep up» — данные от этого плотнее не становятся.
+            long logNowNs = System.nanoTime();
+            Long logPrevNs = LAST_PASS_LOG_NS.get(player.getUUID());
+            if (logPrevNs == null || logNowNs - logPrevNs > 950_000_000L) {
+                LAST_PASS_LOG_NS.put(player.getUUID(), logNowNs);
+                RAD_INV_LOG.info("[RAD-INV] {}: проход инвентаря t={} — {} стак(ов), carried {} шт, {}{} (frozen={})",
+                    player.getGameProfile().getName(), nowTick, debugTouched,
+                    carriedStack.getCount(),
+                    clickFrozen ? "запись заморожена" : "запись выполнена",
+                    "", clickFrozen);
+            }
         }
         // Пересобираем полную эмиссию после обновления вложенных слотов. Каждый
         // верхний стак входит ровно раз; виртуальная наведёнка активной руки
@@ -460,6 +479,7 @@ public final class RadiationSystem {
             case 0 -> "инвентарь/горячая панель";
             case 1 -> "броня";
             case 2 -> "вторая рука";
+            case 3 -> "курсор (в руке)";
             default -> "слот " + compartment;
         };
     }
@@ -700,6 +720,7 @@ public final class RadiationSystem {
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
             LAST_SWING.remove(player.getUUID());
+            LAST_PASS_LOG_NS.remove(player.getUUID());
             HELD_RAD.entrySet().removeIf(entry -> entry.getKey().player().equals(player.getUUID()));
             RadSickness.forget(player.getUUID());
             RadCleanse.forget(player.getUUID());

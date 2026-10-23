@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.272$", props, re.M), "mod_version != 0.3.272"
+assert re.search(r"^mod_version=0\.3\.273$", props, re.M), "mod_version != 0.3.273"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -495,6 +495,24 @@ _mix = _json.loads((ROOT / "src/main/resources/gonzotech.mixins.json").read_text
 assert "ContainerClickRadiationMixin" in _mix["mixins"], "миксин кликов вылетел из конфиг-листа"
 assert "radiationInventoryDebug" in (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java") \
     .read_text(encoding="utf-8"), "нет тумблера серверного дебаггера инвентаря"
+
+# 0.3.273: доказуемость миксина + хигиена дебаггера (раунд автора 23.10 вечер).
+_m273 = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java") \
+    .read_text(encoding="utf-8")
+assert "ПРИМЕНЁН" in _m273, "нет unconditional-строки живости миксина"
+assert "allowClickLog()" in _m273, "клик-строки не защищены реалтаймовым шлюзом"
+_watch273 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationClickWatch.java") \
+    .read_text(encoding="utf-8")
+assert "FREEZE_TICKS = 30" in _watch273, "окно заморозки снова равно периоду прохода (фазовая дыра)"
+assert "public static boolean allowClickLog()" in _watch273
+for _lng in ("en_us", "ru_ru"):
+    _j = _json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{_lng}.json").read_text(encoding="utf-8"))
+    for _k in ("gonzotech.configuration.radiationInventoryDebug",
+               "gonzotech.configuration.radiationInventoryDebug.tooltip",
+               "gonzotech.configuration.section.gonzotech.server.toml",
+               "gonzotech.configuration.section.gonzotech.client.toml",
+               "gonzotech.configuration.title"):
+        assert _k in _j, f"{_lng}: нет ключа конфига {_k}"
 
 # 0.3.271: стража кликов — радиация не пишет в стаки окна drag&drop (дюп-фикс).
 assert (ROOT / "src/main/java/com/gonzotech/radiation/RadiationClickWatch.java").exists(), \

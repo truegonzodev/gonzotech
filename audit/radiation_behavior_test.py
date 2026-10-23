@@ -30,8 +30,13 @@ cfg = (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java").
 assert "radiationInventoryDebug" in cfg
 _mixin272 = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java") \
     .read_text(encoding="utf-8")
-assert "gonzotech$countContainerItems" in _mixin272 and 'at = @At(\'RETURN\')'.replace("\'", chr(34)) in _mixin272
+assert "gonzotech$snapshot" in _mixin272 and 'at = @At(\'RETURN\')'.replace("\'", chr(34)) in _mixin272
 assert "RAD_INV_LOG" in system and "debugInv" in system
+
+# 0.3.273 (раунд 2): carried участвует в проходе, лог проходов с реалтайм-шлюзом.
+assert "player.containerMenu.getCarried()" in system, "курсор снова вне радиационного прохода"
+assert "LAST_PASS_LOG_NS" in system, "нет реалтаймового шлюза лога проходов (flood на 2000 tps)"
+assert 'case 3 -> "курсор (в руке)"' in system
 
 # 0.3.271 (dupe guard): physical writes freeze while a player clicks a container;
 # dose math continues from virtual values.
