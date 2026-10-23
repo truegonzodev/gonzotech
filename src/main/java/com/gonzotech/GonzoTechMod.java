@@ -268,6 +268,17 @@ public class GonzoTechMod {
         // Эффекты кризиса: фиксация камеры, ложный экран смерти, ЛКМ-«использование предмета».
         com.gonzotech.core.psyche.PsycheCrisisNetwork.register(registrar);
 
+        registrar.playToServer(
+            com.gonzotech.radiation.InventoryLedgerPayload.TYPE,
+            com.gonzotech.radiation.InventoryLedgerPayload.STREAM_CODEC,
+            (payload, context) -> {
+                net.minecraft.server.level.ServerPlayer sender = context.sender().getPlayer();
+                if (sender != null) {
+                    context.enqueueWork(() -> com.gonzotech.radiation.RadiationSystem
+                            .acceptLedger(sender, payload.clientSum()));
+                }
+            });
+
         registrar.playToClient(
             com.gonzotech.radiation.RadiationVisualPayload.TYPE,
             com.gonzotech.radiation.RadiationVisualPayload.STREAM_CODEC,

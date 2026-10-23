@@ -128,6 +128,32 @@ public final class RadiationSystem {
     private static final Map<UUID, Integer> LAST_SWING = new HashMap<>();
     /** Виртуальная радиация активного предмета: не трогаем carried NBT во время действия. */
     private static final Map<HeldKey, HeldRadState> HELD_RAD = new HashMap<>();
+    /**
+     * (0.3.277) Инвентарный журнал против «все всё дюпают»: Σ предметов
+     * открытого меню (+курсор), посчитанная сервером на проходе, против суммы
+     * того же меню, посчитанной КЛИЕНТОМ и присланной раз в секунду. Серверная
+     * растёт = физический дюп (кто-то добавляет предметы серверу). Расхождение
+     * клиент>сервер без роста серверной = призрак картинки. Пары:
+     * [сервер, клиент].
+     */
+    private static final Map<java.util.UUID, long[]> LEDGER = new HashMap<>();
+    private static final Map<java.util.UUID, Long> LEDGER_CLIENT = new HashMap<>();
+
+    /** Значение клиентской суммы из {@link InventoryLedgerPayload}. */
+    public static void acceptLedger(ServerPlayer player, long clientSum) {
+        LEDGER_CLIENT.put(player.getUUID(), clientSum);
+    }
+
+    /** Сумма предметов меню по единой для сервера и клиента формуле. */
+    public static long menuItemCount(AbstractContainerMenu menu) {
+        long sum = menu.getCarried().getCount();
+        for (Slot slot : menu.slots) {
+            ItemStack stack = slot.getItem();
+            if (!stack.isEmpty()) sum += stack.getCount();
+        }
+        return sum;
+    }
+
     /** Один скан содержимого на чанк, общий для всех игроков в нём. */
     private static final Map<ServerLevel, Map<Long, Long>> LAST_CONTENT_SCAN =
             Collections.synchronizedMap(new WeakHashMap<>());
@@ -351,6 +377,27 @@ public final class RadiationSystem {
                 carriedNow.setCount(carriedNow.getMaxStackSize());
                 openMenu.setCarried(carriedNow);
             }
+        }
+
+        // (0.3.277) [LEDGER] — одна строка на изменение пары сумм или на любое
+        // расхождение сервер/клиент. Это арбитр спора «дюп vs призрак»: видно,
+        // ЧЬЯ именно сторона набрала предметы.
+        long serverSum = menuItemCount(player.containerMenu);
+        Long clientBox = LEDGER_CLIENT.get(player.getUUID());
+        long clientSum = clientBox == null ? serverSum : clientBox;
+        long[] prev = LEDGER.get(player.getUUID());
+        if (prev == null || prev[0] != serverSum || prev[1] != clientSum || serverSum != clientSum) {
+            long dSrv = prev == null ? 0 : serverSum - prev[0];
+            long dCli = prev == null ? 0 : clientSum - prev[1];
+            if (serverSum != clientSum || dSrv != 0) {
+                RAD_INV_LOG.warn("[LEDGER] {}: сервер Σ={} (Δ{}) | клиент Σ={} (Δ{}) | расхождение {}",
+                        player.getGameProfile().getName(), serverSum, dSrv, clientSum, dCli,
+                        clientSum - serverSum);
+            } else if (debugInv) {
+                RAD_INV_LOG.info("[LEDGER] {}: сервер Σ={} | клиент Σ={} (совпадают)",
+                        player.getGameProfile().getName(), serverSum, clientSum);
+            }
+            LEDGER.put(player.getUUID(), new long[]{serverSum, clientSum});
         }
 
         if (debugInv) {
@@ -772,6 +819,8 @@ public final class RadiationSystem {
             RadiationTrace.stop(player, "выход из игры");
             DOSE_ACC.remove(player.getUUID());
             SHED_ACC.remove(player.getUUID());
+            LEDGER.remove(player.getUUID());
+            LEDGER_CLIENT.remove(player.getUUID());
             LAST_SWING.remove(player.getUUID());
             LAST_PASS_LOG_NS.remove(player.getUUID());
             HELD_RAD.entrySet().removeIf(entry -> entry.getKey().player().equals(player.getUUID()));

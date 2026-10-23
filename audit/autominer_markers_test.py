@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.276$", props, re.M), "mod_version != 0.3.276"
+assert re.search(r"^mod_version=0\.3\.277$", props, re.M), "mod_version != 0.3.277"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -510,13 +510,21 @@ _sys275 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java") 
     .read_text(encoding="utf-8")
 for _dead in ("RadiationClickWatch", "clickFrozen", "menuOpen", "isContainerViewed"):
     assert _dead not in _sys275, f"{_dead}: след паузы в RadiationSystem"
-# 0.3.276: защита всасывания changedSlots (корень дюпа 1.21.4) + тик-бэкстоп.
-assert "gonzotech$rejectInflatedClick" in _m275 and "callback.cancel()" in _m275, \
-    "reject раздутых changedSlots пропал из миксина"
-assert "ОТВЕРГНУТ" in _m275 and "broadcastFullState()" in _m275
-assert "ClickType.CLONE" in _m275, "креатив-набор будет ложно отвергнут"
+# 0.3.277: reject 276 удалён (setRemoteSlotNoCopy в 1.21.4 пишет только кэш
+# remoteSlots — «всасывания в реальность» нет), вместо него — unconditional
+# счётчик живости обработчика и сервер/клиентский [LEDGER].
+assert "rejectInflatedClick" not in _m275 and "ClickType.CLONE" not in _m275, \
+    "страж несуществующего канала должен быть удалён"
+assert "GONZOTECH$CLICKS" in _m275 and "обработчик кликов жив" in _m275, \
+    "нет unconditional-пробника кликов (первые 3 + каждый 25-й)"
 assert "раздутый стак" in _sys275 and "getMaxStackSize(stack)" in _sys275, \
     "тик-бэкстоп раздутых стаков пропал (вторая линия без миксина)"
+_led = (ROOT / "src/main/java/com/gonzotech/radiation/InventoryLedgerClient.java") \
+    .read_text(encoding="utf-8")
+assert "InventoryLedgerPayload" in _led and "sendToServer" in _led, "клиент не шлёт свою сумму"
+assert "[LEDGER]" in _sys275 and "acceptLedger" in _sys275, "серверный журнал сумм пропал"
+_mod = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
+assert "playToServer" in _mod and "InventoryLedgerPayload.TYPE" in _mod, "пакет не зарегистрирован"
 # 0.3.276-f1: бэкстоп пользуется AbstractContainerMenu/Slot — импорты обязаны
 # быть (сборка автора 23.10 падала ровно на этом: тихий no-op splice).
 assert "import net.minecraft.world.inventory.AbstractContainerMenu;" in _sys275 \
