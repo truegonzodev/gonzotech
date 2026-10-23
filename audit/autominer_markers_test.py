@@ -525,6 +525,10 @@ assert "InventoryLedgerPayload" in _led and "sendToServer" in _led, "клиен�
 assert "[LEDGER]" in _sys275 and "acceptLedger" in _sys275, "серверный журнал сумм пропал"
 _mod = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
 assert "playToServer" in _mod and "InventoryLedgerPayload.TYPE" in _mod, "пакет не зарегистрирован"
+# IPayloadContext в 1.21.4 не имеет sender() — единственный путь к игроку —
+# context.player() + instanceof (как в PlotnickButtonPayload.handle).
+assert "context.sender()" not in _mod, "несуществующий IPayloadContext.sender() вернутся"
+assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod
 # 0.3.276-f1: бэкстоп пользуется AbstractContainerMenu/Slot — импорты обязаны
 # быть (сборка автора 23.10 падала ровно на этом: тихий no-op splice).
 assert "import net.minecraft.world.inventory.AbstractContainerMenu;" in _sys275 \

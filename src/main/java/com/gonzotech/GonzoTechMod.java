@@ -271,11 +271,9 @@ public class GonzoTechMod {
         registrar.playToServer(
             com.gonzotech.radiation.InventoryLedgerPayload.TYPE,
             com.gonzotech.radiation.InventoryLedgerPayload.STREAM_CODEC,
-            (payload, context) -> {
-                net.minecraft.server.level.ServerPlayer sender = context.sender().getPlayer();
-                if (sender != null) {
-                    context.enqueueWork(() -> com.gonzotech.radiation.RadiationSystem
-                            .acceptLedger(sender, payload.clientSum()));
+            (payload, context) -> context.enqueueWork(() -> {
+                if (context.player() instanceof net.minecraft.server.level.ServerPlayer sender) {
+                    com.gonzotech.radiation.RadiationSystem.acceptLedger(sender, payload.clientSum());
                 }
             });
 
