@@ -517,6 +517,11 @@ assert "ОТВЕРГНУТ" in _m275 and "broadcastFullState()" in _m275
 assert "ClickType.CLONE" in _m275, "креатив-набор будет ложно отвергнут"
 assert "раздутый стак" in _sys275 and "getMaxStackSize(stack)" in _sys275, \
     "тик-бэкстоп раздутых стаков пропал (вторая линия без миксина)"
+# 0.3.276-f1: бэкстоп пользуется AbstractContainerMenu/Slot — импорты обязаны
+# быть (сборка автора 23.10 падала ровно на этом: тихий no-op splice).
+assert "import net.minecraft.world.inventory.AbstractContainerMenu;" in _sys275 \
+    and "import net.minecraft.world.inventory.Slot;" in _sys275, \
+    "нет импортов inventory-классов — javac упадёт на бэкстопе"
 for _lng in ("en_us", "ru_ru"):
     _j = _json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{_lng}.json").read_text(encoding="utf-8"))
     for _k in ("gonzotech.configuration.radiationInventoryDebug",
