@@ -379,25 +379,53 @@ public final class RadiationSystem {
             }
         }
 
-        // (0.3.277) [LEDGER] — одна строка на изменение пары сумм или на любое
-        // расхождение сервер/клиент. Это арбитр спора «дюп vs призрак»: видно,
-        // ЧЬЯ именно сторона набрала предметы.
+        // (0.3.277) [LEDGER] — арбитр «дюп vs призрак» по контейнеру. 0.3.278:
+        // сеанс автора показал, что меню-Σ недостаточно — Q-дюп живёт НА ЗЕМЛЕ
+        // (выбросил из меню Δ0, подобрал обратно — рост утонет в легитимном
+        // пикапе). Поэтому строка расширена до МИРА: меню + ItemEntity в чанке
+        // игрока. Рост мировой Σ — единственное, что доказывает физический дюп;
+        // он же ловит и возвраты carried на землю (отрицательные Δ земли при
+        // drag-end). Легитимный рост (крафт, печь, лут) никуда не девается —
+        // строки читаются в паре с действиями в логе.
         long serverSum = menuItemCount(player.containerMenu);
         Long clientBox = LEDGER_CLIENT.get(player.getUUID());
         long clientSum = clientBox == null ? serverSum : clientBox;
+        int pcx = (int) Math.floor(player.getX()) >> 4;
+        int pcz = (int) Math.floor(player.getZ()) >> 4;
+        net.minecraft.world.phys.AABB groundBox = new net.minecraft.world.phys.AABB(
+                pcx << 4, level.getMinY(), pcz << 4,
+                (pcx << 4) + 16, level.getMinY() + level.getHeight(), (pcz << 4) + 16);
+        long groundSum = 0L;
+        int groundCount = 0;
+        for (net.minecraft.world.entity.item.ItemEntity drop
+                : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                    groundBox, entity -> !entity.getItem().isEmpty())) {
+            groundSum += drop.getItem().getCount();
+            groundCount++;
+        }
+        long worldSum = serverSum + groundSum;
         long[] prev = LEDGER.get(player.getUUID());
-        if (prev == null || prev[0] != serverSum || prev[1] != clientSum || serverSum != clientSum) {
+        long prevGround = prev == null || prev.length < 3 ? (prev == null ? 0L : groundSum) : prev[2];
+        boolean ledgerChanged = prev == null || prev[0] != serverSum || prev[1] != clientSum
+                || prevGround != groundSum;
+        if (ledgerChanged) {
             long dSrv = prev == null ? 0 : serverSum - prev[0];
             long dCli = prev == null ? 0 : clientSum - prev[1];
-            if (serverSum != clientSum || dSrv != 0) {
-                RAD_INV_LOG.warn("[LEDGER] {}: сервер Σ={} (Δ{}) | клиент Σ={} (Δ{}) | расхождение {}",
-                        player.getGameProfile().getName(), serverSum, dSrv, clientSum, dCli,
-                        clientSum - serverSum);
+            long dGround = prev == null ? 0 : groundSum - prevGround;
+            long dWorld = dSrv + dGround;
+            if (serverSum != clientSum || dWorld != 0L) {
+                RAD_INV_LOG.warn("[LEDGER] {}: меню Σ={} (Δ{}) | клиент Σ={} (Δ{}) | расхождение {} | земля Σ={} ({} сущ., Δ{}) | мир Σ={} (Δ{})",
+                        player.getGameProfile().getName(), serverSum,
+                        (dSrv >= 0 ? "+" : "") + dSrv, clientSum, (dCli >= 0 ? "+" : "") + dCli,
+                        clientSum - serverSum, groundSum, groundCount,
+                        (dGround >= 0 ? "+" : "") + dGround, worldSum,
+                        (dWorld >= 0 ? "+" : "") + dWorld);
             } else if (debugInv) {
-                RAD_INV_LOG.info("[LEDGER] {}: сервер Σ={} | клиент Σ={} (совпадают)",
-                        player.getGameProfile().getName(), serverSum, clientSum);
+                RAD_INV_LOG.info("[LEDGER] {}: меню Σ={} | клиент Σ={} (совпадают) | земля Σ={} ({} сущ.) | мир Σ={}",
+                        player.getGameProfile().getName(), serverSum, clientSum,
+                        groundSum, groundCount, worldSum);
             }
-            LEDGER.put(player.getUUID(), new long[]{serverSum, clientSum});
+            LEDGER.put(player.getUUID(), new long[]{serverSum, clientSum, groundSum});
         }
 
         if (debugInv) {
@@ -762,18 +790,29 @@ public final class RadiationSystem {
                 cx << 4, level.getMinY(), cz << 4,
                 (cx << 4) + 16, level.getMinY() + level.getHeight(), (cz << 4) + 16);
         double[] totals = new double[2]; // [конечные предметы → чанк, цель BlockItem]
+        // 0.3.278, разбор Q-дюпа выживания (автор 23.10: выбросить→подобрать,
+        // 2×/3× переживает перезаход). Это были единственные места мода, пишущие
+        // ItemStack сущности. Ванильный ItemEntity#setItem = getEntityData()
+        // .set(DATA_ITEM, stack), а stack здесь тот же объект, что уже лежит в
+        // сущности (drop.getItem() — live-ссылка, не копия) ⇒ запись была
+        // само-присваиванием и физическим дюпом быть не могла — гипотеза
+        // stale-write-back ЗАКРЫТА. Тем не менее вызов снят: при гонке с
+        // pickup-тиком он возвращал бы на уже опустевшую сущность лишние объекты
+        // (риск без выгоды — затухание и так мутирует live-стек на месте).
+        // Рамкам оставлен только setChanged: mark dirty для сохранения, без
+        // переприсваивания.
         for (net.minecraft.world.entity.item.ItemEntity drop
                 : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box,
                     entity -> !entity.getItem().isEmpty())) {
             ItemStack stack = drop.getItem();
-            if (ItemRadioactivity.decayInducedDeepLazily(stack, nowTick)) drop.setItem(stack);
+            ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
             classifyFloorStack(level, drop.blockPosition(), "предмет на земле", stack, contamination, totals);
         }
         for (net.minecraft.world.entity.decoration.ItemFrame frame
                 : level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box,
                     entity -> !entity.getItem().isEmpty())) {
             ItemStack stack = frame.getItem();
-            if (ItemRadioactivity.decayInducedDeepLazily(stack, nowTick)) frame.setItem(stack, false);
+            if (ItemRadioactivity.decayInducedDeepLazily(stack, nowTick)) frame.setChanged();
             classifyFloorStack(level, frame.blockPosition(), "предмет в рамке", stack, contamination, totals);
         }
         return new FloorScan(totals[0], totals[1]);

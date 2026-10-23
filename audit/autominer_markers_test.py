@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.277$", props, re.M), "mod_version != 0.3.277"
+assert re.search(r"^mod_version=0\.3\.278$", props, re.M), "mod_version != 0.3.278"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -528,6 +528,16 @@ assert "playToServer" in _mod and "InventoryLedgerPayload.TYPE" in _mod, "пак
 # IPayloadContext в 1.21.4 не имеет sender() — единственный путь к игроку —
 # context.player() + instanceof (как в PlotnickButtonPayload.handle).
 assert "context.sender()" not in _mod, "несуществующий IPayloadContext.sender() вернутся"
+# 0.3.278: разбор Q-дюпа (автор: воспроизводится в ВЫЖИВАНИИ, переживает
+# перезаход). Write-back стаков на сущности удалён (ванильный ItemEntity#setItem
+# = entityData.set того же live-объекта — само-присваивание; риск при гонке с
+# pickup без выгоды). [LEDGER] расширен мировой суммой: меню + земля.
+assert "drop.setItem(" not in _sys275, "write-back на ItemEntity вернулся — фикс 278 откатился"
+assert "frame.setItem(" not in _sys275, "write-back на рамку вернулся"
+assert "frame.setChanged()" in _sys275, "рамкам не проставляется dirty-флаг"
+assert "земля Σ=" in _sys275 and "мир Σ=" in _sys275, "[LEDGER] не расширен землёй/миром"
+assert "new long[]{serverSum, clientSum, groundSum}" in _sys275, "базовая линия LEDGER не трёхместная"
+assert "getEntityData()" in _sys275, "обоснование no-op (ванильный сеттер) пропало из комментария"
 assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod
 # 0.3.276-f1: бэкстоп пользуется AbstractContainerMenu/Slot — импорты обязаны
 # быть (сборка автора 23.10 падала ровно на этом: тихий no-op splice).
