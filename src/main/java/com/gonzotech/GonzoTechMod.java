@@ -275,7 +275,7 @@ public class GonzoTechMod {
                 if (context.player() instanceof net.minecraft.server.level.ServerPlayer sender) {
                     com.gonzotech.radiation.RadiationSystem.acceptLedger(sender, payload.clientSum());
                 }
-            });
+            }));
 
         registrar.playToClient(
             com.gonzotech.radiation.RadiationVisualPayload.TYPE,
