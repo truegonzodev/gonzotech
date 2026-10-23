@@ -22,7 +22,7 @@ public abstract class ContainerClickRadiationMixin {
     public ServerPlayer player;
 
     @Inject(
-            method = "handleContainerClick(Lnet/minecraft/network/protocol/play/ServerboundContainerClickPacket;)V",
+            method = "handleContainerClick",
             at = @At("HEAD"))
     private void gonzotech$markContainerClick(ServerboundContainerClickPacket packet, CallbackInfo callback) {
         RadiationClickWatch.markClick(this.player);

@@ -31,7 +31,9 @@ docs = (ROOT / "docs/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
 watch = read("radiation/RadiationClickWatch.java")
 assert "FREEZE_TICKS" in watch and "markClick" in watch
 mixin = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java").read_text(encoding="utf-8")
-assert "handleContainerClick(Lnet/minecraft/network/protocol/play/ServerboundContainerClickPacket;)V" in mixin
+# 1.21.4 play-пакеты в protocol.game; цель миксина — по имени (уникально), без хрупкого дескриптора.
+assert 'method = "handleContainerClick"' in mixin
+assert "protocol/play" not in mixin
 assert "clickFrozen = RadiationClickWatch.recentlyClicked(player, nowTick)" in system
 assert "clickFrozen = RadiationClickWatch.worldFrozen(level, nowTick)" in system
 assert "if (!clickFrozen) changed |=" in system, "BE-контейнеры пишут в окне клика"
