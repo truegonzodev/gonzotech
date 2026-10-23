@@ -385,7 +385,7 @@
   "gonzotech.configuration.pipeRoutingDiagnostics": "Pipe Routing Diagnostics",
   "gonzotech.configuration.pipeRoutingDiagnostics.tooltip": "Detailed server logs for pipe routing and topology rebuilds. High-volume and potentially expensive; enable only for a short profiling session. Does not change gameplay.",
   "gonzotech.configuration.radiationInventoryDebug": "Radiation Inventory Debugger",
-  "gonzotech.configuration.radiationInventoryDebug.tooltip": "Server logs every container click with before/after item and radiation totals, and every inventory pass (write vs click-freeze). Logging only; never affects gameplay.",
+  "gonzotech.configuration.radiationInventoryDebug.tooltip": "Server logs every container click with before/after item and radiation totals, every inventory pass and every gonzo_rad removal with its cause. Logging only; never affects gameplay.",
   "gonzotech.configuration.section.gonzotech.client.toml": "Gonzotech Client",
   "gonzotech.configuration.section.gonzotech.client.toml.title": "Gonzotech Client Config",
   "gonzotech.configuration.section.gonzotech.server.toml": "Gonzotech Server",

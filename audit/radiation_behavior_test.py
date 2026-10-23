@@ -33,27 +33,28 @@ _mixin272 = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMi
 assert "gonzotech$snapshot" in _mixin272 and 'at = @At(\'RETURN\')'.replace("\'", chr(34)) in _mixin272
 assert "RAD_INV_LOG" in system and "debugInv" in system
 
-# 0.3.273 (раунд 2): carried участвует в проходе, лог проходов с реалтайм-шлюзом.
-assert "player.containerMenu.getCarried()" in system, "курсор снова вне радиационного прохода"
+# 0.3.275 (автор 23.10: «пауза — неверное вмешательство»): все freeze-гарды
+# удалены; N3 в силе — carried вне прохода; физическая запись held-предмета
+# идёт каждый проход (это и есть фикс «взял курсором — потерял наведёнку»:
+# split() копирует ФИЗИЧЕСКИЙ NBT, а в 272/273 он отставал до 35 с).
+assert "player.containerMenu.getCarried()" not in system, "carried опять в проходе (N3!)"
+assert "case 3" not in system, "carried-компартмент 273 отменён (N3)"
+assert "RadiationClickWatch" not in system and not (ROOT / "src/main/java/com/gonzotech/radiation/RadiationClickWatch.java").exists(), "стража пауз жива"
+assert "menuOpen" not in system and "clickFrozen" not in system and "isContainerViewed" not in system
+assert "peekInducedAt" not in item_rad and "peekInducedAt" not in system
 assert "LAST_PASS_LOG_NS" in system, "нет реалтаймового шлюза лога проходов (flood на 2000 tps)"
-assert 'case 3 -> "курсор (в руке)"' in system
-
-# 0.3.271 (dupe guard): physical writes freeze while a player clicks a container;
-# dose math continues from virtual values.
-watch = read("radiation/RadiationClickWatch.java")
-assert "FREEZE_TICKS" in watch and "markClick" in watch
+# held-flush каждый проход + догон осиротевшего состояния без понижения
+assert "ItemRadioactivity.setInduced(stack, state.value);" in system
+assert "Осиротевшее HELD-состояние" in system and "heldIt.remove();" in system
+assert "Math.max(state.value, ItemRadioactivity.getInduced(state.stack))" in system
+# трипwire: любое снятие gonzo_rad логируется с причиной
+assert "rest-catchup steps=" in item_rad and "setInduced-floor" in item_rad and "CLR_LOG" in item_rad
 mixin = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java").read_text(encoding="utf-8")
 # 1.21.4 play-пакеты в protocol.game; цель миксина — по имени (уникально), без хрупкого дескриптора.
 assert 'method = "handleContainerClick"' in mixin
 assert "protocol/play" not in mixin
-# 0.3.274: guard не зависит от миксина — открытое меню = первичный сигнал.
-assert "boolean menuOpen = player.containerMenu != player.inventoryMenu" in system
-assert "clickFrozen = menuOpen || RadiationClickWatch.recentlyClicked(player, nowTick)" in system
-assert "boolean clickFrozen = isContainerViewed(level, container)" in system, "BE-заморозка не локализована (N2)"
-assert "slot.container == container" in system
-assert "if (!clickFrozen) changed |=" in system, "BE-контейнеры пишут в окне клика"
-assert "!frozen && (periodicFlush || !hardUse && !inSoftCd)" in system
-assert "peekInducedAt" in item_rad and "clickFrozen\n                            ? ItemRadioactivity.peekInducedAt" in system
+assert "ПРИМЕНЁН" in mixin and "markClick" not in mixin
+assert "RadiationClickWatch." not in mixin  # javadoc упоминает удаление — вызовов нет
 
 # Inventory dose is rebuilt after the tick, so direct induced activity is counted once.
 assert "double totalNzt = 0.0D;" in system

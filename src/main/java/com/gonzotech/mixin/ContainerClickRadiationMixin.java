@@ -2,7 +2,6 @@ package com.gonzotech.mixin;
 
 import com.gonzotech.core.config.GonzoServerConfig;
 import com.gonzotech.radiation.ItemRadioactivity;
-import com.gonzotech.radiation.RadiationClickWatch;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -18,22 +17,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * (0.3.271, автор 23.10) Помечает клик по контейнеру до исполнения меню-логики,
- * чтобы радиационный пересчёт не переписывал стаки в окне drag&drop (дюп через
- * carried). Никаких изменений самих кликов.
+ * (0.3.275, вердикт автора 23.10) ЧИСТАЯ ДИАГНОСТИКА: с каждого клика по
+ * контейнеру печатает серверные суммы (предметы и наведённая радиация, слоты +
+ * carried) до и после — это доказательный инструмент: рост суммы = физический
+ * дюп, стабильная = расхождение картинки. Guard'ы-паузы (271–274) удалены:
+ * «пауза — неверное вмешательство» (замороженные интервалы ленивый догон
+ * считал покоем и сжигал наведёнку, а дюп живость стражи не остановила).
  *
- * <p>0.3.273: ран 23.10 показал нулевой вывод обоих хендлеров при живом
- * дебаг-флаге — молчание хендлера больше нельзя отличить от «кликов не было».
- * Поэтому (а) статический блок пишет одну unconditional-строку при загрузке
- * класса: появление «миксин контейнерных кликов ПРИМЕНЁН» в логе доказывает,
- * что трансформация сработала; (б) при включённом флаге каждый клик пишет и
- * дельту РАДИАЦИИ (по Σ per-item×count всех слотов + курсору), а не только
- * дельту предметов — обнуление carried видно именно так.</p>
+ * <p>Живость миксина доказана прогоном автора 23.10 (строка «ПРИМЕНЁН» +
+ * mixin-debug о обоих инжекторах). Статический блок при загрузке класса
+ * оставлен: он отделяет «трансформация не применилась» от «дельт не было».
+ * При включённом флаге клик пишет и дельту РАДИАЦИИ (Σ per-item×count всех
+ * слотов + курсор), а не только дельту предметов — обнуление carried видно
+ * именно так.</p>
  *
- * <p>0.3.274: прогон автора показал нулевой вывод хендлеров при живом флаге и
- * активных кликах — стража переехала на детерминированный сигнал (открытое меню
- * в RadiationSystem). Миксин остаётся как чистая диагностика: строка «ПРИМЕНЁН»
- * в полном логе решает, удалить ли его в 0.3.275.</p>
+ * <p>Миксин ничего не меняет: клик-пометка (RadiationClickWatch) удалена
+ * вместе с паузами — файл guard'ов больше не существует.</p>
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ContainerClickRadiationMixin {
@@ -60,15 +59,26 @@ public abstract class ContainerClickRadiationMixin {
     @Unique
     private long[] gonzotech$radBefore;
 
+    /** Реалтаймовый шлюз клик-строк: не чаще одной в 150 мс (anti-flood при спам-ЛКМ). */
+    @Unique
+    private static final java.util.concurrent.atomic.AtomicLong GONZOTECH$LAST_CLICK_LOG_NS =
+            new java.util.concurrent.atomic.AtomicLong();
+
+    @Unique
+    private static boolean gonzotech$allowClickLog() {
+        long now = System.nanoTime();
+        long prev = GONZOTECH$LAST_CLICK_LOG_NS.get();
+        return now - prev > 150_000_000L && GONZOTECH$LAST_CLICK_LOG_NS.compareAndSet(prev, now);
+    }
+
     @Inject(
             method = "handleContainerClick",
             at = @At("HEAD"))
-    private void gonzotech$markContainerClick(ServerboundContainerClickPacket packet, CallbackInfo callback) {
+    private void gonzotech$snapshotContainerClick(ServerboundContainerClickPacket packet, CallbackInfo callback) {
         if (this.player == null) return;
-        RadiationClickWatch.markClick(this.player);
         if (GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get()) {
             this.gonzotech$radBefore = gonzotech$snapshot(this.player.containerMenu);
-            if (RadiationClickWatch.allowClickLog()) {
+            if (gonzotech$allowClickLog()) {
                 GONZOTECH$LOG.info("[RAD-INV] {} клик t={} slot={} carried={} шт | до: {} шт, rad={}",
                     this.player.getGameProfile().getName(),
                     this.player.getServer() != null ? this.player.getServer().getTickCount() : -1L,

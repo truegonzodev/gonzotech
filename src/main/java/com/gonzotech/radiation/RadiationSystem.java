@@ -14,8 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -136,20 +134,20 @@ public final class RadiationSystem {
             Collections.synchronizedMap(new WeakHashMap<>());
     private record HeldKey(UUID player, InteractionHand hand) {}
     private record FloorScan(double ordinaryTransfer, double blockLikeTarget) {}
-    private static final int USE_SOFT_CD_TICKS = 40;
-    private static final int HELD_FLUSH_TICKS = 20 * 35;
 
+    /**
+     * (0.3.275) Только источник истины дозы; физический NBT дописывается каждый
+     * проход (ранее — раз в HELD_FLUSH_TICKS, из-за чего vanilla split на курсор
+     * копировал устаревшее физическое значение — баг автора «моментально теряет
+     * всю наведёнку»).
+     */
     private static final class HeldRadState {
         private ItemStack stack;
         private double value;
-        private int lastUseTick;
-        private int lastFlushTick;
 
-        private HeldRadState(ItemStack stack, double value, int tick) {
+        private HeldRadState(ItemStack stack, double value) {
             this.stack = stack;
             this.value = value;
-            this.lastUseTick = tick;
-            this.lastFlushTick = tick;
         }
     }
 
@@ -185,33 +183,21 @@ public final class RadiationSystem {
             PacketDistributor.sendToPlayer(player, new RadiationVisualPayload(visual));
         }
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
-        // (0.3.271, автор 23.10) Игрок кликает по GUI — стаки не пишем: запись в
-        // окне между предсказанием клиента и обработкой клика = дюп через carried.
-        // (0.3.274, раунд автора 23.10 вечер) Миксин-стража мертва: лог автора —
-        // включённый флаг, живые изменения инвентаря, ноль строк клика при том,
-        // что markClick вызывается до всякого конфига. Guard не может зависеть от
-        // трансформации, которую нельзя доказать: primary сигнал — открытое меню
-        // (окно оптимистичного предсказания 1.21.2+ живёт ровно пока меню
-        // открыто). recentlyClicked остаётся вторым слоем: если миксин оживёт
-        // (или оживает на проде), окно клика крыто и без открытого меню.
-        boolean menuOpen = player.containerMenu != player.inventoryMenu;
-        boolean clickFrozen = menuOpen || RadiationClickWatch.recentlyClicked(player, nowTick);
+        // (0.3.275, автор 23.10: «пауза — неверное вмешательство») Заморозки нет
+        // ни на клик, ни на открытое меню: пропущенные из-за паузы секунды
+        // ленивый догон считал покоем и сжигал наведёнку (до полного обнуления
+        // NBT). Физическая запись идёт всегда; корректность окна drag&drop —
+        // вопрос к синхронизации, не к паузе (см. журнал; дебаг-логи кликов).
         boolean debugInv = GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get();
         int debugTouched = 0;
         int debugItemCount = 0;
 
         // Скан полной эмиссии инвентаря; максимум и второй максимум используются
         // только для локальной логистики наведёнки предметов, не для переноса в чанк.
-        // (0.3.273, раунд автора 23.10) Курсор участвует в проходе на равных:
-        // предмет, взятый в carried, излучает и получает дозу. Раньше он был вне
-        // прохода (документированное поведение N3), и автор зафиксировал это как
-        // баг: «не принимает и не излучает». Физическая запись в курсор защищена
-        // тем же clickFrozen, что и слоты: окно клика стаки не трогаем.
-        ItemStack carriedStack = player.containerMenu.getCarried();
-        List<List<ItemStack>> compartments = carriedStack.isEmpty()
-                ? List.of(player.getInventory().items, player.getInventory().armor, player.getInventory().offhand)
-                : List.of(player.getInventory().items, player.getInventory().armor, player.getInventory().offhand,
-                        List.of(carriedStack));
+        // N3 автора в силе: carried вне прохода (0.3.273 возвращён — запрос
+        // автора был не про участие курсора, а про сброс NBT при взятии).
+        List<List<ItemStack>> compartments = List.of(
+                player.getInventory().items, player.getInventory().armor, player.getInventory().offhand);
         // 0.3.83: суммы — с рекурсивным обходом вложенных хранилищ (шалкер/
         // связка/мод-контейнер фонят как россыпь; экран только у носителей).
         double intrinsic = 0.0;
@@ -286,13 +272,10 @@ public final class RadiationSystem {
                 double perItem;
                 if (activeHand) {
                     perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
-                            stackSource, factor, nowTick, clickFrozen);
+                            stackSource, factor, nowTick);
                 } else {
-                    perItem = clickFrozen
-                            ? ItemRadioactivity.peekInducedAt(
-                                stack, hasSourceContext, stackSource, factor, nowTick)
-                            : ItemRadioactivity.tickInducedAt(
-                                stack, hasSourceContext, stackSource, factor, nowTick);
+                    perItem = ItemRadioactivity.tickInducedAt(
+                            stack, hasSourceContext, stackSource, factor, nowTick);
                 }
                 induced += perItem * count;
                 if (debugInv) {
@@ -315,6 +298,27 @@ public final class RadiationSystem {
             }
         }
 
+        // (0.3.275) Осиротевшее HELD-состояние: стак ушёл из руки (взят на курсор,
+        // брошен Q, сдвинут в ящик), а рука не занята новым предметом — главный
+        // цикл его больше не увидит. Догоняем физический NBT немедленно (max —
+        // чтобы не уронить то, что уже записано) и снимаем состояние: иначе оно
+        // доживает до смены предмета в руке с устаревшим value.
+        ItemStack mainNow = player.getMainHandItem();
+        ItemStack offNow = player.getOffhandItem();
+        var heldIt = HELD_RAD.entrySet().iterator();
+        while (heldIt.hasNext()) {
+            var heldEntry = heldIt.next();
+            if (!heldEntry.getKey().player().equals(player.getUUID())) continue;
+            HeldRadState orphan = heldEntry.getValue();
+            if (orphan.stack == mainNow || orphan.stack == offNow) continue;
+            if (!orphan.stack.isEmpty()) {
+                ItemRadioactivity.setInduced(orphan.stack,
+                        Math.max(orphan.value, ItemRadioactivity.getInduced(orphan.stack)));
+                ItemRadioactivity.markDecayTick(orphan.stack, nowTick);
+            }
+            heldIt.remove();
+        }
+
         if (debugInv) {
             // (0.3.273) Реалтаймовый шлюз 1 строка/с на игрока: на tickRate 2000
             // лог с периодом 20 тиков давал 100 строк/с и сам кормил
@@ -323,12 +327,8 @@ public final class RadiationSystem {
             Long logPrevNs = LAST_PASS_LOG_NS.get(player.getUUID());
             if (logPrevNs == null || logNowNs - logPrevNs > 950_000_000L) {
                 LAST_PASS_LOG_NS.put(player.getUUID(), logNowNs);
-                RAD_INV_LOG.info("[RAD-INV] {}: проход инвентаря t={} — {} стак(ов), {} шт, carried {} шт, меню {}, {}{} (frozen={})",
-                    player.getGameProfile().getName(), nowTick, debugTouched, debugItemCount,
-                    carriedStack.getCount(),
-                    menuOpen ? player.containerMenu.getClass().getSimpleName() : "нет",
-                    clickFrozen ? "запись заморожена" : "запись выполнена",
-                    "", clickFrozen);
+                RAD_INV_LOG.info("[RAD-INV] {}: проход инвентаря t={} — {} стак(ов), {} шт, запись выполнена",
+                    player.getGameProfile().getName(), nowTick, debugTouched, debugItemCount);
             }
         }
         // Пересобираем полную эмиссию после обновления вложенных слотов. Каждый
@@ -494,29 +494,8 @@ public final class RadiationSystem {
             case 0 -> "инвентарь/горячая панель";
             case 1 -> "броня";
             case 2 -> "вторая рука";
-            case 3 -> "курсор (в руке)";
             default -> "слот " + compartment;
         };
-    }
-
-    /**
-     * (0.3.274, локализация N2) Смотрит ли кто-то этот контейнер прямо сейчас:
-     * слот открытого меню указывает на SAME-экземпляр Container. Проверка по
-     * идентичности, без реестров и событий — состояние меню сервера и есть
-     * реестр. Открытый GUI = открытое окно оптимистичного предсказания клиента
-     * (stateId/setRemoteSlotNoCopy, 1.21.2+): физическая запись в просматриваемый
-     * контейнер в этом окне и рождает расхождение картинки; доза и эмиссии
-     * считаются, NBT догонит лениво после закрытия.
-     */
-    private static boolean isContainerViewed(ServerLevel level, Container container) {
-        for (ServerPlayer viewer : level.players()) {
-            AbstractContainerMenu menu = viewer.containerMenu;
-            if (menu == null || menu == viewer.inventoryMenu) continue;
-            for (Slot slot : menu.slots) {
-                if (slot.container == container) return true;
-            }
-        }
-        return false;
     }
 
     private static boolean hasVisualInstrument(ServerPlayer player) {
@@ -539,36 +518,40 @@ public final class RadiationSystem {
 
     private static double tickHeldRadiation(ServerPlayer player, ItemStack stack, boolean hardUse,
                                             boolean hasSource, double sourceNzt, double factor,
-                                            long nowTick, boolean frozen) {
+                                            long nowTick) {
         InteractionHand hand = stack == player.getOffhandItem()
                 ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
         HeldKey key = new HeldKey(player.getUUID(), hand);
-        int now = player.tickCount;
         HeldRadState state = HELD_RAD.get(key);
         if (state == null && !hardUse) {
-            return frozen
-                    ? ItemRadioactivity.peekInducedAt(stack, hasSource, sourceNzt, factor, nowTick)
-                    : ItemRadioactivity.tickInducedAt(stack, hasSource, sourceNzt, factor, nowTick);
+            return ItemRadioactivity.tickInducedAt(stack, hasSource, sourceNzt, factor, nowTick);
         }
         if (state == null || state.stack != stack) {
-            if (state != null && !frozen) {
-                ItemRadioactivity.setInduced(state.stack, state.value);
+            if (state != null) {
+                // Смена предмета в руке: виртуальное состояние старого дописываем
+                // (не понижаем: физическое значение может быть свежее редкого флеша).
+                ItemRadioactivity.setInduced(state.stack,
+                        Math.max(state.value, ItemRadioactivity.getInduced(state.stack)));
                 ItemRadioactivity.markDecayTick(state.stack, nowTick);
                 ItemRadioactivity.decayInducedDeepLazily(state.stack, nowTick);
             }
             state = new HeldRadState(stack,
-                    ItemRadioactivity.inducedBeforeSourceStep(stack, nowTick), now);
+                    ItemRadioactivity.inducedBeforeSourceStep(stack, nowTick));
             HELD_RAD.put(key, state);
         }
-        if (hardUse) state.lastUseTick = now;
         state.value = ItemRadioactivity.nextInduced(state.value, stack, hasSource, sourceNzt, factor);
 
-        boolean inSoftCd = now - state.lastUseTick < USE_SOFT_CD_TICKS;
-        boolean periodicFlush = now - state.lastFlushTick >= HELD_FLUSH_TICKS;
-        if (!frozen && (periodicFlush || !hardUse && !inSoftCd)) {
-            ItemRadioactivity.setInduced(stack, state.value);
-            ItemRadioactivity.markDecayTick(stack, nowTick);
-            ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
+        // (0.3.275, автор 23.10 «carried теряет всю радиацию») Held-защита больше
+        // НЕ задерживает физическую запись: раньше во время use value жил только
+        // в HELD_RAD (flush — раз в 35 с), а vanilla split() при взятии стака на
+        // курсор копирует ФИЗИЧЕСКОЕ значение — копия уезжала с обнулённой
+        // наведёнкой. Пишем каждый проход; визуальный дребезг руки давно гасит
+        // RadReequipGate (20.09), sync-шторм поглощает broadcastChanges.
+        // Виртуальное состояние остаётся источником истины для дозы и трасс.
+        ItemRadioactivity.setInduced(stack, state.value);
+        ItemRadioactivity.markDecayTick(stack, nowTick);
+        ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
+        if (!hardUse) {
             HELD_RAD.remove(key);
             return ItemRadioactivity.getInduced(stack);
         }
@@ -583,17 +566,17 @@ public final class RadiationSystem {
     private static void scanContainersInto(ServerLevel level, long chunkKey,
                                            ChunkRadiationData data, long nowTick) {
         if (!claimContentScan(level, chunkKey, nowTick)) return;
-        // (0.3.274, N2 локализация автора) Глобальная «кто-то кликает» заморозка
-        // снята: пишем запрет только тому контейнеру, который кто-то СМОТРИТ —
-        // его слоты участвуют в предсказании клиента, и окно записи там закрыто
-        // на всё время открытого GUI. Остальные контейнеры чанка не простаивают.
+        // (0.3.275, автор 23.10) Пауз нет вовсе: содержимое контейнеров
+        // догорает/нарабатывает каждый цикл. Ранние гейты (worldFrozen,
+        // просмотр-контейнера) отменены — пауза портит данные (догон
+        // считает paused-интервал покоем) и, как показал прогон с доказанной
+        // живостью миксина, дюпа не остановила.
         LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
         double contamination = data.contaminationOf(chunkKey);
         double containerTransfer = 0.0D;
         double leadChestTransfer = 0.0D;
         for (BlockEntity be : chunk.getBlockEntities().values()) {
             if (!(be instanceof Container container)) continue;
-            boolean clickFrozen = isContainerViewed(level, container);
             boolean leadChest = be.getBlockState().getBlock()
                     instanceof com.gonzotech.machines.block.ThirdLeadChestBlock;
             double mine = 0.0D;
@@ -601,7 +584,7 @@ public final class RadiationSystem {
             for (int i = 0; i < container.getContainerSize(); i++) {
                 ItemStack stack = container.getItem(i);
                 if (stack.isEmpty()) continue;
-                if (!clickFrozen) changed |= ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
+                changed |= ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
                 mine += RadSources.emissionDeep(stack);
             }
             if (changed) container.setChanged();

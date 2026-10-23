@@ -20,6 +20,8 @@ import java.util.List;
  * считается как {@code perItem * count}.</p>
  */
 public final class ItemRadioactivity {
+    private static final org.slf4j.Logger CLR_LOG =
+            org.slf4j.LoggerFactory.getLogger("gonzotech/radiation-inventory");
     public static final String TAG_RAD = "gonzo_rad";
     /** Версия формата: 1 = значение на один предмет; без версии — старый total-stack формат. */
     private static final String TAG_RAD_MODEL = "gonzo_rad_model";
@@ -72,7 +74,7 @@ public final class ItemRadioactivity {
 
     public static void setInduced(ItemStack stack, double value) {
         if (value < CLEANUP_FLOOR) {
-            clear(stack);
+            clear(stack, "setInduced-floor");
             return;
         }
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
@@ -82,7 +84,14 @@ public final class ItemRadioactivity {
                 }));
     }
 
-    private static void clear(ItemStack stack) {
+    /** (0.3.275) Любое снятие gonzo_rad логируется с причиной — «моментальная
+     *  потеря радиации» ловится за руку на первом же прогоне. */
+    private static void clear(ItemStack stack, String cause) {
+        if (com.gonzotech.core.config.GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get()) {
+            CLR_LOG.info("[RAD-INV] очистка gonzo_rad: item={}, old={}, count={}, cause={}",
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()),
+                    String.format("%.2f", getInduced(stack)), stack.getCount(), cause);
+        }
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return;
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
@@ -178,7 +187,7 @@ public final class ItemRadioactivity {
     public static void tickInduced(ItemStack stack, boolean hasSource, double sourceNzt, double factor) {
         double next = nextInduced(getInduced(stack), stack, hasSource, sourceNzt, factor);
         if (next > 0.0) setInduced(stack, next);
-        else clear(stack);
+        else clear(stack, "tick-floor");
     }
 
     /**
@@ -207,19 +216,6 @@ public final class ItemRadioactivity {
         markDecayTick(stack, nowTick);
         decayInducedDeepLazily(stack, nowTick);
         return getInduced(stack);
-    }
-
-    /**
-     * (0.3.271) Тик в окне клика: значение считается (пропущенные шаги — отдыхом,
-     * шаг источника — реально), стак не трогается. После разморозки физический
-     * NBT догоняет тем же ленивым механизмом lastDecayTick.
-     */
-    public static double peekInducedAt(ItemStack stack, boolean hasSource, double sourceNzt,
-                                       double factor, long nowTick) {
-        if (stack.isEmpty()) return 0.0D;
-        double next = nextInduced(inducedBeforeSourceStep(stack, nowTick), stack,
-                hasSource, sourceNzt, factor);
-        return Math.max(0.0D, next);
     }
 
     /** Пропущенные пассивные интервалы перед текущим шагом источника — без записи NBT. */
@@ -317,7 +313,7 @@ public final class ItemRadioactivity {
         if (current <= 0.0D || steps <= 0L) return;
         double next = restDecay(current, steps);
         if (next >= CLEANUP_FLOOR) setInduced(stack, next);
-        else clear(stack);
+        else clear(stack, "rest-catchup steps=" + steps);
     }
 
     /** Совместимость со старыми callers: split больше не требует ручного деления. */

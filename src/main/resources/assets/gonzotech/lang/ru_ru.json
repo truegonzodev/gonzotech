@@ -385,7 +385,7 @@
   "gonzotech.configuration.pipeRoutingDiagnostics": "Диагностика маршрутизации труб",
   "gonzotech.configuration.pipeRoutingDiagnostics.tooltip": "Подробные серверные логи маршрутизации и перестройки топологии. Объёмные и могут снижать TPS; включайте только на короткий сеанс профилирования. На игровой процесс не влияет.",
   "gonzotech.configuration.radiationInventoryDebug": "Отладчик радиации в инвентаре",
-  "gonzotech.configuration.radiationInventoryDebug.tooltip": "Сервер пишет в лог каждый клик по контейнеру с суммой предметов и радиации до/после и каждый проход инвентаря (запись или заморозка на клик). Только логирование; на игру не влияет.",
+  "gonzotech.configuration.radiationInventoryDebug.tooltip": "Сервер пишет в лог каждый клик по контейнеру с суммой предметов и радиации до/после, каждый проход инвентаря и каждое снятие gonzo_rad с причиной. Только логирование; на игру не влияет.",
   "gonzotech.configuration.section.gonzotech.client.toml": "Клиентские настройки Gonzotech",
   "gonzotech.configuration.section.gonzotech.client.toml.title": "Конфиг Gonzotech (клиент)",
   "gonzotech.configuration.section.gonzotech.server.toml": "Серверные настройки Gonzotech",

@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.274$", props, re.M), "mod_version != 0.3.274"
+assert re.search(r"^mod_version=0\.3\.275$", props, re.M), "mod_version != 0.3.275"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -496,15 +496,20 @@ assert "ContainerClickRadiationMixin" in _mix["mixins"], "миксин клик�
 assert "radiationInventoryDebug" in (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java") \
     .read_text(encoding="utf-8"), "нет тумблера серверного дебаггера инвентаря"
 
-# 0.3.273: доказуемость миксина + хигиена дебаггера (раунд автора 23.10 вечер).
-_m273 = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java") \
+# 0.3.275 (автор 23.10 «пауза — неверное вмешательство»): миксин = чистая
+# диагностика, guard-файл удалён, шлюзов 273-образных больше нет. Живость
+# («ПРИМЕНЁН») доказана прогоном автора — пины на неё остаются.
+_m275 = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java") \
     .read_text(encoding="utf-8")
-assert "ПРИМЕНЁН" in _m273, "нет unconditional-строки живости миксина"
-assert "allowClickLog()" in _m273, "клик-строки не защищены реалтаймовым шлюзом"
-_watch273 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationClickWatch.java") \
+assert "ПРИМЕНЁН" in _m275, "нет unconditional-строки живости миксина"
+assert "allowClickLog()" in _m275, "клик-строки не защищены реалтаймовым шлюзом"
+assert "AtomicLong" in _m275 and "150_000_000" in _m275, "шлюз уехал из миксина"
+assert not (ROOT / "src/main/java/com/gonzotech/radiation/RadiationClickWatch.java").exists(), \
+    "стража пауз жива — автор 23.10 отменил весь класс вмешательств"
+_sys275 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java") \
     .read_text(encoding="utf-8")
-assert "FREEZE_TICKS = 30" in _watch273, "окно заморозки снова равно периоду прохода (фазовая дыра)"
-assert "public static boolean allowClickLog()" in _watch273
+for _dead in ("RadiationClickWatch", "clickFrozen", "menuOpen", "isContainerViewed"):
+    assert _dead not in _sys275, f"{_dead}: след паузы в RadiationSystem"
 for _lng in ("en_us", "ru_ru"):
     _j = _json.loads((ROOT / f"src/main/resources/assets/gonzotech/lang/{_lng}.json").read_text(encoding="utf-8"))
     for _k in ("gonzotech.configuration.radiationInventoryDebug",
@@ -513,12 +518,8 @@ for _lng in ("en_us", "ru_ru"):
                "gonzotech.configuration.section.gonzotech.client.toml",
                "gonzotech.configuration.title"):
         assert _k in _j, f"{_lng}: нет ключа конфига {_k}"
-
-# 0.3.271: стража кликов — радиация не пишет в стаки окна drag&drop (дюп-фикс).
-assert (ROOT / "src/main/java/com/gonzotech/radiation/RadiationClickWatch.java").exists(), \
-    "нет RadiationClickWatch — перераспределение наведёнки остаётся в окне клика"
-assert "ContainerClickRadiationMixin" in (ROOT / "src/main/resources/gonzotech.mixins.json") \
-    .read_text(encoding="utf-8"), "миксин кликов не зарегистрирован"
+assert "заморозка" not in _j["gonzotech.configuration.radiationInventoryDebug.tooltip"], \
+    "ru-описание флага всё ещё обещает логи заморозки"
 
 # 0.3.270: авария сжигает всё топливо; unformed-продолжение; угольки.
 assert (ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorEmberData.java").exists(), \

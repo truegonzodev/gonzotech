@@ -18,9 +18,9 @@ public final class GonzoServerConfig {
                 .define("pipeRoutingDiagnostics", false);
         RADIATION_INVENTORY_DEBUG = builder
                 .comment("Server-side radiation inventory debugger: logs every container click",
-                        "with the exact before/after item total of the open menu (slot duplication",
-                        "proof) and each radiation inventory pass (writes vs click-freeze skips).",
-                        "Logging only; never affects gameplay.")
+                        "with the exact before/after item and induced-radiation totals of the open",
+                        "menu (slot duplication proof), each radiation inventory pass and every",
+                        "gonzo_rad NBT removal with its cause. Logging only; never affects gameplay.")
                 .translation("gonzotech.configuration.radiationInventoryDebug")
                 .define("radiationInventoryDebug", false);
         SPEC = builder.build();
