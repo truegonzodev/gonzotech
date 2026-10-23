@@ -137,6 +137,15 @@ public final class ReactorHeatDynamics {
             return base + excess;
         }
 
+        /** (0.3.272, N10) Приёмка уголька: поднять показание не ниже hot (через excess). */
+        public void raiseTo(double hot) {
+            if (hot > temperature()) {
+                excess = hot - base;
+                cachedCurve = null;
+                cachedTemperature = Double.NaN;
+            }
+        }
+
         public double meanTemperature() {
             return meanTemperature(temperature());
         }

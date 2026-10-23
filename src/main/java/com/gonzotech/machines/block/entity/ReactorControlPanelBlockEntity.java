@@ -121,8 +121,11 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
     }
 
     /** (0.3.270) Пересборка на том же месте принимает уголёк целиком. */
-    public void adoptEmber(CompoundTag emberState) {
-        runtime.load(emberState);
+    public void adoptEmber(com.gonzotech.machines.reactor.ReactorEmberData.Ember ember) {
+        // (0.3.272, N10) Сначала полное состояние, поверх — температура уголька
+        // (NBT — снимок на момент захвата, уголёк с тех пор ушёл дальше).
+        runtime.load(ember.state);
+        runtime.applyEmberHeat(ember.hot);
         setChanged();
     }
 
@@ -186,8 +189,8 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
     public void clearStructure() {
         formed = false;
         validationPending = false;
-        min = null;
-        max = null;
+        // (0.3.272, N8) min/max НЕ обнуляем: остаточное продолжение (#23) и
+        // захват уголька опираются на границы; deinit формы — не затирание.
         fuelSlotCount = 0;
         runtime.deconfigure();
         setChanged();

@@ -32,13 +32,16 @@ public final class ReactorEmberData extends SavedData {
     /** Допуск догорания: на уровне среды ± COOL_TOLERANCE уголёк считается погасшим. */
     private static final double EXTINGUISHED_MARGIN = ReactorHeatDynamics.COOL_TOLERANCE;
 
-    private static final class Ember {
+    /** (0.3.272, N10) Носитель переносится целиком: состояние + догоняющие скаляры. */
+    public static final class Ember {
+        /** Догоняющая температура (единственный источник истины на приёмке). */
+        public double hot;
+        /** Полный снимок рантайма; привязку портов делает порядок в Structure. */
+        public CompoundTag state;
         long minPos;
         long maxPos;
-        double hot;
         double velocity;
         int water;
-        CompoundTag state;
 
         boolean alive() {
             return hot > ReactorHeatDynamics.AMBIENT + EXTINGUISHED_MARGIN;
@@ -108,14 +111,14 @@ public final class ReactorEmberData extends SavedData {
     }
 
     /** Пересборка ровно на том же месте: приёмка состояния уголька. */
-    public static CompoundTag adopt(ServerLevel level, BlockPos min, BlockPos max) {
+    public static Ember adopt(ServerLevel level, BlockPos min, BlockPos max) {
         ReactorEmberData data = get(level);
         for (Iterator<Ember> it = data.embers.iterator(); it.hasNext(); ) {
             Ember e = it.next();
             if (e.minPos == min.asLong() && e.maxPos == max.asLong()) {
                 it.remove();
                 data.setDirty();
-                return e.state;
+                return e;
             }
         }
         return null;

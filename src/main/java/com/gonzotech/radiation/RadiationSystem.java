@@ -7,6 +7,7 @@ import com.gonzotech.core.psyche.PsycheUltraviolet;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModEffects;
 import com.gonzotech.core.registry.ModItems;
+import com.gonzotech.core.config.GonzoServerConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
@@ -67,6 +68,9 @@ import java.util.WeakHashMap;
  * <p>Все ставки — в nZt/с (п.7: «всё считаем /в сек»).</p>
  */
 public final class RadiationSystem {
+    private static final org.slf4j.Logger RAD_INV_LOG =
+        org.slf4j.LoggerFactory.getLogger("gonzotech/radiation-inventory");
+
 
     // ── доза → шкала ──
     /** Сколько nZt·с суммарной эмиссии = +1 тысячной шкалы (0.1%). Откалибровано
@@ -180,6 +184,8 @@ public final class RadiationSystem {
         // (0.3.271, автор 23.10) Игрок кликает по GUI — стаки не пишем: запись в
         // окне между предсказанием клиента и обработкой клика = дюп через carried.
         boolean clickFrozen = RadiationClickWatch.recentlyClicked(player, nowTick);
+        boolean debugInv = GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get();
+        int debugTouched = 0;
 
         // Скан полной эмиссии инвентаря; максимум и второй максимум используются
         // только для локальной логистики наведёнки предметов, не для переноса в чанк.
@@ -268,6 +274,7 @@ public final class RadiationSystem {
                                 stack, hasSourceContext, stackSource, factor, nowTick);
                 }
                 induced += perItem * count;
+                if (debugInv) debugTouched++;
                 if (tracing && (ownEmission > 0.0 || oldInduced > 0.0 || perItem > 0.0)) {
                     RadiationTrace.log(level, player.blockPosition(), "ПРЕДМЕТЫ ИНВЕНТАРЯ ↔ ДОЗА ИГРОКА",
                             inventoryCompartmentName(compartmentIndex) + " слот " + slot
@@ -284,6 +291,12 @@ public final class RadiationSystem {
             }
         }
 
+        if (debugInv) {
+            RAD_INV_LOG.info("[RAD-INV] {}: проход инвентаря t={} — {} стак(ов), {}{} (frozen={})",
+                player.getGameProfile().getName(), nowTick, debugTouched,
+                clickFrozen ? "запись заморожена" : "запись выполнена",
+                "", clickFrozen);
+        }
         // Пересобираем полную эмиссию после обновления вложенных слотов. Каждый
         // верхний стак входит ровно раз; виртуальная наведёнка активной руки
         // подменяет старый NBT, не записываясь в carried stack во время use.

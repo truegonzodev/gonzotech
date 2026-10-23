@@ -370,5 +370,22 @@ assert "ReactorEmberData.capture(serverLevel, panel)" in block_src, "panel break
 assert "ReactorEmberData.adopt(level, info.min(), info.max())" in structure_src, "ember state not adopted on rebuild"
 assert "MELTDOWN_TEMPERATURE" in ember_src and "0.35" in ember_src
 assert "emberWorthy" in runtime and "emberVelocity" in runtime
+# 0.3.272 (сверка аудита 23.10): N8 порядок перехода, N9 обязательное выжигание,
+# N10 приёмка до привязки портов + догоняющая температура.
+assert block_src.index("ReactorEmberData.capture(serverLevel, panel)") < \
+    block_src.index("ReactorStructure.partRemoved(level, pos)"), "уголёк снимается после демонтажа"
+panel_src = read("machines/block/entity/ReactorControlPanelBlockEntity.java")
+clear = panel_src[panel_src.index("public void clearStructure()"):]
+assert "min = null" not in clear[:clear.index("\n    }")], "деинит формы затирает границы"
+deconf = runtime[runtime.index("public void deconfigure()"):]
+deconf = deconf[:deconf.index("\n    }")]
+assert "lastSnapshot = null" not in deconf, "деинит сбрасывает снимок — продолжение мертво"
+acc272 = accident_src
+assert "&& fuelBurned" in acc272[acc272.index("boolean finished"):], "авария finishes без выжигания"
+assert "elapsed == 1L || (elapsed & 3L) == 0L" in acc272
+struct272 = structure_src
+assert struct272.index("ReactorEmberData.adopt(level") < struct272.index("panel.configureStructure(info.min()"), \
+    "load порта-сбрасывает порядок: приёмка должна быть до привязки"
+assert "public void raiseTo(double hot)" in read("machines/reactor/ReactorHeatDynamics.java")
 
 print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening, temperature-tiered burn, per-port output cap")

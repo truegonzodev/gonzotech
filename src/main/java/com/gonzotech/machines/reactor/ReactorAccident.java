@@ -129,7 +129,10 @@ public final class ReactorAccident {
     void tick(ServerLevel level, long gameTime) {
         long elapsed = gameTime - startTick;
         if (elapsed < 1) return;
-        if (!fuelBurned && (gameTime & 19L) == 0L) {
+        // (0.3.272, N9) Первая попытка сразу, далее каждые 4 такта: привязка к
+        // абсолютному gameTime&19 оставляла аварию длиной DUST=5 тактов без единой
+        // попытки на половине фаз старта.
+        if (!fuelBurned && (elapsed == 1L || (elapsed & 3L) == 0L)) {
             // «Твэлы буквально удаляются, все до единого» (автор 22.10): чистим
             // и свежие, и выгоревшие — авария забирает топливо целиком.
             fuelBurned = ReactorFuelStorage.burnAllFuel(level,
@@ -153,7 +156,9 @@ public final class ReactorAccident {
     }
 
     boolean finished(long gameTime) {
-        return gameTime - startTick > DUST_TICKS && (fired & 7) == 7;
+        // (0.3.272, N9) Выжигание топлива — обязательная стадия: авария ждёт
+        // догрузки объёма (флаг в её NBT), а не завершается «недожжённой».
+        return gameTime - startTick > DUST_TICKS && (fired & 7) == 7 && fuelBurned;
     }
 
     /** T1: вода в радиусе 4 от пролома → мёртвая слизь 80 % / радиоактивная 20 %. */

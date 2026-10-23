@@ -25,6 +25,13 @@ pentacin = read("radiation/PentacinItem.java")
 cysteamine = read("radiation/CysteamineItem.java")
 absorbent = read("radiation/RadAbsorbentItem.java")
 docs = (ROOT / "docs/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
+# 0.3.272: серверный дебаггер — дельта серверной суммы на клик + лог проходов.
+cfg = (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java").read_text(encoding="utf-8")
+assert "radiationInventoryDebug" in cfg
+_mixin272 = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java") \
+    .read_text(encoding="utf-8")
+assert "gonzotech$countContainerItems" in _mixin272 and 'at = @At(\'RETURN\')'.replace("\'", chr(34)) in _mixin272
+assert "RAD_INV_LOG" in system and "debugInv" in system
 
 # 0.3.271 (dupe guard): physical writes freeze while a player clicks a container;
 # dose math continues from virtual values.

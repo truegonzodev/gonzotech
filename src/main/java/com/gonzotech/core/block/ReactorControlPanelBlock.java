@@ -99,7 +99,9 @@ public final class ReactorControlPanelBlock extends Block implements EntityBlock
     protected void onRemove(BlockState state, Level level, BlockPos pos,
                             BlockState newState, boolean movedByPiston) {
         if (!state.is(newState.getBlock())) {
-            ReactorStructure.partRemoved(level, pos);
+            // (0.3.272, N8) Порядок перехода: сначала захват уголька (границы и
+            // снимок ещё живы), потом демонтаж структуры. Инвалидация до захвата
+            // съедала данные, на которых уголёк и существует.
             if (level.getBlockEntity(pos) instanceof ReactorControlPanelBlockEntity panel) {
                 if (!movedByPiston && level instanceof ServerLevel serverLevel) {
                     // (0.3.270, автор 22.10) Снос панели не бесплатный reset:
@@ -109,6 +111,7 @@ public final class ReactorControlPanelBlock extends Block implements EntityBlock
                 }
                 Containers.dropContents(level, pos, panel);
             }
+            ReactorStructure.partRemoved(level, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

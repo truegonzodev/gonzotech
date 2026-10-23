@@ -808,12 +808,13 @@ public final class ReactorStructure {
         if (info.sheaths() > 0 && storedFuel >= 0) panel.clearLegacyFuelItems();
         long[] heatPorts = info.heatPorts();
         long[] waterPorts = info.waterPorts();
+        // (0.3.270→0.3.272, N10) Пересборка ровно на том же месте принимает
+        // состояние уголька ДО привязки портов: runtime.load обнуляет списки
+        // портов, configureStructure ниже восстановит их актуальными.
+        ReactorEmberData.Ember ember = ReactorEmberData.adopt(level, info.min(), info.max());
+        if (ember != null) panel.adoptEmber(ember);
         panel.configureStructure(info.min(), info.max(), info.sheaths(), Math.max(0, storedFuel),
             heatPorts, waterPorts, info.valvePorts());
-        // (0.3.270) Пересборка ровно на том же месте принимает состояние уголька:
-        // снос панели — не способ обнулить перегретый реактор.
-        net.minecraft.nbt.CompoundTag ember = ReactorEmberData.adopt(level, info.min(), info.max());
-        if (ember != null) panel.adoptEmber(ember);
         indexStructure(level, panel.getBlockPos(), info.min(), info.max());
         List<BlockPos> ports = new ArrayList<>(heatPorts.length + waterPorts.length);
         for (long port : heatPorts) ports.add(BlockPos.of(port));

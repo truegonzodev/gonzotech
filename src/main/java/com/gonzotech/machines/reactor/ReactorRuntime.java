@@ -131,7 +131,8 @@ public final class ReactorRuntime {
         heatPortSet = Set.of();
         waterPortSet = Set.of();
         lastAnalysis = null;
-        lastSnapshot = null;
+        // (0.3.272, N8) lastSnapshot остаётся: unformed-продолжение (#23) симулирует
+        // по последнему снимку; snapshotDirty ниже даёт мгновенный рефреш на formed.
         outputCurve = null;
         lastLoadedTvels = -1;
         lastSnapshotTick = Long.MIN_VALUE;
@@ -228,6 +229,11 @@ public final class ReactorRuntime {
     }
 
     /** Integrator reading plus the GTH back-pressure layer shown on the temperature gauge. */
+    /** (0.3.272, N10) Поднятие температуры принятого уголька до его фактического жара. */
+    public void applyEmberHeat(double hot) {
+        heat.raiseTo(hot);
+    }
+
     /** (0.3.270) Есть ли у рантайма живое содержимое — основание для уголька. */
     public boolean emberWorthy() {
         return hotWithBackpressure() > ReactorHeatDynamics.AMBIENT + 1.0;
