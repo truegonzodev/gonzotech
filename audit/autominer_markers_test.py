@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.283$", props, re.M), "mod_version != 0.3.283"
+assert re.search(r"^mod_version=0\.3\.284$", props, re.M), "mod_version != 0.3.284"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -596,13 +596,16 @@ assert "getRenderOverlayTexture" not in _cfc and "underwater.png" not in _cfc, \
 _fso = ROOT / "src/main/java/com/gonzotech/core/fluid/client/FluidScreenOverlays.java"
 assert _fso.exists(), "FluidScreenOverlays потерян"
 _fsosrc = _fso.read_text(encoding="utf-8")
-for _tok in ("percent + 1", "percent--", "water_overlay", "lava_overlay", "corium_overlay",
+for _tok in ("percent + 1", "fadeTicks", "Math.exp", "shownPercent", "dead_slime_overlay",
+             "water_overlay", "lava_overlay", "corium_overlay",
              "setShaderColor", "openAsReader", "guiTextured"):
+    # 0.3.284: симметричный «percent--» заменён ускоряющейся кривой (Math.max(0, percent - fadeTicks))
     assert _tok in _fsosrc, f"FluidScreenOverlays: {_tok} пропал"
 _modsrc = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
 assert "FluidScreenOverlays.class" in _modsrc, "FluidScreenOverlays не зарегистрирован на шине"
 for _name in ("water_overlay", "lava_overlay", "sulfuric_acid_overlay", "formaldehyde_overlay",
-              "vodka_overlay", "rectificate_overlay", "mash_overlay", "wort_overlay", "corium_overlay"):
+              "vodka_overlay", "rectificate_overlay", "mash_overlay", "wort_overlay",
+              "corium_overlay", "dead_slime_overlay"):
     _png = ROOT / f"src/main/resources/assets/gonzotech/textures/gui/{_name}.png"
     assert _png.exists(), f"плейсхолдер {_name}.png потерян"
     _meta = _png.parent / (_png.name + ".mcmeta")

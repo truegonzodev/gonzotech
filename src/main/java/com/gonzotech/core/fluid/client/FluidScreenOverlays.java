@@ -1,6 +1,7 @@
 package com.gonzotech.core.fluid.client;
 
 import com.gonzotech.core.fluid.ModFluids;
+import com.gonzotech.core.registry.ModBlocks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -32,10 +33,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * кадров 256×144 + {@code .mcmeta} с зацикленной анимацией, прозрачность —
  * альфа пикселей, умноженная на плотность погружения.
  *
- * <p>Отличие от кризиса: плотность растёт <b>от 0 % до 100 %</b> со скоростью
- * 1 %/тик при погружении и уходит симметричным −1 %/тик при выныривании
- * («проявляется/исчезает как 1%/тик»). Погружение, как и везде в 281+,
- * считается по КАМЕРЕ: {@code y < blockY + height}, не по ногам.
+ * <p>Плотность (0.3.284, автор): <b>появление</b> — линейно +1 %/тик (0→100 %),
+ * <b>угасание</b> — ускоряющейся кривой 1, 2, 3 … %/тик: на k-м тике после выхода
+ * цель теряет k процентов. Цель пересчитывается раз в тик, но рисуемое значение
+ * — непрерывный «follow» цели с экспоненциальным сглаживанием по wall-clock
+ * (time constant ~0.1 с): ни ступенек по 5 %, ни дискретного «есть/нет» —
+ * плавная альфа на любом fps. Погружение, как и везде в 281+, считается по
+ * КАМЕРЕ: {@code y < blockY + height}, не по ногам.
+ *
+ * <p>Мёртвая жижа (0.3.284, автор: «добавить подобный оверлей для dead_slime»)
+ * получает спрайт {@code dead_slime_overlay} тем же механизмом; экранная
+ * дымка 0..11 % из {@code DeadSlimeFogClient} остаётся как есть.
  *
  * <p>Механика кадрирования кадров — ручная, как у кризиса: GUI-текстуры не
  * проходят через атлас, поэтому {@code .mcmeta} для них не «тикает»; ширина/
@@ -58,9 +66,17 @@ public final class FluidScreenOverlays {
     /** Жидкость → id оверлея; ленивая (реестр живёт позже класса). */
     private static volatile Map<Fluid, String> fluidToOverlay;
 
-    /** Текущий оверлей и его плотность 0..100 %. */
+    /** Текущий оверлей и его ЦЕЛЕВАЯ плотность 0..100 % (пересчёт раз в тик). */
     private static String currentId;
     private static int percent;
+    /** Сколько тиков длится угасание: цель теряет k % на k-м тике (кривая 1,2,3…). */
+    private static int fadeTicks;
+    /** Отрисовываемая (сглаженная) плотность; доживает до нуля и на «пустой» цели. */
+    private static float shownPercent;
+    /** id оверлея, который сейчас рисуется (живёт, пока shownPercent не стечёт). */
+    private static String shownId;
+    /** Момент последнего кадра — шаг сглаживания по wall-clock (не по тикам). */
+    private static long lastNano;
     /** Общий счётчик тиков для листания кадров (одна фаза на все среды). */
     private static int tickCounter;
 
@@ -72,6 +88,10 @@ public final class FluidScreenOverlays {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         currentId = null;
         percent = 0;
+        fadeTicks = 0;
+        shownPercent = 0;
+        shownId = null;
+        lastNano = 0;
         tickCounter = 0;
     }
 
@@ -114,6 +134,11 @@ public final class FluidScreenOverlays {
      * у неё собственная дымка 0..11 % в {@code DeadSlimeFogClient}.
      */
     private static String resolveOverlayId(Camera camera, ClientLevel level) {
+        // 0.3.284: мёртвая жижа — блок, не жидкость; спрайт-оверлей ей по соседству
+        // с туманом (гейт высоты не нужен: полный блок, вход = «камера в блоке»).
+        if (camera.getBlockAtCamera().is(ModBlocks.DEAD_SLIME_BLOCK.get())) {
+            return "dead_slime_overlay";
+        }
         BlockPos pos = camera.getBlockPosition();
         FluidState state = level.getFluidState(pos);
         if (state.isEmpty()) {
@@ -146,12 +171,12 @@ public final class FluidScreenOverlays {
         if (id != null) {
             // Смена среды без сброса: из сусла в кислоту — плавный переход плотности.
             currentId = id;
+            fadeTicks = 0;
             percent = Math.min(100, percent + 1);
         } else if (percent > 0) {
-            percent--;
-            if (percent == 0) {
-                currentId = null;
-            }
+            // 0.3.284 (автор): угасание ускоряющееся — минус k % на k-м тике (1, 2, 3 …).
+            fadeTicks++;
+            percent = Math.max(0, percent - fadeTicks);
         }
     }
 
@@ -163,7 +188,29 @@ public final class FluidScreenOverlays {
      */
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
-        if (percent <= 0 || currentId == null) {
+        long now = System.nanoTime();
+        double dt = lastNano == 0L ? 0.0 : Math.min(0.5, (now - lastNano) / 1.0E9);
+        lastNano = now;
+        // 0.3.284 (автор: «появление дискретное, либо есть либо его нет»): тиковая
+        // цель перескакивает на 5 % за раз — на глаз это ступени. Рисуемое значение
+        // догоняет цель непрерывно (экспоненциальное сглаживание, константа ~0.1 c);
+        // после обнуления цели показ ещё «стекает» к нулю — плавны и вход, и выход.
+        // Сглаживание на wall-clock, без API partial-tick — совпадает на любом fps.
+        if (currentId != null) {
+            shownId = currentId;
+        }
+        float k = (float) (1.0 - Math.exp(-dt * 10.0));
+        shownPercent += (percent - shownPercent) * k;
+        if (percent == 0) {
+            if (shownPercent < 0.05F) {
+                shownPercent = 0.0F;
+                shownId = null;
+                fadeTicks = 0;
+            }
+        } else if (percent - shownPercent < 0.02F && shownPercent - percent < 0.02F) {
+            shownPercent = percent; // на плато — без «дребезга»
+        }
+        if (shownPercent <= 0.0F || shownId == null) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -173,12 +220,13 @@ public final class FluidScreenOverlays {
         GuiGraphics g = event.getGuiGraphics();
         int width = g.guiWidth();
         int height = g.guiHeight();
-        Anim anim = ANIMS.computeIfAbsent(currentId, FluidScreenOverlays::readAnim);
-        float alpha = Mth.clamp(percent / 100.0F, 0.0F, 1.0F);
+        String id = shownId;
+        Anim anim = ANIMS.computeIfAbsent(id, FluidScreenOverlays::readAnim);
+        float alpha = Mth.clamp(shownPercent / 100.0F, 0.0F, 1.0F);
 
         int v = (tickCounter / anim.frameTicks) % anim.frames * anim.h;
-        ResourceLocation tex = TEXTURES.computeIfAbsent(currentId, id ->
-                ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/" + id + ".png"));
+        ResourceLocation tex = TEXTURES.computeIfAbsent(id, rid ->
+                ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/" + rid + ".png"));
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
         g.pose().pushPose();
         g.pose().scale(width / (float) anim.w, height / (float) anim.h, 1.0F);
@@ -234,6 +282,6 @@ public final class FluidScreenOverlays {
     public static Set<String> requiredAssets() {
         return Set.of("water_overlay", "lava_overlay", "sulfuric_acid_overlay",
                 "formaldehyde_overlay", "vodka_overlay", "rectificate_overlay",
-                "mash_overlay", "wort_overlay", "corium_overlay");
+                "mash_overlay", "wort_overlay", "corium_overlay", "dead_slime_overlay");
     }
 }
