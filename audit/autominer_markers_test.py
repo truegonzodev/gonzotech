@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.280$", props, re.M), "mod_version != 0.3.280"
+assert re.search(r"^mod_version=0\.3\.281$", props, re.M), "mod_version != 0.3.281"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -564,6 +564,20 @@ assert "ViewportEvent.RenderFog" not in _dsf
 assert "VEIL_MAX_PERCENT = 11" in _dsf and "veilPercent + 1" in _dsf and "veilPercent--" in _dsf, \
     "дымка 11 % с симметричным ramp у жижи пропала"
 assert "RenderGuiEvent.Post" in _dsf, "экранный оверлей жижи не рисуется"
+# 0.3.281: «подводная» идентификация гонзо-жидкостей — миксин Camera +
+# вспомогательный класс; тег #minecraft:water на наши жидкости — ЗАПРЕЩЁН
+# (утаскивает утопление/тушение огня/плавание, см. GonzoFluidFog javadoc).
+_cam = (ROOT / "src/main/java/com/gonzotech/mixin/client/CameraGonzoFluidFogMixin.java")
+assert _cam.exists(), "миксин Camera#getFluidInCamera потерян"
+_camsrc = _cam.read_text(encoding="utf-8")
+assert 'method = "getFluidInCamera"' in _camsrc and "FogType.WATER" in _camsrc, \
+    "миксин не возвращает WATER камере в гонзо-жидкости"
+assert "isFoggedFluid" in _camsrc, "проверка принадлежности жидкости уехала из миксина"
+_gff = (ROOT / "src/main/java/com/gonzotech/core/fluid/GonzoFluidFog.java")
+assert _gff.exists() and _gff.read_text(encoding="utf-8").count("ModFluids.") >= 14, \
+    "набор из 14 холдеров жидкостей разъехался"
+assert not (ROOT / "src/main/resources/data/minecraft/tags/fluid/water.json").exists(), \
+    "тег #minecraft:water на гонзо-жидкости — возвращение утопления в кислоту"
 assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod
 # 0.3.276-f1: бэкстоп пользуется AbstractContainerMenu/Slot — импорты обязаны
 # быть (сборка автора 23.10 падала ровно на этом: тихий no-op splice).

@@ -45,7 +45,8 @@
     "client.PistonHeadRendererMixin",
     "client.WolfModelFatMixin",
     "client.WolfRenderStateMixin",
-    "client.WolfRendererMixin"
+    "client.WolfRendererMixin",
+    "client.CameraGonzoFluidFogMixin"
   ],
   "injectors": {
     "defaultRequire": 1
