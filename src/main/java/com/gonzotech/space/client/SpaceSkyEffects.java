@@ -278,6 +278,18 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             : Mth.clamp(rendererDaylight, 0.0F, 1.0F);
         int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFactor(dayFrac));
+        // Суневет: туман ЧИСТО наследует цвет неба купола (автор 24.10: при
+        // багровом дне туман оставался ванильным небесно-голубым — багровый
+        // оверлей жил только в локальных переменных renderSky, сюда не доезжал).
+        // Те же гейты и тот же вес, что у горизонта купола (renderSky: crimson
+        // ×0.95 на CRIMSON_HORIZON_ARGB): только Оверворлд, GONE не трогаем.
+        if (level != null && level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                && SpaceSkyState.sunState != SunState.GONE) {
+            double crimson = SunEventClient.crimsonIntensity(level);
+            if (crimson > 0.001F) {
+                horizon = overlayArgb(horizon, CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F));
+            }
+        }
         double r = ((horizon >>> 16) & 0xFF) / 255.0;
         double g = ((horizon >>> 8) & 0xFF) / 255.0;
         double b = (horizon & 0xFF) / 255.0;

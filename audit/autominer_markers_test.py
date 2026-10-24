@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.278$", props, re.M), "mod_version != 0.3.278"
+assert re.search(r"^mod_version=0\.3\.279$", props, re.M), "mod_version != 0.3.279"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -538,6 +538,16 @@ assert _sys275.count(".setChanged()") == 1, "у рамок вернулся не
 assert "земля Σ=" in _sys275 and "мир Σ=" in _sys275, "[LEDGER] не расширен землёй/миром"
 assert "new long[]{serverSum, clientSum, groundSum}" in _sys275, "базовая линия LEDGER не трёхместная"
 assert "getEntityData()" in _sys275, "обоснование no-op (ванильный сеттер) пропало из комментария"
+# 0.3.279: туман при багровом дне. getBrightnessDependentFogColor обязан нести
+# ТОТ ЖЕ crimson-оверлей, что и горизонт купола (тот же вес 0.95 и тот же гейт
+# OVERWORLD×!GONE) — «туман чисто перенимает sky color» (автор 24.10).
+_fog = (ROOT / "src/main/java/com/gonzotech/space/client/SpaceSkyEffects.java") \
+    .read_text(encoding="utf-8")
+assert _fog.count("CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F))") == 2, \
+    "оверлей горизонта должен применяться симметрично: купол (renderSky) + туман"
+assert _fog.count("net.minecraft.world.level.Level.OVERWORLD") >= 2, \
+    "гейт багрового тинта по измерению должен быть в обоих местах"
+assert "overridesSkyLight()" in _fog, "привязка skyDarken к суневету пропала"
 assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod
 # 0.3.276-f1: бэкстоп пользуется AbstractContainerMenu/Slot — импорты обязаны
 # быть (сборка автора 23.10 падала ровно на этом: тихий no-op splice).
