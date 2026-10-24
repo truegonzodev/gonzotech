@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.279$", props, re.M), "mod_version != 0.3.279"
+assert re.search(r"^mod_version=0\.3\.280$", props, re.M), "mod_version != 0.3.280"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -548,6 +548,22 @@ assert _fog.count("CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F))") == 2, \
 assert _fog.count("net.minecraft.world.level.Level.OVERWORLD") >= 2, \
     "гейт багрового тинта по измерению должен быть в обоих местах"
 assert "overridesSkyLight()" in _fog, "привязка skyDarken к суневету пропала"
+# 0.3.280: туман гонзо-жидкостей — underwater-подобие вместо terrain-fog:
+# геометрия только в FOG_TERRAIN, плотность 0→93 %; мёртвая жижа — без
+# отмены RenderFog, экранная дымка 11 % с ramp ±1 %/тик по камере.
+_cfc = (ROOT / "src/main/java/com/gonzotech/core/fluid/client/CoriumFluidClient.java") \
+    .read_text(encoding="utf-8")
+assert "FogRenderer.FogMode.FOG_TERRAIN" in _cfc, "гейт слоя тумана у жидкостей потерян"
+assert "FOG_ALPHA_MAX = 0.93F" in _cfc, "потолок плотности 93 % потерян"
+assert "FogShape.SPHERE, fogR, fogG, fogB, 1.0F" not in _cfc, "старый безгейтовый возврат с alpha=1.0 вернулся"
+_dsf = (ROOT / "src/main/java/com/gonzotech/core/client/DeadSlimeFogClient.java") \
+    .read_text(encoding="utf-8")
+assert "setCanceled" not in _dsf, "terrain-fog жижи вернулся (отмена RenderFog)"
+assert "onRenderFog" not in _dsf, "обработчик RenderFog у жижи должен быть удалён"
+assert "ViewportEvent.RenderFog" not in _dsf
+assert "VEIL_MAX_PERCENT = 11" in _dsf and "veilPercent + 1" in _dsf and "veilPercent--" in _dsf, \
+    "дымка 11 % с симметричным ramp у жижи пропала"
+assert "RenderGuiEvent.Post" in _dsf, "экранный оверлей жижи не рисуется"
 assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod
 # 0.3.276-f1: бэкстоп пользуется AbstractContainerMenu/Slot — импорты обязаны
 # быть (сборка автора 23.10 падала ровно на этом: тихий no-op splice).

@@ -22,17 +22,23 @@ def read(path: str) -> str:
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
-# Dead slime uses depth-based world fog with powder-snow visibility, not a screen-space fill.
+# Dead slime 0.3.280 (автор): подводный образец — murk-цвет через ComputeFogColor,
+# terrain-fog (отмены/сферы) удалён полностью, плотность — экранная дымка 11 %
+# с ramp ±1 %/тик по КАМЕРЕ (не по ногам).
 fog = read("core/client/DeadSlimeFogClient.java")
 entry = read("GonzoTechMod.java")
-assert "FOG_START = 0.0F" in fog and "FOG_END = 2.0F" in fog
-assert "event.setNearPlaneDistance(FOG_START)" in fog
-assert "event.setFarPlaneDistance(FOG_END)" in fog
-assert "vanilla powder-snow fog interval" in fog
 assert "getMapColor(level, cameraPos).col" in fog
-assert "ViewportEvent.ComputeFogColor" in fog and "ViewportEvent.RenderFog" in fog
-assert "event.setFogShape(FogShape.SPHERE)" in fog and "event.setCanceled(true)" in fog
-assert "RenderGuiEvent" not in fog and "graphics.fill(" not in fog
+assert "ViewportEvent.ComputeFogColor" in fog
+assert "RenderFog" not in fog and "setCanceled" not in fog, "terrain-fog жижи вернулся"
+assert "VEIL_MAX_PERCENT = 11" in fog
+assert "veilPercent + 1" in fog and "veilPercent--" in fog, "симметричный ramp потерян"
+assert "RenderGuiEvent.Post" in fog and "g.fill" in fog
+assert "getBlockAtCamera()" in fog, "погружение должно считаться по камере"
+assert "onLogout" in fog, "дымка обязана обнуляться на выход"
+assert "DeadSlimeFogClient.class" in entry
+# было «никакого screen-space fill» (прежняя доктрина); автор 24.10 требует
+# именно экранную дымку по образцу crisis_screen_effect — пин перевёрнут.
+assert "RenderGuiEvent" in fog and "g.fill" in fog
 assert "camera.getBlockAtCamera()" in fog
 assert "cameraInsideDeadSlime" in fog and "ModBlocks.DEAD_SLIME_BLOCK.get()" in fog
 assert "screen_effect_freeze" not in fog

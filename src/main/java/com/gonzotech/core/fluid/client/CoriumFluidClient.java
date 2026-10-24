@@ -42,6 +42,9 @@ public final class CoriumFluidClient {
     private static final int TINT_WORT = 0xE0FFFFFF;
     private static final int TINT_CORIUM = 0xFFFFFFFF;
 
+    /** Потолок плотности тумана: 0→93 % вместо 0→100 % (автор 24.10). */
+    private static final float FOG_ALPHA_MAX = 0.93F;
+
     private CoriumFluidClient() {
     }
 
@@ -138,7 +141,18 @@ public final class CoriumFluidClient {
             @Override
             public FogParameters modifyFogRender(Camera camera, FogRenderer.FogMode mode,
                                                  float renderDistance, float partialTick, FogParameters fogParameters) {
-                return new FogParameters(fogStart, fogEnd, FogShape.SPHERE, fogR, fogG, fogB, 1.0F);
+                // 0.3.280 (автор): жидкостной туман живёт ТОЛЬКО в земном слое
+                // (FOG_TERRAIN). Наш прежний безгейтовый возврат подменял геометрию
+                // и неба (FOG_SKY): сфера far=1.5..6, наложенная на скай-слой, и
+                // давала «рентген» (в просветах видно небо; сторонние туман-киллеры
+                // сбивали весь pattern, путая наш underwater-fog с terrain-fog).
+                // Цвет (modifyFogColor) остаётся на оба слоя — так же ведёт себя
+                // ванильная вода. Плотность — 0→93 % (автор: не 100 %), радиусы
+                // (near/far) не трогаем.
+                if (mode != FogRenderer.FogMode.FOG_TERRAIN) {
+                    return fogParameters;
+                }
+                return new FogParameters(fogStart, fogEnd, FogShape.SPHERE, fogR, fogG, fogB, FOG_ALPHA_MAX);
             }
         }, type);
     }
