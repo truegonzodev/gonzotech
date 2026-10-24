@@ -534,7 +534,7 @@ assert "context.sender()" not in _mod, "несуществующий IPayloadCon
 # pickup без выгоды). [LEDGER] расширен мировой суммой: меню + земля.
 assert "drop.setItem(" not in _sys275, "write-back на ItemEntity вернулся — фикс 278 откатился"
 assert "frame.setItem(" not in _sys275, "write-back на рамку вернулся"
-assert "frame.setChanged()" in _sys275, "рамкам не проставляется dirty-флаг"
+assert _sys275.count(".setChanged()") == 1, "у рамок вернулся несуществующий Entity#setChanged (не компилируется)"
 assert "земля Σ=" in _sys275 and "мир Σ=" in _sys275, "[LEDGER] не расширен землёй/миром"
 assert "new long[]{serverSum, clientSum, groundSum}" in _sys275, "базовая линия LEDGER не трёхместная"
 assert "getEntityData()" in _sys275, "обоснование no-op (ванильный сеттер) пропало из комментария"

@@ -799,8 +799,13 @@ public final class RadiationSystem {
         // stale-write-back ЗАКРЫТА. Тем не менее вызов снят: при гонке с
         // pickup-тиком он возвращал бы на уже опустевшую сущность лишние объекты
         // (риск без выгоды — затухание и так мутирует live-стек на месте).
-        // Рамкам оставлен только setChanged: mark dirty для сохранения, без
-        // переприсваивания.
+        // Пометка рамок тоже снята: ItemFrame живёт в тех же SynchedEntityData
+        // (set того же объекта — equals-early-return, dirty не ставит; проверено
+        // по исходникам 1.21.4 в раунде 277), а сохранение читает live-стек в
+        // addAdditionalSaveData — затухание и так в нём. Отдельного mark'а
+        // у Entity нет (setChanged — только у BlockEntity; javac автора это и
+        // поймал), выдумывать синк-костыль не стали: значение доедет до клиента
+        // при ближайшей штатной синхронизации сущности.
         for (net.minecraft.world.entity.item.ItemEntity drop
                 : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box,
                     entity -> !entity.getItem().isEmpty())) {
@@ -812,7 +817,7 @@ public final class RadiationSystem {
                 : level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ItemFrame.class, box,
                     entity -> !entity.getItem().isEmpty())) {
             ItemStack stack = frame.getItem();
-            if (ItemRadioactivity.decayInducedDeepLazily(stack, nowTick)) frame.setChanged();
+            ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
             classifyFloorStack(level, frame.blockPosition(), "предмет в рамке", stack, contamination, totals);
         }
         return new FloorScan(totals[0], totals[1]);
