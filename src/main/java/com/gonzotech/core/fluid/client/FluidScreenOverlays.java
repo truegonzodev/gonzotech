@@ -83,23 +83,24 @@ public final class FluidScreenOverlays {
             synchronized (FluidScreenOverlays.class) {
                 local = fluidToOverlay;
                 if (local == null) {
-                    local = Map.of(
-                            // Гонзо-жидкости: названия оверлеев — по списку автора
-                            // (vodka = этанол, rectificate = дистиллят).
-                            ModFluids.ETHANOL.get(), "vodka_overlay",
-                            ModFluids.FLOWING_ETHANOL.get(), "vodka_overlay",
-                            ModFluids.FORMALDEHYDE.get(), "formaldehyde_overlay",
-                            ModFluids.FLOWING_FORMALDEHYDE.get(), "formaldehyde_overlay",
-                            ModFluids.SULFURIC_ACID.get(), "sulfuric_acid_overlay",
-                            ModFluids.FLOWING_SULFURIC_ACID.get(), "sulfuric_acid_overlay",
-                            ModFluids.DISTILLATE.get(), "rectificate_overlay",
-                            ModFluids.FLOWING_DISTILLATE.get(), "rectificate_overlay",
-                            ModFluids.MASH.get(), "mash_overlay",
-                            ModFluids.FLOWING_MASH.get(), "mash_overlay",
-                            ModFluids.WORT.get(), "wort_overlay",
-                            ModFluids.FLOWING_WORT.get(), "wort_overlay",
-                            ModFluids.MOLTEN_CORIUM.get(), "corium_overlay",
-                            ModFluids.FLOWING_MOLTEN_CORIUM.get(), "corium_overlay");
+                    // Гонзо-жидкости: названия оверлеев — по списку автора
+                    // (vodka = этанол, rectificate = дистиллят). 14 пар — Map.of
+                    // умеет только 10, поэтому ofEntries (сборка автора 24.10).
+                    local = Map.ofEntries(
+                            Map.entry(ModFluids.ETHANOL.get(), "vodka_overlay"),
+                            Map.entry(ModFluids.FLOWING_ETHANOL.get(), "vodka_overlay"),
+                            Map.entry(ModFluids.FORMALDEHYDE.get(), "formaldehyde_overlay"),
+                            Map.entry(ModFluids.FLOWING_FORMALDEHYDE.get(), "formaldehyde_overlay"),
+                            Map.entry(ModFluids.SULFURIC_ACID.get(), "sulfuric_acid_overlay"),
+                            Map.entry(ModFluids.FLOWING_SULFURIC_ACID.get(), "sulfuric_acid_overlay"),
+                            Map.entry(ModFluids.DISTILLATE.get(), "rectificate_overlay"),
+                            Map.entry(ModFluids.FLOWING_DISTILLATE.get(), "rectificate_overlay"),
+                            Map.entry(ModFluids.MASH.get(), "mash_overlay"),
+                            Map.entry(ModFluids.FLOWING_MASH.get(), "mash_overlay"),
+                            Map.entry(ModFluids.WORT.get(), "wort_overlay"),
+                            Map.entry(ModFluids.FLOWING_WORT.get(), "wort_overlay"),
+                            Map.entry(ModFluids.MOLTEN_CORIUM.get(), "corium_overlay"),
+                            Map.entry(ModFluids.FLOWING_MOLTEN_CORIUM.get(), "corium_overlay"));
                     fluidToOverlay = local;
                 }
             }
