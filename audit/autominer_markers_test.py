@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.285$", props, re.M), "mod_version != 0.3.285"
+assert re.search(r"^mod_version=0\.3\.286$", props, re.M), "mod_version != 0.3.286"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -543,8 +543,13 @@ assert "getEntityData()" in _sys275, "обоснование no-op (ваниль
 # OVERWORLD×!GONE) — «туман чисто перенимает sky color» (автор 24.10).
 _fog = (ROOT / "src/main/java/com/gonzotech/space/client/SpaceSkyEffects.java") \
     .read_text(encoding="utf-8")
-assert _fog.count("CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F))") == 2, \
+# 0.3.286: симметрия усилена — обе точки оверлея (купол + туман) идут через общий
+# crimsonHorizonFor(level) (в E0-снеге там #5D4145 вместо #C24A16).
+assert _fog.count("(float) (crimson * 0.95F))") == 2, \
     "оверлей горизонта должен применяться симметрично: купол (renderSky) + туман"
+assert "int crimsonHorizon = crimsonHorizonFor(level);" in _fog and \
+       "overlayArgb(horizon, crimsonHorizonFor(level)" in _fog, \
+    "E0-снежная подмена кримзон-горизонта должна идти из общего crimsonHorizonFor"
 assert _fog.count("net.minecraft.world.level.Level.OVERWORLD") >= 2, \
     "гейт багрового тинта по измерению должен быть в обоих местах"
 assert "overridesSkyLight()" in _fog, "привязка skyDarken к суневету пропала"
@@ -628,6 +633,24 @@ assert "TEX_WHITE" in _hud and "1, 1, 1, 1, color)" in _hud, \
 assert "g.fill(" not in _hud, "сырой g.fill в шкалах должен быть убран (расслоение сэндвича)"
 assert (ROOT / "src/main/resources/assets/gonzotech/textures/gui/white.png").exists(), \
     "white.png (1×1) потерян — шкалы не затонировать"
+# 0.3.286: матрица осадков Оверворл/Марса (скайбокс+туман) и аддитивная луна.
+_sky = (ROOT / "src/main/java/com/gonzotech/space/client/SpaceSkyEffects.java").read_text(encoding="utf-8")
+assert "0xFF727994" in _sky, "дождевой дневной конец #727994 потерян"
+assert "0xFF969AA2" in _sky, "снежный дневной конец #969AA2 потерян"
+assert "0xFF5D4145" in _sky, "E0-снежный горизонт #5D4145 потерян"
+assert "getRainLevel" in _sky and "wetMode(" in _sky, "wet-согласование скайбокса разъехалось"
+assert "crimsonHorizonFor" in _sky, "snow-подмена кримзон-горизонта уехала"
+# туман обязан брать wet из того же места (получасовой сдвиг с куполом недопустим)
+assert _sky.count("wetDay(horizonNightArgb, horizonDayArgb") >= 2, \
+    "туман перестал наследовать мокрый горизонт купола"
+_sc = (ROOT / "src/main/java/com/gonzotech/space/client/SpaceClient.java").read_text(encoding="utf-8")
+assert "overworld/moon_phases" in _sc and "CelestialBody.Blend.ADDITIVE" in _sc, \
+    "луна Оверворланда слетела с аддитивного блендинга"
+_cb = (ROOT / "src/main/java/com/gonzotech/space/client/CelestialBody.java").read_text(encoding="utf-8")
+assert _cb.count("public static CelestialBody planet(") >= 2, "planet(Blend) перегрузка пропала"
+_swg = (ROOT / "src/main/java/com/gonzotech/core/worldgen/SurfaceWasteGenerator.java").read_text(encoding="utf-8")
+assert "host.dimension() != net.minecraft.world.level.Level.OVERWORLD" in _swg, \
+    "мусор/бочки вернулись в не-оверворлд измерения"
 assert not (ROOT / "src/main/resources/data/minecraft/tags/fluid/water.json").exists(), \
     "тег #minecraft:water на гонзо-жидкости — возвращение утопления в кислоту"
 assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod

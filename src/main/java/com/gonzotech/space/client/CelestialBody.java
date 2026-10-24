@@ -76,7 +76,14 @@ public record CelestialBody(
     /** Планета/спутник: обычное alpha-наложение (спрайт как есть). */
     public static CelestialBody planet(ResourceLocation tex, float size, Motion motion,
                                        float cycleDays, float yaw, float tilt, float phase) {
+        return planet(tex, size, motion, cycleDays, yaw, tilt, phase, Blend.NORMAL);
+    }
+
+    /** Планета/спутник с явным блендом (0.3.286: луна Оверворлда — аддитивная). */
+    public static CelestialBody planet(ResourceLocation tex, float size, Motion motion,
+                                       float cycleDays, float yaw, float tilt, float phase,
+                                       Blend blend) {
         return new CelestialBody(tex, size, motion, cycleDays, yaw, tilt, phase,
-            0xFFFFFFFF, Blend.NORMAL);
+            0xFFFFFFFF, blend);
     }
 }

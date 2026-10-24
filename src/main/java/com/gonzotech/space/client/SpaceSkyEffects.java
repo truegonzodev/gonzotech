@@ -133,6 +133,14 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     // Суневент (автор: «скaйбокс тинтится багровым оранжевым»): купол поверх дневного цикла.
     private static final int CRIMSON_ZENITH_ARGB = 0xFF4A1410;
     private static final int CRIMSON_HORIZON_ARGB = 0xFFC24A16;
+    // 0.3.286 (автор, матрица осадков): «мокрые» дневные концы купола/тумана —
+    // значения для дня (time 6000); ночь не трогается (вес dayFrac обнуляет сдвиг),
+    // закатный блендинг остаётся поверх. Туман = продолжение скайбокса: тот же
+    // конец и та же сила дождя в getBrightnessDependentFogColor.
+    private static final int WET_RAIN_DAY_ARGB = 0xFF727994;   // Оверворлд, дождь
+    private static final int WET_SNOW_DAY_ARGB = 0xFF969AA2;   // Оверворлд, снег (и E-1..E+1)
+    // E0 суневета со снегом: «самое оранжевое» (горизонт #C24A16) меняется на это.
+    private static final int CRIMSON_HORIZON_SNOW_ARGB = 0xFF5D4145;
     // Истощённое солнце: daylight-коэффициент дня E ≈ 0.05 → полдень ≈ свет 3.6
     // (автор 2026-09-18: ещё на 15–20% тусклее исходных ~4.5, т.е. 0.125).
     private static final float CRIMSON_DAYLIGHT_FACTOR = 0.05F;
@@ -277,6 +285,15 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             ? daylightFactor(level, 0.0F)
             : Mth.clamp(rendererDaylight, 0.0F, 1.0F);
         int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
+        // 0.3.286: туман — продолжение купола: та же мокрая подмена дневного конца.
+        // Частичного тика здесь нет — берём силу осадки на целом тике (отставание
+        // ≤1 кадра, тот же приём, что у dayFrac выше).
+        float wet = level != null ? level.getRainLevel(0.0F) : 0.0F;
+        int wetModeNow = level != null && wet > 0.001F ? wetMode(level) : 0;
+        if (wetModeNow != 0) {
+            horizon = wetDay(horizonNightArgb, horizonDayArgb, WET_RAIN_DAY_ARGB,
+                    WET_SNOW_DAY_ARGB, wetModeNow, wet, dayFrac);
+        }
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFactor(dayFrac));
         // Суневет: туман ЧИСТО наследует цвет неба купола (автор 24.10: при
         // багровом дне туман оставался ванильным небесно-голубым — багровый
@@ -287,7 +304,7 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                 && SpaceSkyState.sunState != SunState.GONE) {
             double crimson = SunEventClient.crimsonIntensity(level);
             if (crimson > 0.001F) {
-                horizon = overlayArgb(horizon, CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F));
+                horizon = overlayArgb(horizon, crimsonHorizonFor(level), (float) (crimson * 0.95F));
             }
         }
         double r = ((horizon >>> 16) & 0xFF) / 255.0;
@@ -348,6 +365,17 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
 
         int zenith = lerpArgb(zenithNightArgb, zenithDayArgb, dayFrac);
         int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
+        // 0.3.286 (автор): согласование скайбокса с погодой. getRainLevel —
+        // ванильная плавно нарастающая/угасающая сила осадков: вход и выход
+        // «зависят от дождя» без собственного таймера.
+        float wet = level.getRainLevel(partialTick);
+        int wetModeNow = wet > 0.001F ? wetMode(level) : 0;
+        if (wetModeNow != 0) {
+            zenith = wetDay(zenithNightArgb, zenithDayArgb, WET_RAIN_DAY_ARGB,
+                    WET_SNOW_DAY_ARGB, wetModeNow, wet, dayFrac);
+            horizon = wetDay(horizonNightArgb, horizonDayArgb, WET_RAIN_DAY_ARGB,
+                    WET_SNOW_DAY_ARGB, wetModeNow, wet, dayFrac);
+        }
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
 
         // Суневент: багровый купол (I(t) из SunEventClient) — ТОЛЬКО Оверворлд
@@ -359,7 +387,10 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
             double crimson = SunEventClient.crimsonIntensity(level);
             if (crimson > 0.001F) {
                 zenith = overlayArgb(zenith, CRIMSON_ZENITH_ARGB, (float) (crimson * 0.8F));
-                horizon = overlayArgb(horizon, CRIMSON_HORIZON_ARGB, (float) (crimson * 0.95F));
+                // 0.3.286 (автор, п.4): на E0 суневета со снегом «самое оранжевое»
+                // (горизонт #C24A16) становится #5D4145; остальной блендинг не меняем.
+                int crimsonHorizon = crimsonHorizonFor(level);
+                horizon = overlayArgb(horizon, crimsonHorizon, (float) (crimson * 0.95F));
             }
         }
 
@@ -947,6 +978,65 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         } catch (Exception e) {
             return new int[] { 1, 1 };
         }
+    }
+
+    /**
+     * Мокрый режим (0.3.286, автор): 0 — нет, 1 — дождь Оверворлда, 2 — снег
+     * (холодный биом ИЛИ окно суневета E−1..E+1), 3 — Марс при осадках
+     * (дневной скайбокс 20 % серее и 20 % темнее).
+     */
+    private static int wetMode(ClientLevel level) {
+        if (level.dimension() == Level.OVERWORLD) {
+            return sunEventSnowNow(level) || isColdBiomeAtCamera(level) ? 2 : 1;
+        }
+        if (level.dimension() == com.gonzotech.space.SpaceDimensions.MARS) {
+            return 3;
+        }
+        return 0;
+    }
+
+    /** Ванильный критерий снегопада: температура биома в точке камеры ≤ 0.15. */
+    private static boolean isColdBiomeAtCamera(ClientLevel level) {
+        net.minecraft.core.BlockPos pos =
+                Minecraft.getInstance().gameRenderer.getMainCamera().getBlockPosition();
+        return pos != null && level.getBiome(pos).value().getBaseTemperature() <= 0.15F;
+    }
+
+    /**
+     * Подмешивание «мокрого» дневного конца в купол: мокрая вершина считается тем
+     * же днём (dayFrac), поэтому ночью сдвиг обнуляется сам («для ночи ничего не
+     * трогаем»), а закатный оверлей накладывается уже поверх — «блендинг к закату
+     * не меняется». Режим 3 (Марс): дневной конец не подменяется, а темнеет/седеет.
+     */
+    private static int wetDay(int nightArgb, int dayArgb, int rainArgb, int snowArgb,
+                              int mode, float wet, float dayFrac) {
+        int wetDayArgb = switch (mode) {
+            case 2 -> snowArgb;
+            case 3 -> greyerDarker(dayArgb);
+            default -> rainArgb;
+        };
+        int base = lerpArgb(nightArgb, dayArgb, dayFrac);
+        int wetted = lerpArgb(nightArgb, wetDayArgb, dayFrac);
+        return lerpArgb(base, wetted, Mth.clamp(wet, 0.0F, 1.0F));
+    }
+
+    /** 20 % к серому (по яркости) + 20 % темнее — запрос автора для Марса. */
+    private static int greyerDarker(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+        double lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        r = (int) ((r + (lum - r) * 0.20) * 0.8);
+        g = (int) ((g + (lum - g) * 0.20) * 0.8);
+        b = (int) ((b + (lum - b) * 0.20) * 0.8);
+        return (argb & 0xFF000000) | (Math.min(r, 255) << 16)
+                | (Math.min(g, 255) << 8) | Math.min(b, 255);
+    }
+
+    /** Горизонт кримзон-оверлея: на E0 со снегом — #5D4145 вместо оранжевого. */
+    private static int crimsonHorizonFor(ClientLevel level) {
+        return sunEventSnowNow(level) && SunEventClient.isEventDayNow(level)
+            ? CRIMSON_HORIZON_SNOW_ARGB : CRIMSON_HORIZON_ARGB;
     }
 
     private static int lerpArgb(int a, int b, float t) {

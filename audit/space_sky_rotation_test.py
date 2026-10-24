@@ -54,8 +54,9 @@ overworld = client.split("private static SpaceSkyEffects overworld()", 1)[1].spl
     "// ---- ЛУНА", 1
 )[0]
 pin('CelestialBody.sun(tex("overworld/sun"), 30F, Motion.SUN,\n                1F, 0F, 0F, 0F)' in overworld
-    and 'Motion.SUN, 1F, 0F, 0F, 180F)' in overworld,
-    "only Overworld sun and moon use the X/Y east-to-west orbit plane")
+    and 'Motion.SUN, 1F, 0F, 0F, 180F, CelestialBody.Blend.ADDITIVE)' in overworld,
+    "only Overworld sun and moon use the X/Y east-to-west orbit plane; "
+    "0.3.286: Overworld moon is additive (black = transparent)")
 moon = client.split("private static SpaceSkyEffects moon()", 1)[1].split(
     "// ---- МАРС", 1
 )[0]

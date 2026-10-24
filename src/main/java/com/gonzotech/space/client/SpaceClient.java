@@ -35,8 +35,10 @@ public final class SpaceClient {
                 1F, 0F, 0F, 0F),
             // Отдельный 4×2 vanilla-compatible atlas фаз, а не маленькая луна Марса.
             // Полуразмер ±20 — ровно размер ванильного лунного квада.
+            // 0.3.286 (автор, п.7): луна ТОЛЬКО в Оверворлде — аддитивный бленд,
+            // «чёрнее = прозрачнее» (тёмная сторона не заслоняет небо, фаза честная).
             CelestialBody.planet(tex("overworld/moon_phases"), SpaceSkyEffects.VANILLA_MOON_HALF_SIZE,
-                Motion.SUN, 1F, 0F, 0F, 180F)
+                Motion.SUN, 1F, 0F, 0F, 180F, CelestialBody.Blend.ADDITIVE)
         );
         return new SpaceSkyEffects(
             192.0F, true,

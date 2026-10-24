@@ -31,6 +31,13 @@ public final class SurfaceWasteGenerator {
 
     /** Evaluates neighbouring anchors and writes only the portion in this chunk. */
     public static void generateForChunk(WorldGenLevel level, ChunkPos targetChunk) {
+        // 0.3.286 (автор, п.8): мусор и отходы («gonzo features»: debris и
+        // waste barrels) живут ТОЛЬКО в Оверворлде; в космических измерениях
+        // генератор не вызывается вовсе.
+        net.minecraft.world.level.Level host = level.getLevel();
+        if (host == null || host.dimension() != net.minecraft.world.level.Level.OVERWORLD) {
+            return;
+        }
         for (int anchorX = targetChunk.x - 1; anchorX <= targetChunk.x + 1; anchorX++) {
             for (int anchorZ = targetChunk.z - 1; anchorZ <= targetChunk.z + 1; anchorZ++) {
                 // WorldGenRegion only exposes chunks required by this generation step.
