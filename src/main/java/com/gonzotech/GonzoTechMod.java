@@ -190,6 +190,12 @@ public class GonzoTechMod {
             // 0.3.283: спрайтовые экранные оверлеи сред (вода/лава/7 гонзо-жидкостей),
             // ramp 0→100 % по 1 %/тик, кадр-анимация из .mcmeta по образцу кризиса.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.fluid.client.FluidScreenOverlays.class);
+            // 0.3.287 (автор, п.6): все гонзо-жижи, кроме кориума, — водные звуки
+            // (всплеск при входе, луп-журчание и ENTER/EXIT под жидкостью).
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.fluid.client.GonzoFluidSounds.class);
+            // 0.3.287 (автор, п.1-4): мокрый туман Оверворлда = точный горизонт купола
+            // (правка пост-фактум, после ванильных множителей дождя/бури).
+            NeoForge.EVENT_BUS.register(com.gonzotech.space.client.WetFogAligner.class);
             // Эффекты кризиса на клиенте: экранный эффект, фиксация камеры, ложная смерть.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheCrisisClient.class);
             // Texture-only Smart CTM корпусной оболочки турбины.

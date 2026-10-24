@@ -141,6 +141,12 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     private static final int WET_SNOW_DAY_ARGB = 0xFF969AA2;   // Оверворлд, снег (и E-1..E+1)
     // E0 суневета со снегом: «самое оранжевое» (горизонт #C24A16) меняется на это.
     private static final int CRIMSON_HORIZON_SNOW_ARGB = 0xFF5D4145;
+    // 0.3.287 (автор, п.5): кросс-фейд осадков с закатом/восходом. Оба коэффициента
+    // действуют только при осадках (wet=0 вырождаются) — блендинг ясной погоды цел.
+    // К закату мокрая подмена отступает на ×(1−0.70·sunset), в дождь оранжевое
+    // успокаивается на ×(1−0.55·wet): границы «серое ↔ оранжевое» гасятся плавно.
+    private static final float WET_DUSK_CROSSFADE = 0.70F;
+    private static final float DUSK_WET_SUPPRESS = 0.55F;
     // Истощённое солнце: daylight-коэффициент дня E ≈ 0.05 → полдень ≈ свет 3.6
     // (автор 2026-09-18: ещё на 15–20% тусклее исходных ~4.5, т.е. 0.125).
     private static final float CRIMSON_DAYLIGHT_FACTOR = 0.05F;
@@ -281,31 +287,17 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
          * client frame, rather than by a whole vanilla day/night phase.
          */
         ClientLevel level = Minecraft.getInstance().level;
-        float dayFrac = level != null
-            ? daylightFactor(level, 0.0F)
-            : Mth.clamp(rendererDaylight, 0.0F, 1.0F);
-        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
-        // 0.3.286: туман — продолжение купола: та же мокрая подмена дневного конца.
-        // Частичного тика здесь нет — берём силу осадки на целом тике (отставание
-        // ≤1 кадра, тот же приём, что у dayFrac выше).
-        float wet = level != null ? level.getRainLevel(0.0F) : 0.0F;
-        int wetModeNow = level != null && wet > 0.001F ? wetMode(level) : 0;
-        if (wetModeNow != 0) {
-            horizon = wetDay(horizonNightArgb, horizonDayArgb, WET_RAIN_DAY_ARGB,
-                    WET_SNOW_DAY_ARGB, wetModeNow, wet, dayFrac);
-        }
-        horizon = overlayArgb(horizon, sunsetArgb, sunsetFactor(dayFrac));
-        // Суневет: туман ЧИСТО наследует цвет неба купола (автор 24.10: при
-        // багровом дне туман оставался ванильным небесно-голубым — багровый
-        // оверлей жил только в локальных переменных renderSky, сюда не доезжал).
-        // Те же гейты и тот же вес, что у горизонта купола (renderSky: crimson
-        // ×0.95 на CRIMSON_HORIZON_ARGB): только Оверворлд, GONE не трогаем.
-        if (level != null && level.dimension() == net.minecraft.world.level.Level.OVERWORLD
-                && SpaceSkyState.sunState != SunState.GONE) {
-            double crimson = SunEventClient.crimsonIntensity(level);
-            if (crimson > 0.001F) {
-                horizon = overlayArgb(horizon, crimsonHorizonFor(level), (float) (crimson * 0.95F));
-            }
+        int horizon;
+        if (level != null) {
+            // 0.3.287: туман больше не параллельное описание — берёт ровно тот же
+            // skyShellColors, что и купол: базовый lerp, мокрая подмена, закат и
+            // кримзон на общих этапах. Частичного тика здесь нет — целый тик
+            // (отставание <=1 кадра). В мокром Оверворлде цвет доводит до точного
+            // горизонта WetFogAligner (после ванильных множителей дождя/бури).
+            horizon = skyShellColors(level, 0.0F)[1];
+        } else {
+            horizon = lerpArgb(horizonNightArgb, horizonDayArgb,
+                Mth.clamp(rendererDaylight, 0.0F, 1.0F));
         }
         double r = ((horizon >>> 16) & 0xFF) / 255.0;
         double g = ((horizon >>> 8) & 0xFF) / 255.0;
@@ -361,38 +353,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         RenderSystem.setShaderFog(FogParameters.NO_FOG);
 
         float dayFrac = daylightFactor(level, partialTick);
-        float sunsetFrac = sunsetFactor(dayFrac);
-
-        int zenith = lerpArgb(zenithNightArgb, zenithDayArgb, dayFrac);
-        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
-        // 0.3.286 (автор): согласование скайбокса с погодой. getRainLevel —
-        // ванильная плавно нарастающая/угасающая сила осадков: вход и выход
-        // «зависят от дождя» без собственного таймера.
-        float wet = level.getRainLevel(partialTick);
-        int wetModeNow = wet > 0.001F ? wetMode(level) : 0;
-        if (wetModeNow != 0) {
-            zenith = wetDay(zenithNightArgb, zenithDayArgb, WET_RAIN_DAY_ARGB,
-                    WET_SNOW_DAY_ARGB, wetModeNow, wet, dayFrac);
-            horizon = wetDay(horizonNightArgb, horizonDayArgb, WET_RAIN_DAY_ARGB,
-                    WET_SNOW_DAY_ARGB, wetModeNow, wet, dayFrac);
-        }
-        horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
-
-        // Суневент: багровый купол (I(t) из SunEventClient) — ТОЛЬКО Оверворлд
-        // (автор 2026-09-19: красное небо в остальных гонзо-измерениях убрать;
-        // там лишь плоское солнце меняет текстуру на красную).
-        // GONE не трогаем — там свой режим.
-        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD
-            && SpaceSkyState.sunState != SunState.GONE) {
-            double crimson = SunEventClient.crimsonIntensity(level);
-            if (crimson > 0.001F) {
-                zenith = overlayArgb(zenith, CRIMSON_ZENITH_ARGB, (float) (crimson * 0.8F));
-                // 0.3.286 (автор, п.4): на E0 суневета со снегом «самое оранжевое»
-                // (горизонт #C24A16) становится #5D4145; остальной блендинг не меняем.
-                int crimsonHorizon = crimsonHorizonFor(level);
-                horizon = overlayArgb(horizon, crimsonHorizon, (float) (crimson * 0.95F));
-            }
-        }
+        // 0.3.287: вся купольная колористика (базовый lerp → мокрая подмена 0.3.286 →
+        // закат → кримзон) переехала в skyShellColors — тот же метод зовут туманный
+        // колбэк DSE и WetFogAligner, так что «туман = продолжение скайбокса»
+        // выполняется конструктивно, при любой погоде и фазе суток.
+        int[] shell = skyShellColors(level, partialTick);
+        int zenith = shell[0];
+        int horizon = shell[1];
 
         if (!logged) {
             logged = true;
@@ -434,6 +401,59 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     }
 
     private boolean logged = false;
+
+    /**
+     * Купольные цвета {zenith, horizon}: дневной/ночной lerp → «мокрая» подмена
+     * дневного конца (0.3.286) → закатный оверлей (0.3.287: кросс-фейд с осадками)
+     * → багровый купол суневетов. Единственный источник истины: renderSky, туманный
+     * колбэк DimensionSpecialEffects и WetFogAligner зовут этот метод.
+     */
+    int[] skyShellColors(ClientLevel level, float partialTick) {
+        float dayFrac = daylightFactor(level, partialTick);
+        float sunsetFrac = sunsetFactor(dayFrac);
+
+        int zenith = lerpArgb(zenithNightArgb, zenithDayArgb, dayFrac);
+        int horizon = lerpArgb(horizonNightArgb, horizonDayArgb, dayFrac);
+        // 0.3.286 (автор): согласование скайбокса с погодой. getRainLevel —
+        // ванильная плавно нарастающая/угасающая сила осадков: вход и выход
+        // «зависят от дождя» без собственного таймера.
+        float wet = level.getRainLevel(partialTick);
+        int wetModeNow = wet > 0.001F ? wetMode(level) : 0;
+        if (wetModeNow != 0) {
+            // 0.3.287 (автор, п.5): кросс-фейд осадков с закатом/восходом — к закату
+            // мокрая подмена отступает (небо не «перескакивает» через серый вокруг
+            // оранжевого), взамен в дождь оранжевое успокаивается. При wet=0 оба
+            // коэффициента нейтральны — ясный закат не меняется (просьба автора).
+            float wetShell = wet * (1.0F - WET_DUSK_CROSSFADE * sunsetFrac);
+            zenith = wetDay(zenithNightArgb, zenithDayArgb, WET_RAIN_DAY_ARGB,
+                    WET_SNOW_DAY_ARGB, wetModeNow, wetShell, dayFrac);
+            horizon = wetDay(horizonNightArgb, horizonDayArgb, WET_RAIN_DAY_ARGB,
+                    WET_SNOW_DAY_ARGB, wetModeNow, wetShell, dayFrac);
+            sunsetFrac *= 1.0F - DUSK_WET_SUPPRESS * wet;
+        }
+        horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
+
+        // Суневент: багровый купол (I(t) из SunEventClient) — ТОЛЬКО Оверворлд
+        // (автор 2026-09-19: красное небо в остальных гонзо-измерениях убрать;
+        // там лишь плоское солнце меняет текстуру на красную).
+        // GONE не трогаем — там свой режим.
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD
+            && SpaceSkyState.sunState != SunState.GONE) {
+            double crimson = SunEventClient.crimsonIntensity(level);
+            if (crimson > 0.001F) {
+                zenith = overlayArgb(zenith, CRIMSON_ZENITH_ARGB, (float) (crimson * 0.8F));
+                // 0.3.286 (автор, п.4): на E0 суневета со снегом «самое оранжевое»
+                // (горизонт #C24A16) становится #5D4145; остальной блендинг не меняем.
+                horizon = overlayArgb(horizon, crimsonHorizonFor(level), (float) (crimson * 0.95F));
+            }
+        }
+        return new int[]{zenith, horizon};
+    }
+
+    /** Идёт ли сейчас осадковый режим, требующий мокрой подмены (для WetFogAligner). */
+    boolean wetFogModeActive(ClientLevel level) {
+        return wetMode(level) != 0;
+    }
 
     private float daylightFactor(ClientLevel level, float partialTick) {
         if (SpaceSkyState.sunState == SunState.GONE) {

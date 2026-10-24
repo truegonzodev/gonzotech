@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.286$", props, re.M), "mod_version != 0.3.286"
+assert re.search(r"^mod_version=0\.3\.287$", props, re.M), "mod_version != 0.3.287"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -543,15 +543,17 @@ assert "getEntityData()" in _sys275, "обоснование no-op (ваниль
 # OVERWORLD×!GONE) — «туман чисто перенимает sky color» (автор 24.10).
 _fog = (ROOT / "src/main/java/com/gonzotech/space/client/SpaceSkyEffects.java") \
     .read_text(encoding="utf-8")
-# 0.3.286: симметрия усилена — обе точки оверлея (купол + туман) идут через общий
-# crimsonHorizonFor(level) (в E0-снеге там #5D4145 вместо #C24A16).
-assert _fog.count("(float) (crimson * 0.95F))") == 2, \
-    "оверлей горизонта должен применяться симметрично: купол (renderSky) + туман"
-assert "int crimsonHorizon = crimsonHorizonFor(level);" in _fog and \
-       "overlayArgb(horizon, crimsonHorizonFor(level)" in _fog, \
+# 0.3.287: симметрия стала структурной — купол и туман зовут один общий
+# skyShellColors; внутри него кримзон-оверлеи (вес 0.8 зенит / 0.95 горизонт,
+# в E0-снеге горизонт #5D4145 через crimsonHorizonFor) существуют в одном экземпляре.
+assert _fog.count("(float) (crimson * 0.95F))") == 1, \
+    "кримзон-оверлей горизонта должен жить в единственном skyShellColors"
+assert "overlayArgb(horizon, crimsonHorizonFor(level), (float) (crimson * 0.95F));" in _fog, \
     "E0-снежная подмена кримзон-горизонта должна идти из общего crimsonHorizonFor"
-assert _fog.count("net.minecraft.world.level.Level.OVERWORLD") >= 2, \
-    "гейт багрового тинта по измерению должен быть в обоих местах"
+assert _fog.count("skyShellColors") >= 3, \
+    "0.3.287: renderSky, DSE-туман и определение — три обращения к одному небу"
+assert _fog.count("net.minecraft.world.level.Level.OVERWORLD") >= 1, \
+    "гейт багрового тинта по измерению обязан жить в общем skyShellColors (0.3.287)"
 assert "overridesSkyLight()" in _fog, "привязка skyDarken к суневету пропала"
 # 0.3.280: туман гонзо-жидкостей — underwater-подобие вместо terrain-fog:
 # геометрия только в FOG_TERRAIN, плотность 0→93 %; мёртвая жижа — без
@@ -640,9 +642,26 @@ assert "0xFF969AA2" in _sky, "снежный дневной конец #969AA2 �
 assert "0xFF5D4145" in _sky, "E0-снежный горизонт #5D4145 потерян"
 assert "getRainLevel" in _sky and "wetMode(" in _sky, "wet-согласование скайбокса разъехалось"
 assert "crimsonHorizonFor" in _sky, "snow-подмена кримзон-горизонта уехала"
-# туман обязан брать wet из того же места (получасовой сдвиг с куполом недопустим)
-assert _sky.count("wetDay(horizonNightArgb, horizonDayArgb") >= 2, \
-    "туман перестал наследовать мокрый горизонт купола"
+# 0.3.287: туман наследует мокрый горизонт через общий skyShellColors (см. >=3 выше)
+assert "wetDay(horizonNightArgb, horizonDayArgb" in _sky, \
+    "мокрая подмена горизонта пропала из skyShellColors"
+assert "WET_DUSK_CROSSFADE" in _sky and "DUSK_WET_SUPPRESS" in _sky, \
+    "кросс-фейд осадки<->закат (п.5 автора) уехал"
+assert "skyShellColors(level, 0.0F)[1];" in _sky, "DSE-туман перестал брать цвет из общего неба"
+_wfa = (ROOT / "src/main/java/com/gonzotech/space/client/WetFogAligner.java").read_text(encoding="utf-8")
+assert "ViewportEvent.ComputeFogColor" in _wfa and "skyShellColors(level, partialTick)[1]" in _wfa, \
+    "WetFogAligner потерян — при дожде туман снова станет темнее неба (п.1-4)"
+assert "wet * 4.0F" in _wfa, "правка тумана перестала нарастать с силой дождя (риск щелчка)"
+_fs = (ROOT / "src/main/java/com/gonzotech/core/fluid/client/GonzoFluidSounds.java").read_text(encoding="utf-8")
+for _tok in ("AMBIENT_UNDERWATER_ENTER", "AMBIENT_UNDERWATER_LOOP", "AMBIENT_UNDERWATER_EXIT",
+             "PLAYER_SPLASH_HIGH_SPEED", "forAmbientAddition",
+             "GonzoFluidFog.fluidMedium(state) == FogType.WATER"):
+    assert _tok in _fs, f"звуки жидкостей (п.6): потерян токен {_tok}"
+assert "AbstractTickableSoundInstance" in _fs and "FADE_DURATION" in _fs, \
+    "луп-журчание перестал быть фадовойTickableSound-репликой ванили"
+_gtm287 = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
+assert "com.gonzotech.core.fluid.client.GonzoFluidSounds.class" in _gtm287 and \
+       "com.gonzotech.space.client.WetFogAligner.class" in _gtm287, "обработчики 0.3.287 не зарегистрированы"
 _sc = (ROOT / "src/main/java/com/gonzotech/space/client/SpaceClient.java").read_text(encoding="utf-8")
 assert "overworld/moon_phases" in _sc and "CelestialBody.Blend.ADDITIVE" in _sc, \
     "луна Оверворланда слетела с аддитивного блендинга"
