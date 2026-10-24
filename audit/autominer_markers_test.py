@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.284$", props, re.M), "mod_version != 0.3.284"
+assert re.search(r"^mod_version=0\.3\.285$", props, re.M), "mod_version != 0.3.285"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -561,9 +561,13 @@ _dsf = (ROOT / "src/main/java/com/gonzotech/core/client/DeadSlimeFogClient.java"
 assert "setCanceled" not in _dsf, "terrain-fog жижи вернулся (отмена RenderFog)"
 assert "onRenderFog" not in _dsf, "обработчик RenderFog у жижи должен быть удалён"
 assert "ViewportEvent.RenderFog" not in _dsf
-assert "VEIL_MAX_PERCENT = 11" in _dsf and "veilPercent + 1" in _dsf and "veilPercent--" in _dsf, \
-    "дымка 11 % с симметричным ramp у жижи пропала"
-assert "RenderGuiEvent.Post" in _dsf, "экранный оверлей жижи не рисуется"
+# 0.3.285 (автор): экранная дымка 0..11 % у жижи УДАЛЕНА — плотность целиком
+# у спрайт-оверлея dead_slime_overlay в FluidScreenOverlays.
+assert "veilPercent" not in _dsf and "VEIL_MAX_PERCENT" not in _dsf, \
+    "старый вейл 0..11 % у жижи должен быть удалён (0.3.285)"
+assert "RenderGuiEvent" not in _dsf and "ClientTickEvent" not in _dsf, \
+    "у DeadSlimeFogClient не должно остаться экранного/тикового кода"
+assert "onComputeFogColor" in _dsf, "окраска тумана жижи в map color пропала"
 # 0.3.281: «подводная» идентификация гонзо-жидкостей — миксин Camera +
 # вспомогательный класс; тег #minecraft:water на наши жидкости — ЗАПРЕЩЁН
 # (утаскивает утопление/тушение огня/плавание, см. GonzoFluidFog javadoc).
@@ -596,11 +600,16 @@ assert "getRenderOverlayTexture" not in _cfc and "underwater.png" not in _cfc, \
 _fso = ROOT / "src/main/java/com/gonzotech/core/fluid/client/FluidScreenOverlays.java"
 assert _fso.exists(), "FluidScreenOverlays потерян"
 _fsosrc = _fso.read_text(encoding="utf-8")
-for _tok in ("percent + 1", "fadeTicks", "Math.exp", "shownPercent", "dead_slime_overlay",
+for _tok in ("percent + 1", "fadeTicks", "Math.exp", "shown", "OUTGOING", "dead_slime_overlay",
              "water_overlay", "lava_overlay", "corium_overlay",
-             "setShaderColor", "openAsReader", "guiTextured"):
+             "<< 24", "openAsReader", "guiTextured"):
     # 0.3.284: симметричный «percent--» заменён ускоряющейся кривой (Math.max(0, percent - fadeTicks))
     assert _tok in _fsosrc, f"FluidScreenOverlays: {_tok} пропал"
+for _gui in (_fsosrc,
+             (ROOT / "src/main/java/com/gonzotech/core/psyche/client/PsycheCrisisClient.java").read_text(encoding="utf-8"),
+             (ROOT / "src/main/java/com/gonzotech/core/psyche/client/PsycheHud.java").read_text(encoding="utf-8")):
+    assert "setShaderColor(" not in _gui, \
+        "0.3.285: альфа обязана печататься в вершины (13-й параметр blit'а), setShaderColor в 1.21.2+ игнорируется"
 _modsrc = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
 assert "FluidScreenOverlays.class" in _modsrc, "FluidScreenOverlays не зарегистрирован на шине"
 for _name in ("water_overlay", "lava_overlay", "sulfuric_acid_overlay", "formaldehyde_overlay",
@@ -614,8 +623,8 @@ for _name in ("water_overlay", "lava_overlay", "sulfuric_acid_overlay", "formald
     _a = _mj["animation"]
     assert _a["width"] == 256 and _a["height"] == 144, f"{_name}: кадр не 256×144"
 _hud = (ROOT / "src/main/java/com/gonzotech/core/psyche/client/PsycheHud.java").read_text(encoding="utf-8")
-assert "TEX_WHITE" in _hud and "setShaderColor" in _hud, \
-    "0.3.283: bar_fill обязан тонироваться белым 1×1 blit'ом (тот же пайплайн, что рамка)"
+assert "TEX_WHITE" in _hud and "1, 1, 1, 1, color)" in _hud, \
+    "0.3.285: bar_fill обязан тонироваться белым 1×1 blit'ом с вершинным цветом"
 assert "g.fill(" not in _hud, "сырой g.fill в шкалах должен быть убран (расслоение сэндвича)"
 assert (ROOT / "src/main/resources/assets/gonzotech/textures/gui/white.png").exists(), \
     "white.png (1×1) потерян — шкалы не затонировать"

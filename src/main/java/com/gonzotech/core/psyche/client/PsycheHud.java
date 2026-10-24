@@ -1,7 +1,6 @@
 package com.gonzotech.core.psyche.client;
 
 import com.gonzotech.core.psyche.PlayerPsyche;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.client.Minecraft;
@@ -146,17 +145,18 @@ public final class PsycheHud {
         // под всем — вне жижи»): чистый g.fill жил в собственном gui()-пайплайне, отличном от
         // blit-пайплайна фона/рамки, и слоистая паковка GUI переставляла их местами.
         // Полоса пишется тем же guiTextured-пайплайном, что и рамка: тонированный
-        // setShaderColor белый пиксель 1×1 — сэндвич bg→наполнение→рамка нерушим.
+        // вершинным цветом белый пиксель 1×1 — сэндвич bg→наполнение→рамка нерушим.
         int innerW = BAR_W - 2 * FILL_INSET;
         int innerH = BAR_H - 2 * FILL_INSET;
         int filled = Math.round(clamp01(value / (float) PlayerPsyche.MAX) * innerW);
         if (filled > 0) {
             int fx = x + FILL_INSET;
             int fy = y + FILL_INSET;
-            RenderSystem.setShaderColor(((color >> 16) & 0xFF) / 255.0F,
-                    ((color >> 8) & 0xFF) / 255.0F, (color & 0xFF) / 255.0F, 1.0F);
-            g.blit(RenderType::guiTextured, TEX_WHITE, fx, fy, 0f, 0f, filled, innerH, 1, 1);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            // 0.3.285: тон — вершинным цветом blit'а (13-й параметр), не setShaderColor:
+            // в 1.21.2+ цвет фиксируется на начале GUI-прохода и mid-frame правки
+            // до blit'а не доходят.
+            g.blit(RenderType::guiTextured, TEX_WHITE, fx, fy, 0f, 0f, filled, innerH,
+                    1, 1, 1, 1, color);
         }
 
         // Z2: рамка поверх.

@@ -16,7 +16,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.FluidState;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -37,9 +36,23 @@ import java.util.concurrent.ConcurrentHashMap;
  * <b>угасание</b> — ускоряющейся кривой 1, 2, 3 … %/тик: на k-м тике после выхода
  * цель теряет k процентов. Цель пересчитывается раз в тик, но рисуемое значение
  * — непрерывный «follow» цели с экспоненциальным сглаживанием по wall-clock
- * (time constant ~0.1 с): ни ступенек по 5 %, ни дискретного «есть/нет» —
- * плавная альфа на любом fps. Погружение, как и везде в 281+, считается по
- * КАМЕРЕ: {@code y < blockY + height}, не по ногам.
+ * (time constant ~0.1 с). Погружение, как и везде в 281+, считается по КАМЕРЕ:
+ * {@code y < blockY + height}, не по ногам.
+ *
+ * <p>0.3.285 — два корня прежней «дискретности» (автор: «в жиже сразу 100 %,
+ * после выхода ещё 5 секунд 100 % и резкое исчезновение; ступеней не было»):
+ * <ol>
+ *   <li>GUI-пайплайн 1.21.2+ (RenderPipeline) снимает цвет при создании типа,
+ *       поэтому {@code RenderSystem.setShaderColor} до blit'а <b>игнорируется</b>:
+ *       альфа рампы никогда не попадала в вершины, оверлей рисовался на своей
+ *       собственной альфе PNG, а «пропадал» по guard'у percent==0 — ровно 100/0.
+ *       Теперь прозрачность печатается в вершинный цвет: 13-аргументный
+ *       {@code blit(..., texUW, texVH, texW, texH, color)} ванили 1.21.4;</li>
+ *   <li>смена среды — кросс-фейд: текущий оверлей уезжает в «уходящий» слот
+ *       и гасится той же ускоряющейся кривой, новый нарастает с 0 % — без
+ *       перескока суммы (автор: «оверлей воды уходит вниз, лава нарастать»).
+ *       </li>
+ * </ol>
  *
  * <p>Мёртвая жижа (0.3.284, автор: «добавить подобный оверлей для dead_slime»)
  * получает спрайт {@code dead_slime_overlay} тем же механизмом; экранная
@@ -66,15 +79,25 @@ public final class FluidScreenOverlays {
     /** Жидкость → id оверлея; ленивая (реестр живёт позже класса). */
     private static volatile Map<Fluid, String> fluidToOverlay;
 
-    /** Текущий оверлей и его ЦЕЛЕВАЯ плотность 0..100 % (пересчёт раз в тик). */
-    private static String currentId;
-    private static int percent;
-    /** Сколько тиков длится угасание: цель теряет k % на k-м тике (кривая 1,2,3…). */
-    private static int fadeTicks;
-    /** Отрисовываемая (сглаженная) плотность; доживает до нуля и на «пустой» цели. */
-    private static float shownPercent;
-    /** id оверлея, который сейчас рисуется (живёт, пока shownPercent не стечёт). */
-    private static String shownId;
+    /**
+     * Один канал оверлея: id, целевая плотность 0..100 % (тикается), счётчик
+     * тиков угасания (кривая 1,2,3…) и рисуемая (сглаженная) плотность.
+     */
+    private static final class Slot {
+        String id;
+        int percent;
+        int fadeTicks;
+        float shown;
+
+        boolean idle() {
+            return id == null || (percent == 0 && shown <= 0.0F);
+        }
+    }
+
+    /** Нарастающий/плато-канал. */
+    private static final Slot ACTIVE = new Slot();
+    /** Уходящий канал — кросс-фейд при смене среды (0.3.285). */
+    private static final Slot OUTGOING = new Slot();
     /** Момент последнего кадра — шаг сглаживания по wall-clock (не по тикам). */
     private static long lastNano;
     /** Общий счётчик тиков для листания кадров (одна фаза на все среды). */
@@ -86,11 +109,14 @@ public final class FluidScreenOverlays {
     /** Сессийная гигиена: оверлей не должен переехать в следующий мир. */
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
-        currentId = null;
-        percent = 0;
-        fadeTicks = 0;
-        shownPercent = 0;
-        shownId = null;
+        ACTIVE.id = null;
+        ACTIVE.percent = 0;
+        ACTIVE.fadeTicks = 0;
+        ACTIVE.shown = 0.0F;
+        OUTGOING.id = null;
+        OUTGOING.percent = 0;
+        OUTGOING.fadeTicks = 0;
+        OUTGOING.shown = 0.0F;
         lastNano = 0;
         tickCounter = 0;
     }
@@ -168,15 +194,28 @@ public final class FluidScreenOverlays {
         }
         tickCounter++;
         String id = resolveOverlayId(mc.gameRenderer.getMainCamera(), level);
+        // 0.3.285 (автор): кросс-фейд сред — «вода уходит вниз, лава нарастает».
+        if (id != null && ACTIVE.id != null && !ACTIVE.id.equals(id)) {
+            OUTGOING.id = ACTIVE.id;
+            OUTGOING.percent = ACTIVE.percent;
+            OUTGOING.shown = ACTIVE.shown;
+            OUTGOING.fadeTicks = 0;
+            ACTIVE.percent = 0;
+            ACTIVE.shown = 0.0F;
+        }
+        // Уходящий канал гасится ускоряющейся кривой.
+        if (OUTGOING.id != null) {
+            OUTGOING.fadeTicks++;
+            OUTGOING.percent = Math.max(0, OUTGOING.percent - OUTGOING.fadeTicks);
+        }
         if (id != null) {
-            // Смена среды без сброса: из сусла в кислоту — плавный переход плотности.
-            currentId = id;
-            fadeTicks = 0;
-            percent = Math.min(100, percent + 1);
-        } else if (percent > 0) {
+            ACTIVE.id = id;
+            ACTIVE.fadeTicks = 0;
+            ACTIVE.percent = Math.min(100, ACTIVE.percent + 1);
+        } else if (ACTIVE.id != null && ACTIVE.percent > 0) {
             // 0.3.284 (автор): угасание ускоряющееся — минус k % на k-м тике (1, 2, 3 …).
-            fadeTicks++;
-            percent = Math.max(0, percent - fadeTicks);
+            ACTIVE.fadeTicks++;
+            ACTIVE.percent = Math.max(0, ACTIVE.percent - ACTIVE.fadeTicks);
         }
     }
 
@@ -191,26 +230,12 @@ public final class FluidScreenOverlays {
         long now = System.nanoTime();
         double dt = lastNano == 0L ? 0.0 : Math.min(0.5, (now - lastNano) / 1.0E9);
         lastNano = now;
-        // 0.3.284 (автор: «появление дискретное, либо есть либо его нет»): тиковая
-        // цель перескакивает на 5 % за раз — на глаз это ступени. Рисуемое значение
-        // догоняет цель непрерывно (экспоненциальное сглаживание, константа ~0.1 c);
-        // после обнуления цели показ ещё «стекает» к нулю — плавны и вход, и выход.
-        // Сглаживание на wall-clock, без API partial-tick — совпадает на любом fps.
-        if (currentId != null) {
-            shownId = currentId;
-        }
+        // Тиковая цель меняется ступенями по 5 % — рисуемое значение догоняет её
+        // непрерывно (экспоненциальное сглаживание, константа ~0.1 с, wall-clock).
         float k = (float) (1.0 - Math.exp(-dt * 10.0));
-        shownPercent += (percent - shownPercent) * k;
-        if (percent == 0) {
-            if (shownPercent < 0.05F) {
-                shownPercent = 0.0F;
-                shownId = null;
-                fadeTicks = 0;
-            }
-        } else if (percent - shownPercent < 0.02F && shownPercent - percent < 0.02F) {
-            shownPercent = percent; // на плато — без «дребезга»
-        }
-        if (shownPercent <= 0.0F || shownId == null) {
+        follow(OUTGOING, k);
+        follow(ACTIVE, k);
+        if (ACTIVE.id == null && OUTGOING.id == null) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -218,22 +243,49 @@ public final class FluidScreenOverlays {
             return;
         }
         GuiGraphics g = event.getGuiGraphics();
+        drawSlot(g, OUTGOING);
+        drawSlot(g, ACTIVE);
+    }
+
+    /** Шаг следования: shown догоняет percent; на нуле канала канал гаснет. */
+    private static void follow(Slot slot, float k) {
+        if (slot.id == null) {
+            return;
+        }
+        slot.shown += (slot.percent - slot.shown) * k;
+        if (Math.abs(slot.percent - slot.shown) < 0.02F) {
+            slot.shown = slot.percent; // на плато — без «дребезга»
+        }
+        if (slot.percent == 0 && slot.shown < 0.05F) {
+            slot.shown = 0.0F;
+            slot.id = null;
+            slot.fadeTicks = 0;
+        }
+    }
+
+    private static void drawSlot(GuiGraphics g, Slot slot) {
+        if (slot.id == null || slot.shown <= 0.0F) {
+            return;
+        }
         int width = g.guiWidth();
         int height = g.guiHeight();
-        String id = shownId;
+        String id = slot.id;
         Anim anim = ANIMS.computeIfAbsent(id, FluidScreenOverlays::readAnim);
-        float alpha = Mth.clamp(shownPercent / 100.0F, 0.0F, 1.0F);
+        float alpha = Mth.clamp(slot.shown / 100.0F, 0.0F, 1.0F);
 
         int v = (tickCounter / anim.frameTicks) % anim.frames * anim.h;
         ResourceLocation tex = TEXTURES.computeIfAbsent(id, rid ->
                 ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/" + rid + ".png"));
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+        // Альфа ПЕЧАТАЕТСЯ В ВЕРШИНЫ (13-й параметр blit'а 1.21.4): GUI-пайплайн
+        // 1.21.2+ фиксирует цвет при создании RenderType, и RenderSystem
+        // .setShaderColor до blit'а игнорируется — та была природа «100 % или
+        // ничего» (автор, 24.10).
+        int argb = ((int) (alpha * 255.0F) << 24) | 0xFFFFFF;
         g.pose().pushPose();
         g.pose().scale(width / (float) anim.w, height / (float) anim.h, 1.0F);
         g.blit(RenderType::guiTextured, tex, 0, 0, 0.0F, (float) v,
-                anim.w, anim.h, anim.w, anim.h * anim.frames);
+                anim.w, anim.h, anim.w, anim.h, anim.w, anim.h * anim.frames, argb);
         g.pose().popPose();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     // ─────────────────────────── .mcmeta ───────────────────────────

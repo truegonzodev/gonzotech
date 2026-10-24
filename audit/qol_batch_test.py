@@ -22,26 +22,27 @@ def read(path: str) -> str:
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
-# Dead slime 0.3.280 (автор): подводный образец — murk-цвет через ComputeFogColor,
-# terrain-fog (отмены/сферы) удалён полностью, плотность — экранная дымка 11 %
-# с ramp ±1 %/тик по КАМЕРЕ (не по ногам).
+# Dead slime: murk-цвет через ComputeFogColor, terrain-fog (отмены/сферы) нет.
+# 0.3.285 (автор п.1): экранный вейл 0..11 % УДАЛЁН — плотность целиком у
+# спрайт-оверлея dead_slime_overlay (FluidScreenOverlays), у него же и onLogout.
 fog = read("core/client/DeadSlimeFogClient.java")
 entry = read("GonzoTechMod.java")
 assert "getMapColor(level, cameraPos).col" in fog
 assert "ViewportEvent.ComputeFogColor" in fog
 assert "RenderFog" not in fog and "setCanceled" not in fog, "terrain-fog жижи вернулся"
-assert "VEIL_MAX_PERCENT = 11" in fog
-assert "veilPercent + 1" in fog and "veilPercent--" in fog, "симметричный ramp потерян"
-assert "RenderGuiEvent.Post" in fog and "g.fill" in fog
+assert "veilPercent" not in fog and "VEIL_MAX_PERCENT" not in fog, \
+    "старый вейл 0..11 % должен быть удалён"
+assert "RenderGuiEvent" not in fog and "g.fill" not in fog, \
+    "экранная часть жижи живёт только в FluidScreenOverlays"
 assert "getBlockAtCamera()" in fog, "погружение должно считаться по камере"
-assert "onLogout" in fog, "дымка обязана обнуляться на выход"
 assert "DeadSlimeFogClient.class" in entry
-# было «никакого screen-space fill» (прежняя доктрина); автор 24.10 требует
-# именно экранную дымку по образцу crisis_screen_effect — пин перевёрнут.
-assert "RenderGuiEvent" in fog and "g.fill" in fog
 assert "camera.getBlockAtCamera()" in fog
 assert "cameraInsideDeadSlime" in fog and "ModBlocks.DEAD_SLIME_BLOCK.get()" in fog
 assert "screen_effect_freeze" not in fog
+_fso = read("core/fluid/client/FluidScreenOverlays.java")
+assert "onLogout" in _fso, "стек оверлея обязан обнуляться на выход из мира"
+assert "OUTGOING" in _fso, "кросс-фейд сред (уходящий слот) потерян"
+assert "setShaderColor(" not in _fso, "альфа должна печататься в вершины, не в setShaderColor"
 assert "DeadSlimeFogClient.class" in entry
 
 # Sound event volume scales the sword events (author re-balance 0.62/0.73);

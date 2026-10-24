@@ -3,7 +3,6 @@ package com.gonzotech.core.psyche.client;
 import com.gonzotech.core.psyche.PlayerPsyche;
 import com.gonzotech.core.psyche.PsycheCrisisNetwork;
 import com.gonzotech.core.psyche.PsycheNetwork;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -283,13 +282,17 @@ public final class PsycheCrisisClient {
         // square placeholder. Using 24 frames for a 23-frame strip slid the crop down
         // through neighbouring frames. Keep destination bounds fixed at (0,0)..(width,height).
         int v = (frame / FRAME_TICKS) * FRAME_HEIGHT;
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+        // 0.3.285: альфа — в вершинный цвет (13-й параметр blit'а). В 1.21.2+
+        // графический бэкенд фиксирует RenderSystem.setShaderColor на начале
+        // прохода, поэтому прежняя рампа «10 % + 2 %/процент» в blit'е не
+        // применялась вовсе (тот же корень, что нашёл автор на оверлеях сред).
+        int effectArgb = ((int) (alpha * 255.0F) << 24) | 0xFFFFFF;
         g.pose().pushPose();
         g.pose().scale(width / (float) FRAME_WIDTH, height / (float) FRAME_HEIGHT, 1.0F);
         g.blit(RenderType::guiTextured, TEX_SCREEN_EFFECT, 0, 0, 0.0F, (float) v,
-                FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT * FRAME_COUNT);
+                FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT,
+                FRAME_WIDTH, FRAME_HEIGHT * FRAME_COUNT, effectArgb);
         g.pose().popPose();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         // Дымка поверх — та самая «непрозрачность 10 % (+2 % за процент)».
         int tint = ((int) (alpha * 255.0F) << 24) | 0x1A0000;
