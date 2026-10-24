@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.281$", props, re.M), "mod_version != 0.3.281"
+assert re.search(r"^mod_version=0\.3\.282$", props, re.M), "mod_version != 0.3.282"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -570,12 +570,22 @@ assert "RenderGuiEvent.Post" in _dsf, "экранный оверлей жижи 
 _cam = (ROOT / "src/main/java/com/gonzotech/mixin/client/CameraGonzoFluidFogMixin.java")
 assert _cam.exists(), "миксин Camera#getFluidInCamera потерян"
 _camsrc = _cam.read_text(encoding="utf-8")
-assert 'method = "getFluidInCamera"' in _camsrc and "FogType.WATER" in _camsrc, \
-    "миксин не возвращает WATER камере в гонзо-жидкости"
-assert "isFoggedFluid" in _camsrc, "проверка принадлежности жидкости уехала из миксина"
+assert 'method = "getFluidInCamera"' in _camsrc, "миксин отцепился от Camera#getFluidInCamera"
+assert "FogType.POWDER_SNOW" in _camsrc, "мёртвая жижа перестала быть POWDER_SNOW-средой"
+assert "cir.setReturnValue(medium)" in _camsrc, \
+    "миксин перестал возвращать среду из GonzoFluidFog (WATER/LAVA-карта)"
+assert "fluidMedium" in _camsrc, "миксин перестал спрашивать GonzoFluidFog про среду"
+assert "DEAD_SLIME_BLOCK" in _camsrc, "блок-ветка жижи уехала из миксина"
 _gff = (ROOT / "src/main/java/com/gonzotech/core/fluid/GonzoFluidFog.java")
-assert _gff.exists() and _gff.read_text(encoding="utf-8").count("ModFluids.") >= 14, \
+_gffsrc = _gff.read_text(encoding="utf-8")
+assert _gff.exists() and _gffsrc.count("ModFluids.") >= 14, \
     "набор из 14 холдеров жидкостей разъехался"
+assert "FogType.LAVA" in _gffsrc and "FogType.WATER" in _gffsrc, \
+    "GonzoFluidFog.fluidMedium потерял ветку среды"
+_dsb = (ROOT / "src/main/java/com/gonzotech/core/block/DeadSlimeBlock.java")
+_dsb_src = _dsb.read_text(encoding="utf-8")
+assert "skipRendering" in _dsb_src, \
+    "у жижи вернулись самокулящиеся грани (HalfTransparentBlock): внутри снова пусто"
 assert not (ROOT / "src/main/resources/data/minecraft/tags/fluid/water.json").exists(), \
     "тег #minecraft:water на гонзо-жидкости — возвращение утопления в кислоту"
 assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod

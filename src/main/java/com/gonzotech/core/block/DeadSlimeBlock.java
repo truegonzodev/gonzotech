@@ -1,6 +1,7 @@
 package com.gonzotech.core.block;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
@@ -54,6 +55,20 @@ public class DeadSlimeBlock extends SlimeBlock implements BucketPickup {
 
     public DeadSlimeBlock(Properties properties) {
         super(properties);
+    }
+
+    /**
+     * 0.3.282 (автор: «текстура отображается только снаружи блока, но не изнутри»):
+     * родитель HalfTransparentBlock кулит грани slime↔slime (skipRendering==true),
+     * поэтому внутри скопления жижи — пустота, тогда как рыхлый снег ведёт себя
+     * иначе и камера видит оплетающий куб текстур. Запрещаем самокулинг: грани
+     * соседних блоков жижи рисуются всегда — и снаружи (мутная глубина через
+     * слоение полупрозрачных граней), и изнутри (эффект «засперт в кубике»,
+     * который автор показал на снежном скрине).
+     */
+    @Override
+    protected boolean skipRendering(BlockState state, BlockState neighbor, Direction face) {
+        return false;
     }
 
     @Override
