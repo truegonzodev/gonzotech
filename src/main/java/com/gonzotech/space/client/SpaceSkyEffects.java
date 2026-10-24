@@ -401,6 +401,9 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
     }
 
     private boolean logged = false;
+    // 0.3.289: состояние follow-фильтра снеговой линии (см. biomeSnowWeight).
+    private float biomeSnowFollow;
+    private long biomeSnowFollowNs = -1L;
 
     /**
      * Купольные цвета {zenith, horizon}: дневной/ночной lerp → «мокрая» подмена
@@ -419,16 +422,29 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         // «зависят от дождя» без собственного таймера.
         float wet = level.getRainLevel(partialTick);
         int wetModeNow = wet > 0.001F ? wetMode(level) : 0;
+        float snowW = 0.0F;
+        float snowRide = 0.0F;
         if (wetModeNow != 0) {
             // 0.3.287 (автор, п.5): кросс-фейд осадков с закатом/восходом — к закату
             // мокрая подмена отступает (небо не «перескакивает» через серый вокруг
             // оранжевого), взамен в дождь оранжевое успокаивается. При wet=0 оба
             // коэффициента нейтральны — ясный закат не меняется (просьба автора).
             float wetShell = wet * (1.0F - WET_DUSK_CROSSFADE * sunsetFrac);
-            zenith = wetDay(zenithNightArgb, zenithDayArgb, WET_RAIN_DAY_ARGB,
-                    WET_SNOW_DAY_ARGB, wetModeNow, wetShell, dayFrac);
-            horizon = wetDay(horizonNightArgb, horizonDayArgb, WET_RAIN_DAY_ARGB,
-                    WET_SNOW_DAY_ARGB, wetModeNow, wetShell, dayFrac);
+            // 0.3.289 (автор): «снежность» — непрерывный вес, а не boolean.
+            // Снегопадные гейты раньше щёлкали: Level.isRaining() flip-ается на
+            // пороге rainLevel>0.2, поэтому конец снега в полдень Е0 выглядел как
+            // «серое повисло — и прыгнуло в оранжевое», а пересечение снеговой
+            // линии мгновенно меняло и цель, и тон. Окно суневета едет теперь по
+            // силе осадки (полная с wet=0.2 — ровно порог ванили, flip невидим),
+            // холодный биом — экспоненциальное следование ~0.35 с (приём 0.3.284).
+            float wetRamp = Mth.clamp(wet * 5.0F, 0.0F, 1.0F);
+            if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
+                float snowWindow = SunEventClient.isSnowWindowDay(level) ? wetRamp : 0.0F;
+                snowW = Mth.clamp(Math.max(snowWindow, biomeSnowWeight(level)), 0.0F, 1.0F);
+                snowRide = snowW * wetRamp;
+            }
+            zenith = wetDay(zenithNightArgb, zenithDayArgb, wetModeNow, snowW, wetShell, dayFrac);
+            horizon = wetDay(horizonNightArgb, horizonDayArgb, wetModeNow, snowW, wetShell, dayFrac);
             sunsetFrac *= 1.0F - DUSK_WET_SUPPRESS * wet;
         }
         horizon = overlayArgb(horizon, sunsetArgb, sunsetFrac);
@@ -444,7 +460,8 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                 zenith = overlayArgb(zenith, CRIMSON_ZENITH_ARGB, (float) (crimson * 0.8F));
                 // 0.3.286 (автор, п.4): на E0 суневета со снегом «самое оранжевое»
                 // (горизонт #C24A16) становится #5D4145; остальной блендинг не меняем.
-                horizon = overlayArgb(horizon, crimsonHorizonFor(level), (float) (crimson * 0.95F));
+                horizon = overlayArgb(horizon, crimsonHorizonFor(level, snowRide),
+                    (float) (crimson * 0.95F));
             }
         }
         return new int[]{zenith, horizon};
@@ -1015,6 +1032,28 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
         return 0;
     }
 
+    /**
+     * Непрерывное следование ванильному критерию снегопада (0.3.289): ~0.35 с
+     * экспоненциальной фады по wall-clock (тот же приём, что у шкал 0.3.284) —
+     * переход через снеговую линию под дождём больше не «щёлкает» цели и тону.
+     * Первый кадр инициализируется целевым значением (без саморазгона после
+     * паузы/смены измерения).
+     */
+    private float biomeSnowWeight(ClientLevel level) {
+        long now = System.nanoTime();
+        float dt = biomeSnowFollowNs < 0L
+            ? 0.0F
+            : Mth.clamp((now - biomeSnowFollowNs) / 1.0E9F, 0.0F, 0.25F);
+        biomeSnowFollowNs = now;
+        float target = isColdBiomeAtCamera(level) ? 1.0F : 0.0F;
+        if (dt <= 0.0F) {
+            biomeSnowFollow = target;
+        } else {
+            biomeSnowFollow += (target - biomeSnowFollow) * (1.0F - (float) Math.exp(-dt / 0.35));
+        }
+        return biomeSnowFollow;
+    }
+
     /** Ванильный критерий снегопада: температура биома в точке камеры ≤ 0.15. */
     private static boolean isColdBiomeAtCamera(ClientLevel level) {
         net.minecraft.core.BlockPos pos =
@@ -1028,13 +1067,13 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * трогаем»), а закатный оверлей накладывается уже поверх — «блендинг к закату
      * не меняется». Режим 3 (Марс): дневной конец не подменяется, а темнеет/седеет.
      */
-    private static int wetDay(int nightArgb, int dayArgb, int rainArgb, int snowArgb,
-                              int mode, float wet, float dayFrac) {
-        int wetDayArgb = switch (mode) {
-            case 2 -> snowArgb;
-            case 3 -> greyerDarker(dayArgb);
-            default -> rainArgb;
-        };
+    private static int wetDay(int nightArgb, int dayArgb, int mode, float snowW,
+                              float wet, float dayFrac) {
+        // 0.3.289: режим 2 больше не бинарный — дождевая и снежная цели
+        // перемешиваются непрерывным весом snowW (0..1).
+        int wetDayArgb = mode == 3
+            ? greyerDarker(dayArgb)
+            : lerpArgb(WET_RAIN_DAY_ARGB, WET_SNOW_DAY_ARGB, Mth.clamp(snowW, 0.0F, 1.0F));
         int base = lerpArgb(nightArgb, dayArgb, dayFrac);
         int wetted = lerpArgb(nightArgb, wetDayArgb, dayFrac);
         return lerpArgb(base, wetted, Mth.clamp(wet, 0.0F, 1.0F));
@@ -1065,18 +1104,19 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
      * crimsonIntensity — обратного перескока нет; окно E+1/E+2 совпадает с
      * нулевой интенсивностью — тоже невидим.
      */
-    private static int crimsonHorizonFor(ClientLevel level) {
-        if (!sunEventSnowNow(level)) {
+    private static int crimsonHorizonFor(ClientLevel level, float snowRide) {
+        // 0.3.289: гейт убран с sunEventSnowNow() (isRaining()-boolean flip-ится на
+        // rainLevel=0.2 — остаток силы осадков «висел» серым, а подмена сходила на
+        // нет мгновенно). Серость = дневная рампа × непрерывный снежный вес.
+        double dayMix = snowCrimsonMix(level);
+        float mix = (float) Mth.clamp(dayMix * Mth.clamp(snowRide, 0.0F, 1.0F), 0.0, 1.0);
+        if (mix <= 0.001F) {
             return CRIMSON_HORIZON_ARGB;
         }
-        double mix = snowCrimsonMix(level);
-        if (mix <= 0.0) {
-            return CRIMSON_HORIZON_ARGB;
-        }
-        if (mix >= 1.0) {
+        if (mix >= 0.999F) {
             return CRIMSON_HORIZON_SNOW_ARGB;
         }
-        return lerpArgb(CRIMSON_HORIZON_ARGB, CRIMSON_HORIZON_SNOW_ARGB, (float) mix);
+        return lerpArgb(CRIMSON_HORIZON_ARGB, CRIMSON_HORIZON_SNOW_ARGB, mix);
     }
 
     /** 0..1: насколько мы внутри багрово-снежного дня (0 = Е−1 и раньше). */

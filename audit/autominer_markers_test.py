@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.288$", props, re.M), "mod_version != 0.3.288"
+assert re.search(r"^mod_version=0\.3\.289$", props, re.M), "mod_version != 0.3.289"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -548,7 +548,7 @@ _fog = (ROOT / "src/main/java/com/gonzotech/space/client/SpaceSkyEffects.java") 
 # в E0-снеге горизонт #5D4145 через crimsonHorizonFor) существуют в одном экземпляре.
 assert _fog.count("(float) (crimson * 0.95F))") == 1, \
     "кримзон-оверлей горизонта должен жить в единственном skyShellColors"
-assert "overlayArgb(horizon, crimsonHorizonFor(level), (float) (crimson * 0.95F));" in _fog, \
+assert "overlayArgb(horizon, crimsonHorizonFor(level, snowRide)," in _fog, \
     "E0-снежная подмена кримзон-горизонта должна идти из общего crimsonHorizonFor"
 assert _fog.count("skyShellColors") >= 3, \
     "0.3.287: renderSky, DSE-туман и определение — три обращения к одному небу"
@@ -651,6 +651,11 @@ assert "skyShellColors(level, 0.0F)[1];" in _sky, "DSE-туман переста
 assert "snowCrimsonMix" in _sky and \
        "Mth.clamp((float) (t - start) / 2000.0F, 0.0F, 1.0F)" in _sky, \
     "0.3.288: E0-снежная подмена кримзон-горизонта снова бинарна — перескок на t=0"
+assert "biomeSnowFollow" in _sky and "Math.max(snowWindow, biomeSnowWeight(level))" in _sky and \
+       "Mth.clamp(wet * 5.0F, 0.0F, 1.0F)" in _sky, \
+    "0.3.289: снежный вес снова бинарный — конец снега/снеговая линия «щёлкают»"
+assert "lerpArgb(WET_RAIN_DAY_ARGB, WET_SNOW_DAY_ARGB, Mth.clamp(snowW, 0.0F, 1.0F))" in _sky, \
+    "0.3.289: мокрая цель дождь/снег перестала перемешиваться непрерывно"
 _wfa = (ROOT / "src/main/java/com/gonzotech/space/client/WetFogAligner.java").read_text(encoding="utf-8")
 assert "ViewportEvent.ComputeFogColor" in _wfa and "skyShellColors(level, partialTick)[1]" in _wfa, \
     "WetFogAligner потерян — при дожде туман снова станет темнее неба (п.1-4)"
