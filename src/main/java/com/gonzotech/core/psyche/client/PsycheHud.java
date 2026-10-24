@@ -1,6 +1,7 @@
 package com.gonzotech.core.psyche.client;
 
 import com.gonzotech.core.psyche.PlayerPsyche;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.gonzotech.core.psyche.PsycheNetwork;
 import com.gonzotech.core.registry.ModItems;
 import net.minecraft.client.Minecraft;
@@ -54,6 +55,9 @@ public final class PsycheHud {
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/scale_bg.png");
     private static final ResourceLocation TEX_FRAME =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/scale_frame.png");
+    /** 1×1 непрозрачный белый (0.3.283): тонирование {@code setShaderColor} даёт полосу. */
+    private static final ResourceLocation TEX_WHITE =
+            ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/white.png");
 
     // Цвета заливки (ARGB).
     private static final int COLOR_ADDICTION = 0xFFD62F15; // #d62f15
@@ -138,14 +142,21 @@ public final class PsycheHud {
         // Z0: фон.
         blit(g, TEX_BG, x, y);
 
-        // Z1: наполнение (чистый рендер).
+        // Z1: наполнение. 0.3.283 (баг автора: «в жиже bar_fill лежит НАД рамкой и
+        // под всем — вне жижи»): чистый g.fill жил в собственном gui()-пайплайне, отличном от
+        // blit-пайплайна фона/рамки, и слоистая паковка GUI переставляла их местами.
+        // Полоса пишется тем же guiTextured-пайплайном, что и рамка: тонированный
+        // setShaderColor белый пиксель 1×1 — сэндвич bg→наполнение→рамка нерушим.
         int innerW = BAR_W - 2 * FILL_INSET;
         int innerH = BAR_H - 2 * FILL_INSET;
         int filled = Math.round(clamp01(value / (float) PlayerPsyche.MAX) * innerW);
         if (filled > 0) {
             int fx = x + FILL_INSET;
             int fy = y + FILL_INSET;
-            g.fill(fx, fy, fx + filled, fy + innerH, color);
+            RenderSystem.setShaderColor(((color >> 16) & 0xFF) / 255.0F,
+                    ((color >> 8) & 0xFF) / 255.0F, (color & 0xFF) / 255.0F, 1.0F);
+            g.blit(RenderType::guiTextured, TEX_WHITE, fx, fy, 0f, 0f, filled, innerH, 1, 1);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
 
         // Z2: рамка поверх.

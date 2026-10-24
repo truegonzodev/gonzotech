@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.282$", props, re.M), "mod_version != 0.3.282"
+assert re.search(r"^mod_version=0\.3\.283$", props, re.M), "mod_version != 0.3.283"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -584,8 +584,38 @@ assert "FogType.LAVA" in _gffsrc and "FogType.WATER" in _gffsrc, \
     "GonzoFluidFog.fluidMedium потерял ветку среды"
 _dsb = (ROOT / "src/main/java/com/gonzotech/core/block/DeadSlimeBlock.java")
 _dsb_src = _dsb.read_text(encoding="utf-8")
-assert "skipRendering" in _dsb_src, \
-    "у жижи вернулись самокулящиеся грани (HalfTransparentBlock): внутри снова пусто"
+assert "protected boolean skipRendering" not in _dsb_src, \
+    "0.3.283: антикулинг грань-override должен быть снят (логика инвертирована автором)"
+_cfc = (ROOT / "src/main/java/com/gonzotech/core/fluid/client/CoriumFluidClient.java").read_text(encoding="utf-8")
+assert "0.41F, 0.15F, 0.13F, -2.0F, 1.15F" in _cfc, \
+    "кориум: густота/начало/цвет 0.3.283 разъехались"
+assert "0.71F, 0.90F, 0.56F, -1.0F, 6.0F" in _cfc, \
+    "кислота: радиус видимости 6 блоков (0.3.283) разъехался"
+assert "getRenderOverlayTexture" not in _cfc and "underwater.png" not in _cfc, \
+    "чужой underwater.png-оверлей должен быть снят (свои спрайты FluidScreenOverlays)"
+_fso = ROOT / "src/main/java/com/gonzotech/core/fluid/client/FluidScreenOverlays.java"
+assert _fso.exists(), "FluidScreenOverlays потерян"
+_fsosrc = _fso.read_text(encoding="utf-8")
+for _tok in ("percent + 1", "percent--", "water_overlay", "lava_overlay", "corium_overlay",
+             "setShaderColor", "openAsReader", "guiTextured"):
+    assert _tok in _fsosrc, f"FluidScreenOverlays: {_tok} пропал"
+_modsrc = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
+assert "FluidScreenOverlays.class" in _modsrc, "FluidScreenOverlays не зарегистрирован на шине"
+for _name in ("water_overlay", "lava_overlay", "sulfuric_acid_overlay", "formaldehyde_overlay",
+              "vodka_overlay", "rectificate_overlay", "mash_overlay", "wort_overlay", "corium_overlay"):
+    _png = ROOT / f"src/main/resources/assets/gonzotech/textures/gui/{_name}.png"
+    assert _png.exists(), f"плейсхолдер {_name}.png потерян"
+    _meta = _png.parent / (_png.name + ".mcmeta")
+    assert _meta.exists(), f"{_name}.png.mcmeta потерян"
+    _mj = _json.loads(_meta.read_text(encoding="utf-8"))
+    _a = _mj["animation"]
+    assert _a["width"] == 256 and _a["height"] == 144, f"{_name}: кадр не 256×144"
+_hud = (ROOT / "src/main/java/com/gonzotech/core/psyche/client/PsycheHud.java").read_text(encoding="utf-8")
+assert "TEX_WHITE" in _hud and "setShaderColor" in _hud, \
+    "0.3.283: bar_fill обязан тонироваться белым 1×1 blit'ом (тот же пайплайн, что рамка)"
+assert "g.fill(" not in _hud, "сырой g.fill в шкалах должен быть убран (расслоение сэндвича)"
+assert (ROOT / "src/main/resources/assets/gonzotech/textures/gui/white.png").exists(), \
+    "white.png (1×1) потерян — шкалы не затонировать"
 assert not (ROOT / "src/main/resources/data/minecraft/tags/fluid/water.json").exists(), \
     "тег #minecraft:water на гонзо-жидкости — возвращение утопления в кислоту"
 assert "context.player() instanceof net.minecraft.server.level.ServerPlayer" in _mod

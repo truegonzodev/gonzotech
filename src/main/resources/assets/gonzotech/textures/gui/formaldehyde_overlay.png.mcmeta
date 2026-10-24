@@ -1,0 +1,10 @@
+{
+  "animation": {
+    "width": 256,
+    "height": 144,
+    "frametime": 2,
+    "frames": [
+      0
+    ]
+  }
+}

@@ -187,6 +187,9 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheTremorClient.class);
             // Туман мёртвой жижи активен только когда камера находится внутри блока.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.DeadSlimeFogClient.class);
+            // 0.3.283: спрайтовые экранные оверлеи сред (вода/лава/7 гонзо-жидкостей),
+            // ramp 0→100 % по 1 %/тик, кадр-анимация из .mcmeta по образцу кризиса.
+            NeoForge.EVENT_BUS.register(com.gonzotech.core.fluid.client.FluidScreenOverlays.class);
             // Эффекты кризиса на клиенте: экранный эффект, фиксация камеры, ложная смерть.
             NeoForge.EVENT_BUS.register(com.gonzotech.core.psyche.client.PsycheCrisisClient.class);
             // Texture-only Smart CTM корпусной оболочки турбины.

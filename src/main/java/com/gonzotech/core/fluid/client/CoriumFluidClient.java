@@ -4,7 +4,6 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.core.fluid.ModFluids;
 import com.mojang.blaze3d.shaders.FogShape;
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.FogRenderer;
@@ -14,21 +13,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector4f;
 
 /**
  * Клиентская регистрация текстур, моделей и шейдерных эффектов для жидкостей мода Gonzo Tech:
  * <ul>
  *   <li>{@link ItemBlockRenderTypes#setRenderLayer} — слой TRANSLUCENT для полупрозрачных жидкостей (этанол, дистиллят, сусло, кислота, формальдегид);</li>
- *   <li>Подводный шейдер/оверлей камеры (underwater.png);</li>
+ *   <li>Экранный оверлей погружения — спрайтовый, на 1 %/тик,
+ *       в FluidScreenOverlays (0.3.283), не ванильной текстурой;</li>
  *   <li>Цветная дымка и туман при нахождении игрока внутри жидкости через {@link IClientFluidTypeExtensions}.</li>
  * </ul>
  */
 public final class CoriumFluidClient {
-
-    private static final ResourceLocation UNDERWATER_OVERLAY =
-            ResourceLocation.withDefaultNamespace("textures/misc/underwater.png");
 
     // Базовые прозрачности:
     // Вода: ~80% (0xCC)
@@ -73,9 +69,12 @@ public final class CoriumFluidClient {
     }
 
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
-        // 1. Расплавленный кориум (100% непрозрачность, густая плотная раскалённая среда)
+        // 1. Расплавленный кориум (100% непрозрачность, густая плотная раскалённая среда).
+        // 0.3.283 (автор): туман +30 % гуще (end 1.5→1.15), начало ещё ближе
+        // (start 0.0→-2.0 — муть накрывает с самой поверхности, приём как у ванильной
+        // лавы), цвет — 50 % хода к #911410 (0.25,0.22,0.20 → 0.41,0.15,0.13).
         registerFluid(event, ModFluids.MOLTEN_CORIUM_TYPE.get(), "molten_corium", TINT_CORIUM,
-                0.25F, 0.22F, 0.20F, 0.0F, 1.5F);
+                0.41F, 0.15F, 0.13F, -2.0F, 1.15F);
 
         // 2. Этанол / Ректификат (прозрачность как у воды 80%, бирюзовая дымка #8affe9, в 3-4 раза плотнее)
         registerFluid(event, ModFluids.ETHANOL_TYPE.get(), "ethanol", TINT_WATER_BASE,
@@ -86,8 +85,10 @@ public final class CoriumFluidClient {
                 0.51F, 0.45F, 0.65F, 0.0F, 2.0F);
 
         // 4. Серная кислота (прозрачность как у воды 80%, салатово-жёлтая кислотная дымка #b4e58e)
+        // 0.3.283 (автор): радиус видимости +50 % — градиент 0→93 % растянут с
+        // ~3 блоков на 6 («за 5-7 блоков»).
         registerFluid(event, ModFluids.SULFURIC_ACID_TYPE.get(), "sulfuric_acid", TINT_WATER_BASE,
-                0.71F, 0.90F, 0.56F, -1.0F, 3.5F);
+                0.71F, 0.90F, 0.56F, -1.0F, 6.0F);
 
         // 5. Дистиллят (прозрачность как у воды 80%, синяя чистая дымка #8bd3fc)
         registerFluid(event, ModFluids.DISTILLATE_TYPE.get(), "distillate", TINT_WATER_BASE,
@@ -127,10 +128,10 @@ public final class CoriumFluidClient {
                 return tintColor;
             }
 
-            @Override
-            public @Nullable ResourceLocation getRenderOverlayTexture(Minecraft mc) {
-                return UNDERWATER_OVERLAY;
-            }
+            // 0.3.283 (автор): собственный спрайтовый оверлей каждой жидкости
+            // (FluidScreenOverlays, 0→100 %, ramp 1 %/тик) вытеснил чужой
+            // ванильный оверлей погружения — двойной пелены больше нет.
+            // Хук расширения оверлея здесь не переопределён: дефолт == null.
 
             @Override
             public Vector4f modifyFogColor(Camera camera, float partialTick, ClientLevel level,
