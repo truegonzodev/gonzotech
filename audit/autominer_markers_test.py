@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.287$", props, re.M), "mod_version != 0.3.287"
+assert re.search(r"^mod_version=0\.3\.288$", props, re.M), "mod_version != 0.3.288"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -648,6 +648,9 @@ assert "wetDay(horizonNightArgb, horizonDayArgb" in _sky, \
 assert "WET_DUSK_CROSSFADE" in _sky and "DUSK_WET_SUPPRESS" in _sky, \
     "кросс-фейд осадки<->закат (п.5 автора) уехал"
 assert "skyShellColors(level, 0.0F)[1];" in _sky, "DSE-туман перестал брать цвет из общего неба"
+assert "snowCrimsonMix" in _sky and \
+       "Mth.clamp((float) (t - start) / 2000.0F, 0.0F, 1.0F)" in _sky, \
+    "0.3.288: E0-снежная подмена кримзон-горизонта снова бинарна — перескок на t=0"
 _wfa = (ROOT / "src/main/java/com/gonzotech/space/client/WetFogAligner.java").read_text(encoding="utf-8")
 assert "ViewportEvent.ComputeFogColor" in _wfa and "skyShellColors(level, partialTick)[1]" in _wfa, \
     "WetFogAligner потерян — при дожде туман снова станет темнее неба (п.1-4)"

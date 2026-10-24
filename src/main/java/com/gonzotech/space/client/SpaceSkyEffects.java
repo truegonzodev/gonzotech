@@ -1053,10 +1053,40 @@ public class SpaceSkyEffects extends DimensionSpecialEffects {
                 | (Math.min(g, 255) << 8) | Math.min(b, 255);
     }
 
-    /** Горизонт кримзон-оверлея: на E0 со снегом — #5D4145 вместо оранжевого. */
+    /**
+     * Горизонт кримзон-оверлея: на E0 со снегом — #5D4145 вместо оранжевого.
+     * 0.3.288 (автор): подмена въезжает плавно, а не бинарной сменой по дню.
+     * Раньше в t=0 Е0 (восход) разогнавшаяся рампа багровости (вес 0.95) держала
+     * «классический оранжевый восход» Е−1, а ровно на полуночи цвет мгновенно
+     * становился серо-багровым — перескок при полной мощности оверлея. Теперь
+     * #C24A16 → #5D4145 кросс-фейдится по первым 2000 тикам Е0 (ширина = рампe
+     * входа багровости на Е−1, т.е. смена симметрична входу ивента); до восхода
+     * подмены нет вообще. На закате Е0 (12500..14500) вес оверлея гасит сам
+     * crimsonIntensity — обратного перескока нет; окно E+1/E+2 совпадает с
+     * нулевой интенсивностью — тоже невидим.
+     */
     private static int crimsonHorizonFor(ClientLevel level) {
-        return sunEventSnowNow(level) && SunEventClient.isEventDayNow(level)
-            ? CRIMSON_HORIZON_SNOW_ARGB : CRIMSON_HORIZON_ARGB;
+        if (!sunEventSnowNow(level)) {
+            return CRIMSON_HORIZON_ARGB;
+        }
+        double mix = snowCrimsonMix(level);
+        if (mix <= 0.0) {
+            return CRIMSON_HORIZON_ARGB;
+        }
+        if (mix >= 1.0) {
+            return CRIMSON_HORIZON_SNOW_ARGB;
+        }
+        return lerpArgb(CRIMSON_HORIZON_ARGB, CRIMSON_HORIZON_SNOW_ARGB, (float) mix);
+    }
+
+    /** 0..1: насколько мы внутри багрово-снежного дня (0 = Е−1 и раньше). */
+    private static double snowCrimsonMix(ClientLevel level) {
+        long start = SunEventClient.nextEventDay * SunEventClient.DAY_LENGTH;
+        long t = level.getDayTime();
+        if (start <= 0L || t < start) {
+            return 0.0;
+        }
+        return Mth.clamp((float) (t - start) / 2000.0F, 0.0F, 1.0F);
     }
 
     private static int lerpArgb(int a, int b, float t) {
