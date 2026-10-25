@@ -290,13 +290,19 @@ public final class RadiationSystem {
                 // прибавить наведённую эмиссию к уже включённой второй раз.
                 double storedInduced = ItemRadioactivity.getInduced(stack);
                 inducedBefore += storedInduced * count;
-                double oldInduced = tracing ? storedInduced : 0.0;
+                // 0.3.291: строке [PASS] нужен «до» и на debug-сеансах, не только на трассе.
+                double oldInduced = (tracing || debugInv) ? storedInduced : 0.0;
                 if (tracing && activeHand) {
                     InteractionHand hand = stack == player.getOffhandItem()
                             ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
                     HeldRadState heldState = HELD_RAD.get(new HeldKey(player.getUUID(), hand));
                     if (heldState != null && heldState.stack == stack) oldInduced = heldState.value;
                 }
+                // 0.3.291 (п.6 таблицы автора): радиационный проход не имеет права
+                // трогать стак — только компоненты. Прежнее состояние фиксируем
+                // ровно для этой проверки (count/item дрейнули = дюп-вектор).
+                int countBefore = stack.getCount();
+                net.minecraft.world.item.Item itemBefore = stack.getItem();
                 double perItem;
                 if (activeHand) {
                     perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
@@ -309,6 +315,19 @@ public final class RadiationSystem {
                 if (debugInv) {
                     debugTouched++;
                     debugItemCount += stack.getCount();
+                    if (stack.getCount() != countBefore || stack.getItem() != itemBefore) {
+                        RAD_INV_LOG.warn(
+                            "[RAD-INV][COUNT] {}: {} слот {} — проход изменил стак {} ({}→{} шт) — ЭТО дюп-вектор",
+                            player.getGameProfile().getName(),
+                            inventoryCompartmentName(compartmentIndex), slot,
+                            BuiltInRegistries.ITEM.getKey(itemBefore), countBefore, stack.getCount());
+                    }
+                    if (Double.compare(oldInduced, perItem) != 0) {
+                        RAD_INV_LOG.info("[RAD-INV][PASS] {}: {} слот {} {}×{}: gonzo_rad {}→{}",
+                            player.getGameProfile().getName(), inventoryCompartmentName(compartmentIndex),
+                            slot, BuiltInRegistries.ITEM.getKey(stack.getItem()), stack.getCount(),
+                            String.format("%.2f", oldInduced), String.format("%.2f", perItem));
+                    }
                 }
                 if (tracing && (ownEmission > 0.0 || oldInduced > 0.0 || perItem > 0.0)) {
                     RadiationTrace.log(level, player.blockPosition(), "ПРЕДМЕТЫ ИНВЕНТАРЯ ↔ ДОЗА ИГРОКА",
@@ -359,7 +378,7 @@ public final class RadiationSystem {
                 if (stack.isEmpty()) continue;
                 int max = slot.getMaxStackSize(stack);
                 if (stack.getCount() > max) {
-                    RAD_INV_LOG.warn("[RAD-INV] {}: раздутый стак {} — {}→{} шт (slot {}, {}); срезано бэкстопом 0.3.276",
+                    RAD_INV_LOG.warn("[RAD-INV][CLAMP] {}: раздутый стак {} — {}→{} шт (slot {}, {}); срезано бэкстопом 0.3.276",
                             player.getGameProfile().getName(),
                             BuiltInRegistries.ITEM.getKey(stack.getItem()),
                             stack.getCount(), max, slot.getSlotIndex(),
@@ -370,7 +389,7 @@ public final class RadiationSystem {
             }
             ItemStack carriedNow = openMenu.getCarried();
             if (!carriedNow.isEmpty() && carriedNow.getCount() > carriedNow.getMaxStackSize()) {
-                RAD_INV_LOG.warn("[RAD-INV] {}: раздутый carried {} — {}→{} шт; срезано бэкстопом 0.3.276",
+                RAD_INV_LOG.warn("[RAD-INV][CLAMP] {}: раздутый carried {} — {}→{} шт; срезано бэкстопом 0.3.276",
                         player.getGameProfile().getName(),
                         BuiltInRegistries.ITEM.getKey(carriedNow.getItem()),
                         carriedNow.getCount(), carriedNow.getMaxStackSize());

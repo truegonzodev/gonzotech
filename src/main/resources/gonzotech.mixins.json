@@ -30,7 +30,11 @@
     "LiveBiomeSourceDesolationMixin",
     "BiomeSourcePossibleBiomesDesolationMixin",
     "ChunkDecorationDesolationMixin",
-    "ContainerClickRadiationMixin"
+    "ContainerClickRadiationMixin",
+    "ContainerMenuQuickCraftAccessor",
+    "CreativeSlotPacketDebugMixin",
+    "SlotSetByPlayerDebugMixin",
+    "ItemEntityMergeDebugMixin"
   ],
   "client": [
     "client.AdvancementTabMixin",
@@ -46,7 +50,8 @@
     "client.WolfModelFatMixin",
     "client.WolfRenderStateMixin",
     "client.WolfRendererMixin",
-    "client.CameraGonzoFluidFogMixin"
+    "client.CameraGonzoFluidFogMixin",
+    "client.ClientSlotPacketDebugMixin"
   ],
   "injectors": {
     "defaultRequire": 1

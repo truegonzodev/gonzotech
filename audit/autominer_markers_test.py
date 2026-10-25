@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.290$", props, re.M), "mod_version != 0.3.290"
+assert re.search(r"^mod_version=0\.3\.291$", props, re.M), "mod_version != 0.3.291"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -958,6 +958,57 @@ assert "anchor.getY() - 8" not in net_plnr, "#11-Y: старое неогран�
 # #7: документация WorldGuard — README + welcome
 readme290 = (ROOT / "README.md").read_text(encoding="utf-8")
 assert "GT capabilities: server-side WorldGuard" in readme290, "#7: README растерял возможность сервера"
+
+# ── 18. Срез 0.3.291: дебаггер кликов v2 — таблица точек диагностики дюпа (автор 25.10) ──
+clickmix = (ROOT / "src/main/java/com/gonzotech/mixin/ContainerClickRadiationMixin.java").read_text(encoding="utf-8")
+assert "[RAD-INV][CLICK]" in clickmix and "getChangedSlots().entrySet()" in clickmix \
+    and "getButtonNum()" in clickmix, "0.3.291: дактилопечать клика неполная"
+assert "РАСХОЖДЕНИЕ" in clickmix and "getStateId()" in clickmix, \
+    "0.3.291: контроль state-расхождения выпал из дактилопечати клика"
+assert "[RAD-INV][QC]" in clickmix and "QUICK_CRAFT" in clickmix and "ContainerMenuQuickCraftAccessor" in clickmix, \
+    "0.3.291: фазы ПКМ-раскладки исчезли из дебаггера"
+assert "[RAD-INV][CLICK-E]" in clickmix, "0.3.291: пара «после» по слотам/курсору пропала"
+mixdir = "src/main/java/com/gonzotech/mixin"
+for _f, _need in (
+        ("CreativeSlotPacketDebugMixin", 'method = "handleSetCreativeModeSlot"'),
+        ("SlotSetByPlayerDebugMixin", "setByPlayer(Lnet/minecraft/world/item/ItemStack;)V"),
+        ("ItemEntityMergeDebugMixin", "[RAD-INV][ENT-MERGE]"),
+        ("ContainerMenuQuickCraftAccessor", '@Accessor("quickcraftStatus")')):
+    _src291 = (ROOT / mixdir / (_f + ".java")).read_text(encoding="utf-8")
+    assert _need in _src291, f"0.3.291: {_f} разучился видеть {_need}"
+creative291 = (ROOT / mixdir / "CreativeSlotPacketDebugMixin.java").read_text(encoding="utf-8")
+assert "[RAD-INV][CREATIVE-DROP]" in creative291, \
+    "0.3.291: отрицательный слот креатива (выброс) слился с обычным"
+slotw291 = (ROOT / mixdir / "SlotSetByPlayerDebugMixin.java").read_text(encoding="utf-8")
+assert "setByPlayer(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)V" in slotw291, \
+    "0.3.291: вторая передрузка setByPlayer (drag) не покрыта"
+assert "compat={}" in slotw291 and "SLOT-WRITE" in slotw291, "0.3.291: [SLOT-WRITE] растерял совместимость компонентов"
+client291 = (ROOT / mixdir / "client/ClientSlotPacketDebugMixin.java").read_text(encoding="utf-8")
+assert "handleContainerSetSlot" in client291 and "InventoryDebugClientGate.isOn()" in client291 \
+    and "ItemRadioactivity.getInduced" in client291, "0.3.291: клиентский приём setSlot не пишется"
+drop291 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemDropTraceDebug.java").read_text(encoding="utf-8")
+for _tag in ("[RAD-INV][ENT+]", "[RAD-INV][ENT−]", "[RAD-INV][ENT-PICK]", "loadedFromDisk", "TRACED"):
+    assert _tag in drop291, f"0.3.291: трассировка предметов потеряла {_tag}"
+sys291 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text(encoding="utf-8")
+assert "(tracing || debugInv)" in sys291, "0.3.291: [PASS] забыл брать «до» и на debug-сессиях"
+assert "[RAD-INV][COUNT]" in sys291, "0.3.291: проверка неизменности count прохода исчезла"
+assert "[RAD-INV][PASS]" in sys291, "0.3.291: строка компонентов до/после исчезла"
+assert sys291.count("[RAD-INV][CLAMP]") == 2, "0.3.291: обрезание не отдельное событие (ждём 2 подтега)"
+mod291 = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
+assert "InventoryDebugGatePayload.TYPE" in mod291 and "InventoryDebugClientGate.set(payload.enabled())" in mod291, \
+    "0.3.291: гейт клиента не зарегистрирован"
+assert "InventoryDebugGatePayload(\n" in mod291.replace("\r\n", "\n") \
+    and "RADIATION_INVENTORY_DEBUG.get()));" in mod291, "0.3.291: на входе гейт не шлётся"
+mix291 = _json.loads((ROOT / "src/main/resources/gonzotech.mixins.json").read_text(encoding="utf-8"))
+for _m in ("ContainerMenuQuickCraftAccessor", "CreativeSlotPacketDebugMixin",
+           "SlotSetByPlayerDebugMixin", "ItemEntityMergeDebugMixin"):
+    assert _m in mix291["mixins"], f"0.3.291: миксин {_m} не прописан в конфиг-листе"
+assert "client.ClientSlotPacketDebugMixin" in mix291["client"], "0.3.291: клиентский миксин не прописан"
+cfg291 = (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java").read_text(encoding="utf-8")
+assert "QUICK_CRAFT phases" in cfg291 and "setSlot receipts" in cfg291, \
+    "0.3.291: TOML-комментарий не описывает новые линии лога"
+assert "radiationInventoryDebug" in cfg291, "0.3.291: прежний единственный тумблер выжил — ок"
+
 
 
 # lang

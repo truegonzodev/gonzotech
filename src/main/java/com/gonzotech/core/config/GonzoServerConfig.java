@@ -20,7 +20,14 @@ public final class GonzoServerConfig {
                 .comment("Server-side radiation inventory debugger: logs every container click",
                         "with the exact before/after item and induced-radiation totals of the open",
                         "menu (slot duplication proof), each radiation inventory pass and every",
-                        "gonzo_rad NBT removal with its cause. Logging only; never affects gameplay.")
+                        "gonzo_rad NBT removal with its cause.",
+                        "0.3.291 adds: creative slot packets (negative slot = drop), client-side",
+                        "setSlot receipts, QUICK_CRAFT phases and every Slot#setByPlayer write",
+                        "with component compatibility, ItemEntity create/merge/pickup/remove by",
+                        "entity id, radiation-pass component diffs guarded by a count check",
+                        "(truncation logs as its own [CLAMP] event). Client parts are enabled by",
+                        "this same flag through a login gate packet. Logging only; gameplay is",
+                        "never affected.")
                 .translation("gonzotech.configuration.radiationInventoryDebug")
                 .define("radiationInventoryDebug", false);
         SPEC = builder.build();

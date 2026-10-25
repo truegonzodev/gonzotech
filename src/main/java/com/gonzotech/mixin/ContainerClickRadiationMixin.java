@@ -1,6 +1,7 @@
 package com.gonzotech.mixin;
 
 import com.gonzotech.core.config.GonzoServerConfig;
+import com.gonzotech.radiation.DropTraceFormat;
 import com.gonzotech.radiation.ItemRadioactivity;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,6 +36,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * живых кликах) проверяется unconditional-счётчиком: первые 3 клика и каждый
  * 25-й печатаются БЕЗ гейта конфига — отсутствие строк = обработчик вранти
  * не вызывается, это факт о рантайме, а не о фазе лога.</p>
+ *
+ * <p>0.3.291 (таблица автора диагностики дюпа): к суммам добавлены линии
+ * {@code [CLICK]} (дактилопечать пакета: menu/cid/state/type/button/затронутые
+ * слоты/carried «до» + флаг расхождения state), {@code [QC]} (фазы QUICK_CRAFT
+ * из приватных полей меню через {@code ContainerMenuQuickCraftAccessor}) и
+ * {@code [CLICK-E]} (то же «после», печатается и при нулевой дельте Σ — окно
+ * призраков). Прочие точки таблицы — отдельные миксины/слушатели под тем же
+ * TOML-гейтом: [CREATIVE]/[CREATIVE-DROP], [SET-SLOT], [SLOT-WRITE],
+ * [ENT+]/[ENT-MERGE]/[ENT-PICK]/[ENT−], [PASS]/[COUNT]/[CLAMP].</p>
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ContainerClickRadiationMixin {
@@ -60,6 +70,12 @@ public abstract class ContainerClickRadiationMixin {
     /** Снимок меню до клика: [предметы, биты Σ радиации, carried-штук]. */
     @Unique
     private long[] gonzotech$radBefore;
+
+    /** 0.3.291 (п.1 таблицы автора): «до» затронутых пакетом слотов и carried. */
+    @Unique
+    private java.util.Map<Integer, String> gonzotech$slotsBefore;
+    @Unique
+    private String gonzotech$carriedBefore;
 
     /** Unconditional-пробник: «клики доходят» отделяется от «клики видны в логе». */
     @Unique
@@ -100,6 +116,38 @@ public abstract class ContainerClickRadiationMixin {
                     this.gonzotech$radBefore[0],
                     formatNzt(this.gonzotech$radBefore[1]));
             }
+            // 0.3.291 (пункты 1 и 4 таблицы автора): полный дактилопечатающий
+            // след каждого клика — меню, containerId, stateId, тип, кнопка,
+            // затронутые слоты и курсор «до». Расхождение state — собственный
+            // флаг: клики по устаревшему снапшоту — классическое окно дюпа.
+            AbstractContainerMenu menu = this.player.containerMenu;
+            this.gonzotech$slotsBefore = new java.util.HashMap<>();
+            StringBuilder gonzotech$affected = new StringBuilder();
+            for (java.util.Map.Entry<Integer, ItemStack> change : packet.getChangedSlots().entrySet()) {
+                int at = change.getKey();
+                String before = at >= 0 && at < menu.slots.size()
+                    ? DropTraceFormat.fmt(menu.getSlot(at).getItem()) : "нет слота";
+                this.gonzotech$slotsBefore.put(at, before);
+                gonzotech$affected.append(at).append(':').append(before)
+                    .append("→").append(DropTraceFormat.fmt(change.getValue())).append(' ');
+            }
+            this.gonzotech$carriedBefore = DropTraceFormat.fmt(packet.getCarriedItem());
+            GONZOTECH$LOG.info(
+                "[RAD-INV][CLICK] {} t={} menu={} cid={} slot={} btn={} type={} state={}/{}{} | carried {} | затронуто [{}]",
+                this.player.getGameProfile().getName(),
+                this.player.getServer() != null ? this.player.getServer().getTickCount() : -1L,
+                menu.getClass().getSimpleName(), packet.getContainerId(), packet.getSlotNum(),
+                packet.getButtonNum(), packet.getClickType(), packet.getStateId(), menu.getStateId(),
+                packet.getStateId() != menu.getStateId() ? " ⚠РАСХОЖДЕНИЕ" : "",
+                this.gonzotech$carriedBefore, gonzotech$affected);
+            if (packet.getClickType() == net.minecraft.world.inventory.ClickType.QUICK_CRAFT
+                    && menu instanceof com.gonzotech.mixin.ContainerMenuQuickCraftAccessor qc) {
+                GONZOTECH$LOG.info("[RAD-INV][QC] {} btn={}({}) тип={}({}) статус={} выбрано {} слот(ов), carried={}",
+                    this.player.getGameProfile().getName(), packet.getButtonNum(),
+                    gonzotech$phase(packet.getButtonNum()), qc.gonzotech$quickcraftType(),
+                    gonzotech$kind(qc.gonzotech$quickcraftType()), qc.gonzotech$quickcraftStatus(),
+                    qc.gonzotech$quickcraftSlots().size(), DropTraceFormat.fmt(menu.getCarried()));
+            }
         }
     }
 
@@ -110,6 +158,24 @@ public abstract class ContainerClickRadiationMixin {
         if (this.player == null) return;
         if (!GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get() || this.gonzotech$radBefore == null) return;
         long[] after = gonzotech$snapshot(this.player.containerMenu);
+        // 0.3.291 (п.1): «после» курсора и затронутых слотов — печатается и при
+        // нулевой дельте Σ: призрак живёт именно там, где суммы не шевельнулись.
+        if (this.gonzotech$slotsBefore != null) {
+            StringBuilder gonzotech$after = new StringBuilder();
+            for (java.util.Map.Entry<Integer, String> seen : this.gonzotech$slotsBefore.entrySet()) {
+                int at = seen.getKey();
+                String now = at >= 0 && at < this.player.containerMenu.slots.size()
+                    ? DropTraceFormat.fmt(this.player.containerMenu.getSlot(at).getItem())
+                    : "меню сменилось";
+                gonzotech$after.append(at).append(": ").append(seen.getValue())
+                    .append(" → ").append(now).append("; ");
+            }
+            GONZOTECH$LOG.info("[RAD-INV][CLICK-E] {} slot={} carried {} → {} | слоты [{}]",
+                this.player.getGameProfile().getName(), packet.getSlotNum(),
+                this.gonzotech$carriedBefore,
+                DropTraceFormat.fmt(this.player.containerMenu.getCarried()), gonzotech$after);
+            this.gonzotech$slotsBefore = null;
+        }
         long beforeItems = this.gonzotech$radBefore[0];
         long afterItems = after[0];
         double beforeRad = Double.longBitsToDouble(this.gonzotech$radBefore[1]);
@@ -128,6 +194,29 @@ public abstract class ContainerClickRadiationMixin {
             formatNzt(Double.doubleToRawLongBits(afterRad - beforeRad)),
             this.gonzotech$radBefore[2], after[2],
             this.player.containerMenu.getClass().getSimpleName());
+    }
+
+    @Unique
+    private static String gonzotech$phase(int button) {
+        return switch (button) {
+            case 0 -> "НАЧАЛО";
+            case 1 -> "ДОБАВЛЕНИЕ СЛОТА";
+            case 2 -> "ЗАВЕРШЕНИЕ";
+            case 3 -> "ЗАБОР ПО ОДНОМУ";
+            case 4 -> "СБОР ПОРОВНУ";
+            case 5 -> "РАЗЛОЖИТЬ ПО ОДНОМУ";
+            default -> "ФАЗА" + button;
+        };
+    }
+
+    @Unique
+    private static String gonzotech$kind(int type) {
+        return switch (type) {
+            case 0 -> "CHARITABLE";
+            case 1 -> "GREEDY";
+            case 2 -> "COPY";
+            default -> "NONE";
+        };
     }
 
     @Unique

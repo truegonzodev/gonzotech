@@ -134,6 +134,10 @@ public class GonzoTechMod {
                 com.gonzotech.chalkboard.network.NotesNetwork.sendToPlayer(sp);
                 // Рецепты пройденного тира 1 «догоняют» обновления списка (тир 2 — в TierTwoCrafting).
                 com.gonzotech.chalkboard.advancement.RecipeUnlocks.regrantOnLogin(sp);
+                // 0.3.291: клиентские части дебаггера дюпа включаются серверным TOML.
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(sp,
+                    new com.gonzotech.radiation.InventoryDebugGatePayload(
+                        com.gonzotech.core.config.GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get()));
             }
         });
 
@@ -285,6 +289,13 @@ public class GonzoTechMod {
                     com.gonzotech.radiation.RadiationSystem.acceptLedger(sender, payload.clientSum());
                 }
             }));
+
+        // 0.3.291: гейт клиентских частей дебаггера кликов ([SET-SLOT], [SLOT-WRITE][C]).
+        registrar.playToClient(
+            com.gonzotech.radiation.InventoryDebugGatePayload.TYPE,
+            com.gonzotech.radiation.InventoryDebugGatePayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                com.gonzotech.radiation.InventoryDebugClientGate.set(payload.enabled())));
 
         registrar.playToClient(
             com.gonzotech.radiation.RadiationVisualPayload.TYPE,
