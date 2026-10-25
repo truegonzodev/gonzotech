@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.292$", props, re.M), "mod_version != 0.3.292"
+assert re.search(r"^mod_version=0\.3\.293$", props, re.M), "mod_version != 0.3.293"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -965,15 +965,16 @@ assert "[RAD-INV][CLICK]" in clickmix and "getChangedSlots().entrySet()" in clic
     and "getButtonNum()" in clickmix, "0.3.291: дактилопечать клика неполная"
 assert "РАСХОЖДЕНИЕ" in clickmix and "getStateId()" in clickmix, \
     "0.3.291: контроль state-расхождения выпал из дактилопечати клика"
-assert "[RAD-INV][QC]" in clickmix and "QUICK_CRAFT" in clickmix and "ContainerMenuQuickCraftAccessor" in clickmix, \
+assert "[RAD-INV][QC]" in clickmix and "QUICK_CRAFT" in clickmix, \
     "0.3.291: фазы ПКМ-раскладки исчезли из дебаггера"
+assert "ContainerMenuQuickCraftAccessor" not in clickmix, \
+    "0.3.293: accessor приватных quickcraft-полей вернулся (риск APPLY)"
 assert "[RAD-INV][CLICK-E]" in clickmix, "0.3.291: пара «после» по слотам/курсору пропала"
 mixdir = "src/main/java/com/gonzotech/mixin"
 for _f, _need in (
         ("CreativeSlotPacketDebugMixin", 'method = "handleSetCreativeModeSlot"'),
         ("SlotSetByPlayerDebugMixin", "setByPlayer(Lnet/minecraft/world/item/ItemStack;)V"),
-        ("ItemEntityMergeDebugMixin", "[RAD-INV][ENT-MERGE]"),
-        ("ContainerMenuQuickCraftAccessor", '@Accessor("quickcraftStatus")')):
+        ("ItemEntityMergeDebugMixin", "[RAD-INV][ENT-MERGE]")):
     _src291 = (ROOT / mixdir / (_f + ".java")).read_text(encoding="utf-8")
     assert _need in _src291, f"0.3.291: {_f} разучился видеть {_need}"
 creative291 = (ROOT / mixdir / "CreativeSlotPacketDebugMixin.java").read_text(encoding="utf-8")
@@ -986,6 +987,17 @@ assert "compat={}" in slotw291 and "SLOT-WRITE" in slotw291, "0.3.291: [SLOT-WRI
 client291 = (ROOT / mixdir / "client/ClientSlotPacketDebugMixin.java").read_text(encoding="utf-8")
 assert "handleContainerSetSlot" in client291 and "InventoryDebugClientGate.isOn()" in client291 \
     and "ItemRadioactivity.getInduced" in client291, "0.3.291: клиентский приём setSlot не пишется"
+# 0.3.293: краш автора — @Shadow чужого поля (minecraft живёт в родителе
+# ClientCommonPacketListenerImpl, а field-shadow резолвится только в самом
+# целевом классе). Клиентский миксин обязан читать мир через getInstance().
+_t293 = client291.split("*/", 1)[-1]  # код без javadoc-пояснения про сам запрет
+assert "@Shadow" not in _t293 and "Minecraft.getInstance()" in _t293, \
+    "0.3.293: в клиентском миксине снова появился @Shadow — APPLY упадёт"
+assert not (ROOT / mixdir / "ContainerMenuQuickCraftAccessor.java").exists(), \
+    "0.3.293: accessor-файл должен быть удалён"
+_mix293 = _json.loads((ROOT / "src/main/resources/gonzotech.mixins.json").read_text(encoding="utf-8"))
+assert "ContainerMenuQuickCraftAccessor" not in _mix293["mixins"], \
+    "0.3.293: удалённый accessor остался в конфиг-листе — ClassNotFoundException на старте"
 drop291 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemDropTraceDebug.java").read_text(encoding="utf-8")
 for _tag in ("[RAD-INV][ENT+]", "[RAD-INV][ENT−]", "[RAD-INV][ENT-PICK]", "loadedFromDisk", "TRACED"):
     assert _tag in drop291, f"0.3.291: трассировка предметов потеряла {_tag}"
@@ -1000,8 +1012,7 @@ assert "InventoryDebugGatePayload.TYPE" in mod291 and "InventoryDebugClientGate.
 assert "InventoryDebugGatePayload(\n" in mod291.replace("\r\n", "\n") \
     and "RADIATION_INVENTORY_DEBUG.get()));" in mod291, "0.3.291: на входе гейт не шлётся"
 mix291 = _json.loads((ROOT / "src/main/resources/gonzotech.mixins.json").read_text(encoding="utf-8"))
-for _m in ("ContainerMenuQuickCraftAccessor", "CreativeSlotPacketDebugMixin",
-           "SlotSetByPlayerDebugMixin", "ItemEntityMergeDebugMixin"):
+for _m in ("CreativeSlotPacketDebugMixin", "SlotSetByPlayerDebugMixin", "ItemEntityMergeDebugMixin"):
     assert _m in mix291["mixins"], f"0.3.291: миксин {_m} не прописан в конфиг-листе"
 assert "client.ClientSlotPacketDebugMixin" in mix291["client"], "0.3.291: клиентский миксин не прописан"
 cfg291 = (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java").read_text(encoding="utf-8")

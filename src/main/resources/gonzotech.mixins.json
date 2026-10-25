@@ -31,7 +31,6 @@
     "BiomeSourcePossibleBiomesDesolationMixin",
     "ChunkDecorationDesolationMixin",
     "ContainerClickRadiationMixin",
-    "ContainerMenuQuickCraftAccessor",
     "CreativeSlotPacketDebugMixin",
     "SlotSetByPlayerDebugMixin",
     "ItemEntityMergeDebugMixin"

@@ -40,7 +40,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>0.3.291 (таблица автора диагностики дюпа): к суммам добавлены линии
  * {@code [CLICK]} (дактилопечать пакета: menu/cid/state/type/button/затронутые
  * слоты/carried «до» + флаг расхождения state), {@code [QC]} (фазы QUICK_CRAFT
- * из приватных полей меню через {@code ContainerMenuQuickCraftAccessor}) и
+ * вычисляются из buttonNum пакета (0.3.293: приватные поля меню и @Accessor
+     * не используются — тот же риск APPLY, что и shadow поля из предка)
  * {@code [CLICK-E]} (то же «после», печатается и при нулевой дельте Σ — окно
  * призраков). Прочие точки таблицы — отдельные миксины/слушатели под тем же
  * TOML-гейтом: [CREATIVE]/[CREATIVE-DROP], [SET-SLOT], [SLOT-WRITE],
@@ -140,13 +141,16 @@ public abstract class ContainerClickRadiationMixin {
                 packet.getButtonNum(), packet.getClickType(), packet.getStateId(), menu.getStateId(),
                 packet.getStateId() != menu.getStateId() ? " ⚠РАСХОЖДЕНИЕ" : "",
                 this.gonzotech$carriedBefore, gonzotech$affected);
-            if (packet.getClickType() == net.minecraft.world.inventory.ClickType.QUICK_CRAFT
-                    && menu instanceof com.gonzotech.mixin.ContainerMenuQuickCraftAccessor qc) {
-                GONZOTECH$LOG.info("[RAD-INV][QC] {} btn={}({}) тип={}({}) статус={} выбрано {} слот(ов), carried={}",
+            if (packet.getClickType() == net.minecraft.world.inventory.ClickType.QUICK_CRAFT) {
+                // 0.3.293: приватные quickcraft*-поля меню не трогаем (accessor
+                // удалён — тот же класс APPLY-риска, что и shadow-поле). Фаза
+                // полностью выводится из buttonNum пакета, ширину выделения
+                // видно по changedSlots: 0..2 = НАЧАЛО/ДОБАВЛЕНИЕ/ЗАВЕРШЕНИЕ,
+                // 3..5 = ЗАБОР/СБОР/РАЗЛОЖИТЬ.
+                GONZOTECH$LOG.info("[RAD-INV][QC] {} btn={}({}) в пакете {} слот(ов), carried={}",
                     this.player.getGameProfile().getName(), packet.getButtonNum(),
-                    gonzotech$phase(packet.getButtonNum()), qc.gonzotech$quickcraftType(),
-                    gonzotech$kind(qc.gonzotech$quickcraftType()), qc.gonzotech$quickcraftStatus(),
-                    qc.gonzotech$quickcraftSlots().size(), DropTraceFormat.fmt(menu.getCarried()));
+                    gonzotech$phase(packet.getButtonNum()), packet.getChangedSlots().size(),
+                    DropTraceFormat.fmt(menu.getCarried()));
             }
         }
     }
@@ -206,16 +210,6 @@ public abstract class ContainerClickRadiationMixin {
             case 4 -> "СБОР ПОРОВНУ";
             case 5 -> "РАЗЛОЖИТЬ ПО ОДНОМУ";
             default -> "ФАЗА" + button;
-        };
-    }
-
-    @Unique
-    private static String gonzotech$kind(int type) {
-        return switch (type) {
-            case 0 -> "CHARITABLE";
-            case 1 -> "GREEDY";
-            case 2 -> "COPY";
-            default -> "NONE";
         };
     }
 

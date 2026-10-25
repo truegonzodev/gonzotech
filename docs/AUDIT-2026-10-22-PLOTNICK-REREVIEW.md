@@ -889,3 +889,15 @@ camera.getFluidInCamera() (лава/снег/вода — не трогает; N
 **Статус:** ждёт повторной сборки автора (ожидаемо — чистый зелёный; в jar-логе версия 0.3.292 подтвердит, что фикс в сборке).
 
 Следующее по плану автора: N4 + #5 (по прежнему порядку).
+
+### 36. 0.3.293 — краш-фикс APPLY: клиентский миксин без @Shadow; quickcraft-accessor удалён (25.10, автор: краш-репорт «@Shadow field minecraft was not located in the target class ClientPacketListener. No refMap loaded»)
+
+- **Корень.** Поле `minecraft` объявлено не в `ClientPacketListener`, а в родителе `ClientCommonPacketListenerImpl` — а Mixin резолвит **field**-shadow только в самом целевом классе (иерархию обходят метод-тени). Отсюда критический INVALID MIXIN APPLY при первой загрузке целевого класса (в логе — трасса freecam→Minecraft#getCurrentServer, т.е. падение было бы детерминированным для всех, а не только для debug-сеансов). Прежний `@Shadow player` в 277-миксине жив именно потому, что `player` объявлен в самом `ServerGamePacketListenerImpl`.
+- **Фикс.** `client.ClientSlotPacketDebugMixin` переписан без единой тени: состояние читается через `Minecraft.getInstance()` (mc.player/inventoryMenu/containerMenu/screen/level), строчка `[SET-SLOT]` не изменилась по составу. Единственная runtime-зависимость — имя метода-цели `handleContainerSetSlot` (стабильно в 1.21.4).
+- **Превентивно.** Одноклассный риск нёс `ContainerMenuQuickCraftAccessor` (@Accessor на private `quickcraftStatus/Type/Slots` в `AbstractContainerMenu`): если бы имена в моjmap разошлись, клиент падал бы тем же способом при первом открытии меню. Accessor **удалён** (файл + строка json), `[QC]`-строка пересчитана из данных пакета: фаза по `buttonNum` (0..2 НАЧАЛО/ДОБАВЛЕНИЕ/ЗАВЕРШЕНИЕ, 3..5 ЗАБОР/СБОР/РАЗЛОЖИТЬ) + ширина выделения `changedSlots.size()` + carried. Помощник `gonzotech$kind` упразднён за ненадобностью.
+- Остальные цели среза 291 проверены по патчам NeoForge `1.21.4` (не по зеркалу-форку — оно переименовывало поля): `getSlotIndex()` есть (патч Slot), `ItemEntityPickupEvent.Pre/Post` fires в `playerTouch` (патч ItemEntity — контекст -360 подтверждает и имя метода, и сигнатуру `fireItemPickupPost`), `mergeWithNeighbours/tryToMerge/merge(...4 args)` патчами не тронуты → имена из моjmap валидны.
+- Пины: версия 0.3.293; «@Shadow отсутствует в теле клиентского миксина (после javadoc) + getInstance присутствует»; accessor-файл отсутствует и его нет в `gonzotech.mixins.json`; `[QC]`-строка не ссылается на accessor. Проверки: autominer passed; run_all 54/18/0/72; json парсится; скобки сведены.
+
+**Статус:** ждёт пересборки автора — старт клиента обязан пройти чисто (миксин-APPLY больше не трогает чужие поля); сценарий дюпа — как в п.34.
+
+УРОК в базу: в этом проекте зеркала syxxgawd/SodiumExtraMCP-1.21.4 годятся для сигнатур методов, но **не** для полей (форк их тасует); field-shadow/@Accessor ванильного поля = разрешение только «поле объявлено в самом целевом классе».
