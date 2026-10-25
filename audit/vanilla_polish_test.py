@@ -56,7 +56,7 @@ assert "new ItemMatcher(Items.BONE_BLOCK, 1)" in plant
 deepslate = json.loads((RES / "data/gonzotech/recipe/deepslate_from_monolith.json").read_text())
 assert deepslate["type"] == "minecraft:crafting_shapeless"
 assert deepslate["result"] == {"id": "minecraft:deepslate", "count": 16}
-ing = [i["item"] for i in deepslate["ingredients"]]
+ing = list(deepslate["ingredients"])  # 0.3.297: ванильный формат — строки, не {"item":...}
 assert ing.count("gonzotech:monolith") == 4 and ing.count("minecraft:water_bucket") == 1
 
 # ── 5. цирконий из оксида: завод сплавов (кратно) + химзавод (x1.2 GTU) ──
@@ -75,7 +75,7 @@ assert "ModItems.MOTHERBOARD.get()" in tier_three
 mother = json.loads((RES / "data/gonzotech/recipe/motherboard.json").read_text())
 assert mother["type"] == "minecraft:crafting_shapeless"
 assert mother["result"]["id"] == "gonzotech:motherboard"
-names = [i["item"] for i in mother["ingredients"]]
+names = list(mother["ingredients"])  # 0.3.297: строки ингредиента (Datapack loaded-формат 1.21.4)
 for need in ("gonzotech:chip_1", "gonzotech:chip_2", "gonzotech:chip_3",
              "gonzotech:energy_module", "gonzotech:transistor",
              "gonzotech:rubber", "gonzotech:celluloid"):

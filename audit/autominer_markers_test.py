@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.296$", props, re.M), "mod_version != 0.3.296"
+assert re.search(r"^mod_version=0\.3\.297$", props, re.M), "mod_version != 0.3.297"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1082,4 +1082,29 @@ assert "RadDoseIndex.noteInteraction(this.player);" in clickmix.split("isSameThr
 jei295 = (ROOT / "src/main/java/com/gonzotech/integration/jei/GonzoTechJeiPlugin.java").read_text(encoding="utf-8")
 assert "catch (IllegalArgumentException alreadyRegistered)" in jei295, \
     "0.3.295: JEI-расширение снова регистрируется неидемпотентно (вылет на rejoin)"
+
+# 0.3.297 (#43-#46 из latest.log): рецепты в ванильном формате ингредиентов,
+# лут Третьего ПКФСОЗ на собственный id, item-дефиниция Плотника, живые parent
+# у fluid-моделей. Пины проверяют именно загрузку, а не наличие файлов.
+import json as _json297
+for _f297 in ("corundum_abrasive", "deepslate_from_monolith", "motherboard",
+              "sandpapy", "third_grinder"):
+    _raw297 = (ROOT / "src/main/resources/data/gonzotech/recipe" / (_f297 + ".json")).read_text(encoding="utf-8")
+    assert '"item"' not in _raw297, f"0.3.297: {_f297} снова содержит объектоный ingredient-формат"
+    _d297 = _json297.loads(_raw297)
+    _ings = _d297.get("ingredients", [])
+    _keys = list(_d297.get("key", {}).values())
+    assert (_ings and all(isinstance(e, str) for e in _ings)) or \
+        (_keys and all(isinstance(v, str) for v in _keys)), \
+        f"0.3.297: {_f297} пуст/кривой по части ингредиентов"
+_loot297 = (ROOT / "src/main/resources/data/gonzotech/loot_table/blocks/third_pcfsoz.json").read_text(encoding="utf-8")
+assert "gonzotech:third_pcfsoz" in _loot297 and '"gonzotech:pcfsoz"' not in _loot297, \
+    "0.3.297: лут Третьего ПКФСОЗ опять дропит id первой эпохи (потеря блока)"
+_item297 = ROOT / "src/main/resources/assets/gonzotech/items/plotnick.json"
+assert _item297.exists() and "gonzotech:block/plotnick" in _item297.read_text(encoding="utf-8"), \
+    "0.3.297: у Плотника снова нет item-дефиниции — missingno в руке и JEI"
+import subprocess as _sp297
+_out297 = _sp297.run(["grep", "-rl", "template_fluid", "src/main/resources"],
+                     cwd=ROOT, capture_output=True, text=True).stdout.strip()
+assert not _out297, f"0.3.297: мёртвый parent minecraft:block/template_fluid вернулся: {_out297}"
 print("autominer_markers_test passed")

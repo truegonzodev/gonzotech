@@ -2,30 +2,14 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "gonzotech:corundum_abrasive"
-    },
-    {
-      "item": "gonzotech:diamond_dust"
-    },
-    {
-      "item": "gonzotech:silicon_crumbs"
-    },
-    {
-      "item": "minecraft:slime_ball"
-    },
-    {
-      "item": "minecraft:slime_ball"
-    },
-    {
-      "item": "minecraft:paper"
-    },
-    {
-      "item": "minecraft:paper"
-    },
-    {
-      "item": "minecraft:paper"
-    }
+    "gonzotech:corundum_abrasive",
+    "gonzotech:diamond_dust",
+    "gonzotech:silicon_crumbs",
+    "minecraft:slime_ball",
+    "minecraft:slime_ball",
+    "minecraft:paper",
+    "minecraft:paper",
+    "minecraft:paper"
   ],
   "result": {
     "id": "gonzotech:sandpapy",

@@ -2,33 +2,15 @@
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    },
-    {
-      "item": "gonzotech:corundum_grain"
-    }
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain",
+    "gonzotech:corundum_grain"
   ],
   "result": {
     "id": "gonzotech:corundum_abrasive",

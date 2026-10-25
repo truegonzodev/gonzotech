@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:block/template_fluid",
+  "parent": "minecraft:block/block",
   "textures": {
     "particle": "gonzotech:block/fluid/wort_still",
     "still": "gonzotech:block/fluid/wort_still",

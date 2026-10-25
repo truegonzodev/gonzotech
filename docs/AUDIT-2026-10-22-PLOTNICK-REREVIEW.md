@@ -956,3 +956,16 @@ camera.getFluidInCamera() (лава/снег/вода — не трогает; N
 - **#48 (информационно, не фикс мода)** `fireclay_ctm_inner_corner` 2×2 px — SpriteLoader ограничивает mip; авторский плейсхолдер-ассет, решения ждём от автора.
 
 Итог раунда: дюп-ветка закрыта валидацией; открытые технические пункты: #43–#47 (+ #48 на стороне ассетов), прежнее открытое ядро (#1-остаток, #5, #7-доки, #11-Y, N4/N5-N7/N11/N13/N14, #22–#25, #31, #34) — в силе.
+
+### 40. 0.3.297 — #43-#46 закрыты (latest.log-активы), #47/#48 закрыты как не-наши (25.10 вечер, автор: «остальное фиксим, жижи в игре ок»)
+
+- **#43 Пять мёртвых рецептов** — `corundum_abrasive`, `deepslate_from_monolith`, `motherboard`, `sandpapy`, `third_grinder`: ingredients/key развёрнуты из объектного формата `{"item": ...}` в ванильные строки (формат 1.21.4; эталон — живой `empty_hull`). Формат-киль «List is too short: 0, expected [1-9]» устранён; все 792 json каталога парсятся.
+- **#44 loot `third_pcfsoz`** — дроп переведён с несуществующего `gonzotech:pcfsoz` (id первой эпохи) на `gonzotech:third_pcfsoz`; потеря блока при поломке закрыта.
+- **#45 Плотник** — создана `assets/gonzotech/items/plotnick.json` по конвенции соседей (type minecraft:model → `gonzotech:block/plotnick`); «No model loaded for default item ID» больше не будет, missingno в руке/JEI/табе закрыт.
+- **#46 fluid-модели** — у семи `models/block/fluid/*.json` мёртвый parent `minecraft:block/template_fluid` (в ванили такого нет) заменён на `minecraft:block/block`: FluidBlock рендерится атласом жидкостей и blockstate-модель в кадре не используется — WARN «Missing block model» исчез, картинка в игре не меняется (автор подтвердил: «с самими жижами всё ок»).
+- **#47 JEI-группа «Инструменты оператора»** — это ванильная вкладка `minecraft:operatorTools` (вне operator-creative пуста), не наша; JEI ворчит на ваниль. Закрыто без правок.
+- **#48 fireclay_ctm_inner_corner 2×2** — «limits mip level from 4 to 1» = SpriteLoader строит цепь mipmap атласа от максимального спрайта, 2-пиксельный спрайт физически держит 1 шаг. Информационный WARN atlas-бухгалтерии, не ошибка ассета; по решению автора не трогаем.
+- `audit/vanilla_polish_test.py` переведён на строковый формат ингредиентов (пинговал битый формат — устаревший пин).
+- Пины SEC18: отсутствие `"item"`-объектов в пяти файлах + строковые ingredients/key; лут на собственный id; наличие item-дефиниции Плотника с ссылкой на block-модель; отсутствие `template_fluid` во всём ресурсном дереве; версия 0.3.297. Проверки: autominer passed; run_all 54/18/0/72.
+
+**Статус:** ждёт пересборки. В логе пересборки ожидаем: ноль ERROR datapack-логгера, «Loaded N recipes» на 5 больше, ни одного Missing block model / No model loaded for plotnick.
