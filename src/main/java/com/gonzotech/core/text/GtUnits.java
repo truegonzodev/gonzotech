@@ -478,11 +478,14 @@ public final class GtUnits {
     // ───────────────────── Радиация и токсичность (Zt / Tx) ─────────────────────
 
     /**
-     * «#ceeb2d 30 mZt&lt;#7&gt;/t» — единица радиации ВСЕГДА этим цветом, приставка
+     * «#ceeb2d 30 mZt&lt;#7&gt;/s» — единица радиации ВСЕГДА этим цветом, приставка
      * (n/µ/m/k/M/G) приходит из {@link RadUnits} и стоит слитно с «Zt».
+     * 0.3.303 (автор 26.10): хвост — «/s», как и внутренние nZt/сек; «/t»
+     * из флейворной спеки 20.09 снят со всех радиационных экранов разом
+     * (дозиметр, телефон, тултипы, трассы, debug-команда).
      */
     public static MutableComponent zt(double nZt) {
-        return rate(RadUnits.value(nZt), text(RadUnits.unit(nZt), RADIATION), RADIATION);
+        return ratePerSecond(RadUnits.value(nZt), text(RadUnits.unit(nZt), RADIATION), RADIATION);
     }
 
     /**

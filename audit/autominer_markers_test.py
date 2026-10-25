@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.302$", props, re.M), "mod_version != 0.3.302"
+assert re.search(r"^mod_version=0\.3\.303$", props, re.M), "mod_version != 0.3.303"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1215,4 +1215,20 @@ assert "throw new" not in np302, \
 rd302 = (ROOT / "README.md").read_text(encoding="utf-8")
 assert "server-side WorldGuard" in rd302, \
     "0.3.302 #7: документная доктрина флагов потерялась из README"
+
+# 0.3.303: радиационные Zt-дисплеи — единый хвост «/s» (внутренние значения
+# и есть nZt/сек; флейвор «/t» из спеки 20.09 снят по решению автора 26.10).
+ru303 = (ROOT / "src/main/java/com/gonzotech/radiation/RadUnits.java").read_text(encoding="utf-8")
+assert 'unit(nZt) + "/s"' in ru303 and 'unit(nZt) + "/t"' not in ru303, \
+    "0.3.303: RadUnits.format откатился на «/t»"
+gu303 = (ROOT / "src/main/java/com/gonzotech/core/text/GtUnits.java").read_text(encoding="utf-8")
+assert gu303.count("ratePerSecond(RadUnits.value(nZt)") == 2, \
+    "0.3.303: GtUnits.zt() снова красит «/t» — экраны разойдутся"
+rd303 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationDebugCommand.java").read_text(encoding="utf-8")
+assert '.append(Component.literal("/s"))' not in rd303, \
+    "0.3.303: ручной «/s» рядом с zt() вернёт двойной хвост «/s/s»"
+for loc303 in ("ru_ru", "en_us"):
+    j303 = (ROOT / f"src/main/resources/assets/gonzotech/lang/{loc303}.json").read_text(encoding="utf-8")
+    assert "%s/s" not in j303.split('"command.gonzotech.radiation.inside_dose"')[1].split("\n")[0], \
+        f"0.3.303: {loc303} inside_dose держит двойной «%s/s»"
 print("autominer_markers_test passed")

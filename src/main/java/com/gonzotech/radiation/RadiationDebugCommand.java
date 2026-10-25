@@ -89,9 +89,9 @@ public final class RadiationDebugCommand {
                 .append(Component.literal(String.format(Locale.ROOT, "%.1f%%", percent)))
                 .append(Component.literal(" (" + category(percent) + ")"))
                 .withStyle(ChatFormatting.GRAY));
+        // 0.3.303: ручной «/s» снят — суффикс несёт GtUnits.zt (единый канал).
         player.sendSystemMessage(Component.literal("Чанк [" + chunk.x + ", " + chunk.z + "]: ")
                 .append(GtUnits.zt(chunkNzt))
-                .append(Component.literal("/s"))
                 .withStyle(ChatFormatting.GRAY));
 
         var observer = net.minecraft.core.BlockPos.containing(player.getEyePosition());
@@ -112,7 +112,7 @@ public final class RadiationDebugCommand {
                         "Источник радиации в чанке " + chunk.x + "," + chunk.z
                                 + " точке " + source.pos().getX() + " " + source.pos().getY() + " "
                                 + source.pos().getZ() + " — ")
-                        .append(GtUnits.zt(source.emission())).append(Component.literal("/s"))
+                        .append(GtUnits.zt(source.emission()))
                         .withStyle(ChatFormatting.YELLOW));
             }
         }
