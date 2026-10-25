@@ -62,6 +62,15 @@ public final class ItemRadioactivity {
 
     /** Наведённая эмиссия одного предмета внутри стака (nZt/s). */
     public static double getInduced(ItemStack stack) {
+        // 0.3.294 (корневой ремонт дюпа, журнал ### 37): живой стак — значение
+        // из RadDoseIndex; компонент под живым инвентарём не мутирует никогда.
+        RadDoseIndex.Entry idx = RadDoseIndex.peek(stack);
+        if (idx != null) return Math.max(0.0, idx.value);
+        return readComponentValue(stack);
+    }
+
+    /** Холодное компонентное значение (без индекса): сидинг adopt'а и flush. */
+    static double readComponentValue(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return 0.0;
         CompoundTag tag = data.copyTag();
@@ -73,10 +82,15 @@ public final class ItemRadioactivity {
     }
 
     public static void setInduced(ItemStack stack, double value) {
+        if (RadDoseIndex.setValue(stack, value)) return;
         if (value < CLEANUP_FLOOR) {
             clear(stack, "setInduced-floor");
             return;
         }
+        writeComponent(stack, value);
+    }
+
+    static void writeComponent(ItemStack stack, double value) {
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
                 data -> data.update(tag -> {
                     tag.putDouble(TAG_RAD, value);
@@ -92,6 +106,11 @@ public final class ItemRadioactivity {
                     net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()),
                     String.format("%.2f", getInduced(stack)), stack.getCount(), cause);
         }
+        if (RadDoseIndex.markCleared(stack)) return;
+        clearComponent(stack);
+    }
+
+    static void clearComponent(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return;
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
@@ -266,6 +285,9 @@ public final class ItemRadioactivity {
 
     private static boolean decayInducedDeepLazily(ItemStack stack, long nowTick, int depth) {
         if (stack.isEmpty()) return false;
+        // 0.3.294: живой стак не получает переписывания CONTAINER/BUNDLE —
+        // ленивый догон доедет сам на следующем обращении после flush.
+        if (RadDoseIndex.isLive(stack)) return false;
         boolean changed = decayInducedLazily(stack, nowTick);
         if (depth >= 4) return changed;
         // (автор #28, 0.3.267) Связка разряжается как шалкер: items() держит
@@ -297,11 +319,22 @@ public final class ItemRadioactivity {
     /** Отметить уже обработанный инвентарный шаг, в том числе виртуальный held-stack. */
     public static void markDecayTick(ItemStack stack, long nowTick) {
         if (stack.isEmpty() || getInduced(stack) <= 0.0D) return;
+        if (RadDoseIndex.markTick(stack, nowTick)) return;
+        writeComponentLastTick(stack, nowTick);
+    }
+
+    static void writeComponentLastTick(ItemStack stack, long nowTick) {
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
                 data -> data.update(tag -> tag.putLong(TAG_RAD_LAST_TICK, nowTick)));
     }
 
     private static long lastDecayTick(ItemStack stack) {
+        long idx = RadDoseIndex.tickOf(stack);
+        if (idx != Long.MIN_VALUE) return idx;
+        return readComponentLastTick(stack);
+    }
+
+    static long readComponentLastTick(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null) return Long.MIN_VALUE;
         CompoundTag tag = data.copyTag();

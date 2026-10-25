@@ -219,6 +219,15 @@ public final class RadiationSystem {
         boolean debugInv = GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get();
         int debugTouched = 0;
         int debugItemCount = 0;
+        // 0.3.294 (корневой ремонт дюпа из логов автора 25.10): пока игрок
+        // «активен» (клик/креатив-пакет < 5 с) или у него открыт серверный
+        // контейнер, проход пишет только в RadDoseIndex — ItemStack'ы инвентаря
+        // не мутируют, и клиентская сетка не может устареть. Flush компонентов
+        // — в тихое окно, где racing-окна нет по построению.
+        boolean quiet = RadDoseIndex.quietFor(player);
+        if (quiet) {
+            RadDoseIndex.flushPlayer(player);
+        }
 
         // Скан полной эмиссии инвентаря; максимум и второй максимум используются
         // только для локальной логистики наведёнки предметов, не для переноса в чанк.
@@ -273,6 +282,9 @@ public final class RadiationSystem {
                 ItemStack stack = part.get(slot);
                 if (stack.isEmpty()) {
                     continue;
+                }
+                if (!quiet) {
+                    RadDoseIndex.adopt(player, stack);
                 }
                 boolean activeHand = stack == player.getMainHandItem()
                         || stack == player.getOffhandItem();
@@ -886,6 +898,8 @@ public final class RadiationSystem {
             LEDGER_CLIENT.remove(player.getUUID());
             LAST_SWING.remove(player.getUUID());
             LAST_PASS_LOG_NS.remove(player.getUUID());
+            RadDoseIndex.flushPlayer(player);
+            RadDoseIndex.forgetPlayer(player.getUUID());
             HELD_RAD.entrySet().removeIf(entry -> entry.getKey().player().equals(player.getUUID()));
             RadSickness.forget(player.getUUID());
             RadCleanse.forget(player.getUUID());

@@ -3,6 +3,7 @@ package com.gonzotech.mixin;
 import com.gonzotech.core.config.GonzoServerConfig;
 import com.gonzotech.radiation.DropTraceFormat;
 import com.gonzotech.radiation.ItemRadioactivity;
+import com.gonzotech.radiation.RadDoseIndex;
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -100,6 +101,10 @@ public abstract class ContainerClickRadiationMixin {
             at = @At("HEAD"))
     private void gonzotech$snapshotContainerClick(ServerboundContainerClickPacket packet, CallbackInfo callback) {
         if (this.player == null) return;
+        // 0.3.294: любое действие по инвентарю закрывает окно flush — сервер не
+        // должен менять компоненты, пока сортировочный клиентский софт держит
+        // снапшот сетки (см. RadDoseIndex).
+        RadDoseIndex.noteInteraction(this.player);
         long n = GONZOTECH$CLICKS.incrementAndGet();
         if (n <= 3 || n % 25 == 0) {
             GONZOTECH$LOG.info("[RAD-INV] обработчик кликов жив: клик №{} от {} (slot={}, carried={} шт)",

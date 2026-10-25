@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.293$", props, re.M), "mod_version != 0.3.293"
+assert re.search(r"^mod_version=0\.3\.294$", props, re.M), "mod_version != 0.3.294"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1043,4 +1043,23 @@ for lang_name in ("ru_ru.json", "en_us.json"):
         assert m290 and "server-side WorldGuard" in m290.group(1), \
             f"в {lang_name} welcome '{wkey}' не перечисляет GT capabilities: server-side WorldGuard"
 
+
+# 0.3.294: корневой ремонт дюпа — живая доза вне стака (RadDoseIndex);
+# сервер не мутирует предметы «под ногами» клиента, creative-канал
+# (handleSetCreativeModeSlot, 1.21.4: без stateId/контент-проверки) больше
+# нечем наполнять устаревшими сетками.
+idx294 = (ROOT / "src/main/java/com/gonzotech/radiation/RadDoseIndex.java").read_text(encoding="utf-8")
+assert "class RadDoseIndex" in idx294 and "WeakHashMap<ItemStack, Entry>" in idx294 \
+    and "QUIET_NS = 5_000_000_000L" in idx294, "0.3.294: индекс разобран (ключ/окно тишины)"
+ir294 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
+for _r294 in ("RadDoseIndex.peek(stack)", "RadDoseIndex.setValue(stack, value)",
+              "RadDoseIndex.markTick(stack, nowTick)", "RadDoseIndex.tickOf(stack)",
+              "RadDoseIndex.markCleared(stack)", "RadDoseIndex.isLive(stack)"):
+    assert _r294 in ir294, f"0.3.294: роутинг {_r294} выпал — компонент снова пишется под живой сеткой"
+assert "RadDoseIndex.adopt(player, stack)" in sys291 and "RadDoseIndex.quietFor(player)" in sys291 \
+    and "RadDoseIndex.flushPlayer(player)" in sys291, "0.3.294: adopt/flush не в проходе"
+assert "RadDoseIndex.noteInteraction(this.player)" in clickmix \
+    and "RadDoseIndex.noteInteraction(this.player)" in creative291, \
+    "0.3.294: flush-окно растеряло печать активности клика/креатива"
+assert "radClearPending" not in ir294 and "private static final Map<UUID, Long> LAST_INTERACTION_NS" not in ir294
 print("autominer_markers_test passed")
