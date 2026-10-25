@@ -489,9 +489,11 @@ public final class GtUnits {
     }
 
     /**
-     * «#ceeb2d 20 mZt&lt;#7&gt;/s» — доза ЗА СЕКУНДУ (не за тик): так меряется мягкая
-     * доза хазмата ({@link com.gonzotech.radiation.Hazmat#SOFT_DOSE_MILLI}), автор 22.09.2026
-     * в лоре сета написал именно «mZt/s».
+     * «#ceeb2d 20 mZt&lt;#7&gt;/s» — доза ЗА СЕКУНДУ: так меряется мягкая доза
+     * хазмата ({@link com.gonzotech.radiation.Hazmat#SOFT_DOSE_MILLI}), автор 22.09.2026
+     * в лоре сета написал именно «mZt/s». С 0.3.303 то же делает {@link #zt}
+     * (единый «/s» для радиации) — метод оставлен как именованный для
+     * вызовов, подчёркивающих секундный смысл.
      */
     public static MutableComponent ztPerSecond(double nZt) {
         return ratePerSecond(RadUnits.value(nZt), text(RadUnits.unit(nZt), RADIATION), RADIATION);

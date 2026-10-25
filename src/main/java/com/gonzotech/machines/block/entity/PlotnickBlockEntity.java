@@ -1595,7 +1595,7 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /**
      * Запись в виртуальный Container-слот — контракт setItem: ЗАМЕНА
-     * (0.3.298 N5, постановка автора). До этого здесь был «долив» —
+     * (0.3.299 N5, постановка автора). До этого здесь был «долив» —
      * ванильные воронки, пишущие getItem+setItem(слиток), получали
      * перемещение в голову вместо атома замены. Вставка по правилам
      * склада — отдельный метод insert() (трубы/автоматика идут через
@@ -1637,7 +1637,7 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     /** Потолок стопки: ваниальный 64, но не больше лимита самого предмета (#17).
-     *  0.3.298 (N6): единая мерка для меню-мерджа и склада — PlotnickMenu
+     *  0.3.299 (N6): единая мерка для меню-мерджа и склада — PlotnickMenu
      *  берёт её, а не Slot.getMaxStackSize(): пустой слот ничего о потолке
      *  предмета не знает и наливал ванильные 64 в лимитированные стопки. */
     public static int capacityFor(ItemStack stack) {
@@ -2288,7 +2288,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
         for (ItemStack rest : overflow) {
             insert(rest);
-            // 0.3.298 (N7): что при загрузке сейва не влезло — не обрезается
+            // 0.3.299 (N7): что при загрузке сейва не влезло — не обрезается
             // в void, а становится legacyOverflow: свалится на землю первым
             // тиком (то же правило, что #1 у foldIntoStorage).
             if (!rest.isEmpty()) legacyOverflow.add(rest);

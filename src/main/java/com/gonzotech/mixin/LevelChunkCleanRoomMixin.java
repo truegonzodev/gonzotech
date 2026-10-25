@@ -24,7 +24,7 @@ public abstract class LevelChunkCleanRoomMixin {
             com.gonzotech.radiation.Containment.blockChanged(level, pos, old, actual);
             // 0.3.290 #17: тот же канал кормит счётчики Плотника (см. SECTOR_PULSE).
             com.gonzotech.machines.block.entity.PlotnickBlockEntity.pulseBlockChange(level, pos);
-            // 0.3.298 (N13): тем же штампом инвалидируется кэш топологии труб.
+            // 0.3.299 (N13): тем же штампом инвалидируется кэш топологии труб.
             com.gonzotech.machines.network.ItemRouting.onWorldEdit(level);
         }
     }

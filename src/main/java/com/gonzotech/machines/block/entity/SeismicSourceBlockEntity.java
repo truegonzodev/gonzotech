@@ -44,7 +44,7 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        // 0.3.298 (N7): занятый слот отказывает: вторая единица TNT ни автоматике,
+        // 0.3.299 (N7): занятый слот отказывает: вторая единица TNT ни автоматике,
         // ни игроку не кладётся; раньше излишек срезался в setItem молча (десятки
         // исчезали при загрузке/забивке).
         return slot == SLOT_DYNAMITE && isDynamite(stack)
@@ -55,7 +55,7 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
     public void setItem(int slot, ItemStack stack) {
         if (slot != SLOT_DYNAMITE) return;
         if (!stack.isEmpty() && !isDynamite(stack)) return;
-        // 0.3.298 (N7): излишек многостопки не отрезается в void, а падает
+        // 0.3.299 (N7): излишек многостопки не отрезается в void, а падает
         // у блока — защита от прямых записей (команды, сторонние моды),
         // которым canPlaceItem не указ.
         if (stack.getCount() > 1 && level != null) {
@@ -80,7 +80,7 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
             if (!loaded.isEmpty() && !isDynamite(loaded)) {
                 items.set(SLOT_DYNAMITE, ItemStack.EMPTY);
             } else if (loaded.getCount() > 1) {
-                // 0.3.298 (N7): перегруз на загрузке сейва — не обрезка:
+                // 0.3.299 (N7): перегруз на загрузке сейва — не обрезка:
                 // излишек копится в loadSurplus и сыплется на землю первым
                 // тиком (во время загрузки чанка дропать сущности нельзя).
                 loadSurplus = loaded.getCount() - 1;
@@ -109,7 +109,7 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
     /** TNT сверх единицы, поднятый из сейва: очередь наземного дропа. */
     private int loadSurplus;
 
-    /** 0.3.298 (N7): тикер нужен только наземному сбросу loadSurplus. */
+    /** 0.3.299 (N7): тикер нужен только наземному сбросу loadSurplus. */
     public static void serverTick(Level level, BlockPos pos, BlockState state,
             SeismicSourceBlockEntity be) {
         if (be.loadSurplus <= 0 || level == null) return;

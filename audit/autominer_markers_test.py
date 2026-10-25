@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.303$", props, re.M), "mod_version != 0.3.303"
+assert re.search(r"^mod_version=0\.3\.304$", props, re.M), "mod_version != 0.3.304"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1122,7 +1122,7 @@ assert "CLEANUP_FLOOR = RadUnits.MILLI" in ir298, \
 assert "seeded / RadUnits.MILLI" in ir298, \
     "0.3.298: степень стоимости приёма снова считает 0.097 % на nZt вместо mZt"
 assert "target >= CLEANUP_FLOOR" in ir298 and "Math.max(current, CLEANUP_FLOOR)" in ir298, \
-    "0.3.298: посев/гейт роста не привязан к 1-mZt floor (двойная трактовок)"
+    "0.3.298: посев/гейт роста не привязан к 1-mZt floor (иначе — двойная трактовка посева)"
 
 # 0.3.299: N-проход. N5 — setVirtual (виртуал Плотника) обязан быть заменой
 # (контракт setItem): долив в нём рождал «перемещение в голову» для воронок.
@@ -1231,4 +1231,20 @@ for loc303 in ("ru_ru", "en_us"):
     j303 = (ROOT / f"src/main/resources/assets/gonzotech/lang/{loc303}.json").read_text(encoding="utf-8")
     assert "%s/s" not in j303.split('"command.gonzotech.radiation.inside_dose"')[1].split("\n")[0], \
         f"0.3.303: {loc303} inside_dose держит двойной «%s/s»"
+
+# 0.3.304 (полировка): метки раундов в комментариях не должны врать. N-проход
+# выпущен в 0.3.299 — «0.3.298 (N…)» в этих файлах быть не может; юнит-ремонт
+# 0.3.298 без N-тегов остаётся как есть.
+for f304 in ("src/main/java/com/gonzotech/machines/network/ItemRouting.java",
+             "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java",
+             "src/main/java/com/gonzotech/machines/block/entity/SeismicSourceBlockEntity.java",
+             "src/main/java/com/gonzotech/machines/block/SeismicSourceBlock.java",
+             "src/main/java/com/gonzotech/machines/block/PlotnickBlock.java",
+             "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java",
+             "src/main/java/com/gonzotech/mixin/LevelChunkCleanRoomMixin.java"):
+    txt304 = (ROOT / f304).read_text(encoding="utf-8")
+    assert "0.3.298 (N" not in txt304 and "(0.3.298 N" not in txt304, \
+        f"0.3.304: устаревшая метка раунда в {f304}"
+ir304 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
+assert "таблица разделена по измерениям" in ir304, "0.3.304: «помещена» вернулась в док N14"
 print("autominer_markers_test passed")

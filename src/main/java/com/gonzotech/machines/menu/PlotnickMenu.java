@@ -92,7 +92,7 @@ public final class PlotnickMenu extends BaseMachineMenu {
             ItemStack stored = target.getItem();
             if (stored.isEmpty() || !ItemStack.isSameItemSameComponents(stored, stack)) continue;
             if (!target.mayPlace(stack)) continue;
-            // 0.3.298 (N6): потолок — складская capacityFor, не слотовая:
+            // 0.3.299 (N6): потолок — складская capacityFor, не слотовая:
             // у недолитой стопки она равна потолку самого предмета.
             int space = PlotnickBlockEntity.capacityFor(stored) - stored.getCount();
             if (space <= 0) continue;
@@ -105,7 +105,7 @@ public final class PlotnickMenu extends BaseMachineMenu {
         for (int i = 0; i < machineEnd && !stack.isEmpty(); i++) {
             Slot target = slots.get(i);
             if (target.hasItem() || !target.mayPlace(stack)) continue;
-            // 0.3.298 (N6): пустой слот о потолке предмета не знает —
+            // 0.3.299 (N6): пустой слот о потолке предмета не знает —
             // делим по складской capacityFor, иначе setByPlayer рождал
             // стопку сверх лимита мимо clamp'а setItem.
             target.setByPlayer(stack.split(PlotnickBlockEntity.capacityFor(stack)));

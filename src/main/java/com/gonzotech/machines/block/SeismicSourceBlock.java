@@ -29,7 +29,7 @@ public final class SeismicSourceBlock extends MachineBlock {
     }
 
     /**
-     * 0.3.298 (N7): серверный тикер — сброс loadSurplus (TNT сверх единицы,
+     * 0.3.299 (N7): серверный тикер — сброс loadSurplus (TNT сверх единицы,
      * поднятое из старого сейва). Пустой путь — одна проверка счётчика.
      */
     @Override
