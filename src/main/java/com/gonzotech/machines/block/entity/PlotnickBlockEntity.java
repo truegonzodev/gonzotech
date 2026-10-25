@@ -1523,7 +1523,7 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     private boolean insertImpl(ItemStack incoming, boolean mined) {
         if (incoming.isEmpty()) return false;
-        int cap = capOf(incoming);
+        int cap = capacityFor(incoming);
         // 1. Головы активных слотов — классика до 64.
         for (int slot = 0; slot < SLOTS_ACTIVE && !incoming.isEmpty(); slot++) {
             ItemStack head = items.get(slot);
@@ -1594,48 +1594,53 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     /**
-     * Запись в виртуальный Container-слот (трубы/воронки/клик): пустая
-     * стопка — забираем, совпадение — доливаем, иначе — общий роутинг
-     *insert(). В «добытое» извне пускается только снятие (проверка на лице).
+     * Запись в виртуальный Container-слот — контракт setItem: ЗАМЕНА
+     * (0.3.298 N5, постановка автора). До этого здесь был «долив» —
+     * ванильные воронки, пишущие getItem+setItem(слиток), получали
+     * перемещение в голову вместо атома замены. Вставка по правилам
+     * склада — отдельный метод insert() (трубы/автоматика идут через
+     * него); merge-копию перед записью делает сам контейнер-донор
+     * (ItemRouting.tryPlace), поэтому замена здесь ничего не ломает.
+     * Прежний тип из вытесненной ячейки уходит общим роутингом, затем
+     * на землю — ни одного предмета в void. Совпадение типа — молчаливая
+     * замена (так же ведёт себя SimpleContainer; caller владеет вытесненным).
      */
     private void setVirtual(int idx, ItemStack stack) {
         if (idx < 0 || idx >= VIRTUAL_SLOTS) return;
-        if (stack.isEmpty()) {
-            virtual.set(idx, ItemStack.EMPTY);
-            networkStatsDirty = true;
-            setChanged();
-            return;
-        }
         ItemStack cur = virtual.get(idx);
-        if (!cur.isEmpty() && !ItemStack.isSameItemSameComponents(cur, stack)) {
-            insert(stack); // чужой тип в стопку — пусть решает общий роутинг
-            if (!stack.isEmpty()) dump(stack, worldPosition); // не влез — на землю
-            return;
-        }
-        if (cur.isEmpty() && cellFor(stack) >= 0 && cellFor(stack) != idx / STACKS_PER_TYPE) {
-            insert(stack); // тип живёт в другой ячейке — не плодим копию
-            if (!stack.isEmpty()) dump(stack, worldPosition);
-            return;
-        }
-        int cap = capOf(stack);
-        int space = Math.max(0, cap - cur.getCount());
-        int moved = Math.min(space, stack.getCount());
-        if (moved > 0) {
-            if (cur.isEmpty()) virtual.set(idx, stack.split(moved));
-            else {
-                stack.shrink(moved);
-                cur.grow(moved);
+        if (stack.isEmpty()) {
+            if (!cur.isEmpty()) {
+                virtual.set(idx, ItemStack.EMPTY);
+                networkStatsDirty = true;
+                setChanged();
             }
-            networkStatsDirty = true;
-            setChanged();
+            return;
         }
-        if (!stack.isEmpty()) insert(stack); // перелив — общий роутинг
-        if (!stack.isEmpty()) dump(stack, worldPosition); // не влез — на землю, не в void
+        int cap = capacityFor(stack);
+        if (stack.getCount() > cap) {
+            // Неизвестный потолку caller: ячейка принимает норму, излишек
+            // дописываем в общий роутинг сразу (стопка caller'а — как в
+            // heads-ветке setItem: split, а не тихая обрезка).
+            ItemStack over = stack.split(stack.getCount() - cap);
+            insert(over);
+            if (!over.isEmpty()) dump(over, worldPosition);
+        }
+        boolean foreignType =
+            !cur.isEmpty() && !ItemStack.isSameItemSameComponents(cur, stack);
+        virtual.set(idx, stack);
+        if (foreignType) {
+            insert(cur); // вытесненный — на склад, не в void
+            if (!cur.isEmpty()) dump(cur, worldPosition);
+        }
+        networkStatsDirty = true;
         setChanged();
     }
 
-    /** Потолок стопки: ваниальный 64, но не больше лимита самого предмета (#17). */
-    private static int capOf(ItemStack stack) {
+    /** Потолок стопки: ваниальный 64, но не больше лимита самого предмета (#17).
+     *  0.3.298 (N6): единая мерка для меню-мерджа и склада — PlotnickMenu
+     *  берёт её, а не Slot.getMaxStackSize(): пустой слот ничего о потолке
+     *  предмета не знает и наливал ванильные 64 в лимитированные стопки. */
+    public static int capacityFor(ItemStack stack) {
         int cap = stack.getMaxStackSize();
         return cap > 0 ? Math.min(MAX_STACK, cap) : MAX_STACK;
     }
@@ -1653,7 +1658,7 @@ public final class PlotnickBlockEntity extends BlockEntity
      */
     public boolean hasRoom(ItemStack stack) {
         if (stack.isEmpty()) return true;
-        int cap = capOf(stack);
+        int cap = capacityFor(stack);
         for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
             ItemStack head = items.get(slot);
             if (head.isEmpty()) return true;
@@ -1994,9 +1999,9 @@ public final class PlotnickBlockEntity extends BlockEntity
             setVirtual(slot - CONTAINER_SIZE, stack); // трубы/воронки → хранилище
             return;
         }
-        if (stack.getCount() > capOf(stack)) {
+        if (stack.getCount() > capacityFor(stack)) {
             // Сторонний код (клик-мердж) не должен рождать стопку сверх лимита.
-            ItemStack overflow = stack.split(stack.getCount() - capOf(stack));
+            ItemStack overflow = stack.split(stack.getCount() - capacityFor(stack));
             insertOrDrop(overflow, worldPosition);
         }
         // Слот карт не принимает всё подряд (Shift-клик и внешние записи).
@@ -2060,7 +2065,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         if (slot >= SLOTS_ACTIVE) return isAllowedCard(slot, stack);
         ItemStack head = items.get(slot);
         return head.isEmpty()
-            || (ItemStack.isSameItemSameComponents(head, stack) && head.getCount() < capOf(stack));
+            || (ItemStack.isSameItemSameComponents(head, stack) && head.getCount() < capacityFor(stack));
     }
 
     @Override
@@ -2271,13 +2276,19 @@ public final class PlotnickBlockEntity extends BlockEntity
         List<ItemStack> overflow = new ArrayList<>();
         for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
             ItemStack stack = items.get(slot);
-            if (stack.getCount() > capOf(stack)) overflow.add(stack.split(stack.getCount() - capOf(stack)));
+            if (stack.getCount() > capacityFor(stack)) overflow.add(stack.split(stack.getCount() - capacityFor(stack)));
         }
         for (int slot = 0; slot < VIRTUAL_SLOTS; slot++) {
             ItemStack stack = virtual.get(slot);
-            if (stack.getCount() > capOf(stack)) overflow.add(stack.split(stack.getCount() - capOf(stack)));
+            if (stack.getCount() > capacityFor(stack)) overflow.add(stack.split(stack.getCount() - capacityFor(stack)));
         }
-        for (ItemStack rest : overflow) insert(rest);
+        for (ItemStack rest : overflow) {
+            insert(rest);
+            // 0.3.298 (N7): что при загрузке сейва не влезло — не обрезается
+            // в void, а становится legacyOverflow: свалится на землю первым
+            // тиком (то же правило, что #1 у foldIntoStorage).
+            if (!rest.isEmpty()) legacyOverflow.add(rest);
+        }
     }
 
     private static void savePosList(CompoundTag tag, String key, List<BlockPos> positions) {

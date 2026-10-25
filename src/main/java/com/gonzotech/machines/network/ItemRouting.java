@@ -75,19 +75,26 @@ public final class ItemRouting {
      * соседних узла иначе гоняют один предмет туда-обратно (топка A → топка B →
      * топка A) с setChanged-штормом и бесконечно грязными чанками — это и были
      * «лаг-вейвы» автора на куче узлов. Чистится при записи (правило статики).
+     * 0.3.298 (N14): таблица помесящена по измерениям — asLong() позиции в
+     * Незере и обычном мире сталкиваются, и щит на зеркальных координатах
+     * глушил забор там, где конфликта нет.
      */
-    private static final java.util.Map<Long, Long> LAST_INSERTED = new java.util.HashMap<>();
+    private static final java.util.Map<Level, java.util.Map<Long, Long>> LAST_INSERTED =
+        new java.util.WeakHashMap<>();
 
-    private static void noteInserted(long now, BlockPos containerPos) {
-        if (LAST_INSERTED.size() > 256) {
+    private static void noteInserted(Level level, long now, BlockPos containerPos) {
+        java.util.Map<Long, Long> perDim =
+            LAST_INSERTED.computeIfAbsent(level, k -> new java.util.HashMap<>());
+        if (perDim.size() > 256) {
             long oldest = now - 4L;
-            LAST_INSERTED.values().removeIf(t -> t < oldest);
+            perDim.values().removeIf(t -> t < oldest);
         }
-        LAST_INSERTED.put(containerPos.asLong(), now);
+        perDim.put(containerPos.asLong(), now);
     }
 
-    private static boolean insertedThisTick(long now, BlockPos containerPos) {
-        Long at = LAST_INSERTED.get(containerPos.asLong());
+    private static boolean insertedThisTick(Level level, long now, BlockPos containerPos) {
+        java.util.Map<Long, Long> perDim = LAST_INSERTED.get(level);
+        Long at = perDim == null ? null : perDim.get(containerPos.asLong());
         return at != null && at == now;
     }
 
@@ -131,7 +138,7 @@ public final class ItemRouting {
             BlockPos srcPos = pos.relative(dir);
             // Сторона источника, обращённая к трубе (для WorldlyContainer-доступа).
             Direction srcFace = dir.getOpposite();
-            if (insertedThisTick(now, srcPos)) continue;
+            if (insertedThisTick(level, now, srcPos)) continue;
             Container src = containerAt(level, srcPos);
             if (src == null) continue;
             if (!hasExtractableItem(src, srcFace)) continue;
@@ -142,7 +149,9 @@ public final class ItemRouting {
         // Фаза 2 (0.3.96): ОДИН обход сети на узел за тик (раньше — до шести,
         // по грани на каждую). Множество приёмников от грани не зависит: BFS
         // стартует от узла, исключение источника делаем при вставке.
-        List<Sink> sinks = collectSinks(level, pos);
+        // 0.3.298 (N13): результат кэшируется на узел (инвалидация — общий
+        // штамп геометрии из LevelChunk-миксина), с бюджетом узлов на тик.
+        List<Sink> sinks = sinksCached(level, pos);
         if (sinks.isEmpty()) return 0;
 
         int moved = 0;
@@ -198,11 +207,11 @@ public final class ItemRouting {
                     // только источник теперь один на весь BFS) и не вставляем в
                     // контейнер-источник этой же сети в этом же тике (щит циклов).
                     if (sink.containerPos().equals(excludeSrc)) continue;
-                    if (insertedThisTick(now, sink.containerPos())) continue;
+                    if (insertedThisTick(level, now, sink.containerPos())) continue;
                     if (insertOne(sink.container, sink.face, one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();
-                        noteInserted(now, sink.containerPos());
+                        noteInserted(level, now, sink.containerPos());
                         moved++;
                         perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
@@ -282,13 +291,72 @@ public final class ItemRouting {
     private record Sink(Container container, Direction face, List<BlockPos> path, BlockPos containerPos) {
     }
 
+    // ───────────────────── кэш топологии (0.3.298 N13) ─────────────────────
+    // collectSinks бегал по каждой открытой трубе каждый тик: куча труб —
+    // тысячи getBlockState на ровном месте. Кэш приёмников стартовой трубы
+    // живёт, пока геометрия мира не изменилась (штамп от LevelChunk-миксина —
+    // точно для поршней/команд/взрывов) либо пока не истечёт TOPO_TTL_TICKS
+    // (потолок устаревания на случай пути, о котором миксин не знает).
+    // TOPO_BUDGET_PER_TICK — лимит новых BFS-узлов на игровой тик: перерасход
+    // берёт прошлый результат трубы или отдаляет пересчёт на следующий тик.
+
+    static final int TOPO_TTL_TICKS = 40;
+    static final int TOPO_BUDGET_PER_TICK = 2048;
+
+    private record CachedSinks(List<Sink> sinks, long builtTick, long version) {}
+
+    private static final java.util.Map<Level, long[]> TOPO_VERSION =
+        new java.util.WeakHashMap<>();
+    private static final java.util.Map<Level, java.util.Map<Long, CachedSinks>> TOPO_CACHE =
+        new java.util.WeakHashMap<>();
+    private static long topoBudgetTick = Long.MIN_VALUE;
+    private static int topoBudget;
+
+    /** Миксин зовет на КАЖДОМ setBlockState: версии расходятся — кэш протух. */
+    public static void onWorldEdit(Level level) {
+        if (level.isClientSide()) return;
+        TOPO_VERSION.computeIfAbsent(level, k -> new long[1])[0]++;
+    }
+
+    private static long topoVersion(Level level) {
+        long[] v = TOPO_VERSION.get(level);
+        return v == null ? 0L : v[0];
+    }
+
+    private static List<Sink> sinksCached(Level level, BlockPos startPipe) {
+        if (level.isClientSide()) return collectSinks(level, startPipe, new int[1]);
+        long now = level.getGameTime();
+        if (topoBudgetTick != now) {
+            topoBudgetTick = now;
+            topoBudget = TOPO_BUDGET_PER_TICK;
+        }
+        java.util.Map<Long, CachedSinks> perLevel = TOPO_CACHE.get(level);
+        CachedSinks hit = perLevel == null ? null : perLevel.get(startPipe.asLong());
+        long version = topoVersion(level);
+        if (hit != null
+            && (hit.version() == version || now - hit.builtTick() <= TOPO_TTL_TICKS)) {
+            return hit.sinks();
+        }
+        if (topoBudget <= 0) return hit != null ? hit.sinks() : List.of();
+        int[] visited = new int[1];
+        List<Sink> sinks = collectSinks(level, startPipe, visited);
+        topoBudget -= visited[0];
+        if (perLevel == null) {
+            perLevel = new java.util.HashMap<>();
+            TOPO_CACHE.put(level, perLevel);
+        }
+        if (perLevel.size() > 8192) perLevel.clear(); // трубы ломают — кэш не раздуваем
+        perLevel.put(startPipe.asLong(), new CachedSinks(sinks, now, version));
+        return sinks;
+    }
+
     /**
      * Собирает контейнеры-приёмники, достижимые по связной цепи предметных труб от
      * {@code startPipe}. Источник {@code srcPos} исключаем из приёмников. Правила
      * соединения — как в {@link PipeRouting}: труба↔труба по открытым навстречу
      * граням; труба→контейнер, если грань открыта к нему и режим = ОТДАЧА/АВТО.
      */
-    private static List<Sink> collectSinks(Level level, BlockPos startPipe) {
+    private static List<Sink> collectSinks(Level level, BlockPos startPipe, int[] visitedOut) {
         List<Sink> sinks = new ArrayList<>();
         Set<BlockPos> visited = new HashSet<>();
         Map<Long, BlockPos> parents = new HashMap<>();
@@ -328,6 +396,7 @@ public final class ItemRouting {
             PipeFlowWarnings.mark(level, startPipe,
                 level.getGameTime() + PipeFlowWarnings.HOLD_TICKS);
         }
+        visitedOut[0] = visited.size();
         return sinks;
     }
 

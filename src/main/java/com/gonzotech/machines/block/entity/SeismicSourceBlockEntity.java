@@ -13,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -43,18 +44,27 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        // Количество ограничивают getMaxStackSize()/слот меню: сюда автоматика
-        // может приходить со стопкой, из которой будет взята ровно одна единица.
-        return slot == SLOT_DYNAMITE && isDynamite(stack);
+        // 0.3.298 (N7): занятый слот отказывает: вторая единица TNT ни автоматике,
+        // ни игроку не кладётся; раньше излишек срезался в setItem молча (десятки
+        // исчезали при загрузке/забивке).
+        return slot == SLOT_DYNAMITE && isDynamite(stack)
+            && items.get(SLOT_DYNAMITE).isEmpty();
     }
 
     @Override
     public void setItem(int slot, ItemStack stack) {
         if (slot != SLOT_DYNAMITE) return;
         if (!stack.isEmpty() && !isDynamite(stack)) return;
+        // 0.3.298 (N7): излишек многостопки не отрезается в void, а падает
+        // у блока — защита от прямых записей (команды, сторонние моды),
+        // которым canPlaceItem не указ.
+        if (stack.getCount() > 1 && level != null) {
+            net.minecraft.world.level.block.Block.popResource(level, worldPosition,
+                stack.copyWithCount(stack.getCount() - 1));
+        }
         super.setItem(slot, stack.isEmpty()
             ? ItemStack.EMPTY
-            : stack.copyWithCount(Math.min(1, stack.getCount())));
+            : stack.copyWithCount(1));
     }
 
     @Override
@@ -70,6 +80,10 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
             if (!loaded.isEmpty() && !isDynamite(loaded)) {
                 items.set(SLOT_DYNAMITE, ItemStack.EMPTY);
             } else if (loaded.getCount() > 1) {
+                // 0.3.298 (N7): перегруз на загрузке сейва — не обрезка:
+                // излишек копится в loadSurplus и сыплется на землю первым
+                // тиком (во время загрузки чанка дропать сущности нельзя).
+                loadSurplus = loaded.getCount() - 1;
                 items.set(SLOT_DYNAMITE, loaded.copyWithCount(1));
             }
         }
@@ -90,6 +104,19 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
     @Override
     public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
         return false;
+    }
+
+    /** TNT сверх единицы, поднятый из сейва: очередь наземного дропа. */
+    private int loadSurplus;
+
+    /** 0.3.298 (N7): тикер нужен только наземному сбросу loadSurplus. */
+    public static void serverTick(Level level, BlockPos pos, BlockState state,
+            SeismicSourceBlockEntity be) {
+        if (be.loadSurplus <= 0 || level == null) return;
+        int n = be.loadSurplus;
+        be.loadSurplus = 0;
+        net.minecraft.world.level.block.Block.popResource(level, pos,
+            new ItemStack(Items.TNT, n));
     }
 
     @Override

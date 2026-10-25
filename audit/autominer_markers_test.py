@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.298$", props, re.M), "mod_version != 0.3.298"
+assert re.search(r"^mod_version=0\.3\.299$", props, re.M), "mod_version != 0.3.299"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -889,7 +889,8 @@ assert "marker.owner() == 0L" in mk[be and mk.index("removeStationMarkersInSecto
 # #16/17
 assert "items.set(i, ItemStack.EMPTY)" in be and "virtual.set(i, ItemStack.EMPTY)" in be, \
     "clearContent снова дёргает add() на фиксированном NonNullList (#16)"
-assert "capOf(" in be, "мердж не уважает лимит самого предмета (#17)"
+# 0.3.299 (N6): capOf переименован в единый public capacityFor — пин за именем
+assert "capacityFor(" in be, "мердж не уважает лимит самого предмета (#17)"
 # #18
 assert "if (menuViewers++ == 0) networkStatsDirty = true;" in be, "открытие GUI не освежает числа"
 # #21
@@ -1122,4 +1123,46 @@ assert "seeded / RadUnits.MILLI" in ir298, \
     "0.3.298: степень стоимости приёма снова считает 0.097 % на nZt вместо mZt"
 assert "target >= CLEANUP_FLOOR" in ir298 and "Math.max(current, CLEANUP_FLOOR)" in ir298, \
     "0.3.298: посев/гейт роста не привязан к 1-mZt floor (двойная трактовок)"
+
+# 0.3.299: N-проход. N5 — setVirtual (виртуал Плотника) обязан быть заменой
+# (контракт setItem): долив в нём рождал «перемещение в голову» для воронок.
+# N6 — потолок складских стопок один на меню и автоматизацию. N7 — TNT-слот
+# источника: занятый отказывает, перегрузы сейвов вываливаются, а не обрезаются.
+# N11 — установка Плотника одноразово грузит 5×5 чанков. N13 — BFS приёмников
+# кэшируется с инвалидацией по штампу мира и бюджетом узлов на тик. N14 —
+# щит пинг-понга разделён по измерениям.
+be299 = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java").read_text(encoding="utf-8")
+assert "public static int capacityFor(ItemStack stack)" in be299 and "capOf(" not in be299, \
+    "0.3.299 N6: единый потолок склада разъехался с меню"
+sv299 = be299[be299.index("private void setVirtual"):be299.index("private void setVirtual") + 2400]
+assert "virtual.set(idx, stack);" in sv299 and "cur.grow(moved)" not in sv299 \
+    and "insert(stack); // чужой тип в стопку" not in sv299, \
+    "0.3.299 N5: setVirtual снова доливаёт вместо замены — контракт setItem сломан"
+assert "legacyOverflow.add(rest);" in be299, \
+    "0.3.299 N7: normalizeStacks обрезает перегруз загрузки в void"
+mn299 = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
+assert mn299.count("PlotnickBlockEntity.capacityFor(") >= 2, \
+    "0.3.299 N6: меню мердж идёт мимо складской capacityFor"
+ss299 = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/SeismicSourceBlockEntity.java").read_text(encoding="utf-8")
+assert "items.get(SLOT_DYNAMITE).isEmpty()" in ss299 and "loadSurplus" in ss299 \
+    and "popResource" in ss299, \
+    "0.3.299 N7: TNT-слот источника снова принимает воoccupied и режет излишки"
+sb299 = (ROOT / "src/main/java/com/gonzotech/machines/block/SeismicSourceBlock.java").read_text(encoding="utf-8")
+assert "SeismicSourceBlockEntity::serverTick" in sb299, \
+    "0.3.299 N7: у источника нет тикера — loadSurplus некому сбросить"
+pb299 = (ROOT / "src/main/java/com/gonzotech/machines/block/PlotnickBlock.java").read_text(encoding="utf-8")
+assert "protected void onPlace" in pb299 and "server.getChunk(cx + dx, cz + dz)" in pb299, \
+    "0.3.299 N11: установка Плотника не прогревает 5×5 чанков — перевыборы слепнут"
+ir299 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
+assert "sinksCached(level, pos)" in ir299 and "TOPO_BUDGET_PER_TICK" in ir299 \
+    and "public static void onWorldEdit(Level level)" in ir299, \
+    "0.3.299 N13: BFS приёмников снова бегает по каждой трубе каждый тик"
+assert "Map<Level, java.util.Map<Long, Long>> LAST_INSERTED" in ir299 \
+    and "noteInserted(level, now, sink.containerPos())" in ir299, \
+    "0.3.299 N14: щит пинг-понга снова без измерений — коллизии Nether/Overworld"
+assert "insertedThisTick(now," not in ir299.replace("insertedThisTick(level, now,", ""), \
+    "0.3.299 N14: остался вызов insertedThisTick без level"
+mx299 = (ROOT / "src/main/java/com/gonzotech/mixin/LevelChunkCleanRoomMixin.java").read_text(encoding="utf-8")
+assert "ItemRouting.onWorldEdit(level)" in mx299, \
+    "0.3.299 N13: миксин не инвалидирует кэш топологии"
 print("autominer_markers_test passed")

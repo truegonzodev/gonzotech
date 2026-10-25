@@ -38,6 +38,30 @@ public final class PlotnickBlock extends MachineBlock {
         return new PlotnickBlockEntity(pos, state);
     }
 
+    /**
+     * 0.3.298 (N11, постановка автора): установка Плотника принудительно и
+     * ОДНОРАЗОВО грузит 5×5 чанков вокруг — соседи-претенденты видны до
+     * первого секторного выбора, иначе два Плотника несколько секунд
+     * роют один сектор, пока чанки досыпаются. Перевыборы при загрузке
+     * мира уже обеспечивает sectorElectionDue в load. Постоянных тикетов
+     * не вешаем: чанки выгружаются как обычно.
+     */
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos,
+            BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (level.isClientSide() || oldState.is(state.getBlock())) return;
+        if (level instanceof net.minecraft.server.level.ServerLevel server) {
+            int cx = pos.getX() >> 4;
+            int cz = pos.getZ() >> 4;
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    server.getChunk(cx + dx, cz + dz);
+                }
+            }
+        }
+    }
+
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
         Level level, BlockState state, BlockEntityType<T> type

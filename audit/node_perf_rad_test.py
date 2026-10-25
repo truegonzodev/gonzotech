@@ -19,13 +19,17 @@ rad = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read
 # ── 1) ItemRouting: один BFS на узел/тик + ранний выход + щит пинг-понга ──
 assert "hasExtractableItem(src, srcFace)) continue;" in routing      # пустой источник — без BFS
 assert "if (faces.isEmpty()) return 0;" in routing
-assert "List<Sink> sinks = collectSinks(level, pos);" in routing     # ОДИН BFS
-assert "private static List<Sink> collectSinks(Level level, BlockPos startPipe) {" in routing
+# 0.3.299 (N13): единый BFS на узел теперь ещё и кэшируется (sinksCached)
+assert "List<Sink> sinks = sinksCached(level, pos);" in routing     # ОДИН BFS
+assert "private static List<Sink> collectSinks(Level level, BlockPos startPipe, int[] visitedOut) {" in routing  # 0.3.299: счётчик для бюджета
 assert "collectSinks(Level level, BlockPos startPipe, BlockPos srcPos)" not in routing  # старый API умер
-assert "LAST_INSERTED" in routing and "insertedThisTick(now, srcPos)" in routing
-assert "noteInserted(now, sink.containerPos());" in routing
+assert "LAST_INSERTED" in routing and "insertedThisTick(level, now, srcPos)" in routing  # 0.3.299 (N14): по измерениям
+assert "noteInserted(level, now, sink.containerPos());" in routing
 assert "sink.containerPos().equals(excludeSrc)" in routing
-assert "LAST_INSERTED.size() > 256" in routing                       # чистка при записи
+assert "perDim.size() > 256" in routing  # чистка при записи (0.3.299: на измерение)
+assert "private record CachedSinks(List<Sink> sinks, long builtTick, long version)" in routing  # N13
+assert "public static void onWorldEdit(Level level)" in routing      # N13: инвалидация от миксина
+assert "Map<Level, java.util.Map<Long, Long>> LAST_INSERTED" in routing  # N14: не одна карта на все миры
 assert "record Sink(Container container, Direction face, List<BlockPos> path, BlockPos containerPos)" in routing
 
 # ── 2) горячая метка узловых сетей ──
