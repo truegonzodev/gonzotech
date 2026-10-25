@@ -115,4 +115,9 @@ assert tabs.find("PCFSOZ_ITEM.get()") < tabs.find("SOLAR_PANEL_ITEM.get()")
 t3 = (ROOT / "src/main/java/com/gonzotech/machines/crafting/TierThreeCrafting.java").read_text()
 assert '"gonzotech:third_pcfsoz"' in t3  # полный гейт «Открытия 3»
 
-print("PCFSOZ pins passed (5202/64/388, 9000+8000, 32 mB/t @3.2 GTU, 480 t @5.32+32; cake -> U238 + 10% U235)")
+# ── 0.3.305 (Пятилетка П3): перекличка ReprocessingRecipes ведёт в ПЦФСОЗ, а не в центрифугу ──
+rr = (ROOT / "src/main/java/com/gonzotech/machines/processing/ReprocessingRecipes.java").read_text()
+assert "{@link PCFSOZRecipes}" in rr, "ПЦФСОЗ-ссылка в javadoc измельчителя отработки"
+assert "в центрифуге (см." not in rr, "устаревшая отсылка к центрифуге вернулась"
+
+print("PCFSOZ pins passed (+0.3.305 ReprocessingRecipes->PCFSOZ link (5202/64/388, 9000+8000, 32 mB/t @3.2 GTU, 480 t @5.32+32; cake -> U238 + 10% U235)")

@@ -24,6 +24,8 @@ HISTORICAL = {
     "docs/TEMP_NOTES.md", "TEMP_NOTES.md",
     "docs/LOGISTICS-TEMP-NOTES.md", "docs/MATERIAL_PROCESSING_CONCEPT.md",
     "docs/CHALKBOARD-SERVER-AUTHORITY-PATCH.md", "docs/CONTENT_AUDIT_2026-09-14.md",
+    # 0.3.305: dupe_curing.md:4 осознанно цитирует авторскую опечатку в имени файла
+    "dupe_cruing.md",
 }
 PLANNED = {"docs/RADIATION.md"}
 # ссылка: docs/...md либо голое имя файла (NAME + .md)
