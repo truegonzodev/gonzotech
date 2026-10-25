@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.294$", props, re.M), "mod_version != 0.3.294"
+assert re.search(r"^mod_version=0\.3\.295$", props, re.M), "mod_version != 0.3.295"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1062,4 +1062,21 @@ assert "RadDoseIndex.noteInteraction(this.player)" in clickmix \
     and "RadDoseIndex.noteInteraction(this.player)" in creative291, \
     "0.3.294: flush-окно растеряло печать активности клика/креатива"
 assert "radClearPending" not in ir294 and "private static final Map<UUID, Long> LAST_INTERACTION_NS" not in ir294
+
+# 0.3.295: debug2.log — NPE диагностики на netty-входе (гонка HEAD netty-пакета
+# N+1 с RETURN серверного прохода пакета N) + IAE JEI на rejoin. Диагностика
+# гейтится на серверный поток, регистрация расширения идемпотентна.
+assert "private net.minecraft.server.MinecraftServer server;" in clickmix, \
+    "0.3.295: клик-миксин потерял shadow сервера для гейта"
+assert clickmix.count("if (!this.server.isSameThread()) return;") >= 1 \
+    and "this.player == null || !this.server.isSameThread()" in clickmix, \
+    "0.3.295: netty-вход снова лезет в снапшот-поля — вернётся NPE-кик"
+assert "private net.minecraft.server.MinecraftServer server;" in creative291 \
+    and "if (!this.server.isSameThread()) return;" in creative291, \
+    "0.3.295: creative-миксин не гейтнут по потоку"
+assert "RadDoseIndex.noteInteraction(this.player);" in clickmix.split("isSameThread")[0], \
+    "0.3.295: штамп активности уехал под netty-гейт — окно flush перестанет закрываться вовремя"
+jei295 = (ROOT / "src/main/java/com/gonzotech/integration/jei/GonzoTechJeiPlugin.java").read_text(encoding="utf-8")
+assert "catch (IllegalArgumentException alreadyRegistered)" in jei295, \
+    "0.3.295: JEI-расширение снова регистрируется неидемпотентно (вылет на rejoin)"
 print("autominer_markers_test passed")

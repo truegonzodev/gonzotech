@@ -60,8 +60,17 @@ public final class GonzoTechJeiPlugin implements IModPlugin {
 
     @Override
     public void registerVanillaCategoryExtensions(IVanillaCategoryExtensionRegistration registration) {
-        ICraftingCategoryExtension<CraftingRecipe> extension = new GatedCraftingJeiExtension();
-        registration.getCraftingCategory().addExtension(CraftingRecipe.class, extension);
+        // 0.3.295 (debug2.log, ×3 на перелогинах): реестр расширений JEI живёт
+        // дольше пересоздания интеграции — при rejoin хук вызывается повторно и
+        // второй addExtension(CraftingRecipe.class) бросает IAE «already been
+        // registered», унося остальную жизненную фазу плагина. Идемпотентный
+        // skip: расширение уже стоит в реестре, повторная установка не нужна.
+        try {
+            registration.getCraftingCategory().addExtension(
+                CraftingRecipe.class, new GatedCraftingJeiExtension());
+        } catch (IllegalArgumentException alreadyRegistered) {
+            // идемпотентно
+        }
     }
 
     @Override

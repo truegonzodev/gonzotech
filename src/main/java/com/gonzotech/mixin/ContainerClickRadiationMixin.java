@@ -54,6 +54,10 @@ public abstract class ContainerClickRadiationMixin {
     @Shadow
     public ServerPlayer player;
 
+    /** Объявлено в самом целевом классе — field-shadow легален (правило 293). */
+    @Shadow
+    private net.minecraft.server.MinecraftServer server;
+
     @Unique
     private static final Logger GONZOTECH$LOG =
         org.slf4j.LoggerFactory.getLogger("gonzotech/radiation-inventory");
@@ -111,6 +115,19 @@ public abstract class ContainerClickRadiationMixin {
                 n, this.player.getGameProfile().getName(), packet.getSlotNum(),
                 packet.getCarriedItem().getCount());
         }
+        // 0.3.295 (debug2.log: NPE gonzotech$slotsBefore на Netty IO #1 — кик
+        // клиента): handleContainerClick исполняется ДВАЖДЫ на пакет — вход на
+        // netty-потоке, затем перевызов на серверном после ensureRunningOnSameThread
+        // (netty-проход бросает RunningOnDifferentThreadException и RETURN-инъект
+        // на нём НЕ выполняется). HEAD следующего пакета на netty успевал
+        // перезатереть/обнулить снапшот-поля между HEAD и RETURN серверного
+        // прохода предыдущего — FieldMap.put на null. Диагностика живёт только на
+        // серверном потоке: там пакеты идут строго последовательно, HEAD→RETURN
+        // пара на пакет ровно одна; «дубли [CLICK]» из логов 291–294 были именно
+        // этой двойной исполняемой цепочкой, а не внепотоковыми пакетами.
+        // noteInteraction остаётся над гейтом — штамп
+        // активности должен ловить и netty-вход (RadDoseIndex синхронизирован).
+        if (!this.server.isSameThread()) return;
         if (GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get()) {
             this.gonzotech$radBefore = gonzotech$snapshot(this.player.containerMenu);
             if (gonzotech$allowClickLog()) {
@@ -164,7 +181,7 @@ public abstract class ContainerClickRadiationMixin {
             method = "handleContainerClick",
             at = @At("RETURN"))
     private void gonzotech$reportContainerClick(ServerboundContainerClickPacket packet, CallbackInfo callback) {
-        if (this.player == null) return;
+        if (this.player == null || !this.server.isSameThread()) return;
         if (!GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get() || this.gonzotech$radBefore == null) return;
         long[] after = gonzotech$snapshot(this.player.containerMenu);
         // 0.3.291 (п.1): «после» курсора и затронутых слотов — печатается и при
