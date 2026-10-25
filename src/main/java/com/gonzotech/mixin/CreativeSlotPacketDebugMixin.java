@@ -26,10 +26,6 @@ public abstract class CreativeSlotPacketDebugMixin {
     @Shadow
     public ServerPlayer player;
 
-    /** Объявлено в самом целевом классе — field-shadow легален (правило 293). */
-    @Shadow
-    private net.minecraft.server.MinecraftServer server;
-
     @Unique
     private static final Logger GONZOTECH$LOG =
         org.slf4j.LoggerFactory.getLogger("gonzotech/radiation-inventory");
@@ -46,7 +42,8 @@ public abstract class CreativeSlotPacketDebugMixin {
         RadDoseIndex.noteInteraction(this.player);
         // 0.3.295: тот же класс гонки, что у клик-миксина (creative-пакеты тоже
         // перевызываются на серверный поток) — поля-состояние трогаем только там.
-        if (!this.server.isSameThread()) return;
+        net.minecraft.server.MinecraftServer gonzotech$srv = this.player.getServer();
+        if (gonzotech$srv == null || !gonzotech$srv.isSameThread()) return;
         if (!GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get()) return;
         int slot = packet.slotNum(); // short → int; <0 — «бросить»
         ItemStack sent = packet.itemStack();
@@ -67,7 +64,9 @@ public abstract class CreativeSlotPacketDebugMixin {
 
     @Inject(method = "handleSetCreativeModeSlot", at = @At("RETURN"))
     private void gonzotech$afterCreative(ServerboundSetCreativeModeSlotPacket packet, CallbackInfo callback) {
-        if (this.player == null || !this.server.isSameThread()) return;
+        if (this.player == null) return;
+        net.minecraft.server.MinecraftServer gonzotech$srvR = this.player.getServer();
+        if (gonzotech$srvR == null || !gonzotech$srvR.isSameThread()) return;
         int slot = this.gonzotech$creativeSlotSeen;
         this.gonzotech$creativeSlotSeen = Integer.MIN_VALUE;
         if (slot == Integer.MIN_VALUE) return;

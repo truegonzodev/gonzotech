@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.295$", props, re.M), "mod_version != 0.3.295"
+assert re.search(r"^mod_version=0\.3\.296$", props, re.M), "mod_version != 0.3.296"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1066,14 +1066,17 @@ assert "radClearPending" not in ir294 and "private static final Map<UUID, Long> 
 # 0.3.295: debug2.log — NPE диагностики на netty-входе (гонка HEAD netty-пакета
 # N+1 с RETURN серверного прохода пакета N) + IAE JEI на rejoin. Диагностика
 # гейтится на серверный поток, регистрация расширения идемпотентна.
-assert "private net.minecraft.server.MinecraftServer server;" in clickmix, \
-    "0.3.295: клик-миксин потерял shadow сервера для гейта"
-assert clickmix.count("if (!this.server.isSameThread()) return;") >= 1 \
-    and "this.player == null || !this.server.isSameThread()" in clickmix, \
-    "0.3.295: netty-вход снова лезет в снапшот-поля — вернётся NPE-кик"
-assert "private net.minecraft.server.MinecraftServer server;" in creative291 \
-    and "if (!this.server.isSameThread()) return;" in creative291, \
-    "0.3.295: creative-миксин не гейтнут по потоку"
+# 0.3.296: краш-репорт автора повторил урок 293 в новом месте — поле server
+# объявлено НЕ в ServerGamePacketListenerImpl, а в родителе
+# ServerConfigurationPacketListenerImpl (это видно по handleConfigurationFinished
+# в трассе), а field-shadow иерархию не обходит. Тред-гейт обязан идти через
+# player.getServer(): метод-вызовы легальны и уже обкатаны в [CLICK]-строках.
+for _m296 in (clickmix, creative291):
+    assert "private net.minecraft.server.MinecraftServer server;" not in _m296 \
+        and "this.server." not in _m296, \
+        "0.3.296: @Shadow server вернулся — APPLY упадёт на поле из предка"
+    assert "gonzotech$srv" in _m296 and _m296.count("isSameThread()") >= 2, \
+        "0.3.296: гейт потока через getServer() выпал — вернётся NPE-кик диагностики"
 assert "RadDoseIndex.noteInteraction(this.player);" in clickmix.split("isSameThread")[0], \
     "0.3.295: штамп активности уехал под netty-гейт — окно flush перестанет закрываться вовремя"
 jei295 = (ROOT / "src/main/java/com/gonzotech/integration/jei/GonzoTechJeiPlugin.java").read_text(encoding="utf-8")
