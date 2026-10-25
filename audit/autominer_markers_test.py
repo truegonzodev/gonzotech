@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.300$", props, re.M), "mod_version != 0.3.300"
+assert re.search(r"^mod_version=0\.3\.301$", props, re.M), "mod_version != 0.3.301"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1183,4 +1183,11 @@ assert "public static final String TAG_RAD_MODEL" in ir300 \
 mx300 = (ROOT / "src/main/java/com/gonzotech/mixin/client/ItemInHandRendererMixin.java").read_text(encoding="utf-8")
 assert "shouldInstantlyReplaceVisibleItem" in mx300 and "onlyRadChanged(from, to)" in mx300, \
     "0.3.300: миксин-гейт отцепился от ванильной проверки замены"
+
+# 0.3.301: ItemContainerContents в Mojmap НЕ Iterable — пин на индексный обход
+# (урок: MCP-зеркала расходятся с Mojmap API; сверяться с нашим же decay-путём).
+gate301 = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadReequipGate.java").read_text(encoding="utf-8")
+assert "for (ItemStack inner : content)" not in gate301 \
+    and "content.getStackInSlot(i)" in gate301, \
+    "0.3.301: в гейте снова for-each по ItemContainerContents — не скомпилируется"
 print("autominer_markers_test passed")

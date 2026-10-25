@@ -1003,3 +1003,10 @@ camera.getFluidInCamera() (лава/снег/вода — не трогает; N
 - Пины SEC20: три `tag.remove(ItemRadioactivity.TAG_RAD*)`, отсутствие `if (ra == rt)`, наличие deep-обходов BUNDLE/CONTAINER, public-константы в ItemRadioactivity, неизменность миксин-якоря. run_all 54/18/0/72.
 
 **Статус:** ждёт пересборки автора (визуальная проверка: держать в руке заряжаемый/радиоактивный предмет и связку с распадающимися детьми — подскок пропадает, дозы в HUD продолжают тикать). N-проход (42) и юнит-ремонт (41) в силе; следующий пункт плана — п.3, остаточные `#`.
+
+### 44. 0.3.301 — compilefix гейта: ItemContainerContents в Mojmap не Iterable
+
+- Сборка автора (25.10) споткнулась на `for (ItemStack inner : content)` в `stripRadDeep`: MCP-зеркало 1.21.4 показывает у `ItemContainerContents` интерфейс `Iterable<ItemStack>`, Mojmap-реальность — нет (отсюда и индексный обход `getSlots()/getStackInSlot(i)` в нашем `decayInducedDeepLazily`). Гейт переведён на тот же паттерн; `public BundleContents(List)` перепроверен по тому же зеркалу — он и вправду public, единственный API-дрейф был в Iterable.
+- Урок в пин: `autominer_markers_test` следит, что for-each по `ItemContainerContents` в гейте не вернётся. Остальные вызовы 0.3.300 (fromItems, getSlots, update(CUSTOM_DATA)) — доказаны компилирующим кодом `ItemRadioactivity`. run_all 54/18/0.
+
+**Статус:** ждёт пересборки автора — теперь компиляция чистая, визуальный тест тот же (держать заряжаемый предмет/связку — подскока нет, HUD тикает).

@@ -63,9 +63,11 @@ public final class RadReequipGate {
         net.minecraft.world.item.component.ItemContainerContents content =
             stack.get(DataComponents.CONTAINER);
         if (content != null) {
+            // 0.3.301: в Mojmap 1.21.4 ItemContainerContents НЕ Iterable —
+            // обход индексно, как в ItemRadioactivity.decayInducedDeepLazily.
             java.util.List<ItemStack> slots = new java.util.ArrayList<>();
-            for (ItemStack inner : content) {
-                ItemStack copy = inner.copy();
+            for (int i = 0; i < content.getSlots(); i++) {
+                ItemStack copy = content.getStackInSlot(i).copy();
                 stripRadDeep(copy, false);
                 slots.add(copy);
             }
