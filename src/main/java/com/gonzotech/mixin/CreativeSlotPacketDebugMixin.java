@@ -46,7 +46,7 @@ public abstract class CreativeSlotPacketDebugMixin {
                 DropTraceFormat.fmt(this.player.containerMenu.getCarried()));
             return;
         }
-        ItemStack was = slot >= 0 && slot < this.player.inventoryMenu.countSlots()
+        ItemStack was = slot >= 0 && slot < this.player.inventoryMenu.slots.size()
             ? this.player.inventoryMenu.getSlot(slot).getItem() : ItemStack.EMPTY;
         GONZOTECH$LOG.info("[RAD-INV][CREATIVE] {} t={} slot={} прислан {} | сервер было {} | creative={}",
             this.player.getGameProfile().getName(), this.player.level().getGameTime(), slot,
@@ -64,7 +64,7 @@ public abstract class CreativeSlotPacketDebugMixin {
                 DropTraceFormat.fmt(this.player.containerMenu.getCarried()));
             return;
         }
-        ItemStack now = slot >= 0 && slot < this.player.inventoryMenu.countSlots()
+        ItemStack now = slot >= 0 && slot < this.player.inventoryMenu.slots.size()
             ? this.player.inventoryMenu.getSlot(slot).getItem() : ItemStack.EMPTY;
         GONZOTECH$LOG.info("[RAD-INV][CREATIVE-E] {} slot={} стало {}",
             this.player.getGameProfile().getName(), slot, DropTraceFormat.fmt(now));

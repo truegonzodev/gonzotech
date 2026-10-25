@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.291$", props, re.M), "mod_version != 0.3.291"
+assert re.search(r"^mod_version=0\.3\.292$", props, re.M), "mod_version != 0.3.292"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1008,6 +1008,14 @@ cfg291 = (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java
 assert "QUICK_CRAFT phases" in cfg291 and "setSlot receipts" in cfg291, \
     "0.3.291: TOML-комментарий не описывает новые линии лога"
 assert "radiationInventoryDebug" in cfg291, "0.3.291: прежний единственный тумблер выжил — ок"
+# 0.3.292: javac автора — в 1.21.4 у AbstractContainerMenu нет countSlots();
+# границы слотов проверяются только через публичный NonNullList slots (как в 277-миксине).
+for _f292 in ("client/ClientSlotPacketDebugMixin", "CreativeSlotPacketDebugMixin"):
+    assert "countSlots()" not in (ROOT / mixdir / (_f292 + ".java")).read_text(encoding="utf-8"), \
+        f"0.3.292: {_f292} снова зовёт несуществующий countSlots()"
+assert "menu.slots.size()" in client291 and creative291.count("inventoryMenu.slots.size()") == 2, \
+    "0.3.292: проверка границ уехала на публичный slots"
+
 
 
 

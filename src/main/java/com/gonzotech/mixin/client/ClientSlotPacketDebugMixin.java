@@ -39,7 +39,7 @@ public abstract class ClientSlotPacketDebugMixin {
             : (this.minecraft.player.containerMenu.containerId == packet.getContainerId()
                 ? this.minecraft.player.containerMenu : null);
         ItemStack was = ItemStack.EMPTY;
-        if (menu != null && packet.getSlot() >= 0 && packet.getSlot() < menu.countSlots()) {
+        if (menu != null && packet.getSlot() >= 0 && packet.getSlot() < menu.slots.size()) {
             was = menu.getSlot(packet.getSlot()).getItem();
         }
         ItemStack incoming = packet.getItem();
