@@ -24,9 +24,9 @@ public final class ItemRadioactivity {
             org.slf4j.LoggerFactory.getLogger("gonzotech/radiation-inventory");
     public static final String TAG_RAD = "gonzo_rad";
     /** Версия формата: 1 = значение на один предмет; без версии — старый total-stack формат. */
-    private static final String TAG_RAD_MODEL = "gonzo_rad_model";
+    public static final String TAG_RAD_MODEL = "gonzo_rad_model";
     /** Последний ленивый радиационный шаг, общий для инвентарей, контейнеров и ItemEntity. */
-    private static final String TAG_RAD_LAST_TICK = "gonzo_rad_last_tick";
+    public static final String TAG_RAD_LAST_TICK = "gonzo_rad_last_tick";
     public static final int DECAY_STEP_TICKS = 20;
     private static final int PER_ITEM_MODEL = 1;
     public static final double GROWTH = 1.25;

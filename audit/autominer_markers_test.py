@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.299$", props, re.M), "mod_version != 0.3.299"
+assert re.search(r"^mod_version=0\.3\.300$", props, re.M), "mod_version != 0.3.300"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1165,4 +1165,22 @@ assert "insertedThisTick(now," not in ir299.replace("insertedThisTick(level, now
 mx299 = (ROOT / "src/main/java/com/gonzotech/mixin/LevelChunkCleanRoomMixin.java").read_text(encoding="utf-8")
 assert "ItemRouting.onWorldEdit(level)" in mx299, \
     "0.3.299 N13: миксин не инвалидирует кэш топологии"
+
+# 0.3.300: гейт re-equip bob'а обязан зачищать ВСЕ три радиационных штампа
+# (с markDecayTick старые два перестали сходиться — предмет прыгал в руке
+# каждый радиационный проход) и не давать рано-возврата по значению дозы.
+gate300 = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadReequipGate.java").read_text(encoding="utf-8")
+assert gate300.count("tag.remove(ItemRadioactivity.TAG_RAD") == 3, \
+    "0.3.300: RadReequipGate снова strip'ит не все штампы — bob вернётся"
+assert "if (ra == rt)" not in gate300, \
+    "0.3.300: рано-возврат по равенству дозы вернёт прыжок на одних тик-штампах"
+assert "stripRadDeep(copy, false);" in gate300 and "BUNDLE_CONTENTS" in gate300, \
+    "0.3.300: вложенное затухание (связка/контейнер) снова анимирует родителя"
+ir300 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
+assert "public static final String TAG_RAD_MODEL" in ir300 \
+    and "public static final String TAG_RAD_LAST_TICK" in ir300, \
+    "0.3.300: штампы снова приватные — гейт ослепнет при следующем рефакторе"
+mx300 = (ROOT / "src/main/java/com/gonzotech/mixin/client/ItemInHandRendererMixin.java").read_text(encoding="utf-8")
+assert "shouldInstantlyReplaceVisibleItem" in mx300 and "onlyRadChanged(from, to)" in mx300, \
+    "0.3.300: миксин-гейт отцепился от ванильной проверки замены"
 print("autominer_markers_test passed")

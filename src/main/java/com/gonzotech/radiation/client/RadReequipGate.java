@@ -21,35 +21,68 @@ public final class RadReequipGate {
     }
 
     /**
-     * true, если {@code from} и {@code to} отличаются ТОЛЬКО значением
-     * наведённой радиации (gonzo_rad) — такие различия анимируют не нужно.
+     * true, если {@code from} и {@code to} отличаются только радиационными
+     * штампами gonzo_rad / gonzo_rad_model / gonzo_rad_last_tick (включая
+     * затухание вложенного содержимого CONTAINER/BUNDLE) — такие различия
+     * анимировать не нужно: предмет в руке тот же, поменялась лишь доза.
+     *
+     * <p>0.3.300 (автор: «прыгает в руке, скрой визуально»): гейт был написан
+     * до появления тик-штампа markDecayTick — strip'ил два штампа из трёх,
+     * стопки никогда не совпадали и bob играл каждый радиационный проход.
+     * Ранний возврат «значение не менялось» убран: теперь меняется и один
+     * last_tick (обычные предметы!), и разница обязана сверяться полным
+     * сравнением после зачистки всех радиационных следов.</p>
      */
     public static boolean onlyRadChanged(ItemStack from, ItemStack to) {
         if (from.isEmpty() || to.isEmpty()) {
             return false;
         }
-        double ra = ItemRadioactivity.getInduced(from);
-        double rt = ItemRadioactivity.getInduced(to);
-        if (ra == rt) {
-            return false; // наш тег не менялся — пусть решает ваниль
-        }
         ItemStack a = from.copy();
         ItemStack b = to.copy();
-        stripRad(a);
-        stripRad(b);
+        stripRadDeep(a, true);
+        stripRadDeep(b, true);
         return ItemStack.matches(a, b);
     }
 
-    private static void stripRad(ItemStack stack) {
+    /** Снять радиационные штампы; {@code allowNested} — зайти в child-стопки. */
+    private static void stripRadDeep(ItemStack stack, boolean allowNested) {
         stack.update(DataComponents.CUSTOM_DATA,
                 net.minecraft.world.item.component.CustomData.EMPTY,
                 d -> d.update(tag -> {
                     tag.remove(ItemRadioactivity.TAG_RAD);
-                    tag.remove("gonzo_rad_model");
+                    tag.remove(ItemRadioactivity.TAG_RAD_MODEL);
+                    tag.remove(ItemRadioactivity.TAG_RAD_LAST_TICK);
                 }));
         net.minecraft.world.item.component.CustomData after = stack.get(DataComponents.CUSTOM_DATA);
         if (after != null && after.isEmpty()) {
             stack.remove(DataComponents.CUSTOM_DATA);
+        }
+        if (!allowNested) {
+            return;
+        }
+        net.minecraft.world.item.component.ItemContainerContents content =
+            stack.get(DataComponents.CONTAINER);
+        if (content != null) {
+            java.util.List<ItemStack> slots = new java.util.ArrayList<>();
+            for (ItemStack inner : content) {
+                ItemStack copy = inner.copy();
+                stripRadDeep(copy, false);
+                slots.add(copy);
+            }
+            stack.set(DataComponents.CONTAINER,
+                net.minecraft.world.item.component.ItemContainerContents.fromItems(slots));
+        }
+        net.minecraft.world.item.component.BundleContents bundle =
+            stack.get(DataComponents.BUNDLE_CONTENTS);
+        if (bundle != null) {
+            java.util.List<ItemStack> inner = new java.util.ArrayList<>();
+            for (ItemStack one : bundle.items()) {
+                ItemStack copy = one.copy();
+                stripRadDeep(copy, false);
+                inner.add(copy);
+            }
+            stack.set(DataComponents.BUNDLE_CONTENTS,
+                new net.minecraft.world.item.component.BundleContents(inner));
         }
     }
 }
