@@ -22,6 +22,8 @@ public abstract class LevelChunkCleanRoomMixin {
             BlockState actual = chunk.getBlockState(pos);
             CleanRoomSystem.blockChanged(level, pos, old, actual);
             com.gonzotech.radiation.Containment.blockChanged(level, pos, old, actual);
+            // 0.3.290 #17: тот же канал кормит счётчики Плотника (см. SECTOR_PULSE).
+            com.gonzotech.machines.block.entity.PlotnickBlockEntity.pulseBlockChange(level, pos);
         }
     }
 }

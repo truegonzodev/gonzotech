@@ -51,6 +51,13 @@ public final class NetworkPlanner {
     /** Ограничение числа просмотренных клеток на один BFS-запуск. */
     private static final int BFS_NODE_BUDGET = 25_000;
 
+    /**
+     * 0.3.290 #11-Y: вертикальная полурамка планировщика = рабочая лента движка
+     * (та же полурамка, что и поверхностный скан; WORK_BELT_Y Плотника ссылается
+     * сюда — один закон на скан и на планирование).
+     */
+    public static final int VERTICAL_BAND = 48;
+
     private NetworkPlanner() {
     }
 
@@ -102,16 +109,20 @@ public final class NetworkPlanner {
         }
         pending.sort(Comparator.comparingInt(a -> a.distManhattan(origin)));
 
-        int minY = origin.getY() - 16;
-        int maxY = origin.getY() + 16;
-        for (BlockPos anchor : pending) {
-            minY = Math.min(minY, anchor.getY() - 8);
-            maxY = Math.max(maxY, anchor.getY() + 8);
-        }
+        // 0.3.290 #11-Y (решение автора): окно больше не расползается за дальними
+        // якорями — планировщик живёт в ленте движка. Якорь за пределами ленты
+        // (±1 на смежность) недостижим by design: узловой бюджет не сгорает в
+        // пустой вертикали, а 3×3 XZ-рамка (#12) остаётся как была.
+        int minY = Math.max(origin.getY() - VERTICAL_BAND, level.getMinY());
+        int maxY = Math.min(origin.getY() + VERTICAL_BAND, level.getMaxY() - 1);
 
         List<Entry> entries = new ArrayList<>();
         int unreachable = 0;
         for (BlockPos anchor : pending) {
+            if (anchor.getY() < minY - 1 || anchor.getY() > maxY + 1) {
+                unreachable++; // 0.3.290 #11-Y: лента выше/ниже — клетки нелегальны
+                continue;
+            }
             List<BlockPos> path = bfsPathToAnchor(level, network, entries, anchor, minY, maxY,
                 minSectorX, maxSectorX, minSectorZ, maxSectorZ);
             if (path == null) {

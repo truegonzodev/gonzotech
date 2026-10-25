@@ -63,7 +63,12 @@ public final class CleanRoomSystem {
 
     public static RoomLedger.Room room(ServerLevel level, BlockPos pos) {
         return data(level).ledger.find(p -> CleanRoomDetector.read(level, p),
-                CleanRoomDetector.pos(pos), level.getGameTime());
+                CleanRoomDetector.pos(pos), level.getGameTime(), chunkLive(level));
+    }
+
+    /** 0.3.290 #30: быстрая дорожка реестра — «чанк на месте», без чтения блоков. */
+    private static java.util.function.LongPredicate chunkLive(ServerLevel level) {
+        return key -> level.hasChunk((int) (key >> 32), (int) key);
     }
 
     public static double quality(ServerLevel level, BlockPos pos) {
@@ -139,7 +144,7 @@ public final class CleanRoomSystem {
                     RoomTopology.Kind kind = CleanRoomDetector.read(level, CleanRoomDetector.pos(next));
                     if (kind == RoomTopology.Kind.INTERIOR) {
                         RoomLedger.Room side = ledger.find(l -> CleanRoomDetector.read(level, l),
-                                CleanRoomDetector.pos(next), tick);
+                                CleanRoomDetector.pos(next), tick, chunkLive(level));
                         if (side == null) { outside = true; continue; } // воздух вне контуров = улица
                         if (first == null) first = side;
                         else if (second == null && side != first) second = side;

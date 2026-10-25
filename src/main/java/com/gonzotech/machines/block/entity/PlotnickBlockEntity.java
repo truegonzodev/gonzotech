@@ -197,10 +197,20 @@ public final class PlotnickBlockEntity extends BlockEntity
     private int stallReportedSize = -1;
 
     /** Полулента 9 чанков для сканов сети: глубже дорог всё равно нет. */
-    private static final int WORK_BELT_Y = 48;
+    // 0.3.290 #11-Y: половина ленты — одна константа с вертикальным окном планировщика.
+    private static final int WORK_BELT_Y = NetworkPlanner.VERTICAL_BAND;
 
     // Числа тултипа «Постройки» (0.3.259): пересчитываются, пока открыт GUI.
     private int menuViewers;
+    /**
+     * 0.3.290 #17: событийный канал «мир правили руками». У LevelChunk в 1.21.4
+     * нет runTime (проверено по зеркалу), поэтому setBlockState-миксин ставит
+     * штамп игрового времени в эту таблицу — но только для чанков, которые кто-то
+     * смотрит (лидер с открытым GUI регистрирует свой сектор). Сканов мира нет.
+     */
+    private static final java.util.concurrent.ConcurrentHashMap<Long, Long> SECTOR_PULSE =
+        new java.util.concurrent.ConcurrentHashMap<>();
+    private final long[] sectorPulseSeen = new long[9];
     private boolean networkStatsDirty = true;
     private int netDrillsToPlace;
     private int netRoadsFull;
@@ -274,6 +284,9 @@ public final class PlotnickBlockEntity extends BlockEntity
         if (be.buildStalled && !be.buildQueue.isEmpty() && server.getGameTime() % 40 == 0) {
             be.buildStalled = false; // редкая вежливая повторная проба (#10)
         }
+        // 0.3.290 #17: GUI открыт — сравниваем девять штампов чанков сектора;
+        // свежий штамп = ручная правка (команда/поршень/взрыв) -> однократный пересчёт.
+        if (be.menuViewers > 0) be.tickSectorPulse(server);
         if (be.menuViewers > 0 && be.networkStatsDirty) {
             be.networkStatsDirty = false;
             be.refreshNetworkStats(server);
@@ -289,6 +302,40 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     public void menuClosed() {
         menuViewers = Math.max(0, menuViewers - 1);
+    }
+
+    /** 0.3.290 #17: штамп от setBlockState-миксина; горячий путь — одна запись в таблице. */
+    public static void pulseBlockChange(ServerLevel level, BlockPos pos) {
+        SECTOR_PULSE.computeIfPresent(sectorPulseKey(pos.getX() >> 4, pos.getZ() >> 4),
+            (key, stamp) -> level.getGameTime());
+    }
+
+    /**
+     * Регистрация и сверка штампов девяти чанков своего сектора. Ключ — только
+     * координаты чанка: совпадение секторов в разных измерениях способно вызвать
+     * лишний пересчёт (безвредно). Таблица растёт числом открытых когда-либо GUI —
+     * не удалена намеренно, размер ограничен числом лидеров.
+     */
+    private void tickSectorPulse(ServerLevel server) {
+        int cx = worldPosition.getX() >> 4;
+        int cz = worldPosition.getZ() >> 4;
+        long tick = server.getGameTime();
+        boolean changed = false;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                int idx = (dx + 1) * 3 + (dz + 1);
+                long stamp = SECTOR_PULSE.computeIfAbsent(sectorPulseKey(cx + dx, cz + dz), key -> tick);
+                if (stamp != sectorPulseSeen[idx]) {
+                    sectorPulseSeen[idx] = stamp;
+                    changed = true;
+                }
+            }
+        }
+        if (changed) networkStatsDirty = true;
+    }
+
+    private static long sectorPulseKey(int cx, int cz) {
+        return ((long) cx << 32) ^ (cz & 0xffffffffL);
     }
 
     /**
@@ -2132,6 +2179,11 @@ public final class PlotnickBlockEntity extends BlockEntity
             if (!(entry instanceof CompoundTag cell)) continue;
             int index;
             if (cell.contains("I")) index = cell.getInt("I");
+            // 0.3.290 #1: ContainerHelper (хранилище v1, до 0.3.262) писал «Slot»
+            // байтом: 128..255 приезжают знаковыми, а старый 432-виртуаль ещё и
+            // алиасился (256+k -> k). Байт читаем без знака — ровно как ваниль.
+            else if (cell.get("Slot") instanceof net.minecraft.nbt.ByteTag legacyByte)
+                index = legacyByte.getAsInt() & 0xFF;
             else if (cell.get("Slot") instanceof NumericTag numeric) index = numeric.getAsInt();
             else index = seq;
             seq++;
@@ -2139,8 +2191,37 @@ public final class PlotnickBlockEntity extends BlockEntity
             ItemStack stack = cell.contains("Item")
                 ? ItemStack.parseOptional(registries, cell.getCompound("Item"))
                 : ItemStack.parseOptional(registries, cell);
-            if (!stack.isEmpty()) target.set(index, stack);
+            if (stack.isEmpty()) continue;
+            // 0.3.290 #1: коллизия побайтового индекса — не перезапись, а ближайшее
+            // пустое место: при свёртке v1 в новую схему порядок слотов неважен,
+            // важна сохранность — «last wins» съедал чужие стопки.
+            if (!target.get(index).isEmpty()) {
+                int free = -1;
+                for (int probe = index + 1; probe < target.size(); probe++) {
+                    if (target.get(probe).isEmpty()) { free = probe; break; }
+                }
+                if (free < 0) {
+                    for (int probe = 0; probe < index; probe++) {
+                        if (target.get(probe).isEmpty()) { free = probe; break; }
+                    }
+                }
+                if (free < 0) continue; // физически битком: перелив не затираем
+                index = free;
+            }
+            target.set(index, stack);
         }
+    }
+
+    /** 0.3.290 #1: сигнатура v1 — записи с «Slot» (ContainerHelper), без «I»/«Virtual»/«BucketRest». */
+    private static boolean isLegacySlotFormat(CompoundTag tag) {
+        if (!tag.contains("Items") || tag.contains("Virtual") || tag.contains("BucketRest")) return false;
+        for (Tag raw : tag.getList("Items", Tag.TAG_COMPOUND)) {
+            if (raw instanceof CompoundTag cell) {
+                if (cell.contains("Slot")) return true;
+                if (cell.contains("I")) return false;
+            }
+        }
+        return false;
     }
 
     /** Сейв 0.3.262–0.3.263: 432-слотовый виртуаль (индексы за 216). */
@@ -2166,15 +2247,18 @@ public final class PlotnickBlockEntity extends BlockEntity
             NonNullList.withSize(LEGACY_VIRTUAL_SLOTS, ItemStack.EMPTY);
         loadStackList(tag, "BucketRest", legacyRest, registries);
         loadStackList(tag, "Virtual", legacyVirtual, registries);
-        for (int pass = 0; pass < 2; pass++) {
-            NonNullList<ItemStack> source = pass == 0 ? legacyRest : legacyVirtual;
-            for (ItemStack stack : source) {
-                if (stack.isEmpty()) continue;
-                ItemStack rest = stack.copy();
-                while (!rest.isEmpty()) {
-                    if (insert(rest)) continue;
-                    legacyOverflow.add(rest.split(rest.getCount()));
-                }
+        foldIntoStorage(legacyRest);
+        foldIntoStorage(legacyVirtual);
+    }
+
+    /** 0.3.290 #1: общая свёртка legacy-таблицы: что не влезло — в legacyOverflow (0.3.263-правило). */
+    private void foldIntoStorage(NonNullList<ItemStack> source) {
+        for (ItemStack stack : source) {
+            if (stack.isEmpty()) continue;
+            ItemStack rest = stack.copy();
+            while (!rest.isEmpty()) {
+                if (insert(rest)) continue;
+                legacyOverflow.add(rest.split(rest.getCount()));
             }
         }
     }
@@ -2213,7 +2297,18 @@ public final class PlotnickBlockEntity extends BlockEntity
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         gtu.load(tag, "Gtu");
-        loadStackList(tag, "Items", items, registries);
+        // 0.3.290 #1: файлы v1 держали всё в одном «Items» байтовыми «Slot» и на
+        // нынешние 11 активных слотов не ложатся (старый лист был длиннее). Такой
+        // сейв разворачиваем во временную 432-таблицу и сворачиваем правилами
+        // вставки — излишек уедет в legacyOverflow (падает под ноги, не в void).
+        if (isLegacySlotFormat(tag)) {
+            NonNullList<ItemStack> legacyItems =
+                NonNullList.withSize(LEGACY_VIRTUAL_SLOTS, ItemStack.EMPTY);
+            loadStackList(tag, "Items", legacyItems, registries);
+            foldIntoStorage(legacyItems);
+        } else {
+            loadStackList(tag, "Items", items, registries);
+        }
         sectorMarkerIds.clear();
         for (long markerId : tag.getLongArray("SectorMarkers")) {
             sectorMarkerIds.add(markerId);

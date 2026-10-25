@@ -82,10 +82,13 @@ public final class CleanRoomSelfTest {
         world.blocks.put(furniture, Kind.INTERIOR);
         room = ledger.find(world::get, a, 23); ledger.adjust(room, 37);
         world.blocks.put(floor, Kind.UNLOADED);
-        check(ledger.find(world::get, a, 24) == null, "unloaded boundary suspends operation");
+        // 0.3.290 #30: быстрая дорожка проверяет присутствие чанка, а не каждый
+        // блок; здесь отсутствие чанка моделирует именно предикат.
+        java.util.function.LongPredicate live = key -> world.blocks.get(floor) != Kind.UNLOADED;
+        check(ledger.find(world::get, a, 24, live) == null, "unloaded boundary suspends operation");
         check(ledger.rooms().size() == 1, "unload is not a breach");
         world.blocks.put(floor, Kind.SEAL);
-        near(ledger.find(world::get, a, 25).quality(), 37, "chunk reload retains quality");
+        near(ledger.find(world::get, a, 25, live).quality(), 37, "chunk reload retains quality");
 
         RoomLedger restored = new RoomLedger(() -> {});
         for (var entry : ledger.rooms()) restored.restore(entry.cells(), entry.shell(), entry.quality());

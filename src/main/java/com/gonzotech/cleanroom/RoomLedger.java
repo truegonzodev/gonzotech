@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.LongPredicate;
 
 /** One authoritative state per connected volume, with a reverse index for world edits. */
 public final class RoomLedger {
@@ -17,11 +18,17 @@ public final class RoomLedger {
         private double quality;
         private long checkedAt = Long.MIN_VALUE;
         private boolean available;
+        /** 0.3.290 #30: чанки, где живёт геометрия комнаты (быстрая проверка присутствия). */
+        private final long[] chunkKeys;
 
         private Room(Set<RoomTopology.Pos> cells, Set<RoomTopology.Pos> shell, double quality) {
             this.cells = Set.copyOf(cells);
             this.shell = Set.copyOf(shell);
             this.quality = clamp(quality);
+            java.util.LinkedHashSet<Long> keys = new java.util.LinkedHashSet<>();
+            for (RoomTopology.Pos p : this.cells) keys.add(chunkKey(p));
+            for (RoomTopology.Pos p : this.shell) keys.add(chunkKey(p));
+            this.chunkKeys = keys.stream().mapToLong(Long::longValue).toArray();
         }
         public Set<RoomTopology.Pos> cells() { return cells; }
         public Set<RoomTopology.Pos> shell() { return shell; }
@@ -40,7 +47,16 @@ public final class RoomLedger {
     public RoomLedger(Runnable changed) { this.changed = changed; }
     public Collection<Room> rooms() { return new ArrayList<>(rooms); }
 
+    /**
+     * Тестовая дорожка «чанки живут всегда» (0.3.290 #30): продовому коду
+     * обязателен предикат присутствия — полного рескана ради UNLOADED больше нет.
+     */
     public Room find(Function<RoomTopology.Pos, RoomTopology.Kind> world, RoomTopology.Pos origin, long tick) {
+        return find(world, origin, tick, key -> true);
+    }
+
+    public Room find(Function<RoomTopology.Pos, RoomTopology.Kind> world, RoomTopology.Pos origin, long tick,
+                     LongPredicate chunkLive) {
         long epoch = Math.floorDiv(tick, 20);
         if (epoch != oversizedEpoch) {
             oversized.clear();
@@ -49,6 +65,16 @@ public final class RoomLedger {
         Room known = byCell.get(origin);
         if (known != null) {
             if (known.checkedAt == tick) return known.available ? known : null;
+            // 0.3.290 #30: полный перескан cells+shell на каждый запрос заменён
+            // событийной инвалидацией: любое setBlockState (команды, поршни, взрывы)
+            // снимает комнату через blockChanged/invalidate, поэтому available=true
+            // само по себе значит «проверено в этой сессии и событий не было».
+            // Запросу остаётся дешёвое «чанки на месте?»: исчезновение — пауза, а не
+            // взлом; после паузы available=false и следующий запрос идёт полным путём.
+            if (known.available && chunksLive(known, chunkLive)) {
+                known.checkedAt = tick;
+                return known;
+            }
             // Revalidate loaded/saved geometry without forcing chunk loads. An unloaded
             // chunk pauses a room; it is NOT a breach and must not erase its saved quality.
             boolean unloaded = false;
@@ -101,6 +127,18 @@ public final class RoomLedger {
         for (RoomTopology.Pos p : shell) byShell.computeIfAbsent(p, ignored -> new HashSet<>()).add(room);
         changed.run();
         return room;
+    }
+
+    /** 0.3.290 #30: упаковка координат чанка в long (x<<32 ^ z) — декодирует CleanRoomSystem. */
+    private static long chunkKey(RoomTopology.Pos p) {
+        return ((long) (p.x() >> 4) << 32) ^ ((p.z() >> 4) & 0xffffffffL);
+    }
+
+    private static boolean chunksLive(Room room, LongPredicate chunkLive) {
+        for (long key : room.chunkKeys) {
+            if (!chunkLive.test(key)) return false;
+        }
+        return true;
     }
 
     private static boolean allowedInside(RoomTopology.Kind kind) {

@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.289$", props, re.M), "mod_version != 0.3.289"
+assert re.search(r"^mod_version=0\.3\.290$", props, re.M), "mod_version != 0.3.290"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -919,11 +919,58 @@ assert "PlayerChangedDimensionEvent" in me, "метрики не пересыл�
 cp = (ROOT / "src/main/java/com/gonzotech/machines/network/CompositePipeBlock.java").read_text(encoding="utf-8")
 assert cp.index("rotateLayerAt") < cp.index("PipeType part = partAt(state, pos, hit);"), \
     "ветка мастерского поворота снова за режимным блоком (#30)"
+# ── 17. Срез 0.3.290: пакет #30 #17 #18 #1 #11-Y + #7 (документация) ──
+room_ledger = (ROOT / "src/main/java/com/gonzotech/cleanroom/RoomLedger.java").read_text(encoding="utf-8")
+clean_sys = (ROOT / "src/main/java/com/gonzotech/cleanroom/CleanRoomSystem.java").read_text(encoding="utf-8")
+mix_chunk = (ROOT / "src/main/java/com/gonzotech/mixin/LevelChunkCleanRoomMixin.java").read_text(encoding="utf-8")
+net_plnr = (ROOT / "src/main/java/com/gonzotech/machines/miner/NetworkPlanner.java").read_text(encoding="utf-8")
+plot290 = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java").read_text(encoding="utf-8")
+# #30: событийная инвалидация вместо полного рескана на каждый запрос
+assert "LongPredicate chunkLive" in room_ledger and "chunksLive(known, chunkLive)" in room_ledger, \
+    "#30: быстрая дорожка RoomLedger.find исчезла"
+assert room_ledger.count("chunkKeys") == 3, "#30: набор чанков комнаты должен считаться один раз"
+assert clean_sys.count("chunkLive(level)") == 2, "#30: не все запросы к реестру получили предикат"
+assert room_ledger.count("public Room find(") == 2, \
+    "#30: тестовая перегрузка find() должна оставаться единственной трёхаргументной"
+clean_self = (ROOT / "audit/CleanRoomSelfTest.java").read_text(encoding="utf-8")
+assert "LongPredicate live" in clean_self and ", live)" in clean_self, \
+    "#30: UNLOADED-блок селфтеста обязан симулировать чанк предикатом"
+assert "find(world::get, a, 24)" not in clean_self, "#30: селфтест UNLOADED обходит предикат"
+# #17: SECTOR_PULSE — событийное протухание счётчиков
+assert "pulseBlockChange(level, pos);" in mix_chunk, "#17: setBlockState-миксин перестал штамповать секторы"
+assert "if (be.menuViewers > 0) be.tickSectorPulse(server);" in plot290, "#17: сверка штампов выпала из тика"
+assert plot290.count("SECTOR_PULSE") == 3 and "if (changed) networkStatsDirty = true;" in plot290, \
+    "#17: таблица штампов или её потребитель пропали"
+# #18: гейт законности обоих write-путей демонтажа (сделано в 0.3.264 — подтверждено пином)
+assert "if (!mayTouchBreak(server, pos)) continue; // приват против слома" in plot290, \
+    "#18: боковой сбор руды остался без гейта"
+assert "if (!mayTouchBreak(server, pos)) {" in plot290, "#18: демонтаж без гейта"
+# #1: загрузчик v1 — беззнаковый байт «Slot», коллизия в ближайшее пустое, свёртка v1-сейва
+assert "legacyByte.getAsInt() & 0xFF" in plot290, "#1: побайтовый «Slot» v1 снова читается со знаком"
+assert "index = free;" in plot290, "#1: спасение коллизий исчезло из loadStackList"
+assert plot290.count("foldIntoStorage(") == 4, "#1: свёртка legacy-таблиц должна быть одна на v1 и v2"
+assert "if (isLegacySlotFormat(tag)) {" in plot290, "#1: v1-сейв снова читается позиционно"
+# #11-Y: вертикальное окно планировщика = лента движка, одна константа
+assert net_plnr.count("VERTICAL_BAND") == 3, "#11-Y: константа ленты планировщика"
+assert "WORK_BELT_Y = NetworkPlanner.VERTICAL_BAND;" in plot290, "#11-Y: лента BE отсоединилась от планировщика"
+assert "anchor.getY() < minY - 1" in net_plnr, "#11-Y: якоря вне ленты снова уходят в BFS"
+assert "anchor.getY() - 8" not in net_plnr, "#11-Y: старое неограниченное окно вернулось"
+# #7: документация WorldGuard — README + welcome
+readme290 = (ROOT / "README.md").read_text(encoding="utf-8")
+assert "GT capabilities: server-side WorldGuard" in readme290, "#7: README растерял возможность сервера"
+
+
 # lang
 for lang_name in ("ru_ru.json", "en_us.json"):
     lang = (RES / "lang" / lang_name).read_text(encoding="utf-8")
     for key in ("message.gonzotech.plotnick.impulse.nogeophone",
                 "message.gonzotech.plotnick.drill.dismantle"):
         assert key in lang, f"в {lang_name} нет ключа {key}"
+    # 0.3.290 #7: welcome явно перечисляет серверные возможности
+    for wkey in ("gui.gonzotech.welcome.generic", "gui.gonzotech.welcome.hardcore",
+                 "gui.gonzotech.welcome.survival"):
+        m290 = re.search(r'"%s": "([^"]*)"' % re.escape(wkey), lang)
+        assert m290 and "server-side WorldGuard" in m290.group(1), \
+            f"в {lang_name} welcome '{wkey}' не перечисляет GT capabilities: server-side WorldGuard"
 
 print("autominer_markers_test passed")
