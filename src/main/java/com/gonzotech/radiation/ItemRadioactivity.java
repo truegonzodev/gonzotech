@@ -42,14 +42,16 @@ public final class ItemRadioactivity {
      *  плато 0.3.249 (всё сверх 10 mZt теряло половину) — плато-обрушения нет,
      *  отдача плавная и пропорциональна текущему. */
     public static final double SELF_DISCHARGE = GROWTH - 1.0;
-    /** Масштаб насыщения отдачи (mZt): «среднее плато инвентаря» автора ~33 —
+    /** Масштаб насыщения отдачи: «среднее плато инвентаря» автора ~33 mZt
+     *  (0.3.298: ×MILLI — формула живёт в nZt, таблица автора в mZt; до правки
+     *  равновесие замирало на ~30 nZt — в миллион раз ниже задания) —
      *  там отдача достигает 76 % полной скорости, ниже — спадает линейно
      *  (~0.76 %/с на каждый 1 mZt у нуля). Наведёнка НЕ может самоподдерживающе
      *  стоять выше ~40–70 mZt ни у какого источника: «жутко радиоактивным»
      *  делают пресеты (стоп радия), а не накопленный фон — дюп-петли
      *  «инвентарь ↔ инвентарь» закрываются сами, без плато-ножа. */
-    public static final double DISCHARGE_ANCHOR = 33.0;
-    public static final double CLEANUP_FLOOR = 1.0;
+    public static final double DISCHARGE_ANCHOR = 33.0 * RadUnits.MILLI;  // 0.3.298
+    public static final double CLEANUP_FLOOR = RadUnits.MILLI;  // 1 mZt (0.3.298)
 
     private ItemRadioactivity() {
     }
@@ -147,18 +149,20 @@ public final class ItemRadioactivity {
                 ? 0.0 : RadSources.emissionPerItem(stack);
         double target = Math.min(Math.max(0.0, sourceNzt - intrinsic), INDUCED_CAP);
         double next;
-        if (hasSource && target >= 1.0 && factor > 0.0) {
+        if (hasSource && target >= CLEANUP_FLOOR && factor > 0.0) {  // 0.3.298: порог — 1 mZt
             if (current > target) {
                 next = selfDischarge(current);
             } else {
                 // Старт — 1 mZt на предмет (тот же CLEANUP_FLOOR: меньшие
                 // значения setInduced съедает, поэтому сид не может быть
                 // дробным на стаке — это и был корень #27).
-                double seeded = Math.max(current, 1.0);
+                double seeded = Math.max(current, CLEANUP_FLOOR);
                 // (автор 22.10) «Затратность» нагрева: текущая доза душит
                 // приём по геометрической (1−0.00097)^L. Равновесие ниже
                 // цели всегда — mutual-hold дюпа нет даже без жёсткого плато.
-                double uptake = Math.pow(1.0 - UPTAKE_COST, seeded);
+                // 0.3.298: показатель степени — в mZt (строка автора «на каждый
+                // 1 mZt −0.097 %»), значение — в nZt: делим на масштаб.
+                double uptake = Math.pow(1.0 - UPTAKE_COST, seeded / RadUnits.MILLI);
                 // Отдача действует и на ветке роста, иначе равновесие = цель и
                 // «предметы держат друг друга» возвращается (дюп 0.3.249).
                 next = selfDischarge(Math.min(

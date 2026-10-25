@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.297$", props, re.M), "mod_version != 0.3.297"
+assert re.search(r"^mod_version=0\.3\.298$", props, re.M), "mod_version != 0.3.298"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -464,7 +464,7 @@ ir_src = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java")
 assert "INDUCED_REEMIT = 0.75" in ir_src, "нет коэффициента переизлучения наведёнки"
 assert "sourceNzt - intrinsic), INDUCED_CAP)" in ir_src and "intrinsic) / count" not in ir_src, \
     "цель по-прежнему делится на размер стака — стопка снова щит (случай 2)"
-assert "Math.max(current, 1.0);" in ir_src and "1.0 / count" not in ir_src, \
+assert "Math.max(current, CLEANUP_FLOOR);" in ir_src and "1.0 / count" not in ir_src, \
     "сид всё ещё зависит от стака — #27 вернётся"
 assert "RadSources.emissionPerItem(stack);" in ir_src, "intrinsic отнимает тотал стака, а не пресет предмета"
 rad_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadSources.java").read_text(encoding="utf-8")
@@ -1107,4 +1107,19 @@ import subprocess as _sp297
 _out297 = _sp297.run(["grep", "-rl", "template_fluid", "src/main/resources"],
                      cwd=ROOT, capture_output=True, text=True).stdout.strip()
 assert not _out297, f"0.3.297: мёртвый parent minecraft:block/template_fluid вернулся: {_out297}"
+
+# 0.3.298: юнит-ремонт наведёнки — таблица автора в mZt, значения в nZt;
+# константы обязаны приходить в формулу перемасштабленными (×MILLI), иначе
+# плато сжимается на 10^6 (наблюдение автора: «алмаз от полок радия фонит на
+# 30 nZt»). Пресеты RadSources и чанк-гейт масштабированы верно — пин следит,
+# чтобы наведёнка не отстала.
+ir298 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
+assert "DISCHARGE_ANCHOR = 33.0 * RadUnits.MILLI" in ir298, \
+    "0.3.298: якорь отдачи вернулся в сырые nZt — плато сожмётся до десятков nZt"
+assert "CLEANUP_FLOOR = RadUnits.MILLI" in ir298, \
+    "0.3.298: floor чистки вернулся в 1 nZt — сорные доли mZt перестанут выметаться"
+assert "seeded / RadUnits.MILLI" in ir298, \
+    "0.3.298: степень стоимости приёма снова считает 0.097 % на nZt вместо mZt"
+assert "target >= CLEANUP_FLOOR" in ir298 and "Math.max(current, CLEANUP_FLOOR)" in ir298, \
+    "0.3.298: посев/гейт роста не привязан к 1-mZt floor (двойная трактовок)"
 print("autominer_markers_test passed")
