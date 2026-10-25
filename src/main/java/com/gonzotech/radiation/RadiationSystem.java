@@ -711,7 +711,12 @@ public final class RadiationSystem {
         // просмотр-контейнера) отменены — пауза портит данные (догон
         // считает paused-интервал покоем) и, как показал прогон с доказанной
         // живостью миксина, дюпа не остановила.
-        LevelChunk chunk = level.getChunk(ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
+        // 0.3.302 (#25-остаток): обслуживание не генерирует мир — свой чанк
+        // игрока почти всегда загружен, но на выгрузке/границе обязан быть
+        // пропуск, а не синхронная доводка до полного состояния.
+        LevelChunk chunk = level.getChunkSource().getChunkNow(
+            ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey));
+        if (chunk == null) return;
         double contamination = data.contaminationOf(chunkKey);
         double containerTransfer = 0.0D;
         double leadChestTransfer = 0.0D;

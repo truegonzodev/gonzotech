@@ -2192,7 +2192,6 @@ public final class PlotnickBlockEntity extends BlockEntity
             else if (cell.get("Slot") instanceof NumericTag numeric) index = numeric.getAsInt();
             else index = seq;
             seq++;
-            if (index < 0 || index >= target.size()) continue;
             ItemStack stack = cell.contains("Item")
                 ? ItemStack.parseOptional(registries, cell.getCompound("Item"))
                 : ItemStack.parseOptional(registries, cell);
@@ -2200,12 +2199,17 @@ public final class PlotnickBlockEntity extends BlockEntity
             // 0.3.290 #1: коллизия побайтового индекса — не перезапись, а ближайшее
             // пустое место: при свёртке v1 в новую схему порядок слотов неважен,
             // важна сохранность — «last wins» съедал чужие стопки.
-            if (!target.get(index).isEmpty()) {
+            // 0.3.302 (#1-остаток): выход за границы (битый «I», мусор после
+            // арифметических сдвигов) — тот же free-probe с нуля, а не «continue»:
+            // раньше такие записи молча исчезали, что ровно та же потеря, что и
+            // затирание. Байтовый «Slot» уже прочитан без знака (&0xFF) выше.
+            boolean offGrid = index < 0 || index >= target.size();
+            if (offGrid || !target.get(index).isEmpty()) {
                 int free = -1;
-                for (int probe = index + 1; probe < target.size(); probe++) {
+                for (int probe = offGrid ? 0 : index + 1; probe < target.size(); probe++) {
                     if (target.get(probe).isEmpty()) { free = probe; break; }
                 }
-                if (free < 0) {
+                if (free < 0 && !offGrid) {
                     for (int probe = 0; probe < index; probe++) {
                         if (target.get(probe).isEmpty()) { free = probe; break; }
                     }

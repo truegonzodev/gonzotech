@@ -253,13 +253,18 @@ public class ChunkRadiationData extends SavedData {
         double v = baseline.get(chunkKey);
         if (v < 0.0) {
             v = computeBaseline(level, chunkKey);
-            baseline.put(chunkKey, v);
-            setDirty();
-            RadiationTrace.logChunk(level, ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey), "ПРИРОДНЫЙ ФОН ЧАНКА",
-                    "чанк [" + ChunkPos.getX(chunkKey) + "," + ChunkPos.getZ(chunkKey)
-                            + "]; baseline=" + RadiationTrace.rate(v));
+            // 0.3.302 (#34-остаток): -1 — «чанк ещё не загружен»: в память не
+            // ложится, следующий проход (секундный цикл игрока) повторит —
+            // расхождение по тикам вместо мгновенного форс-чтения мира.
+            if (v >= 0.0) {
+                baseline.put(chunkKey, v);
+                setDirty();
+                RadiationTrace.logChunk(level, ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey), "ПРИРОДНЫЙ ФОН ЧАНКА",
+                        "чанк [" + ChunkPos.getX(chunkKey) + "," + ChunkPos.getZ(chunkKey)
+                                + "]; baseline=" + RadiationTrace.rate(v));
+            }
         }
-        return v;
+        return v < 0.0 ? 0.0 : v;
     }
 
     // ───────────────────────── поставленные блоки ─────────────────────────
@@ -582,10 +587,13 @@ public class ChunkRadiationData extends SavedData {
         ChunkPos cp = new ChunkPos(chunkKey);
         RandomSource rnd = RandomSource.create(level.getSeed() ^ chunkKey * 0x9E3779B97F4A7C15L);
 
+        // 0.3.302 (#25/#34): фон считается только по загруженному чанку —
+        // радиационное обслуживание не имеет права запускать генерацию.
+        ChunkAccess chunk = level.getChunkSource().getChunkNow(cp.x, cp.z);
+        if (chunk == null) return -1.0; // «не готово» — baselineOf повторит
         BlockPos center = cp.getMiddleBlockPosition(64);
         boolean desolation = level.getBiome(center).unwrapKey()
                 .map(k -> k.location().equals(DESOLATION)).orElse(false);
-        ChunkAccess chunk = level.getChunk(cp.x, cp.z);
         int minY = level.getMinY(), maxY = level.getMaxY();
         int baseX = cp.getMinBlockX(), baseZ = cp.getMinBlockZ();
         BlockPos.MutableBlockPos mp = new BlockPos.MutableBlockPos();

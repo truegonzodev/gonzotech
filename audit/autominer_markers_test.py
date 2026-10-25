@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.301$", props, re.M), "mod_version != 0.3.301"
+assert re.search(r"^mod_version=0\.3\.302$", props, re.M), "mod_version != 0.3.302"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1190,4 +1190,29 @@ gate301 = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadReequipGate.j
 assert "for (ItemStack inner : content)" not in gate301 \
     and "content.getStackInSlot(i)" in gate301, \
     "0.3.301: в гейте снова for-each по ItemContainerContents — не скомпилируется"
+
+# 0.3.302: проход остаточных #. #1-остаток: legacy-загрузчик не теряет
+# out-of-range записи (общий free-probe). #25/#34-остатки: радиация не грузит
+# чанки — скан контейнеров и природный фон идут через getChunkNow, фон с
+# отложенным ретраем вместо форс-генерации. #7/#22/#23/#31 — закрыты
+# документально (README WorldGuard-секция 290, null-guard стилистика
+# NetworkPlanner без единого throw, unformed без расхода топлива, дюп-верификация
+# latest.log) — подтверждающие пины ниже.
+be302 = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java").read_text(encoding="utf-8")
+assert "if (index < 0 || index >= target.size()) continue;" not in be302 \
+    and "boolean offGrid = index < 0 || index >= target.size();" in be302, \
+    "0.3.302 #1: записи вне границ таблицы снова молча исчезают в loadStackList"
+rs302 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text(encoding="utf-8")
+assert "level.getChunk(" not in rs302, \
+    "0.3.302 #25: RadiationSystem снова форсит загрузку чанка"
+crd302 = (ROOT / "src/main/java/com/gonzotech/radiation/ChunkRadiationData.java").read_text(encoding="utf-8")
+assert "level.getChunk(" not in crd302 and "if (chunk == null) return -1.0;" in crd302 \
+    and "return v < 0.0 ? 0.0 : v;" in crd302, \
+    "0.3.302 #34: фон чанка снова грузит мир или кэшит «неготовность»"
+np302 = (ROOT / "src/main/java/com/gonzotech/machines/miner/NetworkPlanner.java").read_text(encoding="utf-8")
+assert "throw new" not in np302, \
+    "0.3.302 #22: решатель вернулся к исключениям вместо freeze-парковки"
+rd302 = (ROOT / "README.md").read_text(encoding="utf-8")
+assert "server-side WorldGuard" in rd302, \
+    "0.3.302 #7: документная доктрина флагов потерялась из README"
 print("autominer_markers_test passed")
