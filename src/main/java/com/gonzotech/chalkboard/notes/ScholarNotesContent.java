@@ -436,21 +436,42 @@ public final class ScholarNotesContent {
             new ScholarPage(47, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_1H,
                     "gui.gonzotech.notes.sculk.title", "gui.gonzotech.notes.sculk.body",
                     List.of("gonzotech:sculk_bricks", "gonzotech:chiseled_sculk_bricks", "gonzotech:smooth_sculk_bricks",
-                            "gonzotech:sculk_brick_stairs", "gonzotech:sculk_brick_slab", "gonzotech:sculk_brick_wall"), Layout.TEXT_FULL, null),
+                            "gonzotech:sculk_brick_stairs", "gonzotech:sculk_brick_slab", "gonzotech:sculk_brick_wall"), Layout.TEXT_LEFT,
+                    NoteIllustration.craftingRight(
+                            List.of("minecraft:sculk", "minecraft:stone_bricks", "",
+                                    "minecraft:stone_bricks", "minecraft:sculk", "",
+                                    "", "", ""),
+                            "gonzotech:sculk_bricks:4")),
 
             new ScholarPage(48, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_1H,
                     "gui.gonzotech.notes.moss.title", "gui.gonzotech.notes.moss.body",
                     List.of("gonzotech:noble_moss", "gonzotech:smooth_noble_moss", "gonzotech:polished_noble_moss",
                             "gonzotech:chiseled_noble_moss", "gonzotech:noble_moss_slab",
-                            "gonzotech:noble_moss_stairs", "gonzotech:noble_moss_pillar"), Layout.TEXT_FULL, null),
+                            "gonzotech:noble_moss_stairs", "gonzotech:noble_moss_pillar"), Layout.TEXT_LEFT,
+                    NoteIllustration.craftingRight(
+                            List.of("minecraft:mossy_cobblestone", "minecraft:bone_meal", "minecraft:slime_ball",
+                                    "", "", "", "", "", ""),
+                            "gonzotech:noble_moss:2")),
 
             new ScholarPage(49, ScholarChapter.ERA_2, ScholarUnlock.FLAG_COBBLESTONE,
                     "gui.gonzotech.notes.monolith.title", "gui.gonzotech.notes.monolith.body",
-                    List.of("gonzotech:monolith"), Layout.TEXT_FULL, null),
+                    List.of("gonzotech:monolith"), Layout.TEXT_LEFT,
+                    NoteIllustration.craftingRight(
+                            List.of("minecraft:cobblestone", "", "minecraft:cobblestone",
+                                    "minecraft:cobblestone", "minecraft:cobblestone", "minecraft:cobblestone",
+                                    "minecraft:cobblestone", "", "minecraft:cobblestone"),
+                            "gonzotech:monolith")),
 
             new ScholarPage(50, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_2H,
                     "gui.gonzotech.notes.pet_bowl.title", "gui.gonzotech.notes.pet_bowl.body",
-                    List.of("gonzotech:pet_bowl"), Layout.TEXT_FULL, null),
+                    List.of("gonzotech:pet_bowl", "minecraft:chicken", "minecraft:cooked_chicken",
+                            "minecraft:beef", "minecraft:cooked_beef", "minecraft:salmon", "minecraft:cooked_salmon",
+                            "minecraft:cod", "minecraft:cooked_cod"), Layout.TEXT_LEFT,
+                    NoteIllustration.craftingRight(
+                            List.of("minecraft:iron_nugget", "", "minecraft:iron_nugget",
+                                    "minecraft:iron_ingot", "minecraft:bone", "minecraft:iron_ingot",
+                                    "minecraft:iron_ingot", "minecraft:iron_ingot", "minecraft:iron_ingot"),
+                            "gonzotech:pet_bowl")),
 
             // 36 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
             // текст на ВСЮ страницу, в витрине — все формы цезия

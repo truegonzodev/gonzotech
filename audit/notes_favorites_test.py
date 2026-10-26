@@ -36,6 +36,45 @@ assert ids[-1] == 51
 for id, gate in [(45, "PLAYTIME_1H"), (46, "PLAYTIME_1H"), (47, "PLAYTIME_1H"), (48, "PLAYTIME_1H"),
                  (49, "FLAG_COBBLESTONE"), (50, "PLAYTIME_2H"), (51, "NECROSIS_AND_DISCOVERY_3")]:
     assert f"new ScholarPage({id}, ScholarChapter.ERA_2, ScholarUnlock.{gate}," in content
+# 0.3.309: one base recipe on the right; variants remain showcase-only.
+from collections import Counter
+
+def page_source(id):
+    return content.split(f"new ScholarPage({id},", 1)[1].split("new ScholarPage(", 1)[0]
+
+for id, recipe_name in [(47, "sculk_bricks"), (48, "noble_moss"), (49, "monolith"), (50, "pet_bowl")]:
+    page = page_source(id)
+    assert "Layout.TEXT_LEFT" in page and page.count("NoteIllustration.craftingRight(") == 1
+    assert "craftingCycle" not in page
+    match = re.search(r'NoteIllustration.craftingRight\(\s*List.of\((.*?)\),\s*"([^"]+)"', page, re.S)
+    assert match, recipe_name
+    grid = re.findall(r'"([^"]*)"', match.group(1))
+    assert len(grid) == 9
+    recipe = json.loads((ROOT / f"src/main/resources/data/gonzotech/recipe/{recipe_name}.json").read_text())
+    count = recipe["result"].get("count", 1)
+    expected_result = recipe["result"]["id"] + (f":{count}" if count != 1 else "")
+    assert match.group(2) == expected_result, (recipe_name, "wrong output/count")
+    if recipe["type"] == "minecraft:crafting_shaped":
+        rows = recipe["pattern"] + [""] * (3 - len(recipe["pattern"]))
+        expected_grid = [recipe["key"].get(char, "") for row in rows for char in row.ljust(3)]
+        assert grid == expected_grid, (recipe_name, grid, expected_grid)
+    else:
+        assert Counter(item for item in grid if item) == Counter(recipe["ingredients"])
+
+expected_showcases = {
+    47: ["sculk_bricks", "chiseled_sculk_bricks", "smooth_sculk_bricks", "sculk_brick_stairs", "sculk_brick_slab", "sculk_brick_wall"],
+    48: ["noble_moss", "smooth_noble_moss", "polished_noble_moss", "chiseled_noble_moss", "noble_moss_slab", "noble_moss_stairs", "noble_moss_pillar"],
+    49: ["monolith"],
+}
+for id, expected in expected_showcases.items():
+    showcase = page_source(id).split("List.of(", 1)[1].split(")", 1)[0]
+    assert re.findall(r'"([^"]*)"', showcase) == ["gonzotech:" + item for item in expected]
+bowl_showcase = page_source(50).split("List.of(", 1)[1].split(")", 1)[0]
+assert re.findall(r'"([^"]*)"', bowl_showcase) == ["gonzotech:pet_bowl"] + [
+    "minecraft:" + item for item in ("chicken", "cooked_chicken", "beef", "cooked_beef", "salmon", "cooked_salmon", "cod", "cooked_cod")]
+for id in (45, 46):
+    assert "Layout.TEXT_FULL, null" in page_source(id), "world-structure page changed"
+
 necrosis = content.split("new ScholarPage(51,", 1)[1].split("    );", 1)[0]
 assert "List.of(), Layout.TEXT_FULL, null" in necrosis
 unlock = text("chalkboard/notes/ScholarUnlock.java")
