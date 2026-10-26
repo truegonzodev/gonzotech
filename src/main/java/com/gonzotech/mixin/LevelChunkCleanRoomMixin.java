@@ -26,6 +26,9 @@ public abstract class LevelChunkCleanRoomMixin {
             com.gonzotech.machines.block.entity.PlotnickBlockEntity.pulseBlockChange(level, pos);
             // 0.3.299 (N13): тем же штампом инвалидируется кэш топологии труб.
             com.gonzotech.machines.network.ItemRouting.onWorldEdit(level);
+            // 0.3.306 (автор 26.10): тем же каналом правки командой/взрывом
+            // будят ревалидацию матрицы реактора, если клетка внутри границ.
+            com.gonzotech.machines.reactor.ReactorStructure.onWorldEditCell(level, pos);
         }
     }
 }

@@ -388,4 +388,24 @@ assert struct272.index("ReactorEmberData.adopt(level") < struct272.index("panel.
     "load порта-сбрасывает порядок: приёмка должна быть до привязки"
 assert "public void raiseTo(double hot)" in read("machines/reactor/ReactorHeatDynamics.java")
 
+# ── 0.3.306 (автор 26.10, игровые вердикты): три остатка реактора ──
+# 1) уголёк остывает — восстановление обязано ОПУСТИТЬ жар, raiseTo для этого
+# не годится (он умеет только поднимать): adopt принимает heat.setTo целиком.
+heat306 = read("machines/reactor/ReactorHeatDynamics.java")
+assert "public void setTo(double hot) {" in heat306, "0.3.306: нет двусторонней приёмки жара"
+runtime306 = read("machines/reactor/ReactorRuntime.java")
+assert "heat.setTo(hot);" in runtime306, "0.3.306: applyEmberHeat всё ещё односторонний"
+# 2) недоступный топливный объём — тик целиком откладывается: бесплатных GTH
+# при пустом списке чехлов быть не должно (генерация и износ — одно решение).
+assert ("if (formed && ReactorFuelStorage.totalTvelsKnown(level, panel) "
+        "== ReactorFuelStorage.UNKNOWN) return;") in runtime306, \
+    "0.3.306: генерация не гейтится доступностью топлива"
+# 3) правка клетки внутри границ командами/взрывом (LevelChunk-канал) обязана
+# будить ревалидацию матрицы; доступ к панели — только по загруженному чанку.
+assert "public static void onWorldEditCell(Level level, BlockPos pos) {" in structure_src
+assert "if (!server.getChunkSource().hasChunk(root.getX() >> 4, root.getZ() >> 4)) return;" \
+    in structure_src, "0.3.306: канал лезет в выгруженный чанк панели"
+assert "ReactorStructure.onWorldEditCell(level, pos);" in read("mixin/LevelChunkCleanRoomMixin.java"), \
+    "0.3.306: реактор не подключён к общему каналу правок мира"
+
 print("PASS reactor runtime: thermal dynamics, 10,000 C meltdown accident, 9608 C siren, GTH output, water-gauge exchange link, neutron metrics, pipe routing, GUI contracts, back-pressure layer, multi-valve relief with water vent, TVEL durability, layer hardening, temperature-tiered burn, per-port output cap")

@@ -146,6 +146,17 @@ public final class ReactorHeatDynamics {
             }
         }
 
+        /**
+         * (0.3.306, N10-догон) Восстановление уголька — authoritative set в обе
+         * стороны (автор 26.10: raiseTo умел только повышать, остывший за
+         * время разрыва уголёк возвращал старый жар runtime'а).
+         */
+        public void setTo(double hot) {
+            excess = hot - base;
+            cachedCurve = null;
+            cachedTemperature = Double.NaN;
+        }
+
         public double meanTemperature() {
             return meanTemperature(temperature());
         }

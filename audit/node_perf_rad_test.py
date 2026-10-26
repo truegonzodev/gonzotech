@@ -21,7 +21,8 @@ assert "hasExtractableItem(src, srcFace)) continue;" in routing      # пуст�
 assert "if (faces.isEmpty()) return 0;" in routing
 # 0.3.299 (N13): единый BFS на узел теперь ещё и кэшируется (sinksCached)
 assert "List<Sink> sinks = sinksCached(level, pos);" in routing     # ОДИН BFS
-assert "private static List<Sink> collectSinks(Level level, BlockPos startPipe, int[] visitedOut) {" in routing  # 0.3.299: счётчик для бюджета
+assert "private static List<Sink> collectSinks(Level level, BlockPos startPipe, int[] visitedOut, int maxNodes) {" in routing  # 0.3.299: счётчик для бюджета; 0.3.306: сам бюджет обхода
+assert "if (visited.size() > maxNodes) { visitedOut[0] = 2; break; }" in routing  # 0.3.306: усечение не в кэш
 assert "collectSinks(Level level, BlockPos startPipe, BlockPos srcPos)" not in routing  # старый API умер
 assert "LAST_INSERTED" in routing and "insertedThisTick(level, now, srcPos)" in routing  # 0.3.299 (N14): по измерениям
 assert "noteInserted(level, now, sink.containerPos());" in routing

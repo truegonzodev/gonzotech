@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.305$", props, re.M), "mod_version != 0.3.305"
+assert re.search(r"^mod_version=0\.3\.306$", props, re.M), "mod_version != 0.3.306"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1247,4 +1247,43 @@ for f304 in ("src/main/java/com/gonzotech/machines/network/ItemRouting.java",
         f"0.3.304: устаревшая метка раунда в {f304}"
 ir304 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
 assert "таблица разделена по измерениям" in ir304, "0.3.304: «помещена» вернулась в док N14"
+# ── 0.3.306 (ре-аудит по игровым вердиктам автора 26.10) ──
+menu306 = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
+assert "Math.min(PlotnickBlockEntity.capacityFor(stored), target.getMaxStackSize())" in menu306, \
+    "0.3.306: мердж-цикл не знает про потолок слота (карты доезжали 16 в слот=1)"
+assert "Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize());" in menu306, \
+    "0.3.306: пустой слот заполняется по capacityFor без минимума с потолком слота"
+
+ir306 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
+assert "sinks = liveSinks(level, pipePos, sinks);" in ir306 and "if (sinks.isEmpty()) return 0;" in ir306, \
+    "0.3.306: pushItems не переживает удаление маршрута (кэш 1–5 тиков ехал по мёртвым приёмникам)"
+assert "containerAt(level, sink.containerPos()) == sink.container" in ir306, \
+    "0.3.306: приёмник не сверяется с тем же контейнером"
+assert "perLevel.remove(startPipe.asLong());" in ir306, \
+    "0.3.306: отбракованный маршрут не выбрасывает запись кэша"
+assert "if (visited.size() > maxNodes) { visitedOut[0] = 2; break; }" in ir306, \
+    "0.3.306: обход приёмников без бюджета (тик не упирается в потолок)"
+assert "if (visited[0] != 2) perLevel.put(startPipe.asLong()" in ir306, \
+    "0.3.306: усечённый бюджетом список попадает в кэш как полный"
+assert "collectSinks(level, startPipe, visited, topoBudget);" in ir306, \
+    "0.3.306: серверный путь не пользуется бюджетом"
+assert "collectSinks(level, startPipe, new int[1], Integer.MAX_VALUE)" in ir306, \
+    "0.3.306: клиентский предпросмотр нельзя резать бюджетом"
+
+wgb = (ROOT / "src/main/java/com/gonzotech/machines/network/WorldGuardFlags.java").read_text(encoding="utf-8")
+for needle306 in ('"block_place", "block-place"', '"block_break", "block-break"',
+                  '"piston_allowed", "piston-protection"', "getFlagState", "public static Boolean decision("):
+    assert needle306 in wgb, f"0.3.306: в WG-мосту нет {needle306}"
+assert "unavailable = true;" in wgb, "0.3.306: мост не fail-open"
+assert be.count("WorldGuardFlags.decision(server, pos,") == 2, \
+    "0.3.306: прямой опрос WG обязан быть на обоих путях клетки (place и break)"
+
+assert "if (!placeQueueBlockNow(server, pos, target))" in be, "0.3.306: постройка не проверяет результат setBlock"
+assert "if (!server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState()," in be, \
+    "0.3.306: бур-труба списывается до подтверждения мира"
+assert "if (!server.destroyBlock(pos, false, null)) continue;" in be, "0.3.306: выдача руды раньше слома мира"
+assert "if (isImmovable(state, server, pos)) continue;" in be, "0.3.306: боковой сбор не фильтрует immovable"
+pack306 = be[be.index("private void packUp"):] if "private void packUp" in be else be
+assert "if (!tntQueue.isEmpty() || tntRequester != null) {" in be, "0.3.306: «Свернуться» не отменяет ТНТ-очередь"
+
 print("autominer_markers_test passed")

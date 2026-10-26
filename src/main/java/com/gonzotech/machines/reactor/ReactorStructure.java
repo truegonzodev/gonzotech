@@ -135,6 +135,22 @@ public final class ReactorStructure {
         }
     }
 
+    /**
+     * (0.3.306, автор 26.10: «изменение внутренних блоков командами или иным
+     * событийным обходом оставляет старый расчёт без резолвера исключений»)
+     * Тот же канал, что кормит чистые комнаты и радиацию (LevelChunk setBlockState):
+     * если клетка лежит в сохранённых границах собранного реактора — полная
+     * ревалидация матрицы. Только уже загруженные чанки: индекс живёт пока
+     * панель загружена, а на канале мы можем стоять внутри загрузки чанка.
+     */
+    public static void onWorldEditCell(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return;
+        BlockPos root = controllerAt(server, pos);
+        if (root == null) return;
+        if (!server.getChunkSource().hasChunk(root.getX() >> 4, root.getZ() >> 4)) return;
+        invalidateAt(server, pos);
+    }
+
     /** Restore saved bounds after load; an unformed panel is never initialized by chunk loading. */
     public static void restorePanel(ServerLevel level, ReactorControlPanelBlockEntity panel) {
         if (!panel.isFormedController()) {

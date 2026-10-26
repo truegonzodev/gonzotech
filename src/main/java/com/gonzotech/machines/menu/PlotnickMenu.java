@@ -94,7 +94,10 @@ public final class PlotnickMenu extends BaseMachineMenu {
             if (!target.mayPlace(stack)) continue;
             // 0.3.299 (N6): потолок — складская capacityFor, не слотовая:
             // у недолитой стопки она равна потолку самого предмета.
-            int space = PlotnickBlockEntity.capacityFor(stored) - stored.getCount();
+            // 0.3.306: но слот может быть строже склада (CardSlot = 1) —
+            // берём минимум, иначе мердж раздувает одноштучный слот.
+            int space = Math.min(PlotnickBlockEntity.capacityFor(stored), target.getMaxStackSize())
+                - stored.getCount();
             if (space <= 0) continue;
             int moved = Math.min(space, stack.getCount());
             stored.grow(moved);
@@ -108,7 +111,12 @@ public final class PlotnickMenu extends BaseMachineMenu {
             // 0.3.299 (N6): пустой слот о потолке предмета не знает —
             // делим по складской capacityFor, иначе setByPlayer рождал
             // стопку сверх лимита мимо clamp'а setItem.
-            target.setByPlayer(stack.split(PlotnickBlockEntity.capacityFor(stack)));
+            // 0.3.306: и потолок слота тоже (CardSlot=1): Shift+ЛКМ стака
+            // карт из 16 заполнял одноштучный слот всей стопкой, а
+            // секундный наблюдатель срезал излишек в void (автор 26.10,
+            // подтверждено в игре на обоих слотах карт).
+            int room = Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize());
+            target.setByPlayer(stack.split(room));
             movedAny = true;
         }
         // (0.3.266) Хвост в хранилище НЕ отдаём: не влез в головы — лежит

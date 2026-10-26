@@ -923,7 +923,14 @@ public final class PlotnickBlockEntity extends BlockEntity
                 continue;
             }
             consumeStored(needed, 1);
-            placeQueueBlockNow(server, pos, target);
+            if (!placeQueueBlockNow(server, pos, target)) {
+                // Мир не принял блок (защита/сюрприз генерации): труба/бур
+                // возвращаются в склад, точка едет в хвост очереди.
+                ItemStack refund = new ItemStack(needed);
+                if (!insert(refund)) dump(refund, worldPosition);
+                buildQueue.add(entry);
+                continue;
+            }
             if (entry.drill()) {
                 netDrillsToPlace = Math.max(0, netDrillsToPlace - 1);
             } else {
@@ -957,8 +964,10 @@ public final class PlotnickBlockEntity extends BlockEntity
      * нет) и «усадка» слома-частицами самого рабочего блока (block_crack
      * по старому имени). Заменённые блоки частиц не дают.
      */
-    private void placeQueueBlockNow(ServerLevel server, BlockPos pos, BlockState target) {
-        server.setBlock(pos, target, net.minecraft.world.level.block.Block.UPDATE_ALL);
+    private boolean placeQueueBlockNow(ServerLevel server, BlockPos pos, BlockState target) {
+        // 0.3.306 (автор 26.10, п.11): сначала мир, потом подтверждение. Если
+        // setBlock не прошёл — установка не засчитывается, расход вернётся.
+        if (!server.setBlock(pos, target, net.minecraft.world.level.block.Block.UPDATE_ALL)) return false;
         server.playSound(null, pos, SoundType.METAL.getPlaceSound(), SoundSource.BLOCKS,
             0.65F, 0.9F + 0.2F * server.random.nextFloat());
         double cx = pos.getX() + 0.5;
@@ -967,6 +976,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         BlockParticleOption crumble = new BlockParticleOption(ParticleTypes.BLOCK, target);
         server.sendParticles(crumble, cx, cy, cz, 14, 0.22, 0.22, 0.22, 0.05D);
         server.sendParticles(crumble, cx, cy, cz, 6, 0.38, 0.38, 0.38, 0.015D);
+        return true;
     }
 
     // ─────────────────────────── сейсмический импульс ───────────────────────────
@@ -1257,8 +1267,14 @@ public final class PlotnickBlockEntity extends BlockEntity
         if (mined != null && !hasRoom(new ItemStack(mined))) return; // склад не примет — бур ждёт, порода не теряется (#5)
         if (!mayTouchPlace(server, target)) return; // приват против: трубу не кладём, труба не тратится
         if (consumeStored(ModMachines.BORE_PIPE.get().asItem(), 1) == 0) return;
-        server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState(),
-            net.minecraft.world.level.block.Block.UPDATE_ALL);
+        if (!server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState(),
+            net.minecraft.world.level.block.Block.UPDATE_ALL)) {
+            // 0.3.306 (п.11): скважина не выросла — труба домой, порода
+            // не добывается, уровень цели ждёт повторной попытки.
+            ItemStack refund = new ItemStack(ModMachines.BORE_PIPE.get());
+            if (!insert(refund)) dump(refund, worldPosition);
+            return;
+        }
         if (mined != null) {
             // Порода/грунт — в зону «добытое»: наружу оттуда только берут.
             insertMinedOrDrop(new ItemStack(mined), target);
@@ -1280,11 +1296,15 @@ public final class PlotnickBlockEntity extends BlockEntity
                 BlockPos pos = new BlockPos(drillCell.getX() + dx, y, drillCell.getZ() + dz);
                 BlockState state = server.getBlockState(pos);
                 if (state.isAir() || !MinerOres.isOre(state)) continue;
+                // 0.3.306 (автор 26.10, п.11): боковой сбор не сговорчивее
+                // центрального ствола — BlockEntity-руды и неубиваемая
+                // порода мимо (иначе содержимое чужих машин теряется).
+                if (isImmovable(state, server, pos)) continue;
                 Item item = state.getBlock().asItem();
                 if (item == null) continue;
                 if (!hasRoom(new ItemStack(item))) continue; // нет места — руда ждёт в породе (#5)
                 if (!mayTouchBreak(server, pos)) continue; // приват против слома — руда ждёт
-                server.destroyBlock(pos, false, null);
+                if (!server.destroyBlock(pos, false, null)) continue; // 0.3.306: мир не отдал блок — выдача не раньше мира
                 insertMinedOrDrop(new ItemStack(item), pos);
             }
         }
@@ -1312,6 +1332,13 @@ public final class PlotnickBlockEntity extends BlockEntity
             drillPoints.clear();
             drillTargetY.clear();
             cycleDrillCells = List.of();
+            changed = true;
+        }
+        // 0.3.306 (автор 26.10, п.10): «Свернуться» отменяет и замену труб на
+        // динамит — иначе старая очередь достреливает после команды.
+        if (!tntQueue.isEmpty() || tntRequester != null) {
+            tntQueue.clear();
+            tntRequester = null;
             changed = true;
         }
         List<BlockPos> lootable = collectNetworkBlocks(server);
@@ -1475,7 +1502,12 @@ public final class PlotnickBlockEntity extends BlockEntity
                 break;
             }
             consumeStored(explosive, 1);
-            server.setBlock(pos, tnt, net.minecraft.world.level.block.Block.UPDATE_ALL);
+            if (!server.setBlock(pos, tnt, net.minecraft.world.level.block.Block.UPDATE_ALL)) {
+                // 0.3.306 (п.11): TNT не встал — взрывчатка в склад, точка в голову.
+                insertOrDrop(new ItemStack(explosive), worldPosition);
+                tntQueue.add(0, pos);
+                break;
+            }
             BlockParticleOption crumble = new BlockParticleOption(ParticleTypes.BLOCK, tnt);
             server.sendParticles(crumble, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
                 12, 0.24, 0.24, 0.24, 0.04D);
@@ -1769,10 +1801,13 @@ public final class PlotnickBlockEntity extends BlockEntity
      * «Путь блока» (автор, 0.3.264): разрешение клетки меряется серверными
      * стандартными событиями — ставим BlockEvent.EntityPlaceEvent /
      * BlockEvent.BreakEvent от лица ближайшего онлайн-игрока, приваты и
-     * защитные плагины в праве отказать. Игрока рядом нет — проверять не от
-     * кого, разрешаем (чанки всё равно держат игроки, а machine self-move
-     * приватами не считается). Результат кэшируется на тик: поток клеток
-     * стоит, а не спамит события.
+     * защитные плагины в праве отказать. С 0.3.306 перед событийным путём
+     * идёт прямой опрос флагов WorldGuard по самой клетке (WorldGuardFlags:
+     * block_place/block-place, block_break/block-break, piston_allowed/
+     * piston-protection) — владелец и ближайший игрок для этого не нужны.
+     * Ни WG, ни игрока рядом нет — проверять не от кого, разрешаем (чанки
+     * всё равно держат игроки, а machine self-move приватами не считается).
+     * Результат кэшируется на тик: поток клеток стоит, а не спамит события.
      */
     private boolean mayTouchPlace(ServerLevel server, BlockPos pos) {
         long tick = server.getGameTime();
@@ -1780,6 +1815,12 @@ public final class PlotnickBlockEntity extends BlockEntity
         lastTouchTick = tick;
         lastTouchPos = pos.immutable();
         lastTouchPlacing = true;
+        Boolean guard = com.gonzotech.machines.network.WorldGuardFlags.decision(server, pos,
+            com.gonzotech.machines.network.WorldGuardFlags.Action.PLACE);
+        if (guard != null) { // 0.3.306: WG ответил по клетке — событийный путь не нужен
+            lastTouchAllowed = guard;
+            return guard;
+        }
         ServerPlayer actor = actionActor(server);
         if (actor == null) {
             lastTouchAllowed = true; // спросить некого — не считаем это отказом
@@ -1801,6 +1842,12 @@ public final class PlotnickBlockEntity extends BlockEntity
         lastTouchTick = tick;
         lastTouchPos = pos.immutable();
         lastTouchPlacing = false;
+        Boolean guard = com.gonzotech.machines.network.WorldGuardFlags.decision(server, pos,
+            com.gonzotech.machines.network.WorldGuardFlags.Action.BREAK);
+        if (guard != null) { // 0.3.306: WG ответил по клетке — событийный путь не нужен
+            lastTouchAllowed = guard;
+            return guard;
+        }
         ServerPlayer actor = actionActor(server);
         if (actor == null) {
             lastTouchAllowed = true; // спросить некого — не считаем это отказом

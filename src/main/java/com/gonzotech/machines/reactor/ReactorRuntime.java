@@ -229,9 +229,11 @@ public final class ReactorRuntime {
     }
 
     /** Integrator reading plus the GTH back-pressure layer shown on the temperature gauge. */
-    /** (0.3.272, N10) Поднятие температуры принятого уголька до его фактического жара. */
+    /** (0.3.272, N10) Поднятие температуры принятого уголька до его фактического жара.
+     *  (0.3.306) С 306-го — двусторонняя приёмка: остывший уголёк остужает и
+     *  восстановленный runtime, возврата старого жара нет. */
     public void applyEmberHeat(double hot) {
-        heat.raiseTo(hot);
+        heat.setTo(hot);
     }
 
     /** (0.3.270) Есть ли у рантайма живое содержимое — основание для уголька. */
@@ -266,6 +268,11 @@ public final class ReactorRuntime {
         // стареют (нет генерации). Пересборка вернёт ввод/вывод; полный снос
         // панели передаст состояние «уголькам» (ReactorEmberData).
         if (!formed && (!panel.hasSavedBounds() || lastSnapshot == null)) return;
+        // (0.3.306, автор 26.10: «реактор отдаёт GTH при недоступном для расхода
+        // топливе») Если объём топлива выгружен (UNKNOWN), тик целиком
+        // откладывается: и генерация, и износ считаются по одному решению.
+        // Недоступный объём — задержка, а не бесплатная энергия.
+        if (formed && ReactorFuelStorage.totalTvelsKnown(level, panel) == ReactorFuelStorage.UNKNOWN) return;
         long gameTime = level.getGameTime();
         if (formed && (snapshotDirty || lastSnapshot == null || lastSnapshotTick == Long.MIN_VALUE
             || gameTime - lastSnapshotTick >= MachineDefs.REACTOR_FUEL_SNAPSHOT_INTERVAL)) {

@@ -214,12 +214,17 @@ Shift+ПКМ ставит блок (как у турбины).
 
 **Источник флагов регионов — серверный плагин WorldGuard (Paper/Spigot).** Сам мод не
 несёт собственной регион-логики и не дублирует флаги: «можно ли тут строить/ломать»
-решает сторона сервера. Приготовленное под будущее: блочный путь публикует серверные
-события (`BlockEvent.EntityPlace` — `core/event/VanillaPolishEvents.java`), а любые
-мировые правки видны из миксина `LevelChunk#setBlockState`
-(`mixin/LevelChunkCleanRoomMixin`) — мост к `canBuild`-проверкам WorldGuard навешивается
-на любую из этих точек, не трогая внутренности машин. Та же строка — в приветственном
-сообщении (`gui.gonzotech.welcome.*`).
+решает сторона сервера. С 0.3.306 мост **навешан**: машины спрашивают не «ближайшего
+игрока», а саму клетку — `machines/network/WorldGuardFlags.java` (рефлексия, compile-time
+зависимости от плагина нет) перебирает `piston_allowed`/`piston-protection` плюс
+`block_place`/`block-place` (постановка) и `block_break`/`block-break` (слом): хоть один
+применимый регион с DENY — клетка машинам закрыта, событий спрашивать не нужно.
+WG на сервере нет (голый dedicated, одиночная игра) или API-цепочка не разворачивается —
+мост молча отступает и решение остаётся стандартным серверным событиям
+(`BlockEvent.EntityPlace` — `core/event/VanillaPolishEvents.java`), как и раньше. Любые
+мировые правки по-прежнему видны из миксина `LevelChunk#setBlockState`
+(`mixin/LevelChunkCleanRoomMixin`). Та же строка — в приветственном сообщении
+(`gui.gonzotech.welcome.*`).
 
 ## 🛌 Патч 0.3.25 — интерфейс обморока
 

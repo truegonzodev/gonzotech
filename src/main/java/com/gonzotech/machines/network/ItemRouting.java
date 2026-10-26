@@ -179,6 +179,16 @@ public final class ItemRouting {
      */
     private static int pushItems(Level level, BlockPos pipePos, Container src, Direction srcFace,
                                  List<Sink> sinks, BlockPos excludeSrc, int budget, int perItemCap, long now) {
+        // 0.3.306 (автор 26.10, подтверждено в игре: «передают ещё 1–5 тиков»):
+        // кэш топологии живёт до TOPO_TTL_TICKS после правки мира, поэтому
+        // перед вставкой ВСЕ приёмники проверяются повторным обходом: цель —
+        // тот же контейнер на своём месте, каждая труба маршрута цела и
+        // соединена. Что не прошло проверку — не используется; если от списка
+        // что-то отброшено, запись кэша выбрасывается (следующий тик
+        // пересоберёт по бюджету). Перенос при этом просто задерживается —
+        // теряться предметам не за чем.
+        sinks = liveSinks(level, pipePos, sinks);
+        if (sinks.isEmpty()) return 0;
         int moved = 0;
         long rotation = level.getGameTime();
         int n = sinks.size();
@@ -324,7 +334,7 @@ public final class ItemRouting {
     }
 
     private static List<Sink> sinksCached(Level level, BlockPos startPipe) {
-        if (level.isClientSide()) return collectSinks(level, startPipe, new int[1]);
+        if (level.isClientSide()) return collectSinks(level, startPipe, new int[1], Integer.MAX_VALUE);
         long now = level.getGameTime();
         if (topoBudgetTick != now) {
             topoBudgetTick = now;
@@ -339,14 +349,16 @@ public final class ItemRouting {
         }
         if (topoBudget <= 0) return hit != null ? hit.sinks() : List.of();
         int[] visited = new int[1];
-        List<Sink> sinks = collectSinks(level, startPipe, visited);
-        topoBudget -= visited[0];
+        List<Sink> sinks = collectSinks(level, startPipe, visited, topoBudget);
+        if (visited[0] == 2) topoBudget = 0; else topoBudget -= visited[0]; // 0.3.306
         if (perLevel == null) {
             perLevel = new java.util.HashMap<>();
             TOPO_CACHE.put(level, perLevel);
         }
         if (perLevel.size() > 8192) perLevel.clear(); // трубы ломают — кэш не раздуваем
-        perLevel.put(startPipe.asLong(), new CachedSinks(sinks, now, version));
+        // 0.3.306: усечённый бюджетом обход в кэш не кладём — иначе тик позже
+        // по нему ездили бы как по полному (недоисследованные приёмники пропали б).
+        if (visited[0] != 2) perLevel.put(startPipe.asLong(), new CachedSinks(sinks, now, version));
         return sinks;
     }
 
@@ -356,7 +368,7 @@ public final class ItemRouting {
      * соединения — как в {@link PipeRouting}: труба↔труба по открытым навстречу
      * граням; труба→контейнер, если грань открыта к нему и режим = ОТДАЧА/АВТО.
      */
-    private static List<Sink> collectSinks(Level level, BlockPos startPipe, int[] visitedOut) {
+    private static List<Sink> collectSinks(Level level, BlockPos startPipe, int[] visitedOut, int maxNodes) {
         List<Sink> sinks = new ArrayList<>();
         Set<BlockPos> visited = new HashSet<>();
         Map<Long, BlockPos> parents = new HashMap<>();
@@ -366,6 +378,11 @@ public final class ItemRouting {
         parents.put(startPipe.asLong(), null);
 
         while (!queue.isEmpty()) {
+            // 0.3.306: лимит обхода ВНУТРИ BFS (авторская правка бюджета):
+            // visitedOut[0]=2 помечает усечение — такой результат не кэшируется,
+            // поиск продолжится в следующих тиках. Первый большой обход больше
+            // не способен увязнуть сервером: узлы считаются по-настоящему.
+            if (visited.size() > maxNodes) { visitedOut[0] = 2; break; }
             BlockPos pipe = queue.poll();
             BlockState pstate = level.getBlockState(pipe);
             if (!isItemPipe(pstate)) continue;
@@ -408,6 +425,49 @@ public final class ItemRouting {
         }
         Collections.reverse(path);
         return path;
+    }
+
+    /**
+     * 0.3.306: фильтрует кэшированный список приёмников против ЖИВОГО мира и
+     * возвращает актуальный (или пустой). При любом отсеве сбрасывает запись
+     * кэша стартовой трубы — молча ездить по протухшему маршруту сеть не будет.
+     */
+    private static List<Sink> liveSinks(Level level, BlockPos startPipe, List<Sink> cached) {
+        List<Sink> live = new ArrayList<>(cached.size());
+        boolean dropped = false;
+        for (Sink sink : cached) {
+            if (sinkLive(level, sink)) live.add(sink);
+            else dropped = true;
+        }
+        if (dropped) {
+            java.util.Map<Long, CachedSinks> perLevel = TOPO_CACHE.get(level);
+            if (perLevel != null) perLevel.remove(startPipe.asLong());
+        }
+        return dropped ? live : cached;
+    }
+
+    /** Маршрут цел (трубы на месте и соединены) и приёмник — тот же контейнер там же. */
+    private static boolean sinkLive(Level level, Sink sink) {
+        List<BlockPos> path = sink.path();
+        for (int i = 0; i + 1 < path.size(); i++) {
+            BlockState a = level.getBlockState(path.get(i));
+            BlockState b = level.getBlockState(path.get(i + 1));
+            if (!isItemPipe(a) || !pipesConnect(a, b, dirBetween(path.get(i), path.get(i + 1)))) return false;
+        }
+        BlockPos lastPipe = path.get(path.size() - 1);
+        BlockState last = level.getBlockState(lastPipe);
+        Direction toContainer = dirBetween(lastPipe, sink.containerPos());
+        if (!isItemPipe(last) || !opensToward(last, toContainer) || !modeOf(last).deliversToMachine()) return false;
+        return containerAt(level, sink.containerPos()) == sink.container;
+    }
+
+    /** Направление между двумя соседними клетками (маршруты BFS всегда соседние). */
+    private static Direction dirBetween(BlockPos from, BlockPos to) {
+        int dx = to.getX() - from.getX(), dy = to.getY() - from.getY(), dz = to.getZ() - from.getZ();
+        for (Direction d : Direction.values()) {
+            if (d.getStepX() == dx && d.getStepY() == dy && d.getStepZ() == dz) return d;
+        }
+        throw new IllegalStateException("ItemRouting: не соседние клетки маршрута " + from + "→" + to);
     }
 
     // ─────────────────────────── мелкие помощники ───────────────────────────
