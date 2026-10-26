@@ -145,12 +145,16 @@ for lang in ("ru_ru", "en_us"):
         assert data[f"gui.gonzotech.notes.favorites.{key}"]
     assert "/n" not in data["gui.gonzotech.notes.favorites.only_click"]
 
-# Validate small placeholder PNG dimensions + actual alpha, without requiring Pillow.
+# Validate author PNG dimensions + alpha, accepting all standard PNG row filters.
 def png_pixels(name, expected):
     raw = (RES / f"textures/gui/notes/{name}").read_bytes()
     assert raw[:8] == b"\x89PNG\r\n\x1a\n"
     w, h, depth, color = struct.unpack(">IIBB", raw[16:26])
-    assert (w, h) == expected and depth == 8 and color == 6
+    assert depth == 8 and color == 6
+    if expected is None:
+        assert w > 0 and h > 0 and w * 200 == h * 256
+    else:
+        assert (w, h) == expected
     offset = 8
     compressed = b""
     while offset < len(raw):
@@ -160,10 +164,43 @@ def png_pixels(name, expected):
         offset += size + 12
     pixels = zlib.decompress(compressed)
     assert len(pixels) == h * (w * 4 + 1)
-    assert all(pixels[y * (w * 4 + 1)] == 0 for y in range(h)), "placeholder filter"
-    alphas = [pixels[y * (w * 4 + 1) + 1 + x * 4 + 3] for y in range(h) for x in range(w)]
+    stride = w * 4
+    previous = bytearray(stride)
+    decoded = bytearray()
+    for y in range(h):
+        offset = y * (stride + 1)
+        filter_type = pixels[offset]
+        assert 0 <= filter_type <= 4
+        row = bytearray(pixels[offset + 1:offset + 1 + stride])
+        for x in range(stride):
+            left = row[x - 4] if x >= 4 else 0
+            up = previous[x]
+            upper_left = previous[x - 4] if x >= 4 else 0
+            predictor = 0
+            if filter_type == 1: predictor = left
+            elif filter_type == 2: predictor = up
+            elif filter_type == 3: predictor = (left + up) // 2
+            elif filter_type == 4:
+                estimate = left + up - upper_left
+                distances = [abs(estimate - value) for value in (left, up, upper_left)]
+                predictor = (left, up, upper_left)[distances.index(min(distances))]
+            row[x] = (row[x] + predictor) & 255
+        decoded.extend(row)
+        previous = row
+    alphas = decoded[3::4]
     assert 0 in alphas and 255 in alphas
-    return pixels
+    return decoded
 assert png_pixels("feature_icon.png", (9, 9)) != png_pixels("featured_icon.png", (9, 9))
 png_pixels("notes_favorite_tab.png", (28, 14))
+# 0.3.310: every full-width body gets the new template, before header and body.
+png_pixels("page_plain_text.png", None)
+assert '"textures/gui/notes/page_plain_text.png"' in screen
+page_draw = screen.split("private void drawPage(", 1)[1].split("private void drawPageCounter", 1)[0]
+assert "page.layout() == ScholarPage.Layout.TEXT_FULL && page.hasBody()" in page_draw
+background = page_draw.index("drawTemplate(g, TEX_PLAIN_TEXT);")
+assert background < page_draw.index("g.flush();", background) < page_draw.index("drawFavoriteHeader(")
+assert background < page_draw.index("this.font.split(bodyComponent(")
+template_draw = screen.split("private void drawTemplate(", 1)[1].split("private void drawIllustration(", 1)[0]
+assert "pngSize(tex)" in template_draw and "blitScaled(g, tex" in template_draw
+assert "drawString" not in template_draw and "renderItem" not in template_draw
 print("notes pages / gates / creative order / persistent favorites / UI / placeholder contracts passed")

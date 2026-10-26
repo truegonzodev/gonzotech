@@ -107,6 +107,8 @@ public class ScholarNotesScreen extends Screen {
             "gonzotech", "textures/gui/notes/featured_icon.png");
     private static final ResourceLocation TEX_FAVORITE_TAB = ResourceLocation.fromNamespaceAndPath(
             "gonzotech", "textures/gui/notes/notes_favorite_tab.png");
+    private static final ResourceLocation TEX_PLAIN_TEXT = ResourceLocation.fromNamespaceAndPath(
+            "gonzotech", "textures/gui/notes/page_plain_text.png");
     private static final int FEATURE_SIZE = 9;
 
     private static final int INK = 0xFF2B1D0E;
@@ -521,6 +523,12 @@ public class ScholarNotesScreen extends Screen {
             return;
         }
 
+        // 0.3.310: full-width prose shares one background, including future pages.
+        // Submit the texture BEFORE text: the GUI batches different RenderTypes.
+        if (page.layout() == ScholarPage.Layout.TEXT_FULL && page.hasBody()) {
+            drawTemplate(g, TEX_PLAIN_TEXT);
+            g.flush();
+        }
         drawFavoriteHeader(g, page, contentX, contentY, pageInnerW, mouseX, mouseY);
         if (favoriteOnly.contains(page.chapter()) && !isFavorite(page.number())) {
             cancelSketchPlayback();
@@ -738,6 +746,18 @@ public class ScholarNotesScreen extends Screen {
     /** Шаблоны, которых нет в ресурсах (не рисуем и не ищем повторно). */
     private static final Set<ResourceLocation> MISSING_TEMPLATE_TEX = new HashSet<>();
 
+    /** Background only; native PNG resolution is scaled into the fixed page window. */
+    private void drawTemplate(GuiGraphics g, ResourceLocation tex) {
+        if (!MISSING_TEMPLATE_TEX.contains(tex)
+                && Minecraft.getInstance().getResourceManager().getResource(tex).isPresent()) {
+            long size = pngSize(tex);
+            blitScaled(g, tex, leftPos, topPos, FRAME_W, FRAME_H,
+                    (int) (size >>> 32), (int) (size & 0xffffffffL));
+        } else {
+            MISSING_TEMPLATE_TEX.add(tex);
+        }
+    }
+
     /** Шаблон-иллюстрация страницы: PNG-оверлей + подписи + предметы в слотах. */
     private void drawIllustration(GuiGraphics g, ScholarPage page, int mouseX, int mouseY) {
         NoteIllustration il = page.illustration();
@@ -749,14 +769,7 @@ public class ScholarNotesScreen extends Screen {
         //    Файл 256×200 → 1:1, 512×400 → в то же окно (выше плотность).
         ResourceLocation tex = ResourceLocation.fromNamespaceAndPath(
                 "gonzotech", "textures/gui/notes/" + kind.textureName());
-        if (!MISSING_TEMPLATE_TEX.contains(tex)
-                && Minecraft.getInstance().getResourceManager().getResource(tex).isPresent()) {
-            long size = pngSize(tex);
-            blitScaled(g, tex, leftPos, topPos, FRAME_W, FRAME_H,
-                    (int) (size >>> 32), (int) (size & 0xffffffffL));
-        } else {
-            MISSING_TEMPLATE_TEX.add(tex);
-        }
+        drawTemplate(g, tex);
 
         // 2) Локализуемые подписи над сетками/панелями.
         switch (kind) {
