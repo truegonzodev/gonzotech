@@ -9,8 +9,8 @@ import java.util.List;
  * Статичное оглавление «Заметок учёного»: линейный массив страниц в порядке
  * буклета. Боковые вкладки — лишь навигация по главам.
  *
- * <p>Глава I ({@link ScholarChapter#ERA_1}) — дневник Гонзо: 44 страницы
- * (1..44): стартовые 14 + шамот и доменная печь + турбина и редстоун («Открытие 1») + атомный пласт
+ * <p>51 страница с постоянными ID 1..51; порядок в PAGES не равен ID.
+ * Глава I ({@link ScholarChapter#ERA_1}) — дневник Гонзо: стартовые 14 + шамот и доменная печь + турбина и редстоун («Открытие 1») + атомный пласт
  * (дробилка, измельчитель, металлургия, пресс, завод сплавов, центрифуга,
  * тир-2, логистика II — трубы/узел/предметы — и пароген, ядерная топка —
  * «Открытие 2»). Страницы 18, 23, 29 — иллюстрационные: структура турбины,
@@ -424,6 +424,34 @@ public final class ScholarNotesContent {
                                     List.of("gonzotech:second_heat_node", "gonzotech:tungsten_block", "")),
                             NoteIllustration.CAPTION_VIEW_SIDE)),
 
+            // 0.3.308: новые наблюдения между редстоуном/лавой и цезием.
+            new ScholarPage(45, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_1H,
+                    "gui.gonzotech.notes.debris.title", "gui.gonzotech.notes.debris.body",
+                    List.of("gonzotech:debris", "gonzotech:weathered_debris", "gonzotech:weathered_mechanisms", "gonzotech:weathered_plating", "gonzotech:plastic_waste"), Layout.TEXT_FULL, null),
+
+            new ScholarPage(46, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_1H,
+                    "gui.gonzotech.notes.waste.title", "gui.gonzotech.notes.waste.body",
+                    List.of("gonzotech:waste_barrel"), Layout.TEXT_FULL, null),
+
+            new ScholarPage(47, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_1H,
+                    "gui.gonzotech.notes.sculk.title", "gui.gonzotech.notes.sculk.body",
+                    List.of("gonzotech:sculk_bricks", "gonzotech:chiseled_sculk_bricks", "gonzotech:smooth_sculk_bricks",
+                            "gonzotech:sculk_brick_stairs", "gonzotech:sculk_brick_slab", "gonzotech:sculk_brick_wall"), Layout.TEXT_FULL, null),
+
+            new ScholarPage(48, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_1H,
+                    "gui.gonzotech.notes.moss.title", "gui.gonzotech.notes.moss.body",
+                    List.of("gonzotech:noble_moss", "gonzotech:smooth_noble_moss", "gonzotech:polished_noble_moss",
+                            "gonzotech:chiseled_noble_moss", "gonzotech:noble_moss_slab",
+                            "gonzotech:noble_moss_stairs", "gonzotech:noble_moss_pillar"), Layout.TEXT_FULL, null),
+
+            new ScholarPage(49, ScholarChapter.ERA_2, ScholarUnlock.FLAG_COBBLESTONE,
+                    "gui.gonzotech.notes.monolith.title", "gui.gonzotech.notes.monolith.body",
+                    List.of("gonzotech:monolith"), Layout.TEXT_FULL, null),
+
+            new ScholarPage(50, ScholarChapter.ERA_2, ScholarUnlock.PLAYTIME_2H,
+                    "gui.gonzotech.notes.pet_bowl.title", "gui.gonzotech.notes.pet_bowl.body",
+                    List.of("gonzotech:pet_bowl"), Layout.TEXT_FULL, null),
+
             // 36 — «Цезий, обещание взрыва» (впервые добыта любая форма цезия);
             // текст на ВСЮ страницу, в витрине — все формы цезия
             new ScholarPage(36, ScholarChapter.ERA_2, ScholarUnlock.FLAG_CESIUM,
@@ -538,7 +566,11 @@ public final class ScholarNotesContent {
                                     "minecraft:copper_ingot:1", "minecraft:clay:3",
                                     "", "", ""),
                             "gonzotech:semiconductor_ingot:4",
-                            NoteIllustration.CAPTION_FOUNDRY))
+                            NoteIllustration.CAPTION_FOUNDRY)),
+            // В конце «Познания»: строго текст, без витрины и иллюстрации.
+            new ScholarPage(51, ScholarChapter.ERA_2, ScholarUnlock.NECROSIS_AND_DISCOVERY_3,
+                    "gui.gonzotech.notes.necrosis.title", "gui.gonzotech.notes.necrosis.body",
+                    List.of(), Layout.TEXT_FULL, null)
     );
 
     /**
@@ -593,6 +625,14 @@ public final class ScholarNotesContent {
                 deckLayer5(plain, null, pool),
                 deckLayer5(plain, casing, null)),
                 NoteIllustration.CAPTION_VIEW_TOP, "gonzotech:second_steamgen_core", 2);
+    }
+
+    /** Stable saved ID, NOT the current position in the book. */
+    public static int indexOfNumber(int number) {
+        for (int i = 0; i < PAGES.size(); i++) {
+            if (PAGES.get(i).number() == number) return i;
+        }
+        return -1;
     }
 
     /** Доступна ли страница при данном состоянии игрока. */

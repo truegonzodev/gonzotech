@@ -43,6 +43,11 @@ public final class ScholarNoteFlags {
      */
     public static final String WRENCH_EATEN = "wrench_eaten";
 
+    /** Подобран булыжник; необратимый флаг, даже после расхода стопки. */
+    public static final String COBBLESTONE = "cobblestone";
+    /** Игрок хотя бы однажды получил эффект некроза (сам эффект не меняем). */
+    public static final String NECROSIS = "necrosis_seen";
+
     private ScholarNoteFlags() {
     }
 }

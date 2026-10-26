@@ -9,7 +9,7 @@ import java.util.Set;
  * <p>
  * Клиент собирает это из {@link com.gonzotech.chalkboard.network.NotesNetwork.NotesDataPayload}.
  */
-public record NotesState(long playtimeTicks, boolean tier1Unlocked, boolean tier2Unlocked,
+public record NotesState(long playtimeTicks, boolean tier1Unlocked, boolean tier2Unlocked, boolean tier3Unlocked,
                          Set<String> noteFlags) {
 
     /** Есть ли у игрока флаг действия (см. {@link ScholarNoteFlags}). */

@@ -2,6 +2,8 @@ package com.gonzotech.chalkboard.network;
 
 import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.progress.ModAttachments;
+import com.gonzotech.chalkboard.notes.ScholarNotesContent;
+import com.gonzotech.chalkboard.notes.NotesState;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -49,7 +51,7 @@ public final class NotesNetwork {
      * + флаги действий «Познания мира» (см. ScholarNoteFlags).
      */
     public record NotesDataPayload(long playtimeTicks, boolean tier1Unlocked, boolean tier2Unlocked,
-                                   List<String> noteFlags) implements CustomPacketPayload {
+                                   boolean tier3Unlocked, List<String> noteFlags, List<Integer> favorites) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<NotesDataPayload> TYPE =
                 new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "notes_data"));
 
@@ -58,7 +60,9 @@ public final class NotesNetwork {
                         ByteBufCodecs.VAR_LONG, NotesDataPayload::playtimeTicks,
                         ByteBufCodecs.BOOL, NotesDataPayload::tier1Unlocked,
                         ByteBufCodecs.BOOL, NotesDataPayload::tier2Unlocked,
+                        ByteBufCodecs.BOOL, NotesDataPayload::tier3Unlocked,
                         STRING_LIST, NotesDataPayload::noteFlags,
+                        PAGE_LIST, NotesDataPayload::favorites,
                         NotesDataPayload::new
                 );
 
@@ -87,6 +91,30 @@ public final class NotesNetwork {
                     }
             );
 
+    private static final StreamCodec<RegistryFriendlyByteBuf, List<Integer>> PAGE_LIST = StreamCodec.of(
+            (buf, list) -> {
+                buf.writeVarInt(list.size());
+                for (int id : list) buf.writeVarInt(id);
+            }, buf -> {
+                int count = buf.readVarInt();
+                if (count < 0 || count > ScholarNotesContent.PAGES.size()) {
+                    throw new IllegalArgumentException("Invalid favorite notes count: " + count);
+                }
+                List<Integer> ids = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) ids.add(buf.readVarInt());
+                return List.copyOf(ids);
+            });
+
+    /** Explicit intent, not a toggle: retries never undo the user's previous click. */
+    public record FavoriteNotePayload(int pageId, boolean favorite) implements CustomPacketPayload {
+        public static final Type<FavoriteNotePayload> TYPE = new Type<>(
+                ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "favorite_note"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, FavoriteNotePayload> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, FavoriteNotePayload::pageId,
+                ByteBufCodecs.BOOL, FavoriteNotePayload::favorite, FavoriteNotePayload::new);
+        @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     /** Клиентский кэш последнего полученного состояния. */
     public static volatile NotesDataPayload CLIENT_DATA = null;
 
@@ -113,6 +141,28 @@ public final class NotesNetwork {
     }
 
     public static void register(PayloadRegistrar registrar) {
+        registrar.playToServer(FavoriteNotePayload.TYPE, FavoriteNotePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (!(context.player() instanceof ServerPlayer player)) return;
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "notesFavorite", 20)) return;
+                    int index = ScholarNotesContent.indexOfNumber(payload.pageId());
+                    if (index < 0) return;
+                    PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
+                    NotesDataPayload data = snapshot(player);
+                    var state = new NotesState(data.playtimeTicks(),
+                            data.tier1Unlocked(), data.tier2Unlocked(), data.tier3Unlocked(), java.util.Set.copyOf(data.noteFlags()));
+                    // Removal stays possible after a debug gate reset; adding locked pages is forbidden.
+                    if (payload.favorite() && !ScholarNotesContent.isUnlocked(
+                            ScholarNotesContent.PAGES.get(index), state)) {
+                        sendToPlayer(player);
+                        return;
+                    }
+                    if (progress.setFavoriteNote(payload.pageId(), payload.favorite())) {
+                        player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);
+                    }
+                    sendToPlayer(player);
+                }));
+
         registrar.playToServer(
                 NotesRequestPayload.TYPE,
                 NotesRequestPayload.STREAM_CODEC,
@@ -133,11 +183,15 @@ public final class NotesNetwork {
 
     /** Собрать и отправить актуальное состояние игроку. */
     public static void sendToPlayer(ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player, snapshot(player));
+    }
+
+    private static NotesDataPayload snapshot(ServerPlayer player) {
         long playtime = player.getStats().getValue(Stats.CUSTOM.get(Stats.PLAY_TIME));
         PlayerChalkboardProgress progress = player.getData(ModAttachments.CHALKBOARD_PROGRESS);
         boolean tier1 = progress.isRecipeTierUnlocked(1);
         boolean tier2 = progress.isRecipeTierUnlocked(2);
         List<String> flags = List.copyOf(progress.getNoteFlags());
-        PacketDistributor.sendToPlayer(player, new NotesDataPayload(playtime, tier1, tier2, flags));
+        return new NotesDataPayload(playtime, tier1, tier2, progress.isRecipeTierUnlocked(3), flags, progress.getFavoriteNotes());
     }
 }

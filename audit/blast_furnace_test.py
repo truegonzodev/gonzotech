@@ -169,10 +169,10 @@ smodel = (ROOT / "src/main/java/com/gonzotech/chalkboard/notes/StructureModel.ja
 assert "public static StructureModel blastFurnace()" in smodel
 for sid in ('"gonzotech:fireclay"', '"gonzotech:first_heat_node"', '"gonzotech:firebox"', '"minecraft:cauldron"'):
     assert sid in smodel, sid
-# нумерация страниц 1..43 без дыр; витрины новых страниц
+# 0.3.308: постоянные ID 1..51 без дублей; порядок задаёт оглавление
 import re as _re
 _pagenums = [int(m) for m in _re.findall(r'new ScholarPage\((\d+),', content)]
-assert _pagenums == list(range(1, 45)), _pagenums  # 0.3.77: +страница «Зарисовка»
+assert len(_pagenums) == 51 and sorted(_pagenums) == list(range(1, 52)), _pagenums  # «Зарисовка» сохраняет ID 38
 _i15 = content.index('new ScholarPage(15,')
 assert 'p42.title' in content[_i15:_i15 + 200]
 _i16 = content.index('new ScholarPage(16,')

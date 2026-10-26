@@ -1,6 +1,7 @@
 package com.gonzotech.chalkboard.progress;
 
 import com.gonzotech.chalkboard.core.Quantity;
+import com.gonzotech.chalkboard.notes.NotesFavorites;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
@@ -29,7 +30,8 @@ public class PlayerChalkboardProgress {
                     Codec.BOOL.optionalFieldOf("receivedScholarNotes", false).forGetter(PlayerChalkboardProgress::hasReceivedScholarNotes),
                     // Флаги действий «Заметок учёного» (глава «Познание мира»); поле
                     // необязательное — старые сохранения без него декодируются как пустой набор.
-                    Codec.STRING.listOf().optionalFieldOf("noteFlags", List.of()).forGetter(p -> new ArrayList<>(p.getNoteFlags()))
+                    Codec.STRING.listOf().optionalFieldOf("noteFlags", List.of()).forGetter(p -> new ArrayList<>(p.getNoteFlags())),
+                    Codec.INT.listOf().optionalFieldOf("favoriteNotes", List.of()).forGetter(PlayerChalkboardProgress::getFavoriteNotes)
             ).apply(instance, PlayerChalkboardProgress::new)
     );
 
@@ -42,15 +44,16 @@ public class PlayerChalkboardProgress {
     private boolean receivedScholarNotes;
     /** Одноразовые флаги действий для «Заметок учёного» (см. ScholarNoteFlags). */
     private final Set<String> noteFlags;
+    private final NotesFavorites favoriteNotes;
 
     public PlayerChalkboardProgress() {
-        this(0, List.of(), List.of(), Map.of(), Map.of(), "", false, List.of());
+        this(0, List.of(), List.of(), Map.of(), Map.of(), "", false, List.of(), List.of());
     }
 
     public PlayerChalkboardProgress(int currentDiscoveryIndex, List<Integer> tiers, List<String> secrets,
                                   Map<String, String> savedExpr, Map<String, String> savedDrawing,
                                   String globalDrawingJson, boolean receivedScholarNotes,
-                                  List<String> noteFlags) {
+                                  List<String> noteFlags, List<Integer> favoriteNotes) {
         this.currentDiscoveryIndex = Math.max(0, currentDiscoveryIndex);
         this.unlockedRecipeTiers = new HashSet<>(tiers);
         this.unlockedSecretQuantities = new HashSet<>(secrets);
@@ -59,6 +62,13 @@ public class PlayerChalkboardProgress {
         this.globalDrawingJson = globalDrawingJson != null ? globalDrawingJson : "";
         this.receivedScholarNotes = receivedScholarNotes;
         this.noteFlags = new HashSet<>(noteFlags);
+        this.favoriteNotes = new NotesFavorites(favoriteNotes);
+    }
+
+    public List<Integer> getFavoriteNotes() { return favoriteNotes.pages(); }
+
+    public boolean setFavoriteNote(int pageId, boolean favorite) {
+        return favoriteNotes.set(pageId, favorite);
     }
 
     /** Выдавались ли игроку «Заметки учёного» (одноразовая выдача при первом входе). */

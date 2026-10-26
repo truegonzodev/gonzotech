@@ -4,6 +4,9 @@ import com.gonzotech.chalkboard.network.NotesNetwork;
 import com.gonzotech.chalkboard.notes.NoteIllustration;
 import com.gonzotech.chalkboard.notes.NoteIllustrationKind;
 import com.gonzotech.chalkboard.notes.NotesState;
+import com.gonzotech.chalkboard.notes.NotesFavorites;
+import java.util.EnumSet;
+import net.neoforged.neoforge.network.PacketDistributor;
 import com.gonzotech.chalkboard.notes.ScholarChapter;
 import com.gonzotech.chalkboard.notes.ScholarNotesContent;
 import com.gonzotech.chalkboard.notes.ScholarPage;
@@ -98,6 +101,14 @@ public class ScholarNotesScreen extends Screen {
     private static final ResourceLocation TEX_TAB_LOCKED =
             ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/notes/notes_locked_tab.png");
 
+    private static final ResourceLocation TEX_FEATURE = ResourceLocation.fromNamespaceAndPath(
+            "gonzotech", "textures/gui/notes/feature_icon.png");
+    private static final ResourceLocation TEX_FEATURED = ResourceLocation.fromNamespaceAndPath(
+            "gonzotech", "textures/gui/notes/featured_icon.png");
+    private static final ResourceLocation TEX_FAVORITE_TAB = ResourceLocation.fromNamespaceAndPath(
+            "gonzotech", "textures/gui/notes/notes_favorite_tab.png");
+    private static final int FEATURE_SIZE = 9;
+
     private static final int INK = 0xFF2B1D0E;
     private static final int INK_FAINT = 0xFF6B5433;
     private static final int TAB_ACTIVE_TINT = 0x66FFFFFF;
@@ -107,6 +118,13 @@ public class ScholarNotesScreen extends Screen {
     private int topPos;
     private int pageIndex;
     private int scroll;
+    // Session-only category filters: never sent to the server or serialized.
+    private final EnumSet<ScholarChapter> favoriteOnly = EnumSet.noneOf(ScholarChapter.class);
+    private double favoriteScroll;
+    private int[] favoriteRect;
+    private List<Component> favoriteTooltip;
+    private final List<int[]> favoriteTabRects = new ArrayList<>();
+    private boolean initialized;
 
     private final List<int[]> tabRects = new ArrayList<>();
     private int[] prevRect;
@@ -141,7 +159,10 @@ public class ScholarNotesScreen extends Screen {
     protected void init() {
         this.leftPos = (this.width - FRAME_W) / 2;
         this.topPos = (this.height - FRAME_H) / 2;
-        this.pageIndex = ScholarNotesContent.firstUnlockedIndex(state());
+        if (!initialized) {
+            this.pageIndex = ScholarNotesContent.firstUnlockedIndex(state());
+            initialized = true;
+        }
         this.scroll = 0;
         this.structureSubpage = 0;
         // Сбрасываем кэш размеров: если автор перерисовал PNG в другом разрешении
@@ -153,8 +174,8 @@ public class ScholarNotesScreen extends Screen {
     /** Актуальное состояние гейтинга страниц из последнего серверного ответа. */
     private NotesState state() {
         NotesNetwork.NotesDataPayload d = NotesNetwork.CLIENT_DATA;
-        if (d == null) return new NotesState(0L, false, false, Set.of());
-        return new NotesState(d.playtimeTicks(), d.tier1Unlocked(), d.tier2Unlocked(),
+        if (d == null) return new NotesState(0L, false, false, false, Set.of());
+        return new NotesState(d.playtimeTicks(), d.tier1Unlocked(), d.tier2Unlocked(), d.tier3Unlocked(),
                 Set.copyOf(d.noteFlags()));
     }
 
@@ -178,14 +199,14 @@ public class ScholarNotesScreen extends Screen {
 
     private int nextUnlocked(int from) {
         for (int i = from + 1; i < ScholarNotesContent.PAGES.size(); i++) {
-            if (sameBook(i) && unlocked(i)) return i;
+            if (navigationVisible(i)) return i;
         }
         return -1;
     }
 
     private int prevUnlocked(int from) {
         for (int i = from - 1; i >= 0; i--) {
-            if (sameBook(i) && unlocked(i)) return i;
+            if (navigationVisible(i)) return i;
         }
         return -1;
     }
@@ -193,9 +214,46 @@ public class ScholarNotesScreen extends Screen {
     private int firstPageOfChapter(ScholarChapter chapter) {
         List<ScholarPage> pages = ScholarNotesContent.PAGES;
         for (int i = 0; i < pages.size(); i++) {
-            if (pages.get(i).chapter() == chapter && unlocked(i)) return i;
+            if (pages.get(i).chapter() == chapter && unlocked(i)
+                    && (!favoriteOnly.contains(chapter) || isFavorite(pages.get(i).number()))) return i;
         }
         return -1;
+    }
+
+    private ScholarChapter activeChapter() { return ScholarNotesContent.PAGES.get(pageIndex).chapter(); }
+
+    private boolean isFavorite(int id) {
+        var data = NotesNetwork.CLIENT_DATA;
+        return data != null && data.favorites().contains(id);
+    }
+
+    private boolean navigationVisible(int idx) {
+        if (!sameBook(idx) || !unlocked(idx)) return false;
+        ScholarPage page = ScholarNotesContent.PAGES.get(idx);
+        if (favoriteOnly.contains(activeChapter())) {
+            return page.chapter() == activeChapter() && isFavorite(page.number());
+        }
+        return !favoriteOnly.contains(page.chapter()) || isFavorite(page.number());
+    }
+
+    private List<Integer> availableFavorites() {
+        var data = NotesNetwork.CLIENT_DATA;
+        if (data == null) return List.of();
+        List<Integer> result = new ArrayList<>();
+        for (int id : data.favorites()) {
+            int idx = ScholarNotesContent.indexOfNumber(id);
+            if (idx >= 0 && unlocked(idx)) result.add(idx);
+        }
+        return result;
+    }
+
+    private void toggleFavoriteFilter() {
+        ScholarChapter chapter = activeChapter();
+        if (!favoriteOnly.remove(chapter)) favoriteOnly.add(chapter);
+        int first = firstPageOfChapter(chapter);
+        if (favoriteOnly.contains(chapter) && !isFavorite(ScholarNotesContent.PAGES.get(pageIndex).number())
+                && first >= 0) gotoPage(first);
+        scroll = 0;
     }
 
     private void gotoPage(int idx) {
@@ -301,7 +359,16 @@ public class ScholarNotesScreen extends Screen {
 
         tooltipComponent = null;
         tooltipStack = null;
+        favoriteTooltip = null;
+        favoriteRect = null;
+        // A server acknowledgement may remove the current favorite while filtering.
+        if (favoriteOnly.contains(activeChapter())
+                && !isFavorite(ScholarNotesContent.PAGES.get(pageIndex).number())) {
+            int first = firstPageOfChapter(activeChapter());
+            if (first >= 0) gotoPage(first);
+        }
 
+        drawFavoriteTabs(g, mouseX, mouseY);
         drawTabs(g, mouseX, mouseY);   // слой 1 — под панелью
         drawFrame(g);                  // слой 2 — панель
         drawArrows(g, mouseX, mouseY); // слой 3 — контент
@@ -309,7 +376,9 @@ public class ScholarNotesScreen extends Screen {
 
         super.render(g, mouseX, mouseY, partialTick);
 
-        if (tooltipStack != null && !tooltipStack.isEmpty()) {
+        if (favoriteTooltip != null) {
+            g.renderComponentTooltip(this.font, favoriteTooltip, mouseX, mouseY);
+        } else if (tooltipStack != null && !tooltipStack.isEmpty()) {
             g.renderTooltip(this.font, tooltipStack, tooltipX, tooltipY);
         } else if (tooltipComponent != null) {
             g.renderTooltip(this.font, tooltipComponent, tooltipX, tooltipY);
@@ -375,7 +444,8 @@ public class ScholarNotesScreen extends Screen {
             // Отдельная книга («Познание мира») отделена разрывом от вкладок эпох.
             if (ch.side()) ty += SIDE_BOOK_GAP;
             boolean isActive = ch == active;
-            boolean available = firstPageOfChapter(ch) >= 0;
+            boolean available = ScholarNotesContent.PAGES.stream().anyMatch(p ->
+                    p.chapter() == ch && ScholarNotesContent.isUnlocked(p, state()));
             boolean hovered = inRect(mouseX, mouseY, tabX, ty, TAB_W, TAB_H);
 
             blit(g, available ? TEX_TAB_UNLOCKED : TEX_TAB_LOCKED, tabX, ty, TAB_W, TAB_H);
@@ -451,10 +521,17 @@ public class ScholarNotesScreen extends Screen {
             return;
         }
 
-        // Заголовок — жирный (пустые страницы-иллюстрации заголовка не имеют).
-        if (page.titleKey() != null) {
-            Component title = Component.translatable(page.titleKey()).withStyle(ChatFormatting.BOLD);
-            g.drawString(this.font, title, contentX, contentY, INK, false);
+        drawFavoriteHeader(g, page, contentX, contentY, pageInnerW, mouseX, mouseY);
+        if (favoriteOnly.contains(page.chapter()) && !isFavorite(page.number())) {
+            cancelSketchPlayback();
+            bodyContentHeight = 0;
+            int emptyY = contentY + 20;
+            for (var line : this.font.split(Component.translatable("gui.gonzotech.notes.favorites.empty"), pageInnerW)) {
+                g.drawString(this.font, line, contentX, emptyY, INK_FAINT, false);
+                emptyY += this.font.lineHeight + 1;
+            }
+            drawPageCounter(g, "0 / 0");
+            return;
         }
 
         // Тело (если есть).
@@ -499,8 +576,78 @@ public class ScholarNotesScreen extends Screen {
         drawShowcase(g, page, mouseX, mouseY);
 
         String pageLabel = (visibleOrdinal(pageIndex) + 1) + " / " + visibleCount();
-        int pw = this.font.width(pageLabel);
-        g.drawString(this.font, pageLabel, leftPos + (FRAME_W - pw) / 2, topPos + FRAME_H - 12, INK_FAINT, false);
+        drawPageCounter(g, pageLabel);
+    }
+
+    private void drawPageCounter(GuiGraphics g, String label) {
+        g.drawString(this.font, label, leftPos + (FRAME_W - this.font.width(label)) / 2,
+                topPos + FRAME_H - 12, INK_FAINT, false);
+    }
+
+    private void drawFavoriteHeader(GuiGraphics g, ScholarPage page, int x, int y, int width,
+                                    int mouseX, int mouseY) {
+        String text = page.titleKey() == null ? "" : Component.translatable(page.titleKey()).getString();
+        String shown = text;
+        int maxTitle = width - FEATURE_SIZE - 4;
+        while (!shown.isEmpty() && this.font.width(Component.literal(shown).withStyle(ChatFormatting.BOLD)) > maxTitle) {
+            // Reserve the ellipsis too, not just the original title's width.
+            String base = shown.endsWith("…") ? shown.substring(0, shown.length() - 1) : shown;
+            shown = base.length() <= 1 ? "" : base.substring(0, base.length() - 1) + "…";
+        }
+        Component title = Component.literal(shown).withStyle(ChatFormatting.BOLD);
+        if (!shown.isEmpty()) g.drawString(this.font, title, x, y, INK, false);
+        int fx = x + (shown.isEmpty() ? 0 : this.font.width(title) + 4);
+        boolean saved = isFavorite(page.number());
+        blit(g, saved ? TEX_FEATURED : TEX_FEATURE, fx, y, FEATURE_SIZE, FEATURE_SIZE);
+        favoriteRect = new int[]{fx, y, FEATURE_SIZE, FEATURE_SIZE};
+        if (inRect(mouseX, mouseY, favoriteRect)) {
+            favoriteTooltip = List.of(
+                    Component.translatable("gui.gonzotech.notes.favorites." + (saved ? "saved" : "add")).withStyle(ChatFormatting.WHITE),
+                    Component.translatable("gui.gonzotech.notes.favorites." + (saved ? "remove_click" : "add_click")).withStyle(ChatFormatting.GRAY),
+                    Component.translatable("gui.gonzotech.notes.favorites." +
+                            (favoriteOnly.contains(page.chapter()) ? "show_all_click" : "only_click")).withStyle(ChatFormatting.GRAY));
+        }
+    }
+
+    /** 14px ribbons, 4px gaps; raster alpha is baked into GUI vertices (not shader state). */
+    private void drawFavoriteTabs(GuiGraphics g, int mouseX, int mouseY) {
+        favoriteTabRects.clear();
+        List<Integer> favorites = availableFavorites();
+        favoriteScroll = NotesFavorites.clampScroll(favoriteScroll, favorites.size(), FRAME_H);
+        double maxScroll = NotesFavorites.maxScroll(favorites.size(), FRAME_H);
+        int x = leftPos + FRAME_W - 6;
+        g.enableScissor(x, topPos, x + TAB_W, topPos + FRAME_H);
+        // Iterate only the visible range, plus the two possible partially clipped ribbons.
+        int first = Math.max(0, (int) (favoriteScroll / NotesFavorites.STEP));
+        int end = Math.min(favorites.size(), first + FRAME_H / NotesFavorites.STEP + 2);
+        for (int i = first; i < end; i++) {
+            int idx = favorites.get(i);
+            int y = topPos + (int) Math.floor(i * NotesFavorites.STEP - favoriteScroll);
+            for (int row = 0; row < NotesFavorites.FLAG_HEIGHT; row++) {
+                int relativeY = y + row - topPos;
+                if (relativeY < 0 || relativeY >= FRAME_H) continue;
+                int alpha = Math.round(255 * NotesFavorites.edgeAlpha(relativeY, FRAME_H, favoriteScroll, maxScroll));
+                int rgb = idx == pageIndex ? 0xFFFFFF : 0xE2CCB1;
+                g.blit(RenderType::guiTextured, TEX_FAVORITE_TAB, x, y + row, 0f, (float) row,
+                        TAB_W, 1, TAB_W, 1, TAB_W, NotesFavorites.FLAG_HEIGHT, (alpha << 24) | rgb);
+            }
+            int hitTop = Math.max(topPos, y);
+            int hitBottom = Math.min(topPos + FRAME_H, y + NotesFavorites.FLAG_HEIGHT);
+            if (hitBottom > hitTop) {
+                // Panel hides the first six pixels; they must not be clickable through it.
+                int[] rect = {leftPos + FRAME_W, hitTop, TAB_W - 6, hitBottom - hitTop, idx};
+                favoriteTabRects.add(rect);
+                if (inRect(mouseX, mouseY, rect)) {
+                    ScholarPage page = ScholarNotesContent.PAGES.get(idx);
+                    tooltipComponent = page.titleKey() == null
+                            ? Component.translatable("gui.gonzotech.notes.favorites.untitled", page.number())
+                            : Component.translatable(page.titleKey());
+                    tooltipX = mouseX;
+                    tooltipY = mouseY;
+                }
+            }
+        }
+        g.disableScissor();
     }
 
     /**
@@ -1067,6 +1214,23 @@ public class ScholarNotesScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 || button == 1) {
+            for (int[] r : favoriteTabRects) {
+                if (inRect((int) mouseX, (int) mouseY, r)) {
+                    gotoPage(r[4]);
+                    return true;
+                }
+            }
+            if (favoriteRect != null && inRect((int) mouseX, (int) mouseY, favoriteRect)) {
+                if (button == 1) {
+                    toggleFavoriteFilter();
+                } else if (NotesNetwork.CLIENT_DATA != null) {
+                    int id = ScholarNotesContent.PAGES.get(pageIndex).number();
+                    PacketDistributor.sendToServer(new NotesNetwork.FavoriteNotePayload(id, !isFavorite(id)));
+                }
+                return true;
+            }
+        }
         // Панель структуры (навигация подстраниц) — до вкладок и стрелок буклета.
         NoteIllustration il = ScholarNotesContent.PAGES.get(pageIndex).illustration();
         if (il != null && (il.structure() != null || il.deckView() != null)) {
@@ -1092,6 +1256,11 @@ public class ScholarNotesScreen extends Screen {
                 if (inRect((int) mouseX, (int) mouseY, r[0], r[1], r[2], r[3])) {
                     ScholarChapter ch = ScholarChapter.values()[r[4]];
                     int target = firstPageOfChapter(ch);
+                    if (target < 0 && favoriteOnly.contains(ch)) {
+                        for (int i = 0; i < ScholarNotesContent.PAGES.size(); i++) {
+                            if (ScholarNotesContent.PAGES.get(i).chapter() == ch && unlocked(i)) { target = i; break; }
+                        }
+                    }
                     if (target >= 0) gotoPage(target);
                     return true;
                 }
@@ -1112,6 +1281,11 @@ public class ScholarNotesScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (inRect((int) mouseX, (int) mouseY, leftPos + FRAME_W, topPos, TAB_W - 6, FRAME_H)) {
+            favoriteScroll = NotesFavorites.clampScroll(favoriteScroll - scrollY * NotesFavorites.STEP,
+                    availableFavorites().size(), FRAME_H);
+            return true;
+        }
         int overflow = bodyContentHeight - (bodyViewBottom - bodyViewTop);
         if (overflow > 0) {
             scroll -= (int) (scrollY * (this.font.lineHeight + 1) * 2);
@@ -1230,16 +1404,16 @@ public class ScholarNotesScreen extends Screen {
     private int visibleCount() {
         int c = 0;
         for (int i = 0; i < ScholarNotesContent.PAGES.size(); i++) {
-            if (sameBook(i) && unlocked(i)) c++;
+            if (navigationVisible(i)) c++;
         }
-        return Math.max(1, c);
+        return c;
     }
 
     /** Позиция открытой страницы среди открытых страниц ЕЁ книги (0-based). */
     private int visibleOrdinal(int idx) {
         int c = 0;
         for (int i = 0; i < idx; i++) {
-            if (sameBook(i) && unlocked(i)) c++;
+            if (navigationVisible(i)) c++;
         }
         return c;
     }

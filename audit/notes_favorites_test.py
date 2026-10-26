@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""0.3.308 source/resource contracts, NOT a Java or in-game execution claim.
+
+The pure Java gate/order/scroll behavior also lives in notes_model_test.py.
+These checks deliberately still run when that compile gate is SKIP(no JDK).
+"""
+from pathlib import Path
+import json
+import re
+import struct
+import zlib
+
+ROOT = Path(__file__).resolve().parents[1]
+JAVA = ROOT / "src/main/java/com/gonzotech"
+RES = ROOT / "src/main/resources/assets/gonzotech"
+
+def text(path):
+    return (JAVA / path).read_text()
+
+creative = text("core/registry/ModCreativeTabs.java")
+second = creative.index("ModMachines.SECOND_GRINDER_ITEM.get()")
+tap = creative.index("ModMachines.THIRD_DISPENSING_TAP_ITEM.get()")
+silicon = creative.index("ModItems.THIRD_SILICON_FACTORY.get()")
+for machine in ("THIRD_GRINDER", "PLOTNICK", "WORK_BLOCK", "SEISMIC_SOURCE", "GEOPHONE", "MINER_DRILL", "BORE_PIPE"):
+    needle = f"ModMachines.{machine}_ITEM.get()"
+    assert creative.count(needle) == 1, machine
+    assert second < tap < creative.index(needle) < silicon, machine
+
+content = text("chalkboard/notes/ScholarNotesContent.java")
+ids = [int(x) for x in re.findall(r"new ScholarPage\((\d+),", content)]
+assert len(ids) == 51 and sorted(ids) == list(range(1, 52))
+# Original IDs retain relative order: saved favorites and the sketch trigger do not shift.
+assert [id for id in ids if id <= 44] == list(range(1, 45))
+assert ids.index(34) < ids.index(45) < ids.index(46) < ids.index(47) < ids.index(48) < ids.index(49) < ids.index(50) < ids.index(36)
+assert ids[-1] == 51
+for id, gate in [(45, "PLAYTIME_1H"), (46, "PLAYTIME_1H"), (47, "PLAYTIME_1H"), (48, "PLAYTIME_1H"),
+                 (49, "FLAG_COBBLESTONE"), (50, "PLAYTIME_2H"), (51, "NECROSIS_AND_DISCOVERY_3")]:
+    assert f"new ScholarPage({id}, ScholarChapter.ERA_2, ScholarUnlock.{gate}," in content
+necrosis = content.split("new ScholarPage(51,", 1)[1].split("    );", 1)[0]
+assert "List.of(), Layout.TEXT_FULL, null" in necrosis
+unlock = text("chalkboard/notes/ScholarUnlock.java")
+assert "state.playtimeTicks() >= 60L * 60L * 20L" in unlock
+assert "state.playtimeTicks() >= 2L * 60L * 60L * 20L" in unlock
+assert re.search(r"case NECROSIS_AND_DISCOVERY_3 -> state.hasFlag\(ScholarNoteFlags.NECROSIS\)\s*&& state.tier3Unlocked\(\)", unlock)
+events = text("core/event/NotesKnowledgeEvents.java")
+assert "ItemEntityPickupEvent.Post" in events and "event.getOriginalStack().is(Items.COBBLESTONE)" in events
+assert "MobEffectEvent.Added" in events and "player.hasEffect(ModEffects.NECROSIS)" in events
+assert "player.setData(ModAttachments.CHALKBOARD_PROGRESS, progress);" in events
+assert "NotesNetwork.sendToPlayer(player);" in events
+assert "addEffect(" not in events and "removeEffect(" not in events
+
+progress = text("chalkboard/progress/PlayerChalkboardProgress.java")
+assert 'Codec.INT.listOf().optionalFieldOf("favoriteNotes", List.of())' in progress
+assert "NotesFavorites favoriteNotes" in progress
+assert "getFavoriteNotes()" in progress and "favoriteNotes.pages()" in progress
+attachments = text("chalkboard/progress/ModAttachments.java")
+assert ".serialize(PlayerChalkboardProgress.CODEC)" in attachments and ".copyOnDeath()" in attachments
+model = text("chalkboard/notes/NotesFavorites.java")
+assert "List<Integer> ids = new ArrayList<>()" in model
+assert "List.copyOf(ids)" in model
+assert "if (ids.contains(id)) return false;" in model
+assert "ids.remove(Integer.valueOf(id))" in model
+assert "ScholarNotesContent.indexOfNumber(id) < 0" in model
+assert "FLAG_HEIGHT = 14" in model and "GAP = 4" in model
+assert "Math.max(0, Math.min(scroll, maxScroll" in model
+assert "if (scroll > 0)" in model and "if (scroll < maxScroll)" in model
+
+network = text("chalkboard/network/NotesNetwork.java")
+assert "record FavoriteNotePayload(int pageId, boolean favorite)" in network
+assert 'PayloadThrottle.allow(player, "notesFavorite", 20)' in network
+assert "if (index < 0) return;" in network
+assert "payload.favorite() && !" in network and "ScholarNotesContent.isUnlocked(" in network
+assert "progress.setFavoriteNote(payload.pageId(), payload.favorite())" in network
+assert "count < 0 || count >" in network
+assert "NotesDataPayload::tier3Unlocked" in network and "progress.isRecipeTierUnlocked(3)" in network
+assert "NotesDataPayload::favorites" in network and "progress.getFavoriteNotes()" in network
+assert "favoriteOnly" not in network and "favoriteOnly" not in progress
+session = text("chalkboard/client/NotesClientSession.java")
+assert "ClientPlayerNetworkEvent.LoggingOut" in session and "NotesNetwork.CLIENT_DATA = null" in session
+
+screen = text("chalkboard/client/ScholarNotesScreen.java")
+assert "FEATURE_SIZE = 9" in screen
+assert "EnumSet<ScholarChapter> favoriteOnly = EnumSet.noneOf" in screen
+assert "static final EnumSet" not in screen
+assert "firstPageOfChapter" in screen and "favoriteOnly.contains(chapter)" in screen
+assert "drawPageCounter(g, \"0 / 0\")" in screen
+assert "button == 0 || button == 1" in screen
+assert "gotoPage(r[4]);" in screen
+assert "new NotesNetwork.FavoriteNotePayload(id, !isFavorite(id))" in screen
+assert "favoriteOnly.remove(chapter)" in screen and "favoriteOnly.add(chapter)" in screen
+assert "NotesFavorites.clampScroll(favoriteScroll - scrollY * NotesFavorites.STEP" in screen
+scroll_handler = screen.split("public boolean mouseScrolled(", 1)[1].split("private void clampScroll", 1)[0]
+assert scroll_handler.index("favoriteScroll") < scroll_handler.index("bodyContentHeight")
+assert "g.enableScissor(x, topPos, x + TAB_W, topPos + FRAME_H)" in screen
+assert "NotesFavorites.edgeAlpha(" in screen and "(alpha << 24) | rgb" in screen
+assert "setShaderColor" not in screen
+assert "page.chapter() == activeChapter() && isFavorite(page.number())" in screen
+assert "Shader" not in model
+
+for lang in ("ru_ru", "en_us"):
+    data = json.loads((RES / f"lang/{lang}.json").read_text())
+    for key in ("debris", "waste", "sculk", "moss", "monolith", "pet_bowl", "necrosis"):
+        assert data[f"gui.gonzotech.notes.{key}.title"]
+        assert len(data[f"gui.gonzotech.notes.{key}.body"]) > 100
+    for key in ("add", "saved", "add_click", "remove_click", "only_click", "show_all_click", "empty"):
+        assert data[f"gui.gonzotech.notes.favorites.{key}"]
+    assert "/n" not in data["gui.gonzotech.notes.favorites.only_click"]
+
+# Validate small placeholder PNG dimensions + actual alpha, without requiring Pillow.
+def png_pixels(name, expected):
+    raw = (RES / f"textures/gui/notes/{name}").read_bytes()
+    assert raw[:8] == b"\x89PNG\r\n\x1a\n"
+    w, h, depth, color = struct.unpack(">IIBB", raw[16:26])
+    assert (w, h) == expected and depth == 8 and color == 6
+    offset = 8
+    compressed = b""
+    while offset < len(raw):
+        size = struct.unpack(">I", raw[offset:offset+4])[0]
+        kind = raw[offset+4:offset+8]
+        if kind == b"IDAT": compressed += raw[offset+8:offset+8+size]
+        offset += size + 12
+    pixels = zlib.decompress(compressed)
+    assert len(pixels) == h * (w * 4 + 1)
+    assert all(pixels[y * (w * 4 + 1)] == 0 for y in range(h)), "placeholder filter"
+    alphas = [pixels[y * (w * 4 + 1) + 1 + x * 4 + 3] for y in range(h) for x in range(w)]
+    assert 0 in alphas and 255 in alphas
+    return pixels
+assert png_pixels("feature_icon.png", (9, 9)) != png_pixels("featured_icon.png", (9, 9))
+png_pixels("notes_favorite_tab.png", (28, 14))
+print("notes pages / gates / creative order / persistent favorites / UI / placeholder contracts passed")

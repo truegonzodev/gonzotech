@@ -121,13 +121,6 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ELECTRIC_FURNACE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ALLOY_FOUNDRY_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_GRINDER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_GRINDER_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.PLOTNICK_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.WORK_BLOCK_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.SEISMIC_SOURCE_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.GEOPHONE_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.MINER_DRILL_ITEM.get());
-                output.accept(com.gonzotech.machines.registry.ModMachines.BORE_PIPE_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_PRESS_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_LUMBER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SECOND_ITEM_FILTER_ITEM.get());
@@ -168,6 +161,14 @@ public class ModCreativeTabs {
                 output.accept(ModItems.AIR_CLEANER_ITEM.get());
                 output.accept(ModItems.AIR_FILTER_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
+                // 0.3.308: переработка и автошахтер — группа открытия III, рядом с краном.
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_GRINDER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.PLOTNICK_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.WORK_BLOCK_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.SEISMIC_SOURCE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.GEOPHONE_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.MINER_DRILL_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.BORE_PIPE_ITEM.get());
                 // Литографическая фабрика (эпоха 3) — блок/машина подключаются следующим шагом.
                 output.accept(ModItems.THIRD_SILICON_FACTORY.get());
                 // ПЦФСОЗ (0.3.109, автор) — возле литографа, не возле ЦФ1УР.

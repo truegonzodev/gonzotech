@@ -42,7 +42,11 @@ public enum ScholarUnlock {
      * И активировал «Открытие 2». Страница с солнечными часами открывается по нему
      * же, что и физический крафт часов.
      */
-    SUN_EVENT_AND_DISCOVERY_2;
+    SUN_EVENT_AND_DISCOVERY_2,
+    PLAYTIME_1H,
+    PLAYTIME_2H,
+    FLAG_COBBLESTONE,
+    NECROSIS_AND_DISCOVERY_3;
 
     /** Порог наигранного времени в тиках для {@link #PLAYTIME_5MIN}. */
     public static final long PLAYTIME_THRESHOLD_TICKS = 5L * 60L * 20L; // 5 мин
@@ -51,6 +55,11 @@ public enum ScholarUnlock {
     public boolean isMet(NotesState state) {
         return switch (this) {
             case ALWAYS -> true;
+            case PLAYTIME_1H -> state.playtimeTicks() >= 60L * 60L * 20L;
+            case PLAYTIME_2H -> state.playtimeTicks() >= 2L * 60L * 60L * 20L;
+            case FLAG_COBBLESTONE -> state.hasFlag(ScholarNoteFlags.COBBLESTONE);
+            case NECROSIS_AND_DISCOVERY_3 -> state.hasFlag(ScholarNoteFlags.NECROSIS)
+                    && state.tier3Unlocked();
             case PLAYTIME_5MIN -> state.playtimeTicks() >= PLAYTIME_THRESHOLD_TICKS;
             case DISCOVERY_1 -> state.tier1Unlocked();
             case DISCOVERY_2 -> state.tier2Unlocked();
