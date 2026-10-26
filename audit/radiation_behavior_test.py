@@ -24,7 +24,7 @@ dtpa = read("radiation/DtpaItem.java")
 pentacin = read("radiation/PentacinItem.java")
 cysteamine = read("radiation/CysteamineItem.java")
 absorbent = read("radiation/RadAbsorbentItem.java")
-docs = (ROOT / "docs/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
+docs = (ROOT / "docs/archive/legacy-0.3.311/RADIATION-BEHAVIOR-0.3.232.md").read_text(encoding="utf-8")
 # 0.3.272: серверный дебаггер — дельта серверной суммы на клик + лог проходов.
 cfg = (ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java").read_text(encoding="utf-8")
 assert "radiationInventoryDebug" in cfg

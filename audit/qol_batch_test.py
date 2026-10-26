@@ -90,7 +90,7 @@ assert "source instanceof TunnelPrimedTnt" in explosives
 assert "emitDirectionalExplosionParticles(serverLevel)" in read("core/block/TunnelPrimedTnt.java")
 
 # The two resolved design questions are documented: no extra clue cost and no hardcore death patch.
-deferred = (ROOT / "docs/DEFERRED-2026-09-22.md").read_text(encoding="utf-8")
+deferred = (ROOT / "docs/archive/legacy-0.3.311/DEFERRED-2026-09-22.md").read_text(encoding="utf-8")
 assert "отдельной цены нет" in deferred and "смерть" in deferred and "перманентна" in deferred
 assert "Туннельный TNT" in load(ASSETS / "lang/ru_ru.json").values()
 

@@ -160,8 +160,8 @@ pin(set(advancements["forbidden_bath"]["criteria"]) == {"converted_while_submerg
     and advancements["forbidden_bath"]["criteria"]["converted_while_submerged"]["trigger"] == "minecraft:impossible",
     "forbidden-bath is only awarded for the actual submerged-player conversion event")
 
-updated_notes = (ROOT / "docs/UPDATED_TEMP_NOTES.md").read_text(encoding="utf-8")
-deferred = (ROOT / "docs/DEFERRED-2026-09-22.md").read_text(encoding="utf-8")
+updated_notes = (ROOT / "docs/archive/legacy-0.3.311/UPDATED_TEMP_NOTES.md").read_text(encoding="utf-8")
+deferred = (ROOT / "docs/archive/legacy-0.3.311/DEFERRED-2026-09-22.md").read_text(encoding="utf-8")
 for old_open in ("Выкуси", "Выкуси нахрен", "Слон в посудной лавке", "Счастье",
                  "Босс KFC", "Ферментация"):
     pin(old_open in deferred,

@@ -78,7 +78,7 @@ for source, name in ((ruins, "ruins"), (waste, "waste")):
     check(candidate.index("double chanceRoll") < candidate.index("findGroundY"),
           f"{name} candidate reads terrain before its maximum-rate fast rejection")
 
-baseline = (ROOT / "docs/WORLDGEN-SURFACE-RUINS.md").read_text(encoding="utf-8")
+baseline = (ROOT / "docs/archive/legacy-0.3.311/WORLDGEN-SURFACE-RUINS.md").read_text(encoding="utf-8")
 check("bb4dea7161f79ce3eb2a4d845a1fccaa721a9cfc" in baseline
       and "int depth = 1 + (int) Math.floor(2.0" in baseline
       and "1 / 444" in baseline,

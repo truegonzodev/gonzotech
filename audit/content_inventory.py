@@ -16,7 +16,7 @@ import re
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / 'src/main/resources'
 SRC = ROOT / 'src/main/java'
-OUTPUT = ROOT / 'docs/CONTENT-INVENTORY-2026-09-27.csv'
+OUTPUT = ROOT / 'audit/reports/content-inventory.csv'
 SPECIAL = {'alloy_' + part for part in ('boots','chestplate','helmet','leggings','pickaxe','sword')}
 
 
@@ -93,5 +93,6 @@ if __name__ == '__main__':
             raise SystemExit('Inventory changed: regenerate and review audit classifications')
         print('Inventory snapshot is current')
     else:
+        OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT.write_text(text, encoding='utf-8')
         print(OUTPUT.relative_to(ROOT))

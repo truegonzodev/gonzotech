@@ -1,0 +1,844 @@
+{
+  "schema": 1,
+  "source_commit": "42730c304bd48d0f2b90496df5f799350a630c18",
+  "code_version": "0.3.311",
+  "date": "2026-10-27",
+  "files": [
+    {
+      "original": "docs/ALLOY_SYSTEM_DESIGN.md",
+      "archived": "docs/archive/legacy-0.3.311/ALLOY_SYSTEM_DESIGN.md",
+      "sha256": "61d4a96e9b6cee60a8451eb87c2b43cdcc40528529f0f1ecd1b1b87c480b26c0",
+      "bytes": 16583,
+      "destinations": [
+        "docs/MATERIALS.md",
+        "docs/EQUIPMENT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/ALLOY_TINT_PALETTE.md",
+      "archived": "docs/archive/legacy-0.3.311/ALLOY_TINT_PALETTE.md",
+      "sha256": "fe41a70a883e8ff557eb9f67f1b8abea8c68ad5a9829120a603fd36cf4cfb6e9",
+      "bytes": 3402,
+      "destinations": [
+        "docs/MATERIALS.md",
+        "docs/EQUIPMENT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-21.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-21.md",
+      "sha256": "e31c1ddf0acae481879000fc142d2d37ad7a8f2bded687dbea683f34d6eee1d9",
+      "bytes": 311284,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-24.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-24.md",
+      "sha256": "9690b32d67824d64c8a3b65b6babbe8a876d5a9c52108fe6c90330a759d036ed",
+      "bytes": 36122,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-25-CLEANROOM.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-25-CLEANROOM.md",
+      "sha256": "10342418c09cd92fa2df60a63709a811bd6988ba467e7c1d60863f20885e909b",
+      "bytes": 21596,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-25.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-25.md",
+      "sha256": "04d762f1836677bca290f3af57868370c0858c43fecb420fba97df7010a276d9",
+      "bytes": 21939,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-26-AIR-FILTER.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-26-AIR-FILTER.md",
+      "sha256": "73cc809c3d969b42c993d3992906c42dbdd89d5b8698b2226debebd3308aa2fa",
+      "bytes": 7680,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-26-ALCOHOL.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-26-ALCOHOL.md",
+      "sha256": "237986da2f914957933ba756aa905473cb6b5c88808b0153ab9eeb4233bc3802",
+      "bytes": 9773,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-26-CONTOURS.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-26-CONTOURS.md",
+      "sha256": "0b83d646288761dde7858ff9951cfd42fe67f7ee54981a49816ad0e3415a1260",
+      "bytes": 14309,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-26-FLUID-FOAM.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-26-FLUID-FOAM.md",
+      "sha256": "642a19018c80312341fc470232c3bde4469a042d542b1c7d53c782f603095212",
+      "bytes": 9047,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-26-TOOLTIPS.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-26-TOOLTIPS.md",
+      "sha256": "e7ed91c92ac0a38c204d976c06bdbaceed5ce4321d5defe605a2e704a116481c",
+      "bytes": 6058,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-27-FAINT-UI.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-27-FAINT-UI.md",
+      "sha256": "e596d29aa8c69c558c7224346b7c7f2ca7e2e27d7d0eb07d1897111f9dcc4d85",
+      "bytes": 3517,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-27-FOLLOWUP.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-27-FOLLOWUP.md",
+      "sha256": "80fbd0d1a14803bd9fb5966d81b248b69116583c3fa1be53f21d9b74b8b355b8",
+      "bytes": 15752,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-27-GUI.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-27-GUI.md",
+      "sha256": "c487af85a000e0301d17379a76775310aa0a6b1bf3ab20173262a54fbef8d27d",
+      "bytes": 3439,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-27-SECOND-PASS.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-27-SECOND-PASS.md",
+      "sha256": "9824e44eeb5dcc6eec370ee1c071f39f0da54e63b10f50c3766b7d796577a6bf",
+      "bytes": 11688,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-09-27.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-09-27.md",
+      "sha256": "2f6cf056c8bac3a07c68363046638b61f31eb2dfd4dcf5ff5ef1825ecb5fdf49",
+      "bytes": 40479,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-2026-10-22-PLOTNICK-REREVIEW.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-2026-10-22-PLOTNICK-REREVIEW.md",
+      "sha256": "e12cac7280d7944f5f80f7ec92885ef5db5fc637d3aadb4f53eaa456a3b5a712",
+      "bytes": 208280,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-42-REVALIDATION-2026-10-26.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-42-REVALIDATION-2026-10-26.md",
+      "sha256": "55288d688dfc0a4d71e693107758b551b966d942cb4320a3deb142078dfdda4c",
+      "bytes": 12052,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUDIT-CURRENT.md",
+      "archived": "docs/archive/legacy-0.3.311/AUDIT-CURRENT.md",
+      "sha256": "c308e6e16fd671dd35cf992c75654eea897562195594cf55853f0cb3f9fd0136",
+      "bytes": 258351,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/AUTOMINER-DESIGN-0.3.255.md",
+      "archived": "docs/archive/legacy-0.3.311/AUTOMINER-DESIGN-0.3.255.md",
+      "sha256": "5ff31573014428f7da133ab1966f6efa90a1a06985eca46202f4bba00e65208b",
+      "bytes": 16166,
+      "destinations": [
+        "docs/AUTOMINER.md",
+        "docs/DEFFERED.md"
+      ]
+    },
+    {
+      "original": "docs/CONTENT-INVENTORY-2026-09-27.csv",
+      "archived": "docs/archive/legacy-0.3.311/CONTENT-INVENTORY-2026-09-27.csv",
+      "sha256": "29974c23978368418be5d430e5d50dabce26a681a567bb7cbd5f253a733213b7",
+      "bytes": 122814,
+      "destinations": [
+        "docs/AUDIT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/DEFERRED-2026-09-22.md",
+      "archived": "docs/archive/legacy-0.3.311/DEFERRED-2026-09-22.md",
+      "sha256": "eacba8f7e28e53eaeace623157f9656f3d0d5c0f6f7b7f1792dd5741af903793",
+      "bytes": 74909,
+      "destinations": [
+        "docs/DEFFERED.md",
+        "docs/PROGRESSION.md",
+        "docs/AUTHORS-NOTES.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/DRUG-DESCRIPTIONS-2026-09-24.md",
+      "archived": "docs/archive/legacy-0.3.311/DRUG-DESCRIPTIONS-2026-09-24.md",
+      "sha256": "ca16163e48a98157b26b0a62a553ad5b24296007dec08e66c7856a8ebb612ecc",
+      "bytes": 3710,
+      "destinations": [
+        "docs/PSYCHE.md",
+        "docs/RAD_WORLD.md"
+      ]
+    },
+    {
+      "original": "docs/EPOCH3-BASE-2026-09-22.md",
+      "archived": "docs/archive/legacy-0.3.311/EPOCH3-BASE-2026-09-22.md",
+      "sha256": "ab358d2d807bc16ceb8c61ddf4054d615306e78f851855b35a8cc10238b6ba8c",
+      "bytes": 58183,
+      "destinations": [
+        "docs/DEFFERED.md",
+        "docs/PROGRESSION.md",
+        "docs/AUTHORS-NOTES.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/EPOCH3-BRAINSTORM-2026-09-22.md",
+      "archived": "docs/archive/legacy-0.3.311/EPOCH3-BRAINSTORM-2026-09-22.md",
+      "sha256": "1eb8544ebc1f00c71baead025d41cfd6d7ba09d696f3ddb858095b43c9f2a224",
+      "bytes": 53584,
+      "destinations": [
+        "docs/DEFFERED.md",
+        "docs/PROGRESSION.md",
+        "docs/AUTHORS-NOTES.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/EPOCH3-LITHOGRAPHY-PLAN-2026-09-26.md",
+      "archived": "docs/archive/legacy-0.3.311/EPOCH3-LITHOGRAPHY-PLAN-2026-09-26.md",
+      "sha256": "088aaf070d165df2a1c2dc900b2130a81790bd865f91814e9f6d41ea24f7dedf",
+      "bytes": 36377,
+      "destinations": [
+        "docs/DEFFERED.md",
+        "docs/PROGRESSION.md",
+        "docs/AUTHORS-NOTES.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/FLUID-PARTICLES-REVIEW-2026-09-26.md",
+      "archived": "docs/archive/legacy-0.3.311/FLUID-PARTICLES-REVIEW-2026-09-26.md",
+      "sha256": "69557746c02ba48b71f2e56cbebe7422fd38515c8c4689d425af499602d97367",
+      "bytes": 4784,
+      "destinations": [
+        "docs/AUDIT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/GREATSWORD-AUDIT-ROADMAP.md",
+      "archived": "docs/archive/legacy-0.3.311/GREATSWORD-AUDIT-ROADMAP.md",
+      "sha256": "eb50a0285dbfbf1641f03b21db04ceebab86ecb817c215fd67c88a7255837390",
+      "bytes": 16486,
+      "destinations": [
+        "docs/MATERIALS.md",
+        "docs/EQUIPMENT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/GUI-TEXTURE-CONVENTION.md",
+      "archived": "docs/archive/legacy-0.3.311/GUI-TEXTURE-CONVENTION.md",
+      "sha256": "43444618002d3acf3844bb1363646834581757639b10042353197bea1975edba",
+      "bytes": 2947,
+      "destinations": [
+        "docs/RULES.md",
+        "docs/SUPER_CRUCIAL_FILE.md"
+      ]
+    },
+    {
+      "original": "docs/HEAVY-DOOR-2026-09-22.md",
+      "archived": "docs/archive/legacy-0.3.311/HEAVY-DOOR-2026-09-22.md",
+      "sha256": "8d25d1f84be2297c4c8f95a252bdfe37e0e09d7b47b8b788519c700a22e76ead",
+      "bytes": 37123,
+      "destinations": [
+        "docs/MACHINES.md",
+        "docs/RAD_WORLD.md"
+      ]
+    },
+    {
+      "original": "docs/ITEM-RADIATION-CURRENT.md",
+      "archived": "docs/archive/legacy-0.3.311/ITEM-RADIATION-CURRENT.md",
+      "sha256": "e557ecc220609829f4bc50d878d892be08407f936e527b5c6b026833d581be80",
+      "bytes": 28176,
+      "destinations": [
+        "docs/RAD_ITEMS.md",
+        "docs/RAD_WORLD.md",
+        "docs/HISTORY.md",
+        "docs/AUDIT.md"
+      ]
+    },
+    {
+      "original": "docs/ITEM-RADIATION-ENGINE-0.3.306.md",
+      "archived": "docs/archive/legacy-0.3.311/ITEM-RADIATION-ENGINE-0.3.306.md",
+      "sha256": "48af15187175e3b7baaf888468c1f4408f34542d81cd1f87dfa675dc2f588a54",
+      "bytes": 14005,
+      "destinations": [
+        "docs/RAD_ITEMS.md",
+        "docs/RAD_WORLD.md",
+        "docs/HISTORY.md",
+        "docs/AUDIT.md"
+      ]
+    },
+    {
+      "original": "docs/ITEM-RADIATION-MERGE-0.3.311.md",
+      "archived": "docs/archive/legacy-0.3.311/ITEM-RADIATION-MERGE-0.3.311.md",
+      "sha256": "da5c0592e8aa62de7289a3029e69da90172a213a95efd9c20122888d19c5b058",
+      "bytes": 6634,
+      "destinations": [
+        "docs/RAD_ITEMS.md",
+        "docs/RAD_WORLD.md",
+        "docs/HISTORY.md",
+        "docs/AUDIT.md"
+      ]
+    },
+    {
+      "original": "docs/JEI-MACHINES.md",
+      "archived": "docs/archive/legacy-0.3.311/JEI-MACHINES.md",
+      "sha256": "7dc3e9ef5a7082ea91634b4331ec1cc0779e77c2dff9b2a193addca3c5007ff3",
+      "bytes": 11812,
+      "destinations": [
+        "docs/JEI.md",
+        "docs/AUDIT.md"
+      ]
+    },
+    {
+      "original": "docs/JEI-RECIPE-INVENTORY.md",
+      "archived": "docs/archive/legacy-0.3.311/JEI-RECIPE-INVENTORY.md",
+      "sha256": "d1ce22fef32f9bc5e337719a0999140335736040855eb4e29781f5bca764b109",
+      "bytes": 9061,
+      "destinations": [
+        "docs/JEI.md",
+        "docs/AUDIT.md"
+      ]
+    },
+    {
+      "original": "docs/METAL-CHAINS-2026-09-27.md",
+      "archived": "docs/archive/legacy-0.3.311/METAL-CHAINS-2026-09-27.md",
+      "sha256": "da67f9e7558c03e8aa580fde03bd43a314c14d5fc845384c09c7bdd260a9d5a6",
+      "bytes": 19889,
+      "destinations": [
+        "docs/MATERIALS.md",
+        "docs/EQUIPMENT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/MUSIC-CONTEXTS-0.3.233.md",
+      "archived": "docs/archive/legacy-0.3.311/MUSIC-CONTEXTS-0.3.233.md",
+      "sha256": "583e7e39265db449f26f86b2486e639557498fbbb5142b8b1a23d63ce635b24c",
+      "bytes": 5451,
+      "destinations": [
+        "docs/AUDIO_VISUAL.md"
+      ]
+    },
+    {
+      "original": "docs/MUSIC-COOLDOWN-0.3.239.md",
+      "archived": "docs/archive/legacy-0.3.311/MUSIC-COOLDOWN-0.3.239.md",
+      "sha256": "d7178de35f77410e380a2799ad56b9acc93f8c2a98c27dea2e97713f30a29546",
+      "bytes": 1915,
+      "destinations": [
+        "docs/AUDIO_VISUAL.md"
+      ]
+    },
+    {
+      "original": "docs/NOTES-EPOCH3-PLAN-2026-09-22.md",
+      "archived": "docs/archive/legacy-0.3.311/NOTES-EPOCH3-PLAN-2026-09-22.md",
+      "sha256": "89e024bacf1a9fde0840f2f9e4a2e18110b2c1164f12268f40a8455032671b37",
+      "bytes": 18093,
+      "destinations": [
+        "docs/CHALKBOARD.md",
+        "docs/DEFFERED.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/NOTES-FAVORITES-0.3.308.md",
+      "archived": "docs/archive/legacy-0.3.311/NOTES-FAVORITES-0.3.308.md",
+      "sha256": "b879d7ccd9e8a2cfb80467adf6dd4650d96e739a36791d0319262d6396183653",
+      "bytes": 15941,
+      "destinations": [
+        "docs/CHALKBOARD.md",
+        "docs/DEFFERED.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/PIATILETOKA-2026-10-26.md",
+      "archived": "docs/archive/legacy-0.3.311/PIATILETOKA-2026-10-26.md",
+      "sha256": "855ef95cde0d96ed6c5ab23625595fd17a0ad12a79342a919be5220529de80b7",
+      "bytes": 29965,
+      "destinations": [
+        "docs/CHALKBOARD.md",
+        "docs/DEFFERED.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/PIPE-HEAT-ROUTING-PERF-2026-10-04.md",
+      "archived": "docs/archive/legacy-0.3.311/PIPE-HEAT-ROUTING-PERF-2026-10-04.md",
+      "sha256": "442c81668a983def4778c875bdcbab88dc54bcc4edf563d7d051ea8c959459ae",
+      "bytes": 24647,
+      "destinations": [
+        "docs/MACHINES.md",
+        "docs/CAPABILITIES.md"
+      ]
+    },
+    {
+      "original": "docs/PIPES-REVIEW-2026-10-02.md",
+      "archived": "docs/archive/legacy-0.3.311/PIPES-REVIEW-2026-10-02.md",
+      "sha256": "b31bae1d75086a5475dfc5de1c7012d88fd795219fc0338471a2ebb040123066",
+      "bytes": 16812,
+      "destinations": [
+        "docs/MACHINES.md",
+        "docs/CAPABILITIES.md"
+      ]
+    },
+    {
+      "original": "docs/RADIATION-BEHAVIOR-0.3.232.md",
+      "archived": "docs/archive/legacy-0.3.311/RADIATION-BEHAVIOR-0.3.232.md",
+      "sha256": "0cb7de172f5b70da89f4d68f65ff8c1e57e770d3cfae8840d66939a3e2f934e9",
+      "bytes": 18344,
+      "destinations": [
+        "docs/RAD_ITEMS.md",
+        "docs/RAD_WORLD.md",
+        "docs/HISTORY.md",
+        "docs/AUDIT.md"
+      ]
+    },
+    {
+      "original": "docs/RADIATION-VISUAL-PLAN-2026-09-25.md",
+      "archived": "docs/archive/legacy-0.3.311/RADIATION-VISUAL-PLAN-2026-09-25.md",
+      "sha256": "942727f91a6ee96828855bafa638ffeb4fac941a198124e17fa4f8eb214d8d5d",
+      "bytes": 27310,
+      "destinations": [
+        "docs/RAD_WORLD.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-FUEL-STORAGE-0.3.238.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-FUEL-STORAGE-0.3.238.md",
+      "sha256": "d8a28a9a03025ff28e249b85975d8db16f9c428e4b2e3bddc95f4d43e465545b",
+      "bytes": 6032,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-GUI-0.3.236.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-GUI-0.3.236.md",
+      "sha256": "01c50f058aa3f93332dff020de9edb212920ce358573a854e63b47ec75a3a953",
+      "bytes": 7359,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-LAYER-REVIEW-0.3.248.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-LAYER-REVIEW-0.3.248.md",
+      "sha256": "c192fdc3a6544bdcadf9912f13c447a36ed0e87f47ce29f390f24ba69d0703af",
+      "bytes": 14702,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-MATRIX-0.3.237.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-MATRIX-0.3.237.md",
+      "sha256": "90b1a0b1b148965c38c927d6f265e8885eae5a31422dc7a96e22957eac7b0c41",
+      "bytes": 7912,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-MATRIX-0.3.238.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-MATRIX-0.3.238.md",
+      "sha256": "3d43b5971e128abaf733ea0801e802ebae52a97fda4d53e80c7dd4e3dcca032d",
+      "bytes": 6705,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-RUNTIME-0.3.242.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-RUNTIME-0.3.242.md",
+      "sha256": "b3b505b5847f6528ffb80cd7f0b7f87fb5ebdbcf1650350881e6821d70518832",
+      "bytes": 10483,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-STRUCTURE-0.3.234.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-STRUCTURE-0.3.234.md",
+      "sha256": "2e634ab1467bc1aa4371934e1ec8bcebeac748a01694f1a1bd6a154b306c2c42",
+      "bytes": 11858,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/REACTOR-STRUCTURE-0.3.235.md",
+      "archived": "docs/archive/legacy-0.3.311/REACTOR-STRUCTURE-0.3.235.md",
+      "sha256": "bfd89187d0c307b8dfc138454ceae8b7c2b5a2444ae8467ccbec6ed3b905b0f1",
+      "bytes": 6099,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/SPENT-FUEL-REPROCESSING-0.3.250.md",
+      "archived": "docs/archive/legacy-0.3.311/SPENT-FUEL-REPROCESSING-0.3.250.md",
+      "sha256": "7870f5270ea4c641c4e9c8da2d4821335db8a86a0eb94e095eccf5defa10313e",
+      "bytes": 5643,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/SUPER_CRUCIAL_FILE.md",
+      "archived": "docs/archive/legacy-0.3.311/SUPER_CRUCIAL_FILE.md",
+      "sha256": "dd3529b9192a759f42c856e88dff980f39bd1d662225d0ef259e53310e4f56fe",
+      "bytes": 6016,
+      "destinations": [
+        "docs/SUPER_CRUCIAL_FILE.md"
+      ]
+    },
+    {
+      "original": "docs/UNITS-GOST-2026-09-22.md",
+      "archived": "docs/archive/legacy-0.3.311/UNITS-GOST-2026-09-22.md",
+      "sha256": "208d217f9589635f9d322c7c4d7f0ed481a36997bfee1a9bde43d94255333290",
+      "bytes": 12758,
+      "destinations": [
+        "docs/RULES.md",
+        "docs/SUPER_CRUCIAL_FILE.md"
+      ]
+    },
+    {
+      "original": "docs/UPDATED_TEMP_NOTES.md",
+      "archived": "docs/archive/legacy-0.3.311/UPDATED_TEMP_NOTES.md",
+      "sha256": "949e8b7b2327808b391ed8949a219ae6832e04063acebfbb3a9527c44449edd4",
+      "bytes": 226513,
+      "destinations": [
+        "docs/HISTORY.md",
+        "docs/AUDIT.md",
+        "docs/DEFFERED.md",
+        "docs/RULES.md"
+      ]
+    },
+    {
+      "original": "docs/WORLDGEN-SURFACE-RUINS.md",
+      "archived": "docs/archive/legacy-0.3.311/WORLDGEN-SURFACE-RUINS.md",
+      "sha256": "681e0778549929a99021e591bda08ffd3e02073fad583bd03024c85584e61f07",
+      "bytes": 3128,
+      "destinations": [
+        "docs/WORLDGEN.md"
+      ]
+    },
+    {
+      "original": "docs/archive/CHALKBOARD-SERVER-AUTHORITY-PATCH.md",
+      "archived": "docs/archive/legacy-0.3.311/archive/CHALKBOARD-SERVER-AUTHORITY-PATCH.md",
+      "sha256": "d5d10bba76d95c61b6fa50596d1df097792a7dba58fbaab6e041a7064b8ca092",
+      "bytes": 36028,
+      "destinations": [
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/archive/CONTENT_AUDIT_2026-09-14.md",
+      "archived": "docs/archive/legacy-0.3.311/archive/CONTENT_AUDIT_2026-09-14.md",
+      "sha256": "1a92deccad2c16c21f2caff80fdbeebe0de5fb29e7be30c15bac60e7989e3a40",
+      "bytes": 10597,
+      "destinations": [
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/archive/LOGISTICS-TEMP-NOTES.md",
+      "archived": "docs/archive/legacy-0.3.311/archive/LOGISTICS-TEMP-NOTES.md",
+      "sha256": "a571468a20af43b88b3aaba9db29f1d54d4df33da68ea6aba25903885f077042",
+      "bytes": 35868,
+      "destinations": [
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/archive/MATERIAL_PROCESSING_CONCEPT.md",
+      "archived": "docs/archive/legacy-0.3.311/archive/MATERIAL_PROCESSING_CONCEPT.md",
+      "sha256": "5efdbd4f34687ce3c31ada5da7aaedc5cce09cda0e8ddaa272345be27ce4ecc8",
+      "bytes": 47565,
+      "destinations": [
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/archive/README.md",
+      "archived": "docs/archive/legacy-0.3.311/archive/README.md",
+      "sha256": "3a0d6e7f0012cf12b9bef3093eeb36f94215cd5a447e5a79e2aca06aea79436d",
+      "bytes": 3605,
+      "destinations": [
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/archive/TEMP-notes.md",
+      "archived": "docs/archive/legacy-0.3.311/archive/TEMP-notes.md",
+      "sha256": "71d8cca82e8dfbfc6521f05cf396ba3858d70b095b33b274e93a761ef1c0015a",
+      "bytes": 15929,
+      "destinations": [
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/debug.log",
+      "archived": "docs/archive/legacy-0.3.311/debug.log",
+      "sha256": "2835db76e43604d32ce27a4515226758e7b106f0fa879bdd00dd71e365a3f881",
+      "bytes": 10373733,
+      "destinations": [
+        "docs/AUDIT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/debug2.log",
+      "archived": "docs/archive/legacy-0.3.311/debug2.log",
+      "sha256": "7cbbeefb642e6f8b3393ac1fb4adb8f4c02a9b8aacb9f2e7a5b1ca50927be4ee",
+      "bytes": 2567946,
+      "destinations": [
+        "docs/AUDIT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/dupe_curing.md",
+      "archived": "docs/archive/legacy-0.3.311/dupe_curing.md",
+      "sha256": "f58a5743bd17e92aa08dcd31f4af36ebbf2ba49e1742a0a39b82f372014bcc74",
+      "bytes": 14882,
+      "destinations": [
+        "docs/RAD_ITEMS.md",
+        "docs/RAD_WORLD.md",
+        "docs/HISTORY.md",
+        "docs/AUDIT.md"
+      ]
+    },
+    {
+      "original": "docs/latest.log",
+      "archived": "docs/archive/legacy-0.3.311/latest.log",
+      "sha256": "cb301f5397322864288e2ac29609391d766b72b056bcbca97f83adf96a56ff50",
+      "bytes": 19823127,
+      "destinations": [
+        "docs/AUDIT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/lore.md",
+      "archived": "docs/archive/legacy-0.3.311/lore.md",
+      "sha256": "c6d256d2742eb2446608a205762cdcbb2a15df6f46fb83a6e9d40ad72d9da06b",
+      "bytes": 12244,
+      "destinations": [
+        "docs/LORE.md",
+        "docs/AUTHORS-NOTES.md"
+      ]
+    },
+    {
+      "original": "docs/machines_balance.xlsx",
+      "archived": "docs/archive/legacy-0.3.311/machines_balance.xlsx",
+      "sha256": "cd5dc3cb49a3581c3ef350e3d5ce0a396a7c73087a9095b94af24f66a0275ad3",
+      "bytes": 16806,
+      "destinations": [
+        "docs/AUDIT.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/meditation-concept.md",
+      "archived": "docs/archive/legacy-0.3.311/meditation-concept.md",
+      "sha256": "5c09811150af8b3c0613744af220046105b5b25fb9e650ba8343157c4a0c9480",
+      "bytes": 7475,
+      "destinations": [
+        "docs/meditation_concept.md",
+        "docs/DEFFERED.md"
+      ]
+    },
+    {
+      "original": "docs/multiblock_rules.md",
+      "archived": "docs/archive/legacy-0.3.311/multiblock_rules.md",
+      "sha256": "59ea71023cc717c411cc0d7c4251b8321dcaa06d143f22c58f946c737b5977ab",
+      "bytes": 11248,
+      "destinations": [
+        "docs/MACHINES.md",
+        "docs/REACTORS.md"
+      ]
+    },
+    {
+      "original": "docs/nuclear_firebox_fuel_yield_0.3.143.md",
+      "archived": "docs/archive/legacy-0.3.311/nuclear_firebox_fuel_yield_0.3.143.md",
+      "sha256": "003ebca116b0cf8266df34ea99838f7c3223ca1de3d29ceb369d28d0a269004f",
+      "bytes": 4179,
+      "destinations": [
+        "docs/MACHINES.md",
+        "docs/CAPABILITIES.md"
+      ]
+    },
+    {
+      "original": "docs/reactors_concept.md",
+      "archived": "docs/archive/legacy-0.3.311/reactors_concept.md",
+      "sha256": "9f5a52c40c97dcfa184adbe8eb44a873476c857f217c81782c3f66b6956c25e0",
+      "bytes": 125199,
+      "destinations": [
+        "docs/REACTORS.md",
+        "docs/PROGRESSION.md",
+        "docs/HISTORY.md"
+      ]
+    },
+    {
+      "original": "docs/steamgen_rebalance_0.3.142.md",
+      "archived": "docs/archive/legacy-0.3.311/steamgen_rebalance_0.3.142.md",
+      "sha256": "f4126d9bea99b4f0a55839e26dfb568c2d473d524a047ba14c08bb566fc8170e",
+      "bytes": 14618,
+      "destinations": [
+        "docs/MACHINES.md",
+        "docs/CAPABILITIES.md"
+      ]
+    }
+  ],
+  "historical_nonfiles": [
+    {
+      "reference": "docs/TEMP_NOTES.md",
+      "status": "historical citation; absent from source tree 42730c3; not a navigable link"
+    },
+    {
+      "reference": "docs/LOGISTICS-TEMP-NOTES.md",
+      "status": "historical citation; absent from source tree 42730c3; not a navigable link"
+    },
+    {
+      "reference": "docs/MATERIAL_PROCESSING_CONCEPT.md",
+      "status": "historical citation; absent from source tree 42730c3; not a navigable link"
+    },
+    {
+      "reference": "docs/CHALKBOARD-SERVER-AUTHORITY-PATCH.md",
+      "status": "historical citation; absent from source tree 42730c3; not a navigable link"
+    },
+    {
+      "reference": "docs/CONTENT_AUDIT_2026-09-14.md",
+      "status": "historical citation; absent from source tree 42730c3; not a navigable link"
+    },
+    {
+      "reference": "docs/RADIATION.md",
+      "status": "historical citation; absent from source tree 42730c3; not a navigable link"
+    }
+  ]
+}

@@ -134,7 +134,7 @@ class GreatswordContentTest(unittest.TestCase):
         for level, expected_bonus in enumerate((0.05, 0.10, 0.15, 0.20), start=1):
             self.assertAlmostEqual(0.05 * level, expected_bonus)
 
-        docs = (ROOT / "docs/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")
+        docs = (ROOT / "docs/archive/legacy-0.3.311/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")
         self.assertIn("1.55` без Плотности", docs)
         self.assertIn("1.63` с I", docs)
         self.assertIn("1.95` с V", docs)
@@ -373,7 +373,7 @@ class GreatswordContentTest(unittest.TestCase):
         self.assertIn("ModSounds.SWORD_READY.get()", item_source)
 
     def test_alloy_example_and_localizations_exist(self):
-        docs = (ROOT / "docs/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")
+        docs = (ROOT / "docs/archive/legacy-0.3.311/GREATSWORD-AUDIT-ROADMAP.md").read_text(encoding="utf-8")
         self.assertIn("3 порции кальция + 1 порция ванильного железа", docs)
         self.assertIn("3 одинаковых по составу `custom_alloy`", docs)
         self.assertIn("9 + 12.3 × M / 100", docs)

@@ -1,68 +1,93 @@
 #!/usr/bin/env python3
-"""Проверка ссылок на документы Gonzo Tech.
+"""Validate live Markdown links and explicit docs paths; frozen archives stay intact.
 
-Ищем в живых файлах репозитория упоминания `*.md` (в бэктиках или как голый путь) и проверяем,
-что файл существует. Правила:
-
-  * `docs/archive/*.md` — **заморожены**: их содержимое не правим, поэтому ссылки внутри архивных
-    документов не проверяются (история);
-  * `docs/archive/README.md` — живой (карта архива), проверяется;
-  * `info/*.md` — локальная папка автора (в `.gitignore`), в репозитории её нет → не проверяем;
-  * «исторические» и «плановые» имена (старый TEMP_NOTES после переезда в UPDATED_TEMP_NOTES,
-    будущий документ по радиации) — перечислены в HISTORICAL/PLANNED и печатаются как INFO,
-    а не как ошибка: такие имена упоминаются только в рассказе о переезде/планах.
-
-Запуск: python3 audit/doc_links.py
+README is not technical working memory. Its existing links still must work.
+Old non-link citations in source comments/history may resolve ONLY through the
+explicit migration manifest; real Markdown links never get a silent alias.
 """
-import os, re, sys
+from pathlib import Path
+import json
+import re
+import sys
+from urllib.parse import unquote, urlsplit
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # корень репозитория
-TEXT_EXT = (".md", ".java", ".py", ".json", ".gradle", ".properties", ".txt", ".mcmeta")
-FROZEN = re.compile(r"docs/archive/(?!README\.md)[^/]+\.md$")
-# имена, которых в репо нет и не должно быть: говорим о них только в рассказе
-HISTORICAL = {
-    "docs/TEMP_NOTES.md", "TEMP_NOTES.md",
-    "docs/LOGISTICS-TEMP-NOTES.md", "docs/MATERIAL_PROCESSING_CONCEPT.md",
-    "docs/CHALKBOARD-SERVER-AUTHORITY-PATCH.md", "docs/CONTENT_AUDIT_2026-09-14.md",
-    # 0.3.305: dupe_curing.md:4 осознанно цитирует авторскую опечатку в имени файла
-    "dupe_cruing.md",
-}
-PLANNED = {"docs/RADIATION.md"}
-# ссылка: docs/...md либо голое имя файла (NAME + .md)
-LINK = re.compile(r"(?:docs/)?[A-Za-z0-9_\-./]*[A-Za-z0-9_\-]+\.md(?![A-Za-z0-9_\-])")
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / 'docs/archive/legacy-0.3.311/manifest.json'
+migration = json.loads(MANIFEST.read_text())
+ALIASES = {r['original']: r['archived'] for r in migration['files']}
+FROZEN_ORIGINALS = {(ROOT / r['archived']).resolve() for r in migration['files']}
+NONFILES = {r['reference'] for r in migration['historical_nonfiles']}
+EXCLUDED = {'.git', '.gradle', '.cache', 'node_modules', 'build', 'run', 'audit/reports'}
+# All original texts (including the former archive) are frozen by manifest.
+# New migration metadata, including MIGRATION-MAP.md, is still validated.
+FROZEN = ROOT / 'docs/archive/legacy-0.3.311'
+LINK = re.compile(r'!?\[[^\]\n]*\]\(([^\s)]+)(?:\s+"[^"]*")?\)')
+DOC_PATH = re.compile(r'(?<![\w/])docs/[\w./-]+\.(?:md|csv|xlsx)\b')
+problems, citations = [], set()
+checked = 0
 
-problems, checked, info = [], 0, []
-for root, dirs, files in os.walk(ROOT):
-    dirs[:] = [d for d in dirs if d not in (".git", "build", ".gradle", ".cache", "node_modules", "run", "src", "gradle")]
-    for f in files:
-        if not f.endswith(TEXT_EXT):
+
+def frozen(path):
+    return path in FROZEN_ORIGINALS
+
+
+def check_link(file, target, line):
+    global checked
+    if '\\' in target or target.startswith(('http:', 'https:', 'mailto:', 'data:')):
+        return
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc:
+        return
+    path = (file.parent / unquote(parsed.path)).resolve() if parsed.path else file
+    checked += 1
+    if not path.exists():
+        problems.append(f'{file.relative_to(ROOT)}:{line} → {target}')
+        return
+    # Historical anchors refer to the frozen edition, not current headings.
+    if parsed.fragment and path.suffix == '.md' and not frozen(path):
+        text = path.read_text(encoding='utf-8')
+        ids = set(re.findall(r'<a\s+id=["\']([^"\']+)', text))
+        counts = {}
+        for heading in re.findall(r'^#{1,6}\s+(.+?)\s*#*$', text, re.M):
+            slug = re.sub(r'[^\w\- ]', '', heading.lower()).replace(' ', '-')
+            n = counts.get(slug, 0)
+            counts[slug] = n + 1
+            ids.add(slug + (f'-{n}' if n else ''))
+        if unquote(parsed.fragment).lower() not in ids:
+            problems.append(f'{file.relative_to(ROOT)}:{line} → unknown anchor {target}')
+
+
+for file in sorted(ROOT.rglob('*')):
+    rel = file.relative_to(ROOT)
+    if not file.is_file() or file.suffix not in {'.md', '.java', '.py', '.gradle', '.properties', '.txt', '.mcmeta'}:
+        continue
+    if frozen(file) or any(p in EXCLUDED for p in rel.parts) or str(rel).startswith(('audit/reports/', 'run-radiation-')):
+        continue
+    try:
+        text = file.read_text(encoding='utf-8')
+    except (UnicodeDecodeError, OSError):
+        continue
+    if file.suffix == '.md':
+        # Links in code fences are literal examples, not navigation.
+        visible = re.sub(r'```[^\n]*\n.*?```', lambda m: '\n' * m.group().count('\n'), text, flags=re.S)
+        visible = re.sub(r'`[^`\n]+`', lambda m: ' ' * len(m.group()), visible)
+        for match in LINK.finditer(visible):
+            check_link(file, match.group(1), visible[:match.start()].count('\n') + 1)
+    for match in DOC_PATH.finditer(text):
+        ref = match.group()
+        if (ROOT / ref).is_file():
             continue
-        path = os.path.join(root, f)
-        rel = os.path.relpath(path, ROOT)
-        frozen = bool(FROZEN.search(rel))
-        try:
-            text = open(path, encoding="utf-8").read()
-        except (UnicodeDecodeError, OSError):
-            continue
-        for m in LINK.finditer(text):
-            ref = m.group(0)
-            if ref.startswith(("http", "assets/", "data/", "info/")):
-                continue                                  # info/ — локальная папка автора
-            checked += 1
-            if ref in HISTORICAL or ref in PLANNED:
-                info.append(ref)                          # старое имя / план, не битая ссылка
-                continue
-            if frozen:                                   # историю не трогаем
-                continue
-            candidates = [ref] if ref.startswith("docs/") else [ref, f"docs/{ref}", f"docs/archive/{ref}"]
-            if not any(os.path.exists(os.path.join(ROOT, c)) for c in candidates):
-                line = text[:m.start()].count("\n") + 1
-                problems.append(f"{rel}:{line} → {ref}")
+        if ref in ALIASES and (ROOT / ALIASES[ref]).is_file():
+            citations.add(ref)
+        elif ref in NONFILES:
+            # Explicitly inventoried historical names, not existing source files.
+            citations.add(ref)
+        else:
+            problems.append(f'{rel}:{text[:match.start()].count(chr(10)) + 1} → {ref}')
 
-print(f"ссылок проверено: {checked} (архивные документы заморожены)")
-for i in sorted(set(info)):
-    print(f"  · историческое/плановое имя (ожидаемо нет в репо): {i}")
-for p in problems:
-    print("  ⚠", p)
-print(f"битых ссылок: {len(problems)}")
-sys.exit(1 if problems else 0)
+print(f'ссылок проверено: {checked}; замороженный архив исключён рекурсивно')
+print(f'исторических текстовых цитат с явным архивным маршрутом: {len(citations)}')
+for problem in problems:
+    print('  ⚠', problem)
+print(f'битых ссылок: {len(problems)}')
+sys.exit(bool(problems))

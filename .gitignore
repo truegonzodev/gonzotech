@@ -26,3 +26,6 @@ __pycache__/
 
 # Isolated radiation GameTest world
 /run-radiation-merge-tests-311/
+
+# Reproducible local audit reports (not live documentation)
+/audit/reports/
