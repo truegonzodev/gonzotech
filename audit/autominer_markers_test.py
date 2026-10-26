@@ -28,7 +28,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.306$", props, re.M), "mod_version != 0.3.306"
+assert re.search(r"^mod_version=0\.3\.307$", props, re.M), "mod_version != 0.3.307"
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -1285,5 +1285,28 @@ assert "if (!server.destroyBlock(pos, false, null)) continue;" in be, "0.3.306: 
 assert "if (isImmovable(state, server, pos)) continue;" in be, "0.3.306: боковой сбор не фильтрует immovable"
 pack306 = be[be.index("private void packUp"):] if "private void packUp" in be else be
 assert "if (!tntQueue.isEmpty() || tntRequester != null) {" in be, "0.3.306: «Свернуться» не отменяет ТНТ-очередь"
+
+# 0.3.307: исходный #9, остановка ДО раннего pack.nothing; прежний
+# presence-only пин пропускал drilling=false в ветке непустого демонтажа.
+pack307 = be.split("private boolean packUp(", 1)[1].split("private List<BlockPos> collectNetworkBlocks", 1)[0]
+stop307 = pack307.index("drilling = false;")
+empty307 = pack307.index("if (lootable.isEmpty())")
+assert stop307 < empty307, "pack.nothing оставляет бурение включённым"
+assert pack307.index("cycleDrillCells = List.of();", stop307) < empty307, "pack.nothing оставляет кэш буров"
+assert "changed = true;" in pack307[stop307:empty307], "остановка не сохраняется при пустом демонтаже"
+assert pack307.index("tntQueue.clear();") < empty307
+assert pack307.index("tntRequester = null;") < empty307
+
+# 0.3.307: #2, сам корпус имеет отдельный self-drop; содержимое не
+# копируется через loot-компоненты (его выдаёт dropContentsForBreak).
+import json
+plot_loot307 = json.loads((ROOT / "src/main/resources/data/gonzotech/loot_table/blocks/plotnick.json").read_text())
+assert plot_loot307["type"] == "minecraft:block"
+assert len(plot_loot307["pools"]) == 1
+pool307 = plot_loot307["pools"][0]
+assert pool307["rolls"] == 1
+assert pool307["entries"] == [{"type": "minecraft:item", "name": "gonzotech:plotnick"}]
+assert pool307["conditions"] == [{"condition": "minecraft:survives_explosion"}]
+assert not plot_loot307.get("functions") and not pool307.get("functions"), "loot копирует содержимое поверх ручного дропа"
 
 print("autominer_markers_test passed")

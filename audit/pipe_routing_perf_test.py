@@ -85,3 +85,21 @@ assert "it.remove();" in w                            # чистка в тике
 assert "PipeFlowWarnings.mark(level, BlockPos.of(e.getKey())," in r  # маркер из раскладки
 
 print("PipeRouting perf pins passed (crossing index, lazy paths, caps, hot-pipe particles; law/leveling semantics unchanged)")
+
+# 0.3.307: исходный #42 — виртуальный endpoint не форсит чанки и не
+# доверяет захваченному BE после simulate/перестройки. Это source-контракт,
+# не игровой вердикт и не замена Java-harness steamgen_endpoint_test.py.
+sg307 = (ROOT / "src/main/java/com/gonzotech/machines/steamgen/SteamGenStructure.java").read_text()
+ports307 = sg307.split("public static Transfer.Receiver waterReceiverAt(", 1)[1].split(
+    "public static int maxGthIntakeMilli(", 1)[0]
+assert "return portReceiverAt(level, pos, false);" in ports307
+assert "return portReceiverAt(level, pos, true);" in ports307
+assert "BlockPos port = pos.immutable();" in ports307
+assert ports307.count("livePortController(server, port, heat)") == 2
+assert "if (current == null || current != expected) return 0;" in ports307
+assert "controller.isRemoved() || !controller.isFormedController()" in ports307
+assert "if (!(heat ? isHeatPort(state) : isWaterPort(state))) return null;" in ports307
+assert ports307.count(".getChunkNow(") == 2
+assert "level.getBlockEntity(" not in ports307 and "server.getBlockEntity(" not in ports307
+assert ".getChunk(" not in ports307
+assert ports307.index("if (portChunk == null || rootChunk == null)") < ports307.index("rootChunk.getBlockEntity(root)")

@@ -1341,6 +1341,14 @@ public final class PlotnickBlockEntity extends BlockEntity
             tntRequester = null;
             changed = true;
         }
+        // 0.3.307, исходный #9: остановка не зависит от наличия добычи для
+        // демонтажа. Иначе ранний pack.nothing оставлял drilling=true, а
+        // следующий цикл снова находил буры в ленте, даже без разметки.
+        if (drilling || !cycleDrillCells.isEmpty()) {
+            drilling = false;
+            cycleDrillCells = List.of();
+            changed = true;
+        }
         List<BlockPos> lootable = collectNetworkBlocks(server);
         if (lootable.isEmpty()) {
             if (changed) setChanged();
@@ -1348,7 +1356,6 @@ public final class PlotnickBlockEntity extends BlockEntity
             return true;
         }
         networkStatsDirty = true;
-        drilling = false;
         dismantleQueue.clear();
         dismantleQueue.addAll(lootable);
         dismantleReturned = 0;

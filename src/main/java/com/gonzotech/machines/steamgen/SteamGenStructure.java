@@ -106,22 +106,44 @@ public final class SteamGenStructure {
 
     /** Виртуальный приёмник воды: node является водным портом сформированной установки. */
     public static Transfer.Receiver waterReceiverAt(Level level, BlockPos pos) {
-        if (!(level instanceof ServerLevel server)) return null;
-        BlockPos root = controllerAt(server, pos);
-        if (root == null) return null;
-        if (!(server.getBlockEntity(root) instanceof SteamGenCoreBlockEntity controller)
-            || !controller.isFormedController()) return null;
-        return (amount, simulate) -> controller.receiveWaterFromPort(pos, amount, simulate);
+        return portReceiverAt(level, pos, false);
     }
 
     /** Виртуальный приёмник GTH: node является тепловым портом сформированной установки. */
     public static Transfer.Receiver gthReceiverAt(Level level, BlockPos pos) {
+        return portReceiverAt(level, pos, true);
+    }
+
+    /**
+     * 0.3.307, исходный #42: endpoint не владеет BE. Между simulate и commit
+     * чанк/порт/контроллер может исчезнуть. Повторно проверяем живую идентичность;
+     * старый endpoint не получает права писать в новую машину по тому же адресу.
+     */
+    private static Transfer.Receiver portReceiverAt(Level level, BlockPos pos, boolean heat) {
         if (!(level instanceof ServerLevel server)) return null;
-        BlockPos root = controllerAt(server, pos);
+        BlockPos port = pos.immutable();
+        SteamGenCoreBlockEntity expected = livePortController(server, port, heat);
+        if (expected == null) return null;
+        return (amount, simulate) -> {
+            SteamGenCoreBlockEntity current = livePortController(server, port, heat);
+            if (current == null || current != expected) return 0;
+            return heat ? current.receiveGthFromPort(port, amount, simulate)
+                : current.receiveWaterFromPort(port, amount, simulate);
+        };
+    }
+
+    /** Только уже загруженные чанки: индекс сам по себе не доказывает живость формы. */
+    private static SteamGenCoreBlockEntity livePortController(ServerLevel level, BlockPos port, boolean heat) {
+        BlockPos root = controllerAt(level, port);
         if (root == null) return null;
-        if (!(server.getBlockEntity(root) instanceof SteamGenCoreBlockEntity controller)
-            || !controller.isFormedController()) return null;
-        return (amount, simulate) -> controller.receiveGthFromPort(pos, amount, simulate);
+        var portChunk = level.getChunkSource().getChunkNow(port.getX() >> 4, port.getZ() >> 4);
+        var rootChunk = level.getChunkSource().getChunkNow(root.getX() >> 4, root.getZ() >> 4);
+        if (portChunk == null || rootChunk == null) return null;
+        BlockState state = portChunk.getBlockState(port);
+        if (!(heat ? isHeatPort(state) : isWaterPort(state))) return null;
+        if (!(rootChunk.getBlockEntity(root) instanceof SteamGenCoreBlockEntity controller)
+            || controller.isRemoved() || !controller.isFormedController()) return null;
+        return controller;
     }
 
     /**
