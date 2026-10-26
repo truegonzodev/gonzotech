@@ -202,6 +202,7 @@ public class ChemicalPlantBlockEntity extends BaseMachineBlockEntity
             if (outSlotStack.isEmpty()) {
                 items.set(SLOT_OUTPUT, expectedOut.copy());
             } else {
+                com.gonzotech.radiation.engine.ExternalRadiation.merge(outSlotStack, expectedOut, expectedOut.getCount());
                 outSlotStack.grow(expectedOut.getCount());
             }
             progress = 0;

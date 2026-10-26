@@ -30,6 +30,11 @@ neoForge {
     }
 
     runs {
+        radiationTest {
+            type = 'gameTestServer'
+            gameDirectory = project.file('run-radiation-merge-tests-311')
+            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        }
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', mod_id

@@ -2,7 +2,6 @@ package com.gonzotech.mixin;
 
 import com.gonzotech.core.config.GonzoServerConfig;
 import com.gonzotech.radiation.DropTraceFormat;
-import com.gonzotech.radiation.RadDoseIndex;
 import net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -37,9 +36,6 @@ public abstract class CreativeSlotPacketDebugMixin {
     @Inject(method = "handleSetCreativeModeSlot", at = @At("HEAD"))
     private void gonzotech$beforeCreative(ServerboundSetCreativeModeSlotPacket packet, CallbackInfo callback) {
         if (this.player == null) return;
-        // 0.3.294: креативный канал (handleSetCreativeModeSlot) — единственный
-        // без stateId-валидации; его активность тоже закрывает flush-окно.
-        RadDoseIndex.noteInteraction(this.player);
         // 0.3.295: тот же класс гонки, что у клик-миксина (creative-пакеты тоже
         // перевызываются на серверный поток) — поля-состояние трогаем только там.
         net.minecraft.server.MinecraftServer gonzotech$srv = this.player.getServer();

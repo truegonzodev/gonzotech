@@ -82,6 +82,7 @@ public abstract class BaseMachineBlockEntity extends BlockEntity implements Cont
                 if (current.isEmpty()) {
                     items.set(slot, content);
                 } else {
+                    com.gonzotech.radiation.engine.ExternalRadiation.merge(current, content, content.getCount());
                     current.grow(content.getCount());
                 }
                 net.minecraft.world.Containers.dropItemStack(level,

@@ -79,6 +79,7 @@ public class PetBowlBlockEntity extends BlockEntity {
             if (move <= 0) {
                 return false;
             }
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(this.food, held, move);
             this.food.grow(move);
             held.shrink(move);
         } else {

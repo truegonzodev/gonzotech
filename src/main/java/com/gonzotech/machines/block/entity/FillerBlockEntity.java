@@ -736,6 +736,7 @@ public class FillerBlockEntity extends BaseMachineBlockEntity implements
         if (cur.isEmpty()) {
             items.set(slot, stack);
         } else {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(cur, stack, stack.getCount());
             cur.grow(stack.getCount());
         }
     }

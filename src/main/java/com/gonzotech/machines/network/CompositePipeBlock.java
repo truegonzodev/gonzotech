@@ -186,7 +186,16 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
 
     // ─────────────────────────── форма (хитбокс) ───────────────────────────
 
+    // Geometry depends only on presence and the two axes, not five flow modes
+    // or waterlogging. At most 32 * 9 entries instead of recomputing the same
+    // unions for every registry state/support-face query during startup.
+    private static final Map<Integer, VoxelShape> SHAPE_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
     private static VoxelShape shapeFor(BlockState state) {
+        int key = state.getValue(AXIS).ordinal() * 3 + state.getValue(AXIS_LOWER).ordinal();
+        for (PipeType type : BUNDLE_TYPES) key = (key << 1) | (state.getValue(PRESENT.get(type)) ? 1 : 0);
+        return SHAPE_CACHE.computeIfAbsent(key, ignored -> buildShape(state));
+    }
+    private static VoxelShape buildShape(BlockState state) {
         VoxelShape shape = Shapes.empty();
         for (PipeType t : BUNDLE_TYPES) {
             if (!state.getValue(PRESENT.get(t))) continue;

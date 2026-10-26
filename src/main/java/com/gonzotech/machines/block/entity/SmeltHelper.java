@@ -81,6 +81,7 @@ public final class SmeltHelper {
         if (output.isEmpty()) {
             items.set(outputSlot, result.copy());
         } else if (ItemStack.isSameItemSameComponents(output, result)) {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(output, result, result.getCount());
             output.grow(result.getCount());
         }
         input.shrink(1);

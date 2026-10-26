@@ -1,6 +1,7 @@
 package com.gonzotech.core.item;
 
 import com.gonzotech.radiation.CarrierItem;
+import com.gonzotech.radiation.engine.ExternalRadiation;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -70,6 +71,7 @@ public final class LadleItem extends Item implements CarrierItem {
 
     /** Merge-запись предметов; жидкостные ключи чистятся. */
     private static void storeItems(ItemStack stack, String id, int count) {
+        if (count <= 0) ExternalRadiation.clearContents(stack);
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
                 data -> data.update(tag -> {
                     tag.remove(TAG_FLUID);
@@ -81,6 +83,7 @@ public final class LadleItem extends Item implements CarrierItem {
 
     /** Merge-запись жидкости; предметные ключи чистятся. */
     private static void storeFluid(ItemStack stack, String fluid, int mb) {
+        ExternalRadiation.clearContents(stack);
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
                 data -> data.update(tag -> {
                     tag.remove(TAG_ITEM);
@@ -142,7 +145,7 @@ public final class LadleItem extends Item implements CarrierItem {
 
     @Override
     public ItemStack previewCarried(ItemStack carrier) {
-        return previewOf(itemId(carrier), itemCount(carrier));
+        return ExternalRadiation.previewContents(carrier, previewOf(itemId(carrier), itemCount(carrier)));
     }
 
     @Override
@@ -167,6 +170,7 @@ public final class LadleItem extends Item implements CarrierItem {
         int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
                 id, other.getCount());
         if (moved > 0) {
+            ExternalRadiation.insertContents(magazine, itemCount(magazine), other, moved);
             storeItems(magazine, id, itemCount(magazine) + moved);
             other.shrink(moved);
             slot.setChanged();
@@ -204,6 +208,7 @@ public final class LadleItem extends Item implements CarrierItem {
                 int moved = LadleLogic.roomForItem(itemId(magazine), itemCount(magazine),
                         id, incoming.getCount());
                 if (moved > 0) {
+                    ExternalRadiation.insertContents(magazine, itemCount(magazine), incoming, moved);
                     storeItems(magazine, id, itemCount(magazine) + moved);
                     incoming.shrink(moved);
                     playInsert(player);
@@ -252,6 +257,7 @@ public final class LadleItem extends Item implements CarrierItem {
         ItemStack content = previewCarried(magazine);
         if (!content.isEmpty() && ItemStack.isSameItemSameComponents(incoming, content)
                 && incoming.getCount() < incoming.getMaxStackSize()) {
+            ExternalRadiation.merge(incoming, content, 1);
             incoming.grow(1);
             storeItems(magazine, itemId(magazine), itemCount(magazine) - 1);
             playRemoveOne(player);

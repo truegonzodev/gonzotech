@@ -266,6 +266,7 @@ public class PumpBlockEntity extends BaseMachineBlockEntity implements GtuSink, 
             return true;
         }
         if (ItemStack.isSameItemSameComponents(out, filled) && out.getCount() < out.getMaxStackSize()) {
+            com.gonzotech.radiation.engine.ExternalRadiation.dilute(out, 1);
             out.grow(1);
             return true;
         }

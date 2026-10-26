@@ -186,6 +186,7 @@ public final class ReprocessingGrinderBlockEntity extends BaseMachineBlockEntity
         if (output.isEmpty()) {
             items.set(slot, incoming.copy());
         } else {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(output, incoming, incoming.getCount());
             output.grow(incoming.getCount());
         }
     }

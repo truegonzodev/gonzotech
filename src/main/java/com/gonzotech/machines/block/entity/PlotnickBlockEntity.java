@@ -922,12 +922,15 @@ public final class PlotnickBlockEntity extends BlockEntity
                 buildQueue.add(entry); // нечем — переезжает в хвост
                 continue;
             }
-            consumeStored(needed, 1);
+            ItemStack reserved = takeStoredOne(needed);
+            if (reserved.isEmpty()) {
+                buildQueue.add(entry);
+                continue;
+            }
             if (!placeQueueBlockNow(server, pos, target)) {
                 // Мир не принял блок (защита/сюрприз генерации): труба/бур
                 // возвращаются в склад, точка едет в хвост очереди.
-                ItemStack refund = new ItemStack(needed);
-                if (!insert(refund)) dump(refund, worldPosition);
+                if (!insert(reserved)) dump(reserved, worldPosition);
                 buildQueue.add(entry);
                 continue;
             }
@@ -1266,13 +1269,13 @@ public final class PlotnickBlockEntity extends BlockEntity
         Item mined = ts.isAir() ? null : ts.getBlock().asItem();
         if (mined != null && !hasRoom(new ItemStack(mined))) return; // склад не примет — бур ждёт, порода не теряется (#5)
         if (!mayTouchPlace(server, target)) return; // приват против: трубу не кладём, труба не тратится
-        if (consumeStored(ModMachines.BORE_PIPE.get().asItem(), 1) == 0) return;
+        ItemStack reserved = takeStoredOne(ModMachines.BORE_PIPE.get().asItem());
+        if (reserved.isEmpty()) return;
         if (!server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState(),
             net.minecraft.world.level.block.Block.UPDATE_ALL)) {
             // 0.3.306 (п.11): скважина не выросла — труба домой, порода
             // не добывается, уровень цели ждёт повторной попытки.
-            ItemStack refund = new ItemStack(ModMachines.BORE_PIPE.get());
-            if (!insert(refund)) dump(refund, worldPosition);
+            if (!insert(reserved)) dump(reserved, worldPosition);
             return;
         }
         if (mined != null) {
@@ -1508,10 +1511,14 @@ public final class PlotnickBlockEntity extends BlockEntity
                 tntQueue.add(0, pos); // приват против взрывчатки в трубе — пауза очереди
                 break;
             }
-            consumeStored(explosive, 1);
+            ItemStack reserved = takeStoredOne(explosive);
+            if (reserved.isEmpty()) {
+                tntQueue.add(0, pos);
+                break;
+            }
             if (!server.setBlock(pos, tnt, net.minecraft.world.level.block.Block.UPDATE_ALL)) {
                 // 0.3.306 (п.11): TNT не встал — взрывчатка в склад, точка в голову.
-                insertOrDrop(new ItemStack(explosive), worldPosition);
+                insertOrDrop(reserved, worldPosition);
                 tntQueue.add(0, pos);
                 break;
             }
@@ -1570,7 +1577,11 @@ public final class PlotnickBlockEntity extends BlockEntity
                 items.set(slot, incoming.split(Math.min(cap, incoming.getCount())));
             } else if (ItemStack.isSameItemSameComponents(head, incoming)) {
                 int room = cap - head.getCount();
-                if (room > 0) head.grow(incoming.split(Math.min(room, incoming.getCount())).getCount());
+                if (room > 0) {
+                    int moved = Math.min(room, incoming.getCount());
+                    com.gonzotech.radiation.engine.ExternalRadiation.merge(head, incoming, moved);
+                    head.grow(incoming.split(moved).getCount());
+                }
             }
         }
         if (incoming.isEmpty()) {
@@ -1594,7 +1605,11 @@ public final class PlotnickBlockEntity extends BlockEntity
                 virtual.set(idx, incoming.split(Math.min(cap, incoming.getCount())));
             } else if (ItemStack.isSameItemSameComponents(cur, incoming)) {
                 int room = cap - cur.getCount();
-                if (room > 0) cur.grow(incoming.split(Math.min(room, incoming.getCount())).getCount());
+                if (room > 0) {
+                    int moved = Math.min(room, incoming.getCount());
+                    com.gonzotech.radiation.engine.ExternalRadiation.merge(cur, incoming, moved);
+                    cur.grow(incoming.split(moved).getCount());
+                }
             }
         }
         if (incoming.getCount() == 0) {
@@ -1965,6 +1980,28 @@ public final class PlotnickBlockEntity extends BlockEntity
         stack.shrink(take);
         if (stack.isEmpty()) list.set(index, ItemStack.EMPTY);
         return take;
+    }
+
+    /** Reserve the actual item for placement: rollback must retain components and external radiation.
+     *  Same priority as consumeStored: active slots, depot, then mined storage. */
+    private ItemStack takeStoredOne(Item item) {
+        for (int slot = 0; slot < SLOTS_ACTIVE; slot++) {
+            if (getItem(slot).is(item)) {
+                networkStatsDirty = true;
+                return removeItem(slot, 1);
+            }
+        }
+        for (int pass = 0; pass < 2; pass++) {
+            int start = pass == 0 ? OUT_STACKS_PER_TYPE : 0;
+            int end = pass == 0 ? STACKS_PER_TYPE : OUT_STACKS_PER_TYPE;
+            for (int t = 0; t < VIRTUAL_TYPES; t++) {
+                for (int j = start; j < end; j++) {
+                    int slot = CONTAINER_SIZE + t * STACKS_PER_TYPE + j;
+                    if (getItem(slot).is(item)) return removeItem(slot, 1);
+                }
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     /** @return сколько реально сняли: головы → депо → «добытое» (порядок автора). */

@@ -226,6 +226,7 @@ public final class AlloyFoundryBlockEntity extends BaseMachineBlockEntity
         if (output.isEmpty()) {
             items.set(SLOT_OUTPUT, incoming.copy());
         } else {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(output, incoming, incoming.getCount());
             output.grow(incoming.getCount());
         }
     }

@@ -415,6 +415,7 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
         if (slag.isEmpty()) {
             be.items.set(slot, new ItemStack(Items.FLINT));
         } else if (slag.is(Items.FLINT) && slag.getCount() < slag.getMaxStackSize()) {
+            com.gonzotech.radiation.engine.ExternalRadiation.dilute(slag, 1);
             slag.grow(1);
         }
     }
@@ -439,6 +440,7 @@ public final class SiliconFactoryBlockEntity extends BlockEntity
         if (current.isEmpty()) {
             be.items.set(slot, stack);
         } else {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(current, stack, stack.getCount());
             current.grow(stack.getCount());
         }
     }

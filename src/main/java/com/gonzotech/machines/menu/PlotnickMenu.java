@@ -96,10 +96,11 @@ public final class PlotnickMenu extends BaseMachineMenu {
             // у недолитой стопки она равна потолку самого предмета.
             // 0.3.306: но слот может быть строже склада (CardSlot = 1) —
             // берём минимум, иначе мердж раздувает одноштучный слот.
-            int space = Math.min(PlotnickBlockEntity.capacityFor(stored), target.getMaxStackSize())
+            int space = Math.min(PlotnickBlockEntity.capacityFor(stored), target.getMaxStackSize(stack))
                 - stored.getCount();
             if (space <= 0) continue;
             int moved = Math.min(space, stack.getCount());
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(stored, stack, moved);
             stored.grow(moved);
             stack.shrink(moved);
             target.setChanged();
@@ -115,7 +116,7 @@ public final class PlotnickMenu extends BaseMachineMenu {
             // карт из 16 заполнял одноштучный слот всей стопкой, а
             // секундный наблюдатель срезал излишек в void (автор 26.10,
             // подтверждено в игре на обоих слотах карт).
-            int room = Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize());
+            int room = Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize(stack));
             target.setByPlayer(stack.split(room));
             movedAny = true;
         }
@@ -216,6 +217,7 @@ public final class PlotnickMenu extends BaseMachineMenu {
         if (getCarried().isEmpty()) {
             setCarried(template);
         } else if (ItemStack.isSameItemSameComponents(getCarried(), template)) {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(getCarried(), template, overflow);
             getCarried().grow(overflow);
         } else if (!player.getInventory().add(template)) {
             player.drop(template, false);

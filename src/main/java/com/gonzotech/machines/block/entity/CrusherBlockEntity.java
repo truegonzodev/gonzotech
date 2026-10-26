@@ -166,6 +166,7 @@ public class CrusherBlockEntity extends BaseMachineBlockEntity implements GtuSin
             if (existing.isEmpty()) {
                 items.set(OUTPUT_SLOTS[i], pending.copy());
             } else {
+                com.gonzotech.radiation.engine.ExternalRadiation.merge(existing, pending, pending.getCount());
                 existing.grow(pending.getCount());
             }
             pendingOutputs[i] = ItemStack.EMPTY;

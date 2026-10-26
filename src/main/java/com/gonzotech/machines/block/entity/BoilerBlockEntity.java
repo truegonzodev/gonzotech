@@ -217,6 +217,7 @@ public class BoilerBlockEntity extends BaseMachineBlockEntity implements GthSink
         if (out.isEmpty()) {
             items.set(SLOT_BUCKET_OUT, new ItemStack(Items.BUCKET));
         } else if (out.is(Items.BUCKET) && out.getCount() < out.getMaxStackSize()) {
+            com.gonzotech.radiation.engine.ExternalRadiation.dilute(out, 1);
             out.grow(1);
         } else {
             return false;

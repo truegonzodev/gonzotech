@@ -173,6 +173,7 @@ public final class SecondCobbleGeneratorBlockEntity extends BaseMachineBlockEnti
         }
         if (ItemStack.isSameItemSameComponents(output, pendingResult)
             && output.getCount() < output.getMaxStackSize()) {
+            com.gonzotech.radiation.engine.ExternalRadiation.dilute(output, 1);
             output.grow(1);
             pendingResult = ItemStack.EMPTY;
             return true;

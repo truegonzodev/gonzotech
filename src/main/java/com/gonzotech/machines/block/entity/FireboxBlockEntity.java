@@ -165,6 +165,7 @@ public class FireboxBlockEntity extends BaseMachineBlockEntity
                     int room = Math.min(cur.getMaxStackSize(), getMaxStackSize()) - cur.getCount();
                     int move = Math.min(stack.getCount(), room);
                     if (move <= 0) continue;
+                    com.gonzotech.radiation.engine.ExternalRadiation.merge(cur, stack, move);
                     cur.grow(move);
                     stack.shrink(move);
                     if (stack.isEmpty()) return ItemStack.EMPTY;

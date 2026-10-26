@@ -288,6 +288,7 @@ public final class ItemRouting {
         }
         if (ItemStack.isSameItemSameComponents(cur, one)
             && cur.getCount() < Math.min(cur.getMaxStackSize(), dst.getMaxStackSize())) {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(cur, one, 1);
             cur.grow(1);
             dst.setChanged();
             return true;

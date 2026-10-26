@@ -151,6 +151,7 @@ public final class SecondGrinderBlockEntity extends BaseMachineBlockEntity
         if (output.isEmpty()) {
             items.set(SLOT_OUTPUT, pendingOutput.copy());
         } else {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(output, pendingOutput, pendingOutput.getCount());
             output.grow(pendingOutput.getCount());
         }
         pendingOutput = ItemStack.EMPTY;

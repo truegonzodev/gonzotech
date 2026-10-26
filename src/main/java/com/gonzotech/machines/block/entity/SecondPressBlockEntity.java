@@ -146,6 +146,7 @@ public final class SecondPressBlockEntity extends BaseMachineBlockEntity
         if (output.isEmpty()) {
             items.set(SLOT_OUTPUT, result.copy());
         } else {
+            com.gonzotech.radiation.engine.ExternalRadiation.merge(output, result, result.getCount());
             output.grow(result.getCount());
         }
         // The just-completed strike starts a new 60-tick recovery period. Any

@@ -269,6 +269,7 @@ public class GonzoTechMod {
             (payload, context) -> context.enqueueWork(
                 () -> com.gonzotech.machines.client.MarkerClient.accept(payload)));
 
+        com.gonzotech.radiation.engine.RadiationViewNetwork.register(registrar);
         ChalkboardNetwork.register(registrar);
         com.gonzotech.core.tooltip.GateTooltipNetwork.register(registrar);
 

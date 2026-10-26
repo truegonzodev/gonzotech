@@ -23,3 +23,6 @@ git add.bat
 # Local audit toolchains / downloaded dependencies
 .cache/
 __pycache__/
+
+# Isolated radiation GameTest world
+/run-radiation-merge-tests-311/

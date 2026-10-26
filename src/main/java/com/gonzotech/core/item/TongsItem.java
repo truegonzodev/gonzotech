@@ -1,6 +1,7 @@
 package com.gonzotech.core.item;
 
 import com.gonzotech.radiation.CarrierItem;
+import com.gonzotech.radiation.engine.ExternalRadiation;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -61,6 +62,7 @@ public final class TongsItem extends Item implements CarrierItem {
 
     /** Запись через update-merge (фикс 0.3.85: set ломал строку креатив-таба). */
     private static void store(ItemStack stack, String id, int count) {
+        if (count <= 0) ExternalRadiation.clearContents(stack);
         stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
                 data -> data.update(tag -> {
                     tag.putString(TAG_ITEM, id);
@@ -98,7 +100,7 @@ public final class TongsItem extends Item implements CarrierItem {
 
     @Override
     public ItemStack previewCarried(ItemStack carrier) {
-        return previewOf(itemId(carrier), itemCount(carrier));
+        return ExternalRadiation.previewContents(carrier, previewOf(itemId(carrier), itemCount(carrier)));
     }
 
     @Override
@@ -121,6 +123,7 @@ public final class TongsItem extends Item implements CarrierItem {
         int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
                 id, other.getCount());
         if (moved <= 0) return false;
+        ExternalRadiation.insertContents(magazine, itemCount(magazine), other, moved);
         store(magazine, id, itemCount(magazine) + moved);
         other.shrink(moved);
         slot.setChanged();
@@ -142,6 +145,7 @@ public final class TongsItem extends Item implements CarrierItem {
             int moved = TongsLogic.roomFor(itemId(magazine), itemCount(magazine),
                     id, incoming.getCount());
             if (moved <= 0) return false;
+            ExternalRadiation.insertContents(magazine, itemCount(magazine), incoming, moved);
             store(magazine, id, itemCount(magazine) + moved);
             incoming.shrink(moved);
             playInsert(player);
@@ -154,6 +158,7 @@ public final class TongsItem extends Item implements CarrierItem {
             cursor.set(content.split(1));
         } else if (ItemStack.isSameItemSameComponents(incoming, content)
                 && incoming.getCount() < incoming.getMaxStackSize()) {
+            ExternalRadiation.merge(incoming, content, 1);
             incoming.grow(1);
             content.shrink(1);
         } else {

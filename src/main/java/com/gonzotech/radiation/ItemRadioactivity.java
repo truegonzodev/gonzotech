@@ -1,34 +1,14 @@
 package com.gonzotech.radiation;
 
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * Наведённая радиоактивность предмета.
- *
- * <p>ВАЖНО: {@code gonzo_rad} хранит дозу ОДНОГО предмета в стаке, а не дозу
- * стака. Это намеренно: ваниль при разделении стака копирует компоненты, и
- * per-item модель не создаёт радиацию из воздуха. Полная эмиссия стака всегда
- * считается как {@code perItem * count}.</p>
- */
+/** Per-item induced rate in the external owner-persisted engine.
+ * Item components and item serialization never contain dynamic radiation. */
 public final class ItemRadioactivity {
-    private static final org.slf4j.Logger CLR_LOG =
-            org.slf4j.LoggerFactory.getLogger("gonzotech/radiation-inventory");
-    public static final String TAG_RAD = "gonzo_rad";
-    /** Версия формата: 1 = значение на один предмет; без версии — старый total-stack формат. */
-    public static final String TAG_RAD_MODEL = "gonzo_rad_model";
-    /** Последний ленивый радиационный шаг, общий для инвентарей, контейнеров и ItemEntity. */
-    public static final String TAG_RAD_LAST_TICK = "gonzo_rad_last_tick";
     public static final int DECAY_STEP_TICKS = 20;
-    private static final int PER_ITEM_MODEL = 1;
     public static final double GROWTH = 1.25;
     public static final double INDUCED_CAP = 5.0 * RadUnits.UNIT;
     /** (автор 22.10, баланс) Стоимость нагрева: множитель приёма
@@ -62,80 +42,24 @@ public final class ItemRadioactivity {
         return id.getPath().contains("lead");
     }
 
-    /** Наведённая эмиссия одного предмета внутри стака (nZt/s). */
+    /** Runtime rate. Dynamic radiation is never read from item components. */
     public static double getInduced(ItemStack stack) {
-        // 0.3.294 (корневой ремонт дюпа, журнал ### 37): живой стак — значение
-        // из RadDoseIndex; компонент под живым инвентарём не мутирует никогда.
-        RadDoseIndex.Entry idx = RadDoseIndex.peek(stack);
-        if (idx != null) return Math.max(0.0, idx.value);
-        return readComponentValue(stack);
-    }
-
-    /** Холодное компонентное значение (без индекса): сидинг adopt'а и flush. */
-    static double readComponentValue(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) return 0.0;
-        CompoundTag tag = data.copyTag();
-        double value = Math.max(0.0, tag.getDouble(TAG_RAD));
-        // Сейвы до 0.3.17 содержали total-stack. Мигрируем чтением лениво;
-        // ближайшая запись setInduced зафиксирует новый формат явно.
-        return tag.getInt(TAG_RAD_MODEL) == PER_ITEM_MODEL
-                ? value : value / Math.max(1, stack.getCount());
+        return com.gonzotech.radiation.engine.ExternalRadiation.read(stack).rate();
     }
 
     public static void setInduced(ItemStack stack, double value) {
-        if (RadDoseIndex.setValue(stack, value)) return;
-        if (value < CLEANUP_FLOOR) {
-            clear(stack, "setInduced-floor");
-            return;
-        }
-        writeComponent(stack, value);
+        com.gonzotech.radiation.engine.ExternalRadiation.rate(stack,
+                value >= CLEANUP_FLOOR ? value : 0.0);
     }
 
-    static void writeComponent(ItemStack stack, double value) {
-        stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
-                data -> data.update(tag -> {
-                    tag.putDouble(TAG_RAD, value);
-                    tag.putInt(TAG_RAD_MODEL, PER_ITEM_MODEL);
-                }));
-    }
-
-    /** (0.3.275) Любое снятие gonzo_rad логируется с причиной — «моментальная
-     *  потеря радиации» ловится за руку на первом же прогоне. */
     private static void clear(ItemStack stack, String cause) {
-        if (com.gonzotech.core.config.GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get()) {
-            CLR_LOG.info("[RAD-INV] очистка gonzo_rad: item={}, old={}, count={}, cause={}",
-                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()),
-                    String.format("%.2f", getInduced(stack)), stack.getCount(), cause);
-        }
-        if (RadDoseIndex.markCleared(stack)) return;
-        clearComponent(stack);
-    }
-
-    static void clearComponent(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) return;
-        stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
-                d -> d.update(tag -> {
-                    tag.remove(TAG_RAD);
-                    tag.remove(TAG_RAD_MODEL);
-                    tag.remove(TAG_RAD_LAST_TICK);
-                }));
-        CustomData after = stack.get(DataComponents.CUSTOM_DATA);
-        if (after != null && after.isEmpty()) stack.remove(DataComponents.CUSTOM_DATA);
+        com.gonzotech.radiation.engine.ExternalRadiation.rate(stack, 0);
     }
 
     /**
      * Рассчитать следующий per-item уровень без изменения ItemStack.
      *
-     * <p>Рост идёт НА ПРЕДМЕТ, а не на стопку (автор, 22.10: таблица из четырёх
-     * случаев): 1 мандарин получает 1 mZt/s — 64 мандарина получают 64 mZt/s,
-     * каждый как одиночный. Складывать/делить обработчиками не нужно:
-     * {@code gonzo_rad} хранит per-item значение, ваниль при split копирует
-     * компонент — дупа нет; merge ванильный разрешает только равным
-     * компонентам, то есть стелятся одинаковые уровни. «Стопка как щит»
-     * (случай 2) и «стопка не накапливает» (#27, случай 3) этой правкой
-     * закрыты: ни target, ни сид от размера стака не зависят.</p>
+     * Рост идёт на предмет; перенос и взвешенное объединение обслуживает внешний движок.
      */
     public static double nextInduced(double current, ItemStack stack,
                                      boolean hasSource, double sourceNzt, double factor) {
@@ -256,7 +180,7 @@ public final class ItemRadioactivity {
 
     /**
      * Ленивый no-source decay для вещей в контейнерах, на полу и в рамках.
-     * Возвращает true, если NBT радиации или таймера изменился. Пропущенные интервалы
+     * Возвращает true, если внешнее состояние радиации изменилось. Пропущенные интервалы
      * применяются степенями, поэтому обновление не требует тика каждой вещи.
      */
     public static boolean decayInducedLazily(ItemStack stack, long nowTick) {
@@ -289,60 +213,28 @@ public final class ItemRadioactivity {
 
     private static boolean decayInducedDeepLazily(ItemStack stack, long nowTick, int depth) {
         if (stack.isEmpty()) return false;
-        // 0.3.294: живой стак не получает переписывания CONTAINER/BUNDLE —
-        // ленивый догон доедет сам на следующем обращении после flush.
-        if (RadDoseIndex.isLive(stack)) return false;
         boolean changed = decayInducedLazily(stack, nowTick);
+        if (stack.getItem() instanceof CarrierItem carrier) {
+            ItemStack content = carrier.previewCarried(stack);
+            changed |= decayInducedLazily(content, nowTick);
+            com.gonzotech.radiation.engine.ExternalRadiation.writeContents(stack,
+                com.gonzotech.radiation.engine.ExternalRadiation.read(content));
+        }
         if (depth >= 4) return changed;
-        // (автор #28, 0.3.267) Связка разряжается как шалкер: items() держит
-        // живые стопки — наведёнка правится в самих стеках, перекладывать
-        // компонент не нужно. Эмиссия (RadSources.contentsOf) этот обход уже
-        // видел; расхождение пропало.
-        var bundle = stack.get(DataComponents.BUNDLE_CONTENTS);
-        if (bundle != null) {
-            for (ItemStack inner : bundle.items()) {
-                changed |= decayInducedDeepLazily(inner, nowTick, depth + 1);
-            }
-        }
-        ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
-        if (contents == null) return changed;
-        List<ItemStack> slots = new ArrayList<>(contents.getSlots());
-        boolean nestedChanged = false;
-        for (int i = 0; i < contents.getSlots(); i++) {
-            ItemStack nested = contents.getStackInSlot(i);
-            nestedChanged |= decayInducedDeepLazily(nested, nowTick, depth + 1);
-            slots.add(nested);
-        }
-        if (nestedChanged) {
-            stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(slots));
-            changed = true;
+        // Read the immutable contents, update ONLY the external radiation views.
+        for (ItemStack inner : RadSources.contentsOf(stack)) {
+            changed |= decayInducedDeepLazily(inner, nowTick, depth + 1);
         }
         return changed;
     }
 
     /** Отметить уже обработанный инвентарный шаг, в том числе виртуальный held-stack. */
     public static void markDecayTick(ItemStack stack, long nowTick) {
-        if (stack.isEmpty() || getInduced(stack) <= 0.0D) return;
-        if (RadDoseIndex.markTick(stack, nowTick)) return;
-        writeComponentLastTick(stack, nowTick);
-    }
-
-    static void writeComponentLastTick(ItemStack stack, long nowTick) {
-        stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY,
-                data -> data.update(tag -> tag.putLong(TAG_RAD_LAST_TICK, nowTick)));
+        com.gonzotech.radiation.engine.ExternalRadiation.tick(stack, nowTick);
     }
 
     private static long lastDecayTick(ItemStack stack) {
-        long idx = RadDoseIndex.tickOf(stack);
-        if (idx != Long.MIN_VALUE) return idx;
-        return readComponentLastTick(stack);
-    }
-
-    static long readComponentLastTick(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) return Long.MIN_VALUE;
-        CompoundTag tag = data.copyTag();
-        return tag.contains(TAG_RAD_LAST_TICK) ? tag.getLong(TAG_RAD_LAST_TICK) : Long.MIN_VALUE;
+        return com.gonzotech.radiation.engine.ExternalRadiation.read(stack).tick();
     }
 
     private static void decayInducedSteps(ItemStack stack, long steps) {
@@ -351,20 +243,6 @@ public final class ItemRadioactivity {
         double next = restDecay(current, steps);
         if (next >= CLEANUP_FLOOR) setInduced(stack, next);
         else clear(stack, "rest-catchup steps=" + steps);
-    }
-
-    /** Совместимость со старыми callers: split больше не требует ручного деления. */
-    public static void split(ItemStack stack, double fraction) {
-        // Ничего не делаем: ванильный split копирует per-item значение правильно.
-    }
-
-    /** Однократная миграция старого total-stack тега до любых split/merge операций. */
-    public static void migrateLegacy(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data == null) return;
-        CompoundTag tag = data.copyTag();
-        if (!tag.contains(TAG_RAD) || tag.getInt(TAG_RAD_MODEL) == PER_ITEM_MODEL) return;
-        setInduced(stack, tag.getDouble(TAG_RAD) / Math.max(1, stack.getCount()));
     }
 
     /**
@@ -399,10 +277,13 @@ public final class ItemRadioactivity {
 
     /** Полная эмиссия стака: preset per-item × count + induced per-item × count. */
     public static double totalEmission(ItemStack stack) {
-        return RadSources.emissionOfStack(stack) + getInduced(stack) * Math.max(1, stack.getCount());
+        if (stack.isEmpty()) return 0;
+        double sum = RadSources.emissionOfStack(stack) + getInduced(stack) * stack.getCount();
+        if (stack.getItem() instanceof CarrierItem carrier) {
+            ItemStack content = carrier.previewCarried(stack);
+            sum += CarrierItem.RADIOACTIVITY_FACTOR * getInduced(content) * content.getCount();
+        }
+        return sum;
     }
 
-    public static double rawTagValue(CompoundTag tag) {
-        return tag == null ? 0.0 : Math.max(0.0, tag.getDouble(TAG_RAD));
-    }
 }

@@ -246,6 +246,7 @@ public class PcfsozBlockEntity extends BaseMachineBlockEntity
             if (existing.isEmpty()) {
                 items.set(slot, pending.copy());
             } else {
+                com.gonzotech.radiation.engine.ExternalRadiation.merge(existing, pending, pending.getCount());
                 existing.grow(pending.getCount());
             }
             pendingOutputs[i] = ItemStack.EMPTY;

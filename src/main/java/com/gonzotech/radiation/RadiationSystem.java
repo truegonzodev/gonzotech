@@ -124,10 +124,6 @@ public final class RadiationSystem {
     /** Накопители дробной дозы/спада по игрокам (permille дискретен). */
     private static final Map<UUID, Double> DOSE_ACC = new HashMap<>();
     private static final Map<UUID, Double> SHED_ACC = new HashMap<>();
-    /** Последний swing pulse: mining не является обычным isUsingItem(). */
-    private static final Map<UUID, Integer> LAST_SWING = new HashMap<>();
-    /** Виртуальная радиация активного предмета: не трогаем carried NBT во время действия. */
-    private static final Map<HeldKey, HeldRadState> HELD_RAD = new HashMap<>();
     /**
      * (0.3.277) Инвентарный журнал против «все всё дюпают»: Σ предметов
      * открытого меню (+курсор), посчитанная сервером на проходе, против суммы
@@ -160,24 +156,7 @@ public final class RadiationSystem {
     /** Время прошлого активного скана для темпа поставленного источника 5% за 20 с. */
     private static final Map<ServerLevel, Map<Long, Long>> LAST_FLOOR_BLOCK_SCAN =
             Collections.synchronizedMap(new WeakHashMap<>());
-    private record HeldKey(UUID player, InteractionHand hand) {}
     private record FloorScan(double ordinaryTransfer, double blockLikeTarget) {}
-
-    /**
-     * (0.3.275) Только источник истины дозы; физический NBT дописывается каждый
-     * проход (ранее — раз в HELD_FLUSH_TICKS, из-за чего vanilla split на курсор
-     * копировал устаревшее физическое значение — баг автора «моментально теряет
-     * всю наведёнку»).
-     */
-    private static final class HeldRadState {
-        private ItemStack stack;
-        private double value;
-
-        private HeldRadState(ItemStack stack, double value) {
-            this.stack = stack;
-            this.value = value;
-        }
-    }
 
     private RadiationSystem() {
     }
@@ -189,11 +168,6 @@ public final class RadiationSystem {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        // LivingEntity does not expose a public isSwinging() in 1.21.4.
-        // Attack animation is the mapped public signal for the same pulse.
-        if (player.getAttackAnim(0.0F) > 0.0F) {
-            LAST_SWING.put(player.getUUID(), player.tickCount);
-        }
         // Воздух некроза держим КАЖДЫЙ тик: ваниль восстанавливает 4 пузырька в тик,
         // поэтому вычитать раз в секунду бесполезно (автор 22.09.2026 — полоска мигала).
         Necrosis.tickAir(player);
@@ -201,7 +175,7 @@ public final class RadiationSystem {
             return;
         }
         ServerLevel level = (ServerLevel) player.level();
-        long nowTick = level.getServer().getTickCount();
+        long nowTick = level.getGameTime();
         ChunkRadiationData data = ChunkRadiationData.get(level);
         boolean tracing = RadiationTrace.isActive(level, player.blockPosition());
         if (hasVisualInstrument(player)) {
@@ -211,23 +185,11 @@ public final class RadiationSystem {
             PacketDistributor.sendToPlayer(player, new RadiationVisualPayload(visual));
         }
         long chunkKey = new ChunkPos(player.blockPosition()).toLong();
-        // (0.3.275, автор 23.10: «пауза — неверное вмешательство») Заморозки нет
-        // ни на клик, ни на открытое меню: пропущенные из-за паузы секунды
-        // ленивый догон считал покоем и сжигал наведёнку (до полного обнуления
-        // NBT). Физическая запись идёт всегда; корректность окна drag&drop —
-        // вопрос к синхронизации, не к паузе (см. журнал; дебаг-логи кликов).
+        // Dynamic item radiation is external; inventory interactions never pause it.
         boolean debugInv = GonzoServerConfig.RADIATION_INVENTORY_DEBUG.get();
         int debugTouched = 0;
         int debugItemCount = 0;
-        // 0.3.294 (корневой ремонт дюпа из логов автора 25.10): пока игрок
-        // «активен» (клик/креатив-пакет < 5 с) или у него открыт серверный
-        // контейнер, проход пишет только в RadDoseIndex — ItemStack'ы инвентаря
-        // не мутируют, и клиентская сетка не может устареть. Flush компонентов
-        // — в тихое окно, где racing-окна нет по построению.
-        boolean quiet = RadDoseIndex.quietFor(player);
-        if (quiet) {
-            RadDoseIndex.flushPlayer(player);
-        }
+        // 0.3.306: radiation lives outside ItemStack; no interaction pauses or flush.
 
         // Скан полной эмиссии инвентаря; максимум и второй максимум используются
         // только для локальной логистики наведёнки предметов, не для переноса в чанк.
@@ -283,12 +245,6 @@ public final class RadiationSystem {
                 if (stack.isEmpty()) {
                     continue;
                 }
-                if (!quiet) {
-                    RadDoseIndex.adopt(player, stack);
-                }
-                boolean activeHand = stack == player.getMainHandItem()
-                        || stack == player.getOffhandItem();
-                boolean hardUse = activeHand && isHardUsing(player, stack);
                 // Пер-стековый уровень источника: эмиссия этого стака исключена
                 // (второй максимум), чанк-фон общий.
                 double ownEmission = RadSources.emissionDeep(stack);
@@ -297,32 +253,20 @@ public final class RadiationSystem {
                         chunkSource);
                 double factor = RadMaterials.itemFactor(stack);
                 int count = Math.max(1, stack.getCount());
-                // intrinsic уже содержит NBT-наведёнку до тика. Запоминаем ровно
+                // intrinsic уже содержит наведёнку до тика. Запоминаем ровно
                 // этот верхний уровень, чтобы заменить его новым значением, а не
                 // прибавить наведённую эмиссию к уже включённой второй раз.
                 double storedInduced = ItemRadioactivity.getInduced(stack);
                 inducedBefore += storedInduced * count;
                 // 0.3.291: строке [PASS] нужен «до» и на debug-сеансах, не только на трассе.
                 double oldInduced = (tracing || debugInv) ? storedInduced : 0.0;
-                if (tracing && activeHand) {
-                    InteractionHand hand = stack == player.getOffhandItem()
-                            ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-                    HeldRadState heldState = HELD_RAD.get(new HeldKey(player.getUUID(), hand));
-                    if (heldState != null && heldState.stack == stack) oldInduced = heldState.value;
-                }
                 // 0.3.291 (п.6 таблицы автора): радиационный проход не имеет права
-                // трогать стак — только компоненты. Прежнее состояние фиксируем
+                // трогать стак — только внешнее состояние радиации. Прежнее состояние фиксируем
                 // ровно для этой проверки (count/item дрейнули = дюп-вектор).
                 int countBefore = stack.getCount();
                 net.minecraft.world.item.Item itemBefore = stack.getItem();
-                double perItem;
-                if (activeHand) {
-                    perItem = tickHeldRadiation(player, stack, hardUse, hasSourceContext,
-                            stackSource, factor, nowTick);
-                } else {
-                    perItem = ItemRadioactivity.tickInducedAt(
-                            stack, hasSourceContext, stackSource, factor, nowTick);
-                }
+                double perItem = ItemRadioactivity.tickInducedAt(
+                        stack, hasSourceContext, stackSource, factor, nowTick);
                 induced += perItem * count;
                 if (debugInv) {
                     debugTouched++;
@@ -352,61 +296,8 @@ public final class RadiationSystem {
                                     + "; inventoryContribution=" + RadiationTrace.rate(perItem * count)
                                     + "; strongestOtherSource=" + RadiationTrace.rate(stackSource)
                                     + "; materialFactor=" + RadiationTrace.number(factor)
-                                    + (hardUse ? "; held under active use protection" : ""));
+);
                 }
-            }
-        }
-
-        // (0.3.275) Осиротевшее HELD-состояние: стак ушёл из руки (взят на курсор,
-        // брошен Q, сдвинут в ящик), а рука не занята новым предметом — главный
-        // цикл его больше не увидит. Догоняем физический NBT немедленно (max —
-        // чтобы не уронить то, что уже записано) и снимаем состояние: иначе оно
-        // доживает до смены предмета в руке с устаревшим value.
-        ItemStack mainNow = player.getMainHandItem();
-        ItemStack offNow = player.getOffhandItem();
-        var heldIt = HELD_RAD.entrySet().iterator();
-        while (heldIt.hasNext()) {
-            var heldEntry = heldIt.next();
-            if (!heldEntry.getKey().player().equals(player.getUUID())) continue;
-            HeldRadState orphan = heldEntry.getValue();
-            if (orphan.stack == mainNow || orphan.stack == offNow) continue;
-            if (!orphan.stack.isEmpty()) {
-                ItemRadioactivity.setInduced(orphan.stack,
-                        Math.max(orphan.value, ItemRadioactivity.getInduced(orphan.stack)));
-                ItemRadioactivity.markDecayTick(orphan.stack, nowTick);
-            }
-            heldIt.remove();
-        }
-
-        // (0.3.276) Тик-бэкстоп раздутых стаков — независимая от миксина
-        // линия: даже если окно всасывания (changedSlots → setRemoteSlotNoCopy
-        // ПОСЛЕ clicked, 1.21.4) пропустит аномалию, стак, физически
-        // превышающий лимит своего слота, срезается здесь же за секунду.
-        // Отрезанное не возвращается молча: WARN с item-id — это улика дюпа.
-        AbstractContainerMenu openMenu = player.containerMenu;
-        if (openMenu != null) {
-            for (Slot slot : openMenu.slots) {
-                ItemStack stack = slot.getItem();
-                if (stack.isEmpty()) continue;
-                int max = slot.getMaxStackSize(stack);
-                if (stack.getCount() > max) {
-                    RAD_INV_LOG.warn("[RAD-INV][CLAMP] {}: раздутый стак {} — {}→{} шт (slot {}, {}); срезано бэкстопом 0.3.276",
-                            player.getGameProfile().getName(),
-                            BuiltInRegistries.ITEM.getKey(stack.getItem()),
-                            stack.getCount(), max, slot.getSlotIndex(),
-                            slot.container.getClass().getSimpleName());
-                    stack.setCount(max);
-                    slot.set(stack);
-                }
-            }
-            ItemStack carriedNow = openMenu.getCarried();
-            if (!carriedNow.isEmpty() && carriedNow.getCount() > carriedNow.getMaxStackSize()) {
-                RAD_INV_LOG.warn("[RAD-INV][CLAMP] {}: раздутый carried {} — {}→{} шт; срезано бэкстопом 0.3.276",
-                        player.getGameProfile().getName(),
-                        BuiltInRegistries.ITEM.getKey(carriedNow.getItem()),
-                        carriedNow.getCount(), carriedNow.getMaxStackSize());
-                carriedNow.setCount(carriedNow.getMaxStackSize());
-                openMenu.setCarried(carriedNow);
             }
         }
 
@@ -479,15 +370,6 @@ public final class RadiationSystem {
         for (List<ItemStack> part : compartments) {
             for (ItemStack stack : part) {
                 double stackEmission = RadSources.emissionDeep(stack);
-                if (stack == player.getMainHandItem() || stack == player.getOffhandItem()) {
-                    InteractionHand hand = stack == player.getOffhandItem()
-                            ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-                    HeldRadState heldState = HELD_RAD.get(new HeldKey(player.getUUID(), hand));
-                    if (heldState != null && heldState.stack == stack) {
-                        stackEmission += (heldState.value - ItemRadioactivity.getInduced(stack))
-                                * Math.max(1, stack.getCount());
-                    }
-                }
                 double clampedEmission = Math.max(0.0D, stackEmission);
                 totalNzt += clampedEmission;
                 if (clampedEmission > strongestStackNzt) strongestStackNzt = clampedEmission;
@@ -643,59 +525,6 @@ public final class RadiationSystem {
                 || player.getMainHandItem().is(ModItems.TELIFON.get())
                 || player.getOffhandItem().is(ModItems.DOSIMETER.get())
                 || player.getOffhandItem().is(ModItems.TELIFON.get());
-    }
-
-    private static boolean isHardUsing(ServerPlayer player, ItemStack stack) {
-        if (player.isUsingItem() && player.getUseItem() == stack) {
-            return true;
-        }
-        // Mining is not a normal ItemStack use action. Record swing pulses on
-        // every player tick, not only on the once-per-second radiation tick.
-        // The window bridges gaps between consecutive vanilla swings.
-        int lastSwing = LAST_SWING.getOrDefault(player.getUUID(), Integer.MIN_VALUE);
-        return stack == player.getMainHandItem() && player.tickCount - lastSwing <= 10;
-    }
-
-    private static double tickHeldRadiation(ServerPlayer player, ItemStack stack, boolean hardUse,
-                                            boolean hasSource, double sourceNzt, double factor,
-                                            long nowTick) {
-        InteractionHand hand = stack == player.getOffhandItem()
-                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-        HeldKey key = new HeldKey(player.getUUID(), hand);
-        HeldRadState state = HELD_RAD.get(key);
-        if (state == null && !hardUse) {
-            return ItemRadioactivity.tickInducedAt(stack, hasSource, sourceNzt, factor, nowTick);
-        }
-        if (state == null || state.stack != stack) {
-            if (state != null) {
-                // Смена предмета в руке: виртуальное состояние старого дописываем
-                // (не понижаем: физическое значение может быть свежее редкого флеша).
-                ItemRadioactivity.setInduced(state.stack,
-                        Math.max(state.value, ItemRadioactivity.getInduced(state.stack)));
-                ItemRadioactivity.markDecayTick(state.stack, nowTick);
-                ItemRadioactivity.decayInducedDeepLazily(state.stack, nowTick);
-            }
-            state = new HeldRadState(stack,
-                    ItemRadioactivity.inducedBeforeSourceStep(stack, nowTick));
-            HELD_RAD.put(key, state);
-        }
-        state.value = ItemRadioactivity.nextInduced(state.value, stack, hasSource, sourceNzt, factor);
-
-        // (0.3.275, автор 23.10 «carried теряет всю радиацию») Held-защита больше
-        // НЕ задерживает физическую запись: раньше во время use value жил только
-        // в HELD_RAD (flush — раз в 35 с), а vanilla split() при взятии стака на
-        // курсор копирует ФИЗИЧЕСКОЕ значение — копия уезжала с обнулённой
-        // наведёнкой. Пишем каждый проход; визуальный дребезг руки давно гасит
-        // RadReequipGate (20.09), sync-шторм поглощает broadcastChanges.
-        // Виртуальное состояние остаётся источником истины для дозы и трасс.
-        ItemRadioactivity.setInduced(stack, state.value);
-        ItemRadioactivity.markDecayTick(stack, nowTick);
-        ItemRadioactivity.decayInducedDeepLazily(stack, nowTick);
-        if (!hardUse) {
-            HELD_RAD.remove(key);
-            return ItemRadioactivity.getInduced(stack);
-        }
-        return state.value;
     }
 
     /**
@@ -901,11 +730,7 @@ public final class RadiationSystem {
             SHED_ACC.remove(player.getUUID());
             LEDGER.remove(player.getUUID());
             LEDGER_CLIENT.remove(player.getUUID());
-            LAST_SWING.remove(player.getUUID());
             LAST_PASS_LOG_NS.remove(player.getUUID());
-            RadDoseIndex.flushPlayer(player);
-            RadDoseIndex.forgetPlayer(player.getUUID());
-            HELD_RAD.entrySet().removeIf(entry -> entry.getKey().player().equals(player.getUUID()));
             RadSickness.forget(player.getUUID());
             RadCleanse.forget(player.getUUID());
             Necrosis.forget(player.getUUID());
