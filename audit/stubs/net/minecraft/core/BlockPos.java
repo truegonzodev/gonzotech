@@ -2,6 +2,7 @@ package net.minecraft.core;
 /** Стаб типа для локального типчека (сигнатуры сверены сборкой автора 04.10.2026). */
 public class BlockPos {
     public BlockPos(int x, int y, int z) { }
+    public static BlockPos containing(net.minecraft.world.phys.Vec3 p){return new BlockPos(0,0,0);}
     public long asLong() { return 0L; }
     public static BlockPos of(long packed) { return new BlockPos(0, 0, 0); }
     public static long asLong(int x, int y, int z) { return 0L; }

@@ -93,23 +93,23 @@ public final class RadiationContourSelfTest {
         box = new World(); box.layer(2, LEAD); box.cells.put(new Pos(1, 0, 0), SOURCE);
         var inside = box.probe();
         check(inside.enclosed(), "player and source inside enclosure");
-        near(inside.insideDose(), 270_000_000, "one radium block: 675mZt/s * 40% = 270mZt/s");
+        near(inside.insideDose(), 33_750_000, "one radium block: 675mZt/s * 5% = 33.75mZt/s");
         near(inside.factor(), .02, "source does not replace actual wall with a self-shielding cell");
         box.cells.put(new Pos(1, 0, 1), SOURCE);
-        near(box.probe().insideDose(), 540_000_000, "adjacent radioactive blocks both count exactly once");
+        near(box.probe().insideDose(), 67_500_000, "adjacent radioactive blocks both count exactly once");
         check(box.probe().interior().contains(new Pos(1,0,1)), "sources included in cavity cache aliases");
         near(RadiationContour.probe(box::read, new Pos(4,0,0)).insideDose(), 0, "outside observer not exposed through whole shell");
         box.layer(3, LEAD);
         near(box.probe().factor(), 0, "chunk can be fully shielded");
-        near(box.probe().insideDose(), 540_000_000, "zero exterior leakage never cancels internal dose");
+        near(box.probe().insideDose(), 67_500_000, "zero exterior leakage never cancels internal dose");
 
         World split = new World(); split.layer(3, LEAD);
         for (int y=-2; y<=2; y++) for (int z=-2; z<=2; z++) split.cells.put(new Pos(0,y,z), LEAD);
         split.cells.put(new Pos(1,0,0), SOURCE);
         near(RadiationContour.probe(split::read, new Pos(-1,0,0)).insideDose(), 0, "sealed partition blocks exposure from another room");
-        near(RadiationContour.probe(split::read, new Pos(2,0,0)).insideDose(), 270_000_000, "same room exposes its occupant");
+        near(RadiationContour.probe(split::read, new Pos(2,0,0)).insideDose(), 33_750_000, "same room exposes its occupant");
         split.cells.put(new Pos(0,0,0), RadiationContour.AIR);
-        near(RadiationContour.probe(split::read, new Pos(-1,0,0)).insideDose(), 270_000_000, "opening internal door joins source cavity");
+        near(RadiationContour.probe(split::read, new Pos(-1,0,0)).insideDose(), 33_750_000, "opening internal door joins source cavity");
 
         World many = new World(); many.layer(3, LEAD);
         int count = 0;
@@ -117,7 +117,7 @@ public final class RadiationContourSelfTest {
             Pos p = new Pos(x,y,z);
             if (!p.equals(CENTER)) { many.cells.put(p, SOURCE); count++; }
         }
-        near(many.probe().insideDose(), count * 270_000_000.0, "all 124 piled sources counted, not just 16 or visible surface blocks");
+        near(many.probe().insideDose(), count * 33_750_000.0, "all 124 piled sources counted, not just 16 or visible surface blocks");
         check(many.probe().interior().size() == 125, "one snapshot reusable for every interior source/player");
         many.cells.put(new Pos(3,0,0), RadiationContour.UNLOADED);
         check(!many.probe().enclosed() && many.probe().insideDose() == 0, "unknown boundary cannot prove containment or internal dose");

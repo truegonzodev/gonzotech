@@ -8,8 +8,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 /**
  * Клиентский HUD «Солнечных часов» (суневеты, финал ветки; автор 2026-09-18):
@@ -31,8 +29,7 @@ public final class SolarWatchHud {
     }
 
     /** Рисует строку над хотбаром (на строку выше спидометра — не сталкиваемся). */
-    @SubscribeEvent
-    public static void onRenderGui(final RenderGuiEvent.Post event) {
+    public static void render(GuiGraphics graphics) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null || mc.level == null || mc.options.hideGui || !isHoldingWatch(player)) {
@@ -43,7 +40,6 @@ public final class SolarWatchHud {
         long efficiencyPercent = Math.round(SunEventData.solarMultiplierAt(SunEventClient.suneventDays) * 100.0D);
         Component line = Component.translatable(
             "hud.gonzotech.solar_watch", day, SunEventClient.nextEventDay, efficiencyPercent);
-        GuiGraphics graphics = event.getGuiGraphics();
         Font font = mc.font;
         int x = (graphics.guiWidth() - font.width(line)) / 2;
         // Спидометр сидит на guiHeight−59; часы — на строку выше, оба видны сразу.

@@ -11,7 +11,7 @@ public final class RadiationContour {
     public static final int RANGE = 32;
     public static final int MAX_LAYERS = 8;
     public static final double ZERO_THRESHOLD = 1.0E-3;
-    public static final double INSIDE_DOSE_WEIGHT = 0.40;
+    public static final double INSIDE_DOSE_WEIGHT = 0.05;
     public enum Kind { OPEN, WALL, SEAL, UNLOADED }
     public record Pos(int x, int y, int z) {
         public Pos move(int dx, int dy, int dz) { return new Pos(x + dx, y + dy, z + dz); }
@@ -23,6 +23,22 @@ public final class RadiationContour {
     public static final Cell UNLOADED = new Cell(Kind.UNLOADED, 1, 0);
     public record Result(boolean enclosed, double factor, double emission, Set<Pos> interior) {
         public double insideDose() { return enclosed ? emission * INSIDE_DOSE_WEIGHT : 0; }
+
+        /** Solid container BEs and wall-mounted frames can occupy the boundary
+         * itself. They expose an adjacent room, never sources beyond that wall. */
+        public boolean containsSource(Pos source, boolean boundarySource) {
+            if (!enclosed) return false;
+            if (interior.contains(source)) return true;
+            if (!boundarySource) return false;
+            for (int axis = 0; axis < 3; axis++) {
+                for (int sign : new int[]{-1, 1}) {
+                    Pos adjacent = source.move(axis == 0 ? sign : 0,
+                            axis == 1 ? sign : 0, axis == 2 ? sign : 0);
+                    if (interior.contains(adjacent)) return true;
+                }
+            }
+            return false;
+        }
     }
     private record Step(Pos pos, int direction) {}
     private static final Result OPEN = new Result(false, 1, 0, Set.of());

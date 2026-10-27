@@ -79,3 +79,9 @@ GUI alignment: 914 checks по исходнику и настоящим PNG PASS
 ## Временная графика III-хранилищ (0.3.316)
 
 По прямому разрешению автора созданы **placeholders**, не финальная авторская графика. Third accumulator side/top — копии II; third battery side/top/bottom/face — копии канистры. Старые PNG не правились. Third accumulator получил Classic и собственную NEO-пару: bar canvas190,145 + три слота208,145/163/181, стандартный512×512 canvas. Battery переиспользует Classic accumulator, но имеет отдельную NEO-пару (копии first accumulator NEO). Новый список Classic512 sheets=72; NEO ownership отдельный у каждого. Контроль отверстия/подложки/слотов — third_storage_test; обе темы ещё ждут игрового просмотра. Детали трансформации и все пути — SUPER_CRUCIAL_FILE.
+
+## Приборы над хотбаром и chat depth — 0.3.317
+
+Игровой дефект автора: chat background не просто темнит, а отсекает части надписей часов/спидометра, в том числе у телифона. Root подтверждён исходником NeoForge1.21.4 GuiLayerManager: renderInner накапливает Z_SEPARATION для layers, затем popPose; RenderGuiEvent.Post вызывается уже на root Z, при сохранённой глубине GUI. Post-надпись может провалить depth-test против чата, несмотря на поздний вызов.
+
+InstrumentHud через client mod-bus RegisterGuiLayersEvent регистрирует один `gonzotech:instruments` layer **над VanillaGuiLayers.CHAT**. В нём SolarWatchHud.render и SpeedometerHud.render, больше не Post callbacks; не добавляется второй HUD для телифона. Скорость по-прежнему мерится ClientTick.Post, Math.hypot(x,z)×20, руки/телифон/F1 guards прежние. Центрирование, colors/shadows и y=guiHeight−71 /−59 сохранены. Не отключаются depth test, chat background или сторонние overlays, нет магического абсолютного Z. Порядок остальных GUI layers не меняется. Actual registration callback/typecheck проверены, но GPU/chat fade/open-chat/resource packs требуют игрового повторения.

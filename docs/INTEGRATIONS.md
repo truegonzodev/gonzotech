@@ -38,3 +38,7 @@ GT работает **standalone**, без TerraBlender. `DesolationPresetInject
 ## JEI vanilla factory для alloy previews (0.3.316)
 
 Новые display-only CraftingRecipe получаются через IVanillaRecipeFactory/IJeiShapedRecipeBuilder **JEI20.0.0 / MC1.21.4**, SlotDisplay.ItemStackSlotDisplay; API сверено с upstream tagv20.0.0 (gradle.properties minecraftVersion1.21.4), не с веткой другого MC. Dependency20.0.0.4/optional client scope не изменены, JEI не импортируется серверными BE/recipes. Никаких реальных серверных recipe registration или ослабления состава. Показ/переключение мира/сервер без JEI требуют игрового smoke-test; headless checks не заменяют build compatibility.
+
+## GUI layer вместо Post — 0.3.317
+
+Использованы штатные NeoForge1.21.4 RegisterGuiLayersEvent.registerAbove(VanillaGuiLayers.CHAT, id, layer) и mod-client registration; сигнатура/порядок/pose pop подтверждены upstream RegisterGuiLayersEvent/GuiLayerManager. Это исправляет размещение приборов в собственном моде, не объявляет протестированными все сторонние chat/HUD/render mods. Зависимости не менялись; GPU visual acceptance отдельно от typecheck/registration harness.

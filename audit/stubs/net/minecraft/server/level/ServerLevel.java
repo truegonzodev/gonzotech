@@ -5,6 +5,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 public abstract class ServerLevel extends Level {
+ public ServerChunkCache getChunkSource(){return null;}
+ public java.util.List<net.minecraft.world.entity.Entity> getEntities(net.minecraft.world.entity.Entity ignored, net.minecraft.world.phys.AABB bounds, java.util.function.Predicate<? super net.minecraft.world.entity.Entity> filter){return java.util.List.of();}
     @Override public abstract BlockState getBlockState(BlockPos pos);
     @Override public abstract BlockEntity getBlockEntity(BlockPos pos);
     public boolean isOutsideBuildHeight(BlockPos pos) { return false; }

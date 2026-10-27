@@ -329,3 +329,7 @@ PlayerPsyche — codec attachment ModPsycheAttachments.PSYCHE с copyOnDeath. Ps
 ## Проверки 0.3.315 — D-AUD1
 
 После установки Java 21/Pillow выполнены прежние crisis/faint/GUI regressions: F1 не снимает эффект/ложную смерть, source-кадры и vertex alpha соответствуют текущему overload. Новая relaxation-зависимость в старом faint-harness — явно no-op boundary, не самостоятельное доказательство её рисунка. Исходные шкалы/пороги/химия/тремор не менялись; полный suite 77/77 не заменяет авторскую игру. Точный scope/команды — AUDIT.
+
+## Связанный входящий радиационный поток — 0.3.317
+
+Автор уточнил: closed-room insideDose =5% полной эмиссии физических источников окружения до личной защиты, отдельно от собственного inventory и0.1chunk. Этот вклад добавлен **до** прежнего PsycheChemical.doseMultiplier/hazmat/absorption, поэтому зуд/экранирование брони/препараты не обходятся новым room path. Прежняя связь доставленной дозы с химией и само химическое заражение не перебалансированы; исходники psyche не менялись. Источники/исключение observer inventory и нулевой внешний F — RAD_WORLD/RAD_ITEMS.

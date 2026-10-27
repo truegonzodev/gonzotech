@@ -18,6 +18,7 @@ public abstract class Level {
     public void scheduleTick(BlockPos pos, Block block, int delay) { }
     public abstract BlockState getBlockState(BlockPos pos);
     public abstract BlockEntity getBlockEntity(BlockPos pos);
+    public long getDayTime(){return 0;}
     public long getGameTime() { return 0L; }
     public ResourceKey<Level> dimension() { return null; }
 

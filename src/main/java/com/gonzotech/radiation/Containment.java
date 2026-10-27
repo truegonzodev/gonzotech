@@ -36,9 +36,9 @@ import java.util.WeakHashMap;
  * Pure seals are excluded unless they occupy over half the boundary. Below 0.001
  * transmission is rounded to zero. See RadiationContour for the tested policy.
  *
- * A closed room's actual radioactive blocks also expose occupants at 40% emission/s,
- * independently of the attenuation protecting the outside chunk. Inventory sources
- * remain direct; container contents are NOT added to this new block-only exposure.
+ * A closed room's physical sources expose occupants at 5% emission/s, before
+ * personal protection and independently of outgoing contour attenuation. The
+ * observer's own inventory remains a separate full-strength contribution.
  */
 @EventBusSubscriber(modid = GonzoTechMod.MOD_ID)
 public final class Containment {
@@ -100,7 +100,8 @@ public final class Containment {
 
     public static double factor(ServerLevel level, BlockPos source) { return result(level, source).factor(); }
     public static boolean isEnclosed(ServerLevel level, BlockPos source) { return result(level, source).enclosed(); }
-    public static double insideDose(ServerLevel level, BlockPos observer) {
+    public static double insideDose(ServerLevel level, BlockPos observer,
+                                    net.minecraft.world.entity.player.Player observerPlayer) {
         if (level.isOutsideBuildHeight(observer) || !level.hasChunkAt(observer)) return 0;
         var occupancy = cell(level, observer);
         // Do not apply the source/container "ignore my own solid block" exception
@@ -122,7 +123,76 @@ public final class Containment {
                 }
             }
         }
-        return enclosure.insideDose();
+        if (!enclosure.enclosed()) return 0;
+        double contents = contentsEmission(level, enclosure, observerPlayer);
+        double dose = enclosure.insideDose() + contents * RadiationContour.INSIDE_DOSE_WEIGHT;
+        RadiationTrace.log(level, observer, "ОКРУЖЕНИЕ В КОНТУРЕ → ДОЗА ИГРОКА",
+                "blocks=" + RadiationTrace.rate(enclosure.emission())
+                        + "; contents=" + RadiationTrace.rate(contents)
+                        + "; insideDose=" + RadiationTrace.rate(dose)
+                        + "; contour attenuation NOT applied; observer inventory excluded");
+        return dose;
+    }
+
+    /** Read live physical owners, not menus, cached item snapshots or remote ender
+     * storage. Never tick/mutate a cluster here: several occupants may inspect it. */
+    private static double contentsEmission(ServerLevel level, RadiationContour.Result room,
+                                           net.minecraft.world.entity.player.Player observer) {
+        if (room.interior().isEmpty()) return 0;
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (RadiationContour.Pos point : room.interior()) {
+            minX = Math.min(minX, point.x()); maxX = Math.max(maxX, point.x());
+            minY = Math.min(minY, point.y()); maxY = Math.max(maxY, point.y());
+            minZ = Math.min(minZ, point.z()); maxZ = Math.max(maxZ, point.z());
+        }
+        java.util.List<net.minecraft.world.item.ItemStack> roots = new java.util.ArrayList<>();
+        for (int cx = (minX - 1) >> 4; cx <= (maxX + 1) >> 4; cx++) {
+            for (int cz = (minZ - 1) >> 4; cz <= (maxZ + 1) >> 4; cz++) {
+                var chunk = level.getChunkSource().getChunkNow(cx, cz);
+                if (chunk == null) continue;
+                // Each physical half is read once; no combined double-chest view.
+                for (var owner : chunk.getBlockEntities().values()) {
+                    if (!(owner instanceof net.minecraft.world.Container)
+                            && !(owner instanceof com.gonzotech.swag.PetBowlBlockEntity)) continue;
+                    if (containsSource(room, owner.getBlockPos(), true))
+                        roots.addAll(com.gonzotech.radiation.engine.RadiationOwners.slots(owner));
+                }
+            }
+        }
+        var box = new net.minecraft.world.phys.AABB(minX - 1, minY - 1, minZ - 1,
+                maxX + 2, maxY + 2, maxZ + 2);
+        for (var owner : level.getEntities((net.minecraft.world.entity.Entity) null, box,
+                entity -> entity != observer && entity.isAlive()
+                        && (entity instanceof net.minecraft.world.entity.LivingEntity
+                        || entity instanceof net.minecraft.world.entity.item.ItemEntity
+                        || entity instanceof net.minecraft.world.entity.decoration.ItemFrame
+                        || entity instanceof net.minecraft.world.Container))) {
+            BlockPos pos = owner instanceof net.minecraft.world.entity.LivingEntity
+                    ? BlockPos.containing(owner.getEyePosition()) : owner.blockPosition();
+            if (!containsSource(room, pos, owner instanceof net.minecraft.world.entity.decoration.ItemFrame)) continue;
+            if (owner instanceof net.minecraft.world.entity.player.Player player) {
+                // RadiationOwners.slots also includes ender inventory for persistence;
+                // only the physically present inventory can irradiate this room.
+                for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++)
+                    roots.add(player.getInventory().getItem(slot));
+            } else {
+                roots.addAll(com.gonzotech.radiation.engine.RadiationOwners.slots(owner));
+                if (owner instanceof net.minecraft.world.entity.LivingEntity living
+                        && owner instanceof net.minecraft.world.Container) {
+                    for (var slot : net.minecraft.world.entity.EquipmentSlot.values())
+                        roots.add(living.getItemBySlot(slot));
+                }
+            }
+        }
+        // inspect is read-only and identity-deduplicates roots/nested contents,
+        // including equipment exposed again by a container entity. Carrier shielding
+        // and the existing deep/count rules are retained; chunkTarget is NOT dose.
+        return com.gonzotech.radiation.engine.RadiationCluster.inspect(roots).total();
+    }
+
+    private static boolean containsSource(RadiationContour.Result room, BlockPos source, boolean boundary) {
+        return room.containsSource(new RadiationContour.Pos(source.getX(), source.getY(), source.getZ()), boundary);
     }
 
     /** A moving piston cell normally exposes only minecraft:moving_piston. For our

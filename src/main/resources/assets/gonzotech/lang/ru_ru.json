@@ -353,7 +353,7 @@
   "block.gonzotech.zirconium_block": "Циркониевый блок",
   "block.gonzotech.zirconium_ore": "Циркониевая руда",
   "command.gonzotech.radiation.contour": "Замкнутый радиационный контур: %s; множитель внешней утечки: %s",
-  "command.gonzotech.radiation.inside_dose": "Доза от блоков внутри (до защиты): %s",
+  "command.gonzotech.radiation.inside_dose": "Прямая доза внутри контура (до защиты): %s",
   "container.gonzotech.second_lumber": "Лесопилка",
   "death.attack.heart_attack": "%1$s не пережил сердечный приступ",
   "death.attack.radiation": "%1$s погиб от лучевой болезни",

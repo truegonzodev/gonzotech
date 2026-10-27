@@ -9,7 +9,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 import java.util.Locale;
 
@@ -47,8 +46,7 @@ public final class SpeedometerHud {
     }
 
     /** Рисует строку непосредственно над хотбаром, не занимая action bar. */
-    @SubscribeEvent
-    public static void onRenderGui(final RenderGuiEvent.Post event) {
+    public static void render(GuiGraphics graphics) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null || mc.level == null || mc.options.hideGui || !isHoldingSpeedometer(player)) {
@@ -57,7 +55,6 @@ public final class SpeedometerHud {
 
         String value = String.format(Locale.ROOT, "%.1f", speedBlocksPerSecond);
         Component line = Component.translatable("hud.gonzotech.speedometer", value);
-        GuiGraphics graphics = event.getGuiGraphics();
         Font font = mc.font;
         int x = (graphics.guiWidth() - font.width(line)) / 2;
         // Hotbar заканчивается у нижней границы; надпись находится над уровнем XP

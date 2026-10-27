@@ -212,8 +212,8 @@ public class GonzoTechMod {
             NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SpeedometerHud.class);
             // Единый порядок lore, радиации, токсичности, экранирования и F3+H.
             // Регистрируется через UniversalTooltip (@EventBusSubscriber).
-            // Солнечные часы: день/следующий кризис/эффективность панелей над хотбаром.
-            NeoForge.EVENT_BUS.register(com.gonzotech.core.client.SolarWatchHud.class);
+            // Instruments belong to a real GUI layer, not Post at the restored root Z.
+            modEventBus.addListener(com.gonzotech.core.client.InstrumentHud::registerLayers);
             // Фаза 4 — скайбоксы космических измерений (Луна/Марс/Европа).
             modEventBus.addListener(com.gonzotech.space.client.SpaceClient::onRegisterDimensionEffects);
             // Фаза 4 — рендерер горизонта событий Чёрных Дыр.

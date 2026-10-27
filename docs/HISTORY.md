@@ -4468,3 +4468,63 @@ JEI: показывать крафт теплообменника из поль�
 ````
 
 Финальный повтор 0.3.316 после всех profiles/cleanup: **78 PASS / 0 SKIP / 0 FAIL из78** (`/tmp/gonzo-eng316-final.log`), structure9snapshots/29live/75immutable/4173items/69dispositions, links1199/0broken, validate3285JSON/608items/en=ru1281/0errors/0warnings, diff-check0. Старые tracked PNG, radiation runtime, PlotnickBlock и build dependencies не изменены. Подготовлено к commit/push в фиксированную arena/48845eec-gonzotech по ранее данному разрешению автора. ENG-001 остаётся «реализовано, ждёт проверки», D-ENG1 отложена до авторских recipes.
+
+<a id="v-0-3-317"></a>
+### 0.3.317
+
+**HUD-RAD-001, 27.10.2026, base49506f5/316.** Автор прислал image-1.png: фон чата буквально ломает/отсекает хотбарные надписи телифона/часов/спидометра. Второй игровой репорт: после переноса движка стоящий с источниками в одном контуре игрок не получает ожидаемую до-экранирования дозу, хотя чанк защищён. Это отдельное разрешение радиационной правки, не legacy migration/радиационный ребаланс вне заявки.
+
+**Сверка базы:** sandbox восстановил файлы прошлой доставки поверх bf5e72e без истории коммитов; до любой правки fetched fixed session branch. Временный index с полной проекцией рабочего дерева и remote49506f5 дали один tree **baedc3b55e0ffd635bee2c47cfb33f1949b35aee**. Только после доказанного совпадения git reset --mixed FETCH_HEAD вернул HEAD/index к уже доставленной базе, не меняя рабочие файлы. Посторонних WIP/PNG поверх remote не было; прежние изменения не коммитились второй раз.
+
+**Рендер-корень:** NeoForge1.21.4 GuiLayerManager.renderInner pushPose→layer Z_SEPARATION→popPose; затем RenderGuiEvent.Post. HUD текст на root Z может не пройти depth test против уже нарисованного chat background. Сверены upstream RegisterGuiLayersEvent/registerAbove/VanillaGuiLayers.CHAT. Новый InstrumentHud регистрирует единый named GUI layer над CHAT через client mod bus; SolarWatchHud/SpeedometerHud имеют render(GuiGraphics), не Post subscriptions. Tick measurement speed по-прежнему ClientTick.Post, руки/F1/телифон, coords−71/−59, colors/shadows прежние. Нет shader/depth-off hacks и второй регистрации рисунка. Психический/прочий HUD не менялся.
+
+**Расхождение радиации вынесено автору:** старый код+legacy AUDIT-2026-09-26-CONTOURS и RAD_ITEMS явно задавали40% только от блоков, исключая контейнеры; insideDose как вызов не исчез. Поэтому не заявлен установленный commit появления пользовательской регрессии. Вопрос о весе/составе задан до изменения физики. Автор ответил дословно:
+
+> Если игрок в одной комнате с блоком (сундук с радием или блок плутония например) то получает 5% эмиссии блока в сек, до прочих снижений, это оправдано тем что в обычном чанке блоки самостоятельно не облучают игрока а делают это через блок -> чанк, чанк -> игрок. Предметы из инвентаря игрока без изменений воздействие на игрока, но действие предметов на чанк режется контуром. Валяющиеся на полу предметы/рамки те же 5% эмиссии игроку в контуре напрямую до прочих снижений бронёй или эффектом, эмиссия таких предметов в чанк режется самим контуром.
+
+На второй вопрос выбрал **все физические источники**, включая другие player/mob/entity contents; собственный inventory не повторять. Assistant повторил5%/до личной защиты/выход F unchanged.
+
+**Радиационная реализация:** INSIDE_DOSE_WEIGHT .40→.05 по новому решению; геометрия14/bounds/слои/cache неизменны, Result.containsSource добавляет membership interior/face-boundary для solid BE/frame, не пропускает источники за стеной. Containment.insideDose получает observerPlayer, read-only contentsEmission обходит только loaded getChunkNow physical BE/entities в bounds общей полости, без menu/forced chunk loads/ender inventories. Physical halves read once; player physical inventory, entity gear+container, floor/frame/PetBowl и nested roots суммируются одним inspect.total с identity-dedup. Собственный наблюдатель исключён; нет double tick/ExternalRadiation mutation/перепаковки компонентов. Geometry cache не хранит динамическую contents emission. 5% block+contents до psyche/hazmat/absorption, не через F. RadiationSystem и getdose передают observer; diagnostic field insideSources/trace block+contents. Прежние источники→чанк, lead policies, саморазряд/рост/лекарства/own inventory unchanged. Block radium675mZt/s→33.75mZt/s direct pre-personal protection; F0 при этом не отменяет внутренний поток.
+
+**Проверки:** новый actual-method exposure harness57assertions и7/7assertion-killed temp mutants, прежний pure geometry160checks с новым авторским коэффициентом; actual InstrumentHud registration callback/static guards. Typecheck55real+148stubs/0errors (все три приборных класса и Containment включены). Первый aggregate80PASS/0SKIP/0FAIL, прежние78+новые2. Runtime317; полный MC/NeoForge/Gradle build, GameTests/GPU/client/авторский повтор не запускались. Статус → «реализовано, ждёт проверки», не игровое закрытие. Новая coverage закрывает пробел прежнего block-only/source-pin audit, не переписывает исторические PASS как подтверждение нового behavior.
+
+**Документация:** CURRENT/HISTORY, RAD_WORLD/RAD_ITEMS (5%, owners/исключения/F/read-only), CAPABILITIES/PSYCHE/EQUIPMENT (границы/порядок личной защиты), AUDIO_VISUAL/INTEGRATIONS (GUI depth/API), AUDIT (оба новых suites/числа/границы). README/PNG/75legacy/PlotnickBlock/dependencies не менялись. Ниже — дословные заменённые строки живых профилей, в том числе initial in-progress status; frozen архив не исправляется под новый баланс.
+
+Дословно заменено в `docs/CURRENT-STATE.md` (база49506f5/316; CURRENT включает начальный status этого шага):
+
+````text
+**Текущая runtime-версия: 0.3.316.** База ENG-001 — `cf07429` (включает авторский 5ce51b8 / 315); 27.10.2026. Только статус; полный журнал — [HISTORY](HISTORY.md).
+````
+
+````text
+**Статус: в процессе.** Игровой репорт автора: chat background отсекает пиксели HUD приборов; источники в защищённой общей комнате не дают ожидаемой прямой дозы. Подтверждён новый точный контракт: 5% полной эмиссии окружения/с до хазмата/эффектов, все физические источники, собственный инвентарь без изменения и без повтора; выход в чанк по-прежнему ослабляется контуром. Старый block-only40% код/архив не считаются актуальной нормой после этого уточнения. HUD root: Post вызывается после popPose слоёв, Z-depth текста оказывается ниже chat depth. Разрешена отдельная радиационная правка в границах этой заявки; не migration/баланс прочих потоков.
+````
+
+
+Дословно заменено в `docs/RAD_WORLD.md` (база49506f5/316; CURRENT включает начальный status этого шага):
+
+````text
+Срез кода: **0.3.314**, D-RAD2. Общий предметный обработчик и согласованное ограничение наведённого выхода в чанк; поставленные природные блоки, шкала и пропорции входящей дозы сохранены. Предыдущие формулировки — [HISTORY](HISTORY.md#v-0-3-314).
+````
+
+````text
+Контур защищает внешнюю среду, но не делает стоящего рядом с источником внутри игрока неуязвимым. `insideDose` добавляет вклад реальных источников той же полости. Hazmat снижает входящую дозу игрока; носители снижают эмиссию груза; обычное вложенное хранилище не становится защитой.
+````
+
+
+Дословно заменено в `docs/RAD_ITEMS.md` (база49506f5/316; CURRENT включает начальный status этого шага):
+
+````text
+Доза игрока складывается из полной эмиссии инвентаря, 0.1 полного фона чанка и `Containment.insideDose` (40% реальной эмиссии блоков в той же закрытой полости), затем применяются psyche multiplier, hazmat и абсорбция дозы. Приращение шкалы и перенос в contamination — разные расчёты; не следует применять ×0.75 ко всей дозе игрока.
+````
+
+
+Дословно заменено в `docs/AUDIT.md` (база49506f5/316; CURRENT включает начальный status этого шага):
+
+````text
+**Последний полный локальный прогон, ENG-001 / 0.3.316: 78 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+Финальная сверка диагностического UI317: прежние RU/EN labels «Доза от блоков внутри» / «Internal block dose» заменены на общий direct-dose inside-enclosure текст: значение включает и физическое содержимое, не только блоки. Добавлены source checks одинакового observer-excluding call в tick/getdose и актуальности обеих локализаций. Новых ключей/единиц/параметров не добавлено.
+
+Финальная доставка317: полный повтор **80PASS/0SKIP/0FAIL**, typecheck55real/148boundaries; docs9editions/29live/75immutable/4173items/69dispositions; links1200/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check0. Подготовлен commit/push в фиксированную arena/48845eec-gonzotech по разрешению автора. Без новых рецептов/PNG/зависимостей/Plotnick или изменений item-engine/migration. HUD-RAD-001 не закрыта до игрового повторения автора.

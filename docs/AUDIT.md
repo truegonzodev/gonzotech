@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, ENG-001 / 0.3.316: 78 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, HUD-RAD-001 / 0.3.317: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -43,6 +43,8 @@
 | [graphite_tvel_test.py](../audit/graphite_tvel_test.py) | Regression pins for graphite synthesis and the first reactor-fuel content slice.""" |
 | [greatsword_content_test.py](../audit/greatsword_content_test.py) | Static content/regression checks for the monolith and greatsword feature.""" |
 | [gui_alignment_test.py](../audit/gui_alignment_test.py) | Static production wiring + actual PNG geometry, not an in-game renderer test. |
+| [inside_exposure_test.py](../audit/inside_exposure_test.py) | Actual insideDose/physical collector/owner-slot bodies + real contour/cluster core; world boundary doubles; mutation mode. |
+| [instrument_hud_test.py](../audit/instrument_hud_test.py) | Actual InstrumentHud registration/callback + source contracts; not GPU/chat rendering. |
 | [java_bracket_balance_test.py](../audit/java_bracket_balance_test.py) | 0.3.277-f2: баланс {} () [] во всех java-файлах src/main/java. |
 | [jei_display_test.py](../audit/jei_display_test.py) | Static contract checks for JEI categories, GUI geometry, recipes, and GOST tooltips.""" |
 | [lead_chest_test.py](../audit/lead_chest_test.py) | Пины раунда 11 (0.3.111): свинцовый ящик + 14-связный контур. |
@@ -246,3 +248,27 @@ PYTHONPATH=.cache/python-toolchain python3 audit/third_storage_test.py --mutatio
 **Limits:** no full MC/NeoForge/Gradle build, client rendering, actual loot engine/codec/network integration, optional-JEI runtime or GameTests executed here. Existing typecheck covers its own selected sources/stubs, **not all new MC-facing classes**; this run is not claimed as their compilation. Real-core long restore is not proof that MC loot lifecycle supplies BE in every modded destruction path. New devices, actual survival break/place/quit/rejoin, creative loot behavior, slots/shift, mixed-tier/parallel network and all8 JEI pages + real same/mixed alloy crafting need author playtest. Placeholder visual quality is intentionally not final. No radiation/Plotnick runtime changed.
 
 Финальный повтор после синхронизации всех профилей и cleanup: run_all **78 PASS / 0 SKIP / 0 FAIL** (`/tmp/gonzo-eng316-final.log`); docs_structure — 9 previous editions / 29 live / 75 immutable originals / 4173 source items / 69 dispositions; doc_links — **1199 / 0 broken**; validate — **3285 JSON / 608 items / en=ru1281 / 0 errors / 0 warnings**; git diff --check — чисто. Проверено отсутствие изменений radiation runtime, PlotnickBlock и прежних tracked PNG. Runtime0.3.316; build/dependencies без изменений.
+
+## HUD-RAD-001 / 0.3.317 — авторский игровой репорт, новый direct dose contract
+
+После вопроса о конфликте current+legacy40%-block-only автор явно выбрал5% полной физической эмиссии окружения/с до личной защиты, все источники; свой inventory unchanged, выход в чанк режется F. Это авторская норма, не «подгонка» прежних проверок. Новый world path не доказывает, в каком историческом commit возникло отличие от ожидания автора.
+
+- Новый `inside_exposure_test.py`: **57 assertions**, actual Containment.insideDose/contentsEmission/containsSource + RadiationOwners.slots/children bodies и настоящие RadiationContour/RadiationCluster/ItemRadioactivity/ExternalRadiation/deep-copy/math классы. Границы мира/сущностей/lookup — doubles, не MC API proof. Full counts/induced vs strongest target, сундук, вложения, floor/frame, другие игроки, mob equipment, container entity+hand dedup, миска/две physical halves, boundary/frame vs beyond-wall, observer exclusion, NO ender chest, live mutations/no source aging/count change, F=0/F=.8, actual closed two-layer geometry/open corridor/unloaded observer.
+- `--mutation-check`: **7/7 assertion kills**, compile failures не считаются kill: старый40% вес, chunkTarget вместо total, observer included, умножение на outgoing F, игнорирование room membership, потерянный chest path и remote ender inventory. Все мутанты только во временной директории.
+- Новый `instrument_hud_test.py`: настоящий InstrumentHud callback проверяет одну registerAbove CHAT регистрацию/ID и вызов двух renderer без повторов; source guards подтверждают прежние positions/colors/F1/hands/speed и отсутствие Post/depth hacks. Это не GPU depth-buffer test. Полные SolarWatchHud/SpeedometerHud/InstrumentHud добавлены в существующий typecheck.
+- `radiation_contour_test.py`: прежние160 geometry checks сохранены, только численные dose expectations пересчитаны с40% на утверждённые5%; отдельно9cache/lifecycle/order checks. geometry/cache/layer material policy не менялись.
+- `typecheck_test.py`: **55 real / 148 boundary stubs / 0 errors**. Новые surfaces соответствуют используемым repository MC1.21.4 APIs/verified NeoForge source. RadiationSystem/DebugCommand call-site edits не выдаются за полную их MC-компиляцию; actual-body harness/typecheck и авторский build — разные доказательства.
+- Первый aggregate **80 PASS / 0 SKIP / 0 FAIL** (`/tmp/gonzo317-first.log`), прежние78 сохранены +2новых. Java21/ECJ3.46.100/Pillow12 восстановлены в исключённой .cache (не Git). В этом sandbox JAVA_HOME теперь `.cache/python-toolchain/jdk4py/java-runtime`, ECJ_JAR `.cache/package/deps/ecj-3.46.100.jar`, PYTHONPATH `.cache/python-toolchain`.
+
+```bash
+JAVA_HOME="$PWD/.cache/python-toolchain/jdk4py/java-runtime" \
+ECJ_JAR="$PWD/.cache/package/deps/ecj-3.46.100.jar" \
+PYTHONPATH=.cache/python-toolchain python3 audit/inside_exposure_test.py --mutation-check
+# тот же env: python3 audit/instrument_hud_test.py; python3 audit/run_all.py
+```
+
+Полный Minecraft/NeoForge Gradle build, GameTests, GPU/chat fade/open-chat и повтор автора **не выполнялись**. Нужны survival/direct-dose проверки всех owner categories внутри/снаружи/с открытой дверью, без двойного inventory, с личной защитой и сохранением внешнего F. Патч реализован, не объявлен игровым закрытием. Нет изменения source aging/transfer formulas/PNG/PlotnickBlock/migration. GUI source upstream: NeoForge1.21.4 `GuiLayerManager.java`, `RegisterGuiLayersEvent.java`, `VanillaGuiLayers.java` (GitHub).
+
+Финальная сверка диагностического UI317: прежние RU/EN labels «Доза от блоков внутри» / «Internal block dose» заменены на общий direct-dose inside-enclosure текст: значение включает и физическое содержимое, не только блоки. Добавлены source checks одинакового observer-excluding call в tick/getdose и актуальности обеих локализаций. Новых ключей/единиц/параметров не добавлено.
+
+Финальный повтор после всех docs и RU/EN diagnostic labels: **80 PASS / 0 SKIP / 0 FAIL** (`/tmp/gonzo317-final.log`), 55real/148boundary typecheck PASS; 9 previous-edition hashes /29live /75immutable /4173source-items /69dispositions PASS; doc_links **1200/0broken**; validate **3285JSON/608items/en=ru1281/0errors/0warnings**; diff-check clean. Предыдущие radiation_engine/inside_exposure suites не исключены. README/PIPE/PNG/PlotnickBlock, engine/ItemRadioactivity и build dependencies неизменны; изменения radiation ограничены новым room exposure/diagnostic caller и разрешённым весом5%.

@@ -38,5 +38,6 @@ public final class ModItems {
     public static final ItemRef TVEL = new ItemRef();
     public static final ItemRef UF_TVEL = new ItemRef();
 
+    public static final ItemRef SPEEDOMETER=new ItemRef(), SOLAR_WATCH=new ItemRef(), TELIFON=new ItemRef();
     private ModItems() { }
 }

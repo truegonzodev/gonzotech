@@ -33,6 +33,9 @@ if not java or not Path(java).is_file():
     raise SystemExit("Java 21 required: set JAVA_HOME or PATH")
 
 real_files = [
+    ROOT / "src/main/java/com/gonzotech/core/client/InstrumentHud.java",
+    ROOT / "src/main/java/com/gonzotech/core/client/SolarWatchHud.java",
+    ROOT / "src/main/java/com/gonzotech/core/client/SpeedometerHud.java",
     NET / "PipeRouting.java",
     # Real immutable recipe-display dependency: do not replace it with a stub.
     ROOT / "src/main/java/com/gonzotech/machines/processing/ProcessingRecipeDisplay.java",

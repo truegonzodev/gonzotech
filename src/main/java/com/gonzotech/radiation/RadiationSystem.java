@@ -227,9 +227,9 @@ public final class RadiationSystem {
         // Хазмат I (автор 22.09) режет входящую дозу, но пробивается горячим
         // источником: множитель считается от дозы/сек (см. Hazmat.factor).
         // The enclosure protects the outside chunk, not somebody standing beside
-        // its sources. Add 40% of actual block emission in this same closed cavity;
+        // its sources. Add 5% of physical source emission in this same closed cavity;
         // this does not feed chunk contamination or inventory-induced radiation.
-        double containmentDose = Containment.insideDose(level, BlockPos.containing(player.getEyePosition()));
+        double containmentDose = Containment.insideDose(level, BlockPos.containing(player.getEyePosition()), player);
         double rawDose = totalNzt + chunkNzt * CHUNK_DOSE_WEIGHT + containmentDose;
         // «Зуд III» (заражение > 69 %) — +20 % к получению дозы (автор 22.09.2026).
         double psycheDoseMultiplier = PsycheChemical.doseMultiplier(player);
@@ -276,7 +276,7 @@ public final class RadiationSystem {
                             + "; chunkContamination=" + RadiationTrace.rate(chunkContamination)
                             + "; chunkTotal=" + RadiationTrace.rate(chunkNzt) + "×" + CHUNK_DOSE_WEIGHT
                             + "=" + RadiationTrace.rate(chunkNzt * CHUNK_DOSE_WEIGHT)
-                            + "; insideBlockSources=" + RadiationTrace.rate(containmentDose)
+                            + "; insideSources=" + RadiationTrace.rate(containmentDose)
                             + "; psycheMultiplier=" + RadiationTrace.number(psycheDoseMultiplier)
                             + "; hazmatFactor=" + RadiationTrace.number(hazmatFactor)
                             + "; absorptionFactor=" + RadiationTrace.number(absorptionFactor)

@@ -1,5 +1,8 @@
 package net.minecraft.world.entity.player;
 public class Player extends net.minecraft.world.entity.LivingEntity {
+    public Inventory getInventory(){return null;}
+    public boolean isPassenger(){return false;}
+    public net.minecraft.world.entity.Entity getRootVehicle(){return this;}
     public net.minecraft.world.item.ItemStack getMainHandItem() { return null; }
     public net.minecraft.world.item.ItemStack getOffhandItem() { return null; }
     public void startUsingItem(net.minecraft.world.InteractionHand hand) {}
