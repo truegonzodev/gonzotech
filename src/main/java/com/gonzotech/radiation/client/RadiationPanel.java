@@ -76,24 +76,28 @@ public final class RadiationPanel {
         ItemStack stack = event.getItemStack();
         if (stack.isEmpty()) return;
         Double total = rate(stack);
-        if (total != null && total < 1.0) return;
+        if (!com.gonzotech.radiation.RadiationPanelLayout.visible(total)) return;
         Component label = Component.literal("Радиоактивность: ").withColor(0xAAAAAA)
-                .append(total == null ? Component.literal("…").withColor(0xAAAAAA)
-                        : GtUnits.zt(total).copy().withColor(0xCEEB2D));
+                .append(GtUnits.zt(total).copy().withColor(0xCEEB2D));
         var graphics = event.getGraphics(); var font = event.getFont();
-        int width = font.width(label) + 10, height = font.lineHeight + 8;
-        int tooltipHeight = event.getComponents().stream().mapToInt(c -> c.getHeight(font)).sum() + 2;
-        int x = Math.max(3, Math.min(event.getX() - 3, graphics.guiWidth() - width - 3));
-        int y = event.getY() - height - 8;
-        if (y < 3) y = event.getY() + tooltipHeight + 8;
-        y = Math.max(3, Math.min(y, graphics.guiHeight() - height - 3));
+        int tooltipHeight = event.getComponents().stream().mapToInt(c -> c.getHeight(font)).sum()
+                + (event.getComponents().size() == 1 ? -2 : 0);
+        var box = com.gonzotech.radiation.RadiationPanelLayout.place(font.width(label), font.lineHeight,
+                event.getX(), event.getY(), tooltipHeight, graphics.guiWidth(), graphics.guiHeight());
+        int x = box.x(), y = box.y(), width = box.width(), height = box.height();
         graphics.pose().pushPose(); graphics.pose().translate(0, 0, 450);
-        graphics.fill(x, y, x + width, y + height, 0xF0100618);
-        graphics.fill(x, y, x + width, y + 1, 0xFF8AA51D);
-        graphics.fill(x, y + height - 1, x + width, y + height, 0xFF8AA51D);
-        graphics.fill(x, y, x + 1, y + height, 0xFF8AA51D);
-        graphics.fill(x + width - 1, y, x + width, y + height, 0xFF8AA51D);
-        graphics.drawString(font, label, x + 5, y + 4, 0xFFFFFFFF, true);
+        // One-pixel dark silhouette with cut corners; inset bevel matches the author's pixel reference.
+        int background = com.gonzotech.radiation.RadiationPanelLayout.BACKGROUND;
+        int light = com.gonzotech.radiation.RadiationPanelLayout.LIGHT_EDGE;
+        int dark = com.gonzotech.radiation.RadiationPanelLayout.DARK_EDGE;
+        graphics.fill(x + 1, y, x + width - 1, y + height, background);
+        graphics.fill(x, y + 1, x + 1, y + height - 1, background);
+        graphics.fill(x + width - 1, y + 1, x + width, y + height - 1, background);
+        graphics.fill(x + 2, y + 1, x + width - 2, y + 2, light);
+        graphics.fill(x + 1, y + 2, x + 2, y + height - 2, light);
+        graphics.fill(x + 2, y + height - 2, x + width - 2, y + height - 1, dark);
+        graphics.fill(x + width - 2, y + 2, x + width - 1, y + height - 2, dark);
+        graphics.drawString(font, label, box.textX(), box.textY(), 0xFFFFFFFF, true);
         graphics.pose().popPose();
     }
 }

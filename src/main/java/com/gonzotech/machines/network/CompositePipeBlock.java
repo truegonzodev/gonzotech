@@ -236,25 +236,6 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                           Player player, InteractionHand hand, BlockHitResult hit) {
-        // Порядок веток (0.3.263, #30): сначала мастерский поворот без ключа
-        // в руке — раньше верхняя ветка съедала hasMastery и поворот был
-        // недостижим.
-        if (WrenchItem.hasMastery(player) && player.isSecondaryUseActive()
-            && !(stack.getItem() instanceof WrenchItem)) {
-            return CompositePipeBlock.rotateLayerAt(level, pos, state, hit.getLocation())
-                    ? InteractionResult.SUCCESS : InteractionResult.PASS;
-        }
-
-        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
-            PipeType part = partAt(state, pos, hit);
-            if (part == null) return InteractionResult.PASS;
-            if (!level.isClientSide()) {
-                PipeMode nextMode = state.getValue(MODE.get(part)).next();
-                level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
         // Добавление универсальной жидк.трубы: занимает весь FLUID-угол (вода+пар),
         // если он ещё свободен.
         if (isUniversalPipeItem(stack) && ModCompositeAccess.sameTier(this, stack)
@@ -279,6 +260,24 @@ public class CompositePipeBlock extends RotatedPillarBlock implements PipeCarrie
             }
             return InteractionResult.SUCCESS;
         }
+        // Compatible held pipe takes priority over implicit wrench mastery.
+        // После добавления: мастерский поворот без ключа, затем смена режима.
+        if (WrenchItem.hasMastery(player) && player.isSecondaryUseActive()
+            && !(stack.getItem() instanceof WrenchItem)) {
+            return CompositePipeBlock.rotateLayerAt(level, pos, state, hit.getLocation())
+                    ? InteractionResult.SUCCESS : InteractionResult.PASS;
+        }
+
+        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
+            PipeType part = partAt(state, pos, hit);
+            if (part == null) return InteractionResult.PASS;
+            if (!level.isClientSide()) {
+                PipeMode nextMode = state.getValue(MODE.get(part)).next();
+                level.setBlock(pos, state.setValue(MODE.get(part), nextMode), Block.UPDATE_ALL);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         return InteractionResult.PASS;
     }
 

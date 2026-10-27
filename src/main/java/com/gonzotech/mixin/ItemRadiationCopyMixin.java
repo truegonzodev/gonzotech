@@ -11,5 +11,6 @@ public abstract class ItemRadiationCopyMixin {
     @Inject(method = "copy", at = @At("RETURN"))
     private void gonzo$copyExternalDose(CallbackInfoReturnable<ItemStack> cir) {
         ExternalRadiation.copy((ItemStack)(Object)this, cir.getReturnValue());
+        com.gonzotech.radiation.engine.RadiationCopies.detachNested((ItemStack)(Object)this, cir.getReturnValue());
     }
 }

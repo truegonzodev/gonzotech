@@ -11,11 +11,8 @@ public final class ItemRadioactivity {
     public static final int DECAY_STEP_TICKS = 20;
     public static final double GROWTH = 1.25;
     public static final double INDUCED_CAP = 5.0 * RadUnits.UNIT;
-    /** (автор 22.10, баланс) Стоимость нагрева: множитель приёма
-     *  (1 − 0.00097)^L для дозы L в mZt — каждый 1 mZt снимает 0.097 %
-     *  получения наведёнки ОТ ТЕКУЩЕГО, не от потолка. При 1 Zt остаётся
-     *  ~38 % скорости (нагрев в 2.6 раза затратнее). */
-    public static final double UPTAKE_COST = 0.00097;
+    /** Author 0.3.314: each mZt reduces uptake by 0.13% of the remaining rate. */
+    public static final double UPTAKE_COST = 0.0013;
     /** (автор 22.10) Полная скорость отдачи: на большой дозе предмет теряет
      *  SELF_DISCHARGE (25 %) в секунду — авторский ряд 5→3.7→2.7→1.9. Зеркалит
      *  скорость роста: что логистика накручивает, отдача уносит. Заменяет жёсткое
@@ -82,10 +79,10 @@ public final class ItemRadioactivity {
                 // дробным на стаке — это и был корень #27).
                 double seeded = Math.max(current, CLEANUP_FLOOR);
                 // (автор 22.10) «Затратность» нагрева: текущая доза душит
-                // приём по геометрической (1−0.00097)^L. Равновесие ниже
+                // приём по геометрической (1−0.0013)^L. Равновесие ниже
                 // цели всегда — mutual-hold дюпа нет даже без жёсткого плато.
                 // 0.3.298: показатель степени — в mZt (строка автора «на каждый
-                // 1 mZt −0.097 %»), значение — в nZt: делим на масштаб.
+                // 1 mZt −0.13 %»), значение — в nZt: делим на масштаб.
                 double uptake = Math.pow(1.0 - UPTAKE_COST, seeded / RadUnits.MILLI);
                 // Отдача действует и на ветке роста, иначе равновесие = цель и
                 // «предметы держат друг друга» возвращается (дюп 0.3.249).
@@ -126,8 +123,8 @@ public final class ItemRadioactivity {
     }
 
     /**
-     * Шаг роста одного предмета. {@code sourceNzt} — суммарный уровень
-     * локального источника (для стоков — уже со скидкой ре-излучения,
+     * Шаг роста одного предмета. {@code sourceNzt} — сила сильнейшего чужого
+     * предмета либо допустимый фон чанка (наведёнка источника уже со скидкой ре-излучения,
      * {@link #transferEmission}); деления на размер стака нет с 0.3.268:
      * каждый предмет догоняет цель как одиночный.
      */
@@ -144,24 +141,35 @@ public final class ItemRadioactivity {
      */
     public static double tickInducedAt(ItemStack stack, boolean hasSource, double sourceNzt,
                                        double factor, long nowTick) {
+        return tickInducedAt(stack, hasSource, sourceNzt, factor, nowTick, true);
+    }
+
+    /** Cluster traversal already visits children once; do not passively decay them here. */
+    public static double tickSingleInducedAt(ItemStack stack, boolean hasSource, double sourceNzt,
+                                             double factor, long nowTick) {
+        return tickInducedAt(stack, hasSource, sourceNzt, factor, nowTick, false);
+    }
+
+    private static double tickInducedAt(ItemStack stack, boolean hasSource, double sourceNzt,
+                                        double factor, long nowTick, boolean deep) {
         if (stack.isEmpty()) return 0.0D;
         long last = lastDecayTick(stack);
         if (last == Long.MIN_VALUE) {
             tickInduced(stack, hasSource, sourceNzt, factor);
             markDecayTick(stack, nowTick);
-            decayInducedDeepLazily(stack, nowTick);
+            if (deep) decayInducedDeepLazily(stack, nowTick);
             return getInduced(stack);
         }
         long elapsed = nowTick - last;
         if (elapsed < DECAY_STEP_TICKS && elapsed >= 0L) {
-            decayInducedDeepLazily(stack, nowTick);
+            if (deep) decayInducedDeepLazily(stack, nowTick);
             return getInduced(stack);
         }
         long steps = elapsed < 0L ? 1L : Math.max(1L, elapsed / DECAY_STEP_TICKS);
         if (steps > 1L) decayInducedSteps(stack, steps - 1L);
         tickInduced(stack, hasSource, sourceNzt, factor);
         markDecayTick(stack, nowTick);
-        decayInducedDeepLazily(stack, nowTick);
+        if (deep) decayInducedDeepLazily(stack, nowTick);
         return getInduced(stack);
     }
 

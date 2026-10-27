@@ -58,7 +58,7 @@ public final class RadiationDebugCommand {
         ChunkRadiationData.get(level).purgeAround(level, center, 8);
         context.getSource().sendSuccess(() -> Component.literal(
                 "[GonzoTech] Радиация очищена в радиусе 8 чанков вокруг чанка "
-                        + center.x + ", " + center.z + ". Все значения установлены в 0 nZt/s."), true);
+                        + center.x + ", " + center.z + ". Загрязнение чанков установлено в 0 nZt/s; предметы и шкала игрока не очищаются."), true);
         return 1;
     }
 
@@ -93,6 +93,16 @@ public final class RadiationDebugCommand {
         player.sendSystemMessage(Component.literal("Чанк [" + chunk.x + ", " + chunk.z + "]: ")
                 .append(GtUnits.zt(chunkNzt))
                 .withStyle(ChatFormatting.GRAY));
+
+        var inventory = com.gonzotech.radiation.engine.RadiationCluster.inspect(RadiationSystem.playerSlots(player));
+        player.sendSystemMessage(Component.literal("Предметный кластер: " + inventory.slots() + " занятых слотов, "
+                + inventory.count() + " предметов; суммарно ").append(GtUnits.zt(inventory.total())));
+        player.sendSystemMessage(Component.literal("Сильнейший предмет: ").append(GtUnits.zt(inventory.strongestItem()))
+                .append(Component.literal("; цель чанка: ")).append(GtUnits.zt(inventory.chunkTarget())));
+        RadiationTrace.log(level, player.blockPosition(), "GETDOSE: ВНЕШНИЙ ДВИЖОК",
+                "presetSum=" + RadiationTrace.rate(inventory.preset()) + "; inducedSum=" + RadiationTrace.rate(inventory.induced())
+                + "; strongestInduced/item=" + RadiationTrace.rate(inventory.strongestInduced())
+                + "; chunkTarget=" + RadiationTrace.rate(inventory.chunkTarget()));
 
         var observer = net.minecraft.core.BlockPos.containing(player.getEyePosition());
         var contour = Containment.result(level, observer);

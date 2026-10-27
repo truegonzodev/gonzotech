@@ -44,7 +44,7 @@ public final class RadiationOwners {
         if (owner instanceof net.minecraft.world.level.block.entity.BlockEntity be && be.getLevel() != null && be.getLevel().isClientSide()) return;
         loadList(slots(owner), tag.getList(KEY, Tag.TAG_COMPOUND), 0);
     }
-    private static List<ItemStack> children(ItemStack stack) {
+    public static List<ItemStack> children(ItemStack stack) {
         List<ItemStack> out = new ArrayList<>();
         var container = stack.get(DataComponents.CONTAINER);
         // Include empty slots so persistence uses stable slot addresses. Accessor

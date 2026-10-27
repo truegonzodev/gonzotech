@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "863ef748c981213d7bcc1f47446a3cba38cfa259",
+      "snapshot": "docs/archive/editions/0.3.312/OUTDATED_RAD-001_RAD_ITEMS.md",
+      "sha256": "0f69266923480e025b59566598dfbd0e74698d152104aa02892c54523213181e",
+      "bytes": 26013,
+      "task": "RAD-001"
+    },
+    {
+      "source": "docs/RAD_WORLD.md",
+      "source_commit": "863ef748c981213d7bcc1f47446a3cba38cfa259",
+      "snapshot": "docs/archive/editions/0.3.312/OUTDATED_RAD-001_RAD_WORLD.md",
+      "sha256": "9c127884d914804fe0e121cbd7436e7a3bd14c4e3b7d71c165718b393362151e",
+      "bytes": 16536,
+      "task": "RAD-001"
+    },
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "863ef748c981213d7bcc1f47446a3cba38cfa259",
+      "snapshot": "docs/archive/editions/0.3.312/OUTDATED_RAD-001_CURRENT-STATE.md",
+      "sha256": "12c5d3a67b268baaf76c0f528e8ae9b3e32df6e82290aced5978d5559b867a3a",
+      "bytes": 6222,
+      "task": "RAD-001"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "863ef748c981213d7bcc1f47446a3cba38cfa259",
+      "snapshot": "docs/archive/editions/0.3.312/OUTDATED_RAD-001_AUDIT.md",
+      "sha256": "f55814c2df002369a20499f45f19a0a3fc6831f53f43b537cd2e7bd081bdc02e",
+      "bytes": 22221,
+      "task": "RAD-001"
+    }
+  ]
+}

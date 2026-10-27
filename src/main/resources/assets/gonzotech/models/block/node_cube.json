@@ -1,5 +1,5 @@
 {
-  "__comment": "Полный куб для узлов. Как minecraft:block/cube_all, но грани north/east/down зеркалятся по горизонтали (u0<->u1), чтобы рисунок стыковался со south/west/up на плейсхолдере-узле.",
+  "__comment": "Полный куб для узлов. Как minecraft:block/cube_all, но грани north/east/down зеркалятся по горизонтали (u0<->u1), чтобы рисунок стыковался со south/west/up на узле. Нижняя грань дополнительно повёрнута на 180 градусов (0.3.315).",
   "parent": "block/block",
   "textures": {
     "particle": "#all"
@@ -9,7 +9,7 @@
       "from": [0, 0, 0],
       "to": [16, 16, 16],
       "faces": {
-        "down":  {"uv": [16, 0, 0, 16], "texture": "#all", "cullface": "down"},
+        "down":  {"uv": [16, 0, 0, 16], "texture": "#all", "cullface": "down", "rotation": 180},
         "up":    {"uv": [0, 0, 16, 16], "texture": "#all", "cullface": "up"},
         "north": {"uv": [16, 0, 0, 16], "texture": "#all", "cullface": "north"},
         "south": {"uv": [0, 0, 16, 16], "texture": "#all", "cullface": "south"},

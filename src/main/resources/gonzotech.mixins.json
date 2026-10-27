@@ -36,6 +36,7 @@
     "ItemEntityMergeDebugMixin",
     "ItemRadiationCopyMixin",
     "ContainerContentsRadiationMixin",
+    "ContainerContentsConstructorInvoker",
     "EntityRadiationSaveMixin",
     "BlockEntityRadiationSaveMixin",
     "MenuRadiationTransferMixin",

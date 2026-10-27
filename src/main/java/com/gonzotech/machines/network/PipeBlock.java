@@ -203,16 +203,6 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
         if (!level.isClientSide() && com.gonzotech.machines.FormedMenus.open(level, pos, player)) {
             return InteractionResult.SUCCESS;
         }
-        // Ключ — прокрутить режим этой трубы. Никаких сообщений в action-bar:
-        // тип/режим/поток и так живьём висят над прицелом (WrenchHud).
-        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
-            if (!level.isClientSide()) {
-                PipeMode nextMode = state.getValue(MODE).next();
-                level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
         // Универсальная жидк.труба в руке → собрать связку: она займёт FLUID-угол
         // (вода+пар). Нельзя, если эта труба сама жидкостная (угол уже занят).
         if (!connectsAllSides() && CompositePipeBlock.isUniversalPipeItem(stack)
@@ -260,6 +250,17 @@ public class PipeBlock extends RotatedPillarBlock implements PipeCarrier, Simple
                 return InteractionResult.SUCCESS;
             }
         }
+        // Compatible held pipe takes priority over implicit wrench mastery.
+        // Ключ — прокрутить режим этой трубы. Никаких сообщений в action-bar:
+        // тип/режим/поток и так живьём висят над прицелом (WrenchHud).
+        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
+            if (!level.isClientSide()) {
+                PipeMode nextMode = state.getValue(MODE).next();
+                level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         return InteractionResult.PASS;
     }
 }

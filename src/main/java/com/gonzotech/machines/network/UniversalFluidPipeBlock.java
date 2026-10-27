@@ -66,9 +66,8 @@ public class UniversalFluidPipeBlock extends PipeBlock {
     // ─────────────────────────── гаечный ключ ───────────────────────────
 
     /**
-     * Универсальную трубу нельзя собрать в связку (её FLUID-угол уже занят двумя
-     * ресурсами) — ключом только прокручиваем режим. Composite-логику базового
-     * класса перебиваем.
+     * Универсальная труба занимает весь FLUID-угол. Совместимую трубу другого
+     * угла добавляем раньше обработки ключа/mastery; жидкостные типы не добавляются.
      */
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
@@ -76,14 +75,6 @@ public class UniversalFluidPipeBlock extends PipeBlock {
         if (!level.isClientSide() && com.gonzotech.machines.FormedMenus.open(level, pos, player)) {
             return InteractionResult.SUCCESS;
         }
-        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
-            if (!level.isClientSide()) {
-                PipeMode nextMode = state.getValue(MODE).next();
-                level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
-            }
-            return InteractionResult.SUCCESS;
-        }
-
         // Энергетическая труба (провод/теплотруба) в руке → собрать связку: FLUID-
         // угол занимает эта универсальная труба (вода+пар), в свободный угол ложится
         // добавляемый тип. Узлы и жидк.трубы не подходят. Только у обычной (не-узел).
@@ -106,6 +97,15 @@ public class UniversalFluidPipeBlock extends PipeBlock {
                 return InteractionResult.SUCCESS;
             }
         }
+        // Compatible held pipe takes priority over implicit wrench mastery.
+        if (stack.getItem() instanceof WrenchItem || WrenchItem.hasMastery(player)) {
+            if (!level.isClientSide()) {
+                PipeMode nextMode = state.getValue(MODE).next();
+                level.setBlock(pos, state.setValue(MODE, nextMode), Block.UPDATE_ALL);
+            }
+            return InteractionResult.SUCCESS;
+        }
+
         return InteractionResult.PASS;
     }
 }
