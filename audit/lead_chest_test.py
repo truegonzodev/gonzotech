@@ -6,6 +6,7 @@
 обычно, а эмиссия для чанка сначала умножается на 0.2 и только затем на контур.
 """
 from pathlib import Path
+import _radiation_contracts as current
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src/main/java/com/gonzotech"
@@ -84,12 +85,13 @@ pin(f'"gonzotech:{ID}"' in r.split('"result"')[1], "результат")
 # ── 5. Рад-хуки: заражение чанка и визуальные источники ×0.2 ──
 sys_ = (SRC / "radiation/RadiationSystem.java").read_text()
 pin("ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR" in sys_, "скан контейнеров: ×0.2")
-pin("effectiveEmission, CHEST_TO_CHUNK_RATE" in sys_,
-    "свинцовый ящик передаёт 1% max(0.2×M×F−C,0)")
-pin("preContourEmission = mine" in sys_ and "effectiveEmission = preContourEmission * contourFactor" in sys_,
-    "источник ×0,2 применяется до контура")
-pin("ItemRadioactivity.decayInducedDeepLazily(stack, nowTick)" in sys_,
-    "наведёнка содержимого затухает с общей обычной скоростью 1×")
+# Current shared owner engine: internal x0.2 is separate from target x0.2.
+# flows() checks actual call-site order; executable Java tests cover both laws.
+current.flows()
+current.scheduler()
+cluster = (SRC / "radiation/engine/RadiationCluster.java").read_text()
+pin("Policy LEAD = new Policy(0.2)" in cluster, "внутренняя передача ×0.2")
+pin("tickSingleInducedAt(stack" in cluster, "один общий шаг, без второго BE-тикера/deep decay")
 chunk = (SRC / "radiation/ChunkRadiationData.java").read_text()
 i_vis = chunk.find("ThirdLeadChestBlock.CONTENT_CHUNK_FACTOR")
 i_srcs = chunk.find("visualSources")

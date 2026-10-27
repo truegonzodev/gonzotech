@@ -74,7 +74,12 @@ check('frame = (frame + 1) % (FRAME_COUNT * FRAME_TICKS);' in client, 'whole ani
 check('int v = (frame / FRAME_TICKS) * FRAME_HEIGHT;' in client, 'advance by frame height, not width')
 check('FRAME_SIZE' not in client, 'no square-source assumption')
 check('width / (float) FRAME_WIDTH, height / (float) FRAME_HEIGHT' in client, 'independent destination axes')
-check('FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT * FRAME_COUNT' in client, 'source region/strip dimensions')
+# 285 moved alpha into the 13th blit argument and uses the explicit source-size
+# overload. Check destination, source region AND real strip dimensions, not an
+# obsolete shorter overload. No PNG or approved geometry changes.
+blit = re.sub(r'\s+', '', client)
+check('TEX_SCREEN_EFFECT,0,0,0.0F,(float)v,FRAME_WIDTH,FRAME_HEIGHT,FRAME_WIDTH,FRAME_HEIGHT,FRAME_WIDTH,FRAME_HEIGHT*FRAME_COUNT,effectArgb)' in blit,
+      'explicit source region/strip dimensions and per-vertex alpha')
 check('TEX_SCREEN_EFFECT, 0, 0, 0.0F, (float) v' in client, 'stationary full-screen destination')
 # Model the source UVs of that verified blit signature over three complete cycles.
 # Exact rational arithmetic checks pixel centres: no neighbouring frame can be sampled.

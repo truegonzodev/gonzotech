@@ -16,3 +16,5 @@
 - [Перед DOC-003: PSYCHE, LORE, DOCS_RULES, исходная 0.3.311 → 0.3.312](editions/0.3.311/README.md). Полные OUTDATED-тексты, manifest с SHA-256/размером/исходным commit; не действующие спецификации. Правило новых снимков — [DOCS_RULES](../DOCS_RULES.md#живой-срез-и-читаемые-предыдущие-версии-doc-003).
 
 - [Редакции 0.3.312 перед RAD-001](editions/0.3.312/README.md): RAD_ITEMS, RAD_WORLD, CURRENT-STATE, AUDIT.
+
+- [Редакции 0.3.315 перед D-AUD1](editions/0.3.315/README.md): CURRENT-STATE и RAD_ITEMS до code-first ремонта audit-пинов.

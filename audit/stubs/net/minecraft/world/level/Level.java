@@ -6,6 +6,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 public abstract class Level {
+    public boolean isClientSide;
+    public final java.util.Random random = new java.util.Random(0);
+    public void playSound(net.minecraft.world.entity.player.Player player, BlockPos pos,
+        net.minecraft.sounds.SoundEvent sound, net.minecraft.sounds.SoundSource source, float volume, float pitch) {}
     public boolean isClientSide() { return false; }
     public boolean isLoaded(BlockPos pos) { return true; }
     public boolean hasChunkAt(BlockPos pos) { return true; }

@@ -4366,3 +4366,44 @@ transfer = cleansedPermille × 1.35×10^8 nZt × 0.2 × max(1 − C / (100 mZt),
 ```text
 **Текущая runtime-версия: 0.3.315.** База DOC-003 — авторский `6cf8daa`; дата шага 27.10.2026. Только статус; полный журнал — [HISTORY](HISTORY.md).
 ```
+
+### D-AUD1: code-first актуализация audit-пинов, runtime 0.3.315 (27.10.2026)
+
+**Запрос:** автор признал отпавшие после его радиационного патча agent-owned пины и поручил читать/валидировать код, искать дефекты, исправлять тесты по проверенной реализации, не подгонять ради зелёного результата. D-AUD1 перенесена из DEFFERED → в работу → закрыто (audit-область) в CURRENT; удерживать до 0.3.319. Автор также исключил отчёт 25.10 и не воспроизвёл закрытие 27.10: внешняя причина возможна, но неизвестна; CRASH-001 остаётся blocked без speculative runtime fix.
+
+**Источники и ограничения:** изучены авторские 313–315, RULES/DOCS_RULES/CURRENT, RAD_ITEMS/RAD_WORLD и текущие engine/owner/copy/trace/потоки. Старые RADIATION-BEHAVIOR-232 и пины 268/294/300/301 — история, не команда вернуть held-cache, NBT, quiet/flush, re-equip или clamp. Вживую шкалы, коэффициенты 314/315 и новый physical-owner контракт уже согласованы автором. Область скомпилированных doubles не объявлена реальным MC API. Ни одного установленного runtime-дефекта в проверенной области не найдено; src/build/gradle.properties/PNG/OGG/игровые зависимости остались неизменны, runtime 315 без bump.
+
+**Ремонт исходных пяти FAIL:**
+
+- autominer_markers: exact release 310 заменён нижним порогом 315; скрытые read удалённых RadDoseIndex/RadReequipGate/renderer и старые adopt/flush/CLAMP/held/debug-label pins заменены действующими требованиями внешнего хранения/copy hook/owner/trace/неизменности count. Не восстанавливались запрещённые механизмы. Сохранены прочие miners/maps/network/recipes/assets/thread gates. Расход трубы проверяет takeStoredOne → setBlock → добыча с rollback того же stack; оба меню-цикла держат item-sensitive slot limit, не просто новый текст строки.
+- radiation_behavior: старое Python-зеркало 0.00097 с усилением source ×64 и исторический 232-doc fixture больше не спецификация ядра; вместо него настоящий Java-core harness по 0.0013 и актуальным профилям. Лекарственные constants/различия current-dose/prevention/shed и их прежние numerical contracts сохранены.
+- lead_chest/node_perf_rad: shared cluster/scheduler, внутренние ×0.2 и отдельный outgoing target ×0.2 до вычитания contamination, обычный спад/нет собственного BE ticker, floor/frame/placed-like path. Сетевой BFS/ping-pong/smoke/single-seed, девять слотов/рецепты/контур/ассеты не сняты.
+- reactor_radiation_trace: новые поля Step.before/after/otherSource/chunkSource/target и physical cluster Summary, полная доза отдельно от chunk-target; прежние геометрия/ресурсы/контур/реакторные требования сохранены.
+
+**Добавленная поведенческая защита:** radiation_engine_test + RadiationEngineSelfTest компилируют 8 настоящих классов: ItemRadioactivity, RadiationCluster, ExternalRadiation, RadiationCopies, DoseMath, RadUnits, CarrierItem, ContainerContentsAccess. RadiationOwners.children, RadiationSystem.transferTowardChunk/claimContentScan и world-transfer/max-target statements извлекаются дословно; lookup/item/component/transaction границы — тестовые doubles. 11 групп / 450560 assertions, включая геометрический uptake/mZt, cap/floor/discharge, per-item вес merge/split/dilute, snapshot/full-strength tie-break/self+subtree exclusion/order/count, активные вложения без deep-двойного тика, depth4/cargo, строго >30mZt и свинец, отдельные dose total/chunk target, catchup/no duplicate timestamp, независимые copied container/bundle/selection, flow grid/claim per-world/chunk/20ticks и 5000-шаговый feedback 1/41 × 1/64. --mutation-check: 11/11 временных regressions отвергнуты AssertionError; compile error не считается kill. Мутации вне src и не являются найденными багами.
+
+**Ранее скрытые SKIP/FAIL:** установлены локальные Java runtime и compiler, без коммита бинарников. Первый запуск: 66 PASS/5 SKIP/6 FAIL из 77; разбор показал зависимости старых harness, не новый runtime bug. audit_followup получил no-op boundary relaxation (не тест её рендера); blast_furnace — NodeKinds, правило 255, а не SECOND-only; pipe_loss — destination identity прямой Lane и неизменный loss observer; contour — loaded guard до cell(level,block), прежняя доза inside→psyche→hazmat; tongs_ladle — cluster/cargo/deep panel вместо старых strongest-stack scans и tooltip-строки. Typecheck не стал исключать код: добавлен real ProcessingRecipeDisplay, обновлены mod-owned surfaces и compile-only MC/dependency stubs; итог 52 real/131 stubs/0 errors. Результат 72 PASS/5 SKIP/0 FAIL.
+
+Поставлен Pillow; оставшиеся reactor_matrix/steamgen_endpoint wrappers получили JAVA_HOME/ECJ fallback, не изменение assertions. Это раскрыло 75 PASS/0 SKIP/2 FAIL. gui_alignment ждал старый blit overload: с 285 фактические 13 аргументов включают explicit source-size и vertex color, PNG/23×128×72 верны; пин исправлен без трогания геометрии, 914 checks PASS. ReactorHeatDynamicsTest использовал linear fixture после restore, хотя Saved не содержит transient slopes; production refreshSnapshot всегда передаёт rebuild outputCurve. Fixture переведена на этот настоящий путь, без удаления требований постепенного охлаждения/остаточного exchange и с новым повторным restore. Runtime/linear persistence contract не выдумывались и не изменялись, oracle 7358 checks PASS.
+
+**Окончательные доказательства:** полный run_all 77 PASS/0 SKIP/0 FAIL (тот же прежний набор из 76 + новый engine); mutation 11/11; docs_structure/doc_links/validate/diff-check отдельно. Точная среда и промежуточные результаты — AUDIT. Java Temurin21.0.8+9 из jdk4py21.0.8.2 (PyPI), ECJ3.46.100 из npm exoproc-jjit0.6.5, Pillow12.0.0; всё в исключённой .cache, без изменения игровых dependencies. Minecraft/Gradle/client/авторские23GameTests здесь не запускались; RAD001/DRAD2/UX001/DVAL1 не закрыты этим audit. Сохраняется неизвестная причина невоспроизводимого закрытия клиента.
+
+**Синхронная документация:** CURRENT+DEFFERED (переход/закрытие D-AUD1, CRASH уточнение), AUDIT (команды/границы/нефильтрованные результаты), RAD_ITEMS/RAD_WORLD (актуальная защита потоков), AUTOMINER (резерв/slot limit), REACTORS (корректная reload fixture), AUDIO_VISUAL/PSYCHE (фактический blit и boundary relaxation), CAPABILITIES/MACHINES/MULTIBLOCK (compile/NodeKinds/I/O wiring, без изменения механик). Полные старые CURRENT-STATE/RAD_ITEMS с SHA/bytes/Git base сохранены [в OUTDATED](archive/editions/0.3.315/README.md). Остальные удалённые малые тексты сохранены ниже дословно.
+
+Дословно заменено/перенесено из `docs/DEFFERED.md` (база `6497c9a5639346bfb3f9284c326130a6b95daabc`):
+
+````text
+<a id="d-aud1"></a>
+### D-AUD1 — Актуализация старых source-контрактов
+
+**Статус: отложено.** Baseline на 42730c3: autominer_markers_test ожидает 0.3.310, radiation_behavior_test — удалённый held-state; далее есть RadDoseIndex-пины. Требуется отдельная сверка новых инвариантов, не удаление проверок ради PASS. Миграция документационных fixture-путей этого не исправляет.
+
+````
+
+Дословно заменена старая строка реестра `docs/AUDIT.md` (база 6497c9a):
+
+````text
+| [radiation_behavior_test.py](../audit/radiation_behavior_test.py) | Static and numerical contracts for 0.3.232 radiation flows and medicines.""" |
+````
+
+Финальный повтор после всей документации: run_all **77 PASS / 0 SKIP / 0 FAIL из 77**, exit 0; structure **9 редакций с hash/bytes/Git / 29 live / 75 immutable legacy / 4173 пункта / 69 dispositions**; doc_links **1192 / 0 broken**; validate **3275 JSON / 606 items / en=ru1279 / 0 errors / 0 warnings**. Проверка `git diff --exit-code -- src gradle.properties build.gradle` подтвердила отсутствие runtime/build-правок; version 0.3.315. Бинарники toolchain/классы/временные mutation-копии не включены.

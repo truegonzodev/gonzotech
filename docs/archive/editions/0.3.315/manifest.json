@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "6497c9a5639346bfb3f9284c326130a6b95daabc",
+      "snapshot": "docs/archive/editions/0.3.315/OUTDATED_D-AUD1_CURRENT-STATE.md",
+      "sha256": "536340b1313e68bda298c8770d4b0fde8e2f4b07f308a7ebbc4eefae5d3ceade",
+      "bytes": 8109,
+      "task": "D-AUD1"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "6497c9a5639346bfb3f9284c326130a6b95daabc",
+      "snapshot": "docs/archive/editions/0.3.315/OUTDATED_D-AUD1_RAD_ITEMS.md",
+      "sha256": "bf79be1e3adc3c74a26f6ab9db6de56ec35900b948140825d6ee07313bb3f9a0",
+      "bytes": 35036,
+      "task": "D-AUD1"
+    }
+  ]
+}

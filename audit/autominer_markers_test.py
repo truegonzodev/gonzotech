@@ -7,6 +7,8 @@
 хранилище 9×512 активных + 54×512 виртуальных.
 """
 import re
+import _ver
+import _radiation_contracts as current_rad
 import struct
 import sys
 import zlib
@@ -28,7 +30,7 @@ def png_size(path: Path):
 
 # ── версия ──
 props = (ROOT / "gradle.properties").read_text(encoding="utf-8")
-assert re.search(r"^mod_version=0\.3\.310$", props, re.M), "mod_version != 0.3.310"
+_ver.at_least("0.3.315", "current autominer and physical-owner radiation contracts")
 
 # ── 1. Текстуры автора: вымпел 20×35, флажок 14×14 ──
 assert png_size(GUI / "waypoint_marker.png") == (20, 35), "waypoint_marker.png != 20x35"
@@ -310,7 +312,12 @@ assert "hardness < 0F || hardness >= 50F" in be, "нет правила упор
 assert "server.destroyBlock(pos, false, null)" in be, "руда не всасывается (drop=false) в Плотник"
 assert "for (int dx = -2; dx <= 2; dx++)" in be, "всас 5×5 вокруг трубы отсутствует"
 assert "countStored(ModMachines.BORE_PIPE.get().asItem())" in be, "наличие труб в хранилище не проверяется"
-assert "consumeStored(ModMachines.BORE_PIPE.get().asItem(), 1)" in be, "труба не расходуется из хранилища при углублении"
+# 313: reserve the REAL stack before placement, return it unchanged on failure.
+_dig = current_rad.method(be, "private void digStep(")
+assert "takeStoredOne(ModMachines.BORE_PIPE.get().asItem())" in _dig
+assert _dig.index("takeStoredOne(") < _dig.index("server.setBlock(") < _dig.index("insertMinedOrDrop(")
+assert "if (!insert(reserved)) dump(reserved, worldPosition)" in _dig
+assert "if (reserved.isEmpty()) return" in _dig
 assert "connectedWorkRegion" in be[be.index("private void tickDrills"):], \
     "движок не проверяет связность бура с сетью"
 
@@ -444,7 +451,10 @@ assert "MinerSectorDim" in card_src and "dimensionMatches" in card_src, \
 assert "sourceMask,\n            server.dimension())" in be, "импульс не прошивает карту миром"
 assert be.count("dimensionMatches") >= 3, "гейты карты не проверяют измерение"
 ir_src = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
-assert "BUNDLE_CONTENTS" in ir_src, "разрядка по-прежнему слепа к связкам (#28)"
+# Deep traversal moved to shared helpers; do not require direct component rewrite.
+assert "RadSources.contentsOf(stack)" in ir_src
+assert "BUNDLE_CONTENTS" in (ROOT / "src/main/java/com/gonzotech/radiation/RadSources.java").read_text(encoding="utf-8")
+current_rad.external_storage()
 thr_src = (ROOT / "src/main/java/com/gonzotech/core/network/PayloadThrottle.java").read_text(encoding="utf-8")
 assert "WINDOW_TICKS = 20" in thr_src and "public static boolean allow" in thr_src, \
     "троттла нет (#41)"
@@ -470,7 +480,9 @@ assert "RadSources.emissionPerItem(stack);" in ir_src, "intrinsic отнимае
 rad_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadSources.java").read_text(encoding="utf-8")
 assert "public static double emissionTransfer(ItemStack stack)" in rad_src, "нет переноса «на предмет»"
 rs_src = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text(encoding="utf-8")
-assert "secondStackTransfer : maxStackTransfer" in rs_src, "инвентарь не скидывает наведёнку источника"
+# Prefix/suffix exclusion now handles ALL slots including owned nested subtrees.
+current_rad.flows()
+current_rad.scheduler()
 assert "CarrierItem.RADIOACTIVITY_FACTOR * INDUCED_REEMIT" in ir_src, \
     "наведёнка содержимого носителя в обход двойного экрана (п.4 автора)"
 
@@ -517,8 +529,9 @@ assert "rejectInflatedClick" not in _m275 and "ClickType.CLONE" not in _m275, \
     "страж несуществующего канала должен быть удалён"
 assert "GONZOTECH$CLICKS" in _m275 and "обработчик кликов жив" in _m275, \
     "нет unconditional-пробника кликов (первые 3 + каждый 25-й)"
-assert "раздутый стак" in _sys275 and "getMaxStackSize(stack)" in _sys275, \
-    "тик-бэкстоп раздутых стаков пропал (вторая линия без миксина)"
+# Auto-trimming was removed by the author: it is not a dupe cure. The new
+# core asserts count immutability; executable copy/merge tests cover the root.
+assert "[RAD-INV][CLAMP]" not in _sys275
 _led = (ROOT / "src/main/java/com/gonzotech/radiation/InventoryLedgerClient.java") \
     .read_text(encoding="utf-8")
 assert "InventoryLedgerPayload" in _led and "sendToServer" in _led, "клиент не шлёт свою сумму"
@@ -537,7 +550,7 @@ assert "frame.setItem(" not in _sys275, "write-back на рамку вернул
 assert _sys275.count(".setChanged()") == 1, "у рамок вернулся несуществующий Entity#setChanged (не компилируется)"
 assert "земля Σ=" in _sys275 and "мир Σ=" in _sys275, "[LEDGER] не расширен землёй/миром"
 assert "new long[]{serverSum, clientSum, groundSum}" in _sys275, "базовая линия LEDGER не трёхместная"
-assert "getEntityData()" in _sys275, "обоснование no-op (ванильный сеттер) пропало из комментария"
+# The executable no-write-back checks above matter, not an old comment word.
 # 0.3.279: туман при багровом дне. getBrightnessDependentFogColor обязан нести
 # ТОТ ЖЕ crimson-оверлей, что и горизонт купола (тот же вес 0.95 и тот же гейт
 # OVERWORLD×!GONE) — «туман чисто перенимает sky color» (автор 24.10).
@@ -1003,10 +1016,9 @@ drop291 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemDropTraceDebug.java
 for _tag in ("[RAD-INV][ENT+]", "[RAD-INV][ENT−]", "[RAD-INV][ENT-PICK]", "loadedFromDisk", "TRACED"):
     assert _tag in drop291, f"0.3.291: трассировка предметов потеряла {_tag}"
 sys291 = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text(encoding="utf-8")
-assert "(tracing || debugInv)" in sys291, "0.3.291: [PASS] забыл брать «до» и на debug-сессиях"
-assert "[RAD-INV][COUNT]" in sys291, "0.3.291: проверка неизменности count прохода исчезла"
-assert "[RAD-INV][PASS]" in sys291, "0.3.291: строка компонентов до/после исчезла"
-assert sys291.count("[RAD-INV][CLAMP]") == 2, "0.3.291: обрезание не отдельное событие (ждём 2 подтега)"
+# Old per-pass NBT [PASS]/[COUNT]/[CLAMP] logging is superseded by external
+# cluster Step/Summary. Keep click/creative/LEDGER diagnostics independently.
+current_rad.trace()
 mod291 = (ROOT / "src/main/java/com/gonzotech/GonzoTechMod.java").read_text(encoding="utf-8")
 assert "InventoryDebugGatePayload.TYPE" in mod291 and "InventoryDebugClientGate.set(payload.enabled())" in mod291, \
     "0.3.291: гейт клиента не зарегистрирован"
@@ -1045,24 +1057,9 @@ for lang_name in ("ru_ru.json", "en_us.json"):
             f"в {lang_name} welcome '{wkey}' не перечисляет GT capabilities: server-side WorldGuard"
 
 
-# 0.3.294: корневой ремонт дюпа — живая доза вне стака (RadDoseIndex);
-# сервер не мутирует предметы «под ногами» клиента, creative-канал
-# (handleSetCreativeModeSlot, 1.21.4: без stateId/контент-проверки) больше
-# нечем наполнять устаревшими сетками.
-idx294 = (ROOT / "src/main/java/com/gonzotech/radiation/RadDoseIndex.java").read_text(encoding="utf-8")
-assert "class RadDoseIndex" in idx294 and "WeakHashMap<ItemStack, Entry>" in idx294 \
-    and "QUIET_NS = 5_000_000_000L" in idx294, "0.3.294: индекс разобран (ключ/окно тишины)"
-ir294 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
-for _r294 in ("RadDoseIndex.peek(stack)", "RadDoseIndex.setValue(stack, value)",
-              "RadDoseIndex.markTick(stack, nowTick)", "RadDoseIndex.tickOf(stack)",
-              "RadDoseIndex.markCleared(stack)", "RadDoseIndex.isLive(stack)"):
-    assert _r294 in ir294, f"0.3.294: роутинг {_r294} выпал — компонент снова пишется под живой сеткой"
-assert "RadDoseIndex.adopt(player, stack)" in sys291 and "RadDoseIndex.quietFor(player)" in sys291 \
-    and "RadDoseIndex.flushPlayer(player)" in sys291, "0.3.294: adopt/flush не в проходе"
-assert "RadDoseIndex.noteInteraction(this.player)" in clickmix \
-    and "RadDoseIndex.noteInteraction(this.player)" in creative291, \
-    "0.3.294: flush-окно растеряло печать активности клика/креатива"
-assert "radClearPending" not in ir294 and "private static final Map<UUID, Long> LAST_INTERACTION_NS" not in ir294
+# 313–315 supersede 294 deferred storage: dose stays external permanently,
+# copy/weighted merge + owner persistence replace adopt/quiet/flush.
+current_rad.external_storage()
 
 # 0.3.295: debug2.log — NPE диагностики на netty-входе (гонка HEAD netty-пакета
 # N+1 с RETURN серверного прохода пакета N) + IAE JEI на rejoin. Диагностика
@@ -1078,8 +1075,6 @@ for _m296 in (clickmix, creative291):
         "0.3.296: @Shadow server вернулся — APPLY упадёт на поле из предка"
     assert "gonzotech$srv" in _m296 and _m296.count("isSameThread()") >= 2, \
         "0.3.296: гейт потока через getServer() выпал — вернётся NPE-кик диагностики"
-assert "RadDoseIndex.noteInteraction(this.player);" in clickmix.split("isSameThread")[0], \
-    "0.3.295: штамп активности уехал под netty-гейт — окно flush перестанет закрываться вовремя"
 jei295 = (ROOT / "src/main/java/com/gonzotech/integration/jei/GonzoTechJeiPlugin.java").read_text(encoding="utf-8")
 assert "catch (IllegalArgumentException alreadyRegistered)" in jei295, \
     "0.3.295: JEI-расширение снова регистрируется неидемпотентно (вылет на rejoin)"
@@ -1166,30 +1161,10 @@ mx299 = (ROOT / "src/main/java/com/gonzotech/mixin/LevelChunkCleanRoomMixin.java
 assert "ItemRouting.onWorldEdit(level)" in mx299, \
     "0.3.299 N13: миксин не инвалидирует кэш топологии"
 
-# 0.3.300: гейт re-equip bob'а обязан зачищать ВСЕ три радиационных штампа
-# (с markDecayTick старые два перестали сходиться — предмет прыгал в руке
-# каждый радиационный проход) и не давать рано-возврата по значению дозы.
-gate300 = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadReequipGate.java").read_text(encoding="utf-8")
-assert gate300.count("tag.remove(ItemRadioactivity.TAG_RAD") == 3, \
-    "0.3.300: RadReequipGate снова strip'ит не все штампы — bob вернётся"
-assert "if (ra == rt)" not in gate300, \
-    "0.3.300: рано-возврат по равенству дозы вернёт прыжок на одних тик-штампах"
-assert "stripRadDeep(copy, false);" in gate300 and "BUNDLE_CONTENTS" in gate300, \
-    "0.3.300: вложенное затухание (связка/контейнер) снова анимирует родителя"
-ir300 = (ROOT / "src/main/java/com/gonzotech/radiation/ItemRadioactivity.java").read_text(encoding="utf-8")
-assert "public static final String TAG_RAD_MODEL" in ir300 \
-    and "public static final String TAG_RAD_LAST_TICK" in ir300, \
-    "0.3.300: штампы снова приватные — гейт ослепнет при следующем рефакторе"
-mx300 = (ROOT / "src/main/java/com/gonzotech/mixin/client/ItemInHandRendererMixin.java").read_text(encoding="utf-8")
-assert "shouldInstantlyReplaceVisibleItem" in mx300 and "onlyRadChanged(from, to)" in mx300, \
-    "0.3.300: миксин-гейт отцепился от ванильной проверки замены"
-
-# 0.3.301: ItemContainerContents в Mojmap НЕ Iterable — пин на индексный обход
-# (урок: MCP-зеркала расходятся с Mojmap API; сверяться с нашим же decay-путём).
-gate301 = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadReequipGate.java").read_text(encoding="utf-8")
-assert "for (ItemStack inner : content)" not in gate301 \
-    and "content.getStackInSlot(i)" in gate301, \
-    "0.3.301: в гейте снова for-each по ItemContainerContents — не скомпилируется"
+# 300/301 visual stripping hooks were explicitly removed: no live radiation
+# components are written, so there must be no RadReequipGate/renderer workaround.
+# external_storage() above checks absence, current copy hook and count invariants;
+# radiation_engine_test executes nested copy isolation and stable slot traversal.
 
 # 0.3.302: проход остаточных #. #1-остаток: legacy-загрузчик не теряет
 # out-of-range записи (общий free-probe). #25/#34-остатки: радиация не грузит
@@ -1249,9 +1224,9 @@ ir304 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java")
 assert "таблица разделена по измерениям" in ir304, "0.3.304: «помещена» вернулась в док N14"
 # ── 0.3.306 (ре-аудит по игровым вердиктам автора 26.10) ──
 menu306 = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
-assert "Math.min(PlotnickBlockEntity.capacityFor(stored), target.getMaxStackSize())" in menu306, \
+assert "Math.min(PlotnickBlockEntity.capacityFor(stored), target.getMaxStackSize(stack))" in menu306, \
     "0.3.306: мердж-цикл не знает про потолок слота (карты доезжали 16 в слот=1)"
-assert "Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize());" in menu306, \
+assert "Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize(stack));" in menu306, \
     "0.3.306: пустой слот заполняется по capacityFor без минимума с потолком слота"
 
 ir306 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")

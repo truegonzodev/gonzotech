@@ -325,3 +325,7 @@ PlayerPsyche — codec attachment ModPsycheAttachments.PSYCHE с copyOnDeath. Ps
 ## Проверки и происхождение
 
 `audit/psyche_contracts_test.py`: source-пины и числовая регрессия спада/интервала тремора, не Minecraft playtest. Общие результаты/границы — [AUDIT](AUDIT.md). Полная прежняя редакция — [OUTDATED_DOC-003_PSYCHE](archive/editions/0.3.311/OUTDATED_DOC-003_PSYCHE.md). Точные конфликты P01–P14 и решения — [HISTORY](HISTORY.md#v-0-3-312); они не дублируются здесь как старые спецификации.
+
+## Проверки 0.3.315 — D-AUD1
+
+После установки Java 21/Pillow выполнены прежние crisis/faint/GUI regressions: F1 не снимает эффект/ложную смерть, source-кадры и vertex alpha соответствуют текущему overload. Новая relaxation-зависимость в старом faint-harness — явно no-op boundary, не самостоятельное доказательство её рисунка. Исходные шкалы/пороги/химия/тремор не менялись; полный suite 77/77 не заменяет авторскую игру. Точный scope/команды — AUDIT.

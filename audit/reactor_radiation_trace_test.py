@@ -5,6 +5,7 @@ import struct
 from pathlib import Path
 
 import _ver
+import _radiation_contracts as current
 
 ROOT = Path(__file__).resolve().parents[1]
 JAVA = ROOT / "src/main/java"
@@ -130,16 +131,15 @@ assert "все измерения сервера" not in trace
 assert "RadiationTrace.start(player)" in command
 assert "RadiationTrace.tick(event.getServer())" in system
 assert "RadiationTrace.clearAll()" in system
-assert "inventoryContribution=" in system and "strongestOtherSource=" in system
-assert "inducedBefore += storedInduced * count;" in system
-assert "double totalNzt = 0.0D;" in system
-assert "for (List<ItemStack> part : compartments)" in system and "RadSources.emissionDeep(stack);" in system
+# Per-item cluster trace supersedes old compartment/strongest-stack fields.
+current.trace()
+current.flows()
 assert '"ИНВЕНТАРЬ ИГРОКА → ЧАНК"' in system
 assert "inventoryDoseEmission=" in system
 assert '"ДОЗА ИГРОКА"' in system
 assert '"ДИФФУЗИЯ ЧАНК → ЧАНК"' in chunk
 assert '"ИСТОЧНИКИ БЛОКОВ → ЗАРАЖЕНИЕ ЧАНКА"' in chunk
-assert '"КОНТЕЙНЕР → ЧАНК"' in system
+assert '"КЛАСТЕР → ЧАНК"' in system
 assert '"БЛОК В КОНТУРЕ → ДОЗА ИГРОКА"' in containment
 assert "RadiationTrace.playerDoseChange" in system
 assert "data.addContamination(level, chunkKey" in system

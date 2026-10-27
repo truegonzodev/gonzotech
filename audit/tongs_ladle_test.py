@@ -5,6 +5,7 @@ smoke-run (ECJ), plus wiring pins. Author numbers: -40% radioactivity,
 Needs JDK 21 in JAVA_HOME/PATH or a Java 21 runtime + ECJ_JAR.
 """
 from pathlib import Path
+import _radiation_contracts as current_rad
 import os
 import shutil
 import subprocess
@@ -157,9 +158,10 @@ assert "DataComponents.BUNDLE_CONTENTS" in rads
 assert "depth < 4" in rads                        # защита от циклов
 
 radsys = (ROOT / "src/main/java/com/gonzotech/radiation/RadiationSystem.java").read_text()
-assert radsys.count("RadSources.emissionDeep(stack)") >= 2      # intrinsic + per-stack
-assert "secondStackEmission" in radsys and "stackSource" in radsys
-assert "RadSources.emissionDeep(container.getItem(i))" in radsys
+# Unified physical-owner traversal replaces the old strongest-stack scans.
+current_rad.flows()
+current_rad.scheduler()
+assert "shielding*CarrierItem.RADIOACTIVITY_FACTOR" in (ROOT / "src/main/java/com/gonzotech/radiation/engine/RadiationCluster.java").read_text()
 
 chunk = (ROOT / "src/main/java/com/gonzotech/radiation/ChunkRadiationData.java").read_text()
 assert "RadSources.emissionDeep(container.getItem(i))" in chunk  # дозиметр видит вложенное
@@ -180,7 +182,11 @@ ladle = (ROOT / "src/main/java/com/gonzotech/core/item/LadleItem.java").read_tex
 assert "id.equals(BUCKET_ITEM)" in ladle
 assert "path.equals(BUCKET_ITEM)" not in ladle
 radtip = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadTooltip.java").read_text()
-assert "RadSources.emissionDeep(event.getItemStack())" in radtip   # X+Y в тултипе
+# Radiation moved from ordinary tooltip to the paint-only panel; deep fallback
+# remains for supported carriers/nested items, toxicity stays in RadTooltip.
+panel = (ROOT / "src/main/java/com/gonzotech/radiation/client/RadiationPanel.java").read_text()
+assert "RadSources.emissionDeep(stack)" in panel
+assert "RadSources.emissionDeep(event.getItemStack())" not in radtip
 assert "ItemRadioactivity.totalEmission(event.getItemStack())" not in radtip
 
 # ── Пины 0.3.85: ЛКМ-вставка / ПКМ-извлечение, update-merge, отступы лора ──

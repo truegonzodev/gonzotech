@@ -159,6 +159,12 @@ class Minecraft {
     static Minecraft getInstance() { return INSTANCE; }
 }
 class Options { boolean hideGui; }
+// New relaxation overlay is a boundary dependency of the extracted faint hook.
+// Its drawing/math is not the subject of this fake-death/F1/title/fluid suite.
+class PsycheRelaxationClient {
+    static void reset() {}
+    static void render(GuiGraphics graphics, Minecraft minecraft) {}
+}
 '''
 home = os.environ.get('JAVA_HOME')
 java = str(Path(home)/'bin/java') if home else shutil.which('java')

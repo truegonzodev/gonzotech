@@ -40,10 +40,14 @@ for pin in (
     "if (st.getBlock() instanceof UniversalNodeBlock) continue;",
     # 0.3.110: экранированные (эпоха 3) — потери за клетку ×0.88
     "perCell[i] = Math.round(PipeLoss.perCell(true, heatType) * ThirdTierPipe.STAT_FACTOR);",
-    "lanes.add(new Lane(raw, null, 0));",
+    # Lane gained destination identity for cache validation; direct-neighbor
+    # path/loss remain null/0, not a routed pipe cell.
+    "lanes.add(new Lane(raw, null, 0, pos));",
     "long[] lossCells = pathLossCells(level, path, type);",
     "return PipeLoss.sum(pathLossCells(level, path, type));",
-    "recording(level, raw, type, path, lossCells)",
+    # Opt-in diagnostics wrap the same receiver, then identical loss accounting.
+    "Transfer.Receiver observed = diagnostics == null ? raw : observeReceiver(raw, diagnostics, laneIndex);",
+    "recording(level, observed, type, path, lossCells)",
 ):
     assert pin in routing, "routing pin: " + pin.splitlines()[0]
 # все четыре вида дорожек считают потерю; прямые соседи — без потерь

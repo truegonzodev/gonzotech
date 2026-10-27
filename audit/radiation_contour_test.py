@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from _radiation_contracts import method
 
 ROOT = Path(__file__).resolve().parent.parent
 JAVA_HOME = os.environ.get("JAVA_HOME")
@@ -36,7 +37,8 @@ system = (src / "radiation/RadiationSystem.java").read_text()
 hook = (src / "mixin/LevelChunkCleanRoomMixin.java").read_text()
 chunk = (src / "radiation/ChunkRadiationData.java").read_text()
 assert "Map<ServerLevel, Map<Long, Entry>>" in containment and "WeakHashMap" in containment
-assert containment.index("if (!level.hasChunkAt(block))") < containment.index("return cell(level.getBlockState(block))")
+probe = method(containment, "public static RadiationContour.Result result(")
+assert probe.index("if (!level.hasChunkAt(block))") < probe.index("return cell(level, block)")
 assert "onChunkUnload" in containment and "onChunkLoad" in containment and "onLevelUnload" in containment
 assert "Containment.blockChanged(level, pos, old, actual)" in hook
 assert "state.getValue(BlockStateProperties.OPEN)" in containment and "instanceof net.minecraft.world.level.block.TrapDoorBlock" in containment
@@ -47,5 +49,8 @@ assert "Containment.cachedResult(level, pos)" in chunk and "probed++ < MAX_PROBE
 contour_src = (src / "radiation/RadiationContour.java").read_text()
 assert "{1, 1, 1}, {1, 1, -1}, {1, -1, 1}, {1, -1, -1}," in contour_src
 assert "six-sided star seal no longer closes the contour" in (ROOT / "audit/RadiationContourSelfTest.java").read_text()
-assert system.index("+ Containment.insideDose(level, BlockPos.containing(player.getEyePosition()))") < system.index("rawDose *= PsycheChemical.doseMultiplier(player)") < system.index("Hazmat.factor(player, rawDose)")
+# Source contribution is named separately now; preserve the SAME dose order.
+player = method(system, "public static void onPlayerTick(")
+assert player.index("double containmentDose = Containment.insideDose(") < player.index("+ containmentDose") < player.index("rawDose *= psycheDoseMultiplier") < player.index("Hazmat.factor(player, rawDose)")
+assert "double psycheDoseMultiplier = PsycheChemical.doseMultiplier(player)" in player
 print("Radiation cache/lifecycle/dose integration checks passed: 9 (static)")

@@ -8,12 +8,13 @@ import net.minecraft.world.entity.player.Inventory;
 
 /** Minimal UI base surface used to typecheck SteamGenScreen. */
 public abstract class MachineScreen<T> {
+    protected final T menu;
     protected final Font font = new Font();
     protected static final ResourceLocation BAR_GTH = gui("bar_gth.png");
     protected static final ResourceLocation BAR_WATER = gui("bar_water.png");
     protected static final ResourceLocation BAR_STEAM = gui("bar_steam.png");
 
-    protected MachineScreen(T menu, Inventory inventory, Component title) { }
+    protected MachineScreen(T menu, Inventory inventory, Component title) { this.menu=menu; }
     protected static ResourceLocation gui(String path) {
         return ResourceLocation.fromNamespaceAndPath("gonzotech", "textures/gui/" + path);
     }

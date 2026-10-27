@@ -2,6 +2,7 @@ package net.minecraft.world.item;
 /** Стаб: члены, используемые сетевым пакетом (сверены с использованием в репо). */
 public class ItemStack {
     public ItemStack() { }
+    public ItemStack(Item item) { }
     public ItemStack(Item item, int count) { }
     public boolean isEmpty() { return true; }
     public boolean is(Item item) { return false; }

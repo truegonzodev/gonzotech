@@ -15,8 +15,14 @@ ROOT = Path(__file__).resolve().parent.parent
 home = os.environ.get("JAVA_HOME")
 java = str(Path(home) / "bin/java") if home else shutil.which("java")
 javac = str(Path(home) / "bin/javac") if home else shutil.which("javac")
-if not java or not javac:
-    raise SystemExit("javac / Java 21 required for the endpoint harness")
+if not java or not Path(java).is_file():
+    raise SystemExit("Java 21 required: set JAVA_HOME or PATH")
+if os.environ.get("ECJ_JAR"):
+    compiler = [java, "-jar", os.environ["ECJ_JAR"], "-21", "-proc:none"]
+elif javac and Path(javac).is_file():
+    compiler = [javac, "--release", "21"]
+else:
+    raise SystemExit("javac or ECJ_JAR required")
 source = (ROOT / "src/main/java/com/gonzotech/machines/steamgen/SteamGenStructure.java").read_text()
 start = source.index("    public static Transfer.Receiver waterReceiverAt(")
 end = source.index("    /**\n     * Максимальный номинальный приём", start)
@@ -133,5 +139,5 @@ cases = r'''
 with tempfile.TemporaryDirectory(prefix="gonzotech-endpoint-") as output:
     path = Path(output) / "SteamGenEndpointSelfTest.java"
     path.write_text(stubs + methods + cases)
-    subprocess.run([javac, "--release", "21", "-d", output, str(path)], check=True)
+    subprocess.run(compiler + ["-d", output, str(path)], check=True)
     subprocess.run([java, "-cp", output, "SteamGenEndpointSelfTest"], check=True)

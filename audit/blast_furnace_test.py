@@ -100,10 +100,13 @@ assert "PipeRouting.drain(server, node, PipeType.HEAT, budget," in be  # 0.3.75:
 assert "new com.gonzotech.machines.menu.BlastFurnaceMenu(id, inv, this, blastData);" in be
 assert "block.gonzotech.blast_furnace" in be
 
-# структура: роли по автору + флаги FORMED на шамоте + любой тепло/универсал узел T1/T2
+# структура: роли + FORMED; автор 0.3.255 — heat/universal любого поколения
 assert "case FIREBOX -> state.is(ModMachines.FIREBOX.get());" in struct
-assert "state.is(ModMachines.SECOND_HEAT_NODE.get())" in struct
-assert "state.is(ModMachines.SECOND_UNIVERSAL_NODE.get())" in struct
+assert "case HEAT_NODE -> NodeKinds.isHeat(state) || NodeKinds.isUniversal(state);" in struct
+node_kinds = (ROOT / "src/main/java/com/gonzotech/machines/network/NodeKinds.java").read_text()
+assert 'HEAT = "_heat_node"' in node_kinds and 'UNIVERSAL = "_universal_node"' in node_kinds
+assert 'id.getNamespace().equals(GonzoTechMod.MOD_ID)' in node_kinds
+assert 'id.getPath().endsWith(suffix)' in node_kinds
 assert "state.is(Blocks.CAULDRON) || state.is(Blocks.WATER_CAULDRON);" in struct
 assert "FireclayBlock.FORMED, formed" in struct
 assert "isFormed(ServerLevel level, BlockPos fireboxPos)" in struct

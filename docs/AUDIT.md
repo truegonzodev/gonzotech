@@ -1,5 +1,7 @@
 # Проверки проекта и история использования
 
+**Последний полный локальный прогон, D-AUD1 / 0.3.315: 77 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+
 ## Команды и доказательства
 
 - `python3 audit/run_all.py` — все `*_test.py` отдельными процессами. **SKIP ≠ PASS**, FAIL не маскируется. Код возврата 0 только без FAIL.
@@ -70,8 +72,9 @@
 | [pipe_routing_tail_test.py](../audit/pipe_routing_tail_test.py) | Regression contract for the capacity-induced zero-step pipe-routing tail. |
 | [qol_batch_test.py](../audit/qol_batch_test.py) | Static regression checks for the QOL batch and the 0.3.212 dead-slime fog rework.""" |
 | [rad_materials_audit.py](../audit/rad_materials_audit.py) | Аудит экранирования (раунд 14, автор 03.10.2026). |
-| [radiation_behavior_test.py](../audit/radiation_behavior_test.py) | Static and numerical contracts for 0.3.232 radiation flows and medicines.""" |
+| [radiation_behavior_test.py](../audit/radiation_behavior_test.py) | Текущая radiation wiring/storage/flows и неизменённые лекарственные контракты; без held-state. |
 | [radiation_contour_test.py](../audit/radiation_contour_test.py) | Compile/run the actual pure-Java radiation-contour core, without Gradle/Minecraft. |
+| [radiation_engine_test.py](../audit/radiation_engine_test.py) | Реальное Java-ядро, извлечённые flow/claim/children; 11 групп + `--mutation-check`, не Minecraft. |
 | [raw_ore_blocks_test.py](../audit/raw_ore_blocks_test.py) | Regression checks for all 26 compressed raw-ore blocks and processing recipes.""" |
 | [reactor_fuel_storage_test.py](../audit/reactor_fuel_storage_test.py) | Regression contracts for per-sheath fuel ownership and lossless break rounding.""" |
 | [reactor_gui_test.py](../audit/reactor_gui_test.py) | Static regression checks for the reactor panel GUI follow-up.""" |
@@ -182,3 +185,42 @@
 - `python3 audit/docs_structure_test.py`: PASS — 29 профилей + указатель, 75 неизменных legacy, 4173 source-пункта/69 решений, **7** зарегистрированных предыдущих редакций, SHA/байты/Git. В этом Linux checkout адаптер EOL/путей не нужен.
 - `python3 audit/doc_links.py`: 0 битых ссылок. `python3 audit/validate.py`: 3275 JSON, 606 items, en=ru1279, **0 ошибок/0 предупреждений**. `git diff --check` — PASS для текущих изменений.
 - java/javac отсутствуют; Minecraft client/Gradle/23 радиационных и 2 новых pipe GameTests здесь не запускались. Подтверждение причины завершения 27.10 заблокировано отсутствием полного лога/exit code/актуального crash-report или hs_err. Новых runtime/source-test правок не делалось.
+
+## D-AUD1 — code-first ремонт пинов и полный Java-прогон 0.3.315
+
+27.10.2026, база `6497c9a` + авторская 0.3.315. Задача активирована автором после предыдущего обзора и закрыта в пределах audit-контрактов. **Runtime/src/build/игровые зависимости/ассеты не менялись**, повышения версии нет. Ни crash, ни игровой баг этим не объявлены исправленными.
+
+### Что именно доказано
+
+- Новый radiation_engine_test: **11 поведенческих групп / 450560 assertions PASS**, реальная Java-реализация 8 классов, дословные children/transfer/claim и world-transfer statements. Проверяется утверждённая 314/315 формула с 0.0013/mZt, не Python-зеркало старой 0.00097; count/order/self/subtree, lazy catchup, один active tick во вложении, x0.75, оба свинцовых направления и независимость входящего чанка, count-preserving copy/merge, изоляция деревьев, feedback 5000 шагов (1/41 × 1/64).
+- `python3 audit/radiation_engine_test.py --mutation-check`: **11/11 KILLED**, в временных копиях без правок src. Это проверки чувствительности, не «11 найденных багов»: старый uptake, потеря MILLI, отсутствие вычитания intrinsic/x0.75, deep+single tick, свинец=1, включение чанка при =30 mZt, self-subtree в источниках, сумма induced вместо max, общий nested stack копий, сумма per-item rates вместо взвешенного merge.
+- `_radiation_contracts` — только source-wiring: физические inventory slots, world-tick phases/getChunkNow/unload, double-chest canonical owner, update BE при изменении, cap суммарного переноса, новая trace-схема, отсутствие возвращённого RadDoseIndex/re-equip/clamp. Click/creative/thread-guard/LEDGER, рецепты/ассеты и нереляционные autominer/network требования сохранены.
+- Typecheck: **52 реальных файла + 131 compile-only стаб, 0 ошибок**. Не исключён ни один прежний real-file; добавлен реальный ProcessingRecipeDisplay. Восстановлены поверхности новых mod-owned зависимостей, inherited menu и используемых MC типов. Стабы — проверка внутренней согласованности, не независимое доказательство Mojmap/API.
+- Reactor matrix/operating/thermal oracle: **7358 assertions PASS**. Исправлен setup reload-проверки: production восстанавливает outputCurve из live matrix, а transient slopes линейной fixture не входят в Saved. Сохранены требования горячего охлаждения/положительного остаточного выхода; добавлен повторный restore. Runtime и режим formed-port не менялись.
+- GUI: **914 static + actual PNG checks PASS**. Кризисный blit уже с 285 использует явный source-size overload/vertex alpha; пин исправлен на фактические 13 аргументов с прежними 23 кадрами 128×72, не на изменение PNG. Остальные ранее скрытые wiring/dependency FAIL разобраны в HISTORY.
+
+### Промежуточные результаты не скрыты
+
+Baseline без toolchain: **52 PASS / 19 SKIP / 5 FAIL из 76**. После пяти ремонтов + нового harness с Java: **66 PASS / 5 SKIP / 6 FAIL из 77** (audit_followup, blast_furnace, pipe_loss, radiation_contour, tongs_ladle, typecheck). После этих ремонтов: **72 PASS / 5 SKIP / 0 FAIL**. После Pillow и ECJ-поддержки двух оставшихся wrappers: **75 PASS / 0 SKIP / 2 FAIL** (gui_alignment old blit pin, reactor_matrix linear reload fixture). После их разбора: **77 PASS / 0 SKIP / 0 FAIL**, exit 0. Список tests не фильтровался, assertions не отключались.
+
+### Среда/повторение
+
+Обычная среда: JDK 21 (java/javac через JAVA_HOME или PATH), Python + Pillow; `python3 audit/run_all.py`. Либо Java 21 runtime + ECJ: wrappers принимают `ECJ_JAR` (в том числе теперь reactor_matrix и steamgen_endpoint). Только tools в .cache; они не входят в Git и могут отсутствовать после восстановления workspace.
+
+Фактически здесь: jdk4py **21.0.8.2**, Temurin **21.0.8+9-LTS**; ECJ **3.46.100**, извлечён из npm `exoproc-jjit@0.6.5` (SHA-256 jar `74c93172475fee0cd4e6eefb44233516dd40525642da35d009146d97ea598229`); Pillow **12.0.0**. Java runtime поставлен PyPI в `.cache/java-toolchain`, Pillow — `.cache/python-toolchain`, compiler — `.cache/package/deps`. Ни бинарники инструментов, ни сгенерированные классы не коммитятся.
+
+```sh
+export JAVA_HOME="$PWD/.cache/java-toolchain/jdk4py/java-runtime"
+export ECJ_JAR="$PWD/.cache/package/deps/ecj-3.46.100.jar"
+export PYTHONPATH="$PWD/.cache/python-toolchain"
+python3 audit/run_all.py
+python3 audit/radiation_engine_test.py --mutation-check
+python3 audit/docs_structure_test.py
+python3 audit/doc_links.py
+python3 audit/validate.py
+git diff --check
+```
+
+Minecraft/Gradle/23 авторских GameTests и реальный клиент здесь **не запускались**. Boundary doubles для ItemStack/preset/material/components/transactions не гарантируют реальное сохранение owner sidecar, packets, codecs, MC event/Mixin injection или сторонние IItemHandler. RAD-001/D-RAD2/UX-001/D-VAL1 остаются отдельной игровой приёмкой. Невоспроизводимое закрытие 27.10 по-прежнему неизвестной причины, отчёт 25.10 исключён автором.
+
+Контроль документации этого шага: structure **9** previous editions/29 live/75 byte-identical legacy/4173 source items/69 dispositions; doc_links **1192**, 0 broken; validate **3275 JSON/606 items/en=ru1279, 0 errors/0 warnings**; diff-check чисто.

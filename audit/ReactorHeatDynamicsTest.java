@@ -39,8 +39,12 @@ final class ReactorHeatDynamicsTest {
 
         var resumed = new ReactorHeatDynamics.State();
         resumed.restore(runaway.save());
+        // Production rebuilds a nonlinear outputCurve from the live matrix on
+        // reload (ReactorRuntime.refreshSnapshot). The linear fixture's transient
+        // exchangeSlope/usefulSlope are not Saved data and must not be assumed
+        // restored. Exercise the actual runtime path, not invented persistence.
         resumed.configure(new ReactorHeatDynamics.Parameters(
-            .5, 1.0, 0.0, 1_000.0, 30.0, 0.0, .01, .005));
+            .5, 1.0, 0.0, 1_000.0, 30.0, 0.0, 0.0, 0.0, curve));
         MatrixCoefficientsTest.check(resumed.cooling(),
             "saved overcritical core enters the cooling phase when fuel is removed");
         MatrixCoefficientsTest.near(resumed.temperature(), hot, 1e-12,
@@ -49,6 +53,16 @@ final class ReactorHeatDynamicsTest {
         MatrixCoefficientsTest.check(resumed.temperature() < hot
                 && resumed.temperature() > 1_000.0 && resumed.output().exchange() > 0.0,
             "fuel-free core cools gradually while residual heat still produces GTH");
+        double restoredTemperature = resumed.temperature();
+        var restoredAgain = new ReactorHeatDynamics.State();
+        restoredAgain.restore(resumed.save());
+        restoredAgain.configure(new ReactorHeatDynamics.Parameters(
+            .5, 1.0, 0.0, 1_000.0, 30.0, 0.0, 0.0, 0.0, curve));
+        MatrixCoefficientsTest.near(restoredAgain.temperature(), restoredTemperature, 1e-12,
+            "second fuel-free restore preserves residual heat");
+        MatrixCoefficientsTest.near(restoredAgain.output().exchange(), curve.at(restoredTemperature).exchange(), 1e-12,
+            "restored output is rebuilt from the live curve, not transient fixture slopes");
+        MatrixCoefficientsTest.check(restoredAgain.cooling(), "cooling continues after second restore");
 
         var empty = new MatrixCoefficients.Grid(3, 3, 3, MatrixCoefficients.Material.WATER);
         var emptyAnalysis = engine.analyzeDetailed(empty);

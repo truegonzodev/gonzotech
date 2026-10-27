@@ -34,6 +34,8 @@ if not java or not Path(java).is_file():
 
 real_files = [
     NET / "PipeRouting.java",
+    # Real immutable recipe-display dependency: do not replace it with a stub.
+    ROOT / "src/main/java/com/gonzotech/machines/processing/ProcessingRecipeDisplay.java",
     NET / "PipeRoutingDiagnostics.java",
     ROOT / "src/main/java/com/gonzotech/core/config/GonzoServerConfig.java",
     NET / "PipeFlowWarnings.java",

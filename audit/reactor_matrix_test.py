@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Compile the matrix, loaded metrics, ReaCalc 1.7 dynamics, and Java oracles."""
+import os
 import shutil
 import subprocess
 import sys
@@ -16,15 +17,21 @@ HEAT_DYNAMICS = ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorHeat
 NEUTRONS = ROOT / "src/main/java/com/gonzotech/machines/reactor/ReactorNeutronMetrics.java"
 DYNAMICS_TEST = ROOT / "audit/ReactorHeatDynamicsTest.java"
 
-javac = shutil.which("javac")
-java = shutil.which("java")
-if not javac or not java:
-    print("Java 21 required: java/javac not found", file=sys.stderr)
-    raise SystemExit(1)
+home = os.environ.get("JAVA_HOME")
+java = str(Path(home) / "bin/java") if home else shutil.which("java")
+javac = str(Path(home) / "bin/javac") if home else shutil.which("javac")
+if not java or not Path(java).is_file():
+    raise SystemExit("Java 21 required: set JAVA_HOME or PATH")
+if os.environ.get("ECJ_JAR"):
+    compiler = [java, "-jar", os.environ["ECJ_JAR"], "-21", "-proc:none"]
+elif javac and Path(javac).is_file():
+    compiler = [javac, "--release", "21"]
+else:
+    raise SystemExit("javac or ECJ_JAR required")
 
 with tempfile.TemporaryDirectory(prefix="gonzotech-reactor-matrix-") as out:
     compile_result = subprocess.run(
-        [javac, "-encoding", "UTF-8", "-d", out, str(MAIN), str(OPERATING),
+        compiler + ["-encoding", "UTF-8", "-d", out, str(MAIN), str(OPERATING),
          str(HEAT_CURVE), str(HEAT_DYNAMICS), str(NEUTRONS), str(TEST),
          str(OPERATING_TEST), str(DYNAMICS_TEST)],
         text=True, capture_output=True,
