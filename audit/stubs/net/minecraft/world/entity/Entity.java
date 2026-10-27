@@ -1,5 +1,6 @@
 package net.minecraft.world.entity;
 public class Entity {
+ public java.util.UUID getUUID(){return null;}
  public boolean isAlive(){return true;}
  public net.minecraft.core.BlockPos blockPosition(){return null;}
  public net.minecraft.world.phys.Vec3 getEyePosition(){return null;}

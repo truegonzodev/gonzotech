@@ -4,6 +4,7 @@ import com.gonzotech.GonzoTechMod;
 import com.gonzotech.chalkboard.progress.ModAttachments;
 import com.gonzotech.chalkboard.progress.PlayerChalkboardProgress;
 import com.gonzotech.core.registry.ModItems;
+import com.gonzotech.machines.registry.ModMachines;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;

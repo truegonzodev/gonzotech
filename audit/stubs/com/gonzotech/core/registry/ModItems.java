@@ -39,5 +39,27 @@ public final class ModItems {
     public static final ItemRef UF_TVEL = new ItemRef();
 
     public static final ItemRef SPEEDOMETER=new ItemRef(), SOLAR_WATCH=new ItemRef(), TELIFON=new ItemRef();
+
+    // 0.3.319: registry boundary for the real TierThreeCrafting class.
+    public static final ItemRef AIR_CLEANER_ITEM = new ItemRef();
+    public static final ItemRef AIR_FILTER_ITEM = new ItemRef();
+    public static final ItemRef CANISTER = new ItemRef();
+    public static final ItemRef CHIP_1 = new ItemRef();
+    public static final ItemRef CHIP_2 = new ItemRef();
+    public static final ItemRef CHIP_3 = new ItemRef();
+    public static final ItemRef CHIP_BLANK = new ItemRef();
+    public static final ItemRef CHIP_BLANKY = new ItemRef();
+    public static final ItemRef CHIP_SOUP = new ItemRef();
+    public static final ItemRef DOSIMETER = new ItemRef();
+    public static final ItemRef DUST_METER = new ItemRef();
+    public static final ItemRef MOTHERBOARD = new ItemRef();
+    public static final ItemRef PHOTORESIST = new ItemRef();
+    public static final ItemRef RUBBER_BLOCK_ITEM = new ItemRef();
+    public static final ItemRef THIRD_HEAVY_DOOR_LEAD_ITEM = new ItemRef();
+    public static final ItemRef THIRD_HEAVY_DOOR_TUNGSTEN_ITEM = new ItemRef();
+    public static final ItemRef THIRD_HERMETIC_DOOR_ITEM = new ItemRef();
+    public static final ItemRef THIRD_SILICON_FACTORY = new ItemRef();
+    public static final ItemRef UV_LAMP = new ItemRef();
+    public static final ItemRef UV_METER = new ItemRef();
     private ModItems() { }
 }

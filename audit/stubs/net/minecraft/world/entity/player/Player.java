@@ -1,5 +1,7 @@
 package net.minecraft.world.entity.player;
 public class Player extends net.minecraft.world.entity.LivingEntity {
+    public net.minecraft.world.inventory.AbstractContainerMenu containerMenu;
+    public <T> T getData(java.util.function.Supplier<? extends net.neoforged.neoforge.attachment.AttachmentType<T>> type) { return null; }
     public Inventory getInventory(){return null;}
     public boolean isPassenger(){return false;}
     public net.minecraft.world.entity.Entity getRootVehicle(){return this;}

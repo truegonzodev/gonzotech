@@ -4605,3 +4605,52 @@ Headless-регрессия исполняет production transfer/claim и вн
 ````
 
 Финальный повтор318 после синхронизации профилей: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo318-final.log`; повтор mutation-check12/12 assertion-killed, `/tmp/gonzo318-mutations.log`. Docs:9previous-edition hashes/29live/75immutable/4173source-items/69dispositions; links1200/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Изменены только11файлов согласованного исправления/тестов/версии/документов. Доставка commit/push в фиксированную рабочую ветку разрешена автором; HUD-RAD-001 остаётся ждать игры.
+
+<a id="v-0-3-319"></a>
+### 0.3.319 — BUILD-001: пропущенный импорт III crafting gate
+
+27.10.2026, база3d332dd / 0.3.318, фиксированная ветка arena/48845eec-gonzotech; HEAD=origin проверены перед работой, чужого WIP нет. Автор прислал реальный Windows Gradle compileJava FAIL: два `package ModMachines does not exist` в TierThreeCrafting184. Проверено: machines.registry.ModMachines и оба THIRD_ACCUMULATOR_ITEM/THIRD_BATTERY_ITEM существуют; короткие обращения добавлены в316 без импорта. Ошибка агента признана в чате; прежние source-пины ловили условия, но не отсутствие импорта, весь этот класс отсутствовал в typecheck. Предупреждения deprecated/unchecked — не причина FAIL.
+
+Production: только import com.gonzotech.machines.registry.ModMachines; +mod_version319. Никаких изменений physical III gate/recipe book/рецептов/баланса/радиации/PNG/Plotnick. typecheck_test.py: реальный TierThreeCrafting добавлен к55прежним классам, обязательный guard включения, узкие persisted boundary stubs расширены для registry/progress/recipe/event/player/menu. Не генерируются из production при прогоне теста. Добавлена негативная компиляция временной копии без импорта с теми же исходниками, без baseline-classpath; обязательны ненулевой код и диагностическое имя ModMachines. Это compiler rejection, не regex вместо компиляции; временные файлы удаляются автоматически.
+
+BUILD-001 создана в CURRENT: реализовано, ждёт повторной авторской сборки. D-AUD1, закрытая315, удалена из CURRENT в319 по правилу четырёх последующих patch-версий; ссылка ограничения ведёт в HISTORY315. Удалённый раздел сохранён ниже полностью. ENG-001/HUD-RAD-001/прочие незакрытые задачи не объявлены закрытыми, D-ENG1 не активирована. Обновлены CURRENT/AUDIT и выборочно MACHINES/PROGRESSION; прежние заголовки/удалённый статус сохранены дословно. Архив происхождения gateIII (HEAVY-DOOR/EPOCH3-LITHOGRAPHY) сверён, не изменён; новых спорных правил не обнаружено.
+
+Проверки: positive typecheck56real/154stubs/0errors; negative missing-import1/1 compiler rejection; первый полный aggregate80PASS/0SKIP/0FAIL, /tmp/gonzo319-first.log. Полный Gradle/NeoForge/Minecraft build/GameTests/ручная игра здесь не выполнялись. Авторский compileJava FAIL не маскируется предыдущими headless PASS.
+
+#### Полный дословный текст заменённых и удалённых фрагментов
+
+**CURRENT-STATE.md, редакция до 0.3.319:**
+
+````text
+**Текущая runtime-версия: 0.3.318.** База уточнения HUD-RAD-001 — `e420651` / 0.3.317; 27.10.2026. Только статус; полный журнал — [HISTORY](HISTORY.md).
+````
+
+**CURRENT-STATE.md, редакция до 0.3.319:**
+
+````text
+<a id="d-aud1"></a>
+### D-AUD1 — актуализация пинов через проверку настоящего кода
+
+**Статус: закрыто.** Автор активировал задачу: сначала проверить реализацию, затем исправить устаревшие требования тестов, а не подгонять assertions ради PASS. В пределах проверенного дефектов runtime не установлено; src, игровые параметры, build/dependencies и версия не менялись.
+
+- Вместо требований старого RadDoseIndex/held-flush/re-equip/clamp проверяются внешнее состояние, перенос, physical-owner scheduler, per-item snapshot/trace и неизменность count.
+- Новый Java-harness: 11 поведенческих групп настоящего ядра, в том числе 5000-шаговая обратная связь и изоляция вложенных копий; 11/11 временных мутаций кода отвергнуты. Boundary doubles не являются MC API/Mixin/codec-доказательством.
+- Сняты toolchain-SKIP, разобраны ранее скрытые source/fixture/stub FAIL; полный suite **77 PASS / 0 SKIP / 0 FAIL**. Включён прежний набор из 76 тестов + новый radiation_engine_test, без исключений. Подробные переходы/команды — AUDIT/HISTORY.
+- Закрыто в 0.3.315. Удалить при 0.3.319 — после четырёх последующих runtime patch-версий. RAD-001/D-RAD2/UX-001 и ручная D-VAL1 этим не закрываются.
+
+
+````
+
+**CURRENT-STATE.md, редакция до 0.3.319:**
+
+````text
+[D-AUD1](#d-aud1)
+````
+
+**AUDIT.md, редакция до 0.3.319:**
+
+````text
+**Последний полный локальный прогон, уточнение HUD-RAD-001 / 0.3.318: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+Финальный повтор319 после обновления docs: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo319-final.log`. Typecheck56real/154stubs, негативная компиляция без импорта1/1 rejected; docs9editions/29live/75immutable/4173source-items/69dispositions, links1200/0broken, validate3285JSON/608items/en=ru1281/0errors/0warnings, diff-check clean. Native Gradle build не выполнялся; готово к commit/push по разрешению автора.

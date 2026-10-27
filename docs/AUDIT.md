@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, уточнение HUD-RAD-001 / 0.3.318: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, BUILD-001 / 0.3.319: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -282,3 +282,15 @@ PYTHONPATH=.cache/python-toolchain python3 audit/inside_exposure_test.py --mutat
 - Native clusterLeadAndIncomingChunk обновлён для 40/100/150/150+epsilon/500 mZt/s; **Minecraft/Gradle/GameTests/игра не запускались**. Headless harness не объявляется native integration proof. Авторская игровая приёмка остаётся открытой.
 
 Финальный повтор318 после синхронизации профилей: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo318-final.log`; повтор mutation-check12/12 assertion-killed, `/tmp/gonzo318-mutations.log`. Docs:9previous-edition hashes/29live/75immutable/4173source-items/69dispositions; links1200/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Изменены только11файлов согласованного исправления/тестов/версии/документов. Доставка commit/push в фиксированную рабочую ветку разрешена автором; HUD-RAD-001 остаётся ждать игры.
+
+## BUILD-001 / 0.3.319 — фактический compileJava FAIL автора
+
+Автор прислал лог сборки318: два `package ModMachines does not exist` в TierThreeCrafting.isGatedOutput (строка184, оба новых III item). Причина — обращение к короткому имени без импорта; сам реестр существует в machines.registry, поля зарегистрированы. Это пропуск agent-патча316, не радиационная ошибка318. Прежний third_storage source-пин подтверждал наличие условий, а typecheck не включал TierThreeCrafting: 80PASS не означали успешную Minecraft-компиляцию.
+
+Исправление production — одна строка импорта; версия319. typecheck_test теперь компилирует **весь TierThreeCrafting**, вместе с прежними55классами: **56real/154boundary stubs/0errors**. Дополнены только используемые registry/progress/event/recipe/player/menu surfaces по вызовам, существовавшим в репозитории и принятой компилятором части авторской сборки. Registry refs здесь item-границы, не реальная регистрация; Phase3Events/MC/NeoForge остаются doubles. Гейт прогрессии, callback-поведение и recipe-book в игре этой компиляцией не проверены.
+
+При каждом typecheck временная копия TierThreeCrafting **без импорта ModMachines** компилируется с тем же набором исходников, без baseline классов в classpath. Компилятор обязан отказать с упоминанием ModMachines; иначе тест падает. Проверено **1/1 rejection**. Рабочее дерево не мутируется; временные классы/копии удаляются. Первый полный aggregate: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo319-first.log`.
+
+Полный Gradle/NeoForge/Minecraft build здесь **не выполнялся**. Закрытие BUILD-001 ждёт повторной авторской сборки; предупреждения deprecated/unchecked из лога не объявляются ошибками и попутно не правятся. Runtime радиации/энергии/рецепты/PNG/Plotnick не менялись.
+
+Финальный повтор319 после обновления docs: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo319-final.log`. Typecheck56real/154stubs, негативная компиляция без импорта1/1 rejected; docs9editions/29live/75immutable/4173source-items/69dispositions, links1200/0broken, validate3285JSON/608items/en=ru1281/0errors/0warnings, diff-check clean. Native Gradle build не выполнялся; готово к commit/push по разрешению автора.

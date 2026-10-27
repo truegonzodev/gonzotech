@@ -33,6 +33,8 @@ if not java or not Path(java).is_file():
     raise SystemExit("Java 21 required: set JAVA_HOME or PATH")
 
 real_files = [
+    # 0.3.319: compile the entire III gate, not just grep its new storage outputs.
+    ROOT / "src/main/java/com/gonzotech/machines/crafting/TierThreeCrafting.java",
     ROOT / "src/main/java/com/gonzotech/core/client/InstrumentHud.java",
     ROOT / "src/main/java/com/gonzotech/core/client/SolarWatchHud.java",
     ROOT / "src/main/java/com/gonzotech/core/client/SpeedometerHud.java",
@@ -99,6 +101,9 @@ real_files = [
     # 0.3.238: pure-Java coefficient solver remains compiled in the repository typecheck.
     ROOT / "src/main/java/com/gonzotech/machines/reactor/MatrixCoefficients.java",
 ]
+gate_file = ROOT / "src/main/java/com/gonzotech/machines/crafting/TierThreeCrafting.java"
+assert gate_file in real_files, "TierThreeCrafting must remain in the compiled source set"
+
 for f in real_files:
     assert f.is_file(), f"нет файла сетевого пакета: {f}"
 
@@ -127,7 +132,23 @@ with tempfile.TemporaryDirectory(prefix="gonzotech-typecheck-") as output:
     if proc.returncode != 0:
         print(proc.stdout)
         print(proc.stderr)
-        raise SystemExit("TYPECHECK FAILED: сетевой пакет не компилируется против стабов")
+        raise SystemExit("TYPECHECK FAILED: выбранные production-классы не компилируются против стабов")
+
+    # Reproduce the author's 318 compile failure without editing the working tree.
+    # No compiled baseline classes are on this compile's classpath.
+    import_line = "import com.gonzotech.machines.registry.ModMachines;"
+    gate_source = gate_file.read_text()
+    assert gate_source.count(import_line) == 1, "expected explicit machine registry import"
+    mutant_dir = Path(output) / "missing-import-src"
+    mutant_dir.mkdir()
+    mutant = mutant_dir / gate_file.name
+    mutant.write_text(gate_source.replace(import_line, ""))
+    mutant_sources = [str(mutant) if p == str(gate_file) else p for p in sources]
+    rejected = subprocess.run(compiler + ["-d", str(Path(output) / "missing-import-classes")] + mutant_sources,
+                              capture_output=True, text=True)
+    assert rejected.returncode != 0 and "ModMachines" in rejected.stdout + rejected.stderr, \
+        "missing ModMachines import must be rejected by the Java compiler"
+    print("compile regression: missing ModMachines import rejected (1/1)")
 
 # ── Пины двух регрессий, которые этот гейт ловит (0.3.93) ──
 routing = (NET / "PipeRouting.java").read_text()
