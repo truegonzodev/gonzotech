@@ -51,8 +51,8 @@ public final class PsycheChemical {
     // ── шкала ──
     /** Сколько дозы (в долях) уходит в заражение: 2 % (автор). */
     public static final double DOSE_SHARE = 0.02;
-    /** Таяние: 0.3 % от текущего значения в секунду. */
-    public static final double DECAY_PERCENT_PER_SECOND = 0.3;
+    /** Таяние: 0.2 % от текущего значения в секунду. */
+    public static final double DECAY_PERCENT_PER_SECOND = 0.2;
     /** Смерть: чистится 30 % от текущего значения. */
     public static final int DEATH_CLEAR_PERCENT = 30;
     /** Антирадин (абсорбент): +1 % к шкале за применение. */
@@ -124,13 +124,13 @@ public final class PsycheChemical {
         State state = STATES.computeIfAbsent(player.getUUID(), key -> new State());
 
         // 1. Токсичность предметов инвентаря (проще радиации: только игрок).
-        //    Темпы дробные (nTx/с и 0.3 % от текущего), поэтому копим остатки:
-        //    без накопителей целочисленное усечение «замораживало» шкалу ниже ~333‰.
+        //    Темпы дробные (nTx/с и 0.2 % от текущего), поэтому копим остатки:
+        //    без накопителей целочисленное усечение «замораживало» шкалу ниже ~500‰.
         state.incomeAcc += ItemToxicity.inventoryTotal(player) / RadiationSystem.NZT_PER_PERMILLE;
         int income = (int) state.incomeAcc;
         state.incomeAcc -= income;
 
-        // 2. Таяние 0.3 % от ТЕКУЩЕГО значения в секунду.
+        // 2. Таяние 0.2 % от ТЕКУЩЕГО значения в секунду.
         state.decayAcc += before * (DECAY_PERCENT_PER_SECOND / 100.0);
         int decay = (int) state.decayAcc;
         state.decayAcc -= decay;

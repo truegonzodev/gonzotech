@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Docs migration 0.3.311: immutable originals, current ownership and task lifecycle."""
 from pathlib import Path
+from docs_snapshots import registered_snapshots
 import hashlib
 import json
 import re
@@ -19,7 +20,13 @@ EXPECTED = {
     'EQUIPMENT.md', 'PSYCHE.md', 'CLEANROOM.md', 'AUDIO_VISUAL.md',
     'meditation_concept.md', 'reactor_extensions_concept.md',
 }
-assert {p.name for p in DOCS.iterdir() if p.is_file()} == EXPECTED
+# Author marker 6cf8daa is preserved, but is not a 30th technical profile.
+MARKER = '!ALWAYS READ FIRST - DOCS_RULES - RULES'
+assert {p.name for p in DOCS.iterdir() if p.is_file()} == EXPECTED | {MARKER}
+assert (DOCS / MARKER).is_file()
+previous_editions = registered_snapshots(ROOT)
+assert len(previous_editions) >= 3
+print(f'previous editions: {len(previous_editions)} hashes/bytes/Git sources verified')
 assert {p.name for p in DOCS.iterdir() if p.is_dir()} == {'archive'}
 navigation = re.findall(r'^\| \[[^]]+\]\(([^)]+)\)', (DOCS / 'DOCS_RULES.md').read_text(), re.M)
 assert set(navigation) == EXPECTED, 'navigation must target all live documents, not historical copies'

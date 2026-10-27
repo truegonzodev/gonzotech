@@ -6,6 +6,7 @@ Old non-link citations in source comments/history may resolve ONLY through the
 explicit migration manifest; real Markdown links never get a silent alias.
 """
 from pathlib import Path
+from docs_snapshots import registered_snapshots
 import json
 import re
 import sys
@@ -16,6 +17,7 @@ MANIFEST = ROOT / 'docs/archive/legacy-0.3.311/manifest.json'
 migration = json.loads(MANIFEST.read_text())
 ALIASES = {r['original']: r['archived'] for r in migration['files']}
 FROZEN_ORIGINALS = {(ROOT / r['archived']).resolve() for r in migration['files']}
+FROZEN_ORIGINALS |= registered_snapshots(ROOT)
 NONFILES = {r['reference'] for r in migration['historical_nonfiles']}
 EXCLUDED = {'.git', '.gradle', '.cache', 'node_modules', 'build', 'run', 'audit/reports'}
 # All original texts (including the former archive) are frozen by manifest.
@@ -85,7 +87,7 @@ for file in sorted(ROOT.rglob('*')):
         else:
             problems.append(f'{rel}:{text[:match.start()].count(chr(10)) + 1} → {ref}')
 
-print(f'ссылок проверено: {checked}; замороженный архив исключён рекурсивно')
+print(f'ссылок проверено: {checked}; исключены только зарегистрированные замороженные тексты')
 print(f'исторических текстовых цитат с явным архивным маршрутом: {len(citations)}')
 for problem in problems:
     print('  ⚠', problem)

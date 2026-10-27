@@ -42,8 +42,11 @@ public final class PsycheTremorClient {
             return;
         }
         if (nextJitter > 0) {
-            nextJitter--;
-            return;
+            // This tick counts toward the interval: jitter as soon as it reaches zero.
+            // Returning after decrementing to zero would turn 1–2 into 2–3 ticks.
+            if (--nextJitter > 0) {
+                return;
+            }
         }
         // Раз в 1–2 тика — случайный рывок (автор 22.09.2026: «интервал толчков
         // 1–2 тика, а не 1–10» — тряска стала плотной, почти непрерывной).

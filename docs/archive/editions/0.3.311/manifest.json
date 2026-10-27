@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/PSYCHE.md",
+      "source_commit": "6cf8daaf5c2d79b4972cb9aeb1aa1fdf3732b701",
+      "snapshot": "docs/archive/editions/0.3.311/OUTDATED_DOC-003_PSYCHE.md",
+      "sha256": "da0cd62c17c0914ab2e6d7b90a834041e46708c3287220a490b1fcef24eafb32",
+      "bytes": 8116,
+      "task": "DOC-003"
+    },
+    {
+      "source": "docs/LORE.md",
+      "source_commit": "6cf8daaf5c2d79b4972cb9aeb1aa1fdf3732b701",
+      "snapshot": "docs/archive/editions/0.3.311/OUTDATED_DOC-003_LORE.md",
+      "sha256": "1d06f131e7ecf4f5bb7b4bacd82f259f09619b94f5af6503ae596fee4ba9dbb8",
+      "bytes": 12751,
+      "task": "DOC-003"
+    },
+    {
+      "source": "docs/DOCS_RULES.md",
+      "source_commit": "6cf8daaf5c2d79b4972cb9aeb1aa1fdf3732b701",
+      "snapshot": "docs/archive/editions/0.3.311/OUTDATED_DOC-003_DOCS_RULES.md",
+      "sha256": "50cf941a898aae29c2783523ccacad16c57fb87072d9bc5355e4cc04831b8b64",
+      "bytes": 19257,
+      "task": "DOC-003"
+    }
+  ]
+}
