@@ -4654,3 +4654,55 @@ BUILD-001 создана в CURRENT: реализовано, ждёт повто
 ````
 
 Финальный повтор319 после обновления docs: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo319-final.log`. Typecheck56real/154stubs, негативная компиляция без импорта1/1 rejected; docs9editions/29live/75immutable/4173source-items/69dispositions, links1200/0broken, validate3285JSON/608items/en=ru1281/0errors/0warnings, diff-check clean. Native Gradle build не выполнялся; готово к commit/push по разрешению автора.
+
+<a id="v-0-3-320"></a>
+### 0.3.320 — TEX-001: модели после авторского ретекстуринга
+
+27.10.2026. Автор: «коммитнул и запушил ретекстуринг и правил пути текстур, обнови чтобы модели ссылались на новые правильные пути, задокументируй». Remote731ff19 (relocates retextures) поверх61c9324 / runtime319. Восстановленный sandbox имел HEADbf5e72e и старый index; доказано полное равенство текущего дерева61c9324 через временный индекс (tree cfeab77aac32bcbf6cb14d9569d329e2afc861cc). После равенства mixed-reset61c9324 и fast-forward731ff19 без перезаписи WIP. Рабочая ветка фиксированная arena/48845eec-gonzotech.
+
+Авторский731ff19 перемещает13PNG second→third (bore_pipe/top, geophone/top, miner_drill/top, plotnick/top, seismic_source/top, work_block, third_grinder/top), обновляет6PNG accumulatorIII side/top и battery side/top/bottom/face. Эти19текущихPNG16×16; родительский авторский коммит сохранён, агент их не редактирует. В7models/block JSON было18устаревших slots; все переведены на gonzotech:block/third/. AccumulatorIII/battery уже ссылались правильно, модели не правились. Model IDs/parents, геометрия/UV/faces, blockstates/facing, item definitions, PNG/GUI и вся Java (включая read-only PlotnickBlock), механика/баланс/радиация/гейты/рецепты неизменны. mod_version320 за ресурсный фикс.
+
+TEX-001 создана в CURRENT: реализовано, ждёт визуальной проверки, не объявлена закрытой игрой. BUILD-001/ENG-001/HUD-RAD-001 и deferred не закрывались/не активировались. AUDIO_VISUAL и SUPER_CRUCIAL_FILE исправлены: блоки III-хранилищ уже авторский ретекстуринг, не прежние копии; GUI placeholders остаются прежними. Синхронно обновлены CURRENT/AUDIT/MACHINES/AUTOMINER, прежние заменённые тексты сохранены ниже дословно. RULES/DOCS_RULES/профили прочитаны; immutable архив не правился, старый second-каталог в историческом контексте не выдан за текущий.
+
+Регрессия: новый model_texture_paths_test.py —9item/blockstate/model цепочек,1098локальных model texture slots,9/9 in-memory мутаций assertion-rejected (7старых путей, неправильный но существующий battery face, broken inventory model). PNG байты не пинятся против будущего ретекстуринга. autominer_markers_test:3 старых каталога заменены second→third, проверки16×16 и остальная логика сохранены. Before validate18errors/0warnings; after0errors/0warnings,3285JSON/608items/en=ru1281. Первые два aggregate80PASS/0SKIP/1FAIL из81 на старом каталоге в autominer_markers_test; после замены отдельный тест PASS. Финальный прогон записывается ниже. Native Gradle/MC/GameTests/client/GPU/resource reload не выполнялись.
+
+#### Полный дословный текст заменённых фрагментов живых документов
+
+**CURRENT-STATE.md, редакция до 0.3.320:**
+
+````text
+**Текущая runtime-версия: 0.3.319.** База BUILD-001 — `3d332dd` / 0.3.318; 27.10.2026. Только статус; полный журнал — [HISTORY](HISTORY.md).
+````
+
+**CURRENT-STATE.md, редакция до 0.3.320:**
+
+````text
+- Автор разрешил placeholder PNG; все новые block/GUI PNG временные, прежние авторские не изменены. Classic батарейки — существующий аккумулятор; NEO-пара у каждого своя. III accumulator — шкала (190,145), слоты (208,145/163/181), холст 512×512.
+````
+
+**AUDIO_VISUAL.md, редакция до 0.3.320:**
+
+````text
+## Временная графика III-хранилищ (0.3.316)
+````
+
+**AUDIO_VISUAL.md, редакция до 0.3.320:**
+
+````text
+По прямому разрешению автора созданы **placeholders**, не финальная авторская графика. Third accumulator side/top — копии II; third battery side/top/bottom/face — копии канистры. Старые PNG не правились. Third accumulator получил Classic и собственную NEO-пару: bar canvas190,145 + три слота208,145/163/181, стандартный512×512 canvas. Battery переиспользует Classic accumulator, но имеет отдельную NEO-пару (копии first accumulator NEO). Новый список Classic512 sheets=72; NEO ownership отдельный у каждого. Контроль отверстия/подложки/слотов — third_storage_test; обе темы ещё ждут игрового просмотра. Детали трансформации и все пути — SUPER_CRUCIAL_FILE.
+````
+
+**SUPER_CRUCIAL_FILE.md, редакция до 0.3.320:**
+
+````text
+III accumulator: новые `classic/third_accumulator_gui{,_bg}.png`, `neo/third_accumulator_gui{,_bg}_neo.png`; простые временные рамки со строгими 16×16 interiors и gauge opening/backing. Battery: **старые** `classic/accumulator_gui{,_bg}.png`, bar local80,17/canvas208,145; собственные `neo/third_battery_gui{,_bg}_neo.png`, без machine slots. Все шкалы III — GtUnits.x1, точность хранения/sync milli от этого не меняется. Новые block PNG — block/third/third_accumulator{,_top} и third_battery{,_top,_bottom,_face}, временные копии прежних accumulator II / canister соответственно.
+
+````
+
+**AUDIT.md, заменённый заголовок последнего прогона до 0.3.320:**
+
+````text
+**Последний полный локальный прогон, BUILD-001 / 0.3.319: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+Финальный прогон после всех ресурсных исправлений и профильных документов: **81 PASS / 0 SKIP / 0 FAIL из81**, `/tmp/gonzo320-final.log`;9/9ресурсных мутаций отвергнуты. Docs9editions/29live/75immutable/4173source-items/69dispositions PASS; links1201/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; git diff --check чистый. Сравнение с авторским731ff19: PNG, Java, blockstates/items неизменны. Коммит/пуш в фиксированную ветку разрешены; клиент/Gradle/визуальная приёмка не выполнялись.

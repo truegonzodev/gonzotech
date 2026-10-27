@@ -167,7 +167,7 @@ for block_id in ("work_block", "seismic_source", "geophone"):
     assert loot.is_file(), f"нет лута блока {block_id}"
 for texture in ("work_block.png", "seismic_source.png", "seismic_source_top.png",
                 "geophone.png", "geophone_top.png"):
-    assert png_size(RES / "textures/block/second" / texture) == (16, 16), f"{texture} != 16x16"
+    assert png_size(RES / "textures/block/third" / texture) == (16, 16), f"{texture} != 16x16"
 for name in ("seismic_source_gui.png", "seismic_source_gui_bg.png"):
     assert png_size(GUI / "classic" / name) == (512, 512), f"{name} != 512x512"
     neo = GUI / "neo" / name.replace(".png", "_neo.png")
@@ -258,7 +258,7 @@ assert 'registerItem("memory_card"' in machines, "карта памяти не �
 assert (RES / "items/memory_card.json").is_file(), "нет item-модели карты памяти"
 assert (RES / "models/item/memory_card.json").is_file(), "нет модели предмета карты памяти"
 for texture in ("miner_drill.png", "miner_drill_top.png"):
-    assert png_size(RES / "textures/block/second" / texture) == (16, 16), f"{texture} != 16x16"
+    assert png_size(RES / "textures/block/third" / texture) == (16, 16), f"{texture} != 16x16"
 assert png_size(RES / "textures/item/memory_card.png") == (16, 16), "memory_card.png != 16x16"
 sounds = (RES / "sounds.json").read_text(encoding="utf-8")
 assert "geo_impact" in sounds, "geo_impact не объявлен в sounds.json"
@@ -290,7 +290,7 @@ assert (ROOT / "src/main/resources/data/gonzotech/loot_table/blocks/bore_pipe.js
 tag_pick = (ROOT / "src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json").read_text(encoding="utf-8")
 assert "gonzotech:bore_pipe" in tag_pick, "скваженная труба не в теге pickaxe"
 for texture in ("bore_pipe.png", "bore_pipe_top.png"):
-    assert png_size(RES / "textures/block/second" / texture) == (16, 16), f"{texture} != 16x16"
+    assert png_size(RES / "textures/block/third" / texture) == (16, 16), f"{texture} != 16x16"
 
 # Дороги строятся первыми, буры — только после сети
 idx_roads = be.index("new ArrayList<>(plan.entries())")

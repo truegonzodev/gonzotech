@@ -31,3 +31,7 @@
 ## Проверки 0.3.315 — D-AUD1
 
 Source-пины сверены с действующим резервом трубы: takeStoredOne до setBlock, возврат именно reserved при отказе, добыча только после успеха. Оба shift-цикла учитывают min(capacityFor, target.getMaxStackSize(stack)); карточный потолок 1 сохранён. Старый consumeStored и no-arg вариант API не возвращались ради пинов. Нерадиационные требования монолитного теста сохранены, PlotnickBlock.java не менялся. Это wiring-проверка, не повторный игровой тест Плотника; внешняя доза/copy/merge исполняются в новом Java-harness — AUDIT.
+
+## Текстуры комплекса — 0.3.320 / TEX-001
+
+Автор перенёс bore_pipe{,_top}, geophone{,_top}, miner_drill{,_top}, plotnick{,_top}, seismic_source{,_top}, work_block в textures/block/third/ (731ff19); ссылки6моделей комплекса исправлены на gonzotech:block/third/. Родители, грани и существующие facing rotations сохранены, world/blockstate и inventory item definitions ведут в те же block model IDs. В autominer_markers_test три устаревших каталога second/ заменены на third/ с сохранением16×16 и всех прочих пинов. Это визуальные ресурсы, не изменение комплекта/прогрессии/сметы/сети. PlotnickBlock.java и остальные Java-классы не изменялись; нужен просмотр моделей в игре.

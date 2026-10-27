@@ -76,12 +76,18 @@ GT меняет skybox/небесные эффекты; шейдеры, кото
 
 GUI alignment: 914 checks по исходнику и настоящим PNG PASS. Для кризиса проверяется текущий explicit-source-size blit с vertex alpha (13 аргументов), 23 кадра 128×72 и неизменные UV/границы экрана; старый короткий overload не является нормой. Faint/F1 method-harness получил только no-op boundary нового relaxation-вызова; это не проверка рендера relaxation. PNG, shaders, геометрия/альфа и клиентский код не менялись. Визуальная приёмка в клиенте отдельно — AUDIT.
 
-## Временная графика III-хранилищ (0.3.316)
+## Графика III-хранилищ — текущий срез 0.3.320
 
-По прямому разрешению автора созданы **placeholders**, не финальная авторская графика. Third accumulator side/top — копии II; third battery side/top/bottom/face — копии канистры. Старые PNG не правились. Third accumulator получил Classic и собственную NEO-пару: bar canvas190,145 + три слота208,145/163/181, стандартный512×512 canvas. Battery переиспользует Classic accumulator, но имеет отдельную NEO-пару (копии first accumulator NEO). Новый список Classic512 sheets=72; NEO ownership отдельный у каждого. Контроль отверстия/подложки/слотов — third_storage_test; обе темы ещё ждут игрового просмотра. Детали трансформации и все пути — SUPER_CRUCIAL_FILE.
+Block PNG аккумулятора III (side/top) и батарейки (side/top/bottom/face) — авторский ретекстуринг731ff19, уже не копии II/канистры, созданные агентом в316. Пути block/third/third_accumulator{,_top} и third_battery{,_top,_bottom,_face} не изменились; их модели уже верны. GUI остаются прежними временными ассетами: accumulator Classic и собственная NEO-пара, bar canvas190,145 + три слота208,145/163/181, холст512×512; battery переиспользует Classic accumulator и собственную NEO-пару. Classic512 sheets=72, отдельное NEO ownership сохранено. Текстуры и layout GUI в этом проходе не правились; обе темы ждут игрового просмотра. Координаты и пути — SUPER_CRUCIAL_FILE.
 
 ## Приборы над хотбаром и chat depth — 0.3.317
 
 Игровой дефект автора: chat background не просто темнит, а отсекает части надписей часов/спидометра, в том числе у телифона. Root подтверждён исходником NeoForge1.21.4 GuiLayerManager: renderInner накапливает Z_SEPARATION для layers, затем popPose; RenderGuiEvent.Post вызывается уже на root Z, при сохранённой глубине GUI. Post-надпись может провалить depth-test против чата, несмотря на поздний вызов.
 
 InstrumentHud через client mod-bus RegisterGuiLayersEvent регистрирует один `gonzotech:instruments` layer **над VanillaGuiLayers.CHAT**. В нём SolarWatchHud.render и SpeedometerHud.render, больше не Post callbacks; не добавляется второй HUD для телифона. Скорость по-прежнему мерится ClientTick.Post, Math.hypot(x,z)×20, руки/телифон/F1 guards прежние. Центрирование, colors/shadows и y=guiHeight−71 /−59 сохранены. Не отключаются depth test, chat background или сторонние overlays, нет магического абсолютного Z. Порядок остальных GUI layers не меняется. Actual registration callback/typecheck проверены, но GPU/chat fade/open-chat/resource packs требуют игрового повторения.
+
+## Перенос блочных текстур II→III — 0.3.320 / TEX-001
+
+Авторский731ff19 переносит13PNG bore_pipe{,_top}, geophone{,_top}, miner_drill{,_top}, plotnick{,_top}, seismic_source{,_top}, work_block, third_grinder{,_top} из textures/block/second/ в textures/block/third/. В7 JSON models/block исправлены18 texture slots с gonzotech:block/second/ на gonzotech:block/third/; шесть PNG III-хранилищ обновлены автором без смены путей. Все19текущихPNG этих9блоков имеют16×16; авторские байты не изменены агентом. Это ресурсные каталоги, не новое решение о прогрессии/рецептах.
+
+Грани сохранены: bore_pipe end→_top, work_block all→base, пять cube_bottom_top-моделей top/bottom→_top и side→base. III accumulator сохраняет прежний cube_bottom_top, батарейка — cube с отдельной north face/up/down и particle. Model IDs/parents, UV, facing rotations и item definitions не менялись; мир и инвентарь используют те же исправленные block models. Проверка ресурсов:9цепочек/1098локальных slots,9/9мутаций отвергнуты. Это не baked-model/GPU/resource reload доказательство; нужен просмотр в клиенте.

@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, BUILD-001 / 0.3.319: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, TEX-001 / 0.3.320: 81 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -19,6 +19,7 @@
 | Скрипт | Назначение/самоописание |
 |---|---|
 | [_ver.py](../audit/_ver.py) | Единая проверка версии мода для пинов (08.10.2026). |
+| [model_texture_paths_test.py](../audit/model_texture_paths_test.py) | TEX-001: реальные item/blockstate/model цепочки и существование текстур после авторского переноса в third/; --mutation-check проверяет9подмен, не GPU render. |
 | [achievement_tree_test.py](../audit/achievement_tree_test.py) | Static regression contract for the Energy advancement tree and event triggers.""" |
 | [air_filter_test.py](../audit/air_filter_test.py) | Actual filter core + GUI/resource wiring. Not an in-game NeoForge test. |
 | [alcohol_test.py](../audit/alcohol_test.py) | Compile/run the actual pure-Java alcohol-dose core, without Gradle/Minecraft. |
@@ -294,3 +295,15 @@ PYTHONPATH=.cache/python-toolchain python3 audit/inside_exposure_test.py --mutat
 Полный Gradle/NeoForge/Minecraft build здесь **не выполнялся**. Закрытие BUILD-001 ждёт повторной авторской сборки; предупреждения deprecated/unchecked из лога не объявляются ошибками и попутно не правятся. Runtime радиации/энергии/рецепты/PNG/Plotnick не менялись.
 
 Финальный повтор319 после обновления docs: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo319-final.log`. Typecheck56real/154stubs, негативная компиляция без импорта1/1 rejected; docs9editions/29live/75immutable/4173source-items/69dispositions, links1200/0broken, validate3285JSON/608items/en=ru1281/0errors/0warnings, diff-check clean. Native Gradle build не выполнялся; готово к commit/push по разрешению автора.
+
+## TEX-001 / 0.3.320 — модели после авторского731ff19
+
+База remote731ff19 / runtime319. Из-за восстановления sandbox локальный HEAD оказался bf5e72e, но полное дерево рабочего каталога, собранное отдельным временным индексом, **побайтно совпало** с доставленным61c9324 (tree cfeab77aac32bcbf6cb14d9569d329e2afc861cc). Только после доказанного равенства восстановлены branch/index на61c9324 и выполнен fast-forward к авторскому731ff19; чужие изменения не присваивались/не стирались. Авторский коммит:13перемещённыхPNG и6обновлённыхPNG, без изменения models.
+
+До исправления audit/validate.py: **18errors/0warnings**, все — старые second/texture slots в7JSON. Исправлены только ссылки second→third; аккумулятор/батарейка уже корректны. После исправления: **3285JSON/608items/en=ru1281/0errors/0warnings**. PNG/Java/blockstates/items/родители/UV/геометрия не менялись; версия320.
+
+Новый model_texture_paths_test.py входит в run_all:9 реальных item/blockstate/model цепочек с точными parents/face slots/facing rotations,1098локальных texture slots по всем моделям; проверяются существование PNG и lower-case paths, без хэш-пинов против будущей авторской перекраски. --mutation-check:7возвратов старого пути (по модели), валидный но неверный battery north-face PNG и сломанная inventory-ссылка — **9/9 assertion-rejected**, данные меняются только во временной in-memory копии.
+
+Первые два aggregate: **80 PASS / 0 SKIP / 1 FAIL из81** (`/tmp/gonzo320-first.log`, `/tmp/gonzo320-second.log`), оба autominer_markers_test: старый жёсткий textures/block/second/. Три таких чтения в тесте перенесены в third/ по авторским реальным файлам; проверки16×16/GUI/логики и весь остальной набор не удалялись. Отдельный autominer_markers_test после исправления PASS. Java21/Pillow12/ECJ3.46.100 восстановлены в ignored.cache; native Gradle/Minecraft/client/GameTests/GPU/resource reload не выполнялись. Исторические audit FAIL сохранены, не объявлены PASS.
+
+Финальный прогон после всех ресурсных исправлений и профильных документов: **81 PASS / 0 SKIP / 0 FAIL из81**, `/tmp/gonzo320-final.log`;9/9ресурсных мутаций отвергнуты. Docs9editions/29live/75immutable/4173source-items/69dispositions PASS; links1201/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; git diff --check чистый. Сравнение с авторским731ff19: PNG, Java, blockstates/items неизменны. Коммит/пуш в фиксированную ветку разрешены; клиент/Gradle/визуальная приёмка не выполнялись.
