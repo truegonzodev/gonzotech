@@ -15,7 +15,7 @@ EXPECTED = {
     'RULES.md', 'DOCS_RULES.md', 'CURRENT-STATE.md', 'HISTORY.md', 'DEFFERED.md',
     'PROGRESSION.md', 'LORE.md', 'AUTHORS-NOTES.md', 'AUDIT.md', 'RAD_WORLD.md',
     'RAD_ITEMS.md', 'MACHINES.md', 'REACTORS.md', 'AUTOMINER.md', 'CAPABILITIES.md',
-    'CHALKBOARD.md', 'JEI.md', 'SUPER_CRUCIAL_FILE.md', 'WORLDGEN.md', 'MATERIALS.md',
+    'CHALKBOARD.md', 'SCHOLAR_NOTES.md', 'INTEGRATIONS.md', 'MULTIBLOCK.md', 'JEI.md', 'SUPER_CRUCIAL_FILE.md', 'WORLDGEN.md', 'MATERIALS.md',
     'EQUIPMENT.md', 'PSYCHE.md', 'CLEANROOM.md', 'AUDIO_VISUAL.md',
     'meditation_concept.md', 'reactor_extensions_concept.md',
 }
@@ -74,6 +74,8 @@ def tasks(text):
     return re.findall(r'^### ([\w-]+) — ', text, re.M)
 assert len(tasks(current)) == len(set(tasks(current)))
 assert len(tasks(deferred)) == len(set(tasks(deferred)))
+for text in (current, deferred):
+    assert set(re.findall(r'^#{1,6} ([A-Z][\w-]+) — ', text, re.M)) == set(tasks(text)), 'task headings must remain level 3'
 assert set(tasks(current)).isdisjoint(tasks(deferred))
 assert 'четыре последующих' in (DOCS / 'DOCS_RULES.md').read_text()
 for block in re.split(r'(?=^### [\w-]+ — )', current, flags=re.M)[1:]:
@@ -97,7 +99,7 @@ java = ROOT / 'src/main/java/com/gonzotech'
 pages = re.findall(r'new ScholarPage\((\d+), ScholarChapter\.(\w+), ScholarUnlock\.(\w+),',
                    (java / 'chalkboard/notes/ScholarNotesContent.java').read_text())
 assert len(pages) == 51 and len({p[0] for p in pages}) == 51
-chalk = (DOCS / 'CHALKBOARD.md').read_text()
+chalk = (DOCS / 'SCHOLAR_NOTES.md').read_text()
 for number, chapter, gate in pages:
     assert re.search(rf'^\| {number} \| .* \| {chapter} \| `{gate}` \|$', chalk, re.M)
 cat_ids = re.findall(r'public static final Definition \w+ = define(?:TextOnly)?\(\s*"([^"]+)"',
@@ -111,4 +113,33 @@ for index, title in re.findall(r'new DiscoveryDef\((\d+), "([^"]+)"',
                               (java / 'chalkboard/core/DiscoveryDef.java').read_text()):
     assert f'| {int(index) + 1} | {index} | {title} |' in progress
 
-print('docs structure: 26 live docs, 75 byte-identical originals, 4173 source items, 69 roadmap dispositions; task lifecycle and code projections passed')
+print(f'docs structure: {len(EXPECTED)} live docs, 75 byte-identical originals, 4173 source items, 69 roadmap dispositions; task lifecycle and code projections passed')
+
+# Technical ownership and declared sinks must not disappear into HISTORY.
+board = (DOCS / 'CHALKBOARD.md').read_text()
+for symbol in ['ChalkboardWorldData', 'ChalkboardSubmissionValidator', 'validateClaim',
+               'giveNatural', 'CluePayload', 'ChalkboardClueClient', 'sampleSolution']:
+    assert symbol in board, symbol
+assert '| 51 |' not in board, 'page inventory belongs to SCHOLAR_NOTES'
+machines = (DOCS / 'MACHINES.md').read_text()
+for interface in re.findall(r'public interface (\w+)', (java / 'machines/energy/Sinks.java').read_text()):
+    assert f'`{interface}`' in machines, interface
+for source in (java / 'machines').rglob('*BlockEntity.java'):
+    text = source.read_text()
+    if re.search(r'public\s+long\s+receive\w+\(', text) or re.search(r'new (?:GtBuffer|ResourceBuffer)\(', text):
+        row = next((line for line in machines.splitlines() if line.startswith(f'| [{source.stem}](')), '')
+        assert row, source
+        for method in re.findall(r'public\s+long\s+(receive\w+)\(', text):
+            assert f'`{method}`' in row, (source, method)
+        for kind, name, expression in re.findall(r'(?:private|public|protected)\s+(?:final\s+)?(GtBuffer|ResourceBuffer)\s+(\w+)\s*=\s*new\s+\w+\(([^;]+)\);', text):
+            assert f'`{kind} {name}: {expression}`' in row, (source, name)
+
+multi = (DOCS / 'MULTIBLOCK.md').read_text()
+for symbol in ['BlastFurnaceLayout', 'TurbineStructure', 'SteamGenStructure', 'SiliconFactoryStructure', 'ReactorStructure']:
+    assert symbol in multi, symbol
+rules = (DOCS / 'RULES.md').read_text()
+runtime_patch = int(re.search(r'^mod_version=0\.3\.(\d+)$', (ROOT / 'gradle.properties').read_text(), re.M).group(1))
+if runtime_patch <= 361:
+    assert '0.3.361' in rules and '0.3.365' not in rules
+assert 'D-INT1' in deferred + current + (DOCS / 'HISTORY.md').read_text()
+print('docs ownership: board/notes, multiblocks, integration task and sink/BE inventory passed')

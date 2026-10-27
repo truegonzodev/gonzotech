@@ -440,7 +440,7 @@
       "sha256": "89e024bacf1a9fde0840f2f9e4a2e18110b2c1164f12268f40a8455032671b37",
       "bytes": 18093,
       "destinations": [
-        "docs/CHALKBOARD.md",
+        "docs/SCHOLAR_NOTES.md",
         "docs/DEFFERED.md",
         "docs/HISTORY.md"
       ]
@@ -451,7 +451,7 @@
       "sha256": "b879d7ccd9e8a2cfb80467adf6dd4650d96e739a36791d0319262d6396183653",
       "bytes": 15941,
       "destinations": [
-        "docs/CHALKBOARD.md",
+        "docs/SCHOLAR_NOTES.md",
         "docs/DEFFERED.md",
         "docs/HISTORY.md"
       ]
@@ -464,7 +464,8 @@
       "destinations": [
         "docs/CHALKBOARD.md",
         "docs/DEFFERED.md",
-        "docs/HISTORY.md"
+        "docs/HISTORY.md",
+        "docs/SCHOLAR_NOTES.md"
       ]
     },
     {

@@ -61,7 +61,7 @@ I: базовое электричество/помпа/аккумулятор/�
 
 ## Creative и страницы
 
-Правило порядка III — [RULES](RULES.md), реальная последовательность — `ModCreativeTabs`. Префикс `third_` не заменяет таблицу: `plotnick`/`work_block` сохраняют ID. Детали заметок, включая активированный tier3 для некроза, — [CHALKBOARD](CHALKBOARD.md).
+Правило порядка III — [RULES](RULES.md), реальная последовательность — `ModCreativeTabs`. Префикс `third_` не заменяет таблицу: `plotnick`/`work_block` сохраняют ID. Детали заметок, включая активированный tier3 для некроза, — [SCHOLAR_NOTES](SCHOLAR_NOTES.md). Техническая доска и интеграция подсказок — [CHALKBOARD](CHALKBOARD.md).
 
 ## История
 

@@ -46,9 +46,9 @@
 | `METAL-CHAINS-2026-09-27.md` | [METAL-CHAINS-2026-09-27.md](METAL-CHAINS-2026-09-27.md) | [MATERIALS.md](../../MATERIALS.md), [EQUIPMENT.md](../../EQUIPMENT.md), [HISTORY.md](../../HISTORY.md) |
 | `MUSIC-CONTEXTS-0.3.233.md` | [MUSIC-CONTEXTS-0.3.233.md](MUSIC-CONTEXTS-0.3.233.md) | [AUDIO_VISUAL.md](../../AUDIO_VISUAL.md) |
 | `MUSIC-COOLDOWN-0.3.239.md` | [MUSIC-COOLDOWN-0.3.239.md](MUSIC-COOLDOWN-0.3.239.md) | [AUDIO_VISUAL.md](../../AUDIO_VISUAL.md) |
-| `NOTES-EPOCH3-PLAN-2026-09-22.md` | [NOTES-EPOCH3-PLAN-2026-09-22.md](NOTES-EPOCH3-PLAN-2026-09-22.md) | [CHALKBOARD.md](../../CHALKBOARD.md), [DEFFERED.md](../../DEFFERED.md), [HISTORY.md](../../HISTORY.md) |
-| `NOTES-FAVORITES-0.3.308.md` | [NOTES-FAVORITES-0.3.308.md](NOTES-FAVORITES-0.3.308.md) | [CHALKBOARD.md](../../CHALKBOARD.md), [DEFFERED.md](../../DEFFERED.md), [HISTORY.md](../../HISTORY.md) |
-| `PIATILETOKA-2026-10-26.md` | [PIATILETOKA-2026-10-26.md](PIATILETOKA-2026-10-26.md) | [CHALKBOARD.md](../../CHALKBOARD.md), [DEFFERED.md](../../DEFFERED.md), [HISTORY.md](../../HISTORY.md) |
+| `NOTES-EPOCH3-PLAN-2026-09-22.md` | [NOTES-EPOCH3-PLAN-2026-09-22.md](NOTES-EPOCH3-PLAN-2026-09-22.md) | [SCHOLAR_NOTES.md](../../SCHOLAR_NOTES.md), [DEFFERED.md](../../DEFFERED.md), [HISTORY.md](../../HISTORY.md) |
+| `NOTES-FAVORITES-0.3.308.md` | [NOTES-FAVORITES-0.3.308.md](NOTES-FAVORITES-0.3.308.md) | [SCHOLAR_NOTES.md](../../SCHOLAR_NOTES.md), [DEFFERED.md](../../DEFFERED.md), [HISTORY.md](../../HISTORY.md) |
+| `PIATILETOKA-2026-10-26.md` | [PIATILETOKA-2026-10-26.md](PIATILETOKA-2026-10-26.md) | [CHALKBOARD.md](../../CHALKBOARD.md), [DEFFERED.md](../../DEFFERED.md), [HISTORY.md](../../HISTORY.md), [SCHOLAR_NOTES.md](../../SCHOLAR_NOTES.md) |
 | `PIPE-HEAT-ROUTING-PERF-2026-10-04.md` | [PIPE-HEAT-ROUTING-PERF-2026-10-04.md](PIPE-HEAT-ROUTING-PERF-2026-10-04.md) | [MACHINES.md](../../MACHINES.md), [CAPABILITIES.md](../../CAPABILITIES.md) |
 | `PIPES-REVIEW-2026-10-02.md` | [PIPES-REVIEW-2026-10-02.md](PIPES-REVIEW-2026-10-02.md) | [MACHINES.md](../../MACHINES.md), [CAPABILITIES.md](../../CAPABILITIES.md) |
 | `RADIATION-BEHAVIOR-0.3.232.md` | [RADIATION-BEHAVIOR-0.3.232.md](RADIATION-BEHAVIOR-0.3.232.md) | [RAD_ITEMS.md](../../RAD_ITEMS.md), [RAD_WORLD.md](../../RAD_WORLD.md), [HISTORY.md](../../HISTORY.md), [AUDIT.md](../../AUDIT.md) |
@@ -186,3 +186,7 @@
 ## Границы полноты
 
 Хеши доказывают отсутствие потерянных/изменённых файлов; реестр заголовков/пунктов даёт адрес каждого исходного свидетельства. Это не математическое доказательство, что ни одна авторская мысль не требует будущего уточнения. В сомнительных местах сохранены источник и неопределённость, а не выдуманы даты/вердикты/новые задачи. Полный старый текст остаётся доступен даже там, где новая текущая спецификация короче.
+
+## Уточнение маршрутов DOC-002 (0.3.311)
+
+Прежний CHALKBOARD со страницами переименован в SCHOLAR_NOTES; доска/подсказки теперь в новом CHALKBOARD. Технические мультиблоки — MULTIBLOCK, внешняя совместимость — INTEGRATIONS. Это обновление маршрутов metadata, не изменение 75 оригиналов; прежние решения и 69 исходов сохраняются.

@@ -5,7 +5,7 @@
 - `python3 audit/run_all.py` — все `*_test.py` отдельными процессами. **SKIP ≠ PASS**, FAIL не маскируется. Код возврата 0 только без FAIL.
 - `python3 audit/validate.py` — ресурсы, JSON, локализации и связность контента; это не MC-компиляция.
 - `python3 audit/doc_links.py` — Markdown-ссылки, локальные пути и старые текстовые ссылки с явной картой архива. Замороженные архивные тексты не правятся ради нового layout.
-- `python3 audit/docs_structure_test.py` — 75 SHA-256, полный исходный inventory, маршруты переноса/все 4173 source-пункта, whitelist корня, разные task ID и четыре патча удержания. Проверяет сохранность текста/структуры, **не математически полную сохранность авторского смысла**.
+- `python3 audit/docs_structure_test.py` — 75 SHA-256, полный исходный inventory, маршруты переноса/все 4173 source-пункта, whitelist корня, разные task ID и четыре патча удержания, разделение доски/заметок и наличие реестра Sinks/ресурсных BE. Проверяет сохранность текста/структуры, **не математически полную сохранность авторского смысла**.
 - `python3 audit/content_inventory.py` — ресурсный census в `audit/reports/content-inventory.csv`, не в docs. `--check` сравнивает с локальным отчётом. Это не survival reachability solver: машинные таблицы/события и намерение автора проверяются отдельно.
 - JDK/harness/typecheck и Minecraft build/GameTest — разные уровни. Общие скобки/Tree-sitter не доказывают Mojmap/API compatibility. Недоступный JDK/Pillow отмечается как SKIP.
 - JDK 21 + зависимости: `./gradlew build runRadiationTest --offline --no-configuration-cache`. Тестовый мир `run-radiation-merge-tests-311`, namespace gonzotech; 11 GameTests в RadiationGameTests. Не считать наличие тестов выполнением клиентского ЛКМ/ПКМ/Q.
@@ -112,6 +112,13 @@
 | DOC-001, 0.3.311, 27.10.2026 | **54 PASS / 19 SKIP / 2 FAIL из 75** | Новый docs_structure_test PASS; те же два исходных FAIL, runtime не изменён |
 | DOC-001: сохранность/навигация | 75/75 SHA-256 и Git 42730c3; 4173 пункта; 69 исходов; 0 битых ссылок | Структурные проверки не доказывают автоматически всю семантику |
 | DOC-001: ресурсы/census | validate: 0 ошибок / 0 предупреждений; content_inventory + --check PASS | 606 item definitions, 792 recipe files; CSV в audit/reports, не в docs |
+
+### DOC-002: проверка расширенной структуры (27.10.2026, 0.3.311)
+
+- docs_structure_test: PASS — **29** живых документов, инвентарь 51 страницы в SCHOLAR_NOTES, технические владельцы CHALKBOARD/MULTIBLOCK, все Sinks и BE с буферами/receive* отражены в MACHINES; прежние 75 оригиналов и 4173 source-пункта сохранены. Наличие названия метода в документе не доказывает полной семантической корректности.
+- doc_links: **0** битых ссылок; validate: **0 ошибок / 0 предупреждений**; git diff --check: чисто.
+- run_all: **54 PASS / 19 SKIP / 2 FAIL из 75**. Те же autominer_markers_test и radiation_behavior_test, assertions не менялись. Новых code/asset/dependency изменений нет; игровой/Gradle-прогон не выполнялся.
+- Пределы радиационных тестов и D-AUD1 остаются; этот документальный проход их не «озеленяет».
 
 ## Исторические fixtures и текущие контракты
 

@@ -125,3 +125,9 @@ This is a project display convention, not an external standards certification.
 ## История
 
 0.3.213: optional plugin; 0.3.219–226: crops, анимации/динамические проекции и прежний census; 0.3.250–253: переработка/ПЦФСОЗ/third_grinder; 0.3.311 docs migration: текущая таблица категорий пересверена — 24. Исторические fixture-проверки старых docs не доказывают нынешний счёт runtime-записей. Полный лог — [HISTORY](HISTORY.md), открытые задачи — D-E1…E5 в [DEFFERED](DEFFERED.md).
+
+## Необязательная внешняя интеграция
+
+JEI объявлен optional/client/AFTER с диапазоном `[20.0.0.4,)`; compileOnly API и dev runtimeOnly не означают упаковку JEI в GT. Совместная работа подтверждена автором, но source-пины display не заменяют игровой прогон конкретной версии. Общая матрица — [INTEGRATIONS](INTEGRATIONS.md). Геометрия/порты многоблоков описаны в [MULTIBLOCK](MULTIBLOCK.md), не выводятся из картинки JEI.
+
+0.3.311, DOC-002: разделены внешняя совместимость, display и структура; рецепты не менялись.
