@@ -440,7 +440,18 @@ public final class RadiationGameTests {
         normal=stack(64,0);lead=normal.copy();
         RadiationCluster.step(java.util.List.of(normal),40000000,RadiationCluster.Policy.NORMAL,120,null);
         RadiationCluster.step(java.util.List.of(lead),40000000,RadiationCluster.Policy.LEAD,120,null);
-        eq(h,ExternalRadiation.read(normal).rate(),ExternalRadiation.read(lead).rate(),"incoming chunk unaffected by outward/internal shielding");
+        h.assertTrue(ExternalRadiation.read(normal).rate()>0,"ordinary owner receives the full chunk background");
+        eq(h,ExternalRadiation.read(lead).rate(),0,"40mZt x0.2 is below incoming threshold");
+        for(double background:new double[]{100000000,150000000,150000001,500000000}) {
+            ItemStack protectedItem=stack(64,0);
+            var incomingTrace=new java.util.ArrayList<RadiationCluster.Step>();
+            RadiationCluster.step(java.util.List.of(protectedItem),background,RadiationCluster.Policy.LEAD,120,incomingTrace::add);
+            double incoming=background*0.2;
+            eq(h,incomingTrace.get(0).chunkSource(),incoming>30000000?incoming:0,
+                    "lead factor applies before strict 30mZt incoming threshold");
+            if(incoming<=30000000) eq(h,ExternalRadiation.read(protectedItem).rate(),0,"lead suppresses subthreshold input");
+            else h.assertTrue(ExternalRadiation.read(protectedItem).rate()>0,"lead transmits eligible shielded background");
+        }
         ItemStack hot=stack(64,100000000);
         RadiationCluster.step(java.util.List.of(hot),40000000,RadiationCluster.Policy.NORMAL,120,null);
         h.assertTrue(ExternalRadiation.read(hot).rate()<100000000,"colder chunk cannot heat hotter item");

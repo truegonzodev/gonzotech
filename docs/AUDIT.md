@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, HUD-RAD-001 / 0.3.317: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, уточнение HUD-RAD-001 / 0.3.318: 80 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -272,3 +272,13 @@ PYTHONPATH=.cache/python-toolchain python3 audit/inside_exposure_test.py --mutat
 Финальная сверка диагностического UI317: прежние RU/EN labels «Доза от блоков внутри» / «Internal block dose» заменены на общий direct-dose inside-enclosure текст: значение включает и физическое содержимое, не только блоки. Добавлены source checks одинакового observer-excluding call в tick/getdose и актуальности обеих локализаций. Новых ключей/единиц/параметров не добавлено.
 
 Финальный повтор после всех docs и RU/EN diagnostic labels: **80 PASS / 0 SKIP / 0 FAIL** (`/tmp/gonzo317-final.log`), 55real/148boundary typecheck PASS; 9 previous-edition hashes /29live /75immutable /4173source-items /69dispositions PASS; doc_links **1200/0broken**; validate **3285JSON/608items/en=ru1281/0errors/0warnings**; diff-check clean. Предыдущие radiation_engine/inside_exposure suites не исключены. README/PIPE/PNG/PlotnickBlock, engine/ItemRadioactivity и build dependencies неизменны; изменения radiation ограничены новым room exposure/diagnostic caller и разрешённым весом5%.
+
+## Уточнение HUD-RAD-001 / 0.3.318 — входящий фон свинцового ящика
+
+- База e420651 / 0.3.317. Прежние kernel, native GameTest и документы явно требовали неослабленного свинцом входа. Автор заменил это правило: ×0,2 применяется и к входу; на отдельный вопрос выбрал порог **после** умножения. Исторические утверждения выше относятся к прежним версиям, не к текущему контракту.
+- Production-изменение только в RadiationCluster.step: incomingChunk=chunkEmission×policy.internalTransfer, затем строгий >CHUNK_THRESHOLD. NORMAL=1/LEAD=0,2 сохранены; нет F, второго множителя вложения или изменения исходящих путей/ItemRadioactivity/прямых5%.
+- radiation_engine_test.py --mutation-check: **11 поведенческих групп / 450609 assertions PASS; 12/12 mutants assertion-killed**. Проверяются обычный/свинцовый вход на 30, 30+epsilon, 100, 149, 150, 150+epsilon, 151, 500 mZt/s; trace, неизменность count, вложенное однократное ослабление, вычитание intrinsic после экрана. Добавлен мутант отсутствующего входящего свинцового коэффициента; строгий порог по-прежнему mutation-проверяется.
+- Первый полный aggregate: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo318-first.log`; прежние exposure/HUD/contour/outgoing/storage checks сохранены. Среда Java21/ECJ/Pillow та же, что для317, boundary typecheck55real/148stubs.
+- Native clusterLeadAndIncomingChunk обновлён для 40/100/150/150+epsilon/500 mZt/s; **Minecraft/Gradle/GameTests/игра не запускались**. Headless harness не объявляется native integration proof. Авторская игровая приёмка остаётся открытой.
+
+Финальный повтор318 после синхронизации профилей: **80 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo318-final.log`; повтор mutation-check12/12 assertion-killed, `/tmp/gonzo318-mutations.log`. Docs:9previous-edition hashes/29live/75immutable/4173source-items/69dispositions; links1200/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Изменены только11файлов согласованного исправления/тестов/версии/документов. Доставка commit/push в фиксированную рабочую ветку разрешена автором; HUD-RAD-001 остаётся ждать игры.

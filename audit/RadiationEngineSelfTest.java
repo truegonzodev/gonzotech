@@ -136,9 +136,25 @@ public final class RadiationEngineSelfTest {
             eq(rate(s),0,"chunk input is STRICTLY above 30 mZt/s");
         }
         for(var policy:List.of(RadiationCluster.Policy.NORMAL,RadiationCluster.Policy.LEAD)){
-            ItemStack s=stack(CLEAN,1,0);RadiationCluster.step(List.of(s),30*M+1,policy,20,null);
-            eq(rate(s),expected(0,30*M+1,0,1),"incoming chunk is not attenuated by lead");
+            for(double background:new double[]{30*M,30*M+1,100*M,149*M,150*M,150*M+1,151*M,500*M}) {
+                ItemStack s=stack(CLEAN,64,0);
+                List<RadiationCluster.Step> incomingTrace=new ArrayList<>();
+                RadiationCluster.step(List.of(s),background,policy,20,incomingTrace::add);
+                double attenuated=background*(policy==RadiationCluster.Policy.LEAD?0.2:1.0);
+                double accepted=attenuated>30*M?attenuated:0;
+                eq(incomingTrace.get(0).chunkSource(),accepted,"chunk trace: lead factor BEFORE strict incoming threshold");
+                eq(rate(s),accepted>0?expected(0,accepted,0,1):0,"normal input full, lead input x0.2 before threshold");
+                eq(s.getCount(),64,"incoming lead shielding does not modify count");
+            }
         }
+        ItemStack nested=stack(CLEAN,1,0),wrapped=box(List.of(nested));
+        List<RadiationCluster.Step> nestedTrace=new ArrayList<>();
+        RadiationCluster.step(List.of(wrapped),500*M,RadiationCluster.Policy.LEAD,20,nestedTrace::add);
+        eq(nestedTrace.get(1).chunkSource(),100*M,"nested lead contents get one x0.2, not a second attenuation");
+        eq(rate(nested),expected(0,100*M,0,1),"nested input is not accidentally x0.04");
+        ItemStack intrinsic=stack(RADIUM,1,0);
+        RadiationCluster.step(List.of(intrinsic),400*M,RadiationCluster.Policy.LEAD,20,null);
+        eq(rate(intrinsic),expected(0,80*M,75*M,1),"subtract intrinsic AFTER lead attenuation, not before");
         ItemStack source=stack(RADIUM,64,0),target=stack(CLEAN,64,0);
         RadiationCluster.step(List.of(source,target),0,RadiationCluster.Policy.LEAD,20,null);
         eq(rate(target),expected(0,15*M,0,1),"lead internal per-item transfer x0.2");

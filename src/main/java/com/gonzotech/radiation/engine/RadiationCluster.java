@@ -9,6 +9,7 @@ import java.util.function.Consumer;
  * Reads all sources before updating external rates; never writes item components/counts. */
 public final class RadiationCluster {
     public static final double CHUNK_THRESHOLD = 30 * RadUnits.MILLI;
+    /** Owner shielding applies to both other-item transfer and incoming chunk strength. */
     public record Policy(double internalTransfer) {
         public static final Policy NORMAL = new Policy(1);
         public static final Policy LEAD = new Policy(0.2);
@@ -90,7 +91,10 @@ public final class RadiationCluster {
             prefix[i+1]=max(prefix[i],sources[i]);
         }
         for(int i=n-1;i>=0;i--)suffix[i]=max(sources[i],suffix[i+1]);
-        double chunk=chunkEmission>CHUNK_THRESHOLD?chunkEmission:0;
+        // Contours are outward-only. Lead-owner shielding is separate and applies
+        // BEFORE the >30 mZt/s incoming threshold (author clarification, 318).
+        double incomingChunk=chunkEmission*policy.internalTransfer;
+        double chunk=incomingChunk>CHUNK_THRESHOLD?incomingChunk:0;
         boolean changed=false;
         for(int i=0;i<n;i++) {
             Node node=nodes.get(i);ItemStack stack=node.stack;
