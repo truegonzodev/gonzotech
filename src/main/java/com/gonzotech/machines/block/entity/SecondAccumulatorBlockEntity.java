@@ -137,6 +137,11 @@ public final class SecondAccumulatorBlockEntity extends BaseMachineBlockEntity i
                 if (cap <= 0) return null;
                 return (amount, simulate) -> other.receiveGtu(Math.min(amount, cap), simulate);
             }
+            if (target instanceof ThirdEnergyStorageBlockEntity other) {
+                long cap = Math.max(0, stored - other.storedGtuMilli()) / 2;
+                if (cap <= 0) return null;
+                return (amount, simulate) -> other.receiveGtu(Math.min(amount, cap), simulate);
+            }
             if (target instanceof GtuSink sink) return sink::receiveGtu;
             return null;
         });

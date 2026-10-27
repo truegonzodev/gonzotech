@@ -1,6 +1,8 @@
 package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.machines.block.entity.ThirdAccumulatorBlockEntity;
+import com.gonzotech.machines.block.entity.ThirdBatteryBlockEntity;
 import com.gonzotech.core.fluid.LiquidFireBlockEntity;
 import com.gonzotech.machines.block.entity.AccumulatorBlockEntity;
 import com.gonzotech.machines.block.entity.AlloyFoundryBlockEntity;
@@ -119,6 +121,11 @@ public final class ModBlockEntities {
     public static final Supplier<BlockEntityType<AccumulatorBlockEntity>> FIRST_ACCUMULATOR =
         BLOCK_ENTITIES.register("first_accumulator", () -> new BlockEntityType<>(
             AccumulatorBlockEntity::new, false, ModMachines.FIRST_ACCUMULATOR.get()));
+
+    public static final Supplier<BlockEntityType<ThirdAccumulatorBlockEntity>> THIRD_ACCUMULATOR =
+        BLOCK_ENTITIES.register("third_accumulator", () -> new BlockEntityType<>(ThirdAccumulatorBlockEntity::new, false, ModMachines.THIRD_ACCUMULATOR.get()));
+    public static final Supplier<BlockEntityType<ThirdBatteryBlockEntity>> THIRD_BATTERY =
+        BLOCK_ENTITIES.register("third_battery", () -> new BlockEntityType<>(ThirdBatteryBlockEntity::new, false, ModMachines.THIRD_BATTERY.get()));
 
     public static final Supplier<BlockEntityType<SecondAccumulatorBlockEntity>> SECOND_ACCUMULATOR =
         BLOCK_ENTITIES.register("second_accumulator", () -> new BlockEntityType<>(

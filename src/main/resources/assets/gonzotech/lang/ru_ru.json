@@ -1277,5 +1277,7 @@
   "gui.gonzotech.notes.favorites.only_click": "ПКМ - Отображать только избранные страницы этой категории",
   "gui.gonzotech.notes.favorites.show_all_click": "ПКМ - Перестать отображать только избранные страницы этой категории",
   "gui.gonzotech.notes.favorites.empty": "В этой категории нет избранных страниц. ПКМ по звезде возвращает все страницы.",
-  "gui.gonzotech.notes.favorites.untitled": "Страница %s"
+  "gui.gonzotech.notes.favorites.untitled": "Страница %s",
+  "block.gonzotech.third_accumulator": "Аккумулятор III",
+  "block.gonzotech.third_battery": "Электролитическая батарейка"
 }

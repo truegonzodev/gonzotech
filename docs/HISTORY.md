@@ -4407,3 +4407,64 @@ transfer = cleansedPermille × 1.35×10^8 nZt × 0.2 × max(1 − C / (100 mZt),
 ````
 
 Финальный повтор после всей документации: run_all **77 PASS / 0 SKIP / 0 FAIL из 77**, exit 0; structure **9 редакций с hash/bytes/Git / 29 live / 75 immutable legacy / 4173 пункта / 69 dispositions**; doc_links **1192 / 0 broken**; validate **3275 JSON / 606 items / en=ru1279 / 0 errors / 0 warnings**. Проверка `git diff --exit-code -- src gradle.properties build.gradle` подтвердила отсутствие runtime/build-правок; version 0.3.315. Бинарники toolchain/классы/временные mutation-копии не включены.
+
+### ENG-001: новая заявка, уточнение перед реализацией (27.10.2026, база cf07429 / 0.3.315)
+
+Автор запросил third_accumulator: side + topbottom textures, отдельный Classic GUI (база классического аккумулятора с тремя слотами рядом со шкалой), собственная NEO-пара; 230882.0 GTU capacity, max intake/output 294 GTU/t, паразитка 0.032 GTU/t. Три слота предназначены для будущей зарядки предметов/батарейки; фактическая зарядка сейчас не заявлена. Исходная раскладка:
+
+```text
+[136,145][154,145][172,145][190,145BARGTU][208,145SLOT][226,145][244,145][262,145][280,145]
+[136,163][154,163][172,163][190,163BARGTU][208,163SLOT][226,163][244,163][262,163][280,163]
+[136,181][154,181][172,181][190,181BARGTU][208,181SLOT][226,181][244,181][262,181][280,181]
+```
+
+Также third_battery, название «электролитическая батарейка», во вкладке «Приспособления» рядом с канистрой: side/top/bottom/face textures; общий Classic GUI аккумулятора и собственная NEO-пара. Ставится как канистра, ломается/переносится без потери энергии; capacity 68088.0 GTU, intake max244 GTU/t, output max188 GTU/t. Рецепты, гейты, собственные потери, предметный режим зарядки и точные ограничения слотов не заданы.
+
+JEI: показывать крафт теплообменника из пользовательского сплава и аналогичные крафты иных предметов. Preview использует default-state без состава («ожидает состав»), показывает форму; это не разрешение обходить composition checks реального крафта. Найдены HeatExchangerCellRecipe, AlloyEquipmentRecipe, AlloyGreatswordRecipe; текущий плагин их явные preview не регистрирует.
+
+Прочитаны RULES/DOCS_RULES/CURRENT и относящиеся таблицы MACHINES/CAPABILITIES/EQUIPMENT/PROGRESSION/SUPER_CRUCIAL_FILE, существующие Accumulator/SecondAccumulator и Canister, custom recipe matchers/JEI registration. Поиск новых PNG в checkout не обнаружил third_accumulator/third_battery; старый архив содержит только намерение lithium для III-аккумулятора, не утверждённую смету — рецепт из него не выдумывается. ENG-001 записана в CURRENT как blocked до ответов об ассетах, слотах, режиме батареи и рецептах/гейтах. В чат вынесена трактовка данных координат и суммарных tick caps; игровой код/баланс/PNG/build/version не менялись. Тесты runtime не запускались, поскольку реализация не начата.
+
+<a id="v-0-3-316"></a>
+### 0.3.316
+
+**ENG-001 (27.10.2026), base cf07429 / 0.3.315.** После предыдущей blocked-записи автор ответил на все четыре вопроса: «Просто создай плейсхолдеры»; любые обычные предметы в трёх слотах сейчас, зарядка только в будущем; «Да, именно так» о passive nonstackable exact-charge battery с automatic placed I/O, canister shape/orientation, нулевой собственной потерей и обычным Classic accumulator; «Оба фулл гейт по открытию 3, креатив вкладки указаны, оба являются third_, рецепты дам потом, повесить вопрос о рецептах в deffered/текущую задачу». В чат отдельно вынесены aggregate per-tick caps и интерпретация координат.
+
+**Реализация:** ThirdStorageDefs/TickEnergyStorage: long milli, III230882000/294000/294000/loss32, battery68088000/244000/188000/loss0; независимые суммарные clocks, nonmutating simulation, однократная потеря в loaded tick. Новые block/BE/menu/screens/items и их регистрации. III accumulator3plain slots с обычными max stacks, literal CarrierItem storage без базового unpack, ContainerHelper save/drop/extract; зарядка не добавлена. Battery0slots, passive nonstackable item, exact long CUSTOM_DATA/BE EnergyMilli, нормальный getDrops enrichment без второго ручного player-only дропа, setPlacedBy restore. Canister shape/facing/liquid rejection. Компаратор0…15; PipeRouting WIRE с sender-paid path loss. I/II только распознают новые stores для equalization, их balance/save/call limits прежние. Три independent sync limbs ≤999 сохраняют milli/полную ёмкость без signed-short overflow, client SimpleContainerData без clamp промежуточных частей.
+
+**Графика/гейты:** author-authorized temporary copies side/top для accumulator, side/top/bottom/face battery; Classic/NEO III accumulator и own NEO battery. Старые PNG не менялись; battery Classic старый accumulator. ExactIII bar190,145/slots208,145/163/181,512canvas и−128transform. X.Y tooltips. Physical output gate/tooltip III; creative функционалIII/Приспособления после канистры. Реальных recipes нет по решению автора; создана отдельная deferred D-ENG1 для author recipes + recipe-book registration/gateIII. Отсутствующий survival path не объявляется реализованным; новые note pages не выдумываются.
+
+**JEI:** AlloyCraftingJeiRecipes строит8unregistered CraftingRecipe holders через exact JEI20/MC1.21.4 display-aware vanilla factory: cell, six Kind forms, alloygreatsword. Live pattern/output source, plain composition-free ItemStack displays/Ingredients. IDs jei_preview/..., только в JEI. Cell/greatsword получили defensive-copy pattern getters; остальные matches/assemble/composition code не изменены. Новый broad extension/реальный recipe serializer не добавлены. Версия зависимостей не менялась.
+
+**Проверки/границы:** third_storage_test68source/resource/PNGchecks; настоящие pure-core classes1535705assertions,10/10временныхmutants отвергнуты AssertionError. Первый aggregate78PASS/0SKIP/0FAIL (прежние77+новый), GUI theme72sheets вместо70 из-за нового Classicpair, IIIformat test включает оба экрана. Источники APIJEI tagv20.0.0 / NeoForge1.21.4 и реальный PetBowl loot hook проверены. Это **не MC compilation/render/loot/network/GameTest proof**: старый stub typecheck не покрывает все новые MC classes. ENG-001 → «реализовано, ждёт проверки», не закрыто; нет объявленного игрового бага/успеха. Все прежние RAD/UX/CRASH статусы удержаны.
+
+**Документация:** CURRENT/HISTORY, D-ENG1 в DEFFERED, MACHINES и CAPABILITIES (точный storage/network/NBT/sync/слоты/loot), PROGRESSION (IIIphysical now/recipespending), EQUIPMENT/MATERIALS и JEI (shape-only/no fake composition), SUPER_CRUCIAL_FILE/AUDIO_VISUAL (coords/placeholders/paths), INTEGRATIONS (exactoptionalAPI), AUDIT (команды/результат/границы). README/архив75legacy/радиация/PlotnickBlock не изменены. Runtime bump315→316 только из-за новой реализации. Ниже дословно сохраняются все удалённые текущие строки/параграфы; прежняя blocked-запись HISTORY315 также оставлена как событие, не нынешний blocker.
+
+Дословно заменено в `docs/CURRENT-STATE.md` (редакция перед ENG-001 implementation, база cf07429 / runtime315):
+
+````text
+**Текущая runtime-версия: 0.3.315.** База текущего разбора — авторский `5ce51b8`; 27.10.2026. Только статус; полный журнал — [HISTORY](HISTORY.md).
+````
+
+````text
+**Статус: заблокировано.** Новая заявка автора после D-AUD1: third_accumulator (230882 GTU, приём/выдача 294 GTU/t, паразитка 0.032 GTU/t), third_battery (68088 GTU, приём 244 GTU/t, выдача 188 GTU/t, перенос с сохранением энергии), preview компонентных alloy-крафтов в JEI без выдуманного состава. Реализация ещё не начата; runtime 0.3.315.
+````
+
+````text
+Ожидаются уточнения: источник новых block/GUI PNG; реальные свойства трёх будущих зарядных слотов; текущий режим сетевой работы/потерь/переносимости батарейки; рецепты и гейты обоих устройств. Координаты и исходная заявка сохранены в HISTORY. Существующие runtime/ассеты не менялись.
+````
+
+
+Дословно заменено в `docs/AUDIT.md` (редакция перед ENG-001 implementation, база cf07429 / runtime315):
+
+````text
+**Последний полный локальный прогон, D-AUD1 / 0.3.315: 77 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+
+Дословно заменено в `docs/JEI.md` (редакция перед ENG-001 implementation, база cf07429 / runtime315):
+
+````text
+`audit/jei_display_test.py` checks the 23-category set, exact block-title translations, texture/crop geometry, one-pixel alignment exceptions, ingredient lookup, standard item slots, dynamic alloy/fermentation/salt tooltips, generator profiles, filler tank regions, tap outputs, container amounts and RU/EN strings. The static audit can run with Python. A full Java build and in-game JEI visual check still require a Java 21 development environment; the current sandbox has no JDK.
+````
+
+Финальный повтор 0.3.316 после всех profiles/cleanup: **78 PASS / 0 SKIP / 0 FAIL из78** (`/tmp/gonzo-eng316-final.log`), structure9snapshots/29live/75immutable/4173items/69dispositions, links1199/0broken, validate3285JSON/608items/en=ru1281/0errors/0warnings, diff-check0. Старые tracked PNG, radiation runtime, PlotnickBlock и build dependencies не изменены. Подготовлено к commit/push в фиксированную arena/48845eec-gonzotech по ранее данному разрешению автора. ENG-001 остаётся «реализовано, ждёт проверки», D-ENG1 отложена до авторских recipes.

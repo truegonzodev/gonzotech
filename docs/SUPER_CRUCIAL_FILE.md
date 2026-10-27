@@ -98,3 +98,18 @@ BAR: (116,35). Инвентарь игрока остаётся на холст�
 ## Нижняя грань узлов — 0.3.315
 
 В models/block/node_cube.json для faces.down задан rotation=180. Все 19 существующих моделей узлов наследуют этот родитель; исходные UV и ориентация остальных граней сохранены. PNG не менялись. Это поворот наложения текстуры нижней грани, не поворот блока или всей модели.
+
+## III accumulator / electrolytic battery — 0.3.316, ENG-001
+
+Автор подтвердил placeholder PNG; существующие авторские ассеты не редактируются. Canvas512×512, MachineScreen transform −128,−128; декоративный panel-ref (128,127) не меняет вычисления slot coordinates. Машинная область III accumulator:
+
+| Элемент | Canvas (x,y) | Menu/screen local (x,y) | Размер |
+|---|---|---|---|
+| GTU | 190,145 | 62,17 | 16×52 |
+| Slot0 | 208,145 | 80,17 | 16×16 |
+| Slot1 | 208,163 | 80,35 | 16×16 |
+| Slot2 | 208,181 | 80,53 | 16×16 |
+
+Остальные позиции исходных 9-колоночных строк **не дополнительные machine slots**. Три слота принимают любые обычные предметы сейчас; будущая зарядка не нарисованный/действующий процесс. Player inventory без изменений: canvas136,212… и hotbar136,270…, addPlayerInventory(8,84).
+
+III accumulator: новые `classic/third_accumulator_gui{,_bg}.png`, `neo/third_accumulator_gui{,_bg}_neo.png`; простые временные рамки со строгими 16×16 interiors и gauge opening/backing. Battery: **старые** `classic/accumulator_gui{,_bg}.png`, bar local80,17/canvas208,145; собственные `neo/third_battery_gui{,_bg}_neo.png`, без machine slots. Все шкалы III — GtUnits.x1, точность хранения/sync milli от этого не меняется. Новые block PNG — block/third/third_accumulator{,_top} и third_battery{,_top,_bottom,_face}, временные копии прежних accumulator II / canister соответственно.

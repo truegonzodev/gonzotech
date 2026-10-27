@@ -251,6 +251,8 @@
     "gonzotech:raw_iridium_block",
     "gonzotech:raw_osmium_block",
     "gonzotech:miner_drill",
-    "gonzotech:bore_pipe"
+    "gonzotech:bore_pipe",
+    "gonzotech:third_accumulator",
+    "gonzotech:third_battery"
   ]
 }

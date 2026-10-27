@@ -163,6 +163,7 @@ public class ModCreativeTabs {
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_DISPENSING_TAP_ITEM.get());
                 // 0.3.308: переработка и автошахтер — группа открытия III, рядом с краном.
                 output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_GRINDER_ITEM.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_ACCUMULATOR_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.PLOTNICK_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.WORK_BLOCK_ITEM.get());
                 output.accept(com.gonzotech.machines.registry.ModMachines.SEISMIC_SOURCE_ITEM.get());
@@ -429,6 +430,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.FILLED_DURABLE_AMPOULE.get());
                 // Канистра.
                 output.accept(ModItems.CANISTER.get());
+                output.accept(com.gonzotech.machines.registry.ModMachines.THIRD_BATTERY_ITEM.get());
                 // Яйцо призыва «альт-жителя» (автор 27.09.2026) — рядом с вёдрами и канистрой.
                 output.accept(ModItems.ALT_SPAWN_EGG.get());
                 // Промышленная взрывчатка — в самом конце вкладки.

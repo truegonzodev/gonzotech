@@ -24,6 +24,9 @@ public final class AlloyGreatswordRecipe extends CustomRecipe {
     /** I = custom-alloy ingot, B = titanium block, R = rebar. */
     private static final String[] PATTERN = { " IB", "BIB", "RI " };
 
+    /** Display-only shape access; crafting still validates the real composition. */
+    public static String[] pattern() { return PATTERN.clone(); }
+
     public AlloyGreatswordRecipe(CraftingBookCategory category) {
         super(category);
     }

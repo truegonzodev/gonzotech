@@ -56,6 +56,8 @@
     "gonzotech:raw_palladium_block",
     "gonzotech:raw_cesium_block",
     "gonzotech:raw_iridium_block",
-    "gonzotech:raw_osmium_block"
+    "gonzotech:raw_osmium_block",
+    "gonzotech:third_accumulator",
+    "gonzotech:third_battery"
   ]
 }

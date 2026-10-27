@@ -1,6 +1,8 @@
 package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.machines.menu.ThirdAccumulatorMenu;
+import com.gonzotech.machines.menu.ThirdBatteryMenu;
 import com.gonzotech.machines.menu.AccumulatorMenu;
 import com.gonzotech.machines.menu.AlloyFoundryMenu;
 import com.gonzotech.machines.menu.BoilerMenu;
@@ -82,6 +84,11 @@ public final class ModMenus {
 
     public static final Supplier<MenuType<AccumulatorMenu>> FIRST_ACCUMULATOR =
         MENUS.register("first_accumulator", () -> IMenuTypeExtension.create(AccumulatorMenu::new));
+
+    public static final Supplier<MenuType<ThirdAccumulatorMenu>> THIRD_ACCUMULATOR =
+        MENUS.register("third_accumulator", () -> IMenuTypeExtension.create(ThirdAccumulatorMenu::new));
+    public static final Supplier<MenuType<ThirdBatteryMenu>> THIRD_BATTERY =
+        MENUS.register("third_battery", () -> IMenuTypeExtension.create(ThirdBatteryMenu::new));
 
     public static final Supplier<MenuType<SecondAccumulatorMenu>> SECOND_ACCUMULATOR =
         MENUS.register("second_accumulator", () -> IMenuTypeExtension.create(SecondAccumulatorMenu::new));

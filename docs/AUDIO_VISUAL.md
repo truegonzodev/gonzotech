@@ -75,3 +75,7 @@ GT меняет skybox/небесные эффекты; шейдеры, кото
 ## Проверка визуальных пинов 0.3.315 — D-AUD1
 
 GUI alignment: 914 checks по исходнику и настоящим PNG PASS. Для кризиса проверяется текущий explicit-source-size blit с vertex alpha (13 аргументов), 23 кадра 128×72 и неизменные UV/границы экрана; старый короткий overload не является нормой. Faint/F1 method-harness получил только no-op boundary нового relaxation-вызова; это не проверка рендера relaxation. PNG, shaders, геометрия/альфа и клиентский код не менялись. Визуальная приёмка в клиенте отдельно — AUDIT.
+
+## Временная графика III-хранилищ (0.3.316)
+
+По прямому разрешению автора созданы **placeholders**, не финальная авторская графика. Third accumulator side/top — копии II; third battery side/top/bottom/face — копии канистры. Старые PNG не правились. Third accumulator получил Classic и собственную NEO-пару: bar canvas190,145 + три слота208,145/163/181, стандартный512×512 canvas. Battery переиспользует Classic accumulator, но имеет отдельную NEO-пару (копии first accumulator NEO). Новый список Classic512 sheets=72; NEO ownership отдельный у каждого. Контроль отверстия/подложки/слотов — third_storage_test; обе темы ещё ждут игрового просмотра. Детали трансформации и все пути — SUPER_CRUCIAL_FILE.

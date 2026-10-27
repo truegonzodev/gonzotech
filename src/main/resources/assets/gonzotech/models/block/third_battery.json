@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "gonzotech:block/third/third_battery",
+    "north": "gonzotech:block/third/third_battery_face",
+    "south": "gonzotech:block/third/third_battery",
+    "east": "gonzotech:block/third/third_battery",
+    "west": "gonzotech:block/third/third_battery",
+    "up": "gonzotech:block/third/third_battery_top",
+    "down": "gonzotech:block/third/third_battery_bottom"
+  }
+}

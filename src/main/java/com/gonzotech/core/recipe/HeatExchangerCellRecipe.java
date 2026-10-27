@@ -19,6 +19,9 @@ public final class HeatExchangerCellRecipe extends CustomRecipe {
 
     private static final String[] PATTERN = { "AAA", "A A", "AAA" };
 
+    /** Display-only shape access; crafting still validates the real composition. */
+    public static String[] pattern() { return PATTERN.clone(); }
+
     public HeatExchangerCellRecipe(CraftingBookCategory category) {
         super(category);
     }

@@ -36,8 +36,8 @@ classic_sheets = {
 }
 # 512px classic sheets: 66 at 0.3.255 + 2 from the author's texture push
 # (markers & textures: plotnick_gui.png / plotnick_gui_bg.png) + 2 sheets
-# for the seismic source GUI.
-assert len(classic_sheets) == 70, f"expected 70 512px classic sheets, found {len(classic_sheets)}"
+# for the seismic source GUI, then the III accumulator Classic pair (316).
+assert len(classic_sheets) == 72, f"expected 72 512px classic sheets, found {len(classic_sheets)}"
 filter_classic = {
     "item_filter_gui.png": "item_filter_gui_neo.png",
     "second_item_filter_gui.png": "second_item_filter_gui_neo.png",

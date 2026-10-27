@@ -461,3 +461,8 @@
 
 <a id="d-rad2"></a>
 D-RAD2 перенесена по новой заявке автора в [CURRENT-STATE](CURRENT-STATE.md#d-rad2), runtime 0.3.314. Прежний текст дословно сохранён в HISTORY.
+
+<a id="d-eng1"></a>
+### D-ENG1 — Авторские рецепты аккумулятора III и электролитической батарейки
+
+**Статус: отложено.** Автор прямо отложил смету `third_accumulator` / `third_battery`: «рецепты дам потом». ENG-001 реализует устройства/preview, но не выдумывает ингредиенты из старой lithium-идеи. После авторских рецептов добавить реальные JSON/ID, книжную выдачу и recipe gate III в TierThreeCrafting/RecipeUnlocks, проверить все варианты и tooltip; **оба — полный гейт открытия III**, не только скрытие в книге. Физический output gate/tooltip уже есть с 0.3.316. Текущий implementation-status — [ENG-001](CURRENT-STATE.md).

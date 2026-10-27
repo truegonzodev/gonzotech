@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, D-AUD1 / 0.3.315: 77 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, ENG-001 / 0.3.316: 78 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -99,6 +99,7 @@
 | [surface_worldgen_test.py](../audit/surface_worldgen_test.py) | Static contract checks for the all-biome surface ruin and waste generators.""" |
 | [third_epoch_test.py](../audit/third_epoch_test.py) | Пины раунда 10 (0.3.110): экранированная семья эпохи 3 + свинцовые поршни. |
 | [tongs_ladle_test.py](../audit/tongs_ladle_test.py) | Tongs & ladle (0.3.79, EPOCH3-BASE 2.8): pure storage logic compiled and |
+| [third_storage_test.py](../audit/third_storage_test.py) | ENG-001: real Java budget/loss/sync core, mutation mode, static loot/GUI/JEI wiring; not MC build. |
 | [typecheck_test.py](../audit/typecheck_test.py) | Вспомогательный скрипт / source check |
 | [validate.py](../audit/validate.py) | Статическая валидация ресурсов Gonzo Tech (без Java/Minecraft). |
 | [vanilla_polish_test.py](../audit/vanilla_polish_test.py) | Static contracts: «Улучшение ванили» и компоненты 0.3.254 (автор).""" |
@@ -224,3 +225,24 @@ git diff --check
 Minecraft/Gradle/23 авторских GameTests и реальный клиент здесь **не запускались**. Boundary doubles для ItemStack/preset/material/components/transactions не гарантируют реальное сохранение owner sidecar, packets, codecs, MC event/Mixin injection или сторонние IItemHandler. RAD-001/D-RAD2/UX-001/D-VAL1 остаются отдельной игровой приёмкой. Невоспроизводимое закрытие 27.10 по-прежнему неизвестной причины, отчёт 25.10 исключён автором.
 
 Контроль документации этого шага: structure **9** previous editions/29 live/75 byte-identical legacy/4173 source items/69 dispositions; doc_links **1192**, 0 broken; validate **3275 JSON/606 items/en=ru1279, 0 errors/0 warnings**; diff-check чисто.
+
+## ENG-001 / 0.3.316 — новые III-хранилища и JEI-preview
+
+Среда та же, что D-AUD1: Java21 (.cache/java-toolchain/jdk4py/java-runtime), ECJ3.46.100 (.cache/package/deps), Pillow12 (.cache/python-toolchain); бинарники не входят в Git. Команда:
+
+```bash
+JAVA_HOME="$PWD/.cache/java-toolchain/jdk4py/java-runtime" \
+ECJ_JAR="$PWD/.cache/package/deps/ecj-3.46.100.jar" \
+PYTHONPATH=.cache/python-toolchain python3 audit/third_storage_test.py --mutation-check
+# тот же env: python3 audit/run_all.py
+```
+
+- `ThirdStorageSelfTest` компилирует **настоящие ThirdStorageDefs + TickEnergyStorage**, без MC doubles. **1535705 assertions:** точные8констант, combined intake/output в одном tick, множество источников/приёмников, simulate и probe другого tick без сброса clock, capacity/empty/отрицательные/Long.MAX_VALUE, loss32раз/тик/без долга, battery stable10000ticks, energy conservation, 100000 случайных sync roundtrip + carry/full/signed-short boundaries, 2×5000×30 модельных операций.
+- 68 static checks: registrations/gate/creative/no invented recipe, ordinary CarrierItem storage, actual path-loss debit, read-only simulate wiring, long NBT/CUSTOM_DATA, loot-context single drop/no manual drop path, placement, 512 PNG/literal slot interiors/gauge opening+backing, independent client sync limbs, six live Kind forms + cell/greatsword getters, JEI-only composition-free display.
+- `--mutation-check`: **10/10** temporary code regressions rejected by AssertionError; compile failure is **not** counted as kill. Per-call input/output, mutation during either simulate, rounded charge, missing/double loss, wrong intake budget, discarded fraction and short overflow. Actual src is untouched by mutations.
+- Aggregate first pass after implementation: **78 PASS / 0 SKIP / 0 FAIL**, `/tmp/gonzo-eng316-initial.log`; old77tests retained + third_storage_test. GUI theme expectation is now72 Classic512 sheets (new pair), not70; per-screen distinct NEO checks remain. Added both screens to III X.Y format suite.
+- Upstream API research: JEI tagv20.0.0 has minecraftVersion1.21.4, display-aware vanilla factory/builder verified; real repository PetBowlBlock establishes MC getDrops/LootParams signature; NeoForge1.21.4 DeferredRegister confirms custom item properties overload/useBlockDescriptionPrefix. Cached sources are not dependencies or committed artifacts.
+
+**Limits:** no full MC/NeoForge/Gradle build, client rendering, actual loot engine/codec/network integration, optional-JEI runtime or GameTests executed here. Existing typecheck covers its own selected sources/stubs, **not all new MC-facing classes**; this run is not claimed as their compilation. Real-core long restore is not proof that MC loot lifecycle supplies BE in every modded destruction path. New devices, actual survival break/place/quit/rejoin, creative loot behavior, slots/shift, mixed-tier/parallel network and all8 JEI pages + real same/mixed alloy crafting need author playtest. Placeholder visual quality is intentionally not final. No radiation/Plotnick runtime changed.
+
+Финальный повтор после синхронизации всех профилей и cleanup: run_all **78 PASS / 0 SKIP / 0 FAIL** (`/tmp/gonzo-eng316-final.log`); docs_structure — 9 previous editions / 29 live / 75 immutable originals / 4173 source items / 69 dispositions; doc_links — **1199 / 0 broken**; validate — **3285 JSON / 608 items / en=ru1281 / 0 errors / 0 warnings**; git diff --check — чисто. Проверено отсутствие изменений radiation runtime, PlotnickBlock и прежних tracked PNG. Runtime0.3.316; build/dependencies без изменений.

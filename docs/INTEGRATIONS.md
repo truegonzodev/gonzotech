@@ -34,3 +34,7 @@ GT работает **standalone**, без TerraBlender. `DesolationPresetInject
 ## История
 
 0.3.311, DOC-002: добавлен явный реестр совместимости; автор подтвердил JEI/Simple Fog Control/Sodium/Lithium. Проверено отсутствие текущей TerraBlender-интеграции; автор согласовал D-INT1 для будущего условного подключения. Небо/генерация отмечены как зоны риска, runtime/dependencies не изменены. Полная история — [HISTORY](HISTORY.md).
+
+## JEI vanilla factory для alloy previews (0.3.316)
+
+Новые display-only CraftingRecipe получаются через IVanillaRecipeFactory/IJeiShapedRecipeBuilder **JEI20.0.0 / MC1.21.4**, SlotDisplay.ItemStackSlotDisplay; API сверено с upstream tagv20.0.0 (gradle.properties minecraftVersion1.21.4), не с веткой другого MC. Dependency20.0.0.4/optional client scope не изменены, JEI не импортируется серверными BE/recipes. Никаких реальных серверных recipe registration или ослабления состава. Показ/переключение мира/сервер без JEI требуют игрового smoke-test; headless checks не заменяют build compatibility.

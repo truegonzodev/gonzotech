@@ -120,7 +120,7 @@ This is a project display convention, not an external standards certification.
 
 ## Validation status
 
-`audit/jei_display_test.py` checks the 23-category set, exact block-title translations, texture/crop geometry, one-pixel alignment exceptions, ingredient lookup, standard item slots, dynamic alloy/fermentation/salt tooltips, generator profiles, filler tank regions, tap outputs, container amounts and RU/EN strings. The static audit can run with Python. A full Java build and in-game JEI visual check still require a Java 21 development environment; the current sandbox has no JDK.
+`audit/jei_display_test.py` checks the current 24 machine-category set, geometry, projections, ingredients and RU/EN strings. `audit/third_storage_test.py` additionally pins eight composition-free crafting previews and their live shape sources. Java 21 runtime + ECJ are available for headless tests (AUDIT); full Minecraft/NeoForge compilation and in-game JEI checks have not run in this sandbox.
 
 ## История
 
@@ -131,3 +131,20 @@ This is a project display convention, not an external standards certification.
 JEI объявлен optional/client/AFTER с диапазоном `[20.0.0.4,)`; compileOnly API и dev runtimeOnly не означают упаковку JEI в GT. Совместная работа подтверждена автором, но source-пины display не заменяют игровой прогон конкретной версии. Общая матрица — [INTEGRATIONS](INTEGRATIONS.md). Геометрия/порты многоблоков описаны в [MULTIBLOCK](MULTIBLOCK.md), не выводятся из картинки JEI.
 
 0.3.311, DOC-002: разделены внешняя совместимость, display и структура; рецепты не менялись.
+
+## Custom-alloy crafting previews — 0.3.316
+
+`AlloyCraftingJeiRecipes` registers **8** `RecipeHolder<CraftingRecipe>` in existing `RecipeTypes.CRAFTING`, not eight new machine categories (machine count remains24). Uses registration.getVanillaRecipeFactory().createShapedRecipeBuilder(category, SlotDisplay), define(symbol,Ingredient,SlotDisplay), pattern/build; verified JEI tagv20.0.0 targets MC1.21.4. Preview IDs `gonzotech:jei_preview/<form>` exist only in JEI, not RecipeManager/datapack/recipe book.
+
+| Preview | Live shape source | Other ingredients |
+|---|---|---|
+| heat_exchanger_cell | HeatExchangerCellRecipe.pattern(): AAA / A A / AAA | none |
+| alloy_pickaxe | Kind.PICKAXE.pattern(): AAA / _S_ / _S_ | stick |
+| alloy_sword | Kind.SWORD.pattern(): A / A / S | stick |
+| alloy_chestplate | Kind.CHESTPLATE.pattern(): A A / AAA / AAA | none |
+| alloy_helmet | Kind.HELMET.pattern(): AAA / A A | none |
+| alloy_leggings | Kind.LEGGINGS.pattern(): AAA / A A / A A | none |
+| alloy_boots | Kind.BOOTS.pattern(): A A / A A | none |
+| alloy_greatsword | AlloyGreatswordRecipe.pattern(): _IB / BIB / RI_ | B=titanium_block, R=rebar |
+
+A/I = custom_alloy; `_` in this table denotes a blank, actual strings use spaces. Equipment patterns/output come from Kind, other two expose defensive-copy readonly shape getters. Input/output SlotDisplay use **new plain ItemStack(item)**, no example AlloyComposition, no fromComposition/stat factory; «ожидает состав» is intentional. Real special crafting still validates a supported identical composition and transfers it to the result. No server recipe, serializer, matches or assemble behavior is changed. Default display ingredients can help fill the grid, but the actual server still decides craft validity. Existing gate extension/idempotence remains unchanged; no second broad extension is registered.

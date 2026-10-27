@@ -40,6 +40,7 @@ public final class GonzoTechJeiPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
+        registration.addRecipes(RecipeTypes.CRAFTING, AlloyCraftingJeiRecipes.build(registration.getVanillaRecipeFactory()));
         Map<String, List<MachineJeiRecipe>> recipes = MachineJeiRecipes.build();
         for (MachineJeiCategories.Definition definition : MachineJeiCategories.ALL) {
             registration.addRecipes(definition.type(), recipes.getOrDefault(definition.id(), List.of()));

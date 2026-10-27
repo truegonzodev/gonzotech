@@ -1,6 +1,9 @@
 package com.gonzotech.machines.registry;
 
 import com.gonzotech.GonzoTechMod;
+import com.gonzotech.machines.block.ThirdAccumulatorBlock;
+import com.gonzotech.machines.block.ThirdBatteryBlock;
+import com.gonzotech.machines.item.ThirdBatteryItem;
 import com.gonzotech.machines.block.AccumulatorBlock;
 import com.gonzotech.machines.block.AlloyFoundryBlock;
 import com.gonzotech.machines.block.BoilerBlock;
@@ -404,6 +407,12 @@ public final class ModMachines {
     public static final DeferredBlock<SecondGrinderBlock> SECOND_GRINDER =
         BLOCKS.registerBlock("second_grinder", SecondGrinderBlock::new, machineMetal());
 
+    /** III energy storage; recipes deliberately await the author (ENG-001 / D-ENG1). */
+    public static final DeferredBlock<ThirdAccumulatorBlock> THIRD_ACCUMULATOR =
+        BLOCKS.registerBlock("third_accumulator", ThirdAccumulatorBlock::new, lightMetal());
+    public static final DeferredBlock<ThirdBatteryBlock> THIRD_BATTERY =
+        BLOCKS.registerBlock("third_battery", ThirdBatteryBlock::new, lightMetal());
+
     /** Измельчитель отработки (0.3.250): отработанный ТВЭЛ + пустой корпус → шлаки + бочка отходов. */
     public static final DeferredBlock<ReprocessingGrinderBlock> THIRD_GRINDER =
         BLOCKS.registerBlock("third_grinder", ReprocessingGrinderBlock::new, machineMetal());
@@ -697,6 +706,11 @@ public final class ModMachines {
 
     public static final DeferredItem<BlockItem> SECOND_GRINDER_ITEM =
         ITEMS.registerSimpleBlockItem("second_grinder", SECOND_GRINDER);
+
+    public static final DeferredItem<BlockItem> THIRD_ACCUMULATOR_ITEM =
+        ITEMS.registerSimpleBlockItem("third_accumulator", THIRD_ACCUMULATOR);
+    public static final DeferredItem<ThirdBatteryItem> THIRD_BATTERY_ITEM = ITEMS.registerItem("third_battery",
+        properties -> new ThirdBatteryItem(THIRD_BATTERY.get(),properties), new Item.Properties().useBlockDescriptionPrefix());
 
     public static final DeferredItem<BlockItem> THIRD_GRINDER_ITEM =
         ITEMS.registerSimpleBlockItem("third_grinder", THIRD_GRINDER);

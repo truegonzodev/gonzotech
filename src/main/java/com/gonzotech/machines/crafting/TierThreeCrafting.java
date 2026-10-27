@@ -180,6 +180,8 @@ public final class TierThreeCrafting {
 
     /** true, если предмет — «закрытый» вывод «Открытия 3» (гейт тира 3). */
     public static boolean isGatedOutput(Item item) {
+        // Physical III gate applies now; author recipes are intentionally still pending.
+        if (item == ModMachines.THIRD_ACCUMULATOR_ITEM.get() || item == ModMachines.THIRD_BATTERY_ITEM.get()) return true;
         return item == ModItems.THIRD_HEAVY_DOOR_LEAD_ITEM.get()
             || item == ModItems.THIRD_HEAVY_DOOR_TUNGSTEN_ITEM.get()
             || item == ModItems.THIRD_HERMETIC_DOOR_ITEM.get()

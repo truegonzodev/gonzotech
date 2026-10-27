@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "gonzotech:block/third_battery"
+    },
+    "facing=east": {
+      "model": "gonzotech:block/third_battery",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "gonzotech:block/third_battery",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "gonzotech:block/third_battery",
+      "y": 270
+    }
+  }
+}

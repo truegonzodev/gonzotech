@@ -143,3 +143,24 @@ GUI — [SUPER_CRUCIAL_FILE](SUPER_CRUCIAL_FILE.md); прогрессия — [P
 ## Проверки 0.3.315 — D-AUD1
 
 Проверен не новый баланс, а актуальность audit: NodeKinds домны соответствует утверждённому heat/universal любого поколения (33 layout checks); real PressRecipes/ProcessingRecipeDisplay/SteamGenScreen остаются в compile-гейте. Inherited menu и новые границы зависимостей восстановлены в compile-only stubs. Вырезания реальных классов из typecheck нет; recipes/resources/runtime не менялись. Это не самостоятельное Mojmap/игровое доказательство — AUDIT.
+
+## III-хранилища — действующий контракт 0.3.316 / ENG-001
+
+Баланс в `ThirdStorageDefs`, точный конечный long milli-GTU и независимые input/output clocks в `TickEnergyStorage`. Это локальное хранилище новых устройств, не замена GtBuffer/баланса старых машин.
+
+| Устройство | Ёмкость GTU | Максимум приёма / выдачи GTU/t | Собственная потеря GTU/t | Предметные слоты |
+|---|---:|---:|---:|---|
+| `third_accumulator` | 230882.0 | 294 / 294 | 0.032 | 3 обычных, любые предметы; стандартные лимиты предмета/Container; save/extract/drop |
+| `third_battery` | 68088.0 | 244 / 188 | 0 | 0; переносимый nonstackable item |
+
+Оба лимита **суммарные за game tick**, не на вызов/грань/ветку; simulation не трогает ни запас, ни clocks. III-потеря раз за загруженный тик, без offline catchup; предмет батарейки пассивен и сам не разряжается. Зарядки предметов в трёх слотах **нет** — только будущее назначение. ThirdAccumulator.setItem хранит CarrierItem буквально, без базового unpack, и заменяет значение; обычные stack limits не объявляются исправлением дюпа.
+
+| BE | Владение / API |
+|---|---|
+| [ThirdEnergyStorageBlockEntity](../src/main/java/com/gonzotech/machines/block/entity/ThirdEnergyStorageBlockEntity.java) | Общий `receiveGtu`, `TickEnergyStorage`, read-only серверный ContainerData, PipeRouting WIRE, компаратор 0…15, NBT long `EnergyMilli` |
+| [ThirdAccumulatorBlockEntity](../src/main/java/com/gonzotech/machines/block/entity/ThirdAccumulatorBlockEntity.java) | 3 сохраняемых slots; обычные ContainerHelper и MachineBlock.onRemove; свой menu |
+| [ThirdBatteryBlockEntity](../src/main/java/com/gonzotech/machines/block/entity/ThirdBatteryBlockEntity.java) | 0 slots; loadFromItem/saveToItem; placed network, собственное menu |
+
+Батарейка сохраняет `GonzoBatteryGtuMilli` (long milli) в CUSTOM_DATA, не стирая чужие поля; clamped 0…68088000. `getDrops` берёт настоящий BE из LootContextParams и штампует **уже сформированный** собственный item drop. Нет второго ручного playerWillDestroy/drop-пути; действуют обычные правила loot/инструмента/взрыва, creative не создаёт отдельную гарантированную копию. При setPlacedBy charge восстанавливается точно. Форма/горизонтальная ориентация как у канистры, world liquid не принимает. I/II получили только узкое распознавание нового storage при equalization; старые capacities, loss, формат NBT и per-call intake не менялись.
+
+Sync: три независимых поля (milli remainder, units%1000, thousands), каждое 0…999; decode в меню, без signed-short overflow и без округления server storage. GUI III — X.Y через GtUnits.x1. Физический gate III и Creative-группы — PROGRESSION; точные координаты — SUPER_CRUCIAL_FILE. Рецептов нет до авторской сметы D-ENG1; новая графика временная с разрешения автора.

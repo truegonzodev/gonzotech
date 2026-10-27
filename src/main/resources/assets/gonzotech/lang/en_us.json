@@ -1277,5 +1277,7 @@
   "gui.gonzotech.notes.favorites.only_click": "RMB - Show only favorite pages in this category",
   "gui.gonzotech.notes.favorites.show_all_click": "RMB - Stop showing only favorite pages in this category",
   "gui.gonzotech.notes.favorites.empty": "No favorite pages in this category. Right-click the star to show all pages.",
-  "gui.gonzotech.notes.favorites.untitled": "Page %s"
+  "gui.gonzotech.notes.favorites.untitled": "Page %s",
+  "block.gonzotech.third_accumulator": "Accumulator III",
+  "block.gonzotech.third_battery": "Electrolytic Battery"
 }

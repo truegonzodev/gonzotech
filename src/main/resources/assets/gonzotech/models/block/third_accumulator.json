@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "gonzotech:block/third/third_accumulator",
+    "top": "gonzotech:block/third/third_accumulator_top",
+    "bottom": "gonzotech:block/third/third_accumulator_top"
+  }
+}
