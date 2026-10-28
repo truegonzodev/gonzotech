@@ -2,6 +2,7 @@ package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.machines.energy.ComparatorOutput;
 import com.gonzotech.machines.energy.GtBuffer;
+import com.gonzotech.machines.energy.TickIntakeBudget;
 import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.AccumulatorMenu;
@@ -42,6 +43,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements GtuSink {
 
     private final GtBuffer gtu = new GtBuffer((long) MachineDefs.ACCUMULATOR_GTU_CAPACITY);
+    private final TickIntakeBudget intake = new TickIntakeBudget();
 
     /** Последнее опубликованное значение компаратора; не сохраняется, т.к. вычисляется из буфера. */
     private int lastComparatorOutput;
@@ -115,7 +117,8 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
 
     @Override
     public long receiveGtu(long amount, boolean simulate) {
-        long accepted = gtu.receive(Math.min(amount, (long) MachineDefs.ACCUMULATOR_GTU_INTAKE), simulate);
+        long accepted = intake.receive(gtu, amount, (long) MachineDefs.ACCUMULATOR_GTU_INTAKE,
+            simulate, level == null ? 0L : level.getGameTime());
         if (!simulate && accepted > 0) {
             setChanged();
             updateComparatorOutput();
@@ -166,6 +169,11 @@ public class AccumulatorBlockEntity extends BaseMachineBlockEntity implements Gt
                 long diff = myStored - other.gtu.amountAsLong();
                 if (diff <= 0) return null;                 // у соседа не меньше — не льём
                 long cap = diff / 2;                          // выравнивание без перелёта
+                if (cap <= 0) return null;
+                return (amount, simulate) -> other.receiveGtu(Math.min(amount, cap), simulate);
+            }
+            if (target instanceof SecondAccumulatorBlockEntity other) {
+                long cap = Math.max(0, myStored - other.gtuBuffer().amountAsLong()) / 2;
                 if (cap <= 0) return null;
                 return (amount, simulate) -> other.receiveGtu(Math.min(amount, cap), simulate);
             }

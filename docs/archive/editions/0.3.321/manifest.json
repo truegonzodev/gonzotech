@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "038fc35d440447997e25a8a58f4e0aea05ba1eba",
+      "snapshot": "docs/archive/editions/0.3.321/OUTDATED_PERF_PLAN_CURRENT-STATE.md",
+      "sha256": "296eb9840b4a5b91df16a5d7b42d9b00781a2442ccf26fda8c490a7b143640c8",
+      "bytes": 17532,
+      "task": "PERF-001: before author answers and cycle7/8"
+    }
+  ]
+}

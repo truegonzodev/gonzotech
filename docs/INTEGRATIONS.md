@@ -46,3 +46,7 @@ GT работает **standalone**, без TerraBlender. `DesolationPresetInject
 ## PERF-001/9 — начальный API research
 
 Независимо сверены официальные EngineHub исходники: WG version/7.0.x RegionContainer.get(com.sk89q.worldedit.world.World), RegionManager.getApplicableRegions(BlockVector3), WE BukkitAdapter.adapt(org.bukkit.World). Стандартный тип/методы не совпадают с текущим reflective path. API-source сверка не доказывает наличие классов/адаптации ServerLevel в конкретном hybrid-сервере. Требуются имя/версия реального bridge, mapping измерений и точная политика custom/standard flags; piston-protection нельзя молча считать эквивалентом положительного piston_allowed. Источники — HISTORY; зависимости/optional loading пока не меняются.
+
+### Ответ автора по PERF-001/9
+
+Bridge выбирают создатели серверов. Целевой набор автора: WG7.0.13 и WE7.4.2/подходящая7.4.x под Bukkit/Paper1.21.4. Это target, не тест совместимости всех билдов; адаптеру нужен корректный world provider/optional loading/health-check, а не жёсткое предположение о названии hybrid. БезWG/вне регионов разрешено; установленныйWG с неисправнымbridge — отказ с диагностикой; внутри региона все3разрешения обязательны, unset/unknown не ALLOW, без actor fallback. WG7.0.13 tag доступен upstream (82fdc65d0eec1a55b3346824e4e586983e85d62c). Исправление9 ещё не применено/не прогнано на сервере.

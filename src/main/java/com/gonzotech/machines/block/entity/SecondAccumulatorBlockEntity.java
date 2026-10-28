@@ -2,6 +2,7 @@ package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.machines.energy.ComparatorOutput;
 import com.gonzotech.machines.energy.GtBuffer;
+import com.gonzotech.machines.energy.TickIntakeBudget;
 import com.gonzotech.machines.energy.SecondTierDefs;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.menu.SecondAccumulatorMenu;
@@ -32,6 +33,7 @@ public final class SecondAccumulatorBlockEntity extends BaseMachineBlockEntity i
     private static final int GUI_GTU_BASE = 1_000;
 
     private final GtBuffer gtu = new GtBuffer((long) SecondTierDefs.ACCUMULATOR_GTU_CAPACITY);
+    private final TickIntakeBudget intake = new TickIntakeBudget();
     private int lastComparatorOutput;
 
     private final ContainerData data = new ContainerData() {
@@ -94,7 +96,8 @@ public final class SecondAccumulatorBlockEntity extends BaseMachineBlockEntity i
 
     @Override
     public long receiveGtu(long amount, boolean simulate) {
-        long accepted = gtu.receive(Math.min(amount, (long) SecondTierDefs.ACCUMULATOR_GTU_INTAKE), simulate);
+        long accepted = intake.receive(gtu, amount, (long) SecondTierDefs.ACCUMULATOR_GTU_INTAKE,
+            simulate, level == null ? 0L : level.getGameTime());
         if (!simulate && accepted > 0) {
             setChanged();
             updateComparatorOutput();

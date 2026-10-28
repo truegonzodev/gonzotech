@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, TEX-001 / 0.3.320: 81 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, PERF-001/7–8 / 0.3.321: 82 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -19,6 +19,7 @@
 | Скрипт | Назначение/самоописание |
 |---|---|
 | [_ver.py](../audit/_ver.py) | Единая проверка версии мода для пинов (08.10.2026). |
+| [legacy_accumulator_test.py](../audit/legacy_accumulator_test.py) | PERF-001/7–8: настоящие receive/push методы I/II + GtBuffer/Defs/TickIntakeBudget, aggregate intake/equilibrium; --mutation-check8assertion kills, не fullMC compile. |
 | [model_texture_paths_test.py](../audit/model_texture_paths_test.py) | TEX-001: реальные item/blockstate/model цепочки и существование текстур после авторского переноса в third/; --mutation-check проверяет9подмен, не GPU render. |
 | [achievement_tree_test.py](../audit/achievement_tree_test.py) | Static regression contract for the Energy advancement tree and event triggers.""" |
 | [air_filter_test.py](../audit/air_filter_test.py) | Actual filter core + GUI/resource wiring. Not an in-game NeoForge test. |
@@ -319,3 +320,17 @@ PYTHONPATH=.cache/python-toolchain python3 audit/inside_exposure_test.py --mutat
 Документальная проверка шага записывается после исполнения. Полные cycle2/3 regression/mutation/native проверки новых исправлений ещё не выполнены.
 
 Проверки документального шага исполнены: docs_structure_test PASS (10previous editions с Git/hash/bytes,29live,75immutable,4173source-items,69dispositions); doc_links1202/0broken; git diff --check clean. Промежуточная проверка до завершения HISTORY/переноса указателя D-RAD2 дала3broken anchors, после завершения0; это не runtime FAIL. Код/ресурсы/gradle.properties не изменены, runtime320. Нового aggregate/native/GameTest/TPS/heap прогона не было;81PASS относится к предыдущему завершённому runtime-шагу. Следующий шаг — ответы на blockers5/6/9 и воспроизводимые root-регрессии, не обещание готовых14фиксов.
+
+## PERF-001, цикл7/8 — 0.3.321
+
+После постановки038fc35 автор ответил на4вопроса:5только adjacent endpoint через chunk boundary;9bridge выбирают создатели серверов, targetWG7.0.13/WE7.4.x, выбран optional_strict_regions;6coalesce/reject/Stop priority +cache+тихое10секКД после completion отдельно по операции. Ответы перенесены в CURRENT/связанные профили; не объявлены реализацией5/6/9.
+
+Production: TickIntakeBudget + receiveGtu обоих старыхBE, branchII в I.pushGtu; версия321. Числа вMachineDefs/SecondTierDefs и GtBuffer не менялись; NBT/save/load/loss/output/III/радиация/PNG/Plotnick неизменны. budget owner-local, transient, clock=level.gameTime (до присвоенияlevel0), probe не пишет даже future-tick clock, accepted-only commit.
+
+Новый legacy_accumulator_test.py компилирует **реальные неизменённые GtBuffer/MachineDefs/SecondTierDefs/TickIntakeBudget и точные fields/imports/receiveGtu/pushGtu обоихBE**. Узкие doublesLevel/BlockPos/NBT/route dispatcher/III boundary не nativeAPI/lifecycle proof. Real GtBuffer decimal string save/load прогоняется противNBTboundary, не настоящего world save. Route loss17 — заданный dispatcher результат для проверки source debit, не реальный routing algorithm.
+
+Результат **80605assertions PASS**, randomized200ticks×100calls×2stores; simulation/capacity/tick reset/accepted-only/independent owners and callbacks, future probe readonly, outflow не пополняет intake. ВсеI/II equal/lower/higher направления;IIIветка сохраняется;5источников с реальнымIoutput заполняют общийIIintake. Начальная fixture ошибочно ожидала насытить144000intakeII двумя источникамиI с32000output каждый; assertion честно упал64000, fixture исправлена на5источников, баланс/проверяемый код не подгонялись.
+
+--mutation-check **8/8 assertion-killed**, compiler failures не считаются: missingIIbranch/full-diff, no-used budget, mutating simulation, requested-vs-accepted debit, never reset tick, oldper-callI, oldper-callII. Генератор harness берёт именно нужные productionimports, не скрывает забытый импорт wildcard. Первый aggregate **82PASS/0SKIP/0FAIL**, `/tmp/gonzo321-first.log` (81старый+новый). Java21/ECJ/Pillow восстановлены в ignored.cache; fullMC Gradle/build/GameTests/direct+wire/reload/playtest не запускались. Оставшиеся12пунктов PERF-001 не исправлены, вся задача не закрыта.
+
+Финальный повтор321 после полного обновления профилей: **82 PASS / 0 SKIP / 0 FAIL**, /tmp/gonzo321-delivery.log; legacy80605assertions/8of8assertion-killed. Docs11editions сGit/hash/bytes,29live/75immutable/4173source-items/69dispositions PASS; links1209/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Новые изменения ограничены7/8, helper/test/version и документами/архивом. FullMC/native/gameplay не запускались, остальные12пунктов не исправлены. Подготовлено к commit/push по стоящему разрешению автора.

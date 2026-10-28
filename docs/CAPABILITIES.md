@@ -72,3 +72,11 @@ RadiationCluster.Policy.NORMAL/LEAD используют прежний коэф
 ## PERF-001 — границы нового лечения
 
 Endpoint identity и lifecycle должны учитывать double-wrapper/две половины, entity и заменённый BE; текущая долгоживущая Container-ссылка в WeakHashMap value может удерживать world. Автор разрешил только endpoint-chunk загрузку ItemRouting (не фильтр/сепаратор и не транзитную цепь); механизм определения unloaded endpoint/границы tickets ещё не выбран. Complete/visited/result и продолжение поиска — требование3; shared path validation/lifecycle addresses — предложения13/14. Throttle Fence обязан сохранять допустимый end/ACK и provenance. На этом документальном шаге ни одна runtime-гарантия не объявляется исправленной.
+
+## PERF-001/7/8 — приём I/II после321
+
+ReceiveGtu обоих старых аккумуляторов теперь имеет per-owner/gameTime aggregate allowance, не на вызов/сторону. Simulation не расходует allowance и не меняет clock; commit списывает accepted, а не requested. I явно распознаёт II до общего GtuSink и применяет прежний half-positive-difference по абсолютным milli. NBT/числа/GTU API не меняются, III-ядро не переписывается. Проверки настоящих методов/буфера не заменяют полныйMC pipeline.
+
+### Ответы по границам PERF-001/5/6/9
+
+5: разрешён только непосредственный соседний endpoint через границу загруженного чанка трубы, не транзитная цепь; filter/separator не endpoints. Механизм bounded unloaded lookup/подтверждения и lifecycle ещё исследуется, наивный BFS getBlockState не считается лечением. 6: operation-scoped10сек тихогоКД после завершения + дедуп/одинjob/cache, Stop/end приоритетны; budgets отдельно. 9: optional-strict policy автора описана в INTEGRATIONS, bridge выбирают создатели серверов. В321этот блок ещё не реализован.

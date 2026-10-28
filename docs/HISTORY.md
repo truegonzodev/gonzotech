@@ -4775,3 +4775,63 @@ BUILD-001 ждёт повторной авторской сборки.
 ````
 
 Проверки документального шага исполнены: docs_structure_test PASS (10previous editions с Git/hash/bytes,29live,75immutable,4173source-items,69dispositions); doc_links1202/0broken; git diff --check clean. Промежуточная проверка до завершения HISTORY/переноса указателя D-RAD2 дала3broken anchors, после завершения0; это не runtime FAIL. Код/ресурсы/gradle.properties не изменены, runtime320. Нового aggregate/native/GameTest/TPS/heap прогона не было;81PASS относится к предыдущему завершённому runtime-шагу. Следующий шаг — ответы на blockers5/6/9 и воспроизводимые root-регрессии, не обещание готовых14фиксов.
+
+<a id="v-0-3-321"></a>
+### 0.3.321 — PERF-001, первый цикл применения: аккумуляторы7/8
+
+28.10.2026, база038fc35 (постановка14пунктов после закрытия9старых задач). Сначала получены4ответа автора, затем выбран независимый узкий блок7/8. Остальные12пунктов остаются активными в PERF-001, не считаются применёнными/закрытыми. Старые8реализованных+CRASH уже закрыты по предыдущему прямому решению автора, запись/архив320 сохранены.
+
+#### Ответы автора (дословно)
+
+5: «Если труба загружена а приёмник/источник оказался в выгруженном чанке то загружаем этот чанк. то есть это получается работает только по границам чанков, именно если условный сундук стоит на краю чанка 1,1 а труба из/в этот сундук уже стоит в прилегающем чанке 1,2».
+
+9,bridge: «Я не выбираю бридж, его выбирают создатели серверов. WorldEdit (WE): версия 7.4.2 (или любая сборка ветки 7.4.x, например 7.4.0–7.4.6, предназначенная для Bukkit/Paper 1.21.4). WorldGuard (WG): версия 7.0.13 (релизы старше, такие как 7.0.14+, ориентированы уже на версии 1.21.5 и новее и могут быть несовместимы)».
+
+9,policy: выбран optional_strict_regions — безWG и вне регионов машина работает; установленныйWG с неисправнымbridge запрещает с диагностикой; в регионе все3разрешения, UNSET/unknown не ALLOW; без ближайшего игрока. Это target/policy автора, не агентский отчёт проверки совместимости указанных версий. Отдельно найден официальный tagWG7.0.13 сobject82fdc65d0eec1a55b3346824e4e586983e85d62c; реальный hybrid/bridge не запускался.
+
+6: «Повторы объединять, другое отклонять Один активный тяжёлый job на Плотник; тот же запрос не перезапускает скан, конфликтующий получает отказ/статус занятости. Stop имеет приоритет. Пакетные лимиты и рабочий бюджет подобрать и проверить отдельно. +кэш +тихое кд 10 сек на повтор после уже завершённой задачи, в рамках одной задачи, вызов ТНТ не запускает КД скана, а только для тнт условно».
+
+#### Лечение7/8 и проверки
+
+AccumulatorBlockEntity: явныйIIbranch до generic GtuSink, положительная разница абсолютных milli пополам, не проценты заполненности; I/IIIветки сохранены. Accumulator/SecondAccumulator receiveGtu: per-instance TickIntakeBudget с read-only probe и списанием только принятого объёма на gameTime; выход/освобождение места не обновляют intake budget. Счётчик transient и не сериализуется; прежний GtBuffer BigInteger/decimalNBT остаётся. Новый helper не переносит finiteIII model на старыеBE. Строки import/helperfields и version321 добавлены; MachineDefs/SecondTierDefs/GtBuffer/NBT/loss/output/III/resources/радиация/Plotnick не менялись.
+
+legacy_accumulator_test: real core/defs и дословные fields/imports/receive/push methods обоихBE, MC/route/NBTboundaries отдельно. 80605assertions PASS; randomized200×100×2, несколько источников, simulate, следующий тик, capacity, accepted-only, callback, всеI/IIнаправления,IIIветка, source-debit заданного route loss. Начальный testfixtureFAIL ожидал144000от2источников по32000: фактические64000корректны; fixture→5источников, баланс/production не менялись радиPASS. Mutation8/8 assertion-killed: возвращены старые отсутствующийIIbranch/per-callI/per-callII и5прочих дефектов бюджета/half-difference. Исходники мутируются только в temp dirs, compiler failure не kill. Генерация сохраняет productionimports, не скрывает missing import.
+
+Первый aggregate82PASS/0SKIP/0FAIL, /tmp/gonzo321-first.log. FullMC Gradle/nativeBE/GameTests/direct-wire routing/reload/GPU/игра не выполнялись; нет нового игрового закрытия PERF-001/7/8. Метод-harness не выдаётся за полный typecheck этихBE. CURRENT/MACHINES/CAPABILITIES/AUTOMINER/INTEGRATIONS/AUDIT синхронно обновлены ответами/статусами; исходные удалённые абзацы ниже. Остальные root-регрессии и архитектура1–6/9–14 ещё впереди.
+
+#### Дословно заменённые фрагменты
+
+**CURRENT-STATE.md, перед циклом321:**
+
+````text
+- До применения каждого метода: настоящий Java/method harness там, где доступно, отрицательная проба старой реализации и mutation sensitivity; source-only результат отделять от native Minecraft/GameTest.
+````
+
+**CURRENT-STATE.md, перед циклом321:**
+
+````text
+- Независимые блокеры5/6/9 не запрещают проверить другие пункты; но не подменять авторскую политику выдуманными tickets/флагами/кулдаунами.
+````
+
+**MACHINES.md, перед циклом321:**
+
+````text
+Source baseline320: I не выделяет II перед generic GtuSink, I/II intake ограничен на вызов, а не на gameTime. Требуются симметричное half-difference равновесие абсолютных milli-запасов и общий tick intake budget при сохранении старых intake/output/capacity/loss/NBT. Simulation не должна тратить бюджет. Это новая заявка после принятия ENG-001, не изменение чисел III и не перенос всей конечной модели III на старый GtBuffer. Проверки нескольких источников/прямого и проводного пути/равенства/границ тика ещё предстоят.
+
+````
+
+Полная дословная редакция CURRENT до всех изменений321 (включая заголовок/статус и подпункты5–9) дополнительно сохранена в [OUTDATED_PERF_PLAN_CURRENT](archive/editions/0.3.321/OUTDATED_PERF_PLAN_CURRENT-STATE.md), Git038fc35/hash/bytes зарегистрированы.
+
+**AUDIT.md, заменённый заголовок перед доставкой321:**
+
+````text
+**Последний полный локальный прогон, TEX-001 / 0.3.320: 81 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+**MACHINES.md, заменённый заголовок перед доставкой321:**
+
+````text
+## PERF-001 — новые исправления аккумуляторов I/II, ещё не применены
+````
+
+Финальный повтор321 после полного обновления профилей: **82 PASS / 0 SKIP / 0 FAIL**, /tmp/gonzo321-delivery.log; legacy80605assertions/8of8assertion-killed. Docs11editions сGit/hash/bytes,29live/75immutable/4173source-items/69dispositions PASS; links1209/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Новые изменения ограничены7/8, helper/test/version и документами/архивом. FullMC/native/gameplay не запускались, остальные12пунктов не исправлены. Подготовлено к commit/push по стоящему разрешению автора.

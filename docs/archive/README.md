@@ -20,3 +20,5 @@
 - [Редакции 0.3.315 перед D-AUD1](editions/0.3.315/README.md): CURRENT-STATE и RAD_ITEMS до code-first ремонта audit-пинов.
 
 - [CURRENT 0.3.320 перед закрытием девяти задач и PERF-001](editions/0.3.320/README.md): полная редакция, manifest; решение автора28.10.2026 и исключение четырёхпатчевого удержания.
+
+- [PERF-001 перед ответами автора и циклом7/8](editions/0.3.321/README.md): полная редакция CURRENT из038fc35, manifest.
