@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/7–8 / 0.3.321: 82 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, PERF-001/4 / 0.3.322: 83 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -19,6 +19,7 @@
 | Скрипт | Назначение/самоописание |
 |---|---|
 | [_ver.py](../audit/_ver.py) | Единая проверка версии мода для пинов (08.10.2026). |
+| [routing_cache_test.py](../audit/routing_cache_test.py) | PERF-001/4: production cache methods, пустой/положительный кэш, version/TTL, lookup boundaries;126assertions и5mutants, не native cart/transfer test. |
 | [legacy_accumulator_test.py](../audit/legacy_accumulator_test.py) | PERF-001/7–8: настоящие receive/push методы I/II + GtBuffer/Defs/TickIntakeBudget, aggregate intake/equilibrium; --mutation-check8assertion kills, не fullMC compile. |
 | [model_texture_paths_test.py](../audit/model_texture_paths_test.py) | TEX-001: реальные item/blockstate/model цепочки и существование текстур после авторского переноса в third/; --mutation-check проверяет9подмен, не GPU render. |
 | [achievement_tree_test.py](../audit/achievement_tree_test.py) | Static regression contract for the Energy advancement tree and event triggers.""" |
@@ -334,3 +335,15 @@ Production: TickIntakeBudget + receiveGtu обоих старыхBE, branchII в
 --mutation-check **8/8 assertion-killed**, compiler failures не считаются: missingIIbranch/full-diff, no-used budget, mutating simulation, requested-vs-accepted debit, never reset tick, oldper-callI, oldper-callII. Генератор harness берёт именно нужные productionimports, не скрывает забытый импорт wildcard. Первый aggregate **82PASS/0SKIP/0FAIL**, `/tmp/gonzo321-first.log` (81старый+новый). Java21/ECJ/Pillow восстановлены в ignored.cache; fullMC Gradle/build/GameTests/direct+wire/reload/playtest не запускались. Оставшиеся12пунктов PERF-001 не исправлены, вся задача не закрыта.
 
 Финальный повтор321 после полного обновления профилей: **82 PASS / 0 SKIP / 0 FAIL**, /tmp/gonzo321-delivery.log; legacy80605assertions/8of8assertion-killed. Docs11editions сGit/hash/bytes,29live/75immutable/4173source-items/69dispositions PASS; links1209/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Новые изменения ограничены7/8, helper/test/version и документами/архивом. FullMC/native/gameplay не запускались, остальные12пунктов не исправлены. Подготовлено к commit/push по стоящему разрешению автора.
+
+## PERF-001/4 — небольшой цикл0.3.322
+
+Автор попросил лёгкие независимые фиксы за один заход, тяжёлое/спорное оставить на потом в текущей задаче. Формат handoff: номера реализации, отдельный игровой чек-лист/ожидаемое поведение; архив только после явного «добро». В этом цикле выбран только4;7/8из321 включены в очередь приёмки, их код не менялся.
+
+После snapshot-восстановления HEAD/indexbf5e72e: временный индекс доказал полное равенство worktree с origin707bc30 (tree3af78b34234f60e3129b79295f5c051cf1a9da99). Только затем mixed-reset на origin, без перезаписи WIP. Java21/ECJ/Pillow восстановлены в ignored.cache. Production: ItemRouting.sinksCached OR→AND, комментарии о TTL/live-проверке и version322; TTL40/budget2048/throughput/физические lookup/liveSinks/sinkLive/радиация/accumulators/PNG/Plotnick не менялись.
+
+routing_cache_test.py компилирует дословные Sink/CachedSinks records/cache fields/constants и методы onWorldEdit/topoVersion/sinksCached/liveSinks. BFS discovery/контейнерный lookup/часы — узкие doubles, не настоящий мир. **126assertions PASS:** пустой поиск→появился endpoint без block edit; age1..40reuse/age41refresh; положительный кэш тоже истекает, hits не сдвигают builtTick; version change внутриTTL; live rejection→удаление cache entry; разные миры/старты; прежний client branch; exhausted-budget fallback и retry при следующем доступном tick. Source sinkLive/path и transfer не переписывались; весь ItemRouting компилируется прежним typecheck с boundary stubs.
+
+--mutation-check: **5/5 assertion-killed**, включая точный старыйOR, игнорированиеTTL/версии, вечный пересчёт и сдвиг границы40. Ошибки компиляции не считаются kill, рабочий файл не мутируется. Первый aggregate **83PASS/0SKIP/0FAIL** (/tmp/gonzo322-first.log):82старых+новый. Native Gradle/Minecraft/GameTests/вагонетка/перенос/TPS не запускались. При исчерпанном BFS-бюджете fallback оставлен — пункт3ещё не закрыт; обещания жёсткого времени discovery на перегруженной сети нет. Архивировать4/7/8без нового ответа автора запрещено.
+
+Финальная доставка322: повтор полного suite **83PASS/0SKIP/0FAIL**, /tmp/gonzo322-final.log; повтор cache126assertions/5of5assertion-killed, /tmp/gonzo322-mutations.log; whole ItemRouting в typecheck56real/154stubs/0errors. Docs11editions/29live/75immutable/4173source-items/69dispositions; links1210/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Ни одного изменения archive/DEFFERED;4/7/8остаются вCURRENT до авторского ответа. Native Minecraft/build/GameTests/игровой перенос не запускались. Подготовлено к commit/push в фиксированную ветку по разрешению автора.

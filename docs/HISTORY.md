@@ -4835,3 +4835,61 @@ Source baseline320: I не выделяет II перед generic GtuSink, I/II 
 ````
 
 Финальный повтор321 после полного обновления профилей: **82 PASS / 0 SKIP / 0 FAIL**, /tmp/gonzo321-delivery.log; legacy80605assertions/8of8assertion-killed. Docs11editions сGit/hash/bytes,29live/75immutable/4173source-items/69dispositions PASS; links1209/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Новые изменения ограничены7/8, helper/test/version и документами/архивом. FullMC/native/gameplay не запускались, остальные12пунктов не исправлены. Подготовлено к commit/push по стоящему разрешению автора.
+
+<a id="v-0-3-322"></a>
+### 0.3.322 — PERF-001/4, лёгкий независимый фикс и новый порядок приёмки
+
+28.10.2026, база707bc30625e55845dd6eba1c0da787fc914953bc / runtime321. Автор попросил лёгкие пункты небольшими заходами, тяжёлое/спорное позже; после фикса присылать «закрытоX/Y…», «проверить в игре», «ожидаемое поведение»; только после его «добро» закрытые пункты уезжают в архив, цикл продолжается до пустой текущей задачи. Это не новое подтверждение игровой приёмки7/8. ВCURRENT сохранены все14пунктов; готовые по реализации4/7/8отдельно ждут игрового ответа, остальные11не применены. Ничего из текущей PERF-001в архив/DEFFERED не переносилось.
+
+Временный индекс доказал полное равенство snapshot worktree origin707bc30: tree3af78b34234f60e3129b79295f5c051cf1a9da99; после этого безопасный mixed-reset восстановил branch/index без изменения файлов. RULES/DOCS_RULES/CURRENT/CAPABILITIES и архивные указатели маршрутизации проверены; исходный архив не переписывался. Исторический штамп/TTL не делает староеOR правильной политикой; новая заявка4явно требует независимого старения при неподвижных блоках.
+
+Применён только ItemRouting.sinksCached: hit.version()==version **AND** age≤40 вместоOR. Пустой cache больше не бессмертен без world edits, новая версия инвалидирует и молодой cache. КонстантыTTL40/BFS2048/throughput не менялись. Сохранены прежние liveSinks/sinkLive и exhausted-budget fallback: новый discovery требует доступного бюджета, fairness/resumableBFS3ещё впереди. Поясняющие source comments приведены к факту; version322. Нет изменения живого lookup, loaded-политики5, identity1, экономики/радиации/аккумуляторов7/8, PNG/Plotnick/рецептов. Гарантии жёсткого discovery latency на насыщенной сети не выдумываются.
+
+Новый routing_cache_test:126assertions на production methods/fields/constants/records сMC/BFSlookup boundaries,5/5 временных mutations assertion-killed (точный старыйOR, безTTL, безверсии, всегдапересчёт, невернаяграница40). Тестирует arrival безblock edit, expiry negative/positive, young version mismatch, no builtTick refresh, live rejection invalidation, worlds/positions, client branch, budget exhausted/retry. Это не нативный entity/transfer test; прежний full ItemRouting входит вtypecheck. Первый aggregate83PASS/0SKIP/0FAIL /tmp/gonzo322-first.log; новый полныйMinecraft/Gradle/GameTests/игра/TPS не запускался.
+
+CURRENT содержит короткий handoff4/7/8:4линия систочником/пустымвыходом→одна minecart прибывает безblockedit→вмалойненасыщеннойсети находитсяпримерно2–3секпри20TPS→отъезд безпотерь; неиспользовать double chest изнезакрытого1. 7I→IIпоабсолютномузапасу, прямой/проводноймаршрут. 8несколькоисточников, входI≤32GTU/t,II≤144GTU/t, прежнийспадI0,016/II0,010GTU/t, перезаход. Формат/текущий статус синхронизированы сCAPABILITIES/AUDIT; удалённые небольшие фрагменты ниже дословно. Архив/task closure только по следующему авторскому подтверждению.
+
+#### Дословно заменённые фрагменты документов
+
+**CURRENT-STATE.md, перед циклом322:**
+
+````text
+**Runtime: 0.3.321; PERF-001, 28.10.2026.** Постановка/архивирование — `038fc35`; этот цикл применяет только7/8 (аккумуляторы I/II). Остальные12пунктов в исследовании/проектировании, не исправлены. Полный журнал — [HISTORY](HISTORY.md#v-0-3-321).
+````
+
+**CURRENT-STATE.md, перед циклом322:**
+
+````text
+**Статус: в процессе — первый блок7/8 реализован, ждёт native/игровой проверки; остальные12пунктов не применены.** Все14пунктов автора остаются одной текущей задачей. Ответы по5/6/9 зафиксированы ниже; это не закрывает соответствующие исправления. Авторские серверные пробы — предоставленные автором доказательства, не самостоятельно воспроизведённые здесь тесты. TPS/heap не измерены; предложения остаются кандидатами, а не утверждённым единственным методом.
+````
+
+**CURRENT-STATE.md, перед циклом322:**
+
+````text
+#### 4. Подъехавшая контейнер-сущность
+
+**Источник:** по коду; cache hit использует version equal **OR** age≤TTL. Блоки не менялись — пустой список не стареет.
+**Кандидат лечения:** валидная версия **и** ограниченный возраст, дополненный живым разрешением entity endpoint. TTL/текущий throughput попутно не менять; не полагаться только на setBlock. Проба: пустой поиск→вагонетка приехала без block edit→находится; отъезд/замена также не дают ghost sink.
+
+
+````
+
+**CURRENT-STATE.md, перед циклом322:**
+
+````text
+- До применения каждого метода: production Java/method harness там, где доступно, отрицательная проба старой реализации и mutation sensitivity. Для7/8 этот этап выполнен (80605assertions/8mutants); native Minecraft/GameTest остаётся отдельным уровнем. Для других пунктов root-регрессии ещё впереди.
+````
+
+**CAPABILITIES.md, перед циклом322:**
+
+````text
+- ItemRouting пытается проверять живые цепи/приёмники, но в baseline320 установлены дефекты: wrapper identity двойного сундука через==, sentinel усечения BFS затирается, TTL использует OR; гарантия полного/актуального кэша сейчас не подтверждается. Активная PERF-001/1/3/4/13/14 должна исправить это, сохранив throughput и запрет непроверенного пути.
+````
+
+**AUDIT.md, перед циклом322:**
+
+````text
+**Последний полный локальный прогон, PERF-001/7–8 / 0.3.321: 82 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+Финальная доставка322: повтор полного suite **83PASS/0SKIP/0FAIL**, /tmp/gonzo322-final.log; повтор cache126assertions/5of5assertion-killed, /tmp/gonzo322-mutations.log; whole ItemRouting в typecheck56real/154stubs/0errors. Docs11editions/29live/75immutable/4173source-items/69dispositions; links1210/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check clean. Ни одного изменения archive/DEFFERED;4/7/8остаются вCURRENT до авторского ответа. Native Minecraft/build/GameTests/игровой перенос не запускались. Подготовлено к commit/push в фиксированную ветку по разрешению автора.

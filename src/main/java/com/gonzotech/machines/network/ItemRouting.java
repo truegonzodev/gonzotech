@@ -180,7 +180,7 @@ public final class ItemRouting {
     private static int pushItems(Level level, BlockPos pipePos, Container src, Direction srcFace,
                                  List<Sink> sinks, BlockPos excludeSrc, int budget, int perItemCap, long now) {
         // 0.3.306 (автор 26.10, подтверждено в игре: «передают ещё 1–5 тиков»):
-        // кэш топологии живёт до TOPO_TTL_TICKS после правки мира, поэтому
+        // даже свежий по штампу/TTL кэш не доказывает живость сущности, поэтому
         // перед вставкой ВСЕ приёмники проверяются повторным обходом: цель —
         // тот же контейнер на своём месте, каждая труба маршрута цела и
         // соединена. Что не прошло проверку — не используется; если от списка
@@ -305,9 +305,9 @@ public final class ItemRouting {
     // ───────────────────── кэш топологии (0.3.299 N13) ─────────────────────
     // collectSinks бегал по каждой открытой трубе каждый тик: куча труб —
     // тысячи getBlockState на ровном месте. Кэш приёмников стартовой трубы
-    // живёт, пока геометрия мира не изменилась (штамп от LevelChunk-миксина —
-    // точно для поршней/команд/взрывов) либо пока не истечёт TOPO_TTL_TICKS
-    // (потолок устаревания на случай пути, о котором миксин не знает).
+    // считается свежим только при совпадении штампа геометрии И непросроченном
+    // TOPO_TTL_TICKS. Контейнер-сущность может приехать без block edit; один
+    // неизменный штамп не должен навсегда удерживать даже пустой результат.
     // TOPO_BUDGET_PER_TICK — лимит новых BFS-узлов на игровой тик: перерасход
     // берёт прошлый результат трубы или отдаляет пересчёт на следующий тик.
 
@@ -345,7 +345,7 @@ public final class ItemRouting {
         CachedSinks hit = perLevel == null ? null : perLevel.get(startPipe.asLong());
         long version = topoVersion(level);
         if (hit != null
-            && (hit.version() == version || now - hit.builtTick() <= TOPO_TTL_TICKS)) {
+            && (hit.version() == version && now - hit.builtTick() <= TOPO_TTL_TICKS)) {
             return hit.sinks();
         }
         if (topoBudget <= 0) return hit != null ? hit.sinks() : List.of();
