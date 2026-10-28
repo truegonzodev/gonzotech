@@ -278,6 +278,9 @@ public final class ItemRouting {
 
     /** Пытается положить 1 предмет в конкретный слот (стак или пустой). */
     private static boolean tryPlace(Container dst, int slot, ItemStack one) {
+        int limit = Math.min(one.getMaxStackSize(),
+            com.gonzotech.machines.inventory.SlotCapacity.limit(dst, slot));
+        if (limit <= 0) return false;
         ItemStack cur = dst.getItem(slot);
         if (cur.isEmpty()) {
             ItemStack put = one.copy();
@@ -287,7 +290,7 @@ public final class ItemRouting {
             return true;
         }
         if (ItemStack.isSameItemSameComponents(cur, one)
-            && cur.getCount() < Math.min(cur.getMaxStackSize(), dst.getMaxStackSize())) {
+            && cur.getCount() < Math.min(cur.getMaxStackSize(), limit)) {
             com.gonzotech.radiation.engine.ExternalRadiation.merge(cur, one, 1);
             cur.grow(1);
             dst.setChanged();

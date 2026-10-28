@@ -49,7 +49,10 @@
     "SimpleContainerRadiationMixin",
     "InvWrapperRadiationMixin",
     "FurnaceRadiationOutputMixin",
-    "CreativeRadiationTransferMixin"
+    "CreativeRadiationTransferMixin",
+    "InvWrapperSlotCapacityMixin",
+    "SidedInvWrapperSlotCapacityMixin",
+    "HopperSlotCapacityMixin"
   ],
   "client": [
     "client.AdvancementTabMixin",

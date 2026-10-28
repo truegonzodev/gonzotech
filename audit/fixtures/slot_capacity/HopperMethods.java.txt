@@ -1,0 +1,49 @@
+private static ItemStack tryMoveInItem(@Nullable Container p_59321_, Container p_59322_, ItemStack p_59323_, int p_59324_, @Nullable Direction p_59325_) {
+        ItemStack itemstack = p_59322_.getItem(p_59324_);
+        if (canPlaceItemInContainer(p_59322_, p_59323_, p_59324_, p_59325_)) {
+            boolean flag = false;
+            boolean flag1 = p_59322_.isEmpty();
+            if (itemstack.isEmpty()) {
+                p_59322_.setItem(p_59324_, p_59323_);
+                p_59323_ = ItemStack.EMPTY;
+                flag = true;
+            } else if (canMergeItems(itemstack, p_59323_)) {
+                int i = p_59323_.getMaxStackSize() - itemstack.getCount();
+                int j = Math.min(p_59323_.getCount(), i);
+                p_59323_.shrink(j);
+                itemstack.grow(j);
+                flag = j > 0;
+            }
+
+            if (flag) {
+                if (flag1 && p_59322_ instanceof HopperBlockEntity hopperblockentity1 && !hopperblockentity1.isOnCustomCooldown()) {
+                    int k = 0;
+                    if (p_59321_ instanceof HopperBlockEntity hopperblockentity && hopperblockentity1.tickedGameTime >= hopperblockentity.tickedGameTime) {
+                        k = 1;
+                    }
+
+                    hopperblockentity1.setCooldown(8 - k);
+                }
+
+                p_59322_.setChanged();
+            }
+        }
+
+        return p_59323_;
+    }
+
+private static boolean canPlaceItemInContainer(Container p_59335_, ItemStack p_59336_, int p_59337_, @Nullable Direction p_59338_) {
+        if (!p_59335_.canPlaceItem(p_59337_, p_59336_)) {
+            return false;
+        } else {
+            if (p_59335_ instanceof WorldlyContainer worldlycontainer && !worldlycontainer.canPlaceItemThroughFace(p_59337_, p_59336_, p_59338_)) {
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+private static boolean canMergeItems(ItemStack p_59345_, ItemStack p_59346_) {
+        return p_59345_.getCount() <= p_59345_.getMaxStackSize() && ItemStack.isSameItemSameComponents(p_59345_, p_59346_);
+    }

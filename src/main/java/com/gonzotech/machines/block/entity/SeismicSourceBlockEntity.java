@@ -1,6 +1,7 @@
 package com.gonzotech.machines.block.entity;
 
 import com.gonzotech.machines.menu.SeismicSourceMenu;
+import com.gonzotech.machines.inventory.SlotCapacity;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,7 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * «Произвести импульс» — следующий сейсмический пакет.
  */
 public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
-    implements WorldlyContainer {
+    implements WorldlyContainer, SlotCapacity {
 
     public static final int SLOT_DYNAMITE = 0;
     public static final int CONTAINER_SIZE = 1;
@@ -55,16 +56,13 @@ public final class SeismicSourceBlockEntity extends BaseMachineBlockEntity
     public void setItem(int slot, ItemStack stack) {
         if (slot != SLOT_DYNAMITE) return;
         if (!stack.isEmpty() && !isDynamite(stack)) return;
-        // 0.3.299 (N7): излишек многостопки не отрезается в void, а падает
-        // у блока — защита от прямых записей (команды, сторонние моды),
-        // которым canPlaceItem не указ.
-        if (stack.getCount() > 1 && level != null) {
-            net.minecraft.world.level.block.Block.popResource(level, worldPosition,
-                stack.copyWithCount(stack.getCount() - 1));
-        }
-        super.setItem(slot, stack.isEmpty()
-            ? ItemStack.EMPTY
-            : stack.copyWithCount(1));
+        SlotCapacity.requireReplacement(this, slot, stack);
+        super.setItem(slot, stack);
+    }
+
+    @Override
+    public int slotCapacity(int slot) {
+        return slot == SLOT_DYNAMITE ? 1 : 0;
     }
 
     @Override

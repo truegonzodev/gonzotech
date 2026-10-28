@@ -33,6 +33,7 @@ if not java or not Path(java).is_file():
     raise SystemExit("Java 21 required: set JAVA_HOME or PATH")
 
 real_files = [
+    ROOT / "src/main/java/com/gonzotech/machines/inventory/SlotCapacity.java",
     # 0.3.319: compile the entire III gate, not just grep its new storage outputs.
     ROOT / "src/main/java/com/gonzotech/machines/crafting/TierThreeCrafting.java",
     ROOT / "src/main/java/com/gonzotech/core/client/InstrumentHud.java",

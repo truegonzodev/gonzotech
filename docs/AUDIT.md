@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/4 / 0.3.322: 83 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, PERF-001/2 / 0.3.323: 84 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
 
 ## Команды и доказательства
 
@@ -19,6 +19,7 @@
 | Скрипт | Назначение/самоописание |
 |---|---|
 | [_ver.py](../audit/_ver.py) | Единая проверка версии мода для пинов (08.10.2026). |
+| [slot_capacity_test.py](../audit/slot_capacity_test.py) | PERF-001/2: production slot/admission и upstream wrappers,354assertions/10mutants; MC doubles/manual mixin wiring, не native bootstrap. |
 | [routing_cache_test.py](../audit/routing_cache_test.py) | PERF-001/4: production cache methods, пустой/положительный кэш, version/TTL, lookup boundaries;126assertions и5mutants, не native cart/transfer test. |
 | [legacy_accumulator_test.py](../audit/legacy_accumulator_test.py) | PERF-001/7–8: настоящие receive/push методы I/II + GtBuffer/Defs/TickIntakeBudget, aggregate intake/equilibrium; --mutation-check8assertion kills, не fullMC compile. |
 | [model_texture_paths_test.py](../audit/model_texture_paths_test.py) | TEX-001: реальные item/blockstate/model цепочки и существование текстур после авторского переноса в third/; --mutation-check проверяет9подмен, не GPU render. |
@@ -355,3 +356,17 @@ routing_cache_test.py компилирует дословные Sink/CachedSinks
 CURRENT сохраняет11открытых пунктов со старыми номерами;4/7/8 вынесены в archive/editions/0.3.322 с точным исходным CURRENT460edfb и manifest. MACHINES/CAPABILITIES/HISTORY/archive index синхронизированы. Прежний полный suite83PASS и mutation результаты — исторические, не новый прогон этого docs-only шага. Проверки документации записываются ниже после исполнения.
 
 Проверки docs-only закрытия: docs_structure PASS —12предыдущих редакций сGit/hash/bytes,29live/75immutable/4173source-items/69dispositions; doc_links1222/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS после удаления концевого пробела в цитате ответа (слова автора не менялись). Полный code-suite/nativeMinecraft не перезапускались: код/тесты/ресурсы не менялись. Рабочая ветка arena/48845eec-gonzotech, runtime0.3.322.
+
+## PERF-001/2 — одноштучные слоты на подаче,0.3.323
+
+Автор разрешил фикс2и расширил формулировку на единичные слоты вроде карт/TNT «во всех возможных стезях». После вопроса о raw setItem прямо отверг «записать64и потом выбрасывать»: из64на входе берётся1,63остаются у источника. Production SlotCapacity, A/B/TNT capacities, admission gates вItemRouting/InvWrapper/SidedInvWrapper/Hopper и проверки raw replacement реализованы; только новые invalid replacements fail-fast, не drop/trim. Legacy in-place/старый TNTloadSurplus сохранены, обычный склад/GTU/баланс/радиационный закон/PlotnickBlock/PNG не менялись.
+
+slot_capacity_test354assertions: обе карты/TNT,1/2/16/64offers через реальные upstream InvWrapper/SidedInvWrapper algorithms, simulate/commit/repeat/occupied, остаток/сумма/компоненты/caller mutation/dirty, обычный склад и depot64, sided index≠physical index иinvalid, реальные ItemRouting.insertOne/tryPlace, bulk/reject/occupied Hopper, глобальный container max1, raw invalid replacement без изменения/drop, legacy безtrim/in-place update. Тела BE/труб извлечены из production; storage/dimensions/registry/тип мира — doubles (виртуал сокращён для пробы, не новая смета). Hopper original из явно неофициального decomp mirror. Все три полные mixin source тоже компилируются против annotation/API doubles; ручной вызов hook bodies не выдаётся за реальную Mixin weaving/bootstrap. Existing ExternalRadiation.merge в этой count-пробе — boundary double; действующие radiation tests идут общим suite.
+
+--mutation-check **10/10 assertion-killed**: отключитьslot cap; отключитьraw replacement guard; игнорироватьglobalmax1; вернутьA/B64; отключитьInv/Sided hook; перепутатьwrapper/physical index; передатьHopperполнуюстопку вместоoffer; вpipeиспользоватьslot0вместонужного; разрешитьoccupiedA/B. Ошибки компиляции не считаютсяkill, рабочие файлы не мутируются. Неожиданный runtime invalid write в пробе превращается в явную AssertionError нарушения admission, не маскируется как проход.
+
+Upstream fixtures LGPL2.1/origin/hash сохранены offline; byte equality сNeoForge f4b4... и Hopper mirror6e967... проверена gh contents по pinned commits. MixinExtrasWrapMethod проверен на0.4.1; API точного установленного NeoForge21.4.157/nativeMC не компилировался. Первый aggregate **84PASS/0SKIP/0FAIL**, /tmp/gonzo323-first.log; whole SlotCapacity/ItemRouting typecheck57real/154stubs/0errors (+missing-import negative1). Java21/ECJ/Pillow восстановлены вignored.cache.
+
+Пункт2ждёт игры/запуска автора, не архивируется. Выявленные head-card permission vs comment и старые AUTOMINER512/54 vs current runtime64/216 отдельно показаны автору; ответа пока нет, эти политики/баланс не выбирались. Other10пунктов не применены, принятые4/7/8не открыты заново.
+
+Финальный повтор323: **84PASS/0SKIP/0FAIL**, /tmp/gonzo323-final.log; новый admission-тест **354assertions/10of10assertion-killed**, /tmp/gonzo323-mutations.log (добавлены wrong-type offers, raw-guard/globalmax mutants и проверки injector declarations/GUI1). Typecheck57real/154stubs/0errors и missing-import negative1. Docs12snapshots сGit/hash/bytes/29live/75immutable/4173source-items/69dispositions; links1223/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Архив/DEFFERED/PlotnickBlock/радиационныйruntime/энергобаланс/PNG не менялись. Пункт2готов к авторской игре, не закрыт и не архивирован. NativeMinecraft/Gradle/Mixinbootstrap не запускались; два смежных вопроса заданы, ответа пока нет. Подготовлено к commit/push в фиксированную ветку по разрешению автора.

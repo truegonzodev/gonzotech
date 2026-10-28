@@ -4939,3 +4939,71 @@ ReceiveGtu обоих старых аккумуляторов теперь им�
 ````
 
 Проверки docs-only закрытия: docs_structure PASS —12предыдущих редакций сGit/hash/bytes,29live/75immutable/4173source-items/69dispositions; doc_links1222/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS после удаления концевого пробела в цитате ответа (слова автора не менялись). Полный code-suite/nativeMinecraft не перезапускались: код/тесты/ресурсы не менялись. Рабочая ветка arena/48845eec-gonzotech, runtime0.3.322.
+
+<a id="v-0-3-323"></a>
+### 0.3.323 — PERF-001/2, единичные слоты ограничиваются до переноса
+
+28.10.2026, база668810d9132374ec7216331849fe8ac3e20a577f / runtime322. После архива4/7/8 автор спросил следующий лёгкий фикс; предложен2 (per-slot1картA/B), не BFS/очереди/WG. Автор разрешил: «делай, правильно, нужно ограничить единичные слоты аля карт и тнт одной штукой во всех возможных стезях чтобы ни что не могло положить туда стопку». Прочитаны RULES/DOCS_RULES/CURRENT, профильные MACHINES/CAPABILITIES/AUTOMINER/INTEGRATIONS и архивные состояния; branch/HEAD668810d/worktree были согласованы, чужой WIP не трогали.
+
+Исследование: GUI CardSlot/DynamiteSlot уже1, canPlaceItemA/B проверяет только тип, ItemRouting.tryPlace merge берёт общийcontainer max, InvWrapper/SidedInvWrapper.getSlotLimit поумолчанию общийmax. Один canPlace(empty) не ограничивает bulk offer. Источник TNT имелgetMaxStackSize1/empty guard, но rawsetItem выбрасывал лишнее. Вопрос автору о direct setter предложил дваварианта: keep1/drop remainder либо reject raw write. Автор не выбрал вариант, уточнил первопричину подачи дословно:
+
+````text
+а зачем выбрасывать почему нельзя ещё на этапе "подачи" смотреть так у нас есть 64 штуки тнт окей берём одну и переносим в слот, чтобы в целом исключить "мы уже принесли 64 и что теперь делать" другие моды ведь не выкидывают на пол там всё работает без этого костыля с одностопочными штуками всё что связано
+````
+
+В ответ подтверждено исправление admission: offer1/остаток63, occupied0, не floor fallback. Введён SlotCapacity.limit/insert/requireReplacement; Plotnick.slotCapacityA/B=1/остальноепрежнее, SeismicTNT=1. ItemRouting проверяет лимит до setItem/grow. Новые InvWrapper/SidedInvWrapper return hooks ограничивают слот только для opt-in, сохраняют стандартные special cases/исходный handlerinsert/simulate/return. Sided remap wrapper index→physical slot, invalid→0. HopperWrapMethod вызываетoriginalодинраз сbounded offer, возвращает непринятую часть исходной подачи; ordinary valid full-container path остаётся, globally-onecontainers также соблюдаются. Новые три mixin зарегистрированы. Radiation original redirect/copy hooks/законы не переделаны. Raw setItemнеinsertion: новая invalid replacement>1явноотвергаетсяIllegalArgumentException безtrim/drop; legacyтаже-ссылка можетобновляться, старый TNTloadSurplus/NBT untouched. Это не ложная гарантия против модификацииживыхItemStack/NBTстороннимкодом.
+
+GUI FuelSlot/контейнеры реактора ужеmax1, ghostfilterнефизическийслот, ихruntimeне менялся. У ordinary/virtual склада прежняя фактическая смета, intake/GTU/source-vs-wirecaps/аккумуляторы/бюджеты/BFS/TTL/чанки/WG/очереди/радиация/PNG/PlotnickBlock unchanged. Root11(setVirtual) отдельнонеприменён. Version323толькоэтотфикс.
+
+В тесте354assertions исполняются production helper/BE/ItemRouting/hook bodies сMC/storage/annotation doubles и реальными upstream wrapper algorithms; nativeMixinwiringзаменёнручным, не скрыт. ФикстурыкопииInvWrapper/SidedInvWrapper NeoForge1.21.4@f4b4a9655362b103b95769258ed6586597d8b7f4(LGPL2.1иlicense/origin/hash); HoppermethodsизнеавторитетногоmirrorKernelDotDLL/mcp-1.21.4@6e96771cc9652af23d86d558e30f9f39a7378225. ВсебайтысвереныпоpinnedGitHubcontents; сетьвтестененужна. MixinExtrasWrapMethodAPIдоступенв0.4.1, nativeNeoForge21.4.157непроверен. Fullsourceновыхmixinsкомпилируютсяharness, wholeSlotCapacity/ItemRouting входятtypecheck57real/154stubs. ПервоначальныйtypecheckнехваталItemStack.copyWithCountвстаромстабе — добавленреальныйметодAPI, не переписанproductionподстаб.
+
+Перваяfixtureпробаошибочнопредполагала,чтоinsertOneвсегдавыбереткарты,аstockheadsбылипусты. Выясненоотдельно: runtimeдопускаеткартывобычныеголовы/виртуал, комментарийisAllowedCardэтому противоречит. ДляизолированнойпробыA/Bдругиескладызаполненыдругимтипом, непеределанproductionподтест. ЕщёAUTOMINERсодержитстарые54/512приruntimevirtual216/54типа/MAX_STACK64. Оба расхождения явно показаны автору вопросом; ответа нет, типовая политика/баланс не выбирались, вCURRENTзафиксированыпоследствиядляигровойпробы.
+
+Mutation10/10assertion-killed: helpercap/rawguard/globalmax/A-Bcap/Invhook/Sidedhook/индекс/Hopperoffer/pipeindex/occupiedguard. Compiler failures killнеявляются; unexpectedinvalidwriteвharnessявноAssertionError. Первыйaggregate84PASS/0SKIP/0FAIL /tmp/gonzo323-first.log. Java21/ECJ/Pillowвignored.cache. FullGradle/Minecraft/GameTests/Mixinstartup/authorplayagentне запускались;354headlessassertionsнеполнаякомпиляцияBEинеnativehandlerproof.
+
+CURRENT2обновлён «реализовано323, ждёт игры», все11открытыхномеровсохранены,10остальныхнеприменены.4/7/8ужеархивированыи неоткрывалисьзаново;2неархивированбезавторскойприёмки. СинхроннообновленыMACHINES/CAPABILITIES/AUTOMINER/INTEGRATIONS/AUDIT, полнаяхрониказдесь; малыеудалённыефрагментыдословнониже. Игровойhandoff: запускбезMixinошибок, GUI/shift/drag/воронка/труба/handler64→1+63, occupiedпринимает0, simulateничегонекладёт, обычныйскладнеурезан, остатокненаземле, суммасохраняется; для A/B учитыватьостальныеместакладкарт. Повторитьпослеперезаходабезстарогоперегруза.
+
+#### Дословно заменённые фрагменты до323
+
+**CURRENT-STATE.md, база668810d:**
+
+````text
+**Runtime: 0.3.322; PERF-001, 28.10.2026.** Пункты4/7/8 подтверждены автором в игре и по его прямому разрешению убраны из текущей задачи в [архив](archive/editions/0.3.322/README.md). Открыты11пунктов:1/2/3/5/6/9/10/11/12/13/14; исходные номера сохранены. Код/runtime в этом документальном шаге не менялись. Полный журнал — [HISTORY](HISTORY.md#perf-001-478-accepted).
+````
+
+**CURRENT-STATE.md, база668810d:**
+
+````text
+**Статус: в процессе — открыты11пунктов.** Игровая приёмка4/7/8 получена, эти записи закрыты и сразу архивированы по явному распоряжению автора (исключение обычного удержания на четыре патча только для них). Остальные пункты ниже не реализованы и не переносятся в DEFFERED. Продолжаем лёгкие независимые фиксы небольшими заходами; тяжёлое/спорное позже в этой же задаче. После каждого фикса — номера, игровая проверка и ожидаемое поведение; следующий перенос в архив только после авторского подтверждения.
+````
+
+**CURRENT-STATE.md, база668810d:**
+
+````text
+#### 2. Одноштучные карты Плотника и автоматизация
+
+**Источник:** авторская серверная проба16карт в A. Source: CardSlot=1 только в menu; canPlaceItem/ThroughFace разрешают карты, ItemRouting.tryPlace берёт item/container max, не per-slot1.
+**Кандидат лечения:** единый серверный per-slot capacity для обоих слотов A/B, всех insert/merge/adapters и simulate/остатка, не только GUI. Проверить трубы/воронки/стандартный handler, пустой/занятый слот, карты без потери остатка. Не лечить общий дюп срезанием count; формат legacy не менять.
+
+
+````
+
+**CURRENT-STATE.md, база668810d:**
+
+````text
+- До применения каждого метода: production Java/method harness, отрицательная проба прежней реализации и mutation sensitivity, затем отдельная игровая приёмка автора. Для всех11открытых пунктов root-регрессии/лечение ещё впереди. Прежние принятые фиксы и их регрессии сохраняются, но не являются доказательством исправления этих пунктов.
+````
+
+**AUTOMINER.md, база668810d:**
+
+````text
+28.10.2026: прежние задачи приняты/архивированы автором; новая работа касается per-slot1 для обеих карт на всех путях автоматизации, rate/budget кнопок, ownerless WG, очередей/слоя и replacement-only setVirtual. Это отдельная заявка, а не объявление старых42пунктов повторно закрытыми. Source-проверка подтверждает опасный setter с insert/dump, но текущий игровой дюп не установлен. Deque/cursor/метка слоя — предложения для выбора и регрессий, не уже внесённое лечение. Политика чанков ItemRouting не расширяет прогрев Плотника5×5; PlotnickBlock.java read-only. Детали14пунктов и blockers — CURRENT; runtime пока не изменён.
+````
+
+**AUDIT.md, база668810d:**
+
+````text
+**Последний полный локальный прогон, PERF-001/4 / 0.3.322: 83 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+Финальный повтор323: **84PASS/0SKIP/0FAIL**, /tmp/gonzo323-final.log; новый admission-тест **354assertions/10of10assertion-killed**, /tmp/gonzo323-mutations.log (добавлены wrong-type offers, raw-guard/globalmax mutants и проверки injector declarations/GUI1). Typecheck57real/154stubs/0errors и missing-import negative1. Docs12snapshots сGit/hash/bytes/29live/75immutable/4173source-items/69dispositions; links1223/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Архив/DEFFERED/PlotnickBlock/радиационныйruntime/энергобаланс/PNG не менялись. Пункт2готов к авторской игре, не закрыт и не архивирован. NativeMinecraft/Gradle/Mixinbootstrap не запускались; два смежных вопроса заданы, ответа пока нет. Подготовлено к commit/push в фиксированную ветку по разрешению автора.

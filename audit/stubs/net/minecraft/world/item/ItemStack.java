@@ -9,6 +9,7 @@ public class ItemStack {
     public Item getItem() { return null; }
     public int getCount() { return 0; }
     public int getMaxStackSize() { return 64; }
+    public ItemStack copyWithCount(int count) { return new ItemStack(); }
     public ItemStack copy() { return new ItemStack(); }
     public void setCount(int count) { }
     public void grow(int by) { }

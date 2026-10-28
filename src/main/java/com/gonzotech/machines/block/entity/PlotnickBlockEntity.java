@@ -8,6 +8,7 @@ import com.gonzotech.machines.energy.MachineDefs;
 import com.gonzotech.machines.energy.PlotnickDefs;
 import com.gonzotech.machines.energy.Sinks.GtuSink;
 import com.gonzotech.machines.item.MemoryCardItem;
+import com.gonzotech.machines.inventory.SlotCapacity;
 import com.gonzotech.machines.menu.PlotnickMenu;
 import com.gonzotech.machines.miner.MarkerService;
 import com.gonzotech.machines.miner.MinerMarker;
@@ -92,7 +93,7 @@ import java.util.Set;
  * на карту. «Свернуться» (id 4) убирает разметку и снимает очередь.</p>
  */
 public final class PlotnickBlockEntity extends BlockEntity
-    implements GtuSink, WorldlyContainer, MenuProvider {
+    implements GtuSink, WorldlyContainer, MenuProvider, SlotCapacity {
 
     /** Девять активных слотов — классические ваниальные стопки (автор, 0.3.264). */
     public static final int SLOTS_ACTIVE = 9;
@@ -2090,6 +2091,9 @@ public final class PlotnickBlockEntity extends BlockEntity
             setVirtual(slot - CONTAINER_SIZE, stack); // трубы/воронки → хранилище
             return;
         }
+        if (slot == SLOT_CARD_A || slot == SLOT_CARD_B) {
+            SlotCapacity.requireReplacement(this, slot, stack);
+        }
         if (stack.getCount() > capacityFor(stack)) {
             // Сторонний код (клик-мердж) не должен рождать стопку сверх лимита.
             ItemStack overflow = stack.split(stack.getCount() - capacityFor(stack));
@@ -2153,7 +2157,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             }
             return true; // пустая ячейка принимает новый тип (до 54 — за счёт freeCell)
         }
-        if (slot >= SLOTS_ACTIVE) return isAllowedCard(slot, stack);
+        if (slot >= SLOTS_ACTIVE) return isAllowedCard(slot, stack) && items.get(slot).isEmpty();
         ItemStack head = items.get(slot);
         return head.isEmpty()
             || (ItemStack.isSameItemSameComponents(head, stack) && head.getCount() < capacityFor(stack));
@@ -2164,6 +2168,12 @@ public final class PlotnickBlockEntity extends BlockEntity
         // NonNullList.withSize фиксирован: set-петли, не clear()/add().
         for (int i = 0; i < items.size(); i++) items.set(i, ItemStack.EMPTY);
         for (int i = 0; i < virtual.size(); i++) virtual.set(i, ItemStack.EMPTY);
+    }
+
+    @Override
+    public int slotCapacity(int slot) {
+        if (slot < 0 || slot >= CONTAINER_TOTAL) return 0;
+        return slot == SLOT_CARD_A || slot == SLOT_CARD_B ? 1 : MAX_STACK;
     }
 
     @Override

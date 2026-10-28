@@ -1,0 +1,32 @@
+{
+  "files": [
+    {
+      "file": "InvWrapper.java",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/items/wrapper/InvWrapper.java",
+      "sha256": "6eb972e32e3b686cc51dc2728b39de408ef8e63b536ca6ffe9c5f5a486e66aea"
+    },
+    {
+      "file": "SidedInvWrapper.java",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/items/wrapper/SidedInvWrapper.java",
+      "sha256": "97393cf2a680b986a3be93a4b10844f9f81daf3af0a0ddc84e0b19265841c79a"
+    },
+    {
+      "file": "HopperMethods.java.txt",
+      "repository": "KernelDotDLL/mcp-1.21.4",
+      "commit": "6e96771cc9652af23d86d558e30f9f39a7378225",
+      "source": "src/main/java/net/minecraft/world/level/block/entity/HopperBlockEntity.java",
+      "sha256": "fec33f6e2e0dad7d3acf1f2079e598d4c980cadb57606195ceddefdaa3a97e82"
+    },
+    {
+      "file": "LICENSE-NeoForge.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "LICENSE.txt",
+      "sha256": "a8746534d481c0d1046a1c6c02acc034231ad45b56f04ca35212e1f23e3f2712"
+    }
+  ]
+}
