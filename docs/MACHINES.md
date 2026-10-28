@@ -165,8 +165,12 @@ GUI — [SUPER_CRUCIAL_FILE](SUPER_CRUCIAL_FILE.md); прогрессия — [P
 
 Sync: три независимых поля (milli remainder, units%1000, thousands), каждое 0…999; decode в меню, без signed-short overflow и без округления server storage. GUI III — X.Y через GtUnits.x1. Физический gate III и Creative-группы — PROGRESSION; точные координаты — SUPER_CRUCIAL_FILE. Рецептов нет до авторской сметы D-ENG1; новая графика временная с разрешения автора.
 
-Уточнение III-хранилищ / 0.3.319: устранён compileJava blocker TierThreeCrafting — пропущенный импорт machines.registry.ModMachines. Регистрация обоих устройств и их баланс/BE/I/O не менялись; полный gate III сохранён, рецепты всё ещё ждут автора. Production-класс gate включён в56-class boundary typecheck, отсутствие импорта проверяется негативной компиляцией. Это не доказательство полного Minecraft build/игрового I/O; BUILD-001 ждёт повторной авторской сборки.
+Уточнение III-хранилищ / 0.3.319: устранён compileJava blocker TierThreeCrafting — пропущенный импорт machines.registry.ModMachines. Регистрация обоих устройств и их баланс/BE/I/O не менялись; полный gate III сохранён, рецепты всё ещё ждут автора. Production-класс gate включён в56-class boundary typecheck, отсутствие импорта проверяется негативной компиляцией. Это не доказательство полного Minecraft build/игрового I/O; BUILD-001 закрыта по подтверждению автора28.10.2026; нового native build агентом не выполнялось.
 
 ## Блочные модели и новые пути текстур — 0.3.320
 
 После авторского731ff19 модели bore_pipe, geophone, miner_drill, plotnick, seismic_source, work_block и third_grinder используют gonzotech:block/third/ вместо удалённых block/second/ (7JSON/18slots). AccumulatorIII/battery уже использовали third/; их6PNG обновлены автором. Геометрия/грани/facing, blockstate/item IDs, GUI, BE/баланс/I/O и рецепты не менялись. Каталог текстур не устанавливает gameplay tier. Проверены существование всех model texture PNG и обе ссылки world/inventory; клиентская визуальная приёмка отдельно. Авторские PNG неизменны агентом; детали графики — AUDIO_VISUAL.
+
+## PERF-001 — новые исправления аккумуляторов I/II, ещё не применены
+
+Source baseline320: I не выделяет II перед generic GtuSink, I/II intake ограничен на вызов, а не на gameTime. Требуются симметричное half-difference равновесие абсолютных milli-запасов и общий tick intake budget при сохранении старых intake/output/capacity/loss/NBT. Simulation не должна тратить бюджет. Это новая заявка после принятия ENG-001, не изменение чисел III и не перенос всей конечной модели III на старый GtBuffer. Проверки нескольких источников/прямого и проводного пути/равенства/границ тика ещё предстоят.

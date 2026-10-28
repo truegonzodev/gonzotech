@@ -13,7 +13,7 @@
 | Шейдеры, заменяющие небо | **Вероятны конфликты** | GT меняет skybox/небесные эффекты (`space/client/SpaceSkyEffects`, солнечные эффекты и mixins). Shader pack, который тоже подменяет небо, может перекрыть или сломать визуал. Это риск, а не доказанный конфликт со всеми шейдерами; универсальная совместимость не обещана |
 | Моды генерации мира/биомов | **Возможны конфликты** | GT сам вмешивается в генерацию и biome source. Особенно опасны несовместимые подмены/инъекции источника биомов и нарушение lifecycle генерации. Отсутствие общей библиотеки согласования не доказывает баг другого мода |
 | TerraBlender | **Сейчас не поддерживается** | В текущем Java-коде нет адаптера/проверки его наличия; в build.gradle и neoforge.mods.toml нет dependency. Установка TerraBlender в сборку сама по себе не переводит GT на его API. Будущая согласованная задача — [D-INT1](DEFFERED.md#d-int1) |
-| WorldGuard / региональные флаги | Условная server-side интеграция через внешний bridge | Нужен реальный источник флагов; без него нельзя обещать региональную защиту. Границы — [CAPABILITIES](CAPABILITIES.md) |
+| WorldGuard / региональные флаги | **Текущий reflective path не соответствует стандартному WG7; PERF-001/9 активна** | Нужны реальный bridge, адаптация WorldEdit World, cell-based ownerless query всех3разрешений и health check. Без серверного прогона защита не заявляется; fallback/отсутствие bridge требуют решения автора. Границы — [CAPABILITIES](CAPABILITIES.md) |
 
 Для Simple Fog Control/Sodium/Lithium точные номера совместно проверенных версий и конфиг не предоставлены. Не подставлять придуманные номера и не превращать авторское подтверждение в собственный отчёт тестирования.
 
@@ -42,3 +42,7 @@ GT работает **standalone**, без TerraBlender. `DesolationPresetInject
 ## GUI layer вместо Post — 0.3.317
 
 Использованы штатные NeoForge1.21.4 RegisterGuiLayersEvent.registerAbove(VanillaGuiLayers.CHAT, id, layer) и mod-client registration; сигнатура/порядок/pose pop подтверждены upstream RegisterGuiLayersEvent/GuiLayerManager. Это исправляет размещение приборов в собственном моде, не объявляет протестированными все сторонние chat/HUD/render mods. Зависимости не менялись; GPU visual acceptance отдельно от typecheck/registration harness.
+
+## PERF-001/9 — начальный API research
+
+Независимо сверены официальные EngineHub исходники: WG version/7.0.x RegionContainer.get(com.sk89q.worldedit.world.World), RegionManager.getApplicableRegions(BlockVector3), WE BukkitAdapter.adapt(org.bukkit.World). Стандартный тип/методы не совпадают с текущим reflective path. API-source сверка не доказывает наличие классов/адаптации ServerLevel в конкретном hybrid-сервере. Требуются имя/версия реального bridge, mapping измерений и точная политика custom/standard flags; piston-protection нельзя молча считать эквивалентом положительного piston_allowed. Источники — HISTORY; зависимости/optional loading пока не меняются.

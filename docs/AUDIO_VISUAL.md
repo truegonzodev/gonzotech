@@ -91,3 +91,7 @@ InstrumentHud через client mod-bus RegisterGuiLayersEvent регистри�
 Авторский731ff19 переносит13PNG bore_pipe{,_top}, geophone{,_top}, miner_drill{,_top}, plotnick{,_top}, seismic_source{,_top}, work_block, third_grinder{,_top} из textures/block/second/ в textures/block/third/. В7 JSON models/block исправлены18 texture slots с gonzotech:block/second/ на gonzotech:block/third/; шесть PNG III-хранилищ обновлены автором без смены путей. Все19текущихPNG этих9блоков имеют16×16; авторские байты не изменены агентом. Это ресурсные каталоги, не новое решение о прогрессии/рецептах.
 
 Грани сохранены: bore_pipe end→_top, work_block all→base, пять cube_bottom_top-моделей top/bottom→_top и side→base. III accumulator сохраняет прежний cube_bottom_top, батарейка — cube с отдельной north face/up/down и particle. Model IDs/parents, UV, facing rotations и item definitions не менялись; мир и инвентарь используют те же исправленные block models. Проверка ресурсов:9цепочек/1098локальных slots,9/9мутаций отвергнуты. Это не baked-model/GPU/resource reload доказательство; нужен просмотр в клиенте.
+
+## Приёмка автора 28.10.2026
+
+Автор подтвердил и закрыл DOC-003/UX-001/HUD-RAD-001/TEX-001, включая ссылки после ретекстуринга320. Эти задачи больше не ждут авторского «да» в CURRENT. Это авторская приёмка, не новый GPU/client run агента. Новая PERF-001 не разрешает править PNG/GUI layout/HUD-геометрию; временные GUI-пары III и отложенные будущие возможности не объявлены реализованными.

@@ -18,3 +18,5 @@
 - [Редакции 0.3.312 перед RAD-001](editions/0.3.312/README.md): RAD_ITEMS, RAD_WORLD, CURRENT-STATE, AUDIT.
 
 - [Редакции 0.3.315 перед D-AUD1](editions/0.3.315/README.md): CURRENT-STATE и RAD_ITEMS до code-first ремонта audit-пинов.
+
+- [CURRENT 0.3.320 перед закрытием девяти задач и PERF-001](editions/0.3.320/README.md): полная редакция, manifest; решение автора28.10.2026 и исключение четырёхпатчевого удержания.

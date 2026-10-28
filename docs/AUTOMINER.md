@@ -35,3 +35,7 @@ Source-пины сверены с действующим резервом тру
 ## Текстуры комплекса — 0.3.320 / TEX-001
 
 Автор перенёс bore_pipe{,_top}, geophone{,_top}, miner_drill{,_top}, plotnick{,_top}, seismic_source{,_top}, work_block в textures/block/third/ (731ff19); ссылки6моделей комплекса исправлены на gonzotech:block/third/. Родители, грани и существующие facing rotations сохранены, world/blockstate и inventory item definitions ведут в те же block model IDs. В autominer_markers_test три устаревших каталога second/ заменены на third/ с сохранением16×16 и всех прочих пинов. Это визуальные ресурсы, не изменение комплекта/прогрессии/сметы/сети. PlotnickBlock.java и остальные Java-классы не изменялись; нужен просмотр моделей в игре.
+
+## PERF-001 — активная проверка автоматизации и стоимости операций
+
+28.10.2026: прежние задачи приняты/архивированы автором; новая работа касается per-slot1 для обеих карт на всех путях автоматизации, rate/budget кнопок, ownerless WG, очередей/слоя и replacement-only setVirtual. Это отдельная заявка, а не объявление старых42пунктов повторно закрытыми. Source-проверка подтверждает опасный setter с insert/dump, но текущий игровой дюп не установлен. Deque/cursor/метка слоя — предложения для выбора и регрессий, не уже внесённое лечение. Политика чанков ItemRouting не расширяет прогрев Плотника5×5; PlotnickBlock.java read-only. Детали14пунктов и blockers — CURRENT; runtime пока не изменён.

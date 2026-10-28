@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "a4aae4577cf6427e7ea3ac18eed5bc5acede7f47",
+      "snapshot": "docs/archive/editions/0.3.320/OUTDATED_CLOSED_CURRENT-STATE.md",
+      "sha256": "8f4ee5fe8ad40d1e8ee9a74dab2fefd5b1e533f0c5c0e0c8e5c766b17a89b556",
+      "bytes": 17317,
+      "task": "PERF-001: archive nine author-closed tasks"
+    }
+  ]
+}

@@ -4706,3 +4706,72 @@ III accumulator: новые `classic/third_accumulator_gui{,_bg}.png`, `neo/thir
 ````
 
 Финальный прогон после всех ресурсных исправлений и профильных документов: **81 PASS / 0 SKIP / 0 FAIL из81**, `/tmp/gonzo320-final.log`;9/9ресурсных мутаций отвергнуты. Docs9editions/29live/75immutable/4173source-items/69dispositions PASS; links1201/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; git diff --check чистый. Сравнение с авторским731ff19: PNG, Java, blockstates/items неизменны. Коммит/пуш в фиксированную ветку разрешены; клиент/Gradle/визуальная приёмка не выполнялись.
+
+<a id="closure-320-perf"></a>
+## 0.3.320 — документальное закрытие предыдущей задачи и постановка PERF-001 (28.10.2026)
+
+База a4aae4577cf6427e7ea3ac18eed5bc5acede7f47, фиксированная ветка arena/48845eec-gonzotech. Runtime320 сохранён: этот шаг не runtime-фикс. Восстановленный sandbox имел index/HEADbf5e72e; через временный индекс доказано полное равенство дерева рабочей директории origin/a4aae45 (37cf8dcfc74f4c16c8c0c039a0dcd63fdfac0f21), только затем mixed-reset на origin без изменения файлов. Новый чужой WIP не обнаружен.
+
+### Закрытие прежних задач по прямому решению автора
+
+Автор: «1-8 - подтверждено, уезжает в историю в архив»; «9 - я посмотрел системный лог, вылет был вызван не игрой, а фоновым процессом драйвера, закрываем в архив»; «Таким образом текущая задача остаётся пустая». Подтверждены/закрыты DOC-003, RAD-001, D-RAD2, UX-001, ENG-001, HUD-RAD-001 (включая318), BUILD-001, TEX-001; CRASH-001 закрыта как установленная автором внешняя причина, без crash-патча. Никакого собственного повторного native build/playtest или имени процесса/драйвера агент не придумывает.
+
+Все9записей удалены из CURRENT немедленно по явному указанию автора — разовое исключение из удержания4patch, не отмена общего правила. Полная исходная редакция: [OUTDATED_CURRENT](archive/editions/0.3.320/OUTDATED_CLOSED_CURRENT-STATE.md), manifest/Git source/hash/bytes и README зарегистрированы. Остальные старые snapshots/75legacy неизменны. Приёмка не означает реализации D-ENG1/зарядки трёх слотов/замены временныхGUI; DEFFERED87пунктов не закрыт и не активирован целиком. Переадресованы только ссылки на принятые ENG-001/D-RAD2; остальная очередь не менялась.
+
+### Новая текущая задача PERF-001
+
+Автор прислал14пунктов и явно потребовал каждый включить в CURRENT; предложения — только кандидаты для брейншторма, остальные методы как минимум валидировать. Заданный цикл:1добавить→2валидация/research/brainstorm/выбор лечения→3применить→4повтор2/3 до результата. В CURRENT одна активная PERF-001 с14подпунктами, source evidence/направлениями/регрессиями/блокерами, ничего ещё не объявлено исправленным. Радиaционный баланс не меняется, scope6/12 — protocol/performance; PlotnickBlock.java read-only и legacy migration запрет сохранены.
+
+Пункты:1double-wrapper identity;2per-slot карта1 на automation;3отдельные complete/visited/result и resumable BFS;4TTL не version OR age;5разрешена лишь endpoint-chunk загрузка без цепи труб, filter/separator не endpoints;6бюджеты тяжёлых кнопок и корректные Fence begin/end без потери end/ACK, cache;7равновесие I→II;8aggregate tick intake I/II с прежними числами;9работающий ownerless WG adapter/health-check, клетка и все3разрешения;10очереди/собранный слой (#39/#40), второй приоритет;11setter replacement-only, displaced return отдельно, не установлен текущий игровой дюп;12адресная invalidation/общий room snapshot/лёгкие menu snapshots без смены радиации (#33/#36), TPS не измерен;13shared path validation без непроверенного маршрута;14cache lifecycle/addresses вместо world-owning values, explicit cleanup. Предложенные конкретные структуры/штампы ещё выбираются, не выданы за авторское утверждение.
+
+Source-проверка выполнена ItemRouting collectSinks/sinksCached/sinkLive/tryPlace/containerAt, PlotnickBlockEntity card/setVirtual/queues/region checks, PlotnickButtonPayload, Accumulator/SecondAccumulator receive/push, RadiationViewNetwork Fence, CreativeRadiationBridge, MenuDoseTransaction, Containment events/collectors. Авторские server-пробы1/2/3 зарегистрированы, но не повторялись в этом шаге; TPS/heap/fullMC tests не запускались. По5 trace chunk loading ещё нужен. Ошибки/риски по исходнику не превращаются в игровой вердикт.
+
+WG9 независимо проверен по официальному EngineHub коду: [RegionContainer](https://github.com/EngineHub/WorldGuard/blob/version/7.0.x/worldguard-core/src/main/java/com/sk89q/worldguard/protection/regions/RegionContainer.java) get(WorldEdit World); [RegionManager](https://github.com/EngineHub/WorldGuard/blob/version/7.0.x/worldguard-core/src/main/java/com/sk89q/worldguard/protection/managers/RegionManager.java) getApplicableRegions(BlockVector3); [BukkitAdapter](https://github.com/EngineHub/WorldEdit/blob/master/worldedit-bukkit/src/main/java/com/sk89q/worldedit/bukkit/BukkitAdapter.java) adapt(Bukkit World). Source сверка не доказывает реальный bridge. Нужны его имя/версия, mapping измерений, exact flags/семантика piston и политика absent/broken/unset/no-region. Также согласовать unloaded endpoint discovery/tickets и repeat button policy/budgets.
+
+Архивная сверка: AUDIT-42-REVALIDATION-2026-10-26 сохраняет #39/#40 как открытые, не закрывает их общим PASS. Старый WorldGuardFlags/архив допускает no-DENY и actor fallback; новая заявка требует всех3разрешений и ownerless path — старый контракт явно не принимается за готовый адаптер. CAPABILITIES (заявленная полнота BFS/WG) и INTEGRATIONS исправлены как описание известных текущих дефектов, а не фальшивый runtime-фикс. Связанные AUTOMINER/MACHINES/RAD_ITEMS/RAD_WORLD получили scope новой работы; PSYCHE/MULTIBLOCK/PROGRESSION/AUDIO_VISUAL — авторское закрытие соответствующих старых задач. Все заменённые короткие фрагменты ниже; исходный CURRENT сохранён полностью в OUTDATED.
+
+### Дословные заменённые короткие фрагменты
+
+**DEFFERED.md, редакция до постановки PERF-001:**
+
+````text
+D-RAD2 перенесена по новой заявке автора в [CURRENT-STATE](CURRENT-STATE.md#d-rad2), runtime 0.3.314. Прежний текст дословно сохранён в HISTORY.
+````
+
+**DEFFERED.md, редакция до постановки PERF-001:**
+
+````text
+Текущий implementation-status — [ENG-001](CURRENT-STATE.md).
+````
+
+**CAPABILITIES.md, редакция до постановки PERF-001:**
+
+````text
+- ItemRouting: live-проверка цепей/приёмников перед вставкой; усечённый BFS не сохраняется как полный маршрут. Оптимизация сохраняет порядок/политику, не меняет throughput/balance.
+````
+
+**CAPABILITIES.md, редакция до постановки PERF-001:**
+
+````text
+WorldGuard — внешняя server-side система Paper/Spigot, в NeoForge-среде нужен соответствующий bridge/источник. `WorldGuardFlags` выполняет прямой опрос доступного источника; при его отсутствии действует fail-open, событийная проверка — запасной канал. Не обещать региональную защиту standalone-серверу без интеграции. Для построек/добычи проверяется клетка и реальный результат операции, не только наличие события.
+````
+
+**INTEGRATIONS.md, редакция до постановки PERF-001:**
+
+````text
+| WorldGuard / региональные флаги | Условная server-side интеграция через внешний bridge | Нужен реальный источник флагов; без него нельзя обещать региональную защиту. Границы — [CAPABILITIES](CAPABILITIES.md) |
+````
+
+**MACHINES.md, редакция до постановки PERF-001:**
+
+````text
+BUILD-001 ждёт повторной авторской сборки.
+````
+
+**RAD_WORLD.md, редакция до постановки PERF-001:**
+
+````text
+Авторская игровая регрессия принята, патч ещё не закрыт повторной игрой.
+````
+
+Проверки документального шага исполнены: docs_structure_test PASS (10previous editions с Git/hash/bytes,29live,75immutable,4173source-items,69dispositions); doc_links1202/0broken; git diff --check clean. Промежуточная проверка до завершения HISTORY/переноса указателя D-RAD2 дала3broken anchors, после завершения0; это не runtime FAIL. Код/ресурсы/gradle.properties не изменены, runtime320. Нового aggregate/native/GameTest/TPS/heap прогона не было;81PASS относится к предыдущему завершённому runtime-шагу. Следующий шаг — ответы на blockers5/6/9 и воспроизводимые root-регрессии, не обещание готовых14фиксов.
