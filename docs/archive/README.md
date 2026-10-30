@@ -30,3 +30,5 @@
 - [PERF-001/11 — replacement-only setter принят автором](editions/0.3.324/README.md): полный CURRENT из432b848, manifest;31.10.2026. Оставшиеся9не закрыты, runtime0.3.324 unchanged.
 
 - [Предыдущие CURRENT/CAPABILITIES перед0.3.325](editions/0.3.325/README.md): полные тексты3224f15до отменыadjacentloading и уточнения54; **не закрытие1/5**.
+
+- [Предыдущие CURRENT/CAPABILITIES/MACHINES перед0.3.326](editions/0.3.326/README.md): exact1370c30доblockingchestfix1/приёмки5.5остаётсязакрытойзаписьювCURRENTдо330,остальныепунктыснимканезакрываются.

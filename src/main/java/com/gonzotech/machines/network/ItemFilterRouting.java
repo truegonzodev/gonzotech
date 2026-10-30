@@ -209,6 +209,7 @@ public final class ItemFilterRouting {
                     int idx = (int) Math.floorMod(rotation + moved + k, n);
                     ItemRouting_Sink sink = targets.get(idx);
                     if (!sinkLoaded(level, sink)) continue;
+                    if (ItemRouting.sameInventory(level, src, sink.container(), sink.containerPos())) continue;
                     if (ItemRouting.insertOne(sink.container(), sink.face(), one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();

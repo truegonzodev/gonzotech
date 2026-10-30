@@ -5219,3 +5219,32 @@ RULES/DOCS_RULES/CURRENT/CAPABILITIES/MACHINES/затронутыйархивcro
 WholeproductionharnessрасширенреальнымиI/II/analoghelper(неfakeisPowered), естьnegativeexactoldcomparator, actualreadenvelope/third-hopwire/unknownIIrejectbranch/passiveI/loadedcap2/negativeXZ/delayedpublicationretry.393assertions/21of21assertionmutants;61real/162stubs/typechecknegative1. Fullsuiteпослеredstone86PASS/0SKIP/0FAIL. CURRENT/CAPABILITIES/MACHINES/AUDITсинхронизированыэтимжешагом; прежниеimmutableснимкинетронуты.5остаётсяреализован/ждётавторскойигры,1опциональностьещёрешаетсяавтором. Финальнаяпроверка/доставканиже.
 
 **Финальный325:** дополнительноrecheckloadedredstoneокрестностипередIIdeletion/rejectcommit; snapshotpowerON/OFFнедаётправопослевыгрузки.399assertions/23of23assertionmutants, exactoldrouters/isolatedoldfilter/oldcomparatorGit/hash/bytesnegative;compilefailurekillнеявляется. Повторполногоsuite86PASS/0SKIP/0FAIL, typecheck61real/162stubs/0errors+negativeimport1. Docs16проверенныхprevioussnapshots/1259links0broken/validate3285JSON608items1281en=ru/0errors0warnings/diffPASS.5реализованиждётавтора,9пунктовостаютсяоткрыты. Кcommit/pushпофиксированнойветке;безnativeMinecraft/Gradle/GameTests/TPS,беззакрытия/архивазадач1/5.
+
+<a id="perf-001-chest-owners"></a>
+### 0.3.326 — doublechest identity fix; приёмка loaded-only5,31.10.2026
+
+База1370c30/0.3.325. Автордословно:
+
+````text
+1. После "фикса" сундуков двойной сундук стал в целом невидим для труб они больше вообщбе отказываются забирать предметы из источника и класть в двойной при любых вариантах подключения
+2. Выгрузка чанков и стоп/возобновление передачи работает правильно. Это можно закрывать
+````
+
+<a id="perf-001-5-accepted"></a>
+**PERF-001/5закрыт поавтору.** Авторподтвердилвыгрузку/стоп/возобновление325иразрешилзакрытие. Закрытиедокументируетсяв326, обычноеудержаниезакрытойзаписидо330; immediatearchiveнаэтомшагенепросили.1остаётсяотдельнойblockingрегрессией, его неисправностьневыдаётсязапровалпринятойполитики5. Остальные6недоказанныеredstone/sidecasesпрежнегочек-листанеобъявленыличноавторомпроверенными, nativeагентскийпрогонневыдуман. Открыты8:1/3/6/9/10/12/13/14.
+
+**1неcosmetic:** авторраньшеподтверждал54доступ/28–54→1–27, теперьпослепредыдущейдоставкисообщаетполныйотказ. Агентпризналрегрессию/пробелпрежнеготеста, неоткатилloadedguards. FreshCompoundContainerнатехжеBEсравнивалсявsinkLiveпо`==`; exact325падаетнавводевновомwhole-routerfixture. Этосравнение существовалоираньше325, поэтомунеобъявленадоказаннойвременнаяпричинаобоихнативныхсимптомов; новыйheadlessпроверяетвсевариантыsource/receiver, нореальныйsource→ordinaryбагавторанебылнативновоспроизведёнагентом. Прежнийloadedtestне собиралfreshwrapper54,399PASSнеозначали«doublechestработает».
+
+ItemRouting326: sharedsameContainerAt сохраняетlive==expectedдляобычныхContainer, дляcompoundтребуетобеCURRENTContainerBEвобоихviews, non-SINGLEChestBlock, loadedадреса; replacementлюбойполовины/split/re-pairнепринимаютсяпооднимкоординатам/числуслотов. SourceпослеBFSпроверяетсятоже. SameinventoryaliasисключёнвItemRoutingиItemFilterRouting; noteCompanionInsertedштампуетвторойадресполучателя, pushItemsповторносмотритLAST_INSERTEDуcapturedsource. Порядокслотов/ванильнаясборка/ёмкость/баланс/радиация/NBTunchanged. Нетновыхcaches/tickets;3/13/14необъявленыисправленными;PlotnickBlockread-only/acceptedslots/replacement/energy/PNGнетронуты.
+
+Double_chest_routing_test:7498assertions/9assertionmutants/exact325routerpairGit/hash/bytesnegative;4направленияpairing,2TYPE,все54слота,3направленияпереноса,full/63+2/warmcache/replacementbothdirections/split/re-pair/genuinecompoundunloadreload/selfroute/shield/filteralias. Модельныемир/ContainerBE/combiner/components/radboundary, неMinecraft/GameTest/TPS. PublicCompoundContainer.containsпроверенвpinnedMCP1.21.4mirror6e96771cc9652af23d86d558e30f9f39a7378225, неавторитетныйbinaryproof. Typecheck61real/163stubsnegativeimport1, existingloaded399/23mutantsсохранены. Первыйfullsuite86PASS/1FAILиззаобязательногопинадефектного`==`; пинзаменённамethodextraction/обязательныеобефизическиеidentity, непростоудалён; повтор87PASS/0SKIP/0FAIL. Финальнаяпроверка/доставканиже.
+
+CURRENT/HISTORY/AUDIT/CAPABILITIES/MACHINESобновленысинхронно;старыеfullCURRENT/CAPABILITIES/MACHINES1370c30сохраненыв[предыдущихредакциях](archive/editions/0.3.326/README.md),неполныйархивзадач. Archive311–325неизменен,DEFFEREDнетронут. СтарыеAUTOMINER512иincompleteBFS3вопросыпо-прежнемубезответа;невыбранывэтотфикс. Живыестарые«5ждётигры»/«1толькокосметика»замененыпоследнимиавторскимисведениями;runtime326,1ждётновойигры,5закрыт.
+
+**Дословно заменённый статусAUDIT1370c30:**
+
+````text
+**Последний полный локальный прогон, PERF-001/5 / 0.3.325: 86 PASS / 0 SKIP / 0 FAIL.** Whole ItemRouting+ItemFilterRouting boundary harness/старыеnegative/mutations не являются нативной игрой.5реализован, ждёт автора;2/4/7/8/11приняты ранее.1runtimeпорядка не менялся.
+````
+
+**Финальный326:** полныйsuite87PASS/0SKIP/0FAIL; doublechest7498assertions/9of9mutants/exact325pairnegative, loaded399/23of23mutants;typecheck61real/163stubs/0errors+negativeimport1. Docs19previoussnapshots/1272links0broken/validate3285JSON608items1281en=ru0errors0warnings/diffPASS. ПромежуточныйdocsretentionFAILисправлендобавлениемформатныхпробеловвclosed/removeполях,а неослаблениемгейта.5закрыт,8пунктовоткрыты;1требуетновойигровойприёмки326. NativeMinecraft/полныйGradle/GameTests/TPSне запускались. Кcommit/pushвфиксированнуюветку.

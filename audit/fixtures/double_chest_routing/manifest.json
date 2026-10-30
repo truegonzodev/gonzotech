@@ -1,0 +1,14 @@
+{
+  "source": "src/main/java/com/gonzotech/machines/network/ItemRouting.java",
+  "source_commit": "1370c30b95a777e27199c126cf948cc2e969ec72",
+  "file": "ItemRouting-0.3.325.java.txt",
+  "sha256": "c4176781cebd4d1278885a1127af1dcab01b5bd70deec07a7e822a5b844d1cb2",
+  "bytes": 30731,
+  "filter": {
+    "source": "src/main/java/com/gonzotech/machines/network/ItemFilterRouting.java",
+    "source_commit": "1370c30b95a777e27199c126cf948cc2e969ec72",
+    "file": "ItemFilterRouting-0.3.325.java.txt",
+    "sha256": "3f916711f19f7e3323068fbfe38bfbebd4f3a2c9dffb401ffe5cf63f22d54720",
+    "bytes": 23597
+  }
+}

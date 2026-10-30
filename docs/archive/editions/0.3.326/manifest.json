@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "1370c30b95a777e27199c126cf948cc2e969ec72",
+      "snapshot": "docs/archive/editions/0.3.326/OUTDATED_BEFORE_CHEST_OWNERS_CURRENT-STATE.md",
+      "sha256": "dc64ef037bdab4d922bff97a4a3dadeba7b23fd28554f8f0501f12791a4161b9",
+      "bytes": 27026,
+      "task": "PERF-001/1 regression repair and /5 author acceptance; previous editions, not wholesale task closure"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "1370c30b95a777e27199c126cf948cc2e969ec72",
+      "snapshot": "docs/archive/editions/0.3.326/OUTDATED_BEFORE_CHEST_OWNERS_CAPABILITIES.md",
+      "sha256": "cc50f8303e8b2c03b34c05e146e78baca68904496094b8426bbd83d0d5450d5f",
+      "bytes": 29223,
+      "task": "PERF-001/1 regression repair and /5 author acceptance; previous editions, not wholesale task closure"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "1370c30b95a777e27199c126cf948cc2e969ec72",
+      "snapshot": "docs/archive/editions/0.3.326/OUTDATED_BEFORE_CHEST_OWNERS_MACHINES.md",
+      "sha256": "bd9bacbd9739c2c5a664ca1a48454cbd9d0379eb3de80ec115706318bbe474dd",
+      "bytes": 40765,
+      "task": "PERF-001/1 regression repair and /5 author acceptance; previous editions, not wholesale task closure"
+    }
+  ]
+}

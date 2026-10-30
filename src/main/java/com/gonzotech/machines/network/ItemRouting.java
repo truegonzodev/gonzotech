@@ -3,6 +3,7 @@ package com.gonzotech.machines.network;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.Container;
+import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -189,9 +190,12 @@ public final class ItemRouting {
         // что-то отброшено, запись кэша выбрасывается (следующий тик
         // пересоберёт по бюджету). Перенос при этом просто задерживается —
         // теряться предметам не за чем.
-        // A source captured before discovery must still be in loaded chunks.
-        if (!containerLookupLoaded(level, excludeSrc)) return 0;
+        // A captured source must still be the same live physical inventory.
+        if (insertedThisTick(level, now, excludeSrc)) return 0;
+        if (!sameContainerAt(level, excludeSrc, src)) return 0;
         sinks = liveSinks(level, pipePos, sinks);
+        // Different halves/wrappers can still be the same source inventory.
+        sinks = sinks.stream().filter(sink -> !sameInventory(level, src, sink.container(), sink.containerPos())).toList();
         if (sinks.isEmpty()) return 0;
         int moved = 0;
         long rotation = level.getGameTime();
@@ -226,6 +230,7 @@ public final class ItemRouting {
                         src.removeItem(slot, 1);
                         src.setChanged();
                         noteInserted(level, now, sink.containerPos());
+                        noteCompanionInserted(level, now, sink.containerPos(), sink.container());
                         moved++;
                         perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
@@ -470,7 +475,7 @@ public final class ItemRouting {
         BlockState last = level.getBlockState(lastPipe);
         Direction toContainer = dirBetween(lastPipe, sink.containerPos());
         if (!isItemPipe(last) || !opensToward(last, toContainer) || !modeOf(last).deliversToMachine()) return false;
-        return containerAt(level, sink.containerPos()) == sink.container;
+        return sameContainerAt(level, sink.containerPos(), sink.container());
     }
 
     /** Направление между двумя соседними клетками (маршруты BFS всегда соседние). */
@@ -498,6 +503,52 @@ public final class ItemRouting {
 
     private static PipeMode modeOf(BlockState state) {
         return state.getBlock() instanceof PipeCarrier c ? c.modeFor(state, T) : PipeMode.AUTO;
+    }
+
+    /**
+     * A fresh vanilla compound wrapper is not a new inventory. Both CURRENT
+     * physical block containers must be present in both views: coordinates or
+     * size alone must never admit a replacement BE or a split/re-paired chest.
+     * Other containers retain exact identity (including container entities).
+     */
+    static boolean sameContainerAt(Level level, BlockPos pos, Container expected) {
+        Container live = containerAt(level, pos);
+        if (live == null) return false;
+        if (live == expected) return true;
+        if (!(live instanceof CompoundContainer current) || !(expected instanceof CompoundContainer previous)) return false;
+        if (!level.hasChunkAt(pos)) return false;
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock) || state.getValue(ChestBlock.TYPE) == ChestType.SINGLE) return false;
+        BlockPos other = pos.relative(ChestBlock.getConnectedDirection(state));
+        if (!level.hasChunkAt(other)) return false;
+        if (!(level.getBlockEntity(pos) instanceof Container first)
+            || !(level.getBlockEntity(other) instanceof Container second) || first == second) return false;
+        return previous.contains(first) && previous.contains(second)
+            && current.contains(first) && current.contains(second);
+    }
+
+    /** Physical alias exclusion, without ordering slots or retaining a new owner cache. */
+    static boolean sameInventory(Level level, Container source, Container target, BlockPos targetPos) {
+        if (source == target) return true;
+        if (source instanceof CompoundContainer compound && compound.contains(target)) return true;
+        if (target instanceof CompoundContainer compound && compound.contains(source)) return true;
+        if (source instanceof CompoundContainer from && target instanceof CompoundContainer to) {
+            if (!level.hasChunkAt(targetPos)) return true; // unavailable is never a transfer target
+            return level.getBlockEntity(targetPos) instanceof Container owner
+                && from.contains(owner) && to.contains(owner);
+        }
+        return false;
+    }
+
+    /** Preserve the existing same-tick anti-ping-pong shield through either half. */
+    private static void noteCompanionInserted(Level level, long now, BlockPos pos, Container target) {
+        if (!(target instanceof CompoundContainer compound) || !level.hasChunkAt(pos)) return;
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock) || state.getValue(ChestBlock.TYPE) == ChestType.SINGLE) return;
+        BlockPos other = pos.relative(ChestBlock.getConnectedDirection(state));
+        if (level.hasChunkAt(other) && level.getBlockEntity(other) instanceof Container owner && compound.contains(owner)) {
+            noteInserted(level, now, other);
+        }
     }
 
     /** Never let vanilla double-chest lookup read an unloaded companion chunk. */

@@ -807,6 +807,7 @@ class Container {
 }
 record ItemRouting_Sink(Container container,Direction face,List<BlockPos> path,BlockPos root,BlockPos containerPos) {}
 class ItemRouting {
+    static boolean sameInventory(Level l,Container a,Container b,BlockPos p){return a==b;}
     // This legacy waste/render probe is all-loaded; full loaded-boundary execution has its own suite.
     static boolean containerLookupLoaded(Level l,BlockPos p){return true;}
     static int[] extractableSlots(Container c,Direction d){return java.util.stream.IntStream.range(0,c.items.length).toArray();}

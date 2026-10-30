@@ -1232,8 +1232,16 @@ assert "Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize(
 ir306 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
 assert "sinks = liveSinks(level, pipePos, sinks);" in ir306 and "if (sinks.isEmpty()) return 0;" in ir306, \
     "0.3.306: pushItems не переживает удаление маршрута (кэш 1–5 тиков ехал по мёртвым приёмникам)"
-assert "containerAt(level, sink.containerPos()) == sink.container" in ir306, \
-    "0.3.306: приёмник не сверяется с тем же контейнером"
+# 0.3.326: preserve owner identity, not identity of a freshly allocated chest view.
+_live326 = current_rad.method(ir306, "private static boolean sinkLive(")
+_owner326 = current_rad.method(ir306, "static boolean sameContainerAt(")
+assert "return sameContainerAt(level, sink.containerPos(), sink.container());" in _live326
+for owner_guard326 in ("Container live = containerAt(level, pos);", "if (live == expected) return true;",
+                       "live instanceof CompoundContainer", "expected instanceof CompoundContainer",
+                       "level.getBlockEntity(pos)", "level.getBlockEntity(other)",
+                       "previous.contains(first) && previous.contains(second)",
+                       "current.contains(first) && current.contains(second)"):
+    assert owner_guard326 in _owner326, "0.3.326: lost physical-owner/replacement guard: " + owner_guard326
 assert "perLevel.remove(startPipe.asLong());" in ir306, \
     "0.3.306: отбракованный маршрут не выбрасывает запись кэша"
 assert "if (visited.size() > maxNodes) { visitedOut[0] = 2; break; }" in ir306, \
