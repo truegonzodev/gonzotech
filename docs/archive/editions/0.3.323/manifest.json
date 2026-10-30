@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "e4da11263fdcde43589dc29b52efd506f2362669",
+      "snapshot": "docs/archive/editions/0.3.323/OUTDATED_PERF_2_CURRENT-STATE.md",
+      "sha256": "a5d1be5338714d91d326e737dc198204145f3d408692ce69c5307ca683746076",
+      "bytes": 21974,
+      "task": "PERF-001/2: author game acceptance; cards outside A/B intentionally unchanged"
+    }
+  ]
+}

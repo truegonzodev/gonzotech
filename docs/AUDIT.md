@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/2 / 0.3.323: 84 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+**Последний полный локальный прогон, PERF-001/11 / 0.3.324: 85 PASS / 0 SKIP / 0 FAIL.** Авторская игра отдельно подтвердила пункт2;11ждёт своей приёмки. Прежние прогоны ниже — история, не текущие blockers.
 
 ## Команды и доказательства
 
@@ -19,6 +19,7 @@
 | Скрипт | Назначение/самоописание |
 |---|---|
 | [_ver.py](../audit/_ver.py) | Единая проверка версии мода для пинов (08.10.2026). |
+| [virtual_replacement_test.py](../audit/virtual_replacement_test.py) | PERF-001/11: actualsetVirtual/get/remove/callers,9363assertions/8mutants incl exact323; MC/storage/manualMixinboundaries, не nativeBE. |
 | [slot_capacity_test.py](../audit/slot_capacity_test.py) | PERF-001/2: production slot/admission и upstream wrappers,354assertions/10mutants; MC doubles/manual mixin wiring, не native bootstrap. |
 | [routing_cache_test.py](../audit/routing_cache_test.py) | PERF-001/4: production cache methods, пустой/положительный кэш, version/TTL, lookup boundaries;126assertions и5mutants, не native cart/transfer test. |
 | [legacy_accumulator_test.py](../audit/legacy_accumulator_test.py) | PERF-001/7–8: настоящие receive/push методы I/II + GtBuffer/Defs/TickIntakeBudget, aggregate intake/equilibrium; --mutation-check8assertion kills, не fullMC compile. |
@@ -370,3 +371,17 @@ Upstream fixtures LGPL2.1/origin/hash сохранены offline; byte equality 
 Пункт2ждёт игры/запуска автора, не архивируется. Выявленные head-card permission vs comment и старые AUTOMINER512/54 vs current runtime64/216 отдельно показаны автору; ответа пока нет, эти политики/баланс не выбирались. Other10пунктов не применены, принятые4/7/8не открыты заново.
 
 Финальный повтор323: **84PASS/0SKIP/0FAIL**, /tmp/gonzo323-final.log; новый admission-тест **354assertions/10of10assertion-killed**, /tmp/gonzo323-mutations.log (добавлены wrong-type offers, raw-guard/globalmax mutants и проверки injector declarations/GUI1). Typecheck57real/154stubs/0errors и missing-import negative1. Docs12snapshots сGit/hash/bytes/29live/75immutable/4173source-items/69dispositions; links1223/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Архив/DEFFERED/PlotnickBlock/радиационныйruntime/энергобаланс/PNG не менялись. Пункт2готов к авторской игре, не закрыт и не архивирован. NativeMinecraft/Gradle/Mixinbootstrap не запускались; два смежных вопроса заданы, ответа пока нет. Подготовлено к commit/push в фиксированную ветку по разрешению автора.
+
+## PERF-001/2 принята; следующий независимый11 —0.3.324,30.10.2026
+
+Автор: «Проверено всё, можно закрывать этот пункт подтвержено проверкой в игре»;2принят и сразу архивирован по standing workflow. Уточнение: не ограничивать карты внеA/B, функционал только вA/B, комментарий не источник механики. Native запуск агентом не приписывается этому ответу. Точные старые CURRENT@e4da112 сохранены вarchive0.3.323сmanifest, закрыт только2. Вопрос старой512фразы не трактован как ответ на баланс.
+
+Выбран11как небольшой независимый следующийфикс. ProductionsetVirtual больше не split/insert/dump/возвращаетcur, только requireReplacement/замена/dirty/stats; empty→empty/invalidindex no-op. Caller audit: один directprivatecaller setItemvirtualbranch; GUI/shift virtual не показывают, real ItemRouting/InvWrapper/SidedInvWrapper делаютпредварительныйadmission/merge, removeItem/removeItemNoUpdate дают явный ownership, hopperfailedtransfer восстанавливаетsnapshot. Старыеstates/legacyNBTне мигрировались; исходные load/save/removeне менялись. Устаревшиеcard/sided source comments уточнены без измененияполитики. Version324. Other9openнеприменены; SlotCapacity/mixins/energy/radiation/PlotnickBlock/ресурсы untouched.
+
+virtual_replacement_test:9363assertions на productionsetter/get/remove/capacity/actualsetItem и upstreamwrapperalgorithms; MCstorage/registries/components/virtualdimensions/ContainerHelper — явные doubles, nativeMixinbootstrap вручнуюwired каквпредыдущемтесте. Сокращённыйvirtual24вместо216дляfixture —не новыйruntimeбаланс. Разные item/components/0/1/3/7/63/64counts, same/different/emptyreplacement, callerownedold/incomingunchanged, storage+explicitownercounts, dirty/stats, invalidindices, nonstackable/oversizedatomicrejection, legacyinplaceno-trim, removeNoUpdate, ordinary/sidedhandler simulate/merge/extract, pipes,100failedhopperrollbackиsuccess. Нет автоматическихinsert/dumpcall, лишнегоclone/grow/split. Existingradtransfer вcount-probe boundary, общийradiationsuite сохраняется.
+
+--mutation-check8/8assertion-killed: exactold0.3.323setterизe4da112(negativefixtureсGit/hash/bytes), auto-insertold, auto-dropold, merge, skipclear, missinglimit, missingstats, missingdirty. Compilerfailure killнеявляется, unexpectedinvalidreplacement вprobe — явнаяAssertionError. Старый2400charwindow sourcepin заменён точнымmethodparser+запретgrow/split/insert/dump, не ослаблен. Wholetypecheck остаётся57real/154stubs/0errors; fullnativeBEcompile/GameTest/Minecraft/TPS не запускались.
+
+Первыйaggregate85PASS/0SKIP/0FAIL, /tmp/gonzo324-first.log; Java21/ECJ/Pillow вignored.cache.11готовк авторской игре, не закрыт/не архивирован;2/4/7/8не открытызаново. Docs/current/profile/frozenprevious/HISTORY обновлены тем же шагом; новые тонкие вопросы не выбраны молча.
+
+Финальный повтор324: **85PASS/0SKIP/0FAIL**, /tmp/gonzo324-final.log; virtualreplacement **9363assertions/8of8assertion-killed**, /tmp/gonzo324-mutations.log, в томчисле exact323fixture сGit/hash/bytes. Документы:13зарегистрированныхprevioussnapshots сGit/hash/bytes,29live/75immutable/4173sourceitems/69dispositions; links1236/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Typecheck57real/154stubs/0errors +negativeimport1. Archive323 —только принятое2;11не закрыт/не архивирован, остальные9неприменены. НативныйMinecraft/полныйGradle/BE/GameTests/TPS агентом не запускались; авторская игра подтвердила только2. Баланс/радиация/SlotCapacity/mixins/PNG/PlotnickBlock/DEFFERED не изменены. Подготовлено к commit/push в фиксированную ветку по разрешению автора.

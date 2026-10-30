@@ -1,0 +1,30 @@
+private void setVirtual(int idx, ItemStack stack) {
+        if (idx < 0 || idx >= VIRTUAL_SLOTS) return;
+        ItemStack cur = virtual.get(idx);
+        if (stack.isEmpty()) {
+            if (!cur.isEmpty()) {
+                virtual.set(idx, ItemStack.EMPTY);
+                networkStatsDirty = true;
+                setChanged();
+            }
+            return;
+        }
+        int cap = capacityFor(stack);
+        if (stack.getCount() > cap) {
+            // Неизвестный потолку caller: ячейка принимает норму, излишек
+            // дописываем в общий роутинг сразу (стопка caller'а — как в
+            // heads-ветке setItem: split, а не тихая обрезка).
+            ItemStack over = stack.split(stack.getCount() - cap);
+            insert(over);
+            if (!over.isEmpty()) dump(over, worldPosition);
+        }
+        boolean foreignType =
+            !cur.isEmpty() && !ItemStack.isSameItemSameComponents(cur, stack);
+        virtual.set(idx, stack);
+        if (foreignType) {
+            insert(cur); // вытесненный — на склад, не в void
+            if (!cur.isEmpty()) dump(cur, worldPosition);
+        }
+        networkStatsDirty = true;
+        setChanged();
+    }

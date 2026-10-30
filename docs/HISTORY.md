@@ -5007,3 +5007,82 @@ CURRENT2обновлён «реализовано323, ждёт игры», вс�
 ````
 
 Финальный повтор323: **84PASS/0SKIP/0FAIL**, /tmp/gonzo323-final.log; новый admission-тест **354assertions/10of10assertion-killed**, /tmp/gonzo323-mutations.log (добавлены wrong-type offers, raw-guard/globalmax mutants и проверки injector declarations/GUI1). Typecheck57real/154stubs/0errors и missing-import negative1. Docs12snapshots сGit/hash/bytes/29live/75immutable/4173source-items/69dispositions; links1223/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Архив/DEFFERED/PlotnickBlock/радиационныйruntime/энергобаланс/PNG не менялись. Пункт2готов к авторской игре, не закрыт и не архивирован. NativeMinecraft/Gradle/Mixinbootstrap не запускались; два смежных вопроса заданы, ответа пока нет. Подготовлено к commit/push в фиксированную ветку по разрешению автора.
+
+<a id="v-0-3-324"></a>
+### 0.3.324 — пункт2 принят в игре; следующий независимый PERF-001/11
+
+30.10.2026 (дата текущего шага), базаe4da11263fdcde43589dc29b52efd506f2362669/runtime323. Ответ автора дословно:
+
+````text
+не верить комментам, забить на возможность положить карты вне А/Б, всё равно функционал карт только если они лежат в А/Б! Проверено всё, можно закрывать этот пункт подтвержено проверкой в игре. И приступать к следующему пункту
+````
+
+Пункт2закрыт по авторской игровой приёмке, по standing workflow сразу убран изCURRENTв [архив0.3.323](archive/editions/0.3.323/README.md), без обычного четырёхпатчевого удержания именно для него. Полный CURRENTдоизменений сохранён побайтно изe4da112/manifestGit/hash/bytes, не только пересказ. Вопрос карт внеA/B снят: хранитькакобычныйтоварразрешено, функционалтольковA/B, ограниченияизкомментарияневводить. Это не разрешение менять GTU/складскойбаланс и не прямой ответ на старую512фразу; она остаётся отдельнойнеясностью, не блокирующей независимый11. Ранее2headless354assertions/10mutants/84PASS и нынешняя авторская игра — разныеуровнидоказательств, nativeзапуск агентом не выдуман.
+
+Snapshot опять имелHEAD/indexbf5e72e. Временныйиндекс доказалточноеравенствоworktreeorigin e4da112 tree3e450d58bf50b0d66beb48d90cd5091a1948f60d; лишь затемmixed-resetбезперезаписифайлов. RULES/DOCS_RULES/CURRENT, MACHINES/CAPABILITIES/AUTOMINER/INTEGRATIONS и предшествующие архивы сверены. Принятый2не открытзаново; остальные10сохраняютномера1/3/5/6/9/10/11/12/13/14.
+
+Для следующего небольшого цикла выбран11(setVirtual), не очереди10и не BFS/WG/чанки. Объявлено автору: убратьскрытыеinsert/dump setter, проверитьcallerownership/rollback; существование игровогодюпа не утверждается. Аудитдоступа: private setVirtual имеет единственный directcaller setItemдляvirtualindices; read/remove/removeNoUpdateнеперекладываютвдругиеячейки; GUI/shiftтолько0..10, поэтомунебылоскрытоговиртуальногоGUIcaller, требующеговозврата. Pipe/wrapperadmission/mergeделаютдо записи, rawmodifiablehandlerreplace —callerownedoperation, failedhopperremove→restore(snapshot)неполагаетсянавнутреннийsetterrouting. ЯвныйownershipвозвращаютсуществующиеremoveItem/removeItemNoUpdate; новогоавтоматическоговозврата ненужно.
+
+Production324: setVirtual —invalidindexno-op, SlotCapacity.requireReplacement до изменения, empty→emptyno-op, virtual.set(idx,stack), statsdirty/setChanged. Удаленыstack.split/insert(over)/dump(over), foreignType/insert(cur)/dump(cur). Без новыхclamps/copies/автоматическоймиграции. Новаяinvalidrawreplacementотвергаетсядомутации; тажессылкаlegacyсохраняетсякакв323. Устаревшиеcard/sidedcommentsуточненыподрешениеавтора, правилаcardadmission/functionalreadнеизменены. Version324. WholeBEнепереписывался: radiation/SlotCapacity/mixins/caps/BFS/queues/worldedit/буферы/NBT/PNG/PlotnickBlock untouched.
+
+Новыйvirtual_replacement_test9363assertions: productionsetVirtual/getItem/removeItem/removeItemNoUpdate/capacity/actualsetItem + реальныеupstreamInvWrapper/SidedInvWrapper и прежнийHoppermethodчерезручнойMixinboundary. Storage/registry/components/ContainerHelper/24virtualfixture —doubles, неnativeполныйBE/мир. Ownershippropertytableразныхтипов/компонентов/количеств, empty/invalid/stats/dirty/oversized/nonstackableatomicreject/legacyinplace, directcallers/handlerssimulate/merge/sidedextract, pipe,100failedhopperrestores/acceptedtransferconservation. Auto-insert/dropпроверяютсянаблюдаемымвызовом, не предположением о мире.
+
+Mutation8/8assertion-killed: точнаястараяреализацияe4da112(fixtureисходныйGit/hash/bytes), возвратстароговinsert, сбросстарого, mergeinsteadofreplacement, skipempty, отсутствиеguard/stats/dirty. Компиляционнаяошибкаkillнеявляется; unexpectedruntimeinvalidwriteвharnessassertion. Старый2400charwindowpinвautominer_markers_testзаменёнexactmethodparser, чтобынеполучатьложныйPASSизсоседнегоinsert; усилензапретgrow/split/insert/insertOrDrop/dump. Исходныесохранения/слотовыеtestfixturesнеподменялись. Первыйaggregate85PASS/0SKIP/0FAIL /tmp/gonzo324-first.log, Java21/ECJ/Pillow восстановленывignored.cache. NativeMinecraft/Gradle/GameTests/TPS/полнаяBEкомпиляцияне запускались.
+
+CURRENTудалилтолько2/егоочередьприёмки/снятыйвопроскарт; всеудалённыебайтывOUTDATED. 11помечен«реализовано324,ждётигры», остальные9неприменены;2/4/7/8сохранилизакрытие. СвязанныеCAPABILITIES/MACHINES/AUTOMINER/INTEGRATIONS/AUDITсинхроннообновлены. Малыеудалённыепрофильныефрагментысохраненыдословнониже; снимок323непереписан. Handoff11: Плотник→забитыйприёмник(повторныеотказы)→освободитьместо, несколькотипов/пустота/сновавставка/перезаход; источникнерастётинеубываетприотказе, приуспехеучётточный, нетскрытогоперекладывания/наземныхвыбросов/sumgrowth. Игроваяприёмка11отдельно, до неёнеархивировать.
+
+#### Дословно заменённые небольшие фрагменты перед324
+
+**CAPABILITIES.md, исходная редакцияe4da112:**
+
+````text
+Проверено headless354assertions/10mutants на production methods и upstream wrapper bodies; Mixin hook wiring вручную, не runtime bootstrap. Требуется игра/запуск автора, пункт2не закрыт. Расхождение комментария про карты внеA/B вынесено вCURRENT, политика товарного склада не менялась.
+````
+
+**MACHINES.md, исходная редакцияe4da112:**
+
+````text
+Другие GUI-return1 сверены: физическое топливо реактора имеет container max1, учитываемый admission/wrappers; ghost-фильтр хранит образец, не принимает материальную стопку. Условия доступа/формирования/типов, топливо/радиация/реакторный runtime не переделывались. Карты внеA/B пока разрешены прежними складскими правилами — вопрос несоответствия комментария вынесен автору, не исправлен попутно.
+````
+
+**MACHINES.md, исходная редакцияe4da112:**
+
+````text
+Локальные354assertions/10mutation kills и84PASS общего suite не заменяют запуск с настоящими mixins/игру. PERF-001/2 остаётся реализованным, но не принятым/не архивированным.
+
+````
+
+**AUTOMINER.md, исходная редакцияe4da112:**
+
+````text
+28.10.2026: PERF-001 сохраняет11открытых пунктов со старыми номерами;2реализован в323и ждёт авторской игровой приёмки, прочие10не применены.4/7/8ранее приняты/архивированы. Текущая работа включает admission per-slot1 дляA/B/TNT, rate/budget кнопок, ownerlessWG, очереди/слои и replacement-only setVirtual. Source setter сinsert/dump остаётся отдельным11, текущий игровой дюп не установлен. Deque/cursor/метка слоя не объявлены готовыми; chunk-policy не расширяет прогрев5×5; PlotnickBlock.java read-only.
+````
+
+**AUTOMINER.md, исходная редакцияe4da112:**
+
+````text
+Не путать лимитA/B с запретом карт как складского товара: runtime допускает карты в обычные/виртуальные слоты, комментарий «карты только в карточные» этому противоречит. Автору задан вопрос, политика этих мест не менялась. Для адресной игровой пробы автоматической подачи вA/B нужно исключить другие принимающие места. Старая фраза этого профиля про54/512 также отмечена как несогласованная с текущими runtime64/216стопками; вопрос автору открыт, новый баланс не выбран.
+
+````
+
+**INTEGRATIONS.md, исходная редакцияe4da112:**
+
+````text
+Тест исполняет production hook bodies с ручным wiring и компилирует новые полные mixin classes против annotation/API doubles; Mixin bootstrap/применение к реальному MC21.4.157 не запускались. Нужны запуск игры без injector errors и игровые пробы GUI/воронки/трубы/handler. Existing radiation redirect/copy hooks/формулы не менялись. Исправление не новая FE/ItemHandler capability registration и не гарантия совместимости с произвольным модом, напрямую меняющим живые ItemStack/NBT.
+
+````
+
+**AUDIT.md, исходная редакцияe4da112:**
+
+````text
+**Последний полный локальный прогон, PERF-001/2 / 0.3.323: 84 PASS / 0 SKIP / 0 FAIL.** Среда и границы — в конце документа; прежние прогоны ниже сохраняются как история, не текущий blocker.
+````
+
+
+**AUTOMINER.md, дополнительная синхронизация принятого2, исходная редакцияe4da112:**
+
+````text
+Лимит1 A/B и динамита проверяется на входе, не после записи стопки. SlotCapacity общий для труб/ванильного переноса/обычного и sided NeoForge handler; при подаче64в свободный нужный слот принимается1, остаток63остаётся вызывающему, занятый слот не принимает ещё. Для sided wrapper используется реальный Container slot. GUI-потолки1 сохранены, raw replacement не подменяется вставкой/подрезкой/наземным возвратом. При правильной подаче новые TNT surplus не возникают; старую NBT-recovery не меняли. Счёт/суммы и отсутствие simulate mutation проверены headless354assertions/10mutants; native запуск/авторская игра требуются.
+````
+
+Финальный повтор324: **85PASS/0SKIP/0FAIL**, /tmp/gonzo324-final.log; virtualreplacement **9363assertions/8of8assertion-killed**, /tmp/gonzo324-mutations.log, в томчисле exact323fixture сGit/hash/bytes. Документы:13зарегистрированныхprevioussnapshots сGit/hash/bytes,29live/75immutable/4173sourceitems/69dispositions; links1236/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Typecheck57real/154stubs/0errors +negativeimport1. Archive323 —только принятое2;11не закрыт/не архивирован, остальные9неприменены. НативныйMinecraft/полныйGradle/BE/GameTests/TPS агентом не запускались; авторская игра подтвердила только2. Баланс/радиация/SlotCapacity/mixins/PNG/PlotnickBlock/DEFFERED не изменены. Подготовлено к commit/push в фиксированную ветку по разрешению автора.

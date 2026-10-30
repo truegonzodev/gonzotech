@@ -1129,10 +1129,10 @@ assert "target >= CLEANUP_FLOOR" in ir298 and "Math.max(current, CLEANUP_FLOOR)"
 be299 = (ROOT / "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java").read_text(encoding="utf-8")
 assert "public static int capacityFor(ItemStack stack)" in be299 and "capOf(" not in be299, \
     "0.3.299 N6: единый потолок склада разъехался с меню"
-sv299 = be299[be299.index("private void setVirtual"):be299.index("private void setVirtual") + 2400]
-assert "virtual.set(idx, stack);" in sv299 and "cur.grow(moved)" not in sv299 \
-    and "insert(stack); // чужой тип в стопку" not in sv299, \
-    "0.3.299 N5: setVirtual снова доливаёт вместо замены — контракт setItem сломан"
+sv299 = current_rad.method(be299, "private void setVirtual(")
+assert "virtual.set(idx, stack);" in sv299 and "SlotCapacity.requireReplacement(" in sv299 \
+    and not re.search(r"\b(?:insert|insertOrDrop|dump)\s*\(|\.(?:grow|split)\s*\(", sv299), \
+    "0.3.324 PERF-001/11: setter должен только заменять, без долива/возврата/сброса"
 assert "legacyOverflow.add(rest);" in be299, \
     "0.3.299 N7: normalizeStacks обрезает перегруз загрузки в void"
 mn299 = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")

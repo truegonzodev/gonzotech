@@ -1649,44 +1649,15 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     /**
-     * Запись в виртуальный Container-слот — контракт setItem: ЗАМЕНА
-     * (0.3.299 N5, постановка автора). До этого здесь был «долив» —
-     * ванильные воронки, пишущие getItem+setItem(слиток), получали
-     * перемещение в голову вместо атома замены. Вставка по правилам
-     * склада — отдельный метод insert() (трубы/автоматика идут через
-     * него); merge-копию перед записью делает сам контейнер-донор
-     * (ItemRouting.tryPlace), поэтому замена здесь ничего не ломает.
-     * Прежний тип из вытесненной ячейки уходит общим роутингом, затем
-     * на землю — ни одного предмета в void. Совпадение типа — молчаливая
-     * замена (так же ведёт себя SimpleContainer; caller владеет вытесненным).
+     * Container replacement only. The caller owns any displaced stack and
+     * performs explicit return/rollback; this setter must not insert or drop it.
+     * Admission limits are checked before replacing, never repaired by routing.
      */
     private void setVirtual(int idx, ItemStack stack) {
         if (idx < 0 || idx >= VIRTUAL_SLOTS) return;
-        ItemStack cur = virtual.get(idx);
-        if (stack.isEmpty()) {
-            if (!cur.isEmpty()) {
-                virtual.set(idx, ItemStack.EMPTY);
-                networkStatsDirty = true;
-                setChanged();
-            }
-            return;
-        }
-        int cap = capacityFor(stack);
-        if (stack.getCount() > cap) {
-            // Неизвестный потолку caller: ячейка принимает норму, излишек
-            // дописываем в общий роутинг сразу (стопка caller'а — как в
-            // heads-ветке setItem: split, а не тихая обрезка).
-            ItemStack over = stack.split(stack.getCount() - cap);
-            insert(over);
-            if (!over.isEmpty()) dump(over, worldPosition);
-        }
-        boolean foreignType =
-            !cur.isEmpty() && !ItemStack.isSameItemSameComponents(cur, stack);
+        SlotCapacity.requireReplacement(this, CONTAINER_SIZE + idx, stack);
+        if (stack.isEmpty() && virtual.get(idx).isEmpty()) return;
         virtual.set(idx, stack);
-        if (foreignType) {
-            insert(cur); // вытесненный — на склад, не в void
-            if (!cur.isEmpty()) dump(cur, worldPosition);
-        }
         networkStatsDirty = true;
         setChanged();
     }
@@ -2126,12 +2097,8 @@ public final class PlotnickBlockEntity extends BlockEntity
         return Container.stillValidBlockEntity(this, player);
     }
 
-    /**
-     * Карты памяти живут только в слотах 9/10 (0.3.263 держал это правило,
-     * v3-переписывание потеряло определение). «Не карта» в слот карт и
-     * «карта» в витринный слот — отказ; виртуальные слоты решают свои
-     * правила выше по тексту.
-     */
+    /** Card-slot type check. Cards may also be stored as ordinary stock;
+     *  only A/B give them functionality (author's clarification after 0.3.323). */
     private static boolean isAllowedCard(int slot, ItemStack stack) {
         boolean cardSlot = slot == SLOT_CARD_A || slot == SLOT_CARD_B;
         boolean card = stack.getItem() instanceof MemoryCardItem;
@@ -2181,16 +2148,15 @@ public final class PlotnickBlockEntity extends BlockEntity
         return MAX_STACK;
     }
 
-    // Карты памяти — только руками. Воронки/трубы видят головы и весь виртуаль,
-    // но вставляют строго в депо, а «добытое» умеют лишь вынимать (автор 0.3.264).
+    // Sided access: heads/cards on non-DOWN faces, virtual depot accepts input;
+    // mined-output virtual slots are extraction-only. SlotCapacity bounds admission.
     @Override
     public int[] getSlotsForFace(Direction side) {
         // (Автор, 0.3.266) Ваниальная воронка под блоком смотрит ровно в DOWN
         // грань и canTakeItemThroughFace не спрашивает — поэтому снизу отдаём
         // только невидимое хранилище: хотбар и карты снаружи неприкосновенны.
-        // Остальные грани — витрина для кладки («куда угодно, кроме слотов
-        // карт»): стражи сидят в canPlaceItem (карты — только карты, зона
-        // «добытое» — только отдавать, чужая ячейка — не кладётся).
+        // Other faces use canPlaceItem: card slots require cards and capacity1;
+        // mined output is extraction-only; an occupied cell keeps its item type.
         if (side == Direction.DOWN) {
             int[] out = new int[VIRTUAL_SLOTS];
             for (int v = 0; v < VIRTUAL_SLOTS; v++) out[v] = CONTAINER_SIZE + v;

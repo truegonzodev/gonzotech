@@ -95,6 +95,12 @@ HopperSlotCapacityMixin оборачивает tryMoveInItem через MixinExt
 
 Raw setItem/setStackInSlot — replacement API, не bulk insert с остатком: новая запись>1в A/B/TNT вызывает явную IllegalArgumentException до изменения. Старый legacy stack той же ссылки может обновляться без миграции; прямое мутирование ItemStack/NBT сторонним кодом не является поддержанным insertion protocol. Это не обещание защиты от произвольного обхода API. TNT loadSurplus recovery старых NBT оставлен отдельно от нового приёма.
 
-Проверено headless354assertions/10mutants на production methods и upstream wrapper bodies; Mixin hook wiring вручную, не runtime bootstrap. Требуется игра/запуск автора, пункт2не закрыт. Расхождение комментария про карты внеA/B вынесено вCURRENT, политика товарного склада не менялась.
+Пункт2подтверждён автором в игре30.10.2026 и [архивирован](archive/editions/0.3.323/README.md). Прежние354headlessassertions/10mutants и ручной Mixinwiring остаются отдельным evidence, не выдаются за native запуск агентом. Автор снял вопрос карт внеA/B: разрешён обычный товарный склад, функционал только вA/B; запрет по неверному комментарию не вводится.
 
 Новые смешанные контейнеры с единичным слотом должны объявлять его серверный SlotCapacity; один GUI Slot.getMaxStackSize=1 недостаточен. Глобальный container max нельзя уменьшать до1для ограничения только одного слота.
+
+## Virtual Container replacement —PERF-001/11,0.3.324
+
+Plotnick.setVirtual — проверка входного replacement и запись только указанного virtual slot, затем dirty/stats; empty→empty иinvalidindex не трогают состояние. Скрытые возвраты прежнего типа/overflow через insert/dump удалены. SlotCapacity.requireReplacement проверяет новую отдельную стопку до изменения; не усечение/перенос в другую ячейку. Старый legacyin-place stack не мигрируется.
+
+Setter не владеет прежним содержимым: при намеренном сохранении старого caller получает его через явный removeItem/removeItemNoUpdate, затем отдельно возвращает/вставляет либо делает rollbackсвоего snapshot. ItemRouting/NeoForgehandlers вставляют по своим admission/merge правилам и не рассчитывают на побочный возврат изsetter. Единственный private caller setVirtual — публичныйsetItemvirtualbranch; GUI виртуаль не показывает. Переписывание режима правок карт/склада/радиационного переноса не требуется. Native игра ещё впереди; локально9363assertions/8mutations, original323не проходит.
