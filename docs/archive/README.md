@@ -28,3 +28,5 @@
 - [PERF-001/2 — одноштучные слоты приняты в игре; карты внеA/B не ограничивать](editions/0.3.323/README.md): полный CURRENT изe4da112 и manifest,30.10.2026; только2закрыт,10пунктов остаются в работе.
 
 - [PERF-001/11 — replacement-only setter принят автором](editions/0.3.324/README.md): полный CURRENT из432b848, manifest;31.10.2026. Оставшиеся9не закрыты, runtime0.3.324 unchanged.
+
+- [Предыдущие CURRENT/CAPABILITIES перед0.3.325](editions/0.3.325/README.md): полные тексты3224f15до отменыadjacentloading и уточнения54; **не закрытие1/5**.

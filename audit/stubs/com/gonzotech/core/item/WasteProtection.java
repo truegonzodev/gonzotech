@@ -1,0 +1,1 @@
+package com.gonzotech.core.item;import net.minecraft.world.item.ItemStack;/** Compile boundary, not waste policy. */public class WasteProtection{public static boolean isProtected(ItemStack s){return false;}}

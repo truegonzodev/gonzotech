@@ -24,6 +24,11 @@ public final class SecondItemScavengerBlock extends ItemScavengerBlock {
     }
 
     @Override
+    public boolean canCheckPower(Level level, BlockPos pos) {
+        return LoadedItemChunks.redstoneAreaLoaded(level, pos);
+    }
+
+    @Override
     public boolean isPowered(Level level, BlockPos pos) {
         return level.hasNeighborSignal(pos);
     }

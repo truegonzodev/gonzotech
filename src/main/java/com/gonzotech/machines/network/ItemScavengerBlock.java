@@ -40,7 +40,15 @@ public class ItemScavengerBlock extends Block {
         return ItemRouting.PER_ITEM_TICK_CAP;
     }
 
-    /** Разрешено ли удаление reject-предметов: у I всегда выключено, II переопределяет. */
+    /** I does not query neighbouring redstone; powered tiers must guard their read envelope. */
+    public boolean canCheckPower(Level level, BlockPos pos) {
+        return level.hasChunkAt(pos);
+    }
+
+    /**
+     * Разрешено ли удаление reject-предметов: у I всегда выключено, II переопределяет.
+     * Caller must first check canCheckPower; unavailable is not the same as OFF.
+     */
     public boolean isPowered(Level level, BlockPos pos) {
         return false;
     }

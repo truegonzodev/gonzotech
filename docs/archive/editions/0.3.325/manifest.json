@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "3224f15bc5ea895aafa5ce8cdc7a3aaa32052853",
+      "snapshot": "docs/archive/editions/0.3.325/OUTDATED_BEFORE_LOADED_ONLY_CURRENT-STATE.md",
+      "sha256": "d86dc199883befe965c4919b007a951f3b397ff961c59aca4874fc4f6e20d04e",
+      "bytes": 22624,
+      "task": "PERF-001/1/5: previous policy and chest evidence; NOT task closure"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "3224f15bc5ea895aafa5ce8cdc7a3aaa32052853",
+      "snapshot": "docs/archive/editions/0.3.325/OUTDATED_BEFORE_LOADED_ONLY_CAPABILITIES.md",
+      "sha256": "1cddf2afbb6d74f8657e8368d3e968a843e638d1b2e9768851e81589f2b2f2d6",
+      "bytes": 25202,
+      "task": "PERF-001/1/5: previous policy and chest evidence; NOT task closure"
+    }
+  ]
+}

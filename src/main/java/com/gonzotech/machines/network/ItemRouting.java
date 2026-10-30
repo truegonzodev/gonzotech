@@ -7,6 +7,8 @@ import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
@@ -115,7 +117,7 @@ public final class ItemRouting {
     public static final int HOT_NODE_BFS = 128;
 
     public static int tickExtract(Level level, BlockPos pos, BlockState state) {
-        if (level.isClientSide()) return 0;
+        if (level.isClientSide() || !level.hasChunkAt(pos)) return 0;
         if (!(state.getBlock() instanceof PipeCarrier carrier)) return 0;
         if (!carrier.carries(state, T)) return 0;
 
@@ -187,6 +189,8 @@ public final class ItemRouting {
         // что-то отброшено, запись кэша выбрасывается (следующий тик
         // пересоберёт по бюджету). Перенос при этом просто задерживается —
         // теряться предметам не за чем.
+        // A source captured before discovery must still be in loaded chunks.
+        if (!containerLookupLoaded(level, excludeSrc)) return 0;
         sinks = liveSinks(level, pipePos, sinks);
         if (sinks.isEmpty()) return 0;
         int moved = 0;
@@ -388,12 +392,14 @@ public final class ItemRouting {
             // не способен увязнуть сервером: узлы считаются по-настоящему.
             if (visited.size() > maxNodes) { visitedOut[0] = 2; break; }
             BlockPos pipe = queue.poll();
+            if (!level.hasChunkAt(pipe)) continue;
             BlockState pstate = level.getBlockState(pipe);
             if (!isItemPipe(pstate)) continue;
             PipeMode mode = modeOf(pstate);
 
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
+                if (!level.hasChunkAt(npos)) continue;
                 BlockState nstate = level.getBlockState(npos);
 
                 if (isItemPipe(nstate)) {
@@ -454,11 +460,13 @@ public final class ItemRouting {
     private static boolean sinkLive(Level level, Sink sink) {
         List<BlockPos> path = sink.path();
         for (int i = 0; i + 1 < path.size(); i++) {
+            if (!level.hasChunkAt(path.get(i)) || !level.hasChunkAt(path.get(i + 1))) return false;
             BlockState a = level.getBlockState(path.get(i));
             BlockState b = level.getBlockState(path.get(i + 1));
             if (!isItemPipe(a) || !pipesConnect(a, b, dirBetween(path.get(i), path.get(i + 1)))) return false;
         }
         BlockPos lastPipe = path.get(path.size() - 1);
+        if (!level.hasChunkAt(lastPipe)) return false;
         BlockState last = level.getBlockState(lastPipe);
         Direction toContainer = dirBetween(lastPipe, sink.containerPos());
         if (!isItemPipe(last) || !opensToward(last, toContainer) || !modeOf(last).deliversToMachine()) return false;
@@ -492,12 +500,22 @@ public final class ItemRouting {
         return state.getBlock() instanceof PipeCarrier c ? c.modeFor(state, T) : PipeMode.AUTO;
     }
 
+    /** Never let vanilla double-chest lookup read an unloaded companion chunk. */
+    static boolean containerLookupLoaded(Level level, BlockPos pos) {
+        if (!level.hasChunkAt(pos)) return false;
+        BlockState state = level.getBlockState(pos);
+        return !(state.getBlock() instanceof ChestBlock)
+            || state.getValue(ChestBlock.TYPE) == ChestType.SINGLE
+            || level.hasChunkAt(pos.relative(ChestBlock.getConnectedDirection(state)));
+    }
+
     /**
      * Контейнер в позиции {@code pos} (сундук/бочка/машина/двойной сундук/вагонетка).
      * Делегируем ванильной логике воронки — она корректно собирает двойные сундуки
      * и контейнер-сущности. Возвращает {@code null}, если контейнера нет.
      */
     static Container containerAt(Level level, BlockPos pos) {
+        if (!containerLookupLoaded(level, pos)) return null;
         return HopperBlockEntity.getContainerAt(level, pos);
     }
 }

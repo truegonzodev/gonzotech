@@ -5194,3 +5194,28 @@ SnapshotопятьимелHEADbf5e72e; временныйиндекссовпа�
 ````
 
 Проверки docs-only уточнения1: docs_structure PASS(14previoussnapshots/Git/hash/bytes,29live/75immutable/4173sourceitems/69dispositions), doc_links1248/0broken, validate3285JSON/608items/en=ru1281/0errors/0warnings, diff-check PASS. Новых native/code-suite запусков нет, код/ресурсы/runtime0.3.324/архив неизменны;1открыт как исследование и не изменён по гипотезе.
+
+<a id="perf-001-loaded-only"></a>
+### 0.3.325 —PERF-001/5:никакой загрузки чанков;1полный54-доступ,31.10.2026
+
+База3224f15. Автор уточнил: не27-only — сундук заполняет28–54, затем1–27; попросил тесты реальных рисков/необязательности фикса и начать5. Обязательный cosmeticreorder1отменён как предложение агента, не какзакрытие задачи. runtime1owner/order не переделывался. CURRENT/CAPABILITIES содержатcontrolcorneraccess/stackadmission/компоненты/обеполовиныsame-network/self-routing/splitBE/reload+conservation. Итогoptional/closeпоавторскомувердикту, не поsource==.
+
+Вask_userпроcold-discovery авторпрямоотверг bothboundedprobeиknown-onlyendpointloader; выбралвообщеникакойзагрузкичанковтрубами. Отмена прежнегоadjacentendpointloadingперенесена во всеживыепрофили, старыйвопрос5снят. Нетновогокэша/tickets/probes/радиусаигрока; нормальнаяserverloadedграница. Если source/маршрут/receiverunloaded, сохранитьнедоставленное. Линия/filter/отсеивательнеподгружаютмирцепью.
+
+ItemRouting: root/source/BFSqueued+neighbor/livepathpair+lastpipe иsharedlookup, guardвторойполовиныChestBlock доvanillaHopper. ItemFilterRouting: обнаруженотдельныйunguardedrouter, поэтомуобработаныегоroot/source/lookups/BFSfrontiers/queued/livechunkpathиpoweredscavengerdeletion; sinkrecordрасширентолькокоординатамиroot/endpointдляloadedcheck. Это неsharedtopologyvalidator13/identityfix1/lifecycle14, неresumableBFS3. Версия325; остальнойruntime/радиация/лимиты/приоритетыветок/acceptedadmission/replacement/PlotnickBlock/прогрев/PNG/NBTunchanged.9пунктовостаютсяоткрыты,5реализованиждётигры, ничегоавтоматическинеархивировано какпринятое.
+
+Тестисполняетобаwholeproductionrouter+SlotCapacityсinstrumentedMC/worlddoubles. Exact324negativefixturesсGit/hash/bytes, отдельно oldfilter+fixedpipe,18assertionmutants(неcompilefailures);58real/163stubswholetypechecknegativeimport1. Первыйfullsuite86PASS/0SKIP/0FAIL. Подробныеграницымодели/команды/финальныйпрогон —AUDIT. NativeMinecraft/Gradle/GameTests/TPSагентомнезапускались.
+
+RULES/DOCS_RULES/CURRENT/CAPABILITIES/MACHINES/затронутыйархивcrosscheckпроведён; staleadjacentloading/полувидимость1вживомтекстеисправленыпоответамавтора, не молчаливымвыбором. ВCAPABILITIESтакжеустраненоstale«WGpolicyещёсогласуется»: выбраннаяранееoptional-strictpolicyужеестьCURRENT/INTEGRATIONS;9коднеисправлен/непринят. СтарыйAUTOMINER512вопросиpolicyнезавершённогоBFS3неразрешеныздесь. ВсеудалённыетекстыCURRENT/CAPABILITIESдословнопобайтносохраненыкак[предыдущие,НЕзакрытыередакции](archive/editions/0.3.325/README.md). Новаяхроника/AUDIT,rootpin иMACHINESupdatedsame-step, immutable311–324archivesнетронуты.
+
+**Заменённый первыйстатусAUDIT из3224f15дословно:**
+
+````text
+**Последний полный локальный прогон, PERF-001/11 / 0.3.324: 85 PASS / 0 SKIP / 0 FAIL (доставка432b848).** Пункты2и11после своих фиксов приняты автором;11архивирован31.10.2026. На текущем docs-only шаге полный code-suite не перезапускался. Прежние прогоны ниже — история, не текущие blockers.
+````
+
+**Дополнение к325до доставки: косвеннаяredstoneграница.** НафинальнойsourceсверкеагентвыявилSecondScavenger.isPowered→hasNeighborSignal/getSignal/getDirectSignalTo/wireconnection(чтениядо3блоков)иUniversalNodeComparator→vanillaupdateNeighbourForOutputSignal(второйблокзаconductorбезguard). Первыйharnessподменялиспитаниепростойграницей, поэтомунедоказывалэтобезопасным; этопрямосообщеноавтору,5невыданкакполностьюготовый. Новыйask_userвыборавтора`endpoint_unavailable`: покаredstoneокрестностьвыгружена, IIнедоступенцеликом, нетниdeletion,ниfallbackrejectnetwork. Unknown≠OFF. canCheckPowerI=loadedrootбезredstone, II=LoadedItemChunksfourcorners±3X/Z; actualhasNeighborSignalтолькопослеguard. UniversalNodeComparatorоткладываеттолькоnotificationдоLAST_SIGNALSpublish, самsignal/transferнеблокируются. Нативныевнешниесигнальныеколлбекинеобещаныпроверенными.
+
+WholeproductionharnessрасширенреальнымиI/II/analoghelper(неfakeisPowered), естьnegativeexactoldcomparator, actualreadenvelope/third-hopwire/unknownIIrejectbranch/passiveI/loadedcap2/negativeXZ/delayedpublicationretry.393assertions/21of21assertionmutants;61real/162stubs/typechecknegative1. Fullsuiteпослеredstone86PASS/0SKIP/0FAIL. CURRENT/CAPABILITIES/MACHINES/AUDITсинхронизированыэтимжешагом; прежниеimmutableснимкинетронуты.5остаётсяреализован/ждётавторскойигры,1опциональностьещёрешаетсяавтором. Финальнаяпроверка/доставканиже.
+
+**Финальный325:** дополнительноrecheckloadedredstoneокрестностипередIIdeletion/rejectcommit; snapshotpowerON/OFFнедаётправопослевыгрузки.399assertions/23of23assertionmutants, exactoldrouters/isolatedoldfilter/oldcomparatorGit/hash/bytesnegative;compilefailurekillнеявляется. Повторполногоsuite86PASS/0SKIP/0FAIL, typecheck61real/162stubs/0errors+negativeimport1. Docs16проверенныхprevioussnapshots/1259links0broken/validate3285JSON608items1281en=ru/0errors0warnings/diffPASS.5реализованиждётавтора,9пунктовостаютсяоткрыты. Кcommit/pushпофиксированнойветке;безnativeMinecraft/Gradle/GameTests/TPS,беззакрытия/архивазадач1/5.

@@ -41,6 +41,9 @@ public final class UniversalNodeComparator {
      * только когда число активных потоков действительно изменилось.
      */
     public static void update(ServerLevel level, BlockPos pos) {
+        // Vanilla neighbour notification can read beyond a loaded conductor.
+        // Do not remember a signal as published until notification is safe.
+        if (!level.hasChunkAt(pos) || !LoadedItemChunks.redstoneAreaLoaded(level, pos)) return;
         int next = signal(level, pos);
         Map<Long, Integer> signals = LAST_SIGNALS.computeIfAbsent(level, ignored -> new HashMap<>());
         long key = pos.asLong();

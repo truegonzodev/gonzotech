@@ -9,7 +9,6 @@ import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.entity.HopperBlockEntity;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ public final class ItemFilterRouting {
     public static final String ALLOY_TAG = "gonzotech_alloy";
 
     public static void tick(Level level, BlockPos pos, BlockState state, ItemFilterBlockEntity be) {
-        if (level.isClientSide()) return;
+        if (level.isClientSide() || !level.hasChunkAt(pos)) return;
 
         // Приёмники «прошедшего» — выходная сеть Фильтра (item-трубы от Фильтра).
         // Приёмники «отсеянного» — сеть Отсеивателя, если он приткнут к грани.
@@ -63,8 +62,11 @@ public final class ItemFilterRouting {
 
         for (Direction dir : Direction.values()) {
             BlockPos npos = pos.relative(dir);
+            if (!level.hasChunkAt(npos)) continue;
             BlockState nstate = level.getBlockState(npos);
             if (nstate.getBlock() instanceof ItemScavengerBlock scavenger) {
+                // Unknown power is not OFF: the whole reject endpoint waits.
+                if (!scavenger.canCheckPower(level, npos)) continue;
                 scavengers.add(new ScavengerEndpoint(npos, scavenger.itemThroughputLimit(),
                     scavenger.perItemThroughputLimit(), scavenger.isPowered(level, npos)));
                 continue;
@@ -72,7 +74,7 @@ public final class ItemFilterRouting {
             if (isItemPipe(nstate)) continue; // трубы — часть выходной сети, не источник
             // Прилегающий контейнер (сундук/машина) — источник. Грань источника,
             // обращённая к Фильтру, = dir.getOpposite() (для sided-доступа).
-            Container c = HopperBlockEntity.getContainerAt(level, npos);
+            Container c = ItemRouting.containerAt(level, npos);
             if (c != null) {
                 sources.add(new Source(npos, dir.getOpposite()));
                 sourcePositions.add(npos);
@@ -147,7 +149,7 @@ public final class ItemFilterRouting {
         // (b) Прилегающие контейнеры-источники (режим «воронка»).
         for (Source source : sources) {
             if (totalBudget.exhausted()) break;
-            Container src = HopperBlockEntity.getContainerAt(level, source.pos());
+            Container src = ItemRouting.containerAt(level, source.pos());
             if (src == null) continue;
             moved = drainContainer(level, pos, be, source.face(), src, pass, reject, poweredScavenger,
                 passBudget, rejectBudget, totalBudget, moved, rotation, false);
@@ -168,6 +170,7 @@ public final class ItemFilterRouting {
                                       BlockPos poweredScavenger,
                                       ChannelBudget passBudget, ChannelBudget rejectBudget,
                                       ChannelBudget totalBudget, int moved, long rotation, boolean ignoreCanTake) {
+        if (!level.hasChunkAt(pos)) return moved;
         for (int slot : ItemRouting.extractableSlots(src, srcFace)) {
             if (totalBudget.exhausted()) break;
             while (!totalBudget.exhausted()) {
@@ -186,6 +189,7 @@ public final class ItemFilterRouting {
                 one.setCount(1);
 
                 if (!matched && poweredScavenger != null) {
+                    if (!level.hasChunkAt(poweredScavenger) || !LoadedItemChunks.redstoneAreaLoaded(level, poweredScavenger)) break;
                     // Redstone-powered scavenger burns reject items at the direct
                     // filter/scavenger connection, even when a pipe is attached.
                     src.removeItem(slot, 1);
@@ -204,6 +208,7 @@ public final class ItemFilterRouting {
                 for (int k = 0; k < n; k++) {
                     int idx = (int) Math.floorMod(rotation + moved + k, n);
                     ItemRouting_Sink sink = targets.get(idx);
+                    if (!sinkLoaded(level, sink)) continue;
                     if (ItemRouting.insertOne(sink.container(), sink.face(), one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();
@@ -292,7 +297,8 @@ public final class ItemFilterRouting {
     // ─────────────────────────── обход сети (BFS) ───────────────────────────
 
     /** Приёмник и точный маршрут item-труб до него. */
-    private record ItemRouting_Sink(Container container, Direction face, List<BlockPos> path) {
+    private record ItemRouting_Sink(Container container, Direction face, List<BlockPos> path,
+                                    BlockPos root, BlockPos containerPos) {
     }
 
     /** Источник: позиция контейнера + его грань, обращённая к Фильтру. */
@@ -312,6 +318,7 @@ public final class ItemFilterRouting {
      */
     private static void collectSinksFromCarrier(Level level, BlockPos root,
                                                 List<BlockPos> exclude, List<ItemRouting_Sink> out) {
+        if (!level.hasChunkAt(root)) return;
         Set<BlockPos> visited = new HashSet<>();
         Map<Long, BlockPos> parents = new HashMap<>();
         Deque<BlockPos> queue = new ArrayDeque<>();
@@ -322,6 +329,7 @@ public final class ItemFilterRouting {
 
         for (Direction dir : Direction.values()) {
             BlockPos npos = root.relative(dir);
+            if (!level.hasChunkAt(npos)) continue;
             BlockState nstate = level.getBlockState(npos);
             if (isItemPipe(nstate)) {
                 // Труба должна быть открыта навстречу корню; корень-носитель — во все стороны.
@@ -336,19 +344,21 @@ public final class ItemFilterRouting {
                 // Корень (напр. если бы был носителем) может отдавать прямо в контейнер.
                 if (exclude.contains(npos)) continue;
                 if (!opensToward(rootState, dir)) continue;
-                Container cc = HopperBlockEntity.getContainerAt(level, npos);
-                if (cc != null) out.add(new ItemRouting_Sink(cc, dir.getOpposite(), List.of()));
+                Container cc = ItemRouting.containerAt(level, npos);
+                if (cc != null) out.add(new ItemRouting_Sink(cc, dir.getOpposite(), List.of(), root, npos));
             }
         }
 
         while (!queue.isEmpty()) {
             BlockPos pipe = queue.poll();
+            if (!level.hasChunkAt(pipe)) continue;
             BlockState pstate = level.getBlockState(pipe);
             if (!isItemPipe(pstate)) continue;
             PipeMode mode = modeOf(pstate);
 
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
+                if (!level.hasChunkAt(npos)) continue;
                 BlockState nstate = level.getBlockState(npos);
 
                 if (isItemPipe(nstate)) {
@@ -363,10 +373,22 @@ public final class ItemFilterRouting {
                 if (visited.contains(npos)) continue; // корень/уже учтён
                 if (!opensToward(pstate, dir)) continue;
                 if (!mode.deliversToMachine()) continue;
-                Container c = HopperBlockEntity.getContainerAt(level, npos);
-                if (c != null) out.add(new ItemRouting_Sink(c, dir.getOpposite(), pathTo(pipe, parents)));
+                Container c = ItemRouting.containerAt(level, npos);
+                if (c != null) out.add(new ItemRouting_Sink(c, dir.getOpposite(), pathTo(pipe, parents), root, npos));
             }
         }
+    }
+
+    /** Loaded-only check, not the shared topology/owner validation of PERF-001/13. */
+    private static boolean sinkLoaded(Level level, ItemRouting_Sink sink) {
+        if (!level.hasChunkAt(sink.root())) return false;
+        BlockState rootState = level.getBlockState(sink.root());
+        if (rootState.getBlock() instanceof ItemScavengerBlock scavenger
+            && !scavenger.canCheckPower(level, sink.root())) return false;
+        for (BlockPos pipe : sink.path()) {
+            if (!level.hasChunkAt(pipe)) return false;
+        }
+        return ItemRouting.containerLookupLoaded(level, sink.containerPos());
     }
 
     /** Восстанавливает выбранный BFS-маршрут от первой трубы после корня. */

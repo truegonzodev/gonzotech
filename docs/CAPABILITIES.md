@@ -11,7 +11,7 @@
 - simulate не расходует материал/буфер и не переносит дозу. Commit повторно проверяет живой приёмник/вместимость, а не доверяет прошлому simulate.
 - `PipeRouting`, `PipeFlowNetwork`, `ItemRouting` используют кэш/маршруты, но sink должен совпадать с текущим BE/типом/формой. Поломка/замена/разгрузка инвалидирует старое обещание.
 - Виртуальные порты SteamGen/реактора не должны грузить чужие чанки. UNKNOWN не означает пустой порт. Обратный heat-путь в тот же реактор исключается.
-- ItemRouting: TTL-hit в322 требует совпадения версии **и** возраста≤40тиков; пустой кэш тоже истекает без block edit, world edit сразу делает hit непригодным. При исчерпанном BFS-бюджете сохраняется прежний fallback до доступного пересчёта; полнота/справедливость большой сети ещё не гарантирована. Wrapper identity двойного сундука, sentinel усечения, стоимость path validation и cache lifecycle остаются PERF-001/1/3/13/14. Live-проверка перед commit сохранена; throughput/balance и loaded-политика не менялись.
+- ItemRouting: TTL-hit в322 требует совпадения версии **и** возраста≤40тиков; пустой кэш тоже истекает без block edit, world edit сразу делает hit непригодным. При исчерпанном BFS-бюджете сохраняется прежний fallback до доступного пересчёта; полнота/справедливость большой сети ещё не гарантирована. Wrapper identity двойного сундука, sentinel усечения, стоимость path validation и cache lifecycle остаются PERF-001/1/3/13/14. Live-проверка перед commit сохранена; throughput/balance не менялись; loaded-only границы добавлены в325(ниже).
 - IItemHandler, InvWrapper, воронки и custom handlers требуют правильной семантики insert/extract/остатка. `setItem` — замена. Остаток/rollback — реальный материал, не реконструкция по одному id/count.
 
 ## Радиационные адаптеры
@@ -20,7 +20,7 @@
 
 ## WorldGuard и регионы
 
-WorldGuard — внешняя server-side система Paper/Spigot; NeoForge требует совместимого bridge/провайдера мира. Baseline320 WorldGuardFlags не является проверенным адаптером стандартного WG7: неверны world type/методы/политика флагов, возможен actor fallback. PERF-001/9 активна: машина без владельца проверяет клетку и все три требуемых разрешения; mapping/политика отсутствия и неисправности bridge ещё согласуются. Наличие WG само по себе не доказывает защиту; до исправления не обещать работоспособность стандартной интеграции.
+WorldGuard — внешняя server-side система Paper/Spigot; NeoForge требует совместимого bridge/провайдера мира. Baseline320 WorldGuardFlags не является проверенным адаптером стандартного WG7: неверны world type/методы/политика флагов, возможен actor fallback. PERF-001/9 активна: машина без владельца проверяет клетку и все три требуемых разрешения; политика уже выбрана: WGabsent/вне регионовallow, broken installeddeny+диагностика, в регионе все3ALLOW, UNSETdeny; конкретный адаптер ещё не реализован. Наличие WG само по себе не доказывает защиту; до исправления не обещать работоспособность стандартной интеграции.
 
 ## Сетевые границы
 
@@ -71,7 +71,7 @@ RadiationCluster.Policy.NORMAL/LEAD используют прежний коэф
 
 ## PERF-001 — границы нового лечения
 
-Endpoint identity и lifecycle должны учитывать double-wrapper/две половины, entity и заменённый BE; текущая долгоживущая Container-ссылка в WeakHashMap value может удерживать world. Автор разрешил только endpoint-chunk загрузку ItemRouting (не фильтр/сепаратор и не транзитную цепь); механизм определения unloaded endpoint/границы tickets ещё не выбран. Complete/visited/result и продолжение поиска — требование3; shared path validation/lifecycle addresses — предложения13/14. Throttle Fence обязан сохранять допустимый end/ACK и provenance. На этом документальном шаге ни одна runtime-гарантия не объявляется исправленной.
+Endpoint identity и lifecycle должны учитывать double-wrapper/две половины, entity и заменённый BE; текущая долгоживущая Container-ссылка в WeakHashMap value может удерживать world. Автор отменил прежнее adjacent-endpoint loading: теперь вся предметная логистика loaded-only, без probes/tickets/known-endpoint loaders, включаяfilter/отсеиватель. Complete/visited/result и продолжение поиска — требование3; shared path validation/lifecycle addresses — предложения13/14. Throttle Fence обязан сохранять допустимый end/ACK и provenance. 5реализован в325и ждёт игры;1/3/6/9/10/12/13/14не объявлены исправленными.
 
 ## PERF-001/7/8 — приём I/II после321
 
@@ -79,7 +79,7 @@ ReceiveGtu обоих старых аккумуляторов имеет per-own
 
 ### Ответы по границам PERF-001/5/6/9
 
-5: разрешён только непосредственный соседний endpoint через границу загруженного чанка трубы, не транзитная цепь; filter/separator не endpoints. Механизм bounded unloaded lookup/подтверждения и lifecycle ещё исследуется, наивный BFS getBlockState не считается лечением. 6: operation-scoped10сек тихогоКД после завершения + дедуп/одинjob/cache, Stop/end приоритетны; budgets отдельно. 9: optional-strict policy автора описана в INTEGRATIONS, bridge выбирают создатели серверов. В321этот блок ещё не реализован.
+5: последнее решение — никакой загрузки чанков предметными трубами/фильтром/отсеивателем, даже непосредственных endpoints. В325добавлены loaded-checks root/source/BFS/path/endpoint; vanilla double-chest lookup допускается только при загруженных обеих половинах. 6: operation-scoped10сек тихогоКД после завершения + дедуп/одинjob/cache, Stop/end приоритетны; budgets отдельно. 9: optional-strict policy автора описана в INTEGRATIONS, bridge выбирают создатели серверов. 6/9ещё не реализованы;5в325ждёт игры.
 
 ## PERF-001/4 — scope небольшого исправления322
 
@@ -105,8 +105,22 @@ Plotnick.setVirtual — проверка входного replacement и зап�
 
 Setter не владеет прежним содержимым: при намеренном сохранении старого caller получает его через явный removeItem/removeItemNoUpdate, затем отдельно возвращает/вставляет либо делает rollbackсвоего snapshot. ItemRouting/NeoForgehandlers вставляют по своим admission/merge правилам и не рассчитывают на побочный возврат изsetter. Единственный private caller setVirtual — публичныйsetItemvirtualbranch; GUI виртуаль не показывает. **Пункт11принят автором31.10.2026 и [архивирован](archive/editions/0.3.324/README.md).** Прежние9363assertions/8mutations, original323не проходит — отдельное headless evidence; native запуск агентом не заявляется.
 
-## Двойной сундук: актуальная граница свидетельств,31.10.2026
+## Двойной сундук:54слота, порядок не является дефектом —31.10.2026
 
-Автор уточнил: нынешний перенос работает, подключения к половинам начинают заполнение с1/28GUIслота. Это не доказательство runtime «wrapper mismatch →transfer0» и не разрешение менять нормальное заполнение. ItemRouting получаетContainer через HopperBlockEntity.getContainerAt, явного ограничения27в helper нет; фактическую вместимость/порядок надо проверять в авторском окружении. ==вsinkLive остаётся source-risk для возвращаемой обёртки, но не подтверждённый этим наблюдением игровой дефект.
+Автор прямо подтвердил полный обход28–54→1–27. Не трактовать первый28как доступ только27; переставлять рабочий порядок без нового решения не требуется.1остаётся исследованием реальных рисков, не обязательным косметическим фиксом и не автоматически закрытым пунктом. Helper по-прежнему делегирует ванильномуHopperlookup; source-risk `sinkLive==`и owner/self-route при двух подключениях требуют самостоятельного воспроизведения. Identity/порядок в325не переделывались.
 
-До кода1нужны пробы fullconnectedhalf→otherhalfempty (вставка) и emptyconnectedhalf→itemsonotherhalf (извлечение). Если54доступны, первыйслот — порядок, а не дефектёмкости. Если доступны27, возможны раннийbackpressure/невидимыйдляавтоматикизапас, не автоматическийдюп/потеря. Подключение обеих половин/смена владельца — отдельные identity/cycleрегрессии, native не воспроизведены. Пункт1не закрыт/не архивирован, но обязательный фикс приостановлен до решения; политика не изменена.
+Для решения optional/фикс: с обеих подключений проверять corner1/27/28/54ввод/вывод, full54/остаток63+2→64+1, компоненты/nonstackable, обе половины на одной сети без внешней цели, split/replacementBE/reload и сохранение общей суммы. [Полный игровой чек-лист](CURRENT-STATE.md). Игрового verdict по этим регрессиям ещё нет.
+
+## Предметная loaded-only граница —PERF-001/5,0.3.325
+
+Предметная логистика не загружает чанки: ни транзит, ни источник/приёмник, ни endpoint ранее известного маршрута. Нет probes/tickets/кэша повторной загрузки/собственного player-distance algorithm. Уже законно загруженные spawn/forceload/другим игроком чанки остаются обычной частью мира; остановка зависит от serverhasChunkAt, не видимости GUI.
+
+ItemRouting: loaded-check root/source; до каждого BFSstate read проверяется chunk queuednode/соседа; перед push source проверяется снова, cached sink требует весь loadedpath/lastpipe и живой endpoint. SharedcontainerAt проверяет адрес и для ChestBlock.TYPE≠SINGLE companion черезgetConnectedDirection до vanillaHopperlookup, чтобы combiner не прочитал выгруженную половину. Без обеих половин операция ждёт, ничего не списывает.
+
+ItemFilterRouting: все source/pass/reject lookups идут черезтотжеcontainerAt; loadedroot/frontier/queuednode доstate read, root+path+endpoint перед insertOne. Sink хранит только дополнительные координатыroot/цели для loaded-проверки; native owneridentity/полнаяпроверка топологии13не переделаны. Выгруженный poweredscavenger не разрешает deletion; загруженныйIIсохраняет прежнюю intentionaldeletion/защитуwaste/бюджеты веток. Недоставленное остаётся у источника/в буфереfilter. Нормальная loadedлогистика не меняет лимиты, компоненты, радиационные sidecars илиNBT.
+
+После внешней загрузки маршрут открывается через прежнюю инвалидацию/TTL40и доступныйBFSbudget; новые bounded/resumable/SLA3не обещаны. Wholeproduction boundaryharness+exactoldnegative+23mutants —не nativeMC/GameTest/TPSдоказательство.5ждёт авторской игры, не закрыт.1/3/13/14не закрываются этим патчем.
+
+**Косвенный redstone-путь5, дополнительное решение автора:** неизвестное питаниеII — недоступность всегоendpoint, неOFF. ItemFilterRouting проверяет `canCheckPower` до постановки scavengerвсписок; уIдостаточен собственныйloadedchunk (нетredstone), уII`LoadedItemChunks.redstoneAreaLoaded` требует консервативный квадрат±3блока поX/Z. Он покрывает vanillaadjacentsignal/conductor/directsignal/wireconnection; fourcornerhasChunkAt нечитаетблоки и не грузит чанки. Это фиксированная окрестность чтения redstone, не player-distance rule. При недоступностиIIнетdeletion и нетfallbackrejectrouting; другие доступные endpoints могут работать.
+
+UniversalNodeComparator передvanillaupdateNeighbourForOutputSignal проверяет ownchunk/тужечитаемуюокрестность: vanillaможетчесть второйблок заconductorи соседнийinputкомпаратора. Unsafeуведомление откладывается **до** записиLAST_SIGNALS, чтобы после внешнейзагрузки повторитьpublication. signal()/лимиты/перенос/числоактивныхпотоков неизменны. Это не обещание переделать сторонние произвольные moddedredstonecallbacks; обычная vanillaграница проверяется headless, nativeприёмка ещё требуется.

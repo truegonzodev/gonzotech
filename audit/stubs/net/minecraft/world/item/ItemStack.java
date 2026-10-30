@@ -14,5 +14,7 @@ public class ItemStack {
     public void setCount(int count) { }
     public void grow(int by) { }
     public void shrink(int by) { }
+    public <T> T get(net.minecraft.core.component.DataComponentType<? extends T> type) { return null; }
+    public static boolean isSameItem(ItemStack a, ItemStack b) { return false; }
     public static boolean isSameItemSameComponents(ItemStack a, ItemStack b) { return false; }
 }

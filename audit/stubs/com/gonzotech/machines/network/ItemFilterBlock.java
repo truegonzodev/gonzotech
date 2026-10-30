@@ -1,0 +1,1 @@
+package com.gonzotech.machines.network;import net.minecraft.world.level.block.Block;/** Compile boundary, not filter block/tier behaviour. */public class ItemFilterBlock extends Block{public int itemThroughputLimit(){return 0;}public int perItemThroughputLimit(){return 0;}}
