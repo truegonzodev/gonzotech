@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/11 / 0.3.324: 85 PASS / 0 SKIP / 0 FAIL.** Авторская игра отдельно подтвердила пункт2;11ждёт своей приёмки. Прежние прогоны ниже — история, не текущие blockers.
+**Последний полный локальный прогон, PERF-001/11 / 0.3.324: 85 PASS / 0 SKIP / 0 FAIL (доставка432b848).** Пункты2и11после своих фиксов приняты автором;11архивирован31.10.2026. На текущем docs-only шаге полный code-suite не перезапускался. Прежние прогоны ниже — история, не текущие blockers.
 
 ## Команды и доказательства
 
@@ -385,3 +385,11 @@ virtual_replacement_test:9363assertions на productionsetter/get/remove/capacit
 Первыйaggregate85PASS/0SKIP/0FAIL, /tmp/gonzo324-first.log; Java21/ECJ/Pillow вignored.cache.11готовк авторской игре, не закрыт/не архивирован;2/4/7/8не открытызаново. Docs/current/profile/frozenprevious/HISTORY обновлены тем же шагом; новые тонкие вопросы не выбраны молча.
 
 Финальный повтор324: **85PASS/0SKIP/0FAIL**, /tmp/gonzo324-final.log; virtualreplacement **9363assertions/8of8assertion-killed**, /tmp/gonzo324-mutations.log, в томчисле exact323fixture сGit/hash/bytes. Документы:13зарегистрированныхprevioussnapshots сGit/hash/bytes,29live/75immutable/4173sourceitems/69dispositions; links1236/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Typecheck57real/154stubs/0errors +negativeimport1. Archive323 —только принятое2;11не закрыт/не архивирован, остальные9неприменены. НативныйMinecraft/полныйGradle/BE/GameTests/TPS агентом не запускались; авторская игра подтвердила только2. Баланс/радиация/SlotCapacity/mixins/PNG/PlotnickBlock/DEFFERED не изменены. Подготовлено к commit/push в фиксированную ветку по разрешению автора.
+
+## 0.3.324 —11принят автором31.10.2026, docs-only
+
+Автор на игровой handoff11ответил «Да, отлично, тоже закрываем это в историю» и попросил уточнить следующие крупные фиксы.11закрыт/сразу архивирован по standingworkflow, CURRENT432b848побайтно сохранён вarchive/editions/0.3.324/manifest; предыдущиеиздания неизменны. Открыты9пунктов1/3/5/6/9/10/12/13/14. Runtime/код/тесты/баланс/радиация/ресурсы не менялись. Прежний полный85PASS и9363/8mutants — результат доставки432b848, не новый code-suite этого шага; native запуск агентом не заявляется. Следующее предложено1, далее проектирование3/13/14; incomplete-deliverypolicy3и старый документальный54/512вопрос ждут ответа. Проверки документации фиксируются после исполнения.
+
+Дополнительное необходимое уточнение для5: разрешена ли единственная boundedпроба непосредственного неизвестного соседнего чанка, если она может показать неendpoint, либо использовать только ранее подтверждённыеадреса и ждать внешней загрузки новых? Безчтения/метаданных неизвестныйтип неопределим; existing adjacent-only/no-cascade policy невыдаётся за ответ наcold-discovery. Этот выбор пока не сделан; новыйruntimeкод5неприменён.
+
+Проверки docs-only приёмки11: docs_structure PASS —14previoussnapshots сGit/hash/bytes,29live/75immutable/4173sourceitems/69dispositions; doc_links1248/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Code-suite/Gradle/nativeMinecraft не перезапускались, runtime0.3.324/код/тесты/ресурсы не менялись.11архивирован,9остальных открыты; никакая предложенная политика BFS/unknownchunk/doc512 не применена без ответа.

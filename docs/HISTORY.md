@@ -5086,3 +5086,63 @@ CURRENTудалилтолько2/егоочередьприёмки/снятый
 ````
 
 Финальный повтор324: **85PASS/0SKIP/0FAIL**, /tmp/gonzo324-final.log; virtualreplacement **9363assertions/8of8assertion-killed**, /tmp/gonzo324-mutations.log, в томчисле exact323fixture сGit/hash/bytes. Документы:13зарегистрированныхprevioussnapshots сGit/hash/bytes,29live/75immutable/4173sourceitems/69dispositions; links1236/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Typecheck57real/154stubs/0errors +negativeimport1. Archive323 —только принятое2;11не закрыт/не архивирован, остальные9неприменены. НативныйMinecraft/полныйGradle/BE/GameTests/TPS агентом не запускались; авторская игра подтвердила только2. Баланс/радиация/SlotCapacity/mixins/PNG/PlotnickBlock/DEFFERED не изменены. Подготовлено к commit/push в фиксированную ветку по разрешению автора.
+
+<a id="perf-001-11-accepted"></a>
+#### 0.3.324 — игровая приёмка11, немедленный архив и уточнение следующего этапа (docs-only)
+
+31.10.2026, база432b848a105a96ea908bce70ab7a4495c8a49838. Автор ответил на игровой handoff11дословно:
+
+````text
+Да, отлично, тоже закрываем это в историю. Какие фиксы дальше? Вроде остались токо крупные важные, уточни что нужно и приступаем
+````
+
+11принят/закрыт, по принятому workflow сразу убран изCURRENTв [архив0.3.324](archive/editions/0.3.324/README.md), не ждём четыре патча именно для него. Это авторская игровая приёмка, не новый агентский Minecraft-прогон и не утверждение ранее не установленного дюпа. Сохранён полный CURRENT@432b848 сmanifestGit/hash/bytes; оставшиеся9вснимке не закрыты/не перенесены. CURRENT сохраняет1/3/5/6/9/10/12/13/14;2/4/7/8/11не открыты заново. CAPABILITIES/MACHINES/AUTOMINER/AUDIT/archiveindex синхронизированы, малые заменённые тексты ниже дословно. Runtime0.3.324и веськод/тесты/ресурсы/DEFFERED unchanged.
+
+Snapshot вновь имелHEAD/indexbf5e72e; временныйиндекс доказал точноеравенство worktreeorigin432b848 treeb077c5cd1496788b5146fce4bda48bc20c897cd6, затем безопасныйmixed-resetбезперезаписифайлов. RULES/DOCS_RULES/CURRENT/профили и прошлые архивы сверены. Не присваивали чужойWIP.
+
+Автор просит уточнить следующийэтап, а не молча выбрать спорный большойредизайн. Предложен ближайший независимый1(physicalowneridentityдвойногосундука), далее общая архитектура3/13/14 отдельными патчами,5boundedendpointloading,6/9защита/adapter,10/12оптимизации. Все9существуют вCURRENT, неDEFFERED. Уже согласованные onejob/coalesce/Stop/10sec, ownerlessWG/all3ALLOW/optionalstrict и adjacent-onlyloading не спрашиваются заново. Serverbridge по9выбирают создатели серверов; точнаяnativeсовместимость не выдумана. Радиационный закон/баланс/прогрев не трогаются.
+
+Первичная сверка CompoundContainer поGitHub KernelDotDLL/mcp-1.21.4 показала privatecontainer1/container2, contains(Container) поidentity; это неавторитетный decompmirror, не native proof и не выбранный окончательный adapter. Для1нужно точносверить обеих физических владельцев, не wrapper==/координаты/одну половину; поломка/замена/разъединение invalidates. Новыйruntimeфикс1вэтомшагене сделан.
+
+Новый конкретный вопрос для3: во время incompleteBFS разрешать передачи в уже найденные и заново проверенные sinks (incompleteникогда неfullcache), или ждатьполногообхода? Первый вариант предложен ради latency/throughput, решенияавтора пока нет. Старый вопрос54/512vsruntime64/216стопок/54типа предложено закрыть только документальной правкой по подтверждённому коду, без перебаланса; ответа пока нет. Ни одно из этих решений не приписано автору. До ответов не применяем зависящие от них политики; контракт1уже определён.
+
+Предыдущие9363assertions/8mutants/85PASS/57realtypecheck сохранены как evidenceдоставки324, не новыйпрогон. На docs-only закрытии исполняются docs_structure/doc_links/validate/diff-check, результаты ниже после запуска. NativeMinecraft/полныйGradle/TPS/heap не запускались.
+
+##### Дословно заменённые небольшие фрагменты до приёмки11
+
+**CAPABILITIES.md, редакция432b848 перед приёмкой11:**
+
+````text
+Setter не владеет прежним содержимым: при намеренном сохранении старого caller получает его через явный removeItem/removeItemNoUpdate, затем отдельно возвращает/вставляет либо делает rollbackсвоего snapshot. ItemRouting/NeoForgehandlers вставляют по своим admission/merge правилам и не рассчитывают на побочный возврат изsetter. Единственный private caller setVirtual — публичныйsetItemvirtualbranch; GUI виртуаль не показывает. Переписывание режима правок карт/склада/радиационного переноса не требуется. Native игра ещё впереди; локально9363assertions/8mutations, original323не проходит.
+
+````
+
+**MACHINES.md, редакция432b848 перед приёмкой11:**
+
+````text
+Автоматизация по-прежнему проверяет типы/депо/добытое/грани/лимиты до вставки; обычныйstock, картыA/B, TNT, GTU buffers/caps/NBT/save/load и баланс не меняются. Source setter violation устранён, существование доступного игрового дюпа не утверждается. Локально9363assertions/8assertionmutantkills,85PASS общегоsuite; пункт11ждёт авторской игры и остаётся вCURRENT.
+
+````
+
+**AUTOMINER.md, редакция432b848 перед приёмкой11:**
+
+````text
+30.10.2026: PERF-001 сохраняет10открытыхпунктов с исходными номерами;11реализован в324и ждёт игры, остальные9неприменены.2/4/7/8приняты автором и архивированы. Далее rate/budget кнопок, ownerlessWG, очереди/слои и routing/lifecycle; deque/cursor/меткаслоя ещё не готовы. Replacement-onlysetVirtual реализован, но текущий игровой дюп не объявлен установленным. Chunk-policy не расширяет прогрев5×5; PlotnickBlock.java read-only.
+````
+
+**AUTOMINER.md, редакция432b848 перед приёмкой11:**
+
+````text
+Только замена указанного virtual slot с предварительной проверкой новой стопки; больше нет скрытых insert/dump прежнего типа/излишка. Caller сам владеет вытесненным/извлечённым предметом и явно выполняет возврат/rollback. Shift/GUI работают только с0..10, virtual доступен черезContainer/adapters; их admission/merge/explicit extraction не менялись. Единственный direct private caller —setItemvirtualbranch. Empty/no-op, dirty/stats и отсутствие legacy migration сохранены.9363assertions/8mutants отвергают в томчисле точный старый323setter, но игровая приёмка11ещё не получена. Очереди/слои10, Плотникblock/election/прогрев и кнопки6не трогались.
+
+````
+
+**AUDIT.md, редакция432b848 перед приёмкой11:**
+
+````text
+**Последний полный локальный прогон, PERF-001/11 / 0.3.324: 85 PASS / 0 SKIP / 0 FAIL.** Авторская игра отдельно подтвердила пункт2;11ждёт своей приёмки. Прежние прогоны ниже — история, не текущие blockers.
+````
+
+Дополнительное необходимое уточнение для5: разрешена ли единственная boundedпроба непосредственного неизвестного соседнего чанка, если она может показать неendpoint, либо использовать только ранее подтверждённыеадреса и ждать внешней загрузки новых? Безчтения/метаданных неизвестныйтип неопределим; existing adjacent-only/no-cascade policy невыдаётся за ответ наcold-discovery. Этот выбор пока не сделан; новыйruntimeкод5неприменён.
+
+Проверки docs-only приёмки11: docs_structure PASS —14previoussnapshots сGit/hash/bytes,29live/75immutable/4173sourceitems/69dispositions; doc_links1248/0broken; validate3285JSON/608items/en=ru1281/0errors/0warnings; diff-check PASS. Code-suite/Gradle/nativeMinecraft не перезапускались, runtime0.3.324/код/тесты/ресурсы не менялись.11архивирован,9остальных открыты; никакая предложенная политика BFS/unknownchunk/doc512 не применена без ответа.

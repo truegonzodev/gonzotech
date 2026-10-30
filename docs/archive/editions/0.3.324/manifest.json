@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "432b848a105a96ea908bce70ab7a4495c8a49838",
+      "snapshot": "docs/archive/editions/0.3.324/OUTDATED_PERF_11_CURRENT-STATE.md",
+      "sha256": "1baa9d6656ce78015babc2afa1c8932e7e2b24686e31bf470b36daa3915cf0f9",
+      "bytes": 20521,
+      "task": "PERF-001/11: author game acceptance and immediate archive"
+    }
+  ]
+}

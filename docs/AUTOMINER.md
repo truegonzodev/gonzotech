@@ -38,7 +38,7 @@ Source-пины сверены с действующим резервом тру
 
 ## PERF-001 — активная проверка автоматизации и стоимости операций
 
-30.10.2026: PERF-001 сохраняет10открытыхпунктов с исходными номерами;11реализован в324и ждёт игры, остальные9неприменены.2/4/7/8приняты автором и архивированы. Далее rate/budget кнопок, ownerlessWG, очереди/слои и routing/lifecycle; deque/cursor/меткаслоя ещё не готовы. Replacement-onlysetVirtual реализован, но текущий игровой дюп не объявлен установленным. Chunk-policy не расширяет прогрев5×5; PlotnickBlock.java read-only.
+31.10.2026: PERF-001 сохраняет9открытыхпунктов1/3/5/6/9/10/12/13/14.2/4/7/8/11приняты автором и архивированы. Следующее — независимый1и согласованное проектирование3/13/14, затем остальные бюджеты/защита/оптимизации отдельными циклами. Replacement-onlysetVirtual принят, новый игровой дюп не объявлен. Chunk-policy не расширяет прогрев5×5; PlotnickBlock.java read-only.
 
 ### Уточнение кнопок PERF-001/6 — ещё не реализовано
 
@@ -52,4 +52,4 @@ Source-пины сверены с действующим резервом тру
 
 ## Replacement-only setVirtual —0.3.324
 
-Только замена указанного virtual slot с предварительной проверкой новой стопки; больше нет скрытых insert/dump прежнего типа/излишка. Caller сам владеет вытесненным/извлечённым предметом и явно выполняет возврат/rollback. Shift/GUI работают только с0..10, virtual доступен черезContainer/adapters; их admission/merge/explicit extraction не менялись. Единственный direct private caller —setItemvirtualbranch. Empty/no-op, dirty/stats и отсутствие legacy migration сохранены.9363assertions/8mutants отвергают в томчисле точный старый323setter, но игровая приёмка11ещё не получена. Очереди/слои10, Плотникblock/election/прогрев и кнопки6не трогались.
+Только замена указанного virtual slot с предварительной проверкой новой стопки; нет скрытых insert/dump прежнего типа/излишка. Caller владеет вытесненным/извлечённым предметом и явно выполняет возврат/rollback. Shift/GUI работают только с0..10, virtual доступен черезContainer/adapters; их admission/merge/explicit extraction прежние. Единственный direct private caller —setItemvirtualbranch. Empty/no-op, dirty/stats и отсутствие новой legacy migration сохранены. **Автор31.10.2026 принял11в игре и разрешил закрытие в историю**, [архив](archive/editions/0.3.324/README.md). Прежние9363assertions/8mutants — headless evidence, не новый native прогон. Очереди/слои10, block/election/прогрев и кнопки6не трогались.
