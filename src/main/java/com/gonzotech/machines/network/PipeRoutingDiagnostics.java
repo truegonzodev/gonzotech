@@ -30,6 +30,19 @@ public final class PipeRoutingDiagnostics {
         return GonzoServerConfig.SPEC.isLoaded() && GonzoServerConfig.PIPE_ROUTING_DIAGNOSTICS.get();
     }
 
+    /** Item debugging is opt-in and sampled once per second, without extra world reads. */
+    static boolean itemEnabled(Level level) {
+        return isEnabled() && Math.floorMod(level.getGameTime(), 20L) == 0L;
+    }
+
+    static void itemEvent(Level level, BlockPos pipe, BlockPos endpoint, String stage, String detail) {
+        if (!itemEnabled(level)) return;
+        LOGGER.info("[GONZOTECH ITEM-DIAG] tick=" + level.getGameTime()
+            + " dimension=" + level.dimension().location() + " pipe=" + pos(pipe)
+            + " endpoint=" + (endpoint == null ? "-" : pos(endpoint))
+            + " stage=" + stage + " " + detail);
+    }
+
     static Trace begin(Level level, BlockPos source, PipeType type, long budget, String operation) {
         if (!isEnabled()) return null;
         return new Trace(level, source, type, budget, operation);

@@ -1152,11 +1152,10 @@ ir299 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java")
 assert "sinksCached(level, pos)" in ir299 and "TOPO_BUDGET_PER_TICK" in ir299 \
     and "public static void onWorldEdit(Level level)" in ir299, \
     "0.3.299 N13: BFS приёмников снова бегает по каждой трубе каждый тик"
-assert "Map<Level, java.util.Map<Long, Long>> LAST_INSERTED" in ir299 \
-    and "noteInserted(level, now, sink.containerPos())" in ir299, \
-    "0.3.299 N14: щит пинг-понга снова без измерений — коллизии Nether/Overworld"
-assert "insertedThisTick(now," not in ir299.replace("insertedThisTick(level, now,", ""), \
-    "0.3.299 N14: остался вызов insertedThisTick без level"
+assert "Map<Level, ItemTransferGuard> TRANSFER_GUARDS" in ir299 \
+    and "guard.record(now, sourceOwners, targetOwners);" in ir299, \
+    "0.3.327: transfer history must remain per-world and record successful transfers"
+assert "insertedThisTick" not in ir299, "0.3.327: received inventory must not freeze independent inputs/output"
 mx299 = (ROOT / "src/main/java/com/gonzotech/mixin/LevelChunkCleanRoomMixin.java").read_text(encoding="utf-8")
 assert "ItemRouting.onWorldEdit(level)" in mx299, \
     "0.3.299 N13: миксин не инвалидирует кэш топологии"
@@ -1221,7 +1220,7 @@ for f304 in ("src/main/java/com/gonzotech/machines/network/ItemRouting.java",
     assert "0.3.298 (N" not in txt304 and "(0.3.298 N" not in txt304, \
         f"0.3.304: устаревшая метка раунда в {f304}"
 ir304 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
-assert "таблица разделена по измерениям" in ir304, "0.3.304: «помещена» вернулась в док N14"
+assert "Map<Level, ItemTransferGuard> TRANSFER_GUARDS" in ir304, "0.3.327: history must be partitioned by world, not a comment phrase"
 # ── 0.3.306 (ре-аудит по игровым вердиктам автора 26.10) ──
 menu306 = (ROOT / "src/main/java/com/gonzotech/machines/menu/PlotnickMenu.java").read_text(encoding="utf-8")
 assert "Math.min(PlotnickBlockEntity.capacityFor(stored), target.getMaxStackSize(stack))" in menu306, \
@@ -1230,7 +1229,7 @@ assert "Math.min(PlotnickBlockEntity.capacityFor(stack), target.getMaxStackSize(
     "0.3.306: пустой слот заполняется по capacityFor без минимума с потолком слота"
 
 ir306 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
-assert "sinks = liveSinks(level, pipePos, sinks);" in ir306 and "if (sinks.isEmpty()) return 0;" in ir306, \
+assert "sinks = liveSinks(level, pipePos, sinks);" in ir306 and "if (sinks.isEmpty()) {" in current_rad.method(ir306, "private static int pushItems("), \
     "0.3.306: pushItems не переживает удаление маршрута (кэш 1–5 тиков ехал по мёртвым приёмникам)"
 # 0.3.326: preserve owner identity, not identity of a freshly allocated chest view.
 _live326 = current_rad.method(ir306, "private static boolean sinkLive(")

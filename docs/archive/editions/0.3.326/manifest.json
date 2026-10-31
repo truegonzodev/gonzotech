@@ -24,6 +24,30 @@
       "sha256": "bd9bacbd9739c2c5a664ca1a48454cbd9d0379eb3de80ec115706318bbe474dd",
       "bytes": 40765,
       "task": "PERF-001/1 regression repair and /5 author acceptance; previous editions, not wholesale task closure"
+    },
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "ccdfa6eb0de300b5cb308d5f42603835ce4b8cfb",
+      "snapshot": "docs/archive/editions/0.3.326/OUTDATED_BEFORE_TRANSFER_DAG_CURRENT-STATE.md",
+      "sha256": "8566d5b36c4f091d9674fed9acc8c996f93e25216fc7946c482f09ec72381633",
+      "bytes": 23147,
+      "task": "PERF-001/1: author partial326 result and approved same-tick multi-input/forward policy; cold native refusal remains open"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "ccdfa6eb0de300b5cb308d5f42603835ce4b8cfb",
+      "snapshot": "docs/archive/editions/0.3.326/OUTDATED_BEFORE_TRANSFER_DAG_CAPABILITIES.md",
+      "sha256": "10606514b233929b598bfd33ca67dbee7856bc029e76c3c939f2908d72eb45d8",
+      "bytes": 31197,
+      "task": "PERF-001/1: author partial326 result and approved same-tick multi-input/forward policy; cold native refusal remains open"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "ccdfa6eb0de300b5cb308d5f42603835ce4b8cfb",
+      "snapshot": "docs/archive/editions/0.3.326/OUTDATED_BEFORE_TRANSFER_DAG_MACHINES.md",
+      "sha256": "5c76d9248af6270809bf0ad65e3fda9db3d7d68c859c8ea8001336ab5e72df1a",
+      "bytes": 42270,
+      "task": "PERF-001/1: author partial326 result and approved same-tick multi-input/forward policy; cold native refusal remains open"
     }
   ]
 }

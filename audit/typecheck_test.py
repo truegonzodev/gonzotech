@@ -55,6 +55,7 @@ real_files = [
     NET / "NodeClumpIndex.java",
     NET / "SecondTierPipe.java",
     NET / "ItemRouting.java",
+    NET / "ItemTransferGuard.java",
     NET / "ItemFilterRouting.java",
     NET / "ItemScavengerBlock.java",
     NET / "SecondItemScavengerBlock.java",

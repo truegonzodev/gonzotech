@@ -63,8 +63,8 @@ for(boolean isSource:new boolean[]{false,true}){
 // Two connections to the SAME physical chest cannot become a transfer target.
 Level l=new Level();l.assembleChests=true;BlockPos a=p(9,8),b=p(9,9),root=p(8,8),second=p(8,9);l.load(a);Box[]own=pair(l,a,Direction.SOUTH,false);own[0].slots[0]=new ItemStack(GOODS,16);BlockState auto=new BlockState(new Pipe(PipeMode.AUTO));l.states.put(root,auto);l.states.put(second,auto);
 eq(0,ItemRouting.tickExtract(l,root,auto),"no self transfer through other wrapper");eq(0,ItemRouting.tickExtract(l,second,auto),"no self transfer through second half");eq(16,sum(own),"self route preserves amount");eq(0,l.flow,"self route produces no fictitious flow");clean(l);
-// Receiving through one contact shields extraction through the other this tick.
-Rig inserted=new Rig(Direction.SOUTH,false,false,true);inserted.setSource(0,16);eq(1,inserted.tick(),"insert into near half");BlockPos far=inserted.to[1].pos;Object stamped=call("insertedThisTick",new Class<?>[]{Level.class,long.class,BlockPos.class},inserted.l,inserted.l.tick,far);ok((boolean)stamped,"same-tick shield covers companion address");
+// Receiving through one contact forbids a return from the other physical half.
+Rig inserted=new Rig(Direction.SOUTH,false,false,true);inserted.setSource(0,16);eq(1,inserted.tick(),"insert into near half");BlockPos far=inserted.to[1].pos;Object attempt=call("transferAttempt",new Class<?>[]{Level.class,BlockPos.class,Container.class,BlockPos.class,Container.class},inserted.l,far,ItemRouting.containerAt(inserted.l,far),inserted.source,inserted.from[0]);try{Method allowed=attempt.getClass().getDeclaredMethod("allowed");allowed.setAccessible(true);ok(!(boolean)allowed.invoke(attempt),"return shield covers companion address");}catch(Exception e){throw new AssertionError(e);}
 // AUTO sources captured before discovery must obey a later same-tick insertion.
 l=new Level();l.assembleChests=true;l.load(p(8,8));root=p(8,8);l.states.put(root,auto);Box simple=new Box(l,p(7,8),1);simple.slots[0]=new ItemStack(GOODS,16);Box[]full=pair(l,p(9,8),Direction.SOUTH,false);for(Box box:full)box.fill(FILLER,64);full[1].slots[26]=ItemStack.EMPTY;
 eq(1,ItemRouting.tickExtract(l,root,auto),"captured source does not bounce received item");eq(15,simple.total(),"AUTO no bounce debit");eq(1,full[1].slots[26].getCount(),"AUTO item remains delivered");clean(l);
@@ -91,12 +91,19 @@ if __name__=='__main__':
             ('coordinates-only','return previous.contains(first) && previous.contains(second)\n            && current.contains(first) && current.contains(second);','return true;'),
             ('only-near-owner','previous.contains(first) && previous.contains(second)','previous.contains(first)'),
             ('only-far-owner','previous.contains(first) && previous.contains(second)','previous.contains(second)'),
-            ('captured-source-owner','if (!sameContainerAt(level, excludeSrc, src)) return 0;','if (!containerLookupLoaded(level, excludeSrc)) return 0;'),
-            ('self-route','sinks = sinks.stream().filter(sink -> !sameInventory(level, src, sink.container(), sink.containerPos())).toList();',''),
-            ('companion-shield','noteCompanionInserted(level, now, sink.containerPos(), sink.container());',''),
-            ('captured-source-shield','if (insertedThisTick(level, now, excludeSrc)) return 0;',''),
+            ('captured-source-owner','if (!sameContainerAt(level, excludeSrc, src)) {','if (!containerLookupLoaded(level, excludeSrc)) {'),
+            ('companion-identity','return List.of(ItemTransferGuard.Owner.block(pos.asLong()), ItemTransferGuard.Owner.block(other.asLong()));','return List.of(ItemTransferGuard.Owner.block(pos.asLong()));'),
+            ('accepted-history','guard.record(now, sourceOwners, targetOwners);',''),
         ]
         for name,old,new in mutants:
-            assert text.count(old)==1,(name,old);result=check(text.replace(old,new));assert result.returncode!=0 and 'AssertionError' in result.stderr,'mutation survived: '+name+'\n'+result.stdout+result.stderr;print('REJECTED:',name)
-        filter_source=(JAVA/'machines/network/ItemFilterRouting.java').read_text();old='if (ItemRouting.sameInventory(level, src, sink.container(), sink.containerPos())) continue;';assert filter_source.count(old)==1;result=check(filter_source=filter_source.replace(old,''));assert result.returncode!=0 and 'AssertionError' in result.stderr,'filter alias mutation survived';print('REJECTED: filter-self-route')
-        print('Mutation sensitivity: 9/9 assertion-killed (compiler failures never count)')
+            assert text.count(old)==1,(name,old)
+            changed=text.replace(old,new)
+            # Owner membership is now independently enforced again by history-key
+            # resolution. Exercise both layers for these deliberate unsafe variants.
+            if name in ('coordinates-only','captured-source-owner'):
+                changed=changed.replace(' || !compound.contains(first) || !compound.contains(second)','')
+            elif name=='only-near-owner':changed=changed.replace(' || !compound.contains(second)','')
+            elif name=='only-far-owner':changed=changed.replace(' || !compound.contains(first)','')
+            result=check(changed);assert result.returncode!=0 and 'AssertionError' in result.stderr,'mutation survived: '+name+'\n'+result.stdout+result.stderr;print('REJECTED:',name)
+
+        print('Mutation sensitivity: 7/7 assertion-killed (compiler failures never count)')

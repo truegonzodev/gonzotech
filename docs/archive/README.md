@@ -32,3 +32,5 @@
 - [Предыдущие CURRENT/CAPABILITIES перед0.3.325](editions/0.3.325/README.md): полные тексты3224f15до отменыadjacentloading и уточнения54; **не закрытие1/5**.
 
 - [Предыдущие CURRENT/CAPABILITIES/MACHINES перед0.3.326](editions/0.3.326/README.md): exact1370c30доblockingchestfix1/приёмки5.5остаётсязакрытойзаписьювCURRENTдо330,остальныепунктыснимканезакрываются.
+
+- [Редакции runtime0.3.326 перед0.3.327](editions/0.3.326/README.md#before-transfer-dag): exactccdfa6e CURRENT/CAPABILITIES/MACHINES до согласованной замены shield; cold-source отказ1 остаётся открытым.

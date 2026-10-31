@@ -19,12 +19,14 @@ SOURCE = ROOT / 'src/main/java/com/gonzotech/machines/network/ItemRouting.java'
 
 STUBS = {
     'net/minecraft/core/BlockPos.java': 'package net.minecraft.core;public record BlockPos(long value){public long asLong(){return value;}}',
+    'com/gonzotech/machines/network/PipeRoutingDiagnostics.java':'package com.gonzotech.machines.network;import net.minecraft.world.level.Level;import net.minecraft.core.BlockPos;public class PipeRoutingDiagnostics{public static boolean itemEnabled(Level l){return false;}public static void itemEvent(Level l,BlockPos p,BlockPos e,String s,String d){}}',
     'net/minecraft/core/Direction.java': 'package net.minecraft.core;public enum Direction{NORTH}',
     'net/minecraft/world/Container.java': 'package net.minecraft.world;public interface Container{}',
     'net/minecraft/world/level/Level.java': 'package net.minecraft.world.level;public class Level{public long tick;public boolean client;public long getGameTime(){return tick;}public boolean isClientSide(){return client;}}',
 }
 
 PROBE = r'''
+ static class PipeRoutingDiagnostics { static boolean itemEnabled(Level l){return false;}static void itemEvent(Level l,BlockPos p,BlockPos e,String s,String d){} }
  private record Box(String name) implements Container {}
  private static final Map<Level,Map<Long,List<Sink>>> DISCOVERY=new IdentityHashMap<>();
  private static int scans,checks;

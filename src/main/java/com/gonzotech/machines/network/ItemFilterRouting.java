@@ -143,7 +143,7 @@ public final class ItemFilterRouting {
         // (a) Транзитный буфер Фильтра — предметы, пришедшие в него по трубам.
         // Тянем их без canTake-проверки (буфер её запрещает для внешних, но сам
         // Фильтр свой буфер раздавать обязан).
-        moved = drainContainer(level, pos, be, null, be, pass, reject, poweredScavenger,
+        moved = drainContainer(level, pos, be, null, be, pos, pass, reject, poweredScavenger,
             passBudget, rejectBudget, totalBudget, moved, rotation, true);
 
         // (b) Прилегающие контейнеры-источники (режим «воронка»).
@@ -151,7 +151,7 @@ public final class ItemFilterRouting {
             if (totalBudget.exhausted()) break;
             Container src = ItemRouting.containerAt(level, source.pos());
             if (src == null) continue;
-            moved = drainContainer(level, pos, be, source.face(), src, pass, reject, poweredScavenger,
+            moved = drainContainer(level, pos, be, source.face(), src, source.pos(), pass, reject, poweredScavenger,
                 passBudget, rejectBudget, totalBudget, moved, rotation, false);
         }
     }
@@ -165,7 +165,7 @@ public final class ItemFilterRouting {
      * @return обновлённая последовательность перемещений за тик (для round-robin)
      */
     private static int drainContainer(Level level, BlockPos pos, ItemFilterBlockEntity be,
-                                      Direction srcFace, Container src,
+                                      Direction srcFace, Container src, BlockPos sourcePos,
                                       List<ItemRouting_Sink> pass, List<ItemRouting_Sink> reject,
                                       BlockPos poweredScavenger,
                                       ChannelBudget passBudget, ChannelBudget rejectBudget,
@@ -210,9 +210,12 @@ public final class ItemFilterRouting {
                     ItemRouting_Sink sink = targets.get(idx);
                     if (!sinkLoaded(level, sink)) continue;
                     if (ItemRouting.sameInventory(level, src, sink.container(), sink.containerPos())) continue;
+                    ItemRouting.TransferAttempt attempt = ItemRouting.transferAttempt(level, sourcePos, src, sink.containerPos(), sink.container());
+                    if (!attempt.allowed()) continue;
                     if (ItemRouting.insertOne(sink.container(), sink.face(), one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();
+                        attempt.record();
                         budget.record(one.getItem());
                         totalBudget.record(one.getItem());
                         moved++;

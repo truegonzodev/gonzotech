@@ -72,34 +72,9 @@ public final class ItemRouting {
      *
      * @return сколько предметов суммарно перемещено за этот тик
      */
-    /**
-     * 0.3.96: щит пинг-понга — позиция контейнера → тик последней ВСТАВКИ.
-     * Из контейнера, в который в этом же тике что-то вставили, не тянем: два
-     * соседних узла иначе гоняют один предмет туда-обратно (топка A → топка B →
-     * топка A) с setChanged-штормом и бесконечно грязными чанками — это и были
-     * «лаг-вейвы» автора на куче узлов. Чистится при записи (правило статики).
-     * 0.3.299 (N14): таблица разделена по измерениям — asLong() позиции в
-     * Незере и обычном мире сталкиваются, и щит на зеркальных координатах
-     * глушил забор там, где конфликта нет.
-     */
-    private static final java.util.Map<Level, java.util.Map<Long, Long>> LAST_INSERTED =
-        new java.util.WeakHashMap<>();
-
-    private static void noteInserted(Level level, long now, BlockPos containerPos) {
-        java.util.Map<Long, Long> perDim =
-            LAST_INSERTED.computeIfAbsent(level, k -> new java.util.HashMap<>());
-        if (perDim.size() > 256) {
-            long oldest = now - 4L;
-            perDim.values().removeIf(t -> t < oldest);
-        }
-        perDim.put(containerPos.asLong(), now);
-    }
-
-    private static boolean insertedThisTick(Level level, long now, BlockPos containerPos) {
-        java.util.Map<Long, Long> perDim = LAST_INSERTED.get(level);
-        Long at = perDim == null ? null : perDim.get(containerPos.asLong());
-        return at != null && at == now;
-    }
+    // One tick of directed transfer history per world. Values contain only primitive
+    // addresses/UUIDs, never a Container -> Level reference back to the weak key.
+    private static final Map<Level, ItemTransferGuard> TRANSFER_GUARDS = new java.util.WeakHashMap<>();
 
     /**
      * 0.3.96: есть ли в источнике хоть один извлекаемый предмет. Раньше BFS
@@ -130,9 +105,11 @@ public final class ItemRouting {
         if (budget <= 0) return 0;
 
         long now = level.getGameTime();
+        boolean diagnostics = PipeRoutingDiagnostics.itemEnabled(level);
+        if (diagnostics) PipeRoutingDiagnostics.itemEvent(level, pos, null, "tick", "state=" + state);
 
         // Фаза 1 (0.3.96): собираем грани-источники, где ЕСТЬ что извлекать, и
-        // отсеиваем пинг-понг (вставлено в этот же тик — не тянем обратно).
+        // Возврат/циклы проверяются по истории конкретных направлений, не по факту приёма.
         List<Object[]> faces = new ArrayList<>(); // {BlockPos srcPos, Direction srcFace, Container src}
         for (Direction dir : Direction.values()) {
             if (!carrier.opensToward(state, T, dir)) continue;
@@ -141,10 +118,16 @@ public final class ItemRouting {
             BlockPos srcPos = pos.relative(dir);
             // Сторона источника, обращённая к трубе (для WorldlyContainer-доступа).
             Direction srcFace = dir.getOpposite();
-            if (insertedThisTick(level, now, srcPos)) continue;
             Container src = containerAt(level, srcPos);
-            if (src == null) continue;
-            if (!hasExtractableItem(src, srcFace)) continue;
+            if (src == null) {
+                if (diagnostics) PipeRoutingDiagnostics.itemEvent(level, pos, srcPos, "source-missing", "loaded=" + level.hasChunkAt(srcPos));
+                continue;
+            }
+            if (!hasExtractableItem(src, srcFace)) {
+                if (diagnostics) PipeRoutingDiagnostics.itemEvent(level, pos, srcPos, "source-empty-or-sided-denied", src.getClass().getName());
+                continue;
+            }
+            if (diagnostics) PipeRoutingDiagnostics.itemEvent(level, pos, srcPos, "source-ready", src.getClass().getName() + " slots=" + src.getContainerSize());
             faces.add(new Object[]{srcPos, srcFace, src});
         }
         if (faces.isEmpty()) return 0;
@@ -155,7 +138,10 @@ public final class ItemRouting {
         // 0.3.299 (N13): результат кэшируется на узел (инвалидация — общий
         // штамп геометрии из LevelChunk-миксина), с бюджетом узлов на тик.
         List<Sink> sinks = sinksCached(level, pos);
-        if (sinks.isEmpty()) return 0;
+        if (sinks.isEmpty()) {
+            if (diagnostics) PipeRoutingDiagnostics.itemEvent(level, pos, null, "no-discovered-sinks", "sources=" + faces.size());
+            return 0;
+        }
 
         int moved = 0;
         for (Object[] face : faces) {
@@ -167,6 +153,7 @@ public final class ItemRouting {
             moved += done;
             budget -= done;
         }
+        if (diagnostics) PipeRoutingDiagnostics.itemEvent(level, pos, null, "result", "moved=" + moved + " sources=" + faces.size() + " discoveredSinks=" + sinks.size());
         return moved;
     }
 
@@ -191,12 +178,19 @@ public final class ItemRouting {
         // пересоберёт по бюджету). Перенос при этом просто задерживается —
         // теряться предметам не за чем.
         // A captured source must still be the same live physical inventory.
-        if (insertedThisTick(level, now, excludeSrc)) return 0;
-        if (!sameContainerAt(level, excludeSrc, src)) return 0;
+        if (!sameContainerAt(level, excludeSrc, src)) {
+            if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, pipePos, excludeSrc, "source-identity-rejected", src.getClass().getName());
+            return 0;
+        }
+        ItemTransferGuard guard = TRANSFER_GUARDS.computeIfAbsent(level, key -> new ItemTransferGuard());
+        List<ItemTransferGuard.Owner> sourceOwners = inventoryOwners(level, excludeSrc, src);
         sinks = liveSinks(level, pipePos, sinks);
         // Different halves/wrappers can still be the same source inventory.
         sinks = sinks.stream().filter(sink -> !sameInventory(level, src, sink.container(), sink.containerPos())).toList();
-        if (sinks.isEmpty()) return 0;
+        if (sinks.isEmpty()) {
+            if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, pipePos, excludeSrc, "no-live-external-sinks", src.getClass().getName());
+            return 0;
+        }
         int moved = 0;
         long rotation = level.getGameTime();
         int n = sinks.size();
@@ -221,16 +215,18 @@ public final class ItemRouting {
                 for (int k = 0; k < n; k++) {
                     int idx = (int) Math.floorMod(rotation + moved + k, n);
                     Sink sink = sinks.get(idx);
-                    // 0.3.96: не льём обратно в источник этой грани (как раньше,
-                    // только источник теперь один на весь BFS) и не вставляем в
-                    // контейнер-источник этой же сети в этом же тике (щит циклов).
+                    // A receiver is not locked by another input. Only a return/cycle
+                    // through this tick's accepted transfer edges is forbidden.
                     if (sink.containerPos().equals(excludeSrc)) continue;
-                    if (insertedThisTick(level, now, sink.containerPos())) continue;
+                    List<ItemTransferGuard.Owner> targetOwners = inventoryOwners(level, sink.containerPos(), sink.container());
+                    if (!guard.allows(now, sourceOwners, targetOwners)) {
+                        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, pipePos, sink.containerPos(), "return-cycle-or-owner-unavailable", "source=" + excludeSrc);
+                        continue;
+                    }
                     if (insertOne(sink.container, sink.face, one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();
-                        noteInserted(level, now, sink.containerPos());
-                        noteCompanionInserted(level, now, sink.containerPos(), sink.container());
+                        guard.record(now, sourceOwners, targetOwners);
                         moved++;
                         perItem.merge(one.getItem(), 1, Integer::sum);
                         placed = true;
@@ -356,13 +352,20 @@ public final class ItemRouting {
         java.util.Map<Long, CachedSinks> perLevel = TOPO_CACHE.get(level);
         CachedSinks hit = perLevel == null ? null : perLevel.get(startPipe.asLong());
         long version = topoVersion(level);
+        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "cache",
+            "hit=" + (hit != null) + " age=" + (hit == null ? "-" : now - hit.builtTick())
+                + " version=" + version + " budget=" + topoBudget);
         if (hit != null
             && (hit.version() == version && now - hit.builtTick() <= TOPO_TTL_TICKS)) {
             return hit.sinks();
         }
-        if (topoBudget <= 0) return hit != null ? hit.sinks() : List.of();
+        if (topoBudget <= 0) {
+            if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "bfs-budget-deferred", "fallback=" + (hit == null ? 0 : hit.sinks().size()));
+            return hit != null ? hit.sinks() : List.of();
+        }
         int[] visited = new int[1];
         List<Sink> sinks = collectSinks(level, startPipe, visited, topoBudget);
+        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "bfs-result", "visitedRaw=" + visited[0] + " sinks=" + sinks.size());
         if (visited[0] == 2) topoBudget = 0; else topoBudget -= visited[0]; // 0.3.306
         if (perLevel == null) {
             perLevel = new java.util.HashMap<>();
@@ -513,6 +516,8 @@ public final class ItemRouting {
      */
     static boolean sameContainerAt(Level level, BlockPos pos, Container expected) {
         Container live = containerAt(level, pos);
+        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, pos, null, "identity-types",
+            "expected=" + expected.getClass().getName() + " live=" + (live == null ? "null" : live.getClass().getName()));
         if (live == null) return false;
         if (live == expected) return true;
         if (!(live instanceof CompoundContainer current) || !(expected instanceof CompoundContainer previous)) return false;
@@ -523,6 +528,10 @@ public final class ItemRouting {
         if (!level.hasChunkAt(other)) return false;
         if (!(level.getBlockEntity(pos) instanceof Container first)
             || !(level.getBlockEntity(other) instanceof Container second) || first == second) return false;
+        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, pos, other, "compound-owners",
+            "near=" + first.getClass().getName() + " far=" + second.getClass().getName()
+                + " previous=" + previous.contains(first) + "/" + previous.contains(second)
+                + " current=" + current.contains(first) + "/" + current.contains(second));
         return previous.contains(first) && previous.contains(second)
             && current.contains(first) && current.contains(second);
     }
@@ -540,15 +549,38 @@ public final class ItemRouting {
         return false;
     }
 
-    /** Preserve the existing same-tick anti-ping-pong shield through either half. */
-    private static void noteCompanionInserted(Level level, long now, BlockPos pos, Container target) {
-        if (!(target instanceof CompoundContainer compound) || !level.hasChunkAt(pos)) return;
-        BlockState state = level.getBlockState(pos);
-        if (!(state.getBlock() instanceof ChestBlock) || state.getValue(ChestBlock.TYPE) == ChestType.SINGLE) return;
-        BlockPos other = pos.relative(ChestBlock.getConnectedDirection(state));
-        if (level.hasChunkAt(other) && level.getBlockEntity(other) instanceof Container owner && compound.contains(owner)) {
-            noteInserted(level, now, other);
+    /** A checked forward transfer shared with filter routing; no world/container retention. */
+    record TransferAttempt(ItemTransferGuard guard, long tick, List<ItemTransferGuard.Owner> source,
+                           List<ItemTransferGuard.Owner> target) {
+        boolean allowed() { return guard.allows(tick, source, target); }
+        void record() { guard.record(tick, source, target); }
+    }
+
+    static TransferAttempt transferAttempt(Level level, BlockPos sourcePos, Container source,
+                                           BlockPos targetPos, Container target) {
+        ItemTransferGuard guard = TRANSFER_GUARDS.computeIfAbsent(level, key -> new ItemTransferGuard());
+        return new TransferAttempt(guard, level.getGameTime(), inventoryOwners(level, sourcePos, source),
+            inventoryOwners(level, targetPos, target));
+    }
+
+    /** History keys are addresses/UUIDs, not retained physical inventories.
+     * Live BE identity is checked independently by sameContainerAt. A replaced
+     * block at the same address can only receive a conservative same-tick denial.
+     */
+    private static List<ItemTransferGuard.Owner> inventoryOwners(Level level, BlockPos pos, Container container) {
+        if (!level.hasChunkAt(pos)) return List.of();
+        if (container instanceof net.minecraft.world.entity.Entity entity) {
+            return List.of(ItemTransferGuard.Owner.entity(entity.getUUID()));
         }
+        if (!(container instanceof CompoundContainer compound)) return List.of(ItemTransferGuard.Owner.block(pos.asLong()));
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof ChestBlock) || state.getValue(ChestBlock.TYPE) == ChestType.SINGLE) return List.of();
+        BlockPos other = pos.relative(ChestBlock.getConnectedDirection(state));
+        if (!level.hasChunkAt(other)
+            || !(level.getBlockEntity(pos) instanceof Container first)
+            || !(level.getBlockEntity(other) instanceof Container second)
+            || first == second || !compound.contains(first) || !compound.contains(second)) return List.of();
+        return List.of(ItemTransferGuard.Owner.block(pos.asLong()), ItemTransferGuard.Owner.block(other.asLong()));
     }
 
     /** Never let vanilla double-chest lookup read an unloaded companion chunk. */
