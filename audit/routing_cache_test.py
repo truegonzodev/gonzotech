@@ -30,10 +30,10 @@ PROBE = r'''
  private record Box(String name) implements Container {}
  private static final Map<Level,Map<Long,List<Sink>>> DISCOVERY=new IdentityHashMap<>();
  private static int scans,checks;
- private static List<Sink> collectSinks(Level level,BlockPos pos,int[] visited,int budget){
-  scans++;visited[0]=1;
+ private static SinkSearch collectSinks(Level level,BlockPos pos,int budget){
+  scans++;
   // Stand-in for a complete small BFS: no attempt to simulate PERF-001/3.
-  return List.copyOf(DISCOVERY.getOrDefault(level,Map.of()).getOrDefault(pos.asLong(),List.of()));
+  return new SinkSearch(List.copyOf(DISCOVERY.getOrDefault(level,Map.of()).getOrDefault(pos.asLong(),List.of())),1,true);
  }
  private static boolean sinkLive(Level level,Sink sink){
   // Entity/block lookup boundary. The real route geometry is not executed here.
@@ -93,7 +93,7 @@ def generated(source):
     start = source.index('    private static final java.util.Map<Level, long[]> TOPO_VERSION')
     end = source.index('    /** Миксин зовёт', start)
     fields = source[start:end]
-    records = method(source, 'private record Sink(') + '\n' + method(source, 'private record CachedSinks(')
+    records = method(source, 'private record Sink(') + '\n' + method(source, 'private record CachedSinks(') + '\n' + method(source, 'private record SinkSearch(')
     bodies = '\n'.join(method(source, signature) for signature in (
         'public static void onWorldEdit(', 'private static long topoVersion(',
         'private static List<Sink> sinksCached(', 'private static List<Sink> liveSinks('))

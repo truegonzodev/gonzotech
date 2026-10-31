@@ -342,8 +342,10 @@ public final class ItemRouting {
         return v == null ? 0L : v[0];
     }
 
+    private record SinkSearch(List<Sink> sinks, int visited, boolean complete) { }
+
     private static List<Sink> sinksCached(Level level, BlockPos startPipe) {
-        if (level.isClientSide()) return collectSinks(level, startPipe, new int[1], Integer.MAX_VALUE);
+        if (level.isClientSide()) return collectSinks(level, startPipe, Integer.MAX_VALUE).sinks();
         long now = level.getGameTime();
         if (topoBudgetTick != now) {
             topoBudgetTick = now;
@@ -363,10 +365,11 @@ public final class ItemRouting {
             if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "bfs-budget-deferred", "fallback=" + (hit == null ? 0 : hit.sinks().size()));
             return hit != null ? hit.sinks() : List.of();
         }
-        int[] visited = new int[1];
-        List<Sink> sinks = collectSinks(level, startPipe, visited, topoBudget);
-        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "bfs-result", "visitedRaw=" + visited[0] + " sinks=" + sinks.size());
-        if (visited[0] == 2) topoBudget = 0; else topoBudget -= visited[0]; // 0.3.306
+        SinkSearch search = collectSinks(level, startPipe, topoBudget);
+        List<Sink> sinks = search.sinks();
+        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "bfs-result",
+            "visited=" + search.visited() + " complete=" + search.complete() + " sinks=" + sinks.size());
+        topoBudget -= search.visited();
         if (perLevel == null) {
             perLevel = new java.util.HashMap<>();
             TOPO_CACHE.put(level, perLevel);
@@ -374,17 +377,17 @@ public final class ItemRouting {
         if (perLevel.size() > 8192) perLevel.clear(); // трубы ломают — кэш не раздуваем
         // 0.3.306: усечённый бюджетом обход в кэш не кладём — иначе тик позже
         // по нему ездили бы как по полному (недоисследованные приёмники пропали б).
-        if (visited[0] != 2) perLevel.put(startPipe.asLong(), new CachedSinks(sinks, now, version));
+        if (search.complete()) perLevel.put(startPipe.asLong(), new CachedSinks(sinks, now, version));
         return sinks;
     }
 
     /**
      * Собирает контейнеры-приёмники, достижимые по связной цепи предметных труб от
-     * {@code startPipe}. Источник {@code srcPos} исключаем из приёмников. Правила
+     * {@code startPipe}. Источник/его alias исключаются перед переносом. Правила
      * соединения — как в {@link PipeRouting}: труба↔труба по открытым навстречу
      * граням; труба→контейнер, если грань открыта к нему и режим = ОТДАЧА/АВТО.
      */
-    private static List<Sink> collectSinks(Level level, BlockPos startPipe, int[] visitedOut, int maxNodes) {
+    private static SinkSearch collectSinks(Level level, BlockPos startPipe, int maxNodes) {
         List<Sink> sinks = new ArrayList<>();
         Set<BlockPos> visited = new HashSet<>();
         Map<Long, BlockPos> parents = new HashMap<>();
@@ -393,12 +396,11 @@ public final class ItemRouting {
         visited.add(startPipe);
         parents.put(startPipe.asLong(), null);
 
-        while (!queue.isEmpty()) {
-            // 0.3.306: лимит обхода ВНУТРИ BFS (авторская правка бюджета):
-            // visitedOut[0]=2 помечает усечение — такой результат не кэшируется,
-            // поиск продолжится в следующих тиках. Первый большой обход больше
-            // не способен увязнуть сервером: узлы считаются по-настоящему.
-            if (visited.size() > maxNodes) { visitedOut[0] = 2; break; }
+        // Count processed nodes, independently of completion. Discovering a queued
+        // neighbour is not permission to process it beyond the remaining budget.
+        int processed = 0;
+        while (!queue.isEmpty() && processed < maxNodes) {
+            processed++;
             BlockPos pipe = queue.poll();
             if (!level.hasChunkAt(pipe)) continue;
             BlockState pstate = level.getBlockState(pipe);
@@ -431,8 +433,7 @@ public final class ItemRouting {
             PipeFlowWarnings.mark(level, startPipe,
                 level.getGameTime() + PipeFlowWarnings.HOLD_TICKS);
         }
-        visitedOut[0] = visited.size();
-        return sinks;
+        return new SinkSearch(sinks, processed, queue.isEmpty());
     }
 
     /** Восстанавливает выбранный BFS-маршрут от стартовой трубы до {@code end}. */

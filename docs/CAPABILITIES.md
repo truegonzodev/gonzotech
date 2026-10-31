@@ -1,6 +1,6 @@
 # Контракты взаимодействия и интеграции
 
-Актуализировано на runtime **0.3.327**,31.10.2026. Документальная база миграции:0.3.311/42730c3; действующие I/O-контракты ниже.
+Актуализировано на runtime **0.3.328**,01.11.2026. Документальная база миграции:0.3.311/42730c3; действующие I/O-контракты ниже.
 
 
 Здесь capabilities — технические границы I/O, загрузки, сети и сторонних интеграций. Это не витрина возможностей мода и не общий backlog.
@@ -11,7 +11,7 @@
 - simulate не расходует материал/буфер и не переносит дозу. Commit повторно проверяет живой приёмник/вместимость, а не доверяет прошлому simulate.
 - `PipeRouting`, `PipeFlowNetwork`, `ItemRouting` используют кэш/маршруты, но sink должен совпадать с текущим BE/типом/формой. Поломка/замена/разгрузка инвалидирует старое обещание.
 - Виртуальные порты SteamGen/реактора не должны грузить чужие чанки. UNKNOWN не означает пустой порт. Обратный heat-путь в тот же реактор исключается.
-- ItemRouting: TTL-hit в322 требует совпадения версии **и** возраста≤40тиков; пустой кэш тоже истекает без block edit, world edit сразу делает hit непригодным. При исчерпанном BFS-бюджете сохраняется прежний fallback до доступного пересчёта; полнота/справедливость большой сети ещё не гарантирована. Повторные обёртки двойного сундука сверяются по физическим половинам;327 разрешает независимые входы/транзит с DAG-защитой; cold-source1 остаётся открытым; sentinelусечения/pathvalidationcost/cachelifecycle остаются3/13/14. Live-проверка перед commit сохранена; throughput/balance не менялись; loaded-only границы добавлены в325(ниже).
+- ItemRouting: TTL-hit в322 требует совпадения версии **и** возраста≤40тиков; пустой кэш тоже истекает без block edit, world edit сразу делает hit непригодным. При исчерпанном BFS-бюджете сохраняется прежний fallback до доступного пересчёта; полнота/справедливость большой сети ещё не гарантирована. Повторные обёртки двойного сундука сверяются по физическим половинам;327 разрешает независимые входы/транзит с DAG-защитой; cold-source1 остаётся открытым; sentinel/count/completion исправлены328; resumable3/pathvalidation13/cachelifecycle14 остаются открыты. Live-проверка перед commit сохранена; throughput/balance не менялись; loaded-only границы добавлены в325(ниже).
 - IItemHandler, InvWrapper, воронки и custom handlers требуют правильной семантики insert/extract/остатка. `setItem` — замена. Остаток/rollback — реальный материал, не реконструкция по одному id/count.
 
 ## Радиационные адаптеры
@@ -71,7 +71,7 @@ RadiationCluster.Policy.NORMAL/LEAD используют прежний коэф
 
 ## PERF-001 — границы нового лечения
 
-Endpoint identity и lifecycle должны учитывать double-wrapper/две половины, entity и заменённый BE; текущая долгоживущая Container-ссылка в WeakHashMap value может удерживать world. Автор отменил прежнее adjacent-endpoint loading: теперь вся предметная логистика loaded-only, без probes/tickets/known-endpoint loaders, включаяfilter/отсеиватель. Complete/visited/result и продолжение поиска — требование3; shared path validation/lifecycle addresses — предложения13/14. Throttle Fence обязан сохранять допустимый end/ACK и provenance. 5принят автором по выгрузке/стопу/возобновлению;1 частично исправлен326, политика327 ждёт игры, cold-source отказ не воспроизведён,3/6/9/10/12/13/14не реализованы.
+Endpoint identity и lifecycle должны учитывать double-wrapper/две половины, entity и заменённый BE; текущая долгоживущая Container-ссылка в WeakHashMap value может удерживать world. Автор отменил прежнее adjacent-endpoint loading: теперь вся предметная логистика loaded-only, без probes/tickets/known-endpoint loaders, включаяfilter/отсеиватель. Complete/visited/result разделены328; продолжение поиска — оставшееся требование3; shared path validation/lifecycle addresses — предложения13/14. Throttle Fence обязан сохранять допустимый end/ACK и provenance. 5принят автором по выгрузке/стопу/возобновлению;1 частично исправлен326, игра327 не принята;328 ждёт игры, отдельный изолированный cold-source ещё открыт; logged BFS starvation исправлен328,3 частично исправлен328,6/9/10/12/13/14 не реализованы.
 
 ## PERF-001/7/8 — приём I/II после321
 
@@ -125,8 +125,18 @@ ItemRouting: loaded-check root/source; до каждого BFSstate read про�
 
 ItemFilterRouting: все source/pass/reject lookups идут черезтотжеcontainerAt; loadedroot/frontier/queuednode доstate read, root+path+endpoint перед insertOne. Sink хранит только дополнительные координатыroot/цели для loaded-проверки; native owneridentity/полнаяпроверка топологии13не переделаны. Выгруженный poweredscavenger не разрешает deletion; загруженныйIIсохраняет прежнюю intentionaldeletion/защитуwaste/бюджеты веток. Недоставленное остаётся у источника/в буфереfilter. Нормальная loadedлогистика не меняет лимиты, компоненты, радиационные sidecars илиNBT.
 
-После внешней загрузки маршрут открывается через прежнюю инвалидацию/TTL40и доступныйBFSbudget; новые bounded/resumable/SLA3не обещаны. Wholeproduction boundaryharness+exactoldnegative+23mutants —не nativeMC/GameTest/TPSдоказательство.5закрыт по авторскому подтверждению выгрузки/стопа/возобновления на325; identity1 частично исправлен326; новая политика327 требует игры, cold-source отказ открыт.3/13/14остаются открыты.
+После внешней загрузки маршрут открывается через прежнюю инвалидацию/TTL40и доступныйBFSbudget; новые bounded/resumable/SLA3не обещаны. Wholeproduction boundaryharness+exactoldnegative+23mutants —не nativeMC/GameTest/TPSдоказательство.5закрыт по авторскому подтверждению выгрузки/стопа/возобновления на325; identity1 частично исправлен326; после отрицательной игры327 требуется проверка328, cold-source отказ открыт.3/13/14остаются открыты.
 
 **Косвенный redstone-путь5, дополнительное решение автора:** неизвестное питаниеII — недоступность всегоendpoint, неOFF. ItemFilterRouting проверяет `canCheckPower` до постановки scavengerвсписок; уIдостаточен собственныйloadedchunk (нетredstone), уII`LoadedItemChunks.redstoneAreaLoaded` требует консервативный квадрат±3блока поX/Z. Он покрывает vanillaadjacentsignal/conductor/directsignal/wireconnection; fourcornerhasChunkAt нечитаетблоки и не грузит чанки. Это фиксированная окрестность чтения redstone, не player-distance rule. При недоступностиIIнетdeletion и нетfallbackrejectrouting; другие доступные endpoints могут работать.
 
 UniversalNodeComparator передvanillaupdateNeighbourForOutputSignal проверяет ownchunk/тужечитаемуюокрестность: vanillaможетчесть второйблок заconductorи соседнийinputкомпаратора. Unsafeуведомление откладывается **до** записиLAST_SIGNALS, чтобы после внешнейзагрузки повторитьpublication. signal()/лимиты/перенос/числоактивныхпотоков неизменны. Это не обещание переделать сторонние произвольные moddedredstonecallbacks; обычная vanillaграница проверяется headless, nativeприёмка ещё требуется.
+
+## Независимые item-пути и BFS budget —0.3.328
+
+Автор подтвердил: закрытие одной линии «вентилем» включает другую; это не ошибка настройки. На327 не работают одновременно2sources→1receiver, A→B→C и две **отдельные** линии между одними inventory (не split с общим входом). Native ITEM-DIAG показал: complete обход2труб обнуляет2048budget, последующие source-ready54 получают deferred/fallback0; при доступном budget выход переносит1. Физические BOTH owners в этих записях совпадают.
+
+Root fix328: `SinkSearch(sinks, visited, complete)`, visited=обработанные узлы≤maxNodes, complete=очередь пуста; только complete попадает в cache. Два узла расходуют2, а не весь бюджет; cache hit не расходует BFS budget. Граница проверяется до обработки следующей queued трубы. Неполный результат не считается полным; прежние immediate live-validated sinks и exhausted-budget fallback сохранены. Реальное исчерпание бюджета остаётся возможным, resumable/fairness больших сетей3 **не реализованы**. TTL40/budget2048/loaded-only5/identity/DAG/alias и существующий перенос unchanged;3 не закрыт целиком.
+
+Независимые линии сохраняют собственные allowance; первый успешный input не блокирует остальные входы/выходы receiver. Разные API GTU/GTH sinks и item Container не смешиваются, новый item interface/фазовый планировщик/virtual batching **не вводятся**: автор отказался от переделки исправного переноса, оценка20–40% осталась идеей без измерения/разрешения. Суммы, вместимость и лимиты прежние; один общий вход/сегмент не превращается в несколько allowance из-за ветвления.
+
+Wholeproduction340assertions/5mutants, exact327negative (Git/hash/bytes), two-node inputs/transit/parallel axes на обоих double контактах иcaps1/2/порядки/cache/budget0–3/partial cache. Старые проверки сохраняются, полныйsuite89PASS.1 ждёт авторской игры328; в показанных source-ready попытках причина локализована вBFS, **все** отдельные cold-source варианты этим не доказаны. Не native MC/Gradle/GameTests/TPS. Предыдущий раздел327 описывает сохранённую identity/DAG основу; его прежний статус уточнён этим свидетельством. [Текущий статус](CURRENT-STATE.md), [история](HISTORY.md#perf-001-two-node-bfs).

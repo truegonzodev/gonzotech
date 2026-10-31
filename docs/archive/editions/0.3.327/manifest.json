@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "3fce03b7e9429e8da63005b13395710afc6a3c43",
+      "snapshot": "docs/archive/editions/0.3.327/OUTDATED_BEFORE_BFS_BUDGET_CURRENT-STATE.md",
+      "sha256": "ba0b66ba21744830094444b44fb4461ec5c6562193e0ba6f9bdb23478abe23c8",
+      "bytes": 25133,
+      "task": "PERF-001/1 and /3: author327 failure, native log and two-node BFS budget root repair; no inventory phase redesign"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "3fce03b7e9429e8da63005b13395710afc6a3c43",
+      "snapshot": "docs/archive/editions/0.3.327/OUTDATED_BEFORE_BFS_BUDGET_CAPABILITIES.md",
+      "sha256": "36a83eb4b3cf20cf8782287db002517cea9d86e9b787c9ba22681ba2acb9eb89",
+      "bytes": 32545,
+      "task": "PERF-001/1 and /3: author327 failure, native log and two-node BFS budget root repair; no inventory phase redesign"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "3fce03b7e9429e8da63005b13395710afc6a3c43",
+      "snapshot": "docs/archive/editions/0.3.327/OUTDATED_BEFORE_BFS_BUDGET_MACHINES.md",
+      "sha256": "e981681953a313d4a0ba6c53c9209a047bd38d16e00ba3a3a9c835808757c8c3",
+      "bytes": 43668,
+      "task": "PERF-001/1 and /3: author327 failure, native log and two-node BFS budget root repair; no inventory phase redesign"
+    }
+  ]
+}

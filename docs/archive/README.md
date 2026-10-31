@@ -34,3 +34,5 @@
 - [Предыдущие CURRENT/CAPABILITIES/MACHINES перед0.3.326](editions/0.3.326/README.md): exact1370c30доblockingchestfix1/приёмки5.5остаётсязакрытойзаписьювCURRENTдо330,остальныепунктыснимканезакрываются.
 
 - [Редакции runtime0.3.326 перед0.3.327](editions/0.3.326/README.md#before-transfer-dag): exactccdfa6e CURRENT/CAPABILITIES/MACHINES до согласованной замены shield; cold-source отказ1 остаётся открытым.
+
+- [Редакции0.3.327 перед BFS-fix328](editions/0.3.327/README.md): exact3fce03b, авторский отказ327/native log, три независимые схемы;1/3 не закрываются по headless.

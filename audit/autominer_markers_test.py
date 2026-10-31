@@ -1243,13 +1243,13 @@ for owner_guard326 in ("Container live = containerAt(level, pos);", "if (live ==
     assert owner_guard326 in _owner326, "0.3.326: lost physical-owner/replacement guard: " + owner_guard326
 assert "perLevel.remove(startPipe.asLong());" in ir306, \
     "0.3.306: отбракованный маршрут не выбрасывает запись кэша"
-assert "if (visited.size() > maxNodes) { visitedOut[0] = 2; break; }" in ir306, \
+assert "while (!queue.isEmpty() && processed < maxNodes) {" in ir306, \
     "0.3.306: обход приёмников без бюджета (тик не упирается в потолок)"
-assert "if (visited[0] != 2) perLevel.put(startPipe.asLong()" in ir306, \
+assert "if (search.complete()) perLevel.put(startPipe.asLong()" in ir306, \
     "0.3.306: усечённый бюджетом список попадает в кэш как полный"
-assert "collectSinks(level, startPipe, visited, topoBudget);" in ir306, \
+assert "collectSinks(level, startPipe, topoBudget);" in ir306, \
     "0.3.306: серверный путь не пользуется бюджетом"
-assert "collectSinks(level, startPipe, new int[1], Integer.MAX_VALUE)" in ir306, \
+assert "collectSinks(level, startPipe, Integer.MAX_VALUE).sinks()" in ir306, \
     "0.3.306: клиентский предпросмотр нельзя резать бюджетом"
 
 wgb = (ROOT / "src/main/java/com/gonzotech/machines/network/WorldGuardFlags.java").read_text(encoding="utf-8")

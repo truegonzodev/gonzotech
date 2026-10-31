@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/1 / 0.3.327: 88 PASS / 0 SKIP / 0 FAIL.** Parallel4321assertions/9mutants; double7498/7mutants; loaded399/23mutants. Это headless, не nativeMinecraft.1 открыт: cold-source отказ не воспроизведён;5 закрыт326/удалить330.
+**Последний полный локальный прогон, PERF-001/1/3 / 0.3.328: 89 PASS / 0 SKIP / 0 FAIL.** BFS340assertions/5mutants/exact327negative; модель, не native игра.1 ждёт автора,3 частично исправлен/ещё открыт;5 закрыт326/удалить330.
 
 ## Команды и доказательства
 
@@ -453,3 +453,24 @@ PipeRoutingDiagnostics: существующий opt-in defaultfalse pipeRouting
 CURRENT/CAPABILITIES/MACHINES/AUDIT/HISTORY синхронизированы; полные предыдущие CURRENT/CAPABILITIES/MACHINES ccdfa6e сохранены побайтно/Git/hash/bytes в [OUTDATED](archive/editions/0.3.326/README.md#before-transfer-dag). Старые311–326 snapshots не переписаны; archive README/manifest дополнены. DEFFERED/README не активируют чужие задачи. Архивные старый shield/«1ждёт игры326» читаются как прежний контракт, не действующая политика. Старые вопросы AUTOMINER512 и incompleteBFS3 остаются вне этого шага, решения не выдуманы.
 
 **Финальная проверка327:** полныйsuite **88PASS/0SKIP/0FAIL**, /tmp/gonzo327-final.log. Повторены mutation suites: parallel4321/9of9, double7498/7of7, loaded399/23of23; все kills — assertion, exact предыдущие router fixtures компилируются и отбрасываются проверками. Typecheck62real/163stubs/0errors/negativeimport1. Docs22previoussnapshots поGit/hash/bytes,29live/75immutable/4173sourceitems/69dispositions;1283links/0broken. Validate3285JSON/608items/1281en=ru/0errors/0warnings; git diff --check PASS. Protected runtime/resources неизменны. В финальном doc review обновлены также нижние ссылки CURRENT с перепрогона326 на327; прежние байты уже сохранены в OUTDATED.1 открыт, cold-source не диагностирован,5 закрыт326/удалить330. Native Minecraft/полный Gradle/GameTests/TPS не запускались. Доставка в фиксированную ветку по разрешению автора.
+
+## 0.3.328 — два узла не означают исчерпание бюджета
+
+Новый `item_bfs_budget_test.py` исполняет wholeproduction ItemRouting/FilterRouting/Guard на observed MC boundaries: **340assertions**. Точно2узла/линия;2sources→1receiver, A→B→C и2раздельные осевые линии между одними doubleсундуками (не fork), caps1/2/оба порядка/cold/cache/edit/conservation; остаток2048→2046→2044. Limits0/1/2/3, complete2 против partial2сqueuedтретьим, запретpartialcache и бесплатныйcachehit. Exact327 frozen/Git/hash/bytes **компилируется и assertion-fails** ту же проверку.5of5assertion-mutants: sentinel2/unbounded/falsecompletion/nevercache/freecost.
+
+Обновлён typed result в прежнем cacheharness:126assertions/5of5TTLmutants. Старые sourcepins autominer/node_perf теперь требуют bounded-loop/complete-cache вместо ошибочного sentinel, не подавлены. Заново: loaded399/23of23, parallel4321/9of9, double7498/7of7, exactold negatives. Полный финальныйsuite: **89PASS/0SKIP/0FAIL**, включаяECJtypecheck. Docs:25snapshot hashes/bytes/Git,75legacy originals,1296links/0broken; diffcheck чист. [Предыдущие редакции327](archive/editions/0.3.327/README.md) побайтные.
+
+Author327native отрицательный; ITEM-DIAG показывает бюджетное голодание готовогоsource после полного2-node поиска. Headless не означает native MC/Gradle/GameTests/TPS или игровую приёмку328;1 открыт,3 count/completion исправлен частично, frontier/resumable/fairness остаются. Инвентарные фазы/перенос не переписаны. [Полная хроника](HISTORY.md#perf-001-two-node-bfs).
+
+Команды328 (JAVA_HOME=локальнаяJava21, ECJ_JAR=ecj3.46.100, PYTHONPATH=toolchain Pillow):
+```sh
+python3 audit/item_bfs_budget_test.py --mutation-check
+python3 audit/routing_cache_test.py --mutation-check
+python3 audit/item_loaded_chunks_test.py --mutation-check
+python3 audit/item_parallel_inputs_test.py --mutation-check
+python3 audit/double_chest_routing_test.py --mutation-check
+python3 audit/run_all.py
+python3 audit/docs_structure_test.py
+python3 audit/doc_links.py
+git diff --check
+```
