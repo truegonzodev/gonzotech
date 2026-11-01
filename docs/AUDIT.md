@@ -547,3 +547,11 @@ git diff --check
 Автор выбрал9 и уточнил target-only/все правки включая ore suction/оба разрешения/buildfallback/explicitpistons; отдельно выбрал globalbuildALLOWoverride после сообщения о nativeWGlegacyисключении. Реального hybridhost пока нет;9 остаётся **открытым для native-приёмки**,12/13/14 не изменялись. Новые признаки прохождения nativeигры не сочиняются. Полные7предыдущихliveредакций exact13be401 в [архиве331](archive/editions/0.3.331/README.md); принятый1 удалён по сроку332,6/10 удерживаютсядо335.
 
 Полный332прогон: **95 PASS / 0 SKIP / 0 FAIL** (`JAVA_HOME` JDK21, ECJ, Pillow; `python3 audit/run_all.py`). Документы:55exactpreviouseditions/29live/75immutable/4173sourceitems/69dispositions;1402ссылки/0broken,11историческихцитатсархивныммаршрутом. `docs_structure_test.py`, `doc_links.py` и `git diff --check` — отдельные проверки; native/Gradle не запускались.
+
+
+<a id="audit-packages332"></a>
+## 0.3.332 — упаковка задач повторного аудита
+
+01.11.2026: по запросу автора создана [карта шести пакетов](<../info/00 — Карта пакетов.md>) в info. Это docs-only: код и ресурсы не менялись, runtime-тесты на этом шаге не перезапускаются. Результаты предыдущего аудита: build JAR PASS; штатные GameTest25/25; изолированные25+6=31/31 (часть доказывает дефекты); Python95/95 с адаптацией Windows/JDK; selfTest3FAIL; реальный загрузчик отвергает рецепт third_grinder. Эти границы сохранены в пакетах. Текущие проверки упаковки и результаты добавляются после их выполнения.
+
+Результат проверки упаковки: docs_structure_test PASS (29 live, 75 immutable originals, 55 previous editions); doc_links PASS (1416 ссылок, 0 битых); дополнительная проверка всех ссылок новых пакетов и SHA-256 доставки 7 файлов PASS; прежние байты трёх дополненных документов сохранены; git diff --check PASS. Первый docs_structure прогон выявил недостающий маркер статуса новой записи CURRENT, он исправлен, повторный прогон PASS. Runtime-проверки повторно не запускались.
