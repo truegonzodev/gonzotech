@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/9 / 0.3.332: 95 PASS / 0 SKIP / 0 FAIL.** Новая проверка:1326assertions/9assertionmutants/exact331compilednegative плюс100000absentBukkitAPIcalls/0block/chunkreads. Production adapter/policy/session иBE paths + exactWG7.0.13 flag engine вplugin-onlyloader; MC/Bukkit/bootstrap/geometry/Guava — doubles, не native hybrid/TPS. Игровая приёмка9 ожидается: у автора пока нет стенда. Прежние budget2107/9, ingress4416/7/3exact329negative, Plotnick388/12, Fence73/7/exact328 сохранены; авторская приёмка330 закрыла6/10в331.
+**Последний полный локальный прогон, PERF-001/9 / 0.3.332: 95 PASS / 0 SKIP / 0 FAIL.** Новая проверка:1326assertions/9assertionmutants/exact331compilednegative плюс100000absentBukkitAPIcalls/0block/chunkreads. Production adapter/policy/session иBE paths + exactWG7.0.13 flag engine вplugin-onlyloader; MC/Bukkit/bootstrap/geometry/Guava — doubles, не native hybrid/TPS. В последующем документальном шаге №9 закрыт решением автора без native WG-прогона; CRIT-1/CRIT-2 зарегистрированы для проверки и плана. Прежние budget2107/9, ingress4416/7/3exact329negative, Plotnick388/12, Fence73/7/exact328 сохранены; авторская приёмка330 закрыла6/10в331.
 
 ## Команды и доказательства
 
@@ -548,10 +548,24 @@ git diff --check
 
 Полный332прогон: **95 PASS / 0 SKIP / 0 FAIL** (`JAVA_HOME` JDK21, ECJ, Pillow; `python3 audit/run_all.py`). Документы:55exactpreviouseditions/29live/75immutable/4173sourceitems/69dispositions;1402ссылки/0broken,11историческихцитатсархивныммаршрутом. `docs_structure_test.py`, `doc_links.py` и `git diff --check` — отдельные проверки; native/Gradle не запускались.
 
+<a id="status-reset332"></a>
+## Повторный аудит332: внешние свидетельства и новая регистрация CRIT
 
-<a id="audit-packages332"></a>
-## 0.3.332 — упаковка задач повторного аудита
+**Это сведения переданного пользователем отчёта, не результаты запуска в этой среде.** Проверенная в отчёте базаbc1da5bc / Minecraft1.21.4 / NeoForge21.4.157 / Java21.
 
-01.11.2026: по запросу автора создана [карта шести пакетов](<../info/00 — Карта пакетов.md>) в info. Это docs-only: код и ресурсы не менялись, runtime-тесты на этом шаге не перезапускаются. Результаты предыдущего аудита: build JAR PASS; штатные GameTest25/25; изолированные25+6=31/31 (часть доказывает дефекты); Python95/95 с адаптацией Windows/JDK; selfTest3FAIL; реальный загрузчик отвергает рецепт third_grinder. Эти границы сохранены в пакетах. Текущие проверки упаковки и результаты добавляются после их выполнения.
+| Уровень | Что сообщено | Что это не доказывает |
+|---|---|---|
+| JAR/штатный GameTest | Сборка и25штатных тестов прошли | Не исправление A1/A2 и не ручная игра |
+| Изолированные дополнительные пробы | 25+6=31/31; A1/A2/A3 observation-tests зелёные при дефекте | Не инвариантные регрессии исправленного поведения |
+| Python audit | 95/95 после Windows/JDK-адаптации запуска без смены проверяемого runtime/assertions | Не portable-запуск исходных скриптов без адаптации |
+| Общая Gradle-команда | build runRadiationTest selfTest завершилась ошибкой:3selfTest failures | Нельзя объявить весь прогон успешным |
+| Рецепт | Minecraft отвергает third_grinder при валидномJSON | JSON-синтаксис не доказывает загрузку рецепта |
+| WG/нагрузка | Hybrid WG, heap-profile и полный TPS-benchmark не проведены | Закрытие№9 решением автора не является native-свидетельством |
 
-Результат проверки упаковки: docs_structure_test PASS (29 live, 75 immutable originals, 55 previous editions); doc_links PASS (1416 ссылок, 0 битых); дополнительная проверка всех ссылок новых пакетов и SHA-256 доставки 7 файлов PASS; прежние байты трёх дополненных документов сохранены; git diff --check PASS. Первый docs_structure прогон выявил недостающий маркер статуса новой записи CURRENT, он исправлен, повторный прогон PASS. Runtime-проверки повторно не запускались.
+Артефакты указаны на внешней Windows-машине: `C:\Users\User\Documents\Codex\2026-10-20\new-chat\work\audit-332` (`probes-reactor.log`, `build-tests.log`, `results.json`, `retry-results.json`, `portable_run.py`, `probe-project`). Здесь не предоставлены и не воспроизведены; не зависимости сборки. Карта содержит14исходных вопросов/6пакетов, а не14новых активных задач. Подробности A3–A9 не представлены, они не активированы.
+
+Текущий шаг: пользователь подтвердил CRIT-1/CRIT-2 **только сверка/план**, №9 закрыть без native-claim,12 отложить отдельно,13/14 вD-PIPE2. Source-сверка обнаружила захваченный final sheath-list и formed/count-only guards ReactorFuelInventory/ReactorMenu (fresh cache validation в ReactorFuelStorage не защищает уже захваченный GUI-list), отдельный SidedInvWrapper.insertItem и отсутствие radiation sidecar-hook в его SlotCapacity-mixin. Это не новый native-test и не исправление. Полный сценарий/приёмка — CURRENT; нужны отрицательные инвариантные регрессии и отдельная будущая игровая приёмка. Радиационные единицы — mZt/s, не /t; count-dupe/новый краш не установлены.
+
+Старые95PASS/1326WGchecks и исторические результаты выше не перезаписаны новыми значениями. Runtime остаётся0.3.332; новые GameTest/Gradle/полный Python-suite в этом документальном шаге не запускались. Предыдущие11liveредакций exactbc1da5bc сохранены полностью; этот fetch не менял local HEAD/index/чужой WIP. [Архив](archive/editions/0.3.332/README.md), [решения](HISTORY.md#status-reset332).
+
+Проверки документального шага: `python3 audit/docs_structure_test.py` — PASS (66previouseditions с hash/bytes/Git,29live/75immutable/4173sourceitems/69dispositions); `python3 audit/doc_links.py` —1454links/0broken,11историческихцитат с явным архивным маршрутом. Проверка whitespace выполнена через `git diff --no-index --check` по14реально изменённым файлам относительно exactbc1da5bc (часть docs локально Git-untracked, обычный diff их не покрывает); отрицательный контроль с trailing space обнаружен. Пять исходников CRIT (ReactorFuelInventory/ReactorMenu/ReactorFuelStorage/InvWrapperRadiationMixin/SidedInvWrapperSlotCapacityMixin) побайтно совпали с базойbc1da5bc. Hash-сверка со снимком начала шага подтверждает отсутствие изменений Java/resources/.gitignore/README/постороннего WIP и отсутствие удалений. Полный95suite/Gradle/GameTests/selfTest не перезапускались; runtime0.3.332. Коммит/пуш этого документального шага не выполнялись: локальная ветка наbf5e72e, remote наbc1da5bc, рабочее дерево содержит ранее существовавший большой дифф. Историю/индекс не перестраивали и чужие изменения не коммитили.

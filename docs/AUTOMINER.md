@@ -36,9 +36,9 @@ Source-пины сверены с действующим резервом тру
 
 Автор перенёс bore_pipe{,_top}, geophone{,_top}, miner_drill{,_top}, plotnick{,_top}, seismic_source{,_top}, work_block в textures/block/third/ (731ff19); ссылки6моделей комплекса исправлены на gonzotech:block/third/. Родители, грани и существующие facing rotations сохранены, world/blockstate и inventory item definitions ведут в те же block model IDs. В autominer_markers_test три устаревших каталога second/ заменены на third/ с сохранением16×16 и всех прочих пинов. Это визуальные ресурсы, не изменение комплекта/прогрессии/сметы/сети. PlotnickBlock.java и остальные Java-классы не изменялись; нужен просмотр моделей в игре.
 
-## PERF-001 — активная проверка автоматизации и стоимости операций
+## PERF-001 — контракты завершённого текущего цикла
 
-01.11.2026, runtime332: PERF-001 открыты9/12/13/14; выбран только9, код готов к будущей native-приёмке;12/13/14 не трогать;6/10 закрыты по авторской игровой приёмке330.1принят автором328;5принят326;2/4/7/8/11приняты ранее. Остаток3 отложен автором в [D-PIPE2](DEFFERED.md#d-pipe2),13/14пока открыты и не взяты в реализацию. Прежний счёт9открытых в этом профиле устарел и исправлен по известным решениям, не новой игровой гипотезе. Replacement-onlysetVirtual принят, новый игровой дюп не объявлен. Chunk-policy не расширяет прогрев5×5; PlotnickBlock.java read-only.
+01.11.2026, runtime332: текущий цикл PERF-001 завершён. №9 закрыт прямым решением автора без утверждения native WG-приёмки; №13/14 и остаток№3 отложены в [D-PIPE2](DEFFERED.md#d-pipe2), №12 — отдельно в [D-PERF12](DEFFERED.md#d-perf12). Остальные принятые пункты не переоткрываются. Следующая текущая работа — сверка и план CRIT-1/CRIT-2, без изменения runtime. Замена статуса не меняет прогрев5×5, склад или read-only PlotnickBlock.java.
 
 ### Кнопки PERF-001/6 — бюджет330, принят автором в331
 
@@ -96,4 +96,6 @@ WG отсутствует — старые события NeoForge и их кэ�
 
 Адаптер использует настоящий Bukkit World с `getHandle()==ServerLevel`, plugin classloaders и `BukkitAdapter.adapt`, затем WG manager/ApplicableRegionSet/flag engine. Никаких догадок world/world_nether/имён dimensions и новых hard dependencies. Детали окружения/перезапуска/границ — [INTEGRATIONS](INTEGRATIONS.md#perf-001-wg332).
 
-Проверки:1326assertions,9mutants/exact331compilednegative;100000вызовов безBukkitAPI,0block/chunkreads. В test исполняются production integration и BE gate/mutation bodies + exactWG7.0.13 flag engine; host/geometry/Guava doubles. Автор не имеет hybrid-стенда: native-приёмка и закрытие9 **ещё впереди**. 12/13/14, D-PLOT1, PlotnickBlock/election/прогрев/радиация/баланс не затронуты.
+Проверки:1326assertions,9mutants/exact331compilednegative;100000вызовов безBukkitAPI,0block/chunkreads. В test исполняются production integration и BE gate/mutation bodies + exactWG7.0.13 flag engine; host/geometry/Guava doubles. По последующему решению автора №9 **закрыт** как реализация; hybrid-прогона не было и отдельной текущей задачи приёмки нет. 12/13/14, D-PLOT1, PlotnickBlock/election/прогрев/радиация/баланс не затронуты.
+
+**Смена статуса01.11.2026:** №9 закрыт решением автора без нового native-доказательства;13/14 → [D-PIPE2](DEFFERED.md#d-pipe2),12 → [D-PERF12](DEFFERED.md#d-perf12). Реализация deferred не разрешена. [Хроника](HISTORY.md#status-reset332).

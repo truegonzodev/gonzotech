@@ -45,3 +45,12 @@
 ## Headless-проверка 0.3.315 — D-AUD1
 
 Reactor matrix/operating/thermal oracle выполнен с Java 21: 7358 assertions PASS. Reload fixture теперь повторяет production-путь: outputCurve пересобирается из live analysis и передаётся configure, transient slopes линейной тестовой модели не считаются сериализованными. Сохранены горячая температура, постепенное охлаждение и положительный остаточный exchange; добавлен второй restore. Это проверка математического ядра, не разрешение штатного I/O у unformed и не игровой прогон аварии. ReactorHeatDynamics/ReactorRuntime и баланс не менялись; детали — AUDIT.
+
+<a id="crit-1"></a>
+## CRIT-1 — актуальность владельцев топлива в открытом меню
+
+Зарегистрировано для source-сверки и плана, не исправлено. Внешний аудит базы332 сообщает настоящий GameTest: в одном тике замена чехла/пересборка с прежней вместимостью оставляет старое меню valid; PICKUP одногоUF_TVEL даёт oldFuel1/liveFuel0/cursor0 при removed(oldSheath). Медленное разрушение может успеть закрыть меню. Агент этот native-тест не воспроизводил.
+
+Source: ReactorFuelInventory удерживает final-список чехлов; его stillValid/canMutate и ReactorMenu.stillValid проверяют formed/число слотов, но не identity текущих владельцев. Freshness-проверка уже есть в ReactorFuelStorage.sheathsCached, однако старый GUI не вызывает её для захваченного списка перед действием. План — generation/точный набор живых владельцев с отклонением до debit cursor, не перенаправление по координатам и не поздний return из setItem. Реакторные чехлы остаются самостоятельными; не менять принцип структуры ради GUI.
+
+Будущая приёмка: PICKUP/извлечение/shift-click/drag/cursor, два зрителя, смена панели/вместимости, fast rebuild, unload/reload/save/load; сохранение единственного ТВЭЛа, отсутствие stale-write/повторной выдачи. Observation-test сначала превращается в отрицательную инвариантную регрессию, затем исправление и отдельная игровая приёмка. [Полная задача](CURRENT-STATE.md#crit-1--устаревшее-меню-реактора-теряет-твэл), [история](HISTORY.md#status-reset332).

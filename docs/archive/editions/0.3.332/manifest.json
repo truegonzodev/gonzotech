@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_CURRENT-STATE.md",
+      "sha256": "dafcae45fd41414f5277a3d33a46df04b3ed5d5b643e14f1d1737191a52f4f0e",
+      "bytes": 14575,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_DEFFERED.md",
+      "sha256": "e8ea912cf43280f94dbd18f97b9ba8f70dc982087f3724f6caae666b19f82ae4",
+      "bytes": 47337,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_AUTOMINER.md",
+      "sha256": "6e6067c0124668052e2c3c811f144855ab552b0d2c349e49e1649118439d4a40",
+      "bytes": 23373,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_CAPABILITIES.md",
+      "sha256": "020dabe6730dd7b094ef51864ec71fa221564a9080da07a0570c9a7cfb402120",
+      "bytes": 48141,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/INTEGRATIONS.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_INTEGRATIONS.md",
+      "sha256": "d0d411e826ef633a63a28de87be36752c0c6e4c9f56e0ed45c6d3261919f21c7",
+      "bytes": 19972,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_MACHINES.md",
+      "sha256": "ed4c698f0c520bc4845c805194e5ebb1f63ab5be6bb956122fa107e1ce51179d",
+      "bytes": 57230,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_RAD_ITEMS.md",
+      "sha256": "a11d2998f6595ff0a122c34984ba25646e928088de8d1843df2d2f52782127e4",
+      "bytes": 44504,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/RAD_WORLD.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_RAD_WORLD.md",
+      "sha256": "2354c1143f8862d90753c5906dc7b1aa6adb1a52de1c8b62c2c584d1b8a9eece",
+      "bytes": 22910,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/REACTORS.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_REACTORS.md",
+      "sha256": "79a6ffda4e12221683fb68b0905e2a44263c3f5498781e7f170bd01a2cfcc265",
+      "bytes": 8435,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_MULTIBLOCK.md",
+      "sha256": "bcd3cbf8b32e6c6c1267cfbbcb3f6a5cb2f63846bc1480e97b50f7c0551994ed",
+      "bytes": 18957,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "bc1da5bc9a1e2a458edc8578aeef7810cf32bd73",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_STATUS_RESET332_AUDIT.md",
+      "sha256": "844964b1c114689ee60c2616d292300d70927a2b570681ab4c4116c5b25ce045",
+      "bytes": 128917,
+      "task": "Author closes PERF9 without native claim; defers13/14 toD-PIPE2 and12 separately; registers CRIT1/2 source-validation and planning only"
+    },
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR_PUSH332_CURRENT-STATE.md",
+      "sha256": "e9e50ed15026cf3919e52dcd3a2c4293230a294c4279d8d37072ef2b890e1337",
+      "bytes": 15973,
+      "task": "Preserve exact author-push332 edition before combining local status reset and package synchronization"
+    },
+    {
+      "source": "docs/HISTORY.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR_PUSH332_HISTORY.md",
+      "sha256": "f2a531e4bf741c716122ad2c2eaecc093656d80cc4c090a56277875e3c3c94a0",
+      "bytes": 844152,
+      "task": "Preserve exact author-push332 edition before combining local status reset and package synchronization"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR_PUSH332_AUDIT.md",
+      "sha256": "fdd3d43dfd183ebdff4f9a70768e57551448e16aadadf7cad423789457915e1b",
+      "bytes": 130584,
+      "task": "Preserve exact author-push332 edition before combining local status reset and package synchronization"
+    }
+  ]
+}

@@ -30,4 +30,4 @@ WG/WE classes and plugin entry objects are moved out of the mod's runtime classp
 
 Sources: WG tag 7.0.13 / `82fdc65d0eec1a55b3346824e4e586983e85d62c`; WE tag 7.4.2 / `ff8ccac9d4934b036a18640f54388ef8b543a075`; Paper `ver/1.21.4` / `73116ac9dd1d55c59db411a55de7e91e025a0c80`. The latter sources pin public adaptation/handle APIs, not a NeoForge hybrid implementation.
 
-**Not proved:** native hybrid/plugin-jar bootstrap, full Minecraft/NeoForge/Gradle build, real region index behavior, all platform/version combinations, gameplay acceptance or measured TPS. No real hybrid host has been selected by the author. PERF-001/9 remains pending native acceptance; tasks 12/13/14 are untouched.
+**Not proved:** native hybrid/plugin-jar bootstrap, full Minecraft/NeoForge/Gradle build, real region index behavior, all platform/version combinations, gameplay acceptance or measured TPS. No real hybrid host has been selected by the author. PERF-001/9 was subsequently closed by the author without claiming native acceptance; 13/14 are deferred to D-PIPE2 and 12 separately to D-PERF12. No native acceptance task remains active.

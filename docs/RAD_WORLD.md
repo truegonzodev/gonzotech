@@ -103,3 +103,5 @@ Headless-регрессия исполняет production transfer/claim и вн
 ## PERF-001/12 — производительность комнаты без нового баланса
 
 Автор закрыл предыдущие RAD/HUD исправления28.10.2026. Новая source-проверка подтверждает полную CACHE.remove(level) на любом chunk load/unload и отдельный source scan для каждого observer. Адресная chunk invalidation и общий physical snapshot с исключением собственного inventory — **кандидаты**, не сделанные изменения. Содержимое должно оставаться живым в tick/world mutation, snapshot не может включать remote ender/дважды считать own inventory. Прямые5%, F и lead×0,2/порог318 не меняются; TPS не измерен.
+
+**Статус01.11.2026:** №12 перенесён в отдельную [D-PERF12](DEFFERED.md#d-perf12), не в трубную D-PIPE2 и не в текущую реализацию. CRIT-2 проверяет корректность sidecar-переноса, не меняет эти room-dose/contour формулы. [Решение](HISTORY.md#status-reset332).

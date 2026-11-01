@@ -30,6 +30,8 @@ merged = (a × n + b × k) / (n + k)
 - Разные новые внешние значения наведёнки больше не мешают обычному стакингу. Все **остальные** ограничения ванильного сравнения предмета/компонентов сохраняются.
 - `DoseMath.finite` отбрасывает неположительные/нефинитные значения. Порог очистки 1 mZt применяется в `ItemRadioactivity.setInduced`; не следует подменять им взвешенное усреднение в `DoseMath`.
 
+**Известный пробел CRIT-2:** side-aware SidedInvWrapper не покрыт обычным InvWrapper-hook; его корректность не гарантируется (см. задачу ниже). Перечень ниже не утверждает устранения этого дефекта.
+
 Адаптеры охватывают стандартные copy, Inventory, Hopper, SimpleContainer, Slot.safeInsert, ItemStackHandler (с учётом simulate), InvWrapper, объединение ItemEntity и BundleContents.Mutable; есть явные вызовы в станках, печах, маршрутизации и носителях GonzoTech. Это **не** гарантия для любого стороннего способа пересоздания предметов.
 
 Источники: [DoseMath](../src/main/java/com/gonzotech/radiation/engine/DoseMath.java), [ExternalRadiation](../src/main/java/com/gonzotech/radiation/engine/ExternalRadiation.java), [ItemRadiationCopyMixin](../src/main/java/com/gonzotech/mixin/ItemRadiationCopyMixin.java), [BundleRadiationTransferMixin](../src/main/java/com/gonzotech/mixin/BundleRadiationTransferMixin.java).
@@ -194,3 +196,14 @@ Fence C2S теперь HandlerThread.NETWORK: общий с PlotnickButtonPayloa
 Ingress330: actualguard/window/config/Plotnickhandler/Fenceregistration +pinnedNeoForgeRegistrar/MainThreadWrapper,4416assertions/7mutants/3exact329negative. Queue/Connection/menu/codecs/eventsдубли, не реальныйNetty илиMixinbootstrap. ОтдельныйglobalbudgetPlotnick2целыхрасчёта кнопок/GUI/тик не throttlesFence до тика и не меняетдобычу/40тиковыйциклбуров. [Хроника330](HISTORY.md#perf-001-budget330), [предыдущие тексты329](archive/editions/0.3.329/README.md).
 
 **Приёмка:** автор протестировал330 и подтвердил штатную работу; PERF-001/6/10 закрыты в331 по его прямому разрешению. Не перечислять неназванные отдельные сценарии как пройденные. В331 исправлена только RU/EN подсказка настройки порога, механика330 неизменна. [Хроника приёмки](HISTORY.md#perf-001-accepted331). В331 только локализация hover-описания общей настройки Plotnick/Fence, без изменения радиации/ACK/provenance/квоты.
+
+<a id="crit-2"></a>
+## CRIT-2 — непокрытый side-aware перенос наведёнки
+
+Зарегистрировано для сверки/плана, runtime не исправлялся. Внешний аудит332 сообщает GameTest с настоящим NeoForge SidedInvWrapper и применёнными mixin:4предмета×6mZt/s +4×2mZt/s дают16 либо48 вместо32; count всегда8. Обычный InvWrapper в контроле сохраняет32. Это дюп/стирание наведёнки, не количества; природная эмиссия типа не пересматривается. Нативный результат здесь не воспроизведён.
+
+Текущий InvWrapperRadiationMixin нацелен на обычный wrapper, а SidedInvWrapper переопределяет insertItem. Его отдельный SlotCapacity-mixin обслуживает только вместимость/индексы и не обеспечивает перенос sidecar. В будущем нужен атомарный merge действующего движка по принятому count, без двойного применения внешней транзакцией. Не возвращать динамические NBT/components, count-trim, паузы или новую радиационную физику.
+
+Инвариант будущей регрессии: без тика распада/облучения сохраняется сумма наведёнки; оба порядка дают32mZt/s суммарно и4на предмет. Проверить empty/partial/full/remainder, типы/компоненты, закрытую грань, simulate без мутации, count/cursor/save/load; InvWrapper/воронка/трубы — соседняя регрессия, не объявленные этим тестом дефекты. Исправленные observation-тесты и отдельная игровая приёмка необходимы позднее. [Полная задача](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [история](HISTORY.md#status-reset332).
+
+PERF-001/12 (стоимость transaction snapshots) теперь отдельно отложен в [D-PERF12](DEFFERED.md#d-perf12). Это не CRIT-2 и не разрешение оптимизации/смены радиационного закона.
