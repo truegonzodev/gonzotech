@@ -1281,5 +1281,6 @@
   "block.gonzotech.third_accumulator": "Accumulator III",
   "block.gonzotech.third_battery": "Electrolytic Battery",
   "disconnect.gonzotech.payload_flood": "Too many GonzoTech Plotnick / radiation Fence requests (limit %s per second or pending).",
-  "gonzotech.configuration.floodRequestThreshold": "Flood request threshold"
+  "gonzotech.configuration.floodRequestThreshold": "Flood request threshold",
+  "gonzotech.configuration.floodRequestThreshold.tooltip": "Combined per-connection limit for Plotnick buttons and radiation Fence requests: in any sliding second and for tasks awaiting server processing. Exceeding either limit always disconnects the player. Repeated, unique and invalid requests, including both begin and end, count equally. Default: 128. Does not limit vanilla packets, other channels or decoding."
 }

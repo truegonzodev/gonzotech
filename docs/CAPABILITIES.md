@@ -1,6 +1,6 @@
 # Контракты взаимодействия и интеграции
 
-Актуализировано на runtime **0.3.330**,01.11.2026. Документальная база миграции:0.3.311/42730c3; действующие I/O-контракты ниже.
+Актуализировано на runtime **0.3.331**,01.11.2026. Документальная база миграции:0.3.311/42730c3; действующие I/O-контракты ниже.
 
 
 Здесь capabilities — технические границы I/O, загрузки, сети и сторонних интеграций. Это не витрина возможностей мода и не общий backlog.
@@ -79,7 +79,7 @@ ReceiveGtu обоих старых аккумуляторов имеет per-own
 
 ### Ответы по границам PERF-001/5/6/9
 
-5: последнее решение — никакой загрузки чанков предметными трубами/фильтром/отсеивателем, даже непосредственных endpoints. В325добавлены loaded-checks root/source/BFS/path/endpoint; vanilla double-chest lookup допускается только при загруженных обеих половинах. 6: operation-scoped10сек тихогоКД после завершения + дедуп/одинjob/cache, Stop немедленный, допустимый end внутри ingressпорога не имеет отдельногоthrottle; общий бюджет330 описан ниже. 9: optional-strict policy автора описана в INTEGRATIONS, bridge выбирают создатели серверов. 6дополнен330 глобальным допуском двух цельных расчётов кнопок/GUI и flood-disconnect;6/10 не закрыты по решению автора;9ещё не реализован;5принят автором,1принят отдельно на328.
+5: последнее решение — никакой загрузки чанков предметными трубами/фильтром/отсеивателем, даже непосредственных endpoints. В325добавлены loaded-checks root/source/BFS/path/endpoint; vanilla double-chest lookup допускается только при загруженных обеих половинах. 6: operation-scoped10сек тихогоКД после завершения + дедуп/одинjob/cache, Stop немедленный, допустимый end внутри ingressпорога не имеет отдельногоthrottle; общий бюджет330 описан ниже. 9: optional-strict policy автора описана в INTEGRATIONS, bridge выбирают создатели серверов. 6дополнен330 глобальным допуском двух цельных расчётов кнопок/GUI и flood-disconnect;6/10 приняты автором по игре330 и закрыты в331;9ещё не реализован;5принят автором,1принят отдельно на328.
 
 ## PERF-001/4 — scope небольшого исправления322
 
@@ -115,7 +115,7 @@ Setter не владеет прежним содержимым: при наме�
 
 Диагностика `pipeRoutingDiagnostics` defaultfalse: item-стадии раз в20тиков, source/classes/physical owners/cache budget/BFS/live sinks/cycle/result; off-path без дополнительных диагностических world reads. Нативный холодный source отказ требует серверного лога, не объясняется снятым source freeze. Полный checklist/config ограничения — [CURRENT](CURRENT-STATE.md).
 
-Wholeproduction regression: parallel4321assertions/9assertion-mutants/exact326negative; double7498/7mutants/exact325negative, loaded399/23mutants. Redundant BOTH-owner membership проверки при unsafe мутациях отключаются вместе; старые blanket-shield мутации заменены согласно новому контракту. Модельные cold/warm controls проходят, но это **не native MC**. Базовый suite327 был88PASS; актуальный полный330 —93PASS,1принят автором328,5принят ранее. [Происхождение](HISTORY.md#perf-001-transfer-dag), [предыдущий контракт](archive/editions/0.3.326/README.md#before-transfer-dag).
+Wholeproduction regression: parallel4321assertions/9assertion-mutants/exact326negative; double7498/7mutants/exact325negative, loaded399/23mutants. Redundant BOTH-owner membership проверки при unsafe мутациях отключаются вместе; старые blanket-shield мутации заменены согласно новому контракту. Модельные cold/warm controls проходят, но это **не native MC**. Базовый suite327 был88PASS; актуальный полный331 —94PASS,1принят автором328,5принят ранее. [Происхождение](HISTORY.md#perf-001-transfer-dag), [предыдущий контракт](archive/editions/0.3.326/README.md#before-transfer-dag).
 
 ## Предметная loaded-only граница —PERF-001/5,0.3.325
 
@@ -145,7 +145,7 @@ Wholeproduction340assertions/5mutants, exact327negative (Git/hash/bytes), two-no
 
 01.11.2026 автор: «окей теперь всё работает штатно», после обсуждения ограничений — «да окей закрываем». **Пункт1 закрыт** по этой игре; не перечислять неописанные автором отдельные restart/compatibility тесты как выполненные. Лимиты,54слота,перенос/sidecars/loaded-only/physical identity/DAG прежние. Отдельная защита отциклов ограничена текущимтиком и inventoryowners, не itemвидом; A→B→C допускается в одномтике, но зависит от порядка вызовов. Межтиковое качание этим не исключается, backpressure/грани сохраняются.
 
-Большие сети/остаток3 перенесены автором в отложенную [D-PIPE2 — «Великую оптимизацию труб II»](DEFFERED.md#d-pipe2); это не объявление resumable/fairness реализованными.13/14 пока остаются вCURRENT, перенос уточняется. Автор выбрал6и10: FIFO/rowcache329 автор назвал штатными, но6/10 прямо оставил открытыми. В330 добавлены глобальные два цельных расчёта кнопок/GUI и pre-enqueue flooddisconnect; порционность сейчас не требуется по решению автора.9/12такжеоткрыты. [Приёмка/хроника](HISTORY.md#perf-001-item-accepted), [предыдущая редакция](archive/editions/0.3.328/README.md).
+Большие сети/остаток3 перенесены автором в отложенную [D-PIPE2 — «Великую оптимизацию труб II»](DEFFERED.md#d-pipe2); это не объявление resumable/fairness реализованными.13/14 пока остаются вCURRENT, перенос уточняется. Автор выбрал6и10: FIFO/rowcache329–330, общий budget и ingress приняты автором в игре330;6/10 закрыты в331. В330 добавлены глобальные два цельных расчёта кнопок/GUI и pre-enqueue flooddisconnect; порционность сейчас не требуется по решению автора.9/12такжеоткрыты. [Приёмка/хроника](HISTORY.md#perf-001-item-accepted), [предыдущая редакция](archive/editions/0.3.328/README.md).
 
 ## PERF-001/6/10 — admission, FIFO и кэш вычислений,0.3.329–330
 
@@ -159,6 +159,8 @@ FIFOочередиDequeсremoveFirst;retrybuild/dismantleвtail,TNTвhead/пау
 
 **Сетевой допуск330:** только PlotnickButtonPayload/Fence C2S перенесены в HandlerThread.NETWORK, общий perconnectionпорог до mainenqueue. Server TOML `floodRequestThreshold = 128`, диапазон1–4096: столько запросов в любойскользящейсекунде и столько outstanding mainзадач; превышение любого —всегда disconnect с RU/EN причиной. Повторы/уникальные/невалидные значения считаются одинаково, begin/endобаучитываются. Принятый Fenceend отдельно не отбрасывается, порядок относительноvanilla inventory сохранён безtickbuffer. Закрытыйbacklog не обращаетсякменю/миру; logout/stop закрываютдопуск, provenancecleanup прежний. Configevents публикуютvolatileint, Netty не читает mutableconfig/world/menu. Это не универсальнаязащитаvanilla/другихмодов/decoding/DDoS и не оптимизацияsnapshotcopies12.
 
-Автор сообщил штатную329, но6/10 **оставил открытыми**. Разбиение расчётов по тикам сейчас отвергнуто: наблюдение20–30ms на его железе не universalTPSproof.330ждёт нативнойпроверки. PlotnickBlock/election/прогрев5×5/PNG/баланс/radiationlaw/legacy/перенос unchanged. [Хроника330](HISTORY.md#perf-001-budget330), [предыдущие тексты329](archive/editions/0.3.329/README.md).
+**Приёмка:** автор протестировал330 и подтвердил штатную работу; PERF-001/6/10 закрыты в331 по его прямому разрешению. Не перечислять неназванные отдельные сценарии как пройденные. В331 исправлена только RU/EN подсказка настройки порога, механика330 неизменна. [Хроника приёмки](HISTORY.md#perf-001-accepted331). Разбиение расчётов не требуется по решению автора; budget не hard-msгарантия. PlotnickBlock/election/прогрев5×5/PNG/баланс/radiationlaw/legacy/перенос unchanged.
 
 **Дополнительные ответы автора перед доставкой329:** разные режимы одной кнопки —разные типы задач/КД (оборудование↔руды дляMARK/NETWORK; LINKсамостоятелен). При смене карты доbegin использовать **текущую** карту, а не отменять запрос. Pendingперепривязываетсякновомутипу доbegin и повторнопроходитегоКД; обходаdeadlineпереключениемкарты нет. Невалиднаяактуальнаякартаотсекаетсядоbegin безКД, начатая ошибкапо-прежнемуставитКД.
+
+**Локализация настройки331:** `floodRequestThreshold.tooltip` имеет отдельныеRU/EN тексты; в русском GUI больше не требуется английский TOMLcommentfallback. Лимит128, диапазон1–4096, slidingwindow/outstanding/disconnect неизменны. Будущее отображение сообщений Плотника — только [D-PLOT1](DEFFERED.md#d-plot1), не реализация этого шага.

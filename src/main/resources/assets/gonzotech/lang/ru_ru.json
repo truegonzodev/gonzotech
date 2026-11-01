@@ -1281,5 +1281,6 @@
   "block.gonzotech.third_accumulator": "Аккумулятор III",
   "block.gonzotech.third_battery": "Электролитическая батарейка",
   "disconnect.gonzotech.payload_flood": "Слишком много запросов GonzoTech: Плотник / радиационный Fence (порог %s за секунду или в ожидании).",
-  "gonzotech.configuration.floodRequestThreshold": "Порог флуд-запросов"
+  "gonzotech.configuration.floodRequestThreshold": "Порог флуд-запросов",
+  "gonzotech.configuration.floodRequestThreshold.tooltip": "Общий лимит кнопок Плотника и радиационных Fence-запросов на одно соединение: за скользящую секунду и по числу задач, ожидающих обработки сервером. Превышение любого предела всегда отключает игрока. Повторы, уникальные и некорректные запросы, begin и end учитываются одинаково. По умолчанию 128. Не ограничивает ванильные пакеты, другие каналы и декодирование."
 }

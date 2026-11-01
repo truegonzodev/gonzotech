@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/6/10 / 0.3.330: 93 PASS / 0 SKIP / 0 FAIL.** Globalbudget2107assertions/9mutants/exact329negative; ingress4416/7mutants/3exact329negative. Прежние Plotnick388/12 и Fence73/7/exact328negatives сохранены. Автор назвал329штатной, но6/10 прямо не закрыл. Модельныеграницы, не nativeMC/Netty/TPS.
+**Последний полный локальный прогон, PERF-001/6/10 + локализация / 0.3.331: 94 PASS / 0 SKIP / 0 FAIL.** Globalbudget2107assertions/9mutants/exact329negative; ingress4416/7mutants/3exact329negative. Прежние Plotnick388/12 и Fence73/7/exact328negatives сохранены. Автор подтвердил штатную работу330 и разрешил закрыть6/10 в331; это отдельное игровое свидетельство, не результат harness. Модельныеграницы, не nativeMC/Netty/TPS.
 
 ## Команды и доказательства
 
@@ -30,6 +30,7 @@
 | [audit_followup_test.py](../audit/audit_followup_test.py) | 27 Sep follow-up: execute production method bodies with API stubs (NOT Minecraft). |
 | [autominer_markers_test.py](../audit/autominer_markers_test.py) | Pins 0.3.256-0.3.263 — метки автошахтера, Плотник, сеть, сейсмика и буры. |
 | [plotnick_budget_test.py](../audit/plotnick_budget_test.py) | Actual server dispatcher/FIFO + selected BE methods;2107assertions/9mutants/exact329negative,2048BE/two-world fairness and bounded preflight. MC/events/logger doubles, not native/TPS. |
+| [config_tooltips_test.py](../audit/config_tooltips_test.py) | RU/EN labels and tooltip keys for all explicit server/client config translations; missing-key mutants and exact330 resource negatives. Not rendered GUI. |
 | [payload_ingress_test.py](../audit/payload_ingress_test.py) | Actual guard/window/config/Plotnickhandler/Fenceregistration + pinned upstream registrar/wrapper;4416assertions/7mutants/3exact329negative. Executor/connection/menu/codec doubles, not Netty/native. |
 | [plotnick_work_test.py](../audit/plotnick_work_test.py) | Production selected BE methods + whole gate/revision;388assertions/12mutants/exact328negative. MC/Forge boundaries, not full BE/native/TPS. |
 | [radiation_fence_test.py](../audit/radiation_fence_test.py) | Actual handler/creative bridge/core;73assertions/7mutants/exact328handler negative. Packet/menu/copy-hook doubles, not native bootstrap. |
@@ -525,3 +526,10 @@ git diff --check
 Первыйfull330:92PASS/1FAIL — старый GUIsourcepin ожидал прямойBEtickrefresh; заменён на event/viewer/dirty **иbudget.start** вactualscheduledcallback +BEregistrationpin, не ослаблен. НовыеexecutableGUIbudgetпробы подтверждаютограничение. Следующийfull:93PASS/0SKIP/0FAIL; послефинальногопроходаповтор. СохраненыстарыеPlotnick388/12 иFence73/7mutants/exact328. NativeGradle/NeoForge/реальныйNetty/MixinGameTests/измеренныйMSPT/TPSнепроводились; авторская«Всёштатно»относитсяк329 и не закрывает6/10. Budget2wholejobs—толькокнопки/GUI, неавтоматическийциклбуров и не hard-msгарантия. Сеть—толькодваC2S, неуниверсальныйDDoS/vanilla/othermodsщит. [Решения/хроника](HISTORY.md#perf-001-budget330).
 
 Финальный330повторпослекода/документации: **93PASS/0SKIP/0FAIL**. Docs:41previouseditions/29live/75immutable/4173sourceitems/69dispositions,1356links/0broken;11историческихтекстовыхцитатсявнымархивныммаршрутом. Scopedfixture.gitattributesсохраняетточныеupstreamбайты/пробелы, не ослабляетproduction/test/docswhitespacecheck.
+
+
+## PERF-001/6/10 — приёмка и tooltip-localization331
+
+Автор подтвердил: «Окей да всё работает Я потестил», разрешил закрыть6/10. Это игровая приёмка механики330, без перечня отдельных нагрузочных/перезапускных сценариев. Java/протокол/квоты/цикл буров не меняются. В331 только RU/EN `floodRequestThreshold.tooltip`; причина проверена по NeoForge ConfigurationScreen на commitf4b4a9655362b103b95769258ed6586597d8b7f4: getTranslationKey(key)+".tooltip", иначе commentfallback. Новый `config_tooltips_test.py` проверяет все явные translationключи server/client: label+tooltip RU/EN и кириллицу RU, два missingtooltipmutants и два exact330negative ресурса. Это resource regression, не открытый GUI.
+
+Команды: `python3 audit/config_tooltips_test.py`, `python3 audit/run_all.py`, `python3 audit/docs_structure_test.py`, `python3 audit/doc_links.py`, `git diff --check`. Полный331прогон: **94 PASS / 0 SKIP / 0 FAIL**. Новая проверка:7явныхconfigключей ×RU/EN label+tooltip,2missingkeymutants и2exact330negative. Docs:48previouseditions/29live/75immutable/4173sourceitems/69dispositions;1380links/0broken. [Приёмка/история](HISTORY.md#perf-001-accepted331).

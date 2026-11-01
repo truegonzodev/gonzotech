@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "8b89bd25019891e9ce0dfda09b80830d56a6c948",
+      "snapshot": "docs/archive/editions/0.3.330/OUTDATED_BEFORE_ACCEPTANCE331_CURRENT-STATE.md",
+      "sha256": "18c820af5d83ac6edf5eaee5bc21ee9fe1ce3036f328adaca84c63e2f127ec58",
+      "bytes": 22017,
+      "task": "PERF-001/6/10 author accepts330;331 tooltip localization only; D-PLOT1 deferred notification presentation"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "8b89bd25019891e9ce0dfda09b80830d56a6c948",
+      "snapshot": "docs/archive/editions/0.3.330/OUTDATED_BEFORE_ACCEPTANCE331_AUTOMINER.md",
+      "sha256": "e8c7be9e3bd2fde42c7e9f9f6c458e01410f8ff3f62c530ab5338c6b39b8a19a",
+      "bytes": 17605,
+      "task": "PERF-001/6/10 author accepts330;331 tooltip localization only; D-PLOT1 deferred notification presentation"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "8b89bd25019891e9ce0dfda09b80830d56a6c948",
+      "snapshot": "docs/archive/editions/0.3.330/OUTDATED_BEFORE_ACCEPTANCE331_CAPABILITIES.md",
+      "sha256": "2ca0f1f8b207c2a5703012c8b27f32378a6ce432d94a65d84e9e214ec04043d7",
+      "bytes": 44631,
+      "task": "PERF-001/6/10 author accepts330;331 tooltip localization only; D-PLOT1 deferred notification presentation"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "8b89bd25019891e9ce0dfda09b80830d56a6c948",
+      "snapshot": "docs/archive/editions/0.3.330/OUTDATED_BEFORE_ACCEPTANCE331_MACHINES.md",
+      "sha256": "06fb80fea2233cc3d0fdc43e0c16165a9ef5d5f09372bc85b11bf578984d8952",
+      "bytes": 55199,
+      "task": "PERF-001/6/10 author accepts330;331 tooltip localization only; D-PLOT1 deferred notification presentation"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "8b89bd25019891e9ce0dfda09b80830d56a6c948",
+      "snapshot": "docs/archive/editions/0.3.330/OUTDATED_BEFORE_ACCEPTANCE331_RAD_ITEMS.md",
+      "sha256": "265f25cc380090a42310a4b85ec62820ad4f703fa5816687b571fcf873d965aa",
+      "bytes": 43685,
+      "task": "PERF-001/6/10 author accepts330;331 tooltip localization only; D-PLOT1 deferred notification presentation"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "8b89bd25019891e9ce0dfda09b80830d56a6c948",
+      "snapshot": "docs/archive/editions/0.3.330/OUTDATED_BEFORE_ACCEPTANCE331_AUDIT.md",
+      "sha256": "80598fdfb623a598c81b1924fe072b1821df763ba15777288c518f8eba546510",
+      "bytes": 123057,
+      "task": "PERF-001/6/10 author accepts330;331 tooltip localization only; D-PLOT1 deferred notification presentation"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "8b89bd25019891e9ce0dfda09b80830d56a6c948",
+      "snapshot": "docs/archive/editions/0.3.330/OUTDATED_BEFORE_ACCEPTANCE331_DEFFERED.md",
+      "sha256": "d995b1c355398d960a1ba8e70202cf7f44ba68b97f3845a04a8a3d2b357ce6c4",
+      "bytes": 45903,
+      "task": "PERF-001/6/10 author accepts330;331 tooltip localization only; D-PLOT1 deferred notification presentation"
+    }
+  ]
+}
