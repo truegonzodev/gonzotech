@@ -112,6 +112,190 @@
       "sha256": "fdd3d43dfd183ebdff4f9a70768e57551448e16aadadf7cad423789457915e1b",
       "bytes": 130584,
       "task": "Preserve exact author-push332 edition before combining local status reset and package synchronization"
+    },
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_CURRENT-STATE.md",
+      "sha256": "e0a94c8fdc67afdc25bf55b66505dbf448b1c43ce7e4bf93fd84c44d60e168c3",
+      "bytes": 11963,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_DEFFERED.md",
+      "sha256": "5d8573b8c6eb17eaddaf54bbcd283e3fbd0469fd64594005f24c65f46560d3d8",
+      "bytes": 50632,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_AUTOMINER.md",
+      "sha256": "dff249f6a431bc982deacdfe94da141c513407816ad1e50252fa8df7f5c3448e",
+      "bytes": 23569,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_CAPABILITIES.md",
+      "sha256": "945aa433dd9ac93e529cae1a6a40d03d4d0bf15885fa3b4760729ec68c31e98d",
+      "bytes": 51147,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/INTEGRATIONS.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_INTEGRATIONS.md",
+      "sha256": "6e6ae161bd0c0c296c7d902603e1336c1a9f1414cd3d0bbc791c64a309cf1585",
+      "bytes": 20565,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_MACHINES.md",
+      "sha256": "3c4fd214778c52eff02b21db69cdf5ccd7a9e9a751259dbd4eb98eaf80b4bb28",
+      "bytes": 59227,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_RAD_ITEMS.md",
+      "sha256": "57bb0236fc8e0ce924750c458dbdd94d7259522da0c2293f6bbb29a930e5e8cf",
+      "bytes": 47388,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/RAD_WORLD.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_RAD_WORLD.md",
+      "sha256": "baf982bb2c30d4004ed42119456d9fda4e4ffb906980bb5b86dca0e194cc6e98",
+      "bytes": 23281,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/REACTORS.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_REACTORS.md",
+      "sha256": "b7c29323623cde21d5c61b288e36454fd33e58ffe568fead701b16424b02abd6",
+      "bytes": 10704,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_MULTIBLOCK.md",
+      "sha256": "ed4044c7637765f4d7f0dc2325d3d33b4552e317fee2a73fd3d4833725ed22db",
+      "bytes": 21226,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_AUDIT.md",
+      "sha256": "5c97df8f51c2ed3fd3bcb1bf4e074c65b2134df5a6562bfbd70e0d35a6d7d278",
+      "bytes": 134589,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/PROGRESSION.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_PROGRESSION.md",
+      "sha256": "3dfd9478bcf326231fc559bc0ccb9edd245493c22c6b33d8f82db20f32b3ab43",
+      "bytes": 10387,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/JEI.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_JEI.md",
+      "sha256": "2480c6310642e402ba2c392333be3e815ba8a46e2ba8670b96b74e3942d13328",
+      "bytes": 15206,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/PSYCHE.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_PSYCHE.md",
+      "sha256": "32441306064d0e338dcd9f6f55bd1f44f53769b31d6c9536cde61c71e0e6dc60",
+      "bytes": 39096,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/CHALKBOARD.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_CHALKBOARD.md",
+      "sha256": "dd2a58a876ce13c9d1189317b056ad267f89240e275f3bcfbcd8175e5bee76e2",
+      "bytes": 8999,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "docs/DOCS_RULES.md",
+      "source_commit": "a6be9ac3cf0631ba461606d9a6986ec8d1aa24d8",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_DOCS_RULES.md",
+      "sha256": "e493987596156b472f591b9bce23f021ac3de954e90aed761a9835a94026361e",
+      "bytes": 24674,
+      "task": "Preserve exact committed status reset before author-package synchronization; runtime unchanged"
+    },
+    {
+      "source": "audit/author test/00 — Карта пакетов.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR332_00.md",
+      "sha256": "ad5f3203c48e664cb297261eb89bcfcbea99ce73689c9772bb7cd2d383a3071b",
+      "bytes": 7337,
+      "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
+    },
+    {
+      "source": "audit/author test/01 — Великая реформа труб II.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR332_01.md",
+      "sha256": "5c5af100f36336183a7dc074614037c8900b19336c815533bb59c3bacdabcc3d",
+      "bytes": 10674,
+      "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
+    },
+    {
+      "source": "audit/author test/02 — Критические баги, дюпы и потери.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR332_02.md",
+      "sha256": "f976f8de62e55fceb92db65e8c24f81cb30673a6ca10e06f81427e0647ff7dff",
+      "bytes": 7922,
+      "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
+    },
+    {
+      "source": "audit/author test/03 — Серверная валидация и защита.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR332_03.md",
+      "sha256": "ed0a7d8f1b112d2da128cf40b17a51de58fc2f29f72f8673a407257280d5d8e8",
+      "bytes": 7287,
+      "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
+    },
+    {
+      "source": "audit/author test/04 — Оптимизация радиации и контуров.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR332_04.md",
+      "sha256": "545ad50846e6a53a5595e0f9deae88b3836d47523a0210889fbc41e19b3d69e3",
+      "bytes": 5666,
+      "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
+    },
+    {
+      "source": "audit/author test/05 — Рецепты и доступность контента.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR332_05.md",
+      "sha256": "935eaa3853124324d6854294a46657bc4822a76c53b184a57e6f701ce9457bcb",
+      "bytes": 2670,
+      "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
+    },
+    {
+      "source": "audit/author test/06 — Тесты и документация.md",
+      "source_commit": "6ea3f4330136353ca845c0cbc5cb3e7b142895c3",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_AUTHOR332_06.md",
+      "sha256": "49eed16612dd956709c10b81c55165723563e5454389e8c23c3a68653fd18f16",
+      "bytes": 5105,
+      "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
     }
   ]
 }

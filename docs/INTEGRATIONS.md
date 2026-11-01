@@ -82,3 +82,9 @@ Bridge выбирают создатели серверов, не автор GT.
 
 Тест исполняет production hook bodies с ручным wiring и компилирует новые mixin classes против annotation/API doubles; агент не запускал native Mixinbootstrap. Автор30.10.2026 подтвердил в игре весь пункт2, он принят/архивирован; это не утверждение проверенной матрицы всех внешних модов. Existing radiation redirects/copy hooks/формулы не менялись. Исправление не новая FE/ItemHandler capabilityregistration и не гарантия против произвольного изменения ItemStack/NBT в обход insertionprotocol. В324эти mixins/зависимости не менялись, проверены их caller paths с production virtual setter.
 **Смена статуса01.11.2026:** №9 закрыт решением автора без нового native-доказательства;13/14 → [D-PIPE2](DEFFERED.md#d-pipe2),12 → [D-PERF12](DEFFERED.md#d-perf12). Реализация deferred не разрешена. [Хроника](HISTORY.md#status-reset332).
+
+## Авторский пакет 03 — отложенная серверная валидация
+
+[D-SEC1](DEFFERED.md#d-sec1) содержит только SEC-1/A6 (bounded ingress других C2 S, не замена существующего Plotnick/Fence) и SEC-2/A7 (server-confirmed crisis action/частота/повторы). SEC-3 из старого исходника не является открытой задачей: автор повторно подтвердил закрытие№9 без native-прогона. Справочный WG-чек-лист выше сохраняет ограничения совместимости, но не создаёт очередь приёмки. Источники — [OUTDATED_AUTHOR332_03](archive/editions/0.3.332/OUTDATED_AUTHOR332_03.md).
+
+Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_INTEGRATIONS.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).

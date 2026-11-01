@@ -54,3 +54,9 @@ Reactor matrix/operating/thermal oracle выполнен с Java 21: 7358 assert
 Source: ReactorFuelInventory удерживает final-список чехлов; его stillValid/canMutate и ReactorMenu.stillValid проверяют formed/число слотов, но не identity текущих владельцев. Freshness-проверка уже есть в ReactorFuelStorage.sheathsCached, однако старый GUI не вызывает её для захваченного списка перед действием. План — generation/точный набор живых владельцев с отклонением до debit cursor, не перенаправление по координатам и не поздний return из setItem. Реакторные чехлы остаются самостоятельными; не менять принцип структуры ради GUI.
 
 Будущая приёмка: PICKUP/извлечение/shift-click/drag/cursor, два зрителя, смена панели/вместимости, fast rebuild, unload/reload/save/load; сохранение единственного ТВЭЛа, отсутствие stale-write/повторной выдачи. Observation-test сначала превращается в отрицательную инвариантную регрессию, затем исправление и отдельная игровая приёмка. [Полная задача](CURRENT-STATE.md#crit-1--устаревшее-меню-реактора-теряет-твэл), [история](HISTORY.md#status-reset332).
+
+## Источник пакета 02 получен
+
+Подробный [авторский текст CRIT-1](archive/editions/0.3.332/OUTDATED_AUTHOR332_02.md) теперь сохранён побайтно из 6ea3f43. Это Markdown-задание с сообщением о внешнем GameTest, не загруженный исполняемый тест/лог; повтор native-прогона здесь не заявлен. Текущая задача/матрица выше не сокращены, реализации пока нет.
+
+Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_REACTORS.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).

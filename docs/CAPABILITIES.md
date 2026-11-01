@@ -183,3 +183,11 @@ FIFOочередиDequeсremoveFirst;retrybuild/dismantleвtail,TNTвhead/пау
 Текущий InvWrapperRadiationMixin нацелен на обычный wrapper, а SidedInvWrapper переопределяет insertItem. Его отдельный SlotCapacity-mixin обслуживает только вместимость/индексы и не обеспечивает перенос sidecar. В будущем нужен атомарный merge действующего движка по принятому count, без двойного применения внешней транзакцией. Не возвращать динамические NBT/components, count-trim, паузы или новую радиационную физику.
 
 Инвариант будущей регрессии: без тика распада/облучения сохраняется сумма наведёнки; оба порядка дают32mZt/s суммарно и4на предмет. Проверить empty/partial/full/remainder, типы/компоненты, закрытую грань, simulate без мутации, count/cursor/save/load; InvWrapper/воронка/трубы — соседняя регрессия, не объявленные этим тестом дефекты. Исправленные observation-тесты и отдельная игровая приёмка необходимы позднее. [Полная задача](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [история](HISTORY.md#status-reset332).
+
+## Пакеты 332: проверенные source-основания, не новые исправления
+
+A3/PIPE-II-1: perItemMap создаётся в ItemRouting.pushItems, который вызывается отдельно для входных граней. Требование автора — лимит Item на весь узел за проход, отдельно от общего бюджета и независимо от других узлов. Внешняя native-проба сообщает 2 переноса при cap1/сумме 10; это превышение throughput, не count-dupe. A5/PIPE-II-2: ItemFilterRouting ищет sinks до no-work return; его поиск не покрыт общим BFS-budget. TPS не измерен. Оба пункта вместе с 13/14/остатком 3 — [D-PIPE2](DEFFERED.md#d-pipe2), не реализованы.
+
+A6/SEC-1: инвентаризировать bounded ingress остальных C2 S, enqueue/decode/размеры/полномочия/menu/distance/loaded target; существующие Plotnick/Fence330 не переоткрываются. A7/SEC-2: crisis-click notification требует отдельной server truth/повторной валидации, не только throttle. Это source-риски, не измеренная DoS-атака: [D-SEC1](DEFFERED.md#d-sec1). №9 закрыт без native-claim, SEC-3 не открыт. Room snapshots12 — отдельно [D-PERF12](DEFFERED.md#d-perf12); CRIT-2 — текущая корректность, не широкая оптимизация.
+
+Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_CAPABILITIES.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).

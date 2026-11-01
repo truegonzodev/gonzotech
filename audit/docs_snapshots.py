@@ -15,11 +15,23 @@ def registered_snapshots(root):
         assert data['schema'] == 1 and data['files'], manifest
         assert (manifest.parent / 'README.md').is_file(), manifest
         for record in data['files']:
-            source = root / record['source']
+            source_name = Path(record['source'])
+            source = root / source_name
+            resolved_source = source.resolve()
+            docs_source = (not source_name.is_absolute()
+                           and source_name.parts[:1] == ('docs',)
+                           and resolved_source.is_relative_to(root / 'docs'))
+            # Only the author's direct Markdown package files join docs sources.
+            # Do not allow arbitrary audit files, nested paths or symlink escapes.
+            author_source = (not source_name.is_absolute()
+                             and len(source_name.parts) == 3
+                             and source_name.parts[:2] == ('audit', 'author test')
+                             and source_name.suffix == '.md'
+                             and resolved_source.parent == root / 'audit/author test')
+            assert docs_source or author_source, source
             path = (root / record['snapshot']).resolve()
             assert path.parent == manifest.parent.resolve(), path
             assert path.name.startswith('OUTDATED_') and path.suffix == '.md', path
-            assert source.resolve().is_relative_to(root / 'docs'), source
             assert re.fullmatch(r'[0-9a-f]{40}', record['source_commit']), record
             assert record['task'] and path not in frozen, record
             content = path.read_bytes()

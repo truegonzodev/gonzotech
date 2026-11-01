@@ -337,3 +337,9 @@ PlayerPsyche — codec attachment ModPsycheAttachments.PSYCHE с copyOnDeath. Ps
 ## Приёмка DOC-003
 
 28.10.2026 автор подтвердил DOC-003 и распорядился закрыть/архивировать прежнюю задачу. Исправления chemical0,2%current/s и тремора1–2тика приняты; новый runtime психики в PERF-001 не запрошен. Будущие механики D-PSY1–7 не активированы и не закрыты этим решением.
+
+## SEC-2/A7 — кризисное уведомление, отложенный пакет 03
+
+Текущая регистрация PsycheCrisisNetwork.ClickPayload (crisis_click) ставит в enqueueWork вызов PsycheCrisis.onItemUsed. Название PsycheCrisisNetworkClickPayload в исходном пакете — обозначение этого сигнала, не отдельный найденный класс. Source-риск не доказывает дюп/краш/DoS и пока не исправлен. При выборе [D-SEC1](DEFFERED.md#d-sec1) нужно отделить server-confirmed action от client notification, проверить состояние/rate/replay/одно наказание на подтверждённое действие; при отсутствии server truth выбор протокола вынести отдельно. Пороги, вероятности и последствия кризиса не менять в транспортной защите. Старые uncategorized задачи психики сюда не добавлены.
+
+Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_PSYCHE.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).

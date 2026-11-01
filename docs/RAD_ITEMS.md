@@ -207,3 +207,9 @@ Ingress330: actualguard/window/config/Plotnickhandler/Fenceregistration +pinnedN
 Инвариант будущей регрессии: без тика распада/облучения сохраняется сумма наведёнки; оба порядка дают32mZt/s суммарно и4на предмет. Проверить empty/partial/full/remainder, типы/компоненты, закрытую грань, simulate без мутации, count/cursor/save/load; InvWrapper/воронка/трубы — соседняя регрессия, не объявленные этим тестом дефекты. Исправленные observation-тесты и отдельная игровая приёмка необходимы позднее. [Полная задача](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [история](HISTORY.md#status-reset332).
 
 PERF-001/12 (стоимость transaction snapshots) теперь отдельно отложен в [D-PERF12](DEFFERED.md#d-perf12). Это не CRIT-2 и не разрешение оптимизации/смены радиационного закона.
+
+## Пакет 04 отдельно от текущего CRIT-2
+
+RAD-PERF-1/№12 в [D-PERF12](DEFFERED.md#d-perf12): сначала профиль rebuild/source scans/observer reuse/copy allocations и хвостов, затем ограниченный выбор snapshot/invalidation. Сохраняются per-item источник, strongest rule, независимость владельцев/GUI, обратная связь, lead и provenance/rollback; динамические NBT/components/паузы/trim не возвращать. CRIT-2 из пакета 02 — отдельная корректность side-aware переноса и не ждёт широкой оптимизации. Исходные Markdown-пакеты теперь доступны, но нативные логи и код дополнительных проб не предоставлены.
+
+Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_RAD_ITEMS.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).

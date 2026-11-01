@@ -10,7 +10,7 @@
 - `python3 audit/docs_structure_test.py` — 75 SHA-256, полный исходный inventory, маршруты переноса/все 4173 source-пункта, whitelist корня, разные task ID и четыре патча удержания, разделение доски/заметок и наличие реестра Sinks/ресурсных BE. Проверяет сохранность текста/структуры, **не математически полную сохранность авторского смысла**.
 - `python3 audit/content_inventory.py` — ресурсный census в `audit/reports/content-inventory.csv`, не в docs. `--check` сравнивает с локальным отчётом. Это не survival reachability solver: машинные таблицы/события и намерение автора проверяются отдельно.
 - JDK/harness/typecheck и Minecraft build/GameTest — разные уровни. Общие скобки/Tree-sitter не доказывают Mojmap/API compatibility. Недоступный JDK/Pillow отмечается как SKIP.
-- JDK 21 + зависимости: `./gradlew build runRadiationTest --offline --no-configuration-cache`. Тестовый мир `run-radiation-merge-tests-311`, namespace gonzotech; 23 GameTests в RadiationGameTests (0.3.314). Не считать наличие тестов выполнением клиентского ЛКМ/ПКМ/Q.
+- JDK 21 + зависимости: `./gradlew build runRadiationTest --offline --no-configuration-cache`. Тестовый мир `run-radiation-merge-tests-311`, namespace gonzotech; по текущим исходникам 23 GameTest в RadiationGameTests +2 в PipeInteractionGameTests =25 всего (source-count, не новый запуск). Не считать наличие тестов выполнением клиентского ЛКМ/ПКМ/Q.
 
 ## Реестр Python-инструментов
 
@@ -569,3 +569,41 @@ git diff --check
 Старые95PASS/1326WGchecks и исторические результаты выше не перезаписаны новыми значениями. Runtime остаётся0.3.332; новые GameTest/Gradle/полный Python-suite в этом документальном шаге не запускались. Предыдущие11liveредакций exactbc1da5bc сохранены полностью; этот fetch не менял local HEAD/index/чужой WIP. [Архив](archive/editions/0.3.332/README.md), [решения](HISTORY.md#status-reset332).
 
 Проверки документального шага: `python3 audit/docs_structure_test.py` — PASS (66previouseditions с hash/bytes/Git,29live/75immutable/4173sourceitems/69dispositions); `python3 audit/doc_links.py` —1454links/0broken,11историческихцитат с явным архивным маршрутом. Проверка whitespace выполнена через `git diff --no-index --check` по14реально изменённым файлам относительно exactbc1da5bc (часть docs локально Git-untracked, обычный diff их не покрывает); отрицательный контроль с trailing space обнаружен. Пять исходников CRIT (ReactorFuelInventory/ReactorMenu/ReactorFuelStorage/InvWrapperRadiationMixin/SidedInvWrapperSlotCapacityMixin) побайтно совпали с базойbc1da5bc. Hash-сверка со снимком начала шага подтверждает отсутствие изменений Java/resources/.gitignore/README/постороннего WIP и отсутствие удалений. Полный95suite/Gradle/GameTests/selfTest не перезапускались; runtime0.3.332. Коммит/пуш этого документального шага не выполнялись: локальная ветка наbf5e72e, remote наbc1da5bc, рабочее дерево содержит ранее существовавший большой дифф. Историю/индекс не перестраивали и чужие изменения не коммитили.
+
+
+> Историческая запись авторской упаковки до переноса в audit/author test. Приведённые в ней успешные link-check относятся к прежнему расположению, не к push6ea3f43; новые результаты и решения ниже имеют приоритет. Полный оригинал 6ea3f43 сохранён в OUTDATED_AUTHOR_PUSH332.
+
+
+<a id="audit-packages332"></a>
+## 0.3.332 — упаковка задач повторного аудита
+
+01.11.2026: по запросу автора создана [карта шести пакетов](archive/editions/0.3.332/OUTDATED_AUTHOR332_00.md) в info. Это docs-only: код и ресурсы не менялись, runtime-тесты на этом шаге не перезапускаются. Результаты предыдущего аудита: build JAR PASS; штатные GameTest25/25; изолированные 25+6=31/31 (часть доказывает дефекты); Python95/95 с адаптацией Windows/JDK; selfTest3 FAIL; реальный загрузчик отвергает рецепт third_grinder. Эти границы сохранены в пакетах. Текущие проверки упаковки и результаты добавляются после их выполнения.
+
+Результат проверки упаковки: docs_structure_test PASS (29 live, 75 immutable originals, 55 previous editions); doc_links PASS (1416 ссылок, 0 битых); дополнительная проверка всех ссылок новых пакетов и SHA-256 доставки 7 файлов PASS; прежние байты трёх дополненных документов сохранены; git diff --check PASS. Первый docs_structure прогон выявил недостающий маркер статуса новой записи CURRENT, он исправлен, повторный прогон PASS. Runtime-проверки повторно не запускались.
+
+<a id="author-sync332"></a>
+## Авторский push6ea3f43: проверка доставки и единый срез
+
+**Доставка.** Remote ветки `arena/48845eec-gonzotech` подтвердил commit `6ea3f4330136353ca845c0cbc5cb3e7b142895c3` (`test`), parent `bc1da5bc`. Семь новых Markdown-пакетов и три дополненных документа, ноль runtime/build/version-изменений. Это задания/сводки, не исполняемые тесты и не логи. GitHub check-runs:0; новый CI/native-прогон не подтверждён. Проверка 720 ссылок по 10 изменённым документам pushed tree выявила 18 неверных путей: ../docs и ../src из audit/author test разрешались внутри audit, а docs ссылались на отсутствующую info. Push успешен; документальная навигация была сломана.
+
+**Безопасная Git-база.** Старый HEADbf5e72e — предок remote; весь runtime уже совпадал. Различались 14 локальных документальных правок, а 7 пакетов отсутствовали. С разрешения автора при пустом индексе выполнен mixed fast-forward HEAD/index на 6ea3f43, без перезаписи всех 5637 существовавших рабочих файлов (побайтно проверено). Пакеты прочитаны из Git. Предыдущая работа сохранена checkpoint-коммитом a6be9ac; три remote-редакции и 11 снимков status-reset уже в архиве. Дополнительно сохранены 16 следующих профилей и все 7 исходных пакетов. Старые авторские записи AUDIT/HISTORY объединены; их info-link направлен на архив, полный original6ea3f43 сохранён. Hard reset/force-push/другая ветка не использовались.
+
+**Действующая очередь.** CURRENT — пакет 02/CRIT-1/CRIT-2, только сверка и план. DEFFERED — D-PIPE2(01,A3/A5/13/14/остаток 3), D-SEC1(03,A6/A7), D-PERF12(04,12), D-CONTENT1(05,A4), D-QA1(06,A8/A9). SEC-3 не открыт: автор повторно оставил№9 закрытым без native-claim. Все 88 старых некатегоризированных task bodies/ID сохранены дословно вне пакетов. D-ENG1 лишь перемещён из позиции после «Не являются открытыми задачами» к открытым uncategorized; D-PLOT1 остаётся ближайшим deferred. Существующие рецептурные/JEI/прочие задачи к пакетам не присоединены.
+
+**Source-сверка и границы.** Подтверждены per-face perItemMap в pushItems, поиск sinks фильтра до no-work return, unusedG в third_grinder и crisis_click→enqueueWork→onItemUsed. Эти вопросы не исправлялись. Пакеты — задания/сообщённые результаты, не logs/probes; Windows-артефакты и 6 дополнительных test bodies не загружены. JAR/GameTest/selfTest/полный Python runtime-набор здесь не перезапускались. Source-count:23 в RadiationGameTests +2 в PipeInteractionGameTests =25 всего, не 25 в одном классе и не новый запуск; само старое 23 класса корректно. AUTOMINER описывает существующие 216 мест/54 группы по 4 стопки/MAX_STACK64 с обычными лимитами типа; прежние 54/512 в архиве. Новый баланс/миграция не выбирались, QA/DOC-пакет не закрыт.
+
+**Архивный контроль.** docs_snapshots расширен только на непосредственные Markdown-источники audit/author test, не произвольный audit. Hash/size/exact-Git/проверка незарегистрированных OUTDATED сохранены. Новый docs_snapshots_test проверяет разрешённые docs/author sources и отклонение чужого audit, вложенных путей, абсолютных путей, traversal, symlink-выходов, повреждений размера/hash, дубликатов, отсутствующих/незарегистрированных снимков, чужой папки manifest и несовпадения с Git. Ранний doc_links выявил два ложных textual path в отрицательных test fixtures; несуществующие образцы теперь собраны из частей, правила checker не ослаблялись. Автоматическая расстановка пробелов затронула перемещённый D-ENG1: guard поймал отличие, исходный body восстановлен; все 88 проверены повторно. Это документальные корректировки, не runtime-дефекты.
+
+Runtime0.3.332. [Исходники и редакции](archive/editions/0.3.332/README.md#author-sync332), [текущая работа](CURRENT-STATE.md), [отложенная очередь](DEFFERED.md). Итоговые исполненные проверки — ниже.
+
+Предыдущая редакция профиля: [до синхронизации пакетов 332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_AUDIT.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
+
+
+**Исполненные проверки синхронизации:**
+- `python3 audit/docs_snapshots_test.py` — PASS,13 тестов с положительными и отрицательными случаями; проверяются также exact-Git и запрет незарегистрированных снимков.
+- `python3 audit/docs_structure_test.py` — PASS:92previous editions с hash/bytes/Git,29live docs,75immutable originals,4173source items,69historical roadmap dispositions; lifecycle/ownership/code projections сохранены.
+- `python3 audit/doc_links.py` —1559 проверенных ссылок,0 битых;11 исторических цитат имеют явный архивный маршрут. Независимый расширенный разбор Markdown, включая `<пути с пробелами>`, проверил1556 навигационных ссылок без ошибок; frozen исключены только по регистрации.
+- Семь исходников автора совпали побайтно с6ea3f43; прежние архивные payloads неизменны. Все88 старых uncategorized task bodies/ID/membership сохранены дословно; первая секция DEFFERED содержит ровно пять пакетов, CURRENT — CRIT-1/CRIT-2 без runtime-разрешения.
+- Все5428 файлов pushed tree вне документального контура/его validator совпали с6ea3f43; pre-existing non-doc work сохранён.23+2GameTest definitions и константы216/54/64 сверены по исходникам, не исполнением игры. `git diff --check` — PASS.
+
+Доставка выполняется обычными commit/push в `arena/48845eec-gonzotech`, без force и без смены ветки; итоговый SHA сверяется с remote и сообщается автору. Runtime0.3.332; full runtime-suite/Gradle/GameTest/selfTest/native WG/heap/TPS в этом документальном проходе не запускались.

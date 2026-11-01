@@ -148,3 +148,9 @@ JEI объявлен optional/client/AFTER с диапазоном `[20.0.0.4,)`
 | alloy_greatsword | AlloyGreatswordRecipe.pattern(): _IB / BIB / RI_ | B=titanium_block, R=rebar |
 
 A/I = custom_alloy; `_` in this table denotes a blank, actual strings use spaces. Equipment patterns/output come from Kind, other two expose defensive-copy readonly shape getters. Input/output SlotDisplay use **new plain ItemStack(item)**, no example AlloyComposition, no fromComposition/stat factory; «ожидает состав» is intentional. Real special crafting still validates a supported identical composition and transfers it to the result. No server recipe, serializer, matches or assemble behavior is changed. Default display ingredients can help fill the grid, but the actual server still decides craft validity. Existing gate extension/idempotence remains unchanged; no second broad extension is registered.
+
+## CONTENT-1/A4 — загрузка crafting recipe отдельно от JEI-категории
+
+У third_grinder есть категория обработки, но keyG не используется в текущем crafting pattern; внешний аудит 332 сообщает отказ загрузчика. Наличие категории/валидного JSON не доказывает RecipeManager entry, возможность скрафтить блок или progression-доступ. [D-CONTENT1](DEFFERED.md#d-content1) хранит только этот новый вопрос: будущая native загрузка и реальный крафт/расход отдельно от JEI display/gate. Старые D-E* и прочие uncategorized JEI-задачи сюда не переносились.
+
+Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_JEI.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).

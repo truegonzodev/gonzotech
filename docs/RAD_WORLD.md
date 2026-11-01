@@ -105,3 +105,9 @@ Headless-регрессия исполняет production transfer/claim и вн
 Автор закрыл предыдущие RAD/HUD исправления28.10.2026. Новая source-проверка подтверждает полную CACHE.remove(level) на любом chunk load/unload и отдельный source scan для каждого observer. Адресная chunk invalidation и общий physical snapshot с исключением собственного inventory — **кандидаты**, не сделанные изменения. Содержимое должно оставаться живым в tick/world mutation, snapshot не может включать remote ender/дважды считать own inventory. Прямые5%, F и lead×0,2/порог318 не меняются; TPS не измерен.
 
 **Статус01.11.2026:** №12 перенесён в отдельную [D-PERF12](DEFFERED.md#d-perf12), не в трубную D-PIPE2 и не в текущую реализацию. CRIT-2 проверяет корректность sidecar-переноса, не меняет эти room-dose/contour формулы. [Решение](HISTORY.md#status-reset332).
+
+## Пакет 04 — измерения до оптимизации
+
+[D-PERF12](DEFFERED.md#d-perf12) дополнен авторским RAD-PERF-1: учитывать отдельно contour rebuild, source scans, несколько observers и menu copies; один/несколько наблюдателей, контейнерная база, переносы, близкие/удалённые chunk events, baseline/среднее/хвост времени и allocations. Snapshot reuse допустим только с полной dependency/invalidation/observer projection, без повторного собственного вклада. Требуются детерминированное сравнение доз/контуров/свинца/фона и UI/getdose; TPS не измерен, проценты/баланс не выбираются. Это отдельно от трубной реформы.
+
+Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_RAD_WORLD.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
