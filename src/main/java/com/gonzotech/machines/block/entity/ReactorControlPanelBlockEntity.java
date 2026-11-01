@@ -32,6 +32,8 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
 
     /** Compatibility-only NBT buffer from 0.3.237; new menu writes never target this list. */
     private final NonNullList<ItemStack> legacyFuelItems = NonNullList.withSize(MAX_FUEL_SLOTS, ItemStack.EMPTY);
+    // Runtime identity of a fuel-menu binding; never persisted or reused across a rebind.
+    private long fuelInventoryRevision;
     private boolean formed;
     private boolean validationPending;
     private BlockPos min;
@@ -168,9 +170,14 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
             && pos.getZ() >= min.getZ() && pos.getZ() <= max.getZ();
     }
 
+    public long fuelInventoryRevision() {
+        return fuelInventoryRevision;
+    }
+
     /** Called only after the entire outer shell and interior pass validation. */
     public void configureStructure(BlockPos min, BlockPos max, int sheathCount, int storedFuel,
                                    long[] heatPorts, long[] waterPorts, long[] valvePorts) {
+        fuelInventoryRevision++;
         this.min = min.immutable();
         this.max = max.immutable();
         this.fuelSlotCount = fuelSlotsForSheaths(sheathCount, storedFuel);
@@ -187,6 +194,7 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
 
     /** Shape deinitialization does not clear fuel: every surviving sheath remains its owner. */
     public void clearStructure() {
+        fuelInventoryRevision++;
         formed = false;
         validationPending = false;
         // (0.3.272, N8) min/max НЕ обнуляем: остаточное продолжение (#23) и
@@ -234,6 +242,7 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
 
     @Override
     public void setRemoved() {
+        fuelInventoryRevision++;
         if (level instanceof ServerLevel serverLevel) {
             // Invalidate by this live BE reference; the chunk may already be unloading,
             // so a world lookup by position here can deadlock the server thread.
@@ -346,6 +355,7 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        fuelInventoryRevision++;
         for (int slot = 0; slot < legacyFuelItems.size(); slot++) legacyFuelItems.set(slot, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, legacyFuelItems, registries);
         formed = tag.getBoolean("Formed");

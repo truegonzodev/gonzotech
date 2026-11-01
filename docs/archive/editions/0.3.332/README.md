@@ -52,3 +52,19 @@
 - [audit/author test/04 — Оптимизация радиации и контуров.md](OUTDATED_AUTHOR332_04.md).
 - [audit/author test/05 — Рецепты и доступность контента.md](OUTDATED_AUTHOR332_05.md).
 - [audit/author test/06 — Тесты и документация.md](OUTDATED_AUTHOR332_06.md).
+
+<a id="crit333"></a>
+## Редакции332 перед исправлениями CRIT-1/CRIT-2 в333
+
+Десять полных документов из462183e до изменения статуса/кода. Это не текущие спецификации; прежние планы/наблюдения сохранены без редактирования. [CURRENT](../../../CURRENT-STATE.md), [HISTORY](../../../HISTORY.md#crit333), [AUDIT](../../../AUDIT.md#crit333).
+
+- [CURRENT-STATE](OUTDATED_BEFORE_CRIT333_CURRENT-STATE.md).
+- [REACTORS](OUTDATED_BEFORE_CRIT333_REACTORS.md).
+- [MULTIBLOCK](OUTDATED_BEFORE_CRIT333_MULTIBLOCK.md).
+- [MACHINES](OUTDATED_BEFORE_CRIT333_MACHINES.md).
+- [RAD_ITEMS](OUTDATED_BEFORE_CRIT333_RAD_ITEMS.md).
+- [CAPABILITIES](OUTDATED_BEFORE_CRIT333_CAPABILITIES.md).
+- [AUTOMINER](OUTDATED_BEFORE_CRIT333_AUTOMINER.md).
+- [RAD_WORLD](OUTDATED_BEFORE_CRIT333_RAD_WORLD.md).
+- [DEFFERED](OUTDATED_BEFORE_CRIT333_DEFFERED.md).
+- [AUDIT](OUTDATED_BEFORE_CRIT333_AUDIT.md).

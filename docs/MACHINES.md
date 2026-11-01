@@ -247,14 +247,15 @@ PERF-001/9 реализован optional WE/WG bridge и закрыт по ре�
 **Смена статуса01.11.2026:** №9 закрыт решением автора без нового native-доказательства;13/14 → [D-PIPE2](DEFFERED.md#d-pipe2),12 → [D-PERF12](DEFFERED.md#d-perf12). Реализация deferred не разрешена. [Хроника](HISTORY.md#status-reset332).
 
 <a id="crit-review332"></a>
-## CRIT-1/CRIT-2 — следующий пакет: сверка и план
+## CRIT-1/CRIT-2 — реализация 333, ожидается приёмка
 
-Runtime332 без изменений. CRIT-1/A1: захваченные старым ReactorFuelInventory чехлы не ревалидируются по физической identity при той же вместимости после same-tick rebuild; по внешнему GameTest один ТВЭЛ оказывается в removed BE, а не у живого владельца/на cursor. CRIT-2/A2: отдельный SidedInvWrapper.insertItem не покрыт обычным radiation hook; slot-limit mixin не переносит sidecar, внешний GameTest сообщает16/48 вместо32mZt/s при count8. Ни нового count-dupe, ни краша этим не установлено.
+CRIT-1: поколение панели и точные живые владельцы, clicked/direct quickMove guard до cursor-debit, стандартное закрытие устаревшего GUI по решению автора; не remap/поздний возврат/перестройка реактора. CRIT-2: отдельный зарегистрированный radiation redirect для двух commit-веток SidedInvWrapper, accepted-copy + старый слот до grow; SlotCapacity/обычный InvWrapper/физика/баланс не менялись.
 
-Оба пункта пока зарегистрированы, source-основания сверены; native-прогоны из переданного отчёта здесь не повторялись. Нужны отрицательные инвариантные регрессии и выбранное точечное лечение до будущего code-патча. Не менять самостоятельность чехлов, дозовую физику/баланс/legacy или исправные трубы/воронку. [CRIT-1](REACTORS.md#crit-1), [CRIT-2](RAD_ITEMS.md#crit-2), [текущая задача](CURRENT-STATE.md), [доказательства](AUDIT.md#status-reset332).
+Headless production-regression1692+2566 assertions PASS; exact462183e baseline2/2 и mutants7/7 отклонены по AssertionError. MC/click/close/weaving/storage doubles — не native-сервер. Четыре новых CriticalStateGameTests добавлены, не запущены здесь; авторская игра/save-load ещё нужны, оба пункта остаются в CURRENT и не закрываются. [CRIT-1](REACTORS.md#crit-1), [CRIT-2](RAD_ITEMS.md#crit-2), [CURRENT](CURRENT-STATE.md), [AUDIT](AUDIT.md#crit333).
 
 ## Единая очередь авторских пакетов 332
 
-Текущая работа — пакет 02, CRIT-1/CRIT-2, только проверка/план. Трубные A3/A5/13/14/остаток 3 — D-PIPE2; радиационная стоимость 12 — D-PERF12. CONTENT-1/A4 отложен отдельно: у third_grinder keyG=second_grinder не используется в PHP/P P/PSP, native loader по отчёту отвергает рецепт. JSON/регистрация блока/JEI-категория не доказывают наличие crafting recipe. Не удалять G ради зелёного лога и не придумывать другой рисунок без согласования. Runtime не менялся. Старые сметы устройств/JEI/прочие uncategorized пункты к этим пакетам не присоединены. [Полная очередь](DEFFERED.md).
+Текущая работа — приёмка реализованных в 333 CRIT-1/CRIT-2 пакета 02. Трубные A3/A5/13/14/остаток 3 — D-PIPE2; радиационная стоимость 12 — D-PERF12. CONTENT-1/A4 отложен отдельно: у third_grinder keyG=second_grinder не используется в PHP/P P/PSP, native loader по отчёту отвергает рецепт. JSON/регистрация блока/JEI-категория не доказывают наличие crafting recipe. Не удалять G ради зелёного лога и не придумывать другой рисунок без согласования. Рецепт не исправлялся в 333. Старые сметы устройств/JEI/прочие uncategorized пункты к этим пакетам не присоединены. [Полная очередь](DEFFERED.md).
 
-Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_MACHINES.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
+
+Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_MACHINES.md); [решение и проверки](HISTORY.md#crit333).

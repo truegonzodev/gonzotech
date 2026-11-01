@@ -107,14 +107,17 @@ DOC-003: два типа поведения закреплены по решен
 <a id="crit-1"></a>
 ## CRIT-1 — актуальность владельцев топлива в открытом меню
 
-Зарегистрировано для source-сверки и плана, не исправлено. Внешний аудит базы332 сообщает настоящий GameTest: в одном тике замена чехла/пересборка с прежней вместимостью оставляет старое меню valid; PICKUP одногоUF_TVEL даёт oldFuel1/liveFuel0/cursor0 при removed(oldSheath). Медленное разрушение может успеть закрыть меню. Агент этот native-тест не воспроизводил.
+**Реализовано в 0.3.333, не закрыто: нужны native-прогон и авторская приёмка.** Исходный внешний опыт 332: при same-tick замене чехла старое меню могло оставить один UF_TVEL в removed BE, oldFuel1/liveFuel0/cursor0; медленное разрушение могло успеть закрыть GUI.
 
-Source: ReactorFuelInventory удерживает final-список чехлов; его stillValid/canMutate и ReactorMenu.stillValid проверяют formed/число слотов, но не identity текущих владельцев. Freshness-проверка уже есть в ReactorFuelStorage.sheathsCached, однако старый GUI не вызывает её для захваченного списка перед действием. План — generation/точный набор живых владельцев с отклонением до debit cursor, не перенаправление по координатам и не поздний return из setItem. Реакторные чехлы остаются самостоятельными; не менять принцип структуры ради GUI.
+По подтверждению автора при расформировании/изменении реактора старое GUI закрывается. ReactorControlPanelBlockEntity.fuelInventoryRevision — runtime-only поколение, меняется на configure/clear/load/remove. ReactorFuelInventory сохраняет immutable-набор старых владельцев и поколение; отвергает смену/удаление/чужой level/unknown chunk/неверные bounds/неактуальный panel/count. Никакого тихого remap по координатам или полного scan объёма на каждый getItem.
 
-Будущая приёмка: PICKUP/извлечение/shift-click/drag/cursor, два зрителя, смена панели/вместимости, fast rebuild, unload/reload/save/load; сохранение единственного ТВЭЛа, отсутствие stale-write/повторной выдачи. Observation-test сначала превращается в отрицательную инвариантную регрессию, затем исправление и отдельная игровая приёмка. [Полная задача](CURRENT-STATE.md#crit-1--устаревшее-меню-реактора-теряет-твэл), [история](HISTORY.md#status-reset332).
+ReactorMenu проверяет clicked и прямой quickMoveStack **до** vanilla-debit, закрывает только своё текущее меню стандартным closeContainer. Cursor возвращается ванильным путём, включая штатный drop при невозможности принять; нет специального возврата через setItem или позднего trim. stillValid даёт обычное серверное закрытие без нового клика. Старый вызов не закрывает другое GUI. Прямые операции container тоже не пишут/не извлекают из устаревших владельцев. Самостоятельность чехлов, redistribution и физика не менялись.
 
-## Источник CRIT-1 и граница планирования
+Headless production-regressions1692 assertions, exact462183e negative и 5 menu/owner mutants PASS; это MC/click/close doubles, не native-приёмка. Добавлены реальные GameTest-сценарии replacement и clear+reconfigure. Ещё проверить native/в игре PICKUP/извлечение/shift/drag/cursor, двух зрителей, смену панели/вместимости, fast rebuild, unload/reload/save/load, отсутствие потерь/stale-write/двойной выдачи. [CURRENT](CURRENT-STATE.md#crit-1--устаревшее-меню-реактора-теряет-твэл), [AUDIT](AUDIT.md#crit333), [HISTORY](HISTORY.md#crit333).
+
+## Источник CRIT-1 и граница доказательств
 
 [Пакет 02](archive/editions/0.3.332/OUTDATED_AUTHOR332_02.md) получен как Markdown-описание внешнего опыта. Требование меню — текущее поколение/точный живой владелец до расхода cursor, не изменение реакторной самостоятельности чехлов. Native-проба/логи в этом push отсутствуют, новый агентский прогон не выполнялся. Трубные изменения портов могут затронуть профиль только после выбора D-PIPE2, не в текущей синхронизации.
 
-Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_MULTIBLOCK.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
+
+Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_MULTIBLOCK.md); [решение и проверки](HISTORY.md#crit333).

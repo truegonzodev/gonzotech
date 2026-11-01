@@ -18,16 +18,18 @@ public final class ReactorFuelInventory implements Container {
     private final ReactorControlPanelBlockEntity panel;
     private final int activeSlots;
     private final boolean serverAuthoritative;
+    private final long revision;
     private final List<ReactorFuelSheathBlockEntity> sheaths;
     private final NonNullList<ItemStack> clientItems = NonNullList.withSize(
         ReactorControlPanelBlockEntity.MAX_FUEL_SLOTS, ItemStack.EMPTY);
 
     public ReactorFuelInventory(ReactorControlPanelBlockEntity panel, int activeSlots) {
         this.panel = panel;
+        this.revision = panel.fuelInventoryRevision();
         this.activeSlots = Math.max(0, Math.min(ReactorControlPanelBlockEntity.MAX_FUEL_SLOTS, activeSlots));
         if (panel.getLevel() instanceof ServerLevel server && panel.isFormedController()) {
             serverAuthoritative = true;
-            sheaths = ReactorFuelStorage.sheathsCached(server, panel);
+            sheaths = List.copyOf(ReactorFuelStorage.sheathsCached(server, panel));
         } else {
             serverAuthoritative = false;
             sheaths = List.of();
@@ -51,8 +53,11 @@ public final class ReactorFuelInventory implements Container {
     public ItemStack getItem(int slot) {
         if (slot < 0 || slot >= activeSlots) return ItemStack.EMPTY;
         if (!serverAuthoritative) return clientItems.get(slot);
+        if (!currentStructure()) return ItemStack.EMPTY;
         SlotAddress address = address(slot);
-        return address == null ? ItemStack.EMPTY : sheaths.get(address.sheathIndex()).getItem(address.localSlot());
+        if (address == null) return ItemStack.EMPTY;
+        ReactorFuelSheathBlockEntity sheath = sheaths.get(address.sheathIndex());
+        return liveOwner(sheath) ? sheath.getItem(address.localSlot()) : ItemStack.EMPTY;
     }
 
     @Override
@@ -119,6 +124,7 @@ public final class ReactorFuelInventory implements Container {
         return panel != null
             && panel.isFormedController()
             && panel.fuelSlotCount() == activeSlots
+            && (player.level().isClientSide() || canMutate())
             && Container.stillValidBlockEntity(panel, player);
     }
 
@@ -131,7 +137,28 @@ public final class ReactorFuelInventory implements Container {
     }
 
     private boolean canMutate() {
-        return panel != null && panel.isFormedController() && panel.fuelSlotCount() == activeSlots;
+        if (!currentStructure() || sheaths.isEmpty()) return false;
+        for (ReactorFuelSheathBlockEntity sheath : sheaths) {
+            if (!liveOwner(sheath)) return false;
+        }
+        return true;
+    }
+
+    private boolean currentStructure() {
+        if (!serverAuthoritative || panel.isRemoved()
+            || !(panel.getLevel() instanceof ServerLevel level)
+            || panel.fuelInventoryRevision() != revision
+            || !panel.isFormedController() || panel.fuelSlotCount() != activeSlots
+            || !level.hasChunkAt(panel.getBlockPos())
+            || !ReactorFuelStorage.canOpenFuelInventory(level, panel)) return false;
+        return level.getBlockEntity(panel.getBlockPos()) == panel;
+    }
+
+    private boolean liveOwner(ReactorFuelSheathBlockEntity sheath) {
+        return !sheath.isRemoved() && sheath.getLevel() == panel.getLevel()
+            && panel.getLevel().hasChunkAt(sheath.getBlockPos())
+            && panel.getLevel().getBlockEntity(sheath.getBlockPos()) == sheath
+            && panel.min().equals(sheath.reactorMin()) && panel.max().equals(sheath.reactorMax());
     }
 
     private record SlotAddress(int sheathIndex, int localSlot) {

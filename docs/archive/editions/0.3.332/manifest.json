@@ -296,6 +296,86 @@
       "sha256": "49eed16612dd956709c10b81c55165723563e5454389e8c23c3a68653fd18f16",
       "bytes": 5105,
       "task": "Exact author task-package source, not executable tests; historical paths/statuses frozen; reconciled live in CURRENT/DEFFERED"
+    },
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_CURRENT-STATE.md",
+      "sha256": "e2409530044d6b4f92b576ea289e2cdac6dc675680b778cda73ab7cba06074ec",
+      "bytes": 13589,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/REACTORS.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_REACTORS.md",
+      "sha256": "f91670145f3249598c38cb9f8db23ffce3ad3adad14453df5829c984f5e07f01",
+      "bytes": 11512,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_MULTIBLOCK.md",
+      "sha256": "ca3f63b49f5fc3ac8a84f1a185d33fb54a3353bcc426a4d4bf669b08411120d2",
+      "bytes": 22254,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_MACHINES.md",
+      "sha256": "ec303e241d638894fd381d89e6f45ab34b8d4a66f887c810f5f7a4b9eecbbeff",
+      "bytes": 60451,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_RAD_ITEMS.md",
+      "sha256": "39a5e1adeae7f62baf29a527b18ad92d397bf1c36b3c9eca8518b8775c466c70",
+      "bytes": 48534,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_CAPABILITIES.md",
+      "sha256": "9b5d03472e638ccb376ae9188838eb4d56cdd53493f9bd7ae66cadef9ad6881f",
+      "bytes": 53032,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_AUTOMINER.md",
+      "sha256": "98a9615b28710d6bff290772f8de7a5ae486b5b1f44a4d4b56dffd5a693cc011",
+      "bytes": 24723,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/RAD_WORLD.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_RAD_WORLD.md",
+      "sha256": "4f69aece9a088ccee3da4bcd31b14366c91c57151699577e35ae191ea628d940",
+      "bytes": 24467,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_DEFFERED.md",
+      "sha256": "bd67da74059121d47f499a3d08c437c53d2631fbeb541ff80ac22dcd2824fba5",
+      "bytes": 81494,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "462183e02411427b33838f06a492e21eed7dc881",
+      "snapshot": "docs/archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_AUDIT.md",
+      "sha256": "984a0098a05afd02e6ddd6b8b68829418daa15acfa7e4f562f6109969c4bd064",
+      "bytes": 144976,
+      "task": "CRIT-1/2 author-approved runtime333; preserve exact prior planning/acceptance state"
     }
   ]
 }

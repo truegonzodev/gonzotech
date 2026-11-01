@@ -10,7 +10,7 @@
 - `python3 audit/docs_structure_test.py` — 75 SHA-256, полный исходный inventory, маршруты переноса/все 4173 source-пункта, whitelist корня, разные task ID и четыре патча удержания, разделение доски/заметок и наличие реестра Sinks/ресурсных BE. Проверяет сохранность текста/структуры, **не математически полную сохранность авторского смысла**.
 - `python3 audit/content_inventory.py` — ресурсный census в `audit/reports/content-inventory.csv`, не в docs. `--check` сравнивает с локальным отчётом. Это не survival reachability solver: машинные таблицы/события и намерение автора проверяются отдельно.
 - JDK/harness/typecheck и Minecraft build/GameTest — разные уровни. Общие скобки/Tree-sitter не доказывают Mojmap/API compatibility. Недоступный JDK/Pillow отмечается как SKIP.
-- JDK 21 + зависимости: `./gradlew build runRadiationTest --offline --no-configuration-cache`. Тестовый мир `run-radiation-merge-tests-311`, namespace gonzotech; по текущим исходникам 23 GameTest в RadiationGameTests +2 в PipeInteractionGameTests =25 всего (source-count, не новый запуск). Не считать наличие тестов выполнением клиентского ЛКМ/ПКМ/Q.
+- JDK 21 + зависимости: `./gradlew build runRadiationTest --offline --no-configuration-cache`. Тестовый мир `run-radiation-merge-tests-311`, namespace gonzotech; по исходникам 333:23 GameTest в RadiationGameTests +2 в PipeInteractionGameTests +4 в CriticalStateGameTests =29 всего (source-count, не новый запуск). Не считать наличие тестов выполнением клиентского ЛКМ/ПКМ/Q.
 
 ## Реестр Python-инструментов
 
@@ -596,7 +596,6 @@ git diff --check
 
 Runtime0.3.332. [Исходники и редакции](archive/editions/0.3.332/README.md#author-sync332), [текущая работа](CURRENT-STATE.md), [отложенная очередь](DEFFERED.md). Итоговые исполненные проверки — ниже.
 
-Предыдущая редакция профиля: [до синхронизации пакетов 332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_AUDIT.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
 
 
 **Исполненные проверки синхронизации:**
@@ -607,3 +606,33 @@ Runtime0.3.332. [Исходники и редакции](archive/editions/0.3.33
 - Все5428 файлов pushed tree вне документального контура/его validator совпали с6ea3f43; pre-existing non-doc work сохранён.23+2GameTest definitions и константы216/54/64 сверены по исходникам, не исполнением игры. `git diff --check` — PASS.
 
 Доставка выполняется обычными commit/push в `arena/48845eec-gonzotech`, без force и без смены ветки; итоговый SHA сверяется с remote и сообщается автору. Runtime0.3.332; full runtime-suite/Gradle/GameTest/selfTest/native WG/heap/TPS в этом документальном проходе не запускались.
+
+<a id="crit333"></a>
+## 0.3.333 — CRIT-1/CRIT-2: root fixes и отрицательные регрессии
+
+Автор разрешил перейти от планирования к двум фиксам и подтвердил закрытие старого GUI при внешнем расформировании/изменении реактора. Version333; оба пункта не закрываются без native/авторской приёмки. Полные 10 предыдущих редакций 332 сохранены с exact462183e/hash/bytes/Git в архиве; предыдущие immutable тексты не менялись.
+
+CRIT-1: runtime-only fuelInventoryRevision на configure/clear/load/remove; immutable captured owners, panel/sheath physical identity, level/loaded/bounds/count checks. getItem проверяет конкретного владельца, не сканирует весь объём на слот. clicked и прямой quickMoveStack проверяют актуальность до vanilla-debit; closeContainer только для своего текущего GUI. Cursor возвращается стандартно, включая drop при заполненном инвентаре. Устаревший вызов не закрывает другое меню. Реакторный storage/redistribution/термодинамика не переписывались.
+
+CRIT-2: SidedInvWrapperRadiationMixin зарегистрирован отдельно, require=2 для full/partial commit grow. До grow accepted-copy объединяется со старым слотом через текущий ExternalRadiation.merge; обе дозы взвешены по фактическим count. simulate/reject/остаток/source/SlotCapacity/обычный InvWrapper не менялись. Внешняя MenuDoseTransaction проверена без двойного merge.
+
+`audit/critical_state_test.py --mutation-check` компилирует целые production ReactorFuelInventory/ReactorMenu/BaseMachineMenu и ExternalRadiation/DoseMath/MenuDoseTransaction, извлекает configure/clear panel bodies, использует hash-pinned NeoForge wrappers с дословными production hook bodies.1692 reactor +2566 radiation assertions PASS. Оба exact462183e baseline assertion-killed;7/7 target mutants assertion-killed, compile failure не считается kill. Первоначальный shift-mutant выжил: тест вызывал shift только после закрытия; добавлены независимые entry-path проверки direct shift/click, повторный прогон ловит оба. Проверены owner replacement даже без removed flag, reconfigure при том же count, foreign level/bounds, unloaded panel/sheath/bounds, два viewers, explicit reopen, direct stale extraction/clear, другой активный GUI, distance, weighted merge в обе стороны, empty/partial/full/face remap/reject, simulate, original offer, incompatible type и outer transaction.
+
+**Граница:** world/slot/click/close/storage/copy hooks и ручная вставка hook bodies — doubles, не настоящий Mixin application/MC/Mojmap/codec/save-load. Panel load/remove increment проверен source-wiring, не runtime NBT. Добавлены 4CriticalStateGameTests с настоящими menu.clicked/SidedInvWrapper/ExternalRadiation/MenuDoseTransaction: replacement-before-debit/GUI-close, clear+reconfigure, insert matrix, outer transaction. Reactor fixture связывает реальные BE напрямую, не доказывает полноценную shell validation/thermal physics. В 333 теперь 29 штатных определений (23+2+4); прежние внешние 25/31 остаются результатами базы 332, не этими новыми тестами. Native GameTest/Gradle/client/save-load здесь не выполнены; это не 29PASS.
+
+Инструменты: Java21.0.8 runtime из jdk4py21.0.8.2 (PyPI) и ECJ3.39.0 с -21, не полный JDK/javac. ECJ взят из GitHub Maven-cache blob0cfc706f6795974c0c9756f600233d567f8fee1a, checksum проверен; SHA-25601f5a92ac19bb2b3bf85e295a68f2c73c264369109158b566ce9b490af982948. Бинарники/Pillow13 и отчёты только в ignored.cache. Прямая загрузка Temurin JDK остановилась на недоступном release-assets host; Gradle distribution/Minecraft/Maven dependencies и полноценного JDK здесь нет. Не выдавать ECJ с MC doubles за сборку мода. Полный runtime/resource/source Python-набор и docs-проверки фиксируются ниже по результатам.
+
+Для native-проверки автора: `./gradlew build runRadiationTest --no-configuration-cache` с JDK21 и зависимостями. Известные selfTest3FAIL/third_grinder unusedG остаются D-QA1/D-CONTENT1 и не лечатся этим патчем; selfTest не добавляется в эту команду ради обхода известного результата, а сохраняется отдельным незелёным долгом. Ни WG9, ни deferred, ни баланс/legacy/шалкеры/PlotnickBlock.java не активированы. [CURRENT](CURRENT-STATE.md), [история/решение](HISTORY.md#crit333), [точные предыдущие редакции](archive/editions/0.3.332/README.md#crit333).
+
+Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_AUDIT.md); [решение и проверки](HISTORY.md#crit333).
+
+
+**Итоговые исполненные проверки333:**
+- Полный набор97Python test-скриптов —97/97PASS:95runtime/resource/source-скриптов (включая новый critical_state_test) и2 документальных. Во внутренних логах нет SKIP; документы/ссылки проверены повторно после синхронизации.
+- CRIT-regression:1692reactor +2566radiation assertions PASS; exact462183e baseline2/2 и7/7target mutants assertion-killed. Compile failure не считается kill.
+- Соседние усиленные прогоны: slot_capacity_test --mutation-check —354assertions,10/10mutants; radiation_engine_test --mutation-check —450609assertions/11groups,12/12mutants. Это production-core/extracted-flow с указанными doubles, не native Minecraft.
+- Targeted typecheck:62 реальных исходника +163stubs,0 ошибок; missing-ModMachines-import negative1/1. Это не полный Mojmap classpath. Native CriticalStateGameTests не объявляются собранными/выполненными: четыре новых определения используют настоящие menu/wrapper API; радиационные величины native fixture масштабированы через RadUnits.MILLI.
+- docs_snapshots_test:13 тестов PASS; docs_structure_test:102 предыдущие редакции exact hash/bytes/Git,29live,75immutable originals,4173source items,69roadmap dispositions PASS. doc_links:1587 проверенных ссылок,0 битых,11 исторических цитат имеют явный архивный маршрут.
+- Scope guard: ровно32 целевых пути,5645 прежних файлов вне них побайтно неизменны. Все88uncategorized task bodies/ID/membership сохранены, пять deferred-пакетов не активированы; HISTORY сохранила полный прежний prefix, старые архивные payloads не менялись. PlotnickBlock.java/PlotnickBlockEntity, рецепты/текстуры/закон радиации/README/.gitignore не менялись. Version333 и min333 regression pin согласованы;29GameTest source definitions — не29PASS. git diff --check PASS; после selective staging проверяется также cached diff.
+
+Оба CRIT остаются **реализованы, не закрыты; ждут native-прогона и игровой приёмки автора**. Сборка Gradle/Minecraft/native Mixins/client/save-load/selfTest здесь не заявлена. Известные3FAIL selfTest и third_grinder остаются в своих deferred. Доставка — обычный commit/push в фиксированную arena/48845eec-gonzotech без force; итоговый SHA сверяется с remote в конце шага.

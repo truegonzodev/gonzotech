@@ -8,6 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 
 /** Panel menu whose visible slots proxy the persistent inventories owned by the fuel sheaths. */
@@ -145,6 +146,26 @@ public final class ReactorMenu extends BaseMachineMenu {
         return panel.isFormedController()
             && panel.fuelSlotCount() == activeFuelSlots
             && super.stillValid(player);
+    }
+
+    // A direct click/quick-move can arrive before the player's next validity tick.
+    // Reject BEFORE vanilla splits the cursor/source; removed() returns it normally.
+    private boolean rejectStaleAction(Player player) {
+        if (player.level().isClientSide() || stillValid(player)) return false;
+        if (player.containerMenu == this) player.closeContainer();
+        return true;
+    }
+
+    @Override
+    public void clicked(int slot, int button, ClickType type, Player player) {
+        if (rejectStaleAction(player)) return;
+        super.clicked(slot, button, type, player);
+    }
+
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        if (rejectStaleAction(player)) return ItemStack.EMPTY;
+        return super.quickMoveStack(player, index);
     }
 
     private static final class FuelSlot extends Slot {

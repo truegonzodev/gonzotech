@@ -30,9 +30,9 @@ merged = (a × n + b × k) / (n + k)
 - Разные новые внешние значения наведёнки больше не мешают обычному стакингу. Все **остальные** ограничения ванильного сравнения предмета/компонентов сохраняются.
 - `DoseMath.finite` отбрасывает неположительные/нефинитные значения. Порог очистки 1 mZt применяется в `ItemRadioactivity.setInduced`; не следует подменять им взвешенное усреднение в `DoseMath`.
 
-**Известный пробел CRIT-2:** side-aware SidedInvWrapper не покрыт обычным InvWrapper-hook; его корректность не гарантируется (см. задачу ниже). Перечень ниже не утверждает устранения этого дефекта.
+**Покрытие 333/CRIT-2:** отдельный зарегистрированный SidedInvWrapper-hook добавлен к обычному InvWrapper; headless-регрессия проходит, native/авторская приёмка ещё нужны. Это не универсальная гарантия для любого стороннего handler.
 
-Адаптеры охватывают стандартные copy, Inventory, Hopper, SimpleContainer, Slot.safeInsert, ItemStackHandler (с учётом simulate), InvWrapper, объединение ItemEntity и BundleContents.Mutable; есть явные вызовы в станках, печах, маршрутизации и носителях GonzoTech. Это **не** гарантия для любого стороннего способа пересоздания предметов.
+Адаптеры охватывают стандартные copy, Inventory, Hopper, SimpleContainer, Slot.safeInsert, ItemStackHandler (с учётом simulate), InvWrapper и SidedInvWrapper, объединение ItemEntity и BundleContents.Mutable; есть явные вызовы в станках, печах, маршрутизации и носителях GonzoTech. Это **не** гарантия для любого стороннего способа пересоздания предметов.
 
 Источники: [DoseMath](../src/main/java/com/gonzotech/radiation/engine/DoseMath.java), [ExternalRadiation](../src/main/java/com/gonzotech/radiation/engine/ExternalRadiation.java), [ItemRadiationCopyMixin](../src/main/java/com/gonzotech/mixin/ItemRadiationCopyMixin.java), [BundleRadiationTransferMixin](../src/main/java/com/gonzotech/mixin/BundleRadiationTransferMixin.java).
 
@@ -198,18 +198,17 @@ Ingress330: actualguard/window/config/Plotnickhandler/Fenceregistration +pinnedN
 **Приёмка:** автор протестировал330 и подтвердил штатную работу; PERF-001/6/10 закрыты в331 по его прямому разрешению. Не перечислять неназванные отдельные сценарии как пройденные. В331 исправлена только RU/EN подсказка настройки порога, механика330 неизменна. [Хроника приёмки](HISTORY.md#perf-001-accepted331). В331 только локализация hover-описания общей настройки Plotnick/Fence, без изменения радиации/ACK/provenance/квоты.
 
 <a id="crit-2"></a>
-## CRIT-2 — непокрытый side-aware перенос наведёнки
+## CRIT-2 — side-aware перенос наведёнки
 
-Зарегистрировано для сверки/плана, runtime не исправлялся. Внешний аудит332 сообщает GameTest с настоящим NeoForge SidedInvWrapper и применёнными mixin:4предмета×6mZt/s +4×2mZt/s дают16 либо48 вместо32; count всегда8. Обычный InvWrapper в контроле сохраняет32. Это дюп/стирание наведёнки, не количества; природная эмиссия типа не пересматривается. Нативный результат здесь не воспроизведён.
+**Реализовано в 0.3.333, не закрыто: нужны native-прогон и авторская приёмка.** Внешний опыт 332:4×6+4×2mZt/s давали 16/48 вместо 32 при неизменном count8; обычный InvWrapper сохранял 32. Это ошибка наведёнки, не количества; прежнее сообщение о native-воспроизведении не выдаётся за новый агентский запуск.
 
-Текущий InvWrapperRadiationMixin нацелен на обычный wrapper, а SidedInvWrapper переопределяет insertItem. Его отдельный SlotCapacity-mixin обслуживает только вместимость/индексы и не обеспечивает перенос sidecar. В будущем нужен атомарный merge действующего движка по принятому count, без двойного применения внешней транзакцией. Не возвращать динамические NBT/components, count-trim, паузы или новую радиационную физику.
+SidedInvWrapper имеет собственный insertItem; поэтому зарегистрирован отдельный SidedInvWrapperRadiationMixin. Redirect требует обе commit-точки grow: accepted-copy с дозой входной части объединяется с существующим слотом до grow на его старый count, через текущий ExternalRadiation.merge. simulate/reject не вызывают hook, original offer/остаток не меняют дозу; empty insert использует обычный copy/owner путь. SidedSlotCapacity-mixin и обычный InvWrapper не переписывались. Внешняя MenuDoseTransaction восстанавливает ту же weighted величину из исходных lots, не удваивает эффект.
 
-Инвариант будущей регрессии: без тика распада/облучения сохраняется сумма наведёнки; оба порядка дают32mZt/s суммарно и4на предмет. Проверить empty/partial/full/remainder, типы/компоненты, закрытую грань, simulate без мутации, count/cursor/save/load; InvWrapper/воронка/трубы — соседняя регрессия, не объявленные этим тестом дефекты. Исправленные observation-тесты и отдельная игровая приёмка необходимы позднее. [Полная задача](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [история](HISTORY.md#status-reset332).
-
-PERF-001/12 (стоимость transaction snapshots) теперь отдельно отложен в [D-PERF12](DEFFERED.md#d-perf12). Это не CRIT-2 и не разрешение оптимизации/смены радиационного закона.
+Без тика распада/облучения оба порядка 4×6+4×2 дают 8×4=32mZt/s. Headless2566 assertions охватывают empty/partial/full, лимиты/face remap/reject, original offer, simulate без dirty/rate/count mutation, несовместимый тип и внешнюю транзакцию; baseline462183e и 2 dose mutants assertion-killed. Реальные Mixin weaving/owner persistence требуют native GameTest/игры. Добавлены native matrix/outer-transaction тесты; не заявляется их запуск здесь. Оставшаяся приёмка: также компоненты/cursor/save-load и соседние InvWrapper/воронка/трубы. Радиационная физика 313–318, sidecar-формат, баланс, NBT/components, паузы/count-trim и legacy не менялись. [CURRENT](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [AUDIT](AUDIT.md#crit333), [HISTORY](HISTORY.md#crit333).
 
 ## Пакет 04 отдельно от текущего CRIT-2
 
 RAD-PERF-1/№12 в [D-PERF12](DEFFERED.md#d-perf12): сначала профиль rebuild/source scans/observer reuse/copy allocations и хвостов, затем ограниченный выбор snapshot/invalidation. Сохраняются per-item источник, strongest rule, независимость владельцев/GUI, обратная связь, lead и provenance/rollback; динамические NBT/components/паузы/trim не возвращать. CRIT-2 из пакета 02 — отдельная корректность side-aware переноса и не ждёт широкой оптимизации. Исходные Markdown-пакеты теперь доступны, но нативные логи и код дополнительных проб не предоставлены.
 
-Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_RAD_ITEMS.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
+
+Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_RAD_ITEMS.md); [решение и проверки](HISTORY.md#crit333).

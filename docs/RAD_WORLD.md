@@ -110,4 +110,9 @@ Headless-регрессия исполняет production transfer/claim и вн
 
 [D-PERF12](DEFFERED.md#d-perf12) дополнен авторским RAD-PERF-1: учитывать отдельно contour rebuild, source scans, несколько observers и menu copies; один/несколько наблюдателей, контейнерная база, переносы, близкие/удалённые chunk events, baseline/среднее/хвост времени и allocations. Snapshot reuse допустим только с полной dependency/invalidation/observer projection, без повторного собственного вклада. Требуются детерминированное сравнение доз/контуров/свинца/фона и UI/getdose; TPS не измерен, проценты/баланс не выбираются. Это отдельно от трубной реформы.
 
-Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_RAD_WORLD.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
+
+## Граница 333/CRIT-2
+
+Исправлен side-aware перенос через SidedInvWrapper, не room/contour расчёт. Формулы 313–318, strongest/per-item, прямые 5%, F, lead×0,2 и строгий>30mZt/s не менялись. D-PERF12 остаётся deferred. [Текущий адаптер и проверка](RAD_ITEMS.md#crit-2).
+
+Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_RAD_WORLD.md); [решение и проверки](HISTORY.md#crit333).
