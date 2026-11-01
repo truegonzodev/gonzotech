@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "5defce4287752b69e94ca1324bfc1fb743c748ee",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_ITEM_ACCEPTANCE_CURRENT-STATE.md",
+      "sha256": "3dd17b40d115e22a4c7a413b9076cd5f8a967af6ff9f7abbab8115c5aa43dda1",
+      "bytes": 24170,
+      "task": "PERF-001/1 author acceptance and /3 deferred as Great Pipe Optimization II; next-step investigation, no runtime changes"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "5defce4287752b69e94ca1324bfc1fb743c748ee",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_ITEM_ACCEPTANCE_CAPABILITIES.md",
+      "sha256": "c811c34137aa8ed67d0968254891d305a2fac10f611e13468081d58f39d6c62d",
+      "bytes": 36062,
+      "task": "PERF-001/1 author acceptance and /3 deferred as Great Pipe Optimization II; next-step investigation, no runtime changes"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "5defce4287752b69e94ca1324bfc1fb743c748ee",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_ITEM_ACCEPTANCE_MACHINES.md",
+      "sha256": "192dd6cda83fc17c6cb1c79c65aa3cefd5e08ef1adbc259e295c52e47f59500b",
+      "bytes": 46962,
+      "task": "PERF-001/1 author acceptance and /3 deferred as Great Pipe Optimization II; next-step investigation, no runtime changes"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "5defce4287752b69e94ca1324bfc1fb743c748ee",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_ITEM_ACCEPTANCE_AUTOMINER.md",
+      "sha256": "0d405ff3270c56d2cfca86db039d2b1f804d5baeb9c8babea62319db898cd4a1",
+      "bytes": 10656,
+      "task": "PERF-001/1 author acceptance and /3 deferred as Great Pipe Optimization II; next-step investigation, no runtime changes"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "5defce4287752b69e94ca1324bfc1fb743c748ee",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_ITEM_ACCEPTANCE_DEFFERED.md",
+      "sha256": "b030b38a943f0a1e519ba725f51416e48d1ffb2a6a35cb68c0471e936e192bb1",
+      "bytes": 43929,
+      "task": "PERF-001/1 author acceptance and /3 deferred as Great Pipe Optimization II; next-step investigation, no runtime changes"
+    }
+  ]
+}

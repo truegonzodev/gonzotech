@@ -36,3 +36,5 @@
 - [Редакции runtime0.3.326 перед0.3.327](editions/0.3.326/README.md#before-transfer-dag): exactccdfa6e CURRENT/CAPABILITIES/MACHINES до согласованной замены shield; cold-source отказ1 остаётся открытым.
 
 - [Редакции0.3.327 перед BFS-fix328](editions/0.3.327/README.md): exact3fce03b, авторский отказ327/native log, три независимые схемы;1/3 не закрываются по headless.
+
+- [Редакция328 до игровой приёмки1](editions/0.3.328/README.md):1закрыт автором, остаток3отложен вD-PIPE2; runtime не меняется.

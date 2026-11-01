@@ -474,3 +474,7 @@ python3 audit/docs_structure_test.py
 python3 audit/doc_links.py
 git diff --check
 ```
+
+### Документальный шаг328 — приёмка1 и переносостатка3
+
+Автор подтвердил штатную работу328 и явно разрешил закрытие1; это игровая приёмка автора, не новыйnativeпрогон агента. Остаток3перенесён вD-PIPE2на позже,13/14покаактивны. Следующий10a только предложен/обследованread-only, код не менялся. Прежний89PASS остаётся последнимполнымcodeпрогоном, заново не выполнялся радиdocs-only. Проверкиэтогошага: docs_structure_test (30snapshot Git/hash/bytes,75legacy), doc_links (0broken), gitdiffcheck. Полная хроника/решения — [HISTORY](HISTORY.md#perf-001-item-accepted).
