@@ -5,7 +5,9 @@ Compiles whole production ReactorFuelInventory/ReactorMenu/BaseMachineMenu,
 ExternalRadiation/DoseMath/MenuDoseTransaction, extracted panel lifecycle methods,
 and hash-pinned upstream handlers with the actual production hook bodies inserted.
 MC world/click/close/storage and copy injections are explicit DOUBLES, NOT native
-Mixin/Mojmap/GUI/persistence evidence. CriticalStateGameTests covers that boundary.
+Mixin/Mojmap/GUI/persistence evidence. Native CriticalStateGameTests require MC.
+334 additionally compiles the failing native caller against pinned API signatures;
+this still does not provide the complete Minecraft/NeoForge classpath.
 Java21 javac or JAVA_HOME + ECJ_JAR; --mutation-check also rejects old462183e
 and targeted mutants by AssertionError, never by a compile failure.
 """
@@ -169,9 +171,81 @@ def run(case, overrides=None, old=False):
         return subprocess.run([java, '-ea', '-cp', str(root / 'classes'), 'probe.CriticalProbe', case], text=True, capture_output=True)
 
 
+def native_menu_api_regression():
+    """Compile the actual failing caller against pinned API shapes, then execute it.
+
+    This is a signature/fixture regression, NOT native Minecraft. The old caller
+    must fail compilation here; that is not a behavioral mutation kill.
+    """
+    fixture = ROOT / 'audit/fixtures/chest_menu_api'
+    metadata = json.loads((fixture / 'manifest.json').read_text())
+    for record in metadata['files']:
+        assert hashlib.sha256((fixture / record['file']).read_bytes()).hexdigest() == record['sha256']
+    api = json.loads((fixture / 'signatures.json').read_text())
+    home = os.environ.get('JAVA_HOME')
+    java = str(Path(home) / 'bin/java') if home else shutil.which('java')
+    javac = str(Path(home) / 'bin/javac') if home else shutil.which('javac')
+    compiler = [java, '-jar', os.environ['ECJ_JAR'], '-21', '-proc:none', '-nowarn'] if os.environ.get('ECJ_JAR') else [javac, '--release', '21']
+    current = (JAVA / 'machines/reactor/CriticalStateGameTests.java').read_text()
+    old = subprocess.check_output(['git', 'show', '31fc7ed43d1dbb37bdd3ec38da427882cd63fd6d:src/main/java/com/gonzotech/machines/reactor/CriticalStateGameTests.java'], text=True)
+    # Constructor parameter names are taken from the pinned declaration too.
+    params = [part.strip().split()[-1] for part in api['constructor'].split('(', 1)[1].rstrip(')').split(',')]
+    kind, identifier, inventory, container, rows = params
+    chest = '''package net.minecraft.world.inventory;
+import net.minecraft.world.Container;import net.minecraft.world.entity.player.*;import net.minecraft.world.item.ItemStack;
+public class ChestMenu extends AbstractContainerMenu {
+private final Container box;private final int rows;
+CTOR {super(KIND,ID);box=BOX;rows=ROWS;if(box.getContainerSize()!=rows*9)throw new AssertionError("container/rows mismatch");for(int i=0;i<rows*9;i++)addSlot(new Slot(box,i,0,0));for(int i=0;i<36;i++)addSlot(new Slot(INV,i,0,0));}
+FACTORY {throw new UnsupportedOperationException("factory has its own storage; must not be used by this test");}
+public Container getContainer(){return box;}public int getRowCount(){return rows;}
+public boolean stillValid(Player p){return true;}public ItemStack quickMoveStack(Player p,int i){return ItemStack.EMPTY;}}
+'''.replace('FACTORY', api['one_row']).replace('CTOR', api['constructor'])
+    for token, replacement in [('KIND', kind), ('ID', identifier), ('BOX', container), ('ROWS', rows), ('INV', inventory)]:
+        chest = chest.replace(token, replacement)
+    common = sources()
+    common['net/minecraft/world/inventory/ChestMenu.java'] = chest
+    common['net/minecraft/world/inventory/MenuType.java'] = 'package net.minecraft.world.inventory;public class MenuType<T>{public static final MenuType<?> GENERIC_9x1=new MenuType<>();}'
+    common['net/minecraft/world/SimpleContainer.java'] = 'package net.minecraft.world;import net.minecraft.world.item.ItemStack;public class SimpleContainer extends probe.Base{public SimpleContainer(int n){items.clear();for(int i=0;i<n;i++)items.add(ItemStack.EMPTY);}}'
+    common['net/minecraft/world/level/GameType.java'] = 'package net.minecraft.world.level;public enum GameType{SURVIVAL}'
+    common['net/minecraft/gametest/framework/GameTestHelper.java'] = 'package net.minecraft.gametest.framework;import net.minecraft.world.entity.player.Player;import net.minecraft.world.level.GameType;public class GameTestHelper{public int assertions;public boolean done;public Player makeMockPlayer(GameType t){return new Player(new net.minecraft.server.level.ServerLevel());}public void assertTrue(boolean v,String message){assertions++;if(!v)throw new AssertionError(message);}public void succeed(){done=true;}}'
+    key = 'net/minecraft/world/entity/player/Player.java'
+    common[key] = common[key].replace('public Level level()', 'public Inventory getInventory(){return inventory;}public Level level()')
+    key = 'net/minecraft/world/item/Items.java'
+    common[key] = common[key].replace('TNT=new Item()', 'DIAMOND=new Item(),TNT=new Item()')
+    common['com/gonzotech/radiation/RadUnits.java'] = (JAVA / 'radiation/RadUnits.java').read_text()
+    prefix = '''package probe;
+import com.gonzotech.radiation.engine.*;import com.gonzotech.radiation.RadUnits;import com.gonzotech.machines.inventory.SlotCapacity;
+import net.minecraft.core.Direction;import net.minecraft.world.*;import net.minecraft.world.item.*;import net.minecraft.world.inventory.*;import net.minecraft.gametest.framework.GameTestHelper;import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
+public class NativeMenuProbe {
+'''
+    helper_signatures = ['private static final class SidedBox', 'private static ItemStack stack(', 'private static double mass(', 'private static void eq(']
+    helpers = '\n'.join(method(current, sig) for sig in helper_signatures)
+    for negative, source in [(False, current), (True, old)]:
+        test = method(source, 'public static void sidedInsertInsideMenuTransaction(')
+        probe = prefix + helpers + test + '\npublic static void main(String[]args){var h=new GameTestHelper();sidedInsertInsideMenuTransaction(h);if(!h.done||h.assertions!=10)throw new AssertionError("binding/layout and both directions must execute");System.out.println("native caller API fixture:10 assertions PASS (MC doubles)");}}'
+        with tempfile.TemporaryDirectory(prefix='gonzotech-menu-api-') as temp:
+            root = Path(temp)
+            for path, text in {**common, 'probe/NativeMenuProbe.java': probe}.items():
+                p = root / path
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(text)
+            compiled = subprocess.run(compiler + ['-d', str(root / 'classes')] + [str(p) for p in root.rglob('*.java')], text=True, capture_output=True)
+            diagnostic = compiled.stdout + compiled.stderr
+            if negative:
+                assert 'ChestMenu.oneRow(40, player.getInventory(), box)' in test
+                assert compiled.returncode and 'oneRow' in diagnostic and ('not applicable for the arguments' in diagnostic or 'cannot be applied' in diagnostic), diagnostic
+                print('API compile-negative:exact333 oneRow(int,Inventory,Container) rejected1/1')
+            else:
+                assert compiled.returncode == 0, diagnostic
+                result = subprocess.run([java, '-ea', '-cp', str(root / 'classes'), 'probe.NativeMenuProbe'], text=True, capture_output=True)
+                assert result.returncode == 0, result.stdout + result.stderr
+                print(result.stdout.strip())
+
+
 def main():
     import _ver
-    _ver.at_least("0.3.333", "CRIT-1/2 stale owners and side-aware dose merge")
+    _ver.at_least("0.3.334", "CRIT-1/2 and native caller ChestMenu API regression")
+    native_menu_api_regression()
     for record in json.loads((capacity.FIX / 'manifest.json').read_text())['files']:
         assert hashlib.sha256((capacity.FIX / record['file']).read_bytes()).hexdigest() == record['sha256']
     config = json.loads((ROOT / 'src/main/resources/gonzotech.mixins.json').read_text())['mixins']

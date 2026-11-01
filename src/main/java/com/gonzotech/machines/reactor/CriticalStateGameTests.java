@@ -18,6 +18,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -165,7 +166,9 @@ public final class CriticalStateGameTests {
         for (boolean reverse : new boolean[]{false, true}) {
             var box = new SidedBox(64, true);
             box.setItem(1, stack(4, reverse ? 6 : 2));
-            var menu = ChestMenu.oneRow(40, player.getInventory(), box);
+            var menu = new ChestMenu(MenuType.GENERIC_9x1, 40, player.getInventory(), box, 1);
+            h.assertTrue(menu.getContainer() == box, "outer transaction observes the actual destination");
+            h.assertTrue(menu.getRowCount() == 1, "one-row layout matches the nine-slot box");
             menu.setCarried(stack(4, reverse ? 2 : 6));
             try (var transaction = new MenuDoseTransaction(menu, ClickType.PICKUP)) {
                 menu.setCarried(new SidedInvWrapper(box, Direction.NORTH).insertItem(0, menu.getCarried(), false));

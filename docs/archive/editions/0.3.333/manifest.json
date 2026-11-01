@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "31fc7ed43d1dbb37bdd3ec38da427882cd63fd6d",
+      "snapshot": "docs/archive/editions/0.3.333/OUTDATED_BEFORE_API334_CURRENT-STATE.md",
+      "sha256": "fec2a1612cada6c268b00c908e181ba444603b6d429a10e346f089bd667d79ab",
+      "bytes": 16155,
+      "task": "Preserve333 edition before author-reported ChestMenu native GameTest compilation repair334"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "31fc7ed43d1dbb37bdd3ec38da427882cd63fd6d",
+      "snapshot": "docs/archive/editions/0.3.333/OUTDATED_BEFORE_API334_AUDIT.md",
+      "sha256": "1528c9fd5373d64dbca80873ab546aef29d07af618c4d189e55e73b5e4c82cdd",
+      "bytes": 153625,
+      "task": "Preserve333 edition before author-reported ChestMenu native GameTest compilation repair334"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "one_row": "public static ChestMenu oneRow(int p_39235_, Inventory p_39236_)",
+  "constructor": "public ChestMenu(MenuType<?> p_39229_, int p_39230_, Inventory p_39231_, Container p_39232_, int p_39233_)"
+}

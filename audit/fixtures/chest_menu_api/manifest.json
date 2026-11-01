@@ -1,0 +1,13 @@
+{
+  "repository": "KernelDotDLL/mcp-1.21.4",
+  "commit": "6e96771cc9652af23d86d558e30f9f39a7378225",
+  "source": "src/main/java/net/minecraft/world/inventory/ChestMenu.java",
+  "source_sha256": "3c6bd654f22bf67aed12ab60e40f6a0f179e990489086a5d113dc56086f475b8",
+  "files": [
+    {
+      "file": "signatures.json",
+      "sha256": "0c5d8c9beb2bd1897aba3125c07e3fc33eb279e620b2afde0b9296d0076ec76e"
+    }
+  ],
+  "scope": "Public API declarations only; MCP1.21.4 mirror, agrees with author333 compiler diagnostic; not complete Minecraft/NeoForge classpath"
+}
