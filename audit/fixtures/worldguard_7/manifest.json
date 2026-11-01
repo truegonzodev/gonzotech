@@ -1,0 +1,175 @@
+{
+  "files": [
+    {
+      "file": "ApplicableRegionSet.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/ApplicableRegionSet.java",
+      "sha256": "214bfbb42a64d2800f6db51800abe467d45d589fe4d2112d2c99dff9a9d1e013",
+      "bytes": 9493,
+      "executable": true
+    },
+    {
+      "file": "AbstractRegionSet.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/AbstractRegionSet.java",
+      "sha256": "82afedd3a6c862cd57031f236c815b02f659ea58b9573c5b27cb28dd9f339ac5",
+      "bytes": 1756,
+      "executable": true
+    },
+    {
+      "file": "RegionResultSet.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/RegionResultSet.java",
+      "sha256": "d52798c323b715bd3091b06d2a683b6a421bb3ba881e6b06d9bda9c87ed7ce6a",
+      "bytes": 6184,
+      "executable": true
+    },
+    {
+      "file": "FlagValueCalculator.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/FlagValueCalculator.java",
+      "sha256": "77cb856b5ee4837125693b60e3b835ebe0414d009f5e8e933cf0fb55d218c7eb",
+      "bytes": 21994,
+      "executable": true
+    },
+    {
+      "file": "NormativeOrders.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/util/NormativeOrders.java",
+      "sha256": "064c6d9fb4d78f146510d1c760d6edeb2b09c545d548b04b6cd48295a6a41674",
+      "bytes": 4997,
+      "executable": true
+    },
+    {
+      "file": "RegionAssociable.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/association/RegionAssociable.java",
+      "sha256": "7ee57abfb68d3652edc1636ae9aef679a76106e9bcf16e6e337b687ccc3ba831",
+      "bytes": 1343,
+      "executable": true
+    },
+    {
+      "file": "Association.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/domains/Association.java",
+      "sha256": "2d183fdc74e77c67fae636f6c3c402dc0e8dabd30e34301572898a7690253277",
+      "bytes": 971,
+      "executable": true
+    },
+    {
+      "file": "Flag.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/flags/Flag.java",
+      "sha256": "a0b1c8897c933278f8df77397f0caeaaf54d8f20f6b41e98aaf80bf589e1cc74",
+      "bytes": 6853,
+      "executable": true
+    },
+    {
+      "file": "StateFlag.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/flags/StateFlag.java",
+      "sha256": "f324a1adba58cf5b659b526b3cd637c05eecb04c65a6b30178f68f59abe3e89a",
+      "bytes": 5442,
+      "executable": true
+    },
+    {
+      "file": "BuildFlag.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/flags/BuildFlag.java",
+      "sha256": "741fbb2d8dee0081e6e1df36d5fa8d29a6b5d1a34f12c7c413e4edc245ece57d",
+      "bytes": 1426,
+      "executable": true
+    },
+    {
+      "file": "RegionGroup.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/flags/RegionGroup.java",
+      "sha256": "624b52694732ffc4f72fa7cb17639cab4c6ed695c0987b060659860690236342",
+      "bytes": 1948,
+      "executable": true
+    },
+    {
+      "file": "RegionGroupFlag.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/flags/RegionGroupFlag.java",
+      "sha256": "b7f2ba57a5f2848e74c2c3a7356fc9c8aff310930ba68cba7e9e4608c2c5c757",
+      "bytes": 3736,
+      "executable": true
+    },
+    {
+      "file": "MapFlag.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/flags/MapFlag.java",
+      "sha256": "bd80d5218a7ceda01304178446ccf3663b84a0d8959f4769440cb42ead67cff6",
+      "bytes": 4164,
+      "executable": true
+    },
+    {
+      "file": "Flags.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/flags/Flags.java",
+      "sha256": "aa4ac2e8d9a4d876168e9fbd0fd3f0b56f7af806ad9564a6168ec49f13bbd698",
+      "bytes": 18009,
+      "executable": false
+    },
+    {
+      "file": "RegionManager.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/managers/RegionManager.java",
+      "sha256": "ed4c6c44f3e72cb2ef3f3a4c1d350927fc12aa66bf466a6b90a655ab73616670",
+      "bytes": 13978,
+      "executable": false
+    },
+    {
+      "file": "RegionContainer.java.txt",
+      "repository": "EngineHub/WorldGuard",
+      "commit": "82fdc65d0eec1a55b3346824e4e586983e85d62c",
+      "source": "worldguard-core/src/main/java/com/sk89q/worldguard/protection/regions/RegionContainer.java",
+      "sha256": "d7d67ee615ba93bc3a9091c0a21fc9e3b623e179bc98fec982aa192b9aaa72cd",
+      "bytes": 7157,
+      "executable": false
+    },
+    {
+      "file": "BukkitAdapter.java.txt",
+      "repository": "EngineHub/WorldEdit",
+      "commit": "ff8ccac9d4934b036a18640f54388ef8b543a075",
+      "source": "worldedit-bukkit/src/main/java/com/sk89q/worldedit/bukkit/BukkitAdapter.java",
+      "sha256": "d15fdcaca4aaedb57b6f12cceb90201f586bc9e9e9a0a111fcb622146b4c3e5a",
+      "bytes": 18616,
+      "executable": false
+    },
+    {
+      "file": "CraftWorld.java.txt",
+      "repository": "PaperMC/Paper",
+      "commit": "73116ac9dd1d55c59db411a55de7e91e025a0c80",
+      "source": "paper-server/src/main/java/org/bukkit/craftbukkit/CraftWorld.java",
+      "sha256": "b84f255b22d6a4e5ee9c7b6f0dae4825290cb1b6b29d223f2fc50b417694fb64",
+      "bytes": 102842,
+      "executable": false
+    },
+    {
+      "file": "WorldGuardFlags-331.java.txt",
+      "repository": "truegonzodev/gonzotech",
+      "commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "source": "src/main/java/com/gonzotech/machines/network/WorldGuardFlags.java",
+      "bytes": 9772,
+      "sha256": "051ccba374d2e106c86a839bda886820586484d3f08eba7301719deffada231e",
+      "executable": false
+    }
+  ]
+}

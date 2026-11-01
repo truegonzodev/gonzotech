@@ -1976,30 +1976,20 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
     }
 
-    /**
-     * «Путь блока» (автор, 0.3.264): разрешение клетки меряется серверными
-     * стандартными событиями — ставим BlockEvent.EntityPlaceEvent /
-     * BlockEvent.BreakEvent от лица ближайшего онлайн-игрока, приваты и
-     * защитные плагины в праве отказать. С 0.3.306 перед событийным путём
-     * идёт прямой опрос флагов WorldGuard по самой клетке (WorldGuardFlags:
-     * block_place/block-place, block_break/block-break, piston_allowed/
-     * piston-protection) — владелец и ближайший игрок для этого не нужны.
-     * Ни WG, ни игрока рядом нет — проверять не от кого, разрешаем (чанки
-     * всё равно держат игроки, а machine self-move приватами не считается).
-     * Результат кэшируется на тик: поток клеток стоит, а не спамит события.
+    /** Target-cell protection only: live ownerless WG query if installed; otherwise
+     * preserve the pre-existing server-event path. Never gate on the Plotnick's own position.
+     * WG results bypass the event cache so a same-tick flag edit/reload cannot reuse ALLOW.
      */
     private boolean mayTouchPlace(ServerLevel server, BlockPos pos) {
+        Boolean guard = com.gonzotech.machines.network.WorldGuardFlags.decision(server, pos,
+            com.gonzotech.machines.network.WorldGuardFlags.Action.PLACE);
+        if (guard != null) return guard; // no actor fallback for installed/broken WG
+
         long tick = server.getGameTime();
         if (touchCached(pos, tick, true)) return lastTouchAllowed;
         lastTouchTick = tick;
         lastTouchPos = pos.immutable();
         lastTouchPlacing = true;
-        Boolean guard = com.gonzotech.machines.network.WorldGuardFlags.decision(server, pos,
-            com.gonzotech.machines.network.WorldGuardFlags.Action.PLACE);
-        if (guard != null) { // 0.3.306: WG ответил по клетке — событийный путь не нужен
-            lastTouchAllowed = guard;
-            return guard;
-        }
         ServerPlayer actor = actionActor(server);
         if (actor == null) {
             lastTouchAllowed = true; // спросить некого — не считаем это отказом
@@ -2016,17 +2006,15 @@ public final class PlotnickBlockEntity extends BlockEntity
     }
 
     private boolean mayTouchBreak(ServerLevel server, BlockPos pos) {
+        Boolean guard = com.gonzotech.machines.network.WorldGuardFlags.decision(server, pos,
+            com.gonzotech.machines.network.WorldGuardFlags.Action.BREAK);
+        if (guard != null) return guard; // no actor fallback for installed/broken WG
+
         long tick = server.getGameTime();
         if (touchCached(pos, tick, false)) return lastTouchAllowed;
         lastTouchTick = tick;
         lastTouchPos = pos.immutable();
         lastTouchPlacing = false;
-        Boolean guard = com.gonzotech.machines.network.WorldGuardFlags.decision(server, pos,
-            com.gonzotech.machines.network.WorldGuardFlags.Action.BREAK);
-        if (guard != null) { // 0.3.306: WG ответил по клетке — событийный путь не нужен
-            lastTouchAllowed = guard;
-            return guard;
-        }
         ServerPlayer actor = actionActor(server);
         if (actor == null) {
             lastTouchAllowed = true; // спросить некого — не считаем это отказом

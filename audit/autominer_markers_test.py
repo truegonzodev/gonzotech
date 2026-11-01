@@ -1254,12 +1254,19 @@ assert "collectSinks(level, startPipe, Integer.MAX_VALUE).sinks()" in ir306, \
     "0.3.306: клиентский предпросмотр нельзя резать бюджетом"
 
 wgb = (ROOT / "src/main/java/com/gonzotech/machines/network/WorldGuardFlags.java").read_text(encoding="utf-8")
-for needle306 in ('"block_place", "block-place"', '"block_break", "block-break"',
-                  '"piston_allowed", "piston-protection"', "getFlagState", "public static Boolean decision("):
-    assert needle306 in wgb, f"0.3.306: в WG-мосту нет {needle306}"
-assert "unavailable = true;" in wgb, "0.3.306: мост не fail-open"
+# 0.3.332 supersedes the invented 306 aliases/API and permanent fail-open pin.
+# Executable coverage (actual WG7 engine, isolated plugin loader + production BE paths)
+# and an exact331 assertion-negative live in worldguard_bridge_test.py.
+assert "public static Boolean decision(" in wgb
+assert "session.adapter == null) return null;" in wgb, "absent WG must preserve the original event path"
+assert "session.warn(level, failure);\n            return false;" in wgb, "installed/broken WG must deny"
+assert "unavailable = true" not in wgb and "getFlagState" not in wgb
 assert be.count("WorldGuardFlags.decision(server, pos,") == 2, \
-    "0.3.306: прямой опрос WG обязан быть на обоих путях клетки (place и break)"
+    "target-cell WG query required on BOTH production mutation gates"
+for gate332 in ("private boolean mayTouchPlace(", "private boolean mayTouchBreak("):
+    body332 = be[be.index(gate332):]
+    assert body332.index("WorldGuardFlags.decision(") < body332.index("touchCached("), \
+        "live WG check must precede the no-WG event cache"
 
 assert "if (!placeQueueBlockNow(server, pos, target))" in be, "0.3.306: постройка не проверяет результат setBlock"
 assert "if (!server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState()," in be, \

@@ -1,6 +1,6 @@
 # Интеграции и совместимость модпака
 
-Срез **0.3.311**, база `26e2a31`, 27.10.2026. Различаем: встроенный адаптер в коде, подтверждение автора о совместной работе, возможный конфликт и будущую интеграцию. Здесь не заявляется, что Arena запустила модпак/все версии модов.
+База реестра **0.3.311** / `26e2a31`; WorldGuard обновлён на **0.3.332**,01.11.2026. Различаем: встроенный адаптер в коде, подтверждение автора о совместной работе, возможный конфликт и будущую интеграцию. Здесь не заявляется, что Arena запустила модпак/все версии модов.
 
 ## Поддерживаемое окружение
 
@@ -13,7 +13,7 @@
 | Шейдеры, заменяющие небо | **Вероятны конфликты** | GT меняет skybox/небесные эффекты (`space/client/SpaceSkyEffects`, солнечные эффекты и mixins). Shader pack, который тоже подменяет небо, может перекрыть или сломать визуал. Это риск, а не доказанный конфликт со всеми шейдерами; универсальная совместимость не обещана |
 | Моды генерации мира/биомов | **Возможны конфликты** | GT сам вмешивается в генерацию и biome source. Особенно опасны несовместимые подмены/инъекции источника биомов и нарушение lifecycle генерации. Отсутствие общей библиотеки согласования не доказывает баг другого мода |
 | TerraBlender | **Сейчас не поддерживается** | В текущем Java-коде нет адаптера/проверки его наличия; в build.gradle и neoforge.mods.toml нет dependency. Установка TerraBlender в сборку сама по себе не переводит GT на его API. Будущая согласованная задача — [D-INT1](DEFFERED.md#d-int1) |
-| WorldGuard / региональные флаги | **Текущий reflective path не соответствует стандартному WG7; PERF-001/9 активна** | Нужны реальный bridge, адаптация WorldEdit World, cell-based ownerless query всех3разрешений и health check. Без серверного прогона защита не заявляется; fallback/отсутствие bridge требуют решения автора. Границы — [CAPABILITIES](CAPABILITIES.md) |
+| WorldGuard / региональные флаги | **Optional адаптер332 реализован; native-приёмка PERF-001/9 ожидается** | Bukkit/CraftWorld identity bridge, plugin classloaders, реальные WE/WG API, target-cell ownerless policy. Нет выбранного hybrid-стенда/гарантии всех платформ; [подробности ниже](#perf-001-wg332) |
 
 Для Simple Fog Control/Sodium/Lithium точные номера совместно проверенных версий и конфиг не предоставлены. Не подставлять придуманные номера и не превращать авторское подтверждение в собственный отчёт тестирования.
 
@@ -43,13 +43,38 @@ GT работает **standalone**, без TerraBlender. `DesolationPresetInject
 
 Использованы штатные NeoForge1.21.4 RegisterGuiLayersEvent.registerAbove(VanillaGuiLayers.CHAT, id, layer) и mod-client registration; сигнатура/порядок/pose pop подтверждены upstream RegisterGuiLayersEvent/GuiLayerManager. Это исправляет размещение приборов в собственном моде, не объявляет протестированными все сторонние chat/HUD/render mods. Зависимости не менялись; GPU visual acceptance отдельно от typecheck/registration harness.
 
-## PERF-001/9 — начальный API research
+<a id="perf-001-wg332"></a>
+## PERF-001/9 — optional WE/WG bridge,0.3.332
 
-Независимо сверены официальные EngineHub исходники: WG version/7.0.x RegionContainer.get(com.sk89q.worldedit.world.World), RegionManager.getApplicableRegions(BlockVector3), WE BukkitAdapter.adapt(org.bukkit.World). Стандартный тип/методы не совпадают с текущим reflective path. API-source сверка не доказывает наличие классов/адаптации ServerLevel в конкретном hybrid-сервере. Требуются имя/версия реального bridge, mapping измерений и точная политика custom/standard flags; piston-protection нельзя молча считать эквивалентом положительного piston_allowed. Источники — HISTORY; зависимости/optional loading пока не меняются.
+Bridge выбирают создатели серверов, не автор GT. Target автора: WG7.0.13 и WE7.4.2/подходящая7.4.x для Bukkit/Paper1.21.4; не проверка бинарной совместимости любого артефакта/всех hybrid. Нет отдельной обязательной dependency, WE/WG не упаковываются в мод.
 
-### Ответ автора по PERF-001/9
+### Реальная цепочка API и границы bridge
 
-Bridge выбирают создатели серверов. Целевой набор автора: WG7.0.13 и WE7.4.2/подходящая7.4.x под Bukkit/Paper1.21.4. Это target, не тест совместимости всех билдов; адаптеру нужен корректный world provider/optional loading/health-check, а не жёсткое предположение о названии hybrid. БезWG/вне регионов разрешено; установленныйWG с неисправнымbridge — отказ с диагностикой; внутри региона все3разрешения обязательны, unset/unknown не ALLOW, без actor fallback. WG7.0.13 tag доступен upstream (82fdc65d0eec1a55b3346824e4e586983e85d62c). Исправление9 ещё не применено/не прогнано на сервере.
+1. Lazy discovery реального running Bukkit server и `PluginManager.getPlugin("WorldGuard")`. Только Bukkit API/пустой сервер не считается WG. Нет WG — кэш отсутствия до server-start/stop, никаких новых block/region/world scans на повторной попытке. После установки ранее отсутствовавшего плагина нужен **полный restart**, hot-install не обещан.
+2. Известный installed WG требует enabled WorldGuard **и** WorldEdit. Классы берутся из classloader реальных plugin objects, не `Class.forName(WG)` из mod loader. Bukkit API должен быть виден mod loader либо server-thread context loader; полностью изолированный/неэкспортирующий Bukkit runtime не является поддержанным bridge. Старое «нет класса WG в mod loader — разрешить всё» удалено.
+3. Bukkit World выбирается только по публичному `getHandle() == ServerLevel`, без угадывания имён/dimension keys. Это проверенный public CraftWorld API Paper1.21.4, но не обещание такого контракта каждого hybrid. Не найден точный handle — deny, не fallback. Слабая карта world mapping очищается при LevelEvent.Unload; server sessions — при ServerStarted/Stopped. Смена plugin object переинициализирует bindings, disabled/missing plugin не разрешает actor fallback.
+4. `BukkitAdapter.adapt(org.bukkit.World)` → **WorldEdit World** → `WorldGuard.getInstance().getPlatform().getRegionContainer().get(world)` → **живой** `RegionManager.getApplicableRegions(BlockVector3)` для одной целевой клетки. Нет cache решений/RegionManager по строке измерения. Новый manager и правка флагов видны при следующей попытке, включая тот же тик.
+5. `ApplicableRegionSet.queryValue` и native `FlagValueCalculator.getEffectiveFlagOf` разрешают priority/ties/parents/groups. BUILD требует ненулевой RegionAssociable: proxy всегда **NON_MEMBER**, не владельца/nearby player. Explicit-value probe отсекает standard default `pistons=ALLOW`. Применение идёт до debit/world mutation/ore award; BE gates до прежнего event cache. Нет проверки корпуса Плотника или whole-sector preflight.
+
+Без WG — штатный путь NeoForge-событий (включая прежнюю actor/event семантику иных защит), без новых региональных сканов. Исправный WG вне любых регионов разрешает. Известный установленный, но неисправный WG/WE/classloader/API/world mapping/region data — deny + серверный ERROR один раз на failure kind за session, не молчаливый fail-open. Null RegionManager (включая disabled regions)/virtual set считается недоступными данными, не доказательством «вне регионов». API binding failure требует смены plugin object/restart; world/region-data failures могут восстановиться при следующей попытке.
+
+### Выбранная автором машинная политика
+
+Для **любой** правки нужны оба разрешения `block-place` и `block-break`: каждое — явный ALLOW либо, при UNSET, fallback от `build=ALLOW`. Любой явный DENY place/break запрещает всё; `build=DENY` — безусловный машинный veto. `pistons` обязан быть **явно ALLOW**; UNSET запрещает, хотя стандартный default WG равен ALLOW. Полное отсутствие этих флагов внутри региона не разрешает работу. Приоритеты, одинаковые priority, родители и region groups разрешаются движком WG; субъект всегда NON_MEMBER, без владельца/ближайшего игрока.
+
+`__global__` считается регионом всего мира, не «вне регионов». По отдельному решению автора явный глобальный `build=ALLOW` **может дать fallback**, в отличие от legacy-правила самого WG. Исключение учитывает NON_MEMBER-группу и native priority/ignored-parent/implicit-build barriers: не перепрыгивает локальный build-барьер и не отменяет DENY/прочие флаги. Остальные значения разрешает WG.
+
+Это **машинная политика**, не имитация обычного WG player build-check. Имена стандартные `build`, `block-place`, `block-break`, `pistons`; выдуманные `block_place`/`piston_allowed`/`piston-protection` не aliases. Область: work/drill строительство, bore-pipe установка/замена + добыча породы, боковой всос руды, демонтаж, TNT replacement. Проверяется именно изменяемая клетка, не соседняя или корпус машины.
+
+### Проверенные источники и предел доказательства
+
+Пины/полные upstream bytes/hash/лицензия: [fixture manifest](../audit/fixtures/worldguard_7/manifest.json), [описание harness](../audit/fixtures/worldguard_7/README.md). WG7.0.13 commit82fdc65d0eec1a55b3346824e4e586983e85d62c; WE7.4.2 ff8ccac9d4934b036a18640f54388ef8b543a075; Paper ver/1.21.4 73116ac9dd1d55c59db411a55de7e91e025a0c80. Это source/API evidence, не запуск этих plugin jars на NeoForge.
+
+`worldguard_bridge_test.py`:1326assertions,9assertionmutants, exact331compilednegative,100000absentAPIdecisions/0block/chunkreads. Исполняются production adapter/policy/session, неизменённые BE gates/мутационные методы и13полных исходников WG flag engine; классы WE/WG физически убраны из mod classpath и доступны только plugin loader. Bukkit/MC/bootstrap/spatial lookup/Guava boundary doubles; не full protected-region index/плагинный bootstrap/native hybrid/Gradle/GameTests/TPS. Проверены81комбинация флагов в обоих gates, live edits/replaced manager, priority/ties/parents/groups/global override и72сравнения global fallback с native ordinary-region oracle, отказ/возобновление6mutation paths, diagnostics/recovery/lifecycle/absence.
+
+### Ожидаемая native-приёмка
+
+Автор ответил: **реального hybrid-стенда пока нет**. PERF-001/9 остаётся открытым для игры; код332 не объявляется авторской игровой приёмкой. Когда создатель сервера выберет bridge: зафиксировать его точный build, Minecraft/NeoForge/WE/WG jars и startup log; проверить loaded plugin APIs и точное mapping overworld/custom dimension; отсутствие WG/чужой NeoForge protection; пустые регионы/глобальный регион; оба разрешения/BUILD veto/явный PISTONS, priority/parent/group; все6правок включая боковой всос руды, отсутствие дебита/выдачи при deny и штатный retry после allow; same-tick edit/reload/unload/restart/disabled/broken provider с диагностикой. Эти сценарии **не выполнены** агентом. 12/13/14 и D-PLOT1 этим шагом не реализуются.
 
 ## NeoForge item wrappers / Mixin admission —0.3.323
 

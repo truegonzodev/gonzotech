@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "snapshot": "docs/archive/editions/0.3.331/OUTDATED_BEFORE_WG332_CURRENT-STATE.md",
+      "sha256": "b07829e5f3688e972340be2bea1cfd2cbdbe9db514db0f82b29fe63acfeec617",
+      "bytes": 14291,
+      "task": "PERF-001/9 real optional WE/WG adapter; author target-only/both-permissions/build fallback/explicit pistons/global override; native host pending; expire accepted1 at332"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "snapshot": "docs/archive/editions/0.3.331/OUTDATED_BEFORE_WG332_AUTOMINER.md",
+      "sha256": "75cd4e719ed2c664c5406e0511798ac119e56aa3d1d38c402702eb5fd5ff3162",
+      "bytes": 19389,
+      "task": "PERF-001/9 real optional WE/WG adapter; author target-only/both-permissions/build fallback/explicit pistons/global override; native host pending; expire accepted1 at332"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "snapshot": "docs/archive/editions/0.3.331/OUTDATED_BEFORE_WG332_CAPABILITIES.md",
+      "sha256": "58ebd2ea95559644580fbff296f9c083f72be7cd538a929eafc76d92a7008df6",
+      "bytes": 45378,
+      "task": "PERF-001/9 real optional WE/WG adapter; author target-only/both-permissions/build fallback/explicit pistons/global override; native host pending; expire accepted1 at332"
+    },
+    {
+      "source": "docs/INTEGRATIONS.md",
+      "source_commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "snapshot": "docs/archive/editions/0.3.331/OUTDATED_BEFORE_WG332_INTEGRATIONS.md",
+      "sha256": "f85b14179363212cd4c63429febc42117cf07e28e7b0873774089182568f2bb4",
+      "bytes": 13107,
+      "task": "PERF-001/9 real optional WE/WG adapter; author target-only/both-permissions/build fallback/explicit pistons/global override; native host pending; expire accepted1 at332"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "snapshot": "docs/archive/editions/0.3.331/OUTDATED_BEFORE_WG332_AUDIT.md",
+      "sha256": "c85b1fdc9104e0b8bc4dd025f7fc537aad6ac2d36d1da134171454b2d2c74638",
+      "bytes": 124916,
+      "task": "PERF-001/9 real optional WE/WG adapter; author target-only/both-permissions/build fallback/explicit pistons/global override; native host pending; expire accepted1 at332"
+    },
+    {
+      "source": "docs/RULES.md",
+      "source_commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "snapshot": "docs/archive/editions/0.3.331/OUTDATED_BEFORE_WG332_RULES.md",
+      "sha256": "fe5bde51e43de5336cee644e33f629174a6591f9ea72c4ee2413ca9b13481d6b",
+      "bytes": 13257,
+      "task": "PERF-001/9 real optional WE/WG adapter; author target-only/both-permissions/build fallback/explicit pistons/global override; native host pending; expire accepted1 at332"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "13be401da9ed6f7c81f63b966f2cee68da08d28e",
+      "snapshot": "docs/archive/editions/0.3.331/OUTDATED_BEFORE_WG332_MACHINES.md",
+      "sha256": "4b61b24addc21b25d47a001eacf96875c015c53cfb5bfdbabdd4b7a3ee87d76c",
+      "bytes": 55928,
+      "task": "PERF-001/9 real optional WE/WG adapter; author target-only/both-permissions/build fallback/explicit pistons/global override; native host pending; expire accepted1 at332"
+    }
+  ]
+}
