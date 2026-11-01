@@ -1,0 +1,26 @@
+private void collectOreRow(ServerLevel server, BlockPos drillCell) {
+        int y = drillTargetY.getOrDefault(drillCell, drillCell.getY()) + 1;
+        if (y < server.getMinY() || y > server.getMaxY()) return;
+        // Всос работает только на уровне уложенной трубы: без трубы — пусто.
+        if (!server.getBlockState(new BlockPos(drillCell.getX(), y, drillCell.getZ()))
+            .is(ModMachines.BORE_PIPE.get())) {
+            return;
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                BlockPos pos = new BlockPos(drillCell.getX() + dx, y, drillCell.getZ() + dz);
+                BlockState state = server.getBlockState(pos);
+                if (state.isAir() || !MinerOres.isOre(state)) continue;
+                // 0.3.306 (автор 26.10, п.11): боковой сбор не сговорчивее
+                // центрального ствола — BlockEntity-руды и неубиваемая
+                // порода мимо (иначе содержимое чужих машин теряется).
+                if (isImmovable(state, server, pos)) continue;
+                Item item = state.getBlock().asItem();
+                if (item == null) continue;
+                if (!hasRoom(new ItemStack(item))) continue; // нет места — руда ждёт в породе (#5)
+                if (!mayTouchBreak(server, pos)) continue; // приват против слома — руда ждёт
+                if (!server.destroyBlock(pos, false, null)) continue; // 0.3.306: мир не отдал блок — выдача не раньше мира
+                insertMinedOrDrop(new ItemStack(item), pos);
+            }
+        }
+    }

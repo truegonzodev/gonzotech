@@ -21,6 +21,8 @@ import java.util.*;
 public final class RadiationViewNetwork {
     private static final int MAX_SLOTS = 1024;
     private static final Map<ServerPlayer, Long> ACK = new WeakHashMap<>();
+    private record PendingFence(long sequence, net.minecraft.world.inventory.AbstractContainerMenu menu) {}
+    private static final Map<ServerPlayer, PendingFence> PENDING = new WeakHashMap<>();
     private static final Map<ServerPlayer, View> LAST = new WeakHashMap<>();
     private RadiationViewNetwork() {}
     public record Entry(int slot, int fingerprint, double rate) {}
@@ -44,20 +46,32 @@ public final class RadiationViewNetwork {
         registrar.playToClient(View.TYPE, View.CODEC, (v, c) -> c.enqueueWork(() ->
                 com.gonzotech.radiation.client.RadiationPanel.accept(v)));
         registrar.playToServer(Fence.TYPE, Fence.CODEC, (v, c) -> c.enqueueWork(() -> {
-            if (c.player() instanceof ServerPlayer player
-                    && v.sequence > ACK.getOrDefault(player, 0L) && v.sequence > 0
-                    && v.cursorCount >= 0 && v.cursorCount <= 64) {
-                if (v.begin) {
-                    if (v.menu == player.containerMenu.containerId) CreativeRadiationBridge.begin(player);
-                } else {
-                    if (v.menu == player.inventoryMenu.containerId)
-                        CreativeRadiationBridge.finish(player, v.cursorCount, v.cursorFingerprint);
-                    // Closing a screen can change the menu before its end fence arrives.
-                    // The barrier still acknowledges processing; it never writes a slot.
-                    ACK.put(player, v.sequence);
-                }
-            }
+            if (c.player() instanceof ServerPlayer player) handleFence(player, v);
         }));
+    }
+    private static void handleFence(ServerPlayer player, Fence v) {
+        if (v.sequence <= ACK.getOrDefault(player, 0L) || v.sequence <= 0
+                || v.cursorCount < 0 || v.cursorCount > 64) return;
+        PendingFence pending = PENDING.get(player);
+        if (v.begin) {
+            if (v.menu != player.containerMenu.containerId) return;
+            if (pending != null && v.sequence <= pending.sequence()) return;
+            if (pending == null || pending.menu() != player.containerMenu) {
+                // Replacement menu: reconcile the old server snapshot before starting another.
+                // Same-menu repeated/newer begins retain ONE original provenance snapshot.
+                if (pending != null) CreativeRadiationBridge.finish(player);
+                CreativeRadiationBridge.begin(player);
+            }
+            PENDING.put(player, new PendingFence(v.sequence, player.containerMenu));
+            return;
+        }
+        // A stale/mismatched end must not finish a newer gesture or advance ACK past it.
+        // The accepted end is NOT rate-limited; the menu may already have closed.
+        if (pending != null && (v.sequence != pending.sequence() || v.menu != pending.menu().containerId)) return;
+        if (v.menu == player.inventoryMenu.containerId)
+            CreativeRadiationBridge.finish(player, v.cursorCount, v.cursorFingerprint);
+        PENDING.remove(player);
+        ACK.put(player, v.sequence);
     }
     private static void writeEntry(RegistryFriendlyByteBuf b, Entry e) {
         b.writeVarInt(e.slot); b.writeInt(e.fingerprint); b.writeDouble(e.rate);
@@ -107,10 +121,10 @@ public final class RadiationViewNetwork {
     }
     @SubscribeEvent public static void logout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            CreativeRadiationBridge.forget(player); ACK.remove(player); LAST.remove(player);
+            CreativeRadiationBridge.forget(player); ACK.remove(player); LAST.remove(player); PENDING.remove(player);
         }
     }
     @SubscribeEvent public static void stop(ServerStoppedEvent event) {
-        ACK.clear(); LAST.clear(); FINGERPRINTS.clear(); ExternalRadiation.clear(); CreativeRadiationBridge.clear();
+        ACK.clear(); LAST.clear(); PENDING.clear(); FINGERPRINTS.clear(); ExternalRadiation.clear(); CreativeRadiationBridge.clear();
     }
 }

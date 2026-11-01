@@ -1,6 +1,6 @@
 # Контракты взаимодействия и интеграции
 
-Актуализировано на runtime **0.3.328**,01.11.2026. Документальная база миграции:0.3.311/42730c3; действующие I/O-контракты ниже.
+Актуализировано на runtime **0.3.329**,01.11.2026. Документальная база миграции:0.3.311/42730c3; действующие I/O-контракты ниже.
 
 
 Здесь capabilities — технические границы I/O, загрузки, сети и сторонних интеграций. Это не витрина возможностей мода и не общий backlog.
@@ -79,7 +79,7 @@ ReceiveGtu обоих старых аккумуляторов имеет per-own
 
 ### Ответы по границам PERF-001/5/6/9
 
-5: последнее решение — никакой загрузки чанков предметными трубами/фильтром/отсеивателем, даже непосредственных endpoints. В325добавлены loaded-checks root/source/BFS/path/endpoint; vanilla double-chest lookup допускается только при загруженных обеих половинах. 6: operation-scoped10сек тихогоКД после завершения + дедуп/одинjob/cache, Stop/end приоритетны; budgets отдельно. 9: optional-strict policy автора описана в INTEGRATIONS, bridge выбирают создатели серверов. 6/9ещё не реализованы;5принят автором,1проверяется отдельно.
+5: последнее решение — никакой загрузки чанков предметными трубами/фильтром/отсеивателем, даже непосредственных endpoints. В325добавлены loaded-checks root/source/BFS/path/endpoint; vanilla double-chest lookup допускается только при загруженных обеих половинах. 6: operation-scoped10сек тихогоКД после завершения + дедуп/одинjob/cache, Stop/end приоритетны; budgets отдельно. 9: optional-strict policy автора описана в INTEGRATIONS, bridge выбирают создатели серверов. 6частично реализован329;9ещё не реализован;5принят автором,1принят отдельно на328.
 
 ## PERF-001/4 — scope небольшого исправления322
 
@@ -115,7 +115,7 @@ Setter не владеет прежним содержимым: при наме�
 
 Диагностика `pipeRoutingDiagnostics` defaultfalse: item-стадии раз в20тиков, source/classes/physical owners/cache budget/BFS/live sinks/cycle/result; off-path без дополнительных диагностических world reads. Нативный холодный source отказ требует серверного лога, не объясняется снятым source freeze. Полный checklist/config ограничения — [CURRENT](CURRENT-STATE.md).
 
-Wholeproduction regression: parallel4321assertions/9assertion-mutants/exact326negative; double7498/7mutants/exact325negative, loaded399/23mutants. Redundant BOTH-owner membership проверки при unsafe мутациях отключаются вместе; старые blanket-shield мутации заменены согласно новому контракту. Модельные cold/warm controls проходят, но это **не native MC**. На327 suite был88PASS; актуальный последний полный328 —89PASS,1принят автором328,5принят ранее. [Происхождение](HISTORY.md#perf-001-transfer-dag), [предыдущий контракт](archive/editions/0.3.326/README.md#before-transfer-dag).
+Wholeproduction regression: parallel4321assertions/9assertion-mutants/exact326negative; double7498/7mutants/exact325negative, loaded399/23mutants. Redundant BOTH-owner membership проверки при unsafe мутациях отключаются вместе; старые blanket-shield мутации заменены согласно новому контракту. Модельные cold/warm controls проходят, но это **не native MC**. Базовый suite327 был88PASS; актуальный полный329 —91PASS,1принят автором328,5принят ранее. [Происхождение](HISTORY.md#perf-001-transfer-dag), [предыдущий контракт](archive/editions/0.3.326/README.md#before-transfer-dag).
 
 ## Предметная loaded-only граница —PERF-001/5,0.3.325
 
@@ -145,4 +145,16 @@ Wholeproduction340assertions/5mutants, exact327negative (Git/hash/bytes), two-no
 
 01.11.2026 автор: «окей теперь всё работает штатно», после обсуждения ограничений — «да окей закрываем». **Пункт1 закрыт** по этой игре; не перечислять неописанные автором отдельные restart/compatibility тесты как выполненные. Лимиты,54слота,перенос/sidecars/loaded-only/physical identity/DAG прежние. Отдельная защита отциклов ограничена текущимтиком и inventoryowners, не itemвидом; A→B→C допускается в одномтике, но зависит от порядка вызовов. Межтиковое качание этим не исключается, backpressure/грани сохраняются.
 
-Большие сети/остаток3 перенесены автором в отложенную [D-PIPE2 — «Великую оптимизацию труб II»](DEFFERED.md#d-pipe2); это не объявление resumable/fairness реализованными.13/14 пока остаются вCURRENT, перенос уточняется. Следующий предложенный ограниченный шаг10a —FIFOочереди Плотника без сдвигаArrayList приpopfront, с прежними retry/head/tail/NBT/workbudget; авторский выбор ещё запрошен, runtime не изменён.6/9/12 также открыты. [Приёмка/хроника](HISTORY.md#perf-001-item-accepted), [предыдущая редакция](archive/editions/0.3.328/README.md).
+Большие сети/остаток3 перенесены автором в отложенную [D-PIPE2 — «Великую оптимизацию труб II»](DEFFERED.md#d-pipe2); это не объявление resumable/fairness реализованными.13/14 пока остаются вCURRENT, перенос уточняется. Автор выбрал6и10: FIFO/rowcache и первыйgate/Fenceпатч реализованы329,10ждёт игры;6ещё требует порционныхсканов.9/12такжеоткрыты. [Приёмка/хроника](HISTORY.md#perf-001-item-accepted), [предыдущая редакция](archive/editions/0.3.328/README.md).
+
+## PERF-001/6/10 — admission, FIFO и кэш вычислений,0.3.329
+
+Автор выбрал6/10 и уточнил: завершениеjob —расчёт/планирование, не исполнениеочереди; Stopтолькобурение,packUpотменяетрасчёт/очереди;начатаянеудача/отменатожеполучаетКД.329делаетодинpendingзапрос/BE ссохранениемпервогозаявителя, тихимcoalesce/conflictreject и исполнениемвближайшемBEtick. Передисполнениемкартывалидируютсяснова; отключённый/сменившиймирrequesterнеисполняется. Stopнемедленный(включаяснятиеpendingStartDrill),packUpсразугаситавтоматикудажеприсвоёмКД; повторныйсканразборкивКДне запускается. Deadline200gameTicksпо типу/режиму операции, TNTнеблокируетразведку, успешный/неудачныйначатыйрасчётставитКДвfinally;ключNBT`CalculationCooldowns`необязательный/старыеотсутствующие=нулевые. Pendingнеимеетресурсныхпобочек/неpersistится.
+
+Pureкэш`scanSurface`: band+токены9чанковданногоLevel, сохраняетпорядокHashSet/List, исходныеchunks/вертикальнаяполосапрежние. Токеныинтересовнечитают/негрузятмир,invalidationsetBlockState/load/unload/levelunload/serverstop/datapack;одинаковыеправкивтомжетикене сливаются. Материалы/карты/приёмник/праваживые, никакогоreplayрасхода/выдачи/marker/импульсаизкэша.
+
+FIFOочередиDequeсremoveFirst;retrybuild/dismantleвtail,TNTвhead/пауза, NBTпозиции/порядок/BuildQueueформатпрежние. Рудныйrowcacheне«однаждыпросмотрено»:толькослойбезpendingруды,стабильныеworldtokensвсехчанков5×5,Yсовпадает. Full/protection/immovable/worldfailоставляютretry;собственныеизмененияпоследобычитребуютдополнительногопроверочногопрохода. Новыеedit/load/unload/tagsне теряются. Энергия/4–8build/3packTNT/40digцикл/лимиты/склад/дропправилапрежние.
+
+**6не завершён:** расчётвнутриjobещёсинхронный, измеренныйslice/workbudgetиограничениевсегоpacketпотокаостаютсявтекущей6. FullуникальныеFenceциклытакжемогутсоздаватьSession,см.RAD_ITEMS.10реализован,ноне закрытбезигры. МодельPlotnick388/12mutants +Fence73/7mutants/exact328negatives,91PASSобщийsuite; не nativeAPI/MC/GameTests/TPS. PlotnickBlock/election/прогрев5×5/PNG/баланс/радиационнаямодель/legacyнеизменны. [Хроника](HISTORY.md#perf-001-work329), [предыдущиетексты](archive/editions/0.3.328/README.md).
+
+**Дополнительные ответы автора перед доставкой329:** разные режимы одной кнопки —разные типы задач/КД (оборудование↔руды дляMARK/NETWORK; LINKсамостоятелен). При смене карты доbegin использовать **текущую** карту, а не отменять запрос. Pendingперепривязываетсякновомутипу доbegin и повторнопроходитегоКД; обходаdeadlineпереключениемкарты нет. Невалиднаяактуальнаякартаотсекаетсядоbegin безКД, начатая ошибкапо-прежнемуставитКД.

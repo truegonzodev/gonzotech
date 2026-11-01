@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/1/3 / 0.3.328: 89 PASS / 0 SKIP / 0 FAIL.** BFS340assertions/5mutants/exact327negative; модель, не native игра.1 ждёт автора,3 частично исправлен/ещё открыт;5 закрыт326/удалить330.
+**Последний полный локальный прогон, PERF-001/6/10 / 0.3.329: 91 PASS / 0 SKIP / 0 FAIL.** Plotnick388/12mutants, Fence73/7mutants, exact328negatives; MCboundarymodels, не игра.6частично реализован,10ждётавтора.
 
 ## Команды и доказательства
 
@@ -29,6 +29,8 @@
 | [alcohol_test.py](../audit/alcohol_test.py) | Compile/run the actual pure-Java alcohol-dose core, without Gradle/Minecraft. |
 | [audit_followup_test.py](../audit/audit_followup_test.py) | 27 Sep follow-up: execute production method bodies with API stubs (NOT Minecraft). |
 | [autominer_markers_test.py](../audit/autominer_markers_test.py) | Pins 0.3.256-0.3.263 — метки автошахтера, Плотник, сеть, сейсмика и буры. |
+| [plotnick_work_test.py](../audit/plotnick_work_test.py) | Production selected BE methods + whole gate/revision;388assertions/12mutants/exact328negative. MC/Forge boundaries, not full BE/native/TPS. |
+| [radiation_fence_test.py](../audit/radiation_fence_test.py) | Actual handler/creative bridge/core;73assertions/7mutants/exact328handler negative. Packet/menu/copy-hook doubles, not native bootstrap. |
 | [blast_furnace_test.py](../audit/blast_furnace_test.py) | Blast furnace (0.3.65): pure 3x3x3 layout self-test via ECJ + wiring pins. |
 | [cleanroom_test.py](../audit/cleanroom_test.py) | Compile/run the actual pure-Java clean-room core, without Gradle/Minecraft. |
 | [composite_bundle_test.py](../audit/composite_bundle_test.py) | Вспомогательный скрипт / source check |
@@ -37,7 +39,7 @@
 | [desolation_biome_injection_test.py](../audit/desolation_biome_injection_test.py) | Пин: desolation в оверворлде — мутация пресета ПОСЛЕ сборки реестров. |
 | [dispensing_tap_color_test.py](../audit/dispensing_tap_color_test.py) | Ensure the dispensing tap uses the same liquid text colors as the source machines.""" |
 | [distiller_raw_fluid_test.py](../audit/distiller_raw_fluid_test.py) | Static regression pins for exclusive mash/wort buffering in the distiller.""" |
-| [double_chest_routing_test.py](../audit/double_chest_routing_test.py) | Whole production routing with fresh54 compoundviews, current physical owners, replacement/selfroute/shield; exact325negative/9assertionmutants. Not nativeMC. |
+| [double_chest_routing_test.py](../audit/double_chest_routing_test.py) | Whole production routing with fresh54 compoundviews, current physical owners, replacement/selfroute/shield; exact325negative/7assertionmutants. Not nativeMC. |
 | [item_loaded_chunks_test.py](../audit/item_loaded_chunks_test.py) | Whole production ItemRouting + ItemFilterRouting/SlotCapacity; observed loaded boundaries; exact324routers/comparator negatives and23assertion mutations. Not nativeMC. |
 | [docs_structure_test.py](../audit/docs_structure_test.py) | Архив, whitelist, маршруты, task ID/retention и проекции текущего кода. |
 | [doc_links.py](../audit/doc_links.py) | Проверка ссылок на документы Gonzo Tech. |
@@ -478,3 +480,20 @@ git diff --check
 ### Документальный шаг328 — приёмка1 и переносостатка3
 
 Автор подтвердил штатную работу328 и явно разрешил закрытие1; это игровая приёмка автора, не новыйnativeпрогон агента. Остаток3перенесён вD-PIPE2на позже,13/14покаактивны. Следующий10a только предложен/обследованread-only, код не менялся. Прежний89PASS остаётся последнимполнымcodeпрогоном, заново не выполнялся радиdocs-only. Проверкиэтогошага: docs_structure_test (30snapshot Git/hash/bytes,75legacy), doc_links (0broken), gitdiffcheck. Полная хроника/решения — [HISTORY](HISTORY.md#perf-001-item-accepted).
+
+## 0.3.329 — первый ограниченный патч6/10
+
+`plotnick_work_test.py`:388assertions,12assertionmutants; selectedproductionBE methods (admission/dispatch/cancel/surface/row/3queues/NBTpositionhelpers), wholePlotnickTaskGate/WorkRevision. MC/Forge/worldlookup/inventory/protection/effects/старыеoperationcallbacks—границы; не fullBE/nativeintegration.1000дубликатовдоBEtick→0вызововнаpacketпути→1расчёт, cooldown200/exactboundary/failure/persistence/cancel, FIFO1/4/32/256/retryheadtail/worldfail/reservereturn/NBT, row26→1blockreadsнастабильныйпустойслой, chunkboundary/worldedit/full/protection/tags/newY, worldisolation/lifecycle/interesteviction. Это счётчтений, **не MSPT/TPS**.
+
+`radiation_fence_test.py`:73assertions/7mutants; actualhandler+wholeunchangedcreativebridge+actualcore, menu/player/codec/copyinjectionдубли. Нетповторногоsnapshotдля1/2/100/1000beginдоACK,stalebegin/end,close/replacement(noninventorytoo),ACK,server-knownprovenance/count,2players. Тристарыхконтроля328(handleButton/collectOreRow/Fencehandler) Git/hash/bytes; компиляцияуспешна, assertionfailureобязателен. Compilerfailureне считаетсяkill. Новыеfixturesowncode6ddd502, прежниезамороженныеfixturesнеправились. AutominerstaticпиныadaptedкDeque/pending-safechecks, не отключены.
+
+Полныйsuite91PASS/0SKIP/0FAIL включаяtypecheck; новыеизменённыеметодыBE иFenceисполняютсявextractionharness, анеполнойnativeсборке. НовыеGate/Revisionиexistingcoreкомпилируютсяцеликомвharness.6ещёбезsliceworkbudget/общегоpacketcap,10ждётигры; нехваткареальногобюджетаоткрыта,не скрытаподadmission. БезnativeGradle/GameTests/клиентскогопрогона/TPSизмерений. Документацияпроверяетсяdocs_structure/doc_links/diffcheckотдельно.
+
+```sh
+python3 audit/plotnick_work_test.py --mutation-check
+python3 audit/radiation_fence_test.py --mutation-check
+python3 audit/run_all.py
+python3 audit/docs_structure_test.py
+python3 audit/doc_links.py
+git diff --check
+```

@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "source": "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java",
+      "signature": "public boolean handleButton(int id, ServerPlayer requester)",
+      "file": "handleButton.java.txt",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "sha256": "d7313d4ded684fa0bb8655602b3b3ce05943f9730b9e5054326c3704e5d79812",
+      "bytes": 1086
+    },
+    {
+      "source": "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java",
+      "signature": "private void collectOreRow(",
+      "file": "collectOreRow.java.txt",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "sha256": "465a73318109487ffe5d15a8ddc31c9a34ea76fba276a7b59489eb5f29092ff3",
+      "bytes": 1813
+    },
+    {
+      "source": "src/main/java/com/gonzotech/radiation/engine/RadiationViewNetwork.java",
+      "signature": null,
+      "file": "RadiationViewNetwork.java.txt",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "sha256": "cd6914b8e0fb80f7d2d8a9b483af732ac5faf47bf0871a720df575299c88e9e3",
+      "bytes": 7421
+    }
+  ]
+}

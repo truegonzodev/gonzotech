@@ -225,7 +225,7 @@ assert "new BlockParticleOption(ParticleTypes.BLOCK, target)" in be, \
 assert "SONIC_BOOM" not in be, "SONIC_BOOM убран по требованию автора"
 assert be.count("ModSounds.GEO_IMPACT") == 1, "звук импульса должен звучать один раз на весь сектор"
 assert "consumeActive(Items.TNT, 1)" in be, "Плотник не дозирует динамит в разряженные источники"
-assert "buildQueue.add(entry); // нечем — переезжает в хвост" in be, \
+assert "buildQueue.addLast(entry); // нечем — переезжает в хвост" in be, \
     "нехватка блоков не перекладывает клетку в хвост очереди (0.3.261)"
 assert '"BuildQueue"' in be and '"DrillPoints"' in be and '"PlaceCooldown"' in be, \
     "очередь постройки/точки бурения не персистентны"
@@ -411,11 +411,11 @@ for anchor in ("new BlockEvent.EntityPlaceEvent(", "new BlockEvent.BreakEvent(",
                "private boolean mayTouchPlace", "private boolean mayTouchBreak",
                "private ServerPlayer actionActor", "touchCached("):
     assert anchor in be, f"гейт привата не на месте: {anchor}"
-assert "if (!mayTouchBreak(server, pos)) continue;" in be, "сбор руд не под гейтом слома"
+assert "if (!mayTouchBreak(server, pos)) { pending = true; continue; }" in be, "сбор руд не под гейтом слома"
 assert "if (!mayTouchBreak(server, pos)) {" in be, "демонтаж не под гейтом слома"
-assert "if (!mayTouchPlace(server, pos)) {\n                buildQueue.add(entry);" in be, \
+assert "if (!mayTouchPlace(server, pos)) {\n                buildQueue.addLast(entry);" in be, \
     "стройка не откладывает клетку при запрете"
-assert "if (!mayTouchPlace(server, pos)) {\n                tntQueue.add(0, pos);" in be, \
+assert "if (!mayTouchPlace(server, pos)) {\n                tntQueue.addFirst(pos);" in be, \
     "ТНТ не в депо — пауза очереди при запрете"
 assert "if (!mayTouchPlace(server, target)) return;" in be, "скважина не под гейтом постановки"
 # Компиляция автора 22.10 (0.3.264): пять несуществующих/потерянных символов — 0.3.265.
@@ -956,7 +956,7 @@ assert "if (be.menuViewers > 0) be.tickSectorPulse(server);" in plot290, "#17: �
 assert plot290.count("SECTOR_PULSE") == 3 and "if (changed) networkStatsDirty = true;" in plot290, \
     "#17: таблица штампов или её потребитель пропали"
 # #18: гейт законности обоих write-путей демонтажа (сделано в 0.3.264 — подтверждено пином)
-assert "if (!mayTouchBreak(server, pos)) continue; // приват против слома" in plot290, \
+assert "if (!mayTouchBreak(server, pos)) { pending = true; continue; } // приват против слома" in plot290, \
     "#18: боковой сбор руды остался без гейта"
 assert "if (!mayTouchBreak(server, pos)) {" in plot290, "#18: демонтаж без гейта"
 # #1: загрузчик v1 — беззнаковый байт «Slot», коллизия в ближайшее пустое, свёртка v1-сейва
@@ -1263,8 +1263,8 @@ assert be.count("WorldGuardFlags.decision(server, pos,") == 2, \
 assert "if (!placeQueueBlockNow(server, pos, target))" in be, "0.3.306: постройка не проверяет результат setBlock"
 assert "if (!server.setBlock(target, ModMachines.BORE_PIPE.get().defaultBlockState()," in be, \
     "0.3.306: бур-труба списывается до подтверждения мира"
-assert "if (!server.destroyBlock(pos, false, null)) continue;" in be, "0.3.306: выдача руды раньше слома мира"
-assert "if (isImmovable(state, server, pos)) continue;" in be, "0.3.306: боковой сбор не фильтрует immovable"
+assert "if (!server.destroyBlock(pos, false, null)) { pending = true; continue; }" in be, "0.3.306: выдача руды раньше слома мира"
+assert "if (isImmovable(state, server, pos)) { pending = true; continue; }" in be, "0.3.306: боковой сбор не фильтрует immovable"
 pack306 = be[be.index("private void packUp"):] if "private void packUp" in be else be
 assert "if (!tntQueue.isEmpty() || tntRequester != null) {" in be, "0.3.306: «Свернуться» не отменяет ТНТ-очередь"
 

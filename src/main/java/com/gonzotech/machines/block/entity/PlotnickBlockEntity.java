@@ -13,6 +13,8 @@ import com.gonzotech.machines.menu.PlotnickMenu;
 import com.gonzotech.machines.miner.MarkerService;
 import com.gonzotech.machines.miner.MinerMarker;
 import com.gonzotech.machines.miner.MinerOres;
+import com.gonzotech.machines.miner.PlotnickTaskGate;
+import com.gonzotech.machines.miner.PlotnickWorkRevision;
 import com.gonzotech.machines.miner.NetworkPlanner;
 import com.gonzotech.machines.registry.ModBlockEntities;
 import com.gonzotech.machines.registry.ModMachines;
@@ -52,6 +54,8 @@ import net.neoforged.neoforge.common.util.BlockSnapshot;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -165,7 +169,7 @@ public final class PlotnickBlockEntity extends BlockEntity
     private final List<BlockPos> drillPoints = new ArrayList<>();
 
     /** Очередь постройки: позиции к закладке, порядок — от сети наружу. */
-    private final List<NetworkPlanner.Entry> buildQueue = new ArrayList<>();
+    private final Deque<NetworkPlanner.Entry> buildQueue = new ArrayDeque<>();
 
     /** Пауза до следующей клетки (случайные 4–8 тиков между блоками). */
     private int placeCooldown;
@@ -174,9 +178,9 @@ public final class PlotnickBlockEntity extends BlockEntity
     private ServerPlayer buildRequester;
 
     /** Очередь демонтажа при «свертывании»: от дальних клеток к Плотнику. */
-    private final List<BlockPos> dismantleQueue = new ArrayList<>();
+    private final Deque<BlockPos> dismantleQueue = new ArrayDeque<>();
     /** Очередь закладки ТНТ в скваженные трубы: сверху вниз по скважинам. */
-    private final List<BlockPos> tntQueue = new ArrayList<>();
+    private final Deque<BlockPos> tntQueue = new ArrayDeque<>();
     private ServerPlayer packRequester;
     private ServerPlayer tntRequester;
     private int dismantleReturned;
@@ -217,6 +221,16 @@ public final class PlotnickBlockEntity extends BlockEntity
     private int netRoadsFull;
     private int netDrillsFound;
     private int netRoadsLink;
+
+    private static final int TASK_ORE_MARK = 8;
+    private static final int TASK_ORE_NETWORK = 9;
+    private final PlotnickTaskGate calculations = new PlotnickTaskGate();
+    private ServerPlayer calculationRequester;
+    private SectorScan cachedSurface;
+    private int cachedBand;
+    private List<Object> cachedSurfaceTokens = List.of();
+    private record OreRowStamp(int y, List<Object> tokens) {}
+    private final Map<BlockPos, OreRowStamp> completedOreRows = new HashMap<>();
 
     private long intakeBudgetTick = Long.MIN_VALUE;
     private int acceptedGtuThisTick;
@@ -275,6 +289,7 @@ public final class PlotnickBlockEntity extends BlockEntity
             if (server.getGameTime() % 40 == 0) be.sectorElectionDue = true;
             return;
         }
+        be.processCalculation(server);
         be.processBuildQueue(server);
         be.processDismantleQueue(server);
         be.processTntQueue(server);
@@ -307,6 +322,7 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /** 0.3.290 #17: штамп от setBlockState-миксина; горячий путь — одна запись в таблице. */
     public static void pulseBlockChange(ServerLevel level, BlockPos pos) {
+        PlotnickWorkRevision.changed(level, pos.getX() >> 4, pos.getZ() >> 4);
         SECTOR_PULSE.computeIfPresent(sectorPulseKey(pos.getX() >> 4, pos.getZ() >> 4),
             (key, stamp) -> level.getGameTime());
     }
@@ -387,6 +403,9 @@ public final class PlotnickBlockEntity extends BlockEntity
     private SectorScan scanSurface(ServerLevel server, int halfBand) {
         int cx = worldPosition.getX() >> 4;
         int cz = worldPosition.getZ() >> 4;
+        List<Object> before = workTokens(server, cx - 1, cx + 1, cz - 1, cz + 1);
+        if (cachedSurface != null && cachedBand == halfBand && cachedSurfaceTokens.equals(before))
+            return cachedSurface;
         net.minecraft.world.level.block.Block work = ModMachines.WORK_BLOCK.get();
         net.minecraft.world.level.block.Block drill = ModMachines.MINER_DRILL.get();
         Set<BlockPos> workCells = new HashSet<>();
@@ -413,7 +432,13 @@ public final class PlotnickBlockEntity extends BlockEntity
                 }
             }
         }
-        return new SectorScan(workCells, drills);
+        SectorScan result = new SectorScan(java.util.Collections.unmodifiableSet(workCells), List.copyOf(drills));
+        if (before.equals(workTokens(server, cx - 1, cx + 1, cz - 1, cz + 1))) {
+            cachedSurface = result;
+            cachedBand = halfBand;
+            cachedSurfaceTokens = before;
+        }
+        return result;
     }
 
     public GtBuffer gtuBuffer() {
@@ -453,6 +478,105 @@ public final class PlotnickBlockEntity extends BlockEntity
             report(requester, "message.gonzotech.plotnick.hibernating");
             return true;
         }
+        long now = server.getGameTime();
+        if (id == BTN_DRILL_STOP) {
+            if (calculations.pending() == BTN_DRILL) {
+                calculations.cancel(now);
+                calculationRequester = null;
+            }
+            return stopDrilling(requester); // never delayed by another calculation/cooldown
+        }
+        if (id < BTN_DRILL || id > BTN_NETWORK_LINK) return false;
+        if (id == BTN_PACK_UP && calculations.pending() != BTN_PACK_UP) {
+            calculations.cancel(now);
+            calculationRequester = null;
+            cancelForPackUp(server); // cancellation is immediate, even during this operation's cooldown
+        }
+        if (calculations.pending() >= 0) return true; // duplicate coalesced / conflict rejected
+        if (!validCalculation(id, server, requester)) return true;
+        if (calculations.request(calculationOperation(id), now)) calculationRequester = requester;
+        return true; // cooldown/conflict rejection is intentionally quiet
+    }
+
+    private int calculationOperation(int button) {
+        if (MemoryCardItem.isFilled(items.get(SLOT_CARD_A))) {
+            if (button == BTN_MARK) return TASK_ORE_MARK;
+            if (button == BTN_NETWORK) return TASK_ORE_NETWORK;
+        }
+        return button;
+    }
+
+    private static int calculationButton(int operation) {
+        if (operation == TASK_ORE_MARK) return BTN_MARK;
+        if (operation == TASK_ORE_NETWORK) return BTN_NETWORK;
+        return operation;
+    }
+
+    private boolean validCalculation(int id, ServerLevel server, ServerPlayer requester) {
+        ItemStack card = items.get(SLOT_CARD_A);
+        if (id == BTN_SEISMO && (!card.is(ModMachines.MEMORY_CARD.get()) || MemoryCardItem.isFilled(card))) {
+            report(requester, card.is(ModMachines.MEMORY_CARD.get())
+                ? "message.gonzotech.plotnick.impulse.filled" : "message.gonzotech.plotnick.impulse.nocard");
+            return false;
+        }
+        if ((id == BTN_MARK || id == BTN_NETWORK) && MemoryCardItem.isFilled(card)
+                && (!isOwnSector(MemoryCardItem.readSector(card)) || !MemoryCardItem.dimensionMatches(card, server))) {
+            report(requester, id == BTN_NETWORK ? "message.gonzotech.plotnick.network.wrongsector"
+                : "message.gonzotech.plotnick.ore.wrongsector");
+            return false;
+        }
+        return true;
+    }
+
+    private void processCalculation(ServerLevel server) {
+        if (calculations.pending() < 0) return;
+        ServerPlayer requester = calculationRequester;
+        if (requester != null && (requester.level() != server || !server.players().contains(requester))) {
+            calculations.cancel(server.getGameTime());
+            calculationRequester = null;
+            return;
+        }
+        int button = calculationButton(calculations.pending());
+        if (!validCalculation(button, server, requester)) {
+            calculations.cancel(server.getGameTime()); // still only preflight, no work began
+            calculationRequester = null;
+            return;
+        }
+        int liveOperation = calculationOperation(button);
+        if (liveOperation != calculations.pending()) {
+            // Author: use the current card, but never bypass the NEW mode's cooldown.
+            calculations.cancel(server.getGameTime());
+            if (!calculations.request(liveOperation, server.getGameTime())) {
+                calculationRequester = null;
+                return;
+            }
+        }
+        calculations.begin();
+        try {
+            executeCalculation(button, server, requester);
+        } finally {
+            calculations.complete(server.getGameTime());
+            calculationRequester = null;
+            setChanged(); // persist per-operation completion deadlines
+        }
+    }
+
+    private void cancelForPackUp(ServerLevel server) {
+        clearSectorMarks(server);
+        buildQueue.clear();
+        tntQueue.clear();
+        buildRequester = tntRequester = null;
+        buildStalled = false;
+        placeCooldown = 0;
+        drilling = false;
+        drillPoints.clear();
+        drillTargetY.clear();
+        cycleDrillCells = List.of();
+        completedOreRows.clear();
+        setChanged();
+    }
+
+    private boolean executeCalculation(int id, ServerLevel server, ServerPlayer requester) {
         return switch (id) {
             case BTN_PACK_UP -> packUp(server, requester);
             case BTN_MARK -> placeSectorMarks(server, requester);
@@ -906,7 +1030,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         // буры и объезженные участки достроятся, когда позволят блоки.
         int cycle = buildQueue.size();
         for (int i = 0; i < cycle; i++) {
-            NetworkPlanner.Entry entry = buildQueue.remove(0);
+            NetworkPlanner.Entry entry = buildQueue.removeFirst();
             BlockState target = entry.drill()
                 ? ModMachines.MINER_DRILL.get().defaultBlockState()
                 : ModMachines.WORK_BLOCK.get().defaultBlockState();
@@ -915,24 +1039,24 @@ public final class PlotnickBlockEntity extends BlockEntity
             if (current.is(target.getBlock())) continue; // уже стоит
             if (!NetworkPlanner.isBuildable(current, server.getBlockState(pos.below()))) continue;
             if (!mayTouchPlace(server, pos)) {
-                buildQueue.add(entry); // приват запретил постановку — клетка ждёт в хвосте
+                buildQueue.addLast(entry); // приват запретил постановку — клетка ждёт в хвосте
                 continue;
             }
             Item needed = target.getBlock().asItem();
             if (countStored(needed) == 0) {
-                buildQueue.add(entry); // нечем — переезжает в хвост
+                buildQueue.addLast(entry); // нечем — переезжает в хвост
                 continue;
             }
             ItemStack reserved = takeStoredOne(needed);
             if (reserved.isEmpty()) {
-                buildQueue.add(entry);
+                buildQueue.addLast(entry);
                 continue;
             }
             if (!placeQueueBlockNow(server, pos, target)) {
                 // Мир не принял блок (защита/сюрприз генерации): труба/бур
                 // возвращаются в склад, точка едет в хвост очереди.
                 if (!insert(reserved)) dump(reserved, worldPosition);
-                buildQueue.add(entry);
+                buildQueue.addLast(entry);
                 continue;
             }
             if (entry.drill()) {
@@ -1286,6 +1410,13 @@ public final class PlotnickBlockEntity extends BlockEntity
         drillTargetY.put(drillCell, targetY - 1);
     }
 
+    private static List<Object> workTokens(ServerLevel server, int minX, int maxX, int minZ, int maxZ) {
+        List<Object> tokens = new ArrayList<>();
+        for (int cx = minX; cx <= maxX; cx++) for (int cz = minZ; cz <= maxZ; cz++)
+            tokens.add(PlotnickWorkRevision.at(server, cx, cz));
+        return List.copyOf(tokens);
+    }
+
     /** Сбор руд на текущем Y скважины: квадрат 5×5 с трубой в центре. */
     private void collectOreRow(ServerLevel server, BlockPos drillCell) {
         int y = drillTargetY.getOrDefault(drillCell, drillCell.getY()) + 1;
@@ -1295,6 +1426,12 @@ public final class PlotnickBlockEntity extends BlockEntity
             .is(ModMachines.BORE_PIPE.get())) {
             return;
         }
+        int minX = (drillCell.getX() - 2) >> 4, maxX = (drillCell.getX() + 2) >> 4;
+        int minZ = (drillCell.getZ() - 2) >> 4, maxZ = (drillCell.getZ() + 2) >> 4;
+        List<Object> before = workTokens(server, minX, maxX, minZ, maxZ);
+        OreRowStamp old = completedOreRows.get(drillCell);
+        if (old != null && old.y() == y && old.tokens().equals(before)) return;
+        boolean pending = false;
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 BlockPos pos = new BlockPos(drillCell.getX() + dx, y, drillCell.getZ() + dz);
@@ -1303,15 +1440,19 @@ public final class PlotnickBlockEntity extends BlockEntity
                 // 0.3.306 (автор 26.10, п.11): боковой сбор не сговорчивее
                 // центрального ствола — BlockEntity-руды и неубиваемая
                 // порода мимо (иначе содержимое чужих машин теряется).
-                if (isImmovable(state, server, pos)) continue;
+                if (isImmovable(state, server, pos)) { pending = true; continue; }
                 Item item = state.getBlock().asItem();
-                if (item == null) continue;
-                if (!hasRoom(new ItemStack(item))) continue; // нет места — руда ждёт в породе (#5)
-                if (!mayTouchBreak(server, pos)) continue; // приват против слома — руда ждёт
-                if (!server.destroyBlock(pos, false, null)) continue; // 0.3.306: мир не отдал блок — выдача не раньше мира
+                if (item == null) { pending = true; continue; }
+                if (!hasRoom(new ItemStack(item))) { pending = true; continue; } // нет места — руда ждёт в породе (#5)
+                if (!mayTouchBreak(server, pos)) { pending = true; continue; } // приват против слома — руда ждёт
+                if (!server.destroyBlock(pos, false, null)) { pending = true; continue; } // 0.3.306: мир не отдал блок — выдача не раньше мира
                 insertMinedOrDrop(new ItemStack(item), pos);
             }
         }
+        if (!pending && before.equals(workTokens(server, minX, maxX, minZ, maxZ))) {
+            if (completedOreRows.size() > 4096) completedOreRows.clear();
+            completedOreRows.put(drillCell.immutable(), new OreRowStamp(y, before));
+        } else completedOreRows.remove(drillCell);
     }
 
     // ─────────────────────────── сворачивание ───────────────────────────
@@ -1408,11 +1549,11 @@ public final class PlotnickBlockEntity extends BlockEntity
         if (dismantleQueue.isEmpty()) return;
         int budget = PlotnickDefs.PACK_BLOCKS_PER_TICK;
         while (!dismantleQueue.isEmpty() && budget-- > 0) {
-            BlockPos pos = dismantleQueue.remove(0);
+            BlockPos pos = dismantleQueue.removeFirst();
             BlockState state = server.getBlockState(pos);
             if (!isPlotnickNetworkBlock(state.getBlock())) continue;
             if (!mayTouchBreak(server, pos)) {
-                dismantleQueue.add(pos); // ломать нельзя — клетка ждёт в хвосте
+                dismantleQueue.addLast(pos); // ломать нельзя — клетка ждёт в хвосте
                 continue;
             }
             // Динамит из разряжаемого источника — тоже домой, в Плотник.
@@ -1498,29 +1639,29 @@ public final class PlotnickBlockEntity extends BlockEntity
         if (tntQueue.isEmpty()) return;
         int budget = PlotnickDefs.PACK_BLOCKS_PER_TICK;
         while (!tntQueue.isEmpty() && budget-- > 0) {
-            BlockPos pos = tntQueue.remove(0);
+            BlockPos pos = tntQueue.removeFirst();
             if (!server.getBlockState(pos).is(ModMachines.BORE_PIPE.get())) continue;
             Item explosive = pickExplosive();
             if (explosive == null) {
-                tntQueue.add(0, pos);
+                tntQueue.addFirst(pos);
                 break; // взрывчатка кончилась — очередь дожидается пополнения
             }
             BlockState tnt = explosive == ModItems.INDUSTRIAL_TNT_ITEM.get()
                 ? ModBlocks.INDUSTRIAL_TNT.get().defaultBlockState()
                 : net.minecraft.world.level.block.Blocks.TNT.defaultBlockState();
             if (!mayTouchPlace(server, pos)) {
-                tntQueue.add(0, pos); // приват против взрывчатки в трубе — пауза очереди
+                tntQueue.addFirst(pos); // приват против взрывчатки в трубе — пауза очереди
                 break;
             }
             ItemStack reserved = takeStoredOne(explosive);
             if (reserved.isEmpty()) {
-                tntQueue.add(0, pos);
+                tntQueue.addFirst(pos);
                 break;
             }
             if (!server.setBlock(pos, tnt, net.minecraft.world.level.block.Block.UPDATE_ALL)) {
                 // 0.3.306 (п.11): TNT не встал — взрывчатка в склад, точка в голову.
                 insertOrDrop(reserved, worldPosition);
-                tntQueue.add(0, pos);
+                tntQueue.addFirst(pos);
                 break;
             }
             BlockParticleOption crumble = new BlockParticleOption(ParticleTypes.BLOCK, tnt);
@@ -2193,6 +2334,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         // виртуала это снова переполнение, не смотрим на него).
         saveStackList(items, "Items", tag, registries);
         saveStackList(virtual, "Virtual", tag, registries);
+        tag.putLongArray("CalculationCooldowns", calculations.save());
         tag.putLong("PlacedAt", placedAt);
         if (hibernating) tag.putBoolean("Hibernating", true);
         if (!sectorMarkerIds.isEmpty()) {
@@ -2362,17 +2504,17 @@ public final class PlotnickBlockEntity extends BlockEntity
         }
     }
 
-    private static void savePosList(CompoundTag tag, String key, List<BlockPos> positions) {
+    private static void savePosList(CompoundTag tag, String key, java.util.Collection<BlockPos> positions) {
         if (positions.isEmpty()) return;
         long[] raw = new long[positions.size()];
-        for (int i = 0; i < raw.length; i++) raw[i] = positions.get(i).asLong();
+        int i = 0;
+        for (BlockPos position : positions) raw[i++] = position.asLong();
         tag.putLongArray(key, raw);
     }
 
-    private static List<BlockPos> loadPosList(CompoundTag tag, String key, List<BlockPos> into) {
+    private static void loadPosList(CompoundTag tag, String key, java.util.Collection<BlockPos> into) {
         into.clear();
         for (long raw : tag.getLongArray(key)) into.add(BlockPos.of(raw));
-        return into;
     }
 
     @Override
@@ -2404,6 +2546,11 @@ public final class PlotnickBlockEntity extends BlockEntity
             loadStackList(tag, "Virtual", virtual, registries);
         }
         normalizeStacks(); // легаси-стопки >64 → классика
+        calculations.load(tag.getLongArray("CalculationCooldowns"));
+        calculationRequester = null;
+        cachedSurface = null;
+        cachedSurfaceTokens = List.of();
+        completedOreRows.clear();
         placedAt = tag.getLong("PlacedAt"); // 0 → выставится первым тиком
         hibernating = tag.getBoolean("Hibernating");
         sectorElectionDue = true; // сектор всегда проверяем заново на загрузке
@@ -2414,7 +2561,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         buildQueue.clear();
         for (Tag queueTag : tag.getList("BuildQueue", Tag.TAG_COMPOUND)) {
             CompoundTag cell = (CompoundTag) queueTag;
-            buildQueue.add(new NetworkPlanner.Entry(
+            buildQueue.addLast(new NetworkPlanner.Entry(
                 BlockPos.of(cell.getLong("Pos")), cell.getBoolean("Drill")));
         }
         placeCooldown = tag.getInt("PlaceCooldown");
@@ -2428,6 +2575,10 @@ public final class PlotnickBlockEntity extends BlockEntity
 
     /** Слом Плотника: сначала убрать его секторную разметку, затем выронить содержимое. */
     public void onBroken() {
+        calculations.cancel(level == null ? 0L : level.getGameTime());
+        calculationRequester = null;
+        cachedSurface = null;
+        completedOreRows.clear();
         if (level instanceof ServerLevel server) {
             clearSectorMarks(server);
             notifySectorChanged(server, worldPosition); // разбудить анабиозных (#анбиоз)

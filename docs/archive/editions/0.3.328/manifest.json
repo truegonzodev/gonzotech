@@ -40,6 +40,46 @@
       "sha256": "b030b38a943f0a1e519ba725f51416e48d1ffb2a6a35cb68c0471e936e192bb1",
       "bytes": 43929,
       "task": "PERF-001/1 author acceptance and /3 deferred as Great Pipe Optimization II; next-step investigation, no runtime changes"
+    },
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_WORK329_CURRENT-STATE.md",
+      "sha256": "ad0249b171e5cd06d60dd10b81678199220a0c94faa6d3a2f078d9e9a2232b1b",
+      "bytes": 18222,
+      "task": "PERF-001/6 and /10 selected; first bounded329 gate/Fence/FIFO/row-cache implementation; large-scan slices remain open"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_WORK329_CAPABILITIES.md",
+      "sha256": "100820778de98d0f8b27dc80272058397f0f5b08a61f808cc27071549a765b65",
+      "bytes": 37955,
+      "task": "PERF-001/6 and /10 selected; first bounded329 gate/Fence/FIFO/row-cache implementation; large-scan slices remain open"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_WORK329_MACHINES.md",
+      "sha256": "f7e7e9b91b4b0b01f761a4bdf597dad11931848a6ae7a474d1c4ded8c6071f86",
+      "bytes": 48827,
+      "task": "PERF-001/6 and /10 selected; first bounded329 gate/Fence/FIFO/row-cache implementation; large-scan slices remain open"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_WORK329_AUTOMINER.md",
+      "sha256": "8e53f098296ce990669e00c86619972cdb5cbf959cc8a68469218e0c275faf81",
+      "bytes": 12192,
+      "task": "PERF-001/6 and /10 selected; first bounded329 gate/Fence/FIFO/row-cache implementation; large-scan slices remain open"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "6ddd502f2b6189735023ff67acce02b94e867603",
+      "snapshot": "docs/archive/editions/0.3.328/OUTDATED_BEFORE_WORK329_RAD_ITEMS.md",
+      "sha256": "a35eabbfe555da86ca6bac369bb89623891ed6ca6a71d6c3c69c3ffd887233c6",
+      "bytes": 39302,
+      "task": "PERF-001/6 and /10 selected; first bounded329 gate/Fence/FIFO/row-cache implementation; large-scan slices remain open"
     }
   ]
 }

@@ -1,0 +1,20 @@
+public boolean handleButton(int id, ServerPlayer requester) {
+        if (!(level instanceof ServerLevel server)) return false;
+        if (hibernating) {
+            // Спящий Плотник кнопок не слушает («не открывает GUI» — та же
+            // логика, что и в useWithoutItem; дублируем на сетевой путь).
+            report(requester, "message.gonzotech.plotnick.hibernating");
+            return true;
+        }
+        return switch (id) {
+            case BTN_PACK_UP -> packUp(server, requester);
+            case BTN_MARK -> placeSectorMarks(server, requester);
+            case BTN_NETWORK -> buildNetwork(server, requester);
+            case BTN_SEISMO -> seismicImpulse(server, requester);
+            case BTN_DYNAMITE -> rigTnt(server, requester);
+            case BTN_NETWORK_LINK -> linkExistingDrills(server, requester);
+            case BTN_DRILL -> startDrilling(server, requester);
+            case BTN_DRILL_STOP -> stopDrilling(requester);
+            default -> false;
+        };
+    }
