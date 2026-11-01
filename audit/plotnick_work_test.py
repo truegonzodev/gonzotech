@@ -139,4 +139,3 @@ if __name__=='__main__':
         gate=(JAVA/'machines/miner/PlotnickTaskGate.java').read_text()
         for label,a,b in [('no-cooldown','now < deadlines[operation]','false'),('global-cooldown','deadlines[running] = now + COOLDOWN_TICKS','java.util.Arrays.fill(deadlines, now + COOLDOWN_TICKS)'),('coalesce-replaced','if (pending == operation) return true;','if (pending == operation) return true; pending = -1;')]:
             assert a in gate;r=run(gate=gate.replace(a,b));assert r.returncode!=0 and 'AssertionError' in r.stderr,label+' survived';print('REJECTED:',label)
-
