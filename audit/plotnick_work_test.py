@@ -34,6 +34,7 @@ public class ServerLevel extends Level{public long tick;public int reads,chunkRe
 'net/neoforged/neoforge/event/server/ServerStoppedEvent.java':'package net.neoforged.neoforge.event.server;public class ServerStoppedEvent{}',
 'net/neoforged/neoforge/event/OnDatapackSyncEvent.java':'package net.neoforged.neoforge.event;public class OnDatapackSyncEvent{}',
 }
+STUBS['com/gonzotech/machines/miner/PlotnickServerBudget.java']='package com.gonzotech.machines.miner;import net.minecraft.server.level.ServerLevel;public class PlotnickServerBudget{public static boolean start(ServerLevel l){return true;}public static boolean queued(ServerLevel l,Object k){return false;}public static void enqueue(ServerLevel l,Object k,Runnable r){}public static void cancel(ServerLevel l,Object k){}}'
 HELPERS=r'''
 static class Ref<T>{final T t;Ref(T t){this.t=t;}T get(){return t;}}
 static class ModMachines{static final Ref<Block> WORK_BLOCK=new Ref<>(new Block()),MINER_DRILL=new Ref<>(new Block()),BORE_PIPE=new Ref<>(new Block());static final Ref<Item> MEMORY_CARD=new Ref<>(new Item());}
@@ -54,6 +55,7 @@ void insertMinedOrDrop(ItemStack s,BlockPos p){mined+=s.getCount();}boolean isPl
 int countStored(Item i){return stock.getOrDefault(i,0);}ItemStack takeStoredOne(Item i){int n=countStored(i);if(n==0)return ItemStack.EMPTY;stock.put(i,n-1);return new ItemStack(i);}
 boolean insert(ItemStack s){stock.merge(s.item,s.getCount(),Integer::sum);return true;}void dump(ItemStack s,BlockPos p){insert(s);}void insertOrDrop(ItemStack s,BlockPos p){insert(s);}
 Item pickExplosive(){return countStored(ModItems.INDUSTRIAL_TNT_ITEM.get())>0?ModItems.INDUSTRIAL_TNT_ITEM.get():countStored(Items.TNT)>0?Items.TNT:null;}
+void scheduleWork(ServerLevel l){}
 boolean perform(int id){executed++;lastOperation=id;if(throwCalculation)throw new IllegalStateException("fixture failure");return true;}
 boolean packUp(ServerLevel s,ServerPlayer p){return perform(BTN_PACK_UP);}boolean placeSectorMarks(ServerLevel s,ServerPlayer p){return perform(BTN_MARK);}boolean buildNetwork(ServerLevel s,ServerPlayer p){return perform(BTN_NETWORK);}boolean seismicImpulse(ServerLevel s,ServerPlayer p){return perform(BTN_SEISMO);}boolean rigTnt(ServerLevel s,ServerPlayer p){return perform(BTN_DYNAMITE);}boolean linkExistingDrills(ServerLevel s,ServerPlayer p){return perform(BTN_NETWORK_LINK);}boolean startDrilling(ServerLevel s,ServerPlayer p){drilling=true;return perform(BTN_DRILL);}boolean stopDrilling(ServerPlayer p){drilling=false;return true;}
 '''
@@ -124,7 +126,7 @@ def run(text=None,gate=None,revision=None):
 if __name__=='__main__':
     text=SOURCE.read_text();r=run();assert r.returncode==0,r.stdout+r.stderr;print(r.stdout.strip())
     # Source wiring: extracted methods are executed above; unexecuted event/serialization integration remains pins.
-    assert 'be.processCalculation(server);' in text and 'PlotnickWorkRevision.changed(level, pos.getX() >> 4, pos.getZ() >> 4);' in text
+    assert 'be.scheduleWork(server);' in text and 'PlotnickWorkRevision.changed(level, pos.getX() >> 4, pos.getZ() >> 4);' in text
     assert '"CalculationCooldowns", calculations.save()' in text and 'calculations.load(tag.getLongArray("CalculationCooldowns"))' in text
     assert 'PlotnickBlockEntity.pulseBlockChange(level, pos)' in (JAVA/'mixin/LevelChunkCleanRoomMixin.java').read_text()
     folder=ROOT/'audit/fixtures/work_328'

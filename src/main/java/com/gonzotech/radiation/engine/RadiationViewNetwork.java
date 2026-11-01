@@ -45,7 +45,8 @@ public final class RadiationViewNetwork {
     public static void register(PayloadRegistrar registrar) {
         registrar.playToClient(View.TYPE, View.CODEC, (v, c) -> c.enqueueWork(() ->
                 com.gonzotech.radiation.client.RadiationPanel.accept(v)));
-        registrar.playToServer(Fence.TYPE, Fence.CODEC, (v, c) -> c.enqueueWork(() -> {
+        registrar.executesOn(net.neoforged.neoforge.network.registration.HandlerThread.NETWORK)
+            .playToServer(Fence.TYPE, Fence.CODEC, (v, c) -> com.gonzotech.core.network.PayloadFloodGuard.enqueue(c, () -> {
             if (c.player() instanceof ServerPlayer player) handleFence(player, v);
         }));
     }
@@ -66,7 +67,8 @@ public final class RadiationViewNetwork {
             return;
         }
         // A stale/mismatched end must not finish a newer gesture or advance ACK past it.
-        // The accepted end is NOT rate-limited; the menu may already have closed.
+        // No separate end throttle: all admitted packets keep FIFO, even after menu close.
+        // Above the shared ingress threshold the connection is disconnected, not silently desynchronised.
         if (pending != null && (v.sequence != pending.sequence() || v.menu != pending.menu().containerId)) return;
         if (v.menu == player.inventoryMenu.containerId)
             CreativeRadiationBridge.finish(player, v.cursorCount, v.cursorFingerprint);

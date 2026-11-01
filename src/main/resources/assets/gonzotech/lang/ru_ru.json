@@ -1279,5 +1279,7 @@
   "gui.gonzotech.notes.favorites.empty": "В этой категории нет избранных страниц. ПКМ по звезде возвращает все страницы.",
   "gui.gonzotech.notes.favorites.untitled": "Страница %s",
   "block.gonzotech.third_accumulator": "Аккумулятор III",
-  "block.gonzotech.third_battery": "Электролитическая батарейка"
+  "block.gonzotech.third_battery": "Электролитическая батарейка",
+  "disconnect.gonzotech.payload_flood": "Слишком много запросов GonzoTech: Плотник / радиационный Fence (порог %s за секунду или в ожидании).",
+  "gonzotech.configuration.floodRequestThreshold": "Порог флуд-запросов"
 }

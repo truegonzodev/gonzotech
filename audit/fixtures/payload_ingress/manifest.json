@@ -1,0 +1,68 @@
+{
+  "files": [
+    {
+      "file": "PayloadRegistrar.java.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/network/registration/PayloadRegistrar.java",
+      "sha256": "13cb3618443703abdc3d4daf63a174ea599ee125ef2ee3fdeade636ff1fdab84",
+      "bytes": 8167
+    },
+    {
+      "file": "HandlerThread.java.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/network/registration/HandlerThread.java",
+      "sha256": "a91c828a93d2ef7476491d0e85d88d1ea7d4a2b271fdaa6067d00cdb748f20b7",
+      "bytes": 680
+    },
+    {
+      "file": "MainThreadPayloadHandler.java.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/network/handling/MainThreadPayloadHandler.java",
+      "sha256": "4f3e3f26656dc5d45b05880cfbfbf8d0624d39dff1399edb151d8ce451b77b89",
+      "bytes": 592
+    },
+    {
+      "file": "IPayloadContext.java.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/network/handling/IPayloadContext.java",
+      "sha256": "486062496df8ec2414b2fdcbeba3b0939dca1d3364fbbe60ca34982600000ed4",
+      "bytes": 4312
+    },
+    {
+      "file": "ServerCommonPacketListenerImpl.java.patch.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "patches/net/minecraft/server/network/ServerCommonPacketListenerImpl.java.patch",
+      "sha256": "06cfbda08047fe98c8729141350c730395bc0480e75def438e94142e1cfe051e",
+      "bytes": 4716
+    },
+    {
+      "file": "IBlockEntityExtension.java.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/common/extensions/IBlockEntityExtension.java",
+      "sha256": "b2eb8a98609f9c19666c19eaccf155cc0b1e85fbcbecd291bc2593da2d05367e",
+      "bytes": 4285
+    },
+    {
+      "file": "ModConfigEvent.java.txt",
+      "repository": "neoforged/FancyModLoader",
+      "commit": "c5f2a36970f1f0a691590acd394932305ab3d6b9",
+      "source": "loader/src/main/java/net/neoforged/fml/event/config/ModConfigEvent.java",
+      "bytes": 1736,
+      "sha256": "7aaade589b35e468931ab2dbd775396d2d11af82fa255a944c8d39e2fe78051c"
+    },
+    {
+      "file": "ModConfigSpec.java.txt",
+      "repository": "neoforged/NeoForge",
+      "commit": "f4b4a9655362b103b95769258ed6586597d8b7f4",
+      "source": "src/main/java/net/neoforged/neoforge/common/ModConfigSpec.java",
+      "bytes": 64208,
+      "sha256": "e2af2d8e8cc251ea5b6d9be81fad320e011e5d8c6b46f42d41cb85a3bd8f92a6"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/6/10 / 0.3.329: 91 PASS / 0 SKIP / 0 FAIL.** Plotnick388/12mutants, Fence73/7mutants, exact328negatives; MCboundarymodels, не игра.6частично реализован,10ждётавтора.
+**Последний полный локальный прогон, PERF-001/6/10 / 0.3.330: 93 PASS / 0 SKIP / 0 FAIL.** Globalbudget2107assertions/9mutants/exact329negative; ingress4416/7mutants/3exact329negative. Прежние Plotnick388/12 и Fence73/7/exact328negatives сохранены. Автор назвал329штатной, но6/10 прямо не закрыл. Модельныеграницы, не nativeMC/Netty/TPS.
 
 ## Команды и доказательства
 
@@ -29,6 +29,8 @@
 | [alcohol_test.py](../audit/alcohol_test.py) | Compile/run the actual pure-Java alcohol-dose core, without Gradle/Minecraft. |
 | [audit_followup_test.py](../audit/audit_followup_test.py) | 27 Sep follow-up: execute production method bodies with API stubs (NOT Minecraft). |
 | [autominer_markers_test.py](../audit/autominer_markers_test.py) | Pins 0.3.256-0.3.263 — метки автошахтера, Плотник, сеть, сейсмика и буры. |
+| [plotnick_budget_test.py](../audit/plotnick_budget_test.py) | Actual server dispatcher/FIFO + selected BE methods;2107assertions/9mutants/exact329negative,2048BE/two-world fairness and bounded preflight. MC/events/logger doubles, not native/TPS. |
+| [payload_ingress_test.py](../audit/payload_ingress_test.py) | Actual guard/window/config/Plotnickhandler/Fenceregistration + pinned upstream registrar/wrapper;4416assertions/7mutants/3exact329negative. Executor/connection/menu/codec doubles, not Netty/native. |
 | [plotnick_work_test.py](../audit/plotnick_work_test.py) | Production selected BE methods + whole gate/revision;388assertions/12mutants/exact328negative. MC/Forge boundaries, not full BE/native/TPS. |
 | [radiation_fence_test.py](../audit/radiation_fence_test.py) | Actual handler/creative bridge/core;73assertions/7mutants/exact328handler negative. Packet/menu/copy-hook doubles, not native bootstrap. |
 | [blast_furnace_test.py](../audit/blast_furnace_test.py) | Blast furnace (0.3.65): pure 3x3x3 layout self-test via ECJ + wiring pins. |
@@ -497,3 +499,29 @@ python3 audit/docs_structure_test.py
 python3 audit/doc_links.py
 git diff --check
 ```
+
+
+<a id="perf-budget330"></a>
+## PERF-001/6 — цельный бюджет и ingress330, 01.11.2026
+
+`plotnick_budget_test.py`: **2107 assertions / 9 assertion-mutants**, whole actual PlotnickServerBudget/PlotnickFairQueue + selected BE admission/dispatch/lifecycle methods. Проверены2startsнаMinecraftServerтик через2мира,2048ожидающихBE→1024тикапоследовательногообслуживания,64invalidpreflights/тик, reentryeventтого жетика,identityFIFO/firstactor,preflight/Stop/packUp (включаяотменуticketприактивномpackCD),livecardновыйmodeCD,disconnect/worldchange/removedidentity,GUIbudget,exceptionCD,levelunloadдругоймир/stopновыйserver. MC/logger/eventcallbacks/операция-эффект —дубли; setRemoved/onChunkUnloadedwiringпин, не native unload.
+
+`payload_ingress_test.py`: **4416 assertions / 7 assertion-mutants**, whole production PayloadFloodWindow/Guard/Config/Plotnickpayload, actualFence registration; whole unchanged pinnedNeoForgePayloadRegistrar/HandlerThread/MainThreadPayloadHandler иFMLModConfigEvent. Проверены128default/диапазон1–4096/exactboundary/trueslidingwindow/outstandingпосле10secidle/concurrent16producers,100000uniqueinvalidrequestsпослеdisconnectбезenqueue/киклавины,shared2channels/perconnectionisolation,нетmenu/playerчтенийNetty,принятыйbegin→модельнаяvanillamutation→endFIFO,configloading/reloading/unloadingvolatilepublication/unrelatedspec,executor/handlerfailurecreditrelease,logouttombstone/stop/newconnection. Connection/executor/menu/codecs/events/NetworkRegistry—дубли, не реальныйNettyилиvanillaпакетныйbootstrap. Fencecore73assertionsпроверяетсяотдельно, не выдаётсязасовместныйнативныйтест.
+
+Exact329negativecontrolsиз9c2d9b3: небюджетированныйBEprocessCalculation, весьстарыйPlotnickpayload, oldFence register, oldMAINPlotnickregister. Git/hash/bytes проверены, каждый компилируется и обязан assertion-fail, compilerfailureнеkill. UpstreamfixturesAPIs/source/лицензия — [payload_ingress](../audit/fixtures/payload_ingress/README.md), собственныестарыефайлы —[work_329](../audit/fixtures/work_329/README.md). Остальныеupstreamфайлывmanifest —sourceAPIпины, не исполняемыйnativeAPIproof; branchcommits не объявленыexact21.4.157jar.
+
+Воспроизведение (JDK21 + ECJ; Pillow для полного набора):
+```bash
+python3 audit/plotnick_budget_test.py --mutation-check
+python3 audit/payload_ingress_test.py --mutation-check
+python3 audit/plotnick_work_test.py --mutation-check
+python3 audit/radiation_fence_test.py --mutation-check
+python3 audit/run_all.py
+python3 audit/docs_structure_test.py
+python3 audit/doc_links.py
+git diff --check
+```
+
+Первыйfull330:92PASS/1FAIL — старый GUIsourcepin ожидал прямойBEtickrefresh; заменён на event/viewer/dirty **иbudget.start** вactualscheduledcallback +BEregistrationpin, не ослаблен. НовыеexecutableGUIbudgetпробы подтверждаютограничение. Следующийfull:93PASS/0SKIP/0FAIL; послефинальногопроходаповтор. СохраненыстарыеPlotnick388/12 иFence73/7mutants/exact328. NativeGradle/NeoForge/реальныйNetty/MixinGameTests/измеренныйMSPT/TPSнепроводились; авторская«Всёштатно»относитсяк329 и не закрывает6/10. Budget2wholejobs—толькокнопки/GUI, неавтоматическийциклбуров и не hard-msгарантия. Сеть—толькодваC2S, неуниверсальныйDDoS/vanilla/othermodsщит. [Решения/хроника](HISTORY.md#perf-001-budget330).
+
+Финальный330повторпослекода/документации: **93PASS/0SKIP/0FAIL**. Docs:41previouseditions/29live/75immutable/4173sourceitems/69dispositions,1356links/0broken;11историческихтекстовыхцитатсявнымархивныммаршрутом. Scopedfixture.gitattributesсохраняетточныеupstreamбайты/пробелы, не ослабляетproduction/test/docswhitespacecheck.

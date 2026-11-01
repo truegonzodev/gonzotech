@@ -793,8 +793,9 @@ assert "MenuHelper.readBlockEntity(inventory, buffer, PlotnickBlockEntity.class)
 
 # никаких плановых пересчётов тултипов
 assert "server.getGameTime() % 20 == 0" not in be, "периодический скан статистики вернулся"
-assert "if (be.menuViewers > 0 && be.networkStatsDirty)" in be, \
-    "статистка не обновляется строго по событиям при открытом GUI"
+assert "else if (menuViewers > 0 && networkStatsDirty && PlotnickServerBudget.start(server))" in current_rad.method(be, "private void processScheduledWork("), \
+    "GUI статистика должна оставаться event/viewer-gated и проходить общий heavy budget"
+assert "be.scheduleWork(server);" in be, "BE tick должен регистрировать dirty GUI в общей очереди"
 mo = be[be.index("public void menuOpened"):be.index("public void menuOpened") + 400]
 assert "refreshNetworkStats" not in mo, "вход в GUI снова сканирует мир внутри menuOpened"
 assert "if (menuViewers++ == 0) networkStatsDirty = true;" in be, \

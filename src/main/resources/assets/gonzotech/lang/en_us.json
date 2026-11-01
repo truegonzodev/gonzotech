@@ -1279,5 +1279,7 @@
   "gui.gonzotech.notes.favorites.empty": "No favorite pages in this category. Right-click the star to show all pages.",
   "gui.gonzotech.notes.favorites.untitled": "Page %s",
   "block.gonzotech.third_accumulator": "Accumulator III",
-  "block.gonzotech.third_battery": "Electrolytic Battery"
+  "block.gonzotech.third_battery": "Electrolytic Battery",
+  "disconnect.gonzotech.payload_flood": "Too many GonzoTech Plotnick / radiation Fence requests (limit %s per second or pending).",
+  "gonzotech.configuration.floodRequestThreshold": "Flood request threshold"
 }

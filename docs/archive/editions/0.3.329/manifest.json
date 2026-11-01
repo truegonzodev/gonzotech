@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "snapshot": "docs/archive/editions/0.3.329/OUTDATED_BEFORE_BUDGET330_CURRENT-STATE.md",
+      "bytes": 19518,
+      "sha256": "3ec3709cdd81eb41ec05d96e6ddb0f71e6bc5a50a17f87608c533be997ca572f",
+      "task": "PERF-001/6/10 author reports normal329 but keeps both open; whole-job global budget and pre-enqueue flood disconnection330"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "snapshot": "docs/archive/editions/0.3.329/OUTDATED_BEFORE_BUDGET330_AUTOMINER.md",
+      "bytes": 14965,
+      "sha256": "eb276be10cd936636ab339edaa80f5795a37892bad6181798aa8f8afbb376525",
+      "task": "PERF-001/6/10 author reports normal329 but keeps both open; whole-job global budget and pre-enqueue flood disconnection330"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "snapshot": "docs/archive/editions/0.3.329/OUTDATED_BEFORE_BUDGET330_CAPABILITIES.md",
+      "bytes": 41978,
+      "sha256": "b236a21b86ae84a8d098d8c30d43a0ad58fd4e6df03269cfccfce24999e41a74",
+      "task": "PERF-001/6/10 author reports normal329 but keeps both open; whole-job global budget and pre-enqueue flood disconnection330"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "snapshot": "docs/archive/editions/0.3.329/OUTDATED_BEFORE_BUDGET330_MACHINES.md",
+      "bytes": 52823,
+      "sha256": "00e44a6565afaeeb6d8b3251d86d93d1bf613645be60d0140504bd6cecc35a49",
+      "task": "PERF-001/6/10 author reports normal329 but keeps both open; whole-job global budget and pre-enqueue flood disconnection330"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "snapshot": "docs/archive/editions/0.3.329/OUTDATED_BEFORE_BUDGET330_RAD_ITEMS.md",
+      "bytes": 41883,
+      "sha256": "47e94638a58338e4855b8c5fbcf127be52fd17bb24f453e8be404c41c23c655d",
+      "task": "PERF-001/6/10 author reports normal329 but keeps both open; whole-job global budget and pre-enqueue flood disconnection330"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "snapshot": "docs/archive/editions/0.3.329/OUTDATED_BEFORE_BUDGET330_AUDIT.md",
+      "bytes": 117904,
+      "sha256": "8ad44de87c1ad880b01726304088063604d2c291b7fa7b7ec566932b1654fc4d",
+      "task": "PERF-001/6/10 author reports normal329 but keeps both open; whole-job global budget and pre-enqueue flood disconnection330"
+    }
+  ]
+}

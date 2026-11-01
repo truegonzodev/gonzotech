@@ -8,9 +8,15 @@ public final class ModConfigSpec {
         public Builder comment(String... lines) { return this; }
         public Builder translation(String key) { return this; }
         public BooleanValue define(String key, boolean defaultValue) { return new BooleanValue(defaultValue); }
+        public IntValue defineInRange(String key, int defaultValue, int min, int max) { return new IntValue(defaultValue); }
         public ModConfigSpec build() { return new ModConfigSpec(); }
     }
 
+    public static final class IntValue {
+        private final int value;
+        public IntValue(int value) { this.value = value; }
+        public int get() { return value; }
+    }
     public static final class BooleanValue {
         private final boolean value;
         public BooleanValue(boolean value) { this.value = value; }

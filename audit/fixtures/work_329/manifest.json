@@ -1,0 +1,32 @@
+{
+  "files": [
+    {
+      "source": "src/main/java/com/gonzotech/machines/block/entity/PlotnickBlockEntity.java",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "file": "PlotnickBlockEntity.java.txt",
+      "bytes": 138141,
+      "sha256": "8d11635a4b5c1beab58a41342c8f611cf8692e546404eeef4fcd9a2c60572fc2"
+    },
+    {
+      "source": "src/main/java/com/gonzotech/machines/menu/PlotnickButtonPayload.java",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "file": "PlotnickButtonPayload.java.txt",
+      "bytes": 2164,
+      "sha256": "957e8ed45250e322d0c0e4ea326f387e83447e4a7f01a97d6c71bbf7836a3a0f"
+    },
+    {
+      "source": "src/main/java/com/gonzotech/radiation/engine/RadiationViewNetwork.java",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "file": "RadiationViewNetwork.java.txt",
+      "bytes": 8403,
+      "sha256": "27e9af7e2b9a47d8fdd861d812ba41e315f2ec9238e29eee930993d1e64d8041"
+    },
+    {
+      "source": "src/main/java/com/gonzotech/GonzoTechMod.java",
+      "source_commit": "9c2d9b377880c4e1b89b4a5dae85246601193ef5",
+      "file": "GonzoTechMod.java.txt",
+      "bytes": 25426,
+      "sha256": "17aebf4ac13f090e8a7c840a8f965a50b0fe0a367711ac16f6eeffd5405a69f2"
+    }
+  ]
+}

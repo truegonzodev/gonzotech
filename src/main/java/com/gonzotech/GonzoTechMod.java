@@ -44,6 +44,9 @@ public class GonzoTechMod {
                 com.gonzotech.core.config.GonzoClientConfig.SPEC);
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::registerPayloads);
+        modEventBus.addListener(com.gonzotech.core.network.PayloadFloodGuard::onConfigLoading);
+        modEventBus.addListener(com.gonzotech.core.network.PayloadFloodGuard::onConfigReloading);
+        modEventBus.addListener(com.gonzotech.core.network.PayloadFloodGuard::onConfigUnloading);
 
         // Жидкости регистрируются ДО блоков: LiquidBlock расплавленного кориума
         // берёт источник жидкости из уже заполненного регистра при своём событии.
@@ -257,7 +260,7 @@ public class GonzoTechMod {
         );
 
         // Кнопки GUI Плотника (0.3.256) — C2S id кнопки.
-        registrar.playToServer(
+        registrar.executesOn(net.neoforged.neoforge.network.registration.HandlerThread.NETWORK).playToServer(
             com.gonzotech.machines.menu.PlotnickButtonPayload.TYPE,
             com.gonzotech.machines.menu.PlotnickButtonPayload.STREAM_CODEC,
             com.gonzotech.machines.menu.PlotnickButtonPayload::handle);

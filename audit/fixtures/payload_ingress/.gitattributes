@@ -1,0 +1,3 @@
+# Exact upstream byte fixtures: preserve line endings and authored trailing spaces.
+# This exception does not apply to production code, tests, docs or fixture metadata.
+*.txt -text -whitespace

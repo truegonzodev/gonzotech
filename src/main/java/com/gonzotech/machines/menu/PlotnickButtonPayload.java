@@ -16,7 +16,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * поэтому кнопки идут отдельным пакетом.
  *
  * @param menuId     id открытого меню
- * @param buttonId   0..5 по макету автора
+ * @param buttonId   0..7: существующие кнопки, LINK (6) и Stop (7)
  */
 public record PlotnickButtonPayload(int menuId, int buttonId) implements CustomPacketPayload {
 
@@ -35,7 +35,7 @@ public record PlotnickButtonPayload(int menuId, int buttonId) implements CustomP
     }
 
     public static void handle(PlotnickButtonPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
+        com.gonzotech.core.network.PayloadFloodGuard.enqueue(context, () -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
             AbstractContainerMenu menu = player.containerMenu;
             if (menu instanceof PlotnickMenu plotnickMenu

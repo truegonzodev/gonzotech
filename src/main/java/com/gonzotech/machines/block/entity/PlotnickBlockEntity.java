@@ -14,6 +14,7 @@ import com.gonzotech.machines.miner.MarkerService;
 import com.gonzotech.machines.miner.MinerMarker;
 import com.gonzotech.machines.miner.MinerOres;
 import com.gonzotech.machines.miner.PlotnickTaskGate;
+import com.gonzotech.machines.miner.PlotnickServerBudget;
 import com.gonzotech.machines.miner.PlotnickWorkRevision;
 import com.gonzotech.machines.miner.NetworkPlanner;
 import com.gonzotech.machines.registry.ModBlockEntities;
@@ -289,7 +290,6 @@ public final class PlotnickBlockEntity extends BlockEntity
             if (server.getGameTime() % 40 == 0) be.sectorElectionDue = true;
             return;
         }
-        be.processCalculation(server);
         be.processBuildQueue(server);
         be.processDismantleQueue(server);
         be.processTntQueue(server);
@@ -303,10 +303,7 @@ public final class PlotnickBlockEntity extends BlockEntity
         // 0.3.290 #17: GUI открыт — сравниваем девять штампов чанков сектора;
         // свежий штамп = ручная правка (команда/поршень/взрыв) -> однократный пересчёт.
         if (be.menuViewers > 0) be.tickSectorPulse(server);
-        if (be.menuViewers > 0 && be.networkStatsDirty) {
-            be.networkStatsDirty = false;
-            be.refreshNetworkStats(server);
-        }
+        be.scheduleWork(server);
     }
 
     /** Кто смотрит в GUI: держим счёт, чтобы не сканировать мир вхолостую. */
@@ -483,18 +480,24 @@ public final class PlotnickBlockEntity extends BlockEntity
             if (calculations.pending() == BTN_DRILL) {
                 calculations.cancel(now);
                 calculationRequester = null;
+                PlotnickServerBudget.cancel(server, this);
+                scheduleWork(server); // a read-only GUI refresh may still be needed
             }
             return stopDrilling(requester); // never delayed by another calculation/cooldown
         }
         if (id < BTN_DRILL || id > BTN_NETWORK_LINK) return false;
         if (id == BTN_PACK_UP && calculations.pending() != BTN_PACK_UP) {
+            PlotnickServerBudget.cancel(server, this);
             calculations.cancel(now);
             calculationRequester = null;
             cancelForPackUp(server); // cancellation is immediate, even during this operation's cooldown
         }
         if (calculations.pending() >= 0) return true; // duplicate coalesced / conflict rejected
         if (!validCalculation(id, server, requester)) return true;
-        if (calculations.request(calculationOperation(id), now)) calculationRequester = requester;
+        if (calculations.request(calculationOperation(id), now)) {
+            calculationRequester = requester;
+            scheduleWork(server);
+        }
         return true; // cooldown/conflict rejection is intentionally quiet
     }
 
@@ -528,6 +531,46 @@ public final class PlotnickBlockEntity extends BlockEntity
         return true;
     }
 
+    /** Both button calculations and idle GUI planning use the same global admission. */
+    private void scheduleWork(ServerLevel server) {
+        if (calculations.pending() < 0 && !(menuViewers > 0 && networkStatsDirty)) return;
+        if (!PlotnickServerBudget.queued(server, this))
+            PlotnickServerBudget.enqueue(server, this, () -> processScheduledWork(server));
+    }
+
+    private void processScheduledWork(ServerLevel server) {
+        if (level != server || isRemoved() || hibernating || !server.hasChunkAt(worldPosition)
+                || server.getBlockEntity(worldPosition) != this) {
+            calculations.cancel(server.getGameTime());
+            calculationRequester = null;
+            return;
+        }
+        try {
+            if (calculations.pending() >= 0) processCalculation(server);
+            else if (menuViewers > 0 && networkStatsDirty && PlotnickServerBudget.start(server)) {
+                networkStatsDirty = false;
+                refreshNetworkStats(server);
+            }
+        } finally {
+            scheduleWork(server); // append at the tail, never jump other BEs or dimensions
+        }
+    }
+
+    private void cancelScheduledWork() {
+        if (level instanceof ServerLevel server) {
+            PlotnickServerBudget.cancel(server, this);
+            calculations.cancel(server.getGameTime());
+        }
+        calculationRequester = null;
+    }
+
+    @Override public void setRemoved() {
+        cancelScheduledWork();
+        super.setRemoved();
+    }
+
+    @Override public void onChunkUnloaded() { cancelScheduledWork(); }
+
     private void processCalculation(ServerLevel server) {
         if (calculations.pending() < 0) return;
         ServerPlayer requester = calculationRequester;
@@ -551,6 +594,7 @@ public final class PlotnickBlockEntity extends BlockEntity
                 return;
             }
         }
+        if (!PlotnickServerBudget.start(server)) return;
         calculations.begin();
         try {
             executeCalculation(button, server, requester);
