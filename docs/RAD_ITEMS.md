@@ -30,7 +30,7 @@ merged = (a × n + b × k) / (n + k)
 - Разные новые внешние значения наведёнки больше не мешают обычному стакингу. Все **остальные** ограничения ванильного сравнения предмета/компонентов сохраняются.
 - `DoseMath.finite` отбрасывает неположительные/нефинитные значения. Порог очистки 1 mZt применяется в `ItemRadioactivity.setInduced`; не следует подменять им взвешенное усреднение в `DoseMath`.
 
-**Покрытие 333/CRIT-2:** отдельный зарегистрированный SidedInvWrapper-hook добавлен к обычному InvWrapper; headless-регрессия проходит, native/авторская приёмка ещё нужны. Это не универсальная гарантия для любого стороннего handler.
+**Покрытие 333/CRIT-2:** отдельный зарегистрированный SidedInvWrapper-hook добавлен к обычному InvWrapper; headless-регрессия проходит; авторская приёмка334 закрыла CRIT-2, без заявления нового native-прогона здесь. Это не универсальная гарантия для любого стороннего handler.
 
 Адаптеры охватывают стандартные copy, Inventory, Hopper, SimpleContainer, Slot.safeInsert, ItemStackHandler (с учётом simulate), InvWrapper и SidedInvWrapper, объединение ItemEntity и BundleContents.Mutable; есть явные вызовы в станках, печах, маршрутизации и носителях GonzoTech. Это **не** гарантия для любого стороннего способа пересоздания предметов.
 
@@ -200,15 +200,17 @@ Ingress330: actualguard/window/config/Plotnickhandler/Fenceregistration +pinnedN
 <a id="crit-2"></a>
 ## CRIT-2 — side-aware перенос наведёнки
 
-**Реализовано в 0.3.333, не закрыто: нужны native-прогон и авторская приёмка.** Внешний опыт 332:4×6+4×2mZt/s давали 16/48 вместо 32 при неизменном count8; обычный InvWrapper сохранял 32. Это ошибка наведёнки, не количества; прежнее сообщение о native-воспроизведении не выдаётся за новый агентский запуск.
+**Закрыто в 0.3.334 по авторской приёмке01.11.2026:** «Оба теста прошли штатно, фиксы применены, уносим в закрытое». Новый агентский native-прогон/точное число GameTest не заявляются. Внешний опыт 332:4×6+4×2mZt/s давали 16/48 вместо 32 при неизменном count8; обычный InvWrapper сохранял 32. Это ошибка наведёнки, не количества; прежнее сообщение о native-воспроизведении не выдаётся за новый агентский запуск.
 
 SidedInvWrapper имеет собственный insertItem; поэтому зарегистрирован отдельный SidedInvWrapperRadiationMixin. Redirect требует обе commit-точки grow: accepted-copy с дозой входной части объединяется с существующим слотом до grow на его старый count, через текущий ExternalRadiation.merge. simulate/reject не вызывают hook, original offer/остаток не меняют дозу; empty insert использует обычный copy/owner путь. SidedSlotCapacity-mixin и обычный InvWrapper не переписывались. Внешняя MenuDoseTransaction восстанавливает ту же weighted величину из исходных lots, не удваивает эффект.
 
-Без тика распада/облучения оба порядка 4×6+4×2 дают 8×4=32mZt/s. Headless2566 assertions охватывают empty/partial/full, лимиты/face remap/reject, original offer, simulate без dirty/rate/count mutation, несовместимый тип и внешнюю транзакцию; baseline462183e и 2 dose mutants assertion-killed. Реальные Mixin weaving/owner persistence требуют native GameTest/игры. Добавлены native matrix/outer-transaction тесты; не заявляется их запуск здесь. Оставшаяся приёмка: также компоненты/cursor/save-load и соседние InvWrapper/воронка/трубы. Радиационная физика 313–318, sidecar-формат, баланс, NBT/components, паузы/count-trim и legacy не менялись. [CURRENT](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [AUDIT](AUDIT.md#crit333), [HISTORY](HISTORY.md#crit333).
+Без тика распада/облучения оба порядка 4×6+4×2 дают 8×4=32mZt/s. Headless2566 assertions охватывают empty/partial/full, лимиты/face remap/reject, original offer, simulate без dirty/rate/count mutation, несовместимый тип и внешнюю транзакцию; baseline462183e и 2 dose mutants assertion-killed. Добавлены native matrix/outer-transaction тесты; новый запуск здесь не заявляется. Автор принял оба фикса; компоненты/cursor/save-load и соседние InvWrapper/воронка/трубы остаются регрессионным контрактом, не открытой очередью приёмки. Радиационная физика 313–318, sidecar-формат, баланс, NBT/components, паузы/count-trim и legacy не менялись. [CURRENT](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [AUDIT](AUDIT.md#crit333), [HISTORY](HISTORY.md#crit333).
 
-## Пакет 04 отдельно от текущего CRIT-2
+## Пакет 04 отдельно от закрытого CRIT-2
 
-RAD-PERF-1/№12 в [D-PERF12](DEFFERED.md#d-perf12): сначала профиль rebuild/source scans/observer reuse/copy allocations и хвостов, затем ограниченный выбор snapshot/invalidation. Сохраняются per-item источник, strongest rule, независимость владельцев/GUI, обратная связь, lead и provenance/rollback; динамические NBT/components/паузы/trim не возвращать. CRIT-2 из пакета 02 — отдельная корректность side-aware переноса и не ждёт широкой оптимизации. Исходные Markdown-пакеты теперь доступны, но нативные логи и код дополнительных проб не предоставлены.
+RAD-PERF-1/№12 в [D-PERF12](DEFFERED.md#d-perf12): сначала профиль rebuild/source scans/observer reuse/copy allocations и хвостов, затем ограниченный выбор snapshot/invalidation. Сохраняются per-item источник, strongest rule, независимость владельцев/GUI, обратная связь, lead и provenance/rollback; динамические NBT/components/паузы/trim не возвращать. CRIT-2 из пакета02 закрыт в334; широкая оптимизация не реализована и остаётся отдельно. Исходные Markdown-пакеты теперь доступны, но нативные логи и код дополнительных проб не предоставлены.
 
 
 Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_RAD_ITEMS.md); [решение и проверки](HISTORY.md#crit333).
+
+Предыдущая редакция: [до авторской приёмки334](archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_RAD_ITEMS.md); [новое решение](HISTORY.md#reactor-review334).

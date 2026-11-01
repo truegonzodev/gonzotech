@@ -1,6 +1,6 @@
 # Проверки проекта и история использования
 
-**Последний полный локальный прогон, PERF-001/9 / 0.3.332: 95 PASS / 0 SKIP / 0 FAIL.** Новая проверка:1326assertions/9assertionmutants/exact331compilednegative плюс100000absentBukkitAPIcalls/0block/chunkreads. Production adapter/policy/session иBE paths + exactWG7.0.13 flag engine вplugin-onlyloader; MC/Bukkit/bootstrap/geometry/Guava — doubles, не native hybrid/TPS. В последующем документальном шаге №9 закрыт решением автора без native WG-прогона; CRIT-1/CRIT-2 зарегистрированы для проверки и плана. Прежние budget2107/9, ingress4416/7/3exact329negative, Plotnick388/12, Fence73/7/exact328 сохранены; авторская приёмка330 закрыла6/10в331.
+**Актуальный статус01.11.2026, runtime0.3.334:** CRIT-1/CRIT-2 закрыты по авторской приёмке; новые HUD-NODE1/REACT-VAL1/REACT-VAL2 только зарегистрированы. Этот шаг документальный, не новый Gradle/Minecraft/GPU/performance run. Последний ранее выполненный локальный полный набор334:97/97PythonPASS; не повторяется ради смены статуса. [Текущая запись/проверки документов](#reactor-review334). Ниже хронологические срезы, прежнее ожидание приёмки не является действующей очередью.
 
 ## Команды и доказательства
 
@@ -653,3 +653,17 @@ API сверено с MCP1.21.4 mirror `KernelDotDLL/mcp-1.21.4`, commit6e96771c
 
 
 Проверки334 выполнены: native-caller API fixture —10assertions PASS; точный старый333 caller получил ожидаемую ошибку компиляции oneRow (1/1 compile-negative). CRIT behavioral1692+2566assertions PASS, baseline2/2 и7/7mutants assertion-killed. Полный набор97Python test-скриптов —97/97PASS (95runtime/resource/source +2docs), внутренних SKIP нет. docs_snapshots_test13PASS; docs_structure104exact snapshots/29live/75immutable/4173items/69dispositions PASS; doc_links1598/0broken,11исторических цитат с явным архивным маршрутом. Whitespace и selective scope проверяются перед commit. Native Gradle/JAR/GameTest334 здесь не выполнялись, авторская приёмка не заявлена.
+
+
+<a id="reactor-review334"></a>
+## Приёмка334 и новые HUD/реакторные задачи — документальный шаг
+
+**Источник:** сообщение автора «Оба теста прошли штатно, фиксы применены, уносим в закрытое» и три новых наблюдения; уточнение через вопрос: «Любая сшитая группа». Этого достаточно для закрытия CRIT-1/CRIT-2 по его решению. Новых логов/счёта всего native suite нет: не заявлять29/29, полный save/load прогон или новый агентский native run. Исторический333 compileJava FAILED не скрыт; исправленный caller334 остаётся регрессионно защищённым.
+
+Новые задачи не исправлялись: HUD-NODE1 — мигает строка группы; REACT-VAL1 — смена режима встроенного узла даёт неформируемое состояние; REACT-VAL2 — после возврата обшивки поршнем formed-текстура расходится с GUI/валидностью. Автор сообщает рабочий поршневой контроль на парогене/турбине; агент его не запускал. Source-сверка: WrenchHud REQUEST_INTERVAL5/FLOW_STALE_TICKS15 и shared FlowEntry.clumpSize; ReactorStructure world-edit invalidation/placement-only initialize; gthPortLimit и MachineDefs=16 364GTH/т на вывод. Это направления расследования, не доказанные root causes. Частота полного пересчёта не измерялась.
+
+План доказательства будущих исправлений: стабильный/сменившийся HUD target с задержками; смена режимов всех допустимых реакторных портов без распада/ресурсного reset и ordinary-node контроль; завершённое piston out/in с проверкой panel/bounds/index/endpoints/GUI, сохранением ресурсов и отказом на настоящем проломе/unknown chunks. Принятые critical regressions сохраняются; не лечить маскировкой invalid GUI или одним декоративным formed.
+
+В этом шаге выполнены только документальные/scope проверки, результаты приведены в HISTORY. Java/resources/Gradle/version/баланс не меняются. Десять прежних документов334 сохранены exactec3ba9d с Git/hash/bytes в [архиве](archive/editions/0.3.334/README.md); старые архивы неизменны. №9/deferred/88uncategorized не переоткрываются и не переупаковываются. [CURRENT](CURRENT-STATE.md), [HISTORY](HISTORY.md#reactor-review334).
+
+Предыдущая редакция: [до авторской приёмки334](archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_AUDIT.md); [новое решение](HISTORY.md#reactor-review334).

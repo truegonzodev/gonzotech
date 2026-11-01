@@ -38,7 +38,7 @@ Source-пины сверены с действующим резервом тру
 
 ## PERF-001 — контракты завершённого текущего цикла
 
-01.11.2026, runtime332: текущий цикл PERF-001 завершён. №9 закрыт прямым решением автора без утверждения native WG-приёмки; №13/14 и остаток№3 отложены в [D-PIPE2](DEFFERED.md#d-pipe2), №12 — отдельно в [D-PERF12](DEFFERED.md#d-perf12). Остальные принятые пункты не переоткрываются. После отдельного разрешения автора CRIT-1/CRIT-2 реализованы в 333; текущая работа — их native/игровая приёмка, не новый PERF-цикл. Замена статуса не меняет прогрев 5×5, склад или read-only PlotnickBlock.java.
+01.11.2026, runtime332: текущий цикл PERF-001 завершён. №9 закрыт прямым решением автора без утверждения native WG-приёмки; №13/14 и остаток№3 отложены в [D-PIPE2](DEFFERED.md#d-pipe2), №12 — отдельно в [D-PERF12](DEFFERED.md#d-perf12). Остальные принятые пункты не переоткрываются. После отдельного разрешения автора CRIT-1/CRIT-2 реализованы в 333; авторская приёмка334 закрыла оба пункта; новые задачи HUD/реакторной валидации — не новый PERF-цикл. Замена статуса не меняет прогрев 5×5, склад или read-only PlotnickBlock.java.
 
 ### Кнопки PERF-001/6 — бюджет330, принят автором в331
 
@@ -100,11 +100,13 @@ WG отсутствует — старые события NeoForge и их кэ�
 
 **Смена статуса01.11.2026:** №9 закрыт решением автора без нового native-доказательства;13/14 → [D-PIPE2](DEFFERED.md#d-pipe2),12 → [D-PERF12](DEFFERED.md#d-perf12). Реализация deferred не разрешена. [Хроника](HISTORY.md#status-reset332).
 
-Авторские пакеты 02/01: CRIT-2 реализован в 333 и ждёт приёмки в CURRENT, а A3/A5 вместе с 13/14/остатком 3 отложены в D-PIPE2. Пакет не включает старые некатегоризированные сметы/JEI/сообщения. [Единая очередь](DEFFERED.md), [исходные тексты](archive/editions/0.3.332/README.md#author-sync332).
+Авторские пакеты 02/01: CRIT-2 реализован в333 и закрыт по авторской приёмке334, а A3/A5 вместе с 13/14/остатком 3 отложены в D-PIPE2. Пакет не включает старые некатегоризированные сметы/JEI/сообщения. [Единая очередь](DEFFERED.md), [исходные тексты](archive/editions/0.3.332/README.md#author-sync332).
 
 
 ## CRIT-2 — sided handler, исправление 333
 
-Отдельный SidedInvWrapperRadiationMixin сохраняет weighted sidecar при объединении accepted-copy со старым слотом до grow; обе commit-ветки покрыты, simulate/reject не мутируют дозу. Количество, грани/индексы и одноштучные admission-лимиты прежние. Код PlotnickBlock/PlotnickBlockEntity не менялся. Headless-регрессии проходят; actual Plotnick native handler/save-load и игровая приёмка ещё требуются. Это не новая ёмкость/баланс/прогрев/выбор контроллера. [RAD_ITEMS](RAD_ITEMS.md#crit-2), [AUDIT](AUDIT.md#crit333).
+Отдельный SidedInvWrapperRadiationMixin сохраняет weighted sidecar при объединении accepted-copy со старым слотом до grow; обе commit-ветки покрыты, simulate/reject не мутируют дозу. Количество, грани/индексы и одноштучные admission-лимиты прежние. Код PlotnickBlock/PlotnickBlockEntity не менялся. Headless-регрессии проходят; авторская приёмка334 закрыла CRIT-2. Подробная native/save-load матрица новым агентским запуском не заявлена. Это не новая ёмкость/баланс/прогрев/выбор контроллера. [RAD_ITEMS](RAD_ITEMS.md#crit-2), [AUDIT](AUDIT.md#crit333).
 
 Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_AUTOMINER.md); [решение и проверки](HISTORY.md#crit333).
+
+Предыдущая редакция: [до авторской приёмки334](archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_AUTOMINER.md); [новое решение](HISTORY.md#reactor-review334).

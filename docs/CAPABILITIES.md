@@ -178,17 +178,27 @@ FIFOочередиDequeсremoveFirst;retrybuild/dismantleвtail,TNTвhead/пау
 <a id="crit-2"></a>
 ## CRIT-2 — side-aware перенос наведёнки
 
-**Реализовано в 0.3.333, не закрыто: нужны native-прогон и авторская приёмка.** Внешний опыт 332:4×6+4×2mZt/s давали 16/48 вместо 32 при неизменном count8; обычный InvWrapper сохранял 32. Это ошибка наведёнки, не количества; прежнее сообщение о native-воспроизведении не выдаётся за новый агентский запуск.
+**Закрыто в 0.3.334 по авторской приёмке01.11.2026:** «Оба теста прошли штатно, фиксы применены, уносим в закрытое». Новый агентский native-прогон/точное число GameTest не заявляются. Внешний опыт 332:4×6+4×2mZt/s давали 16/48 вместо 32 при неизменном count8; обычный InvWrapper сохранял 32. Это ошибка наведёнки, не количества; прежнее сообщение о native-воспроизведении не выдаётся за новый агентский запуск.
 
 SidedInvWrapper имеет собственный insertItem; поэтому зарегистрирован отдельный SidedInvWrapperRadiationMixin. Redirect требует обе commit-точки grow: accepted-copy с дозой входной части объединяется с существующим слотом до grow на его старый count, через текущий ExternalRadiation.merge. simulate/reject не вызывают hook, original offer/остаток не меняют дозу; empty insert использует обычный copy/owner путь. SidedSlotCapacity-mixin и обычный InvWrapper не переписывались. Внешняя MenuDoseTransaction восстанавливает ту же weighted величину из исходных lots, не удваивает эффект.
 
-Без тика распада/облучения оба порядка 4×6+4×2 дают 8×4=32mZt/s. Headless2566 assertions охватывают empty/partial/full, лимиты/face remap/reject, original offer, simulate без dirty/rate/count mutation, несовместимый тип и внешнюю транзакцию; baseline462183e и 2 dose mutants assertion-killed. Реальные Mixin weaving/owner persistence требуют native GameTest/игры. Добавлены native matrix/outer-transaction тесты; не заявляется их запуск здесь. Оставшаяся приёмка: также компоненты/cursor/save-load и соседние InvWrapper/воронка/трубы. Радиационная физика 313–318, sidecar-формат, баланс, NBT/components, паузы/count-trim и legacy не менялись. [CURRENT](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [AUDIT](AUDIT.md#crit333), [HISTORY](HISTORY.md#crit333).
+Без тика распада/облучения оба порядка 4×6+4×2 дают 8×4=32mZt/s. Headless2566 assertions охватывают empty/partial/full, лимиты/face remap/reject, original offer, simulate без dirty/rate/count mutation, несовместимый тип и внешнюю транзакцию; baseline462183e и 2 dose mutants assertion-killed. Добавлены native matrix/outer-transaction тесты; новый запуск здесь не заявляется. Автор принял оба фикса; компоненты/cursor/save-load и соседние InvWrapper/воронка/трубы остаются регрессионным контрактом, не открытой очередью приёмки. Радиационная физика 313–318, sidecar-формат, баланс, NBT/components, паузы/count-trim и legacy не менялись. [CURRENT](CURRENT-STATE.md#crit-2--sidedinvwrapper-создаёт-или-стирает-наведёнку-при-объединении), [AUDIT](AUDIT.md#crit333), [HISTORY](HISTORY.md#crit333).
 
 ## Пакеты 332: проверенные source-основания, не новые исправления
 
 A3/PIPE-II-1: perItemMap создаётся в ItemRouting.pushItems, который вызывается отдельно для входных граней. Требование автора — лимит Item на весь узел за проход, отдельно от общего бюджета и независимо от других узлов. Внешняя native-проба сообщает 2 переноса при cap1/сумме 10; это превышение throughput, не count-dupe. A5/PIPE-II-2: ItemFilterRouting ищет sinks до no-work return; его поиск не покрыт общим BFS-budget. TPS не измерен. Оба пункта вместе с 13/14/остатком 3 — [D-PIPE2](DEFFERED.md#d-pipe2), не реализованы.
 
-A6/SEC-1: инвентаризировать bounded ingress остальных C2S, enqueue/decode/размеры/полномочия/menu/distance/loaded target; существующие Plotnick/Fence330 не переоткрываются. A7/SEC-2: crisis-click notification требует отдельной server truth/повторной валидации, не только throttle. Это source-риски, не измеренная DoS-атака: [D-SEC1](DEFFERED.md#d-sec1). №9 закрыт без native-claim, SEC-3 не открыт. Room snapshots12 — отдельно [D-PERF12](DEFFERED.md#d-perf12); CRIT-2 — текущая корректность, не широкая оптимизация.
+A6/SEC-1: инвентаризировать bounded ingress остальных C2S, enqueue/decode/размеры/полномочия/menu/distance/loaded target; существующие Plotnick/Fence330 не переоткрываются. A7/SEC-2: crisis-click notification требует отдельной server truth/повторной валидации, не только throttle. Это source-риски, не измеренная DoS-атака: [D-SEC1](DEFFERED.md#d-sec1). №9 закрыт без native-claim, SEC-3 не открыт. Room snapshots12 — отдельно [D-PERF12](DEFFERED.md#d-perf12); CRIT-2 закрыт по приёмке334; это корректность переноса, не выполненная широкая оптимизация.
 
 
 Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_CAPABILITIES.md); [решение и проверки](HISTORY.md#crit333).
+
+
+<a id="reactor-review334"></a>
+## Новые наблюдения после приёмки334
+
+**HUD-NODE1, текущая задача:** по уточнению автора мигает счётчик у **любой сшитой группы**, не только реакторных портов. Стабильная топология должна давать стабильное число между ответами; проверить WrenchHud FlowEntry/clumpSize, свежесть и смену адресата без фиктивных размеров. Потоковые данные не объявляются свежими бессрочно ради строки. Это не активация D-PIPE2.
+
+**REACT-VAL1/2, текущие задачи:** standalone-режим встроенного узла не должен определять валидность реактора; в корпусе узел — порт. После завершённого возврата обшивки поршнем ранее собранный реактор должен иметь согласованные root/bounds/member index/живые endpoints и реальное GUI, без ручного break/place. Подтвердить heat/water/universal варианты и обычные узлы вне корпуса; не лечить снятием loaded/identity guards и не сохранять stale receiver. Портовый gthPortLimit16 364GTH/т и внешние трубные ограничения не менять, поток не возвращать в ту же структуру.
+
+[CURRENT](CURRENT-STATE.md), [решение и доказательства](HISTORY.md#reactor-review334), [предыдущая редакция](archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_CAPABILITIES.md). Код в этом документальном шаге не менялся.

@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_CURRENT-STATE.md",
+      "sha256": "830581b6951e3259c4e517e0a7e621ba981da42a9a1275ee5ea34f9564c98a98",
+      "bytes": 17731,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/REACTORS.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_REACTORS.md",
+      "sha256": "0283c6ea8f191e1a3d8657174bf1531343f2d56029f215dc176d8557de96d298",
+      "bytes": 12027,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_MULTIBLOCK.md",
+      "sha256": "dd88137916d22e87717f36c5981063f2eeb9702605bd9738d36359e78ba3e449",
+      "bytes": 22694,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_MACHINES.md",
+      "sha256": "9b21ac4da852c93e15cc7fa5b985e112e1f23171d4e29d1ed098096a7a1124df",
+      "bytes": 60120,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_CAPABILITIES.md",
+      "sha256": "eae4dfd5c5d2132f2a4ba35e8df9eac7ed37f2e3590ba2c05e50466b86001789",
+      "bytes": 53183,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_RAD_ITEMS.md",
+      "sha256": "3a2693f4cd3804ee5ee9278a010006a2ecba6d2b4fc6ccc15e785135691d0724",
+      "bytes": 48499,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/AUTOMINER.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_AUTOMINER.md",
+      "sha256": "53660efa8885aaeebb53e576b7ca6dd945940d6e78eae34f11b84bf8c4f5729a",
+      "bytes": 25574,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_DEFFERED.md",
+      "sha256": "830b1d613f2a3105b59a7bd083a00de5ca3cb48e25ea4eef685daf2fd1064bfd",
+      "bytes": 81457,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/AUDIO_VISUAL.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_AUDIO_VISUAL.md",
+      "sha256": "bf4bba2abeed5ca5ce5c246ce0abcb928b5a6c96e250a725a6f357673ac78439",
+      "bytes": 18122,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "ec3ba9d550c3248ef29a0577fd712d0684050a43",
+      "snapshot": "docs/archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_AUDIT.md",
+      "sha256": "df792e49550e81ccfc162eb1d5626b522ac71b161810838e2d086213e2ef6a6a",
+      "bytes": 159219,
+      "task": "Author acceptance of CRIT-1/2 and registration of HUD-NODE1 / REACT-VAL1 / REACT-VAL2"
+    }
+  ]
+}

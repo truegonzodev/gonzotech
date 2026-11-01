@@ -247,15 +247,23 @@ PERF-001/9 реализован optional WE/WG bridge и закрыт по ре�
 **Смена статуса01.11.2026:** №9 закрыт решением автора без нового native-доказательства;13/14 → [D-PIPE2](DEFFERED.md#d-pipe2),12 → [D-PERF12](DEFFERED.md#d-perf12). Реализация deferred не разрешена. [Хроника](HISTORY.md#status-reset332).
 
 <a id="crit-review332"></a>
-## CRIT-1/CRIT-2 — реализация 333, ожидается приёмка
+## CRIT-1/CRIT-2 — реализация333, приёмка334
 
 CRIT-1: поколение панели и точные живые владельцы, clicked/direct quickMove guard до cursor-debit, стандартное закрытие устаревшего GUI по решению автора; не remap/поздний возврат/перестройка реактора. CRIT-2: отдельный зарегистрированный radiation redirect для двух commit-веток SidedInvWrapper, accepted-copy + старый слот до grow; SlotCapacity/обычный InvWrapper/физика/баланс не менялись.
 
-Headless production-regression1692+2566 assertions PASS; exact462183e baseline2/2 и mutants7/7 отклонены по AssertionError. MC/click/close/weaving/storage doubles — не native-сервер. Четыре новых CriticalStateGameTests добавлены, не запущены здесь; авторская игра/save-load ещё нужны, оба пункта остаются в CURRENT и не закрываются. [CRIT-1](REACTORS.md#crit-1), [CRIT-2](RAD_ITEMS.md#crit-2), [CURRENT](CURRENT-STATE.md), [AUDIT](AUDIT.md#crit333).
+Headless production-regression1692+2566 assertions PASS; exact462183e baseline2/2 и mutants7/7 отклонены по AssertionError. MC/click/close/weaving/storage doubles — не native-сервер. Четыре новых CriticalStateGameTests добавлены, не запущены здесь; автор подтвердил оба теста/применение фиксов и закрыл пункты в334. Нельзя выводить полный счёт native GameTest или подробную save-load матрицу из этой краткой приёмки. [CRIT-1](REACTORS.md#crit-1), [CRIT-2](RAD_ITEMS.md#crit-2), [CURRENT](CURRENT-STATE.md), [AUDIT](AUDIT.md#crit333).
 
 ## Единая очередь авторских пакетов 332
 
-Текущая работа — приёмка реализованных в 333 CRIT-1/CRIT-2 пакета 02. Трубные A3/A5/13/14/остаток 3 — D-PIPE2; радиационная стоимость 12 — D-PERF12. CONTENT-1/A4 отложен отдельно: у third_grinder keyG=second_grinder не используется в PHP/P P/PSP, native loader по отчёту отвергает рецепт. JSON/регистрация блока/JEI-категория не доказывают наличие crafting recipe. Не удалять G ради зелёного лога и не придумывать другой рисунок без согласования. Рецепт не исправлялся в 333. Старые сметы устройств/JEI/прочие uncategorized пункты к этим пакетам не присоединены. [Полная очередь](DEFFERED.md).
+Пакет02/CRIT-1/CRIT-2 принят автором в334. Текущая работа — новые HUD-NODE1/REACT-VAL1/REACT-VAL2, не реализация deferred. Трубные A3/A5/13/14/остаток 3 — D-PIPE2; радиационная стоимость 12 — D-PERF12. CONTENT-1/A4 отложен отдельно: у third_grinder keyG=second_grinder не используется в PHP/P P/PSP, native loader по отчёту отвергает рецепт. JSON/регистрация блока/JEI-категория не доказывают наличие crafting recipe. Не удалять G ради зелёного лога и не придумывать другой рисунок без согласования. Рецепт не исправлялся в 333. Старые сметы устройств/JEI/прочие uncategorized пункты к этим пакетам не присоединены. [Полная очередь](DEFFERED.md).
 
 
 Предыдущая редакция: [до CRIT333](archive/editions/0.3.332/OUTDATED_BEFORE_CRIT333_MACHINES.md); [решение и проверки](HISTORY.md#crit333).
+
+
+<a id="reactor-review334"></a>
+## Новые наблюдения после приёмки334
+
+В CURRENT добавлены **HUD-NODE1** (мигает счётчик у любой сшитой группы), **REACT-VAL1** (режим встроенного порта не должен расформировывать реактор/требовать break-place) и **REACT-VAL2** (после поршневого возврата обшивки formed и реальная доступность GUI/портов должны совпадать). Это зарегистрированные проблемы, не новые выполненные фиксы. Сохраняются ресурсы/температура/топливные владельцы и CRIT-1, потолок реактора16 364GTH/т на вывод и лимиты труб. Не затрагивать standalone-режимы прочих сетей и классический цикл парогенератора/турбины; их авторский положительный контроль не выдаётся за новый агентский тест.
+
+[CURRENT](CURRENT-STATE.md), [решение и доказательства](HISTORY.md#reactor-review334), [предыдущая редакция](archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_MACHINES.md). Код в этом документальном шаге не менялся.
