@@ -2,8 +2,9 @@
 """0.3.335: вшитые корпусные порты, возврат обшивки поршнем, стабильный счётчик клампа.
 
 Source-контракты и отрицательные пины, НЕ доказательство Minecraft/NeoForge сборки,
-нативного GameTest или игровой приёмки автора. Конкретная политика режимов
-вшитого порта отложена в D-PORTMODE1 (0.3.336+) и здесь не реализуется.
+нативного GameTest или игровой приёмки автора. D-PORTMODE1 был намеренно
+отложен в 0.3.335 и реализован отдельным патчем 0.3.336; все пины 0.3.335
+сохранены, а блок заглушек ниже заменён пинами «заглушка снята».
 """
 import json
 from pathlib import Path
@@ -131,13 +132,17 @@ for symbol in ('ReactorStructure.isMember', 'TurbineStructure.isMember', 'SteamG
     assert symbol in ports, symbol
 assert 'PipeCarrier' in ports
 
-# ── D-PORTMODE1: только заглушки/комменты, конкретной реализации НЕТ ────────
-assert 'D-PORTMODE1' in mode_stub and 'return current;' in mode_stub
-assert routing.count('0.3.336+ D-PORTMODE1') == 2
-assert 'PipeMode mode = modeOf(pstate, type);' in routing  # поведение не подменено
-assert 'EmbeddedPortMode.resolve(level, pipe, pstate, type, mode);' in routing  # в комментарии
-assert 'PipeMode effective = EmbeddedPortMode.resolve' not in routing.replace(
-    '// PipeMode effective = EmbeddedPortMode.resolve', '')  # реального вызова нет
+# ── D-PORTMODE1: в 0.3.335 была ЗАГЛУШКА, в 0.3.336 снята реализацией ──────
+# Исторический факт 335 (заглушка) зафиксирован в HISTORY; здесь проверяем,
+# что все остальные пины 335 целы, а заглушечные комментарии убраны честно.
+assert 'D-PORTMODE1' in mode_stub
+assert 'PipeMode mode = modeOf(pstate, type);' in routing  # standalone-режим не подменён
+assert routing.count('0.3.336+ D-PORTMODE1') == 0          # заглушечные комменты сняты
+assert '// PipeMode effective = EmbeddedPortMode.resolve' not in routing
+assert 'EmbeddedPortMode.resolve(level, port, portState, type,' in routing
+assert 'EmbeddedPortMode.cappedIntake' in routing
+assert 'EmbeddedPortMode.charge(level, port, type, sourceTaken, true)' in routing
+assert 'effectiveBudget' in routing
 
 # ── Языковые ключи ──────────────────────────────────────────────────────────
 keys = {
@@ -180,4 +185,4 @@ assert 'v-0-3-335' in history
 assert '18³' in current or '18³' in rules
 
 print('0.3.335 embedded port / piston shell / clump HUD source contracts PASS; '
-      'D-PORTMODE1 deliberately deferred; not a native build or gameplay acceptance')
+      'D-PORTMODE1 stub removed in 0.3.336; not a native build or gameplay acceptance')

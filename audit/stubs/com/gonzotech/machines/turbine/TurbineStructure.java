@@ -9,4 +9,6 @@ public final class TurbineStructure {
     public static void portPlaced(Level level, BlockPos pos) { }
     public static void portRemoved(Level level, BlockPos pos) { }
     private TurbineStructure() { }
+ /** 0.3.336 D-PORTMODE1: реальная сигнатура потолка GTU-порта турбины. */
+ public static long outputPortLimit(Level level, BlockPos port) { return 0L; }
 }

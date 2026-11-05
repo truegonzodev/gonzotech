@@ -220,10 +220,26 @@ public final class PipeRouting {
     public static long drainFromMultiblockPort(Level level, BlockPos port, PipeType type, long budget, long rotation,
                                                BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
                                                BiFunction<Level, BlockPos, Boolean> isMember) {
-        if (budget <= 0 || !isPipe(level.getBlockState(port), type)) return 0;
+        BlockState portState = level.getBlockState(port);
+        if (budget <= 0 || !isPipe(portState, type)) return 0;
         PipeRoutingDiagnostics.Trace diagnostics =
             PipeRoutingDiagnostics.begin(level, port, type, budget, "multiblock-port");
         long routeStarted = diagnostics == null ? 0L : System.nanoTime();
+        // 0.3.336 D-PORTMODE1: «забор» ТОЛЬКО принимает в сборку, поэтому
+        // выдача из неё через такой порт запрещена (в т.ч. GTH реактора).
+        PipeMode sourceMode = EmbeddedPortMode.resolve(level, port, portState, type,
+            modeOf(portState, type));
+        if (!EmbeddedPortMode.allowsOutput(sourceMode)) {
+            if (diagnostics != null) diagnostics.finish("mode-output-blocked", 0L, 0L, 0L);
+            return 0;
+        }
+        // AUTO: обе стороны делят ОДНУ общую проводимость порта.
+        long effectiveBudget = Math.min(budget,
+            EmbeddedPortMode.sharedRemaining(level, port, type, true));
+        if (effectiveBudget <= 0L) {
+            if (diagnostics != null) diagnostics.finish("mode-shared-cap", 0L, 0L, 0L);
+            return 0;
+        }
 
         Set<Long> direct = new HashSet<>();
         List<Lane> lanes = new ArrayList<>();
@@ -253,13 +269,18 @@ public final class PipeRouting {
                 default -> null;
             };
             if (portRaw != null) {
-                addPortLane(level, pipe, port, type, portRaw,
-                    buildPath(level, pipe, pipe, parent), direct, lanes, diagnostics);
+                // 0.3.336 D-PORTMODE1: «отдача» НЕ принимает воду/тепло/пар
+                // внутрь сборки; AUTO делит общий потолок порта с выдачей.
+                if (EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(pstate))) {
+                    Transfer.Receiver gated = EmbeddedPortMode.cappedIntake(level, pipe, type, portRaw);
+                    addPortLane(level, pipe, port, type, gated,
+                        buildPath(level, pipe, pipe, parent), direct, lanes, diagnostics);
+                }
             }
+            // 0.3.336: режим вшитого порта применяется к ЕГО СОБСТВЕННЫМ lane'ам
+            // (выше и в исходном гейте), а НЕ к ordinary machine lanes соседних
+            // блоков — для них сохраняется прежний standalone modeOf.
             PipeMode mode = modeOf(pstate, type);
-            // 0.3.336+ D-PORTMODE1 (заглушка вызова, поведение НЕ меняется):
-            // PipeMode effective = EmbeddedPortMode.resolve(level, pipe, pstate, type, mode);
-            // Политика режимов вшитого порта обсуждается после приёмки 0.3.335.
             for (Direction dir : Direction.values()) {
                 BlockPos next = pipe.relative(dir);
                 // Через другую встроенную ноду не идём: порт — это граница
@@ -296,7 +317,8 @@ public final class PipeRouting {
             return 0;
         }
         long distributionStarted = diagnostics == null ? 0L : System.nanoTime();
-        long sourceTaken = distributeLanes(level, type, lanes, budget, rotation, diagnostics);
+        long sourceTaken = distributeLanes(level, type, lanes, effectiveBudget, rotation, diagnostics);
+        if (sourceTaken > 0L) EmbeddedPortMode.charge(level, port, type, sourceTaken, true);
         long distributionNanos = diagnostics == null ? 0L : System.nanoTime() - distributionStarted;
         if (diagnostics != null) diagnostics.finish("ok", sourceTaken, routeNanos, distributionNanos);
         return sourceTaken;
@@ -372,13 +394,17 @@ public final class PipeRouting {
                 default -> null;
             };
             if (portRaw != null) {
-                List<PathStep> selfPath = buildPath(level, pipe, pipe, parent);
-                addPortLane(level, pipe, fromPos, type, portRaw, selfPath, direct, lanes, diagnostics);
+                // 0.3.336 D-PORTMODE1: «через отдачу нельзя ввести в условный
+                // пароген воду»; AUTO делит общий потолок порта с выдачей.
+                if (EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(pstate))) {
+                    Transfer.Receiver gated = EmbeddedPortMode.cappedIntake(level, pipe, type, portRaw);
+                    List<PathStep> selfPath = buildPath(level, pipe, pipe, parent);
+                    addPortLane(level, pipe, fromPos, type, gated, selfPath, direct, lanes, diagnostics);
+                }
             }
+            // 0.3.336: ordinary machine lanes остаются под прежним modeOf;
+            // политика вшитого порта применяется только к его port lane.
             PipeMode mode = modeOf(pstate, type);
-            // 0.3.336+ D-PORTMODE1 (заглушка вызова, поведение НЕ меняется):
-            // PipeMode effective = EmbeddedPortMode.resolve(level, pipe, pstate, type, mode);
-            // Политика режимов вшитого порта обсуждается после приёмки 0.3.335.
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
                 BlockState nstate = level.getBlockState(npos);

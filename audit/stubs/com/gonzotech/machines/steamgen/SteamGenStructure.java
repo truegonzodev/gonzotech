@@ -11,4 +11,6 @@ public final class SteamGenStructure {
     /** 0.3.104: реальная сигнатура (гвард «порт сформированного мультиблока»). */
     public static boolean isMember(Level level, BlockPos pos) { return false; }
     private SteamGenStructure() { }
+ /** 0.3.336 D-PORTMODE1: реальная сигнатура потолка парового порта. */
+ public static long steamPortLimit(Level level, BlockPos port) { return 0L; }
 }

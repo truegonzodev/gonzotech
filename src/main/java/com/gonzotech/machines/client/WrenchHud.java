@@ -266,6 +266,14 @@ public final class WrenchHud {
         java.util.List<Component> title = new java.util.ArrayList<>(4);
         Component shortMode = Component.translatable(
             "message.gonzotech.pipe_mode_short." + mode.getSerializedName());
+        // 0.3.336 D-PORTMODE1: режим вшитого порта ОДИН на весь узел, поэтому
+        // HUD показывает именно его, а не per-канальный modeOf(state, part).
+        boolean embedded = info != null
+            && info.ownerId() != com.gonzotech.machines.FormedPorts.OWNER_NONE;
+        PipeMode portMode = embedded
+            ? com.gonzotech.machines.network.EmbeddedPortMode.nodeMode(state) : mode;
+        Component portShortMode = Component.translatable(
+            "message.gonzotech.pipe_mode_short." + portMode.getSerializedName());
         if (info == null) {
             // ответ ещё в пути — честно молчим, но не показываем неверный ярлык
         } else if (info.ownerId() == com.gonzotech.machines.FormedPorts.OWNER_NONE) {
@@ -273,7 +281,7 @@ public final class WrenchHud {
                 partLabel(state, part), shortMode));
         } else {
             title.add(Component.translatable("hud.gonzotech.wrench_embedded_port",
-                Component.translatable("resource.gonzotech." + part.id()), shortMode)
+                Component.translatable("resource.gonzotech." + part.id()), portShortMode)
                 .withStyle(ChatFormatting.WHITE));
             title.add(Component.translatable("hud.gonzotech.wrench_embedded_port.host",
                 state.getBlock().getName()).withStyle(ChatFormatting.GRAY));
@@ -282,7 +290,7 @@ public final class WrenchHud {
             // 4-я короткая строка несёт снятое с ПЕРВОЙ строки длинное
             // пояснение AUTO; для «забор»/«отдача» режим уже назван выше и
             // четвёртая строка не нужна (лишнее слово не рисуем).
-            if (mode == PipeMode.AUTO) {
+            if (portMode == PipeMode.AUTO) {
                 title.add(Component.translatable("hud.gonzotech.wrench_port_mode.auto")
                     .withStyle(ChatFormatting.GRAY));
             }

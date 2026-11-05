@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_CURRENT-STATE.md",
+      "sha256": "0bec5c53ded10a320daa418d4d7321d8b7c0613de7d9e42c99925a7e75719056",
+      "bytes": 22045,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/HISTORY.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_HISTORY.md",
+      "sha256": "b99a4ba14ce02f431b6caad5db0b4cf556ff728f5cde96e65efde3f81503b773",
+      "bytes": 922293,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_DEFFERED.md",
+      "sha256": "d95423661ea0a3c89fbf3b097561480ed54d3a507896533a859819461d84db40",
+      "bytes": 83067,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_AUDIT.md",
+      "sha256": "00220cb004f3e8cacec01f0f03f993a7da2f92a4de5c43e9dde7c416c9009749",
+      "bytes": 174158,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/RULES.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_RULES.md",
+      "sha256": "cb796dfc2e452bc2bd474de28b4e3bf1580efa7d08d374599b4ceecb3d911a03",
+      "bytes": 19706,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/DOCS_RULES.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_DOCS_RULES.md",
+      "sha256": "4f93e072aa7297ebafd2e96df47c4a697badd19f152f5095f24b1d8ad49e9c52",
+      "bytes": 26984,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/AUDIO_VISUAL.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_AUDIO_VISUAL.md",
+      "sha256": "2f79ce940bed2c13b97feb715286e543faff8283bdadb45a527a9cfe4130f1aa",
+      "bytes": 24143,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_CAPABILITIES.md",
+      "sha256": "e6653f0d59ca83773e0b470e9a0ffac712ca3d875b539cc01c0b2721df332ecb",
+      "bytes": 59016,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/REACTORS.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_REACTORS.md",
+      "sha256": "09af9a3886e807a37d31531058a85e6ba741c044f92f3d174e558b49b18df1cb",
+      "bytes": 18113,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_MULTIBLOCK.md",
+      "sha256": "bc6e949f60d03761f2c5b5e0b2ee643d74c4c3a79da9b090a93cb96f1538ed97",
+      "bytes": 28939,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_MACHINES.md",
+      "sha256": "6148d767ecb14770959f5bee7003b4103970691cd00545fe94cca24a31f49dd1",
+      "bytes": 64239,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "source_commit": "f875c9b26969f2906569d96532dc981e68cdaf09",
+      "snapshot": "docs/archive/editions/0.3.336/OUTDATED_BEFORE_336_archive-README.md",
+      "sha256": "0e415a5a5ea197fd9e312ee97547d7d7748d99b85f44d29e331af0b8464fc560",
+      "bytes": 8203,
+      "task": "0.3.336 D-PORTMODE1: actual I/O modes for embedded shell ports"
+    }
+  ]
+}
