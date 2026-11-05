@@ -20,6 +20,9 @@ import java.util.Map;
  */
 public final class ItemFlowTracker {
 
+    /** 0.3.337: то же HUD-окно, что у FlowTracker (интервал обновления цифр). */
+    public static final int HUD_WINDOW_TICKS = 2;
+
     private ItemFlowTracker() {
     }
 
@@ -53,6 +56,19 @@ public final class ItemFlowTracker {
         Holder h = LEVELS.get(level);
         if (h == null) return EMPTY;
         if (level.getGameTime() - h.tick > 1) return EMPTY;
+        Map<Item, Integer> byItem = h.flow.get(pipe.asLong());
+        return byItem == null ? EMPTY : byItem;
+    }
+
+    /**
+     * 0.3.337: поток предметов для HUD ключа за окно HUD_WINDOW_TICKS тиков —
+     * последний подтверждённый срез, без усреднения. Устраняет багованное
+     * «1 сек есть / 1 сек нет» при постоянном предметном потоке.
+     */
+    public static Map<Item, Integer> getHud(Level level, BlockPos pipe) {
+        Holder h = LEVELS.get(level);
+        if (h == null) return EMPTY;
+        if (level.getGameTime() - h.tick > HUD_WINDOW_TICKS) return EMPTY;
         Map<Item, Integer> byItem = h.flow.get(pipe.asLong());
         return byItem == null ? EMPTY : byItem;
     }

@@ -285,3 +285,7 @@ Headless production-regression1692+2566 assertions PASS; exact462183e baseline2/
 ## 0.3.337: сетевой лимит под частоту опроса потока
 
 `PipeFlowNetwork.java`: `FLOW_REQUESTS_PER_WINDOW = 24` вместо `8` для `pipeFlowAll` и `pipeItemFlow`, потому что клиент в `WrenchHud.java` теперь запрашивает поток каждые `FLOW_REQUEST_INTERVAL = 2` тика — прежние 8/20 молча отбрасывали бы часть пакетов. `REQUEST_INTERVAL = 5` для фильтра/вольфрама, `PortInfoPayload(pos,int ownerId)`, `PORT_PROBE_RADIUS = 3`, `PORT_PROBE_LIMIT = 96` и пакетная выдача владельцев не изменились. Политика режимов `EmbeddedPortMode` и `PipeRouting` 0.3.336 не переписывалась: D-PORTMODE1 закрыт по игровой приёмке автора. [AUDIT](AUDIT.md#hud337), [HISTORY](HISTORY.md#v-0-3-337), [правила](RULES.md).
+
+### Приёмочная правка 0.3.337: серверный срез, а не «строка априори»
+
+`PipeFlowNetwork.respond`, кламп-ветка и `respondItemFlow` переведены с мгновенного `FlowTracker.get(...)`/`ItemFlowTracker.get(...)` (окно ≤1 тик) на `getHud(...)` с `HUD_WINDOW_TICKS = 2` — последний подтверждённый срез в ед./тик за интервал обновления цифр. Именно этот срез при 100 % постоянном потоке периодически давал ложный ноль и вызывал багованное «1 сек есть / 1 сек нет». `get()` для компаратора/редстоуна и `FlowTracker.getLoss` (исторический пин 0.3.104) не тронуты; предметы `count <= 0` в HUD не уходят, `FLOW_REQUESTS_PER_WINDOW = 24` сохранён. [HISTORY](HISTORY.md#v-0-3-337-accept), [AUDIT](AUDIT.md#hud337-accept).

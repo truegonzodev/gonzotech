@@ -72,6 +72,10 @@ public final class WrenchHud {
         long lossMilli;
         int clumpSize;
         long clientTick;
+        // 0.3.337: тик последнего подтверждённого потока >0 по ЭТОМУ типу.
+        // Нужен только для «<?>» при задержке сервера: не создаём placeholder
+        // для типов, по которым передача никогда не шла (иначе снова кипа).
+        long lastPositiveTick = Long.MIN_VALUE;
     }
 
     // Кэш последних ответов сервера, по typeId. У универсальной трубы приходят два
@@ -111,6 +115,8 @@ public final class WrenchHud {
     private static BlockPos itemFlowPos;
     private static java.util.List<net.minecraft.network.chat.Component> itemFlowLinesCache = java.util.List.of();
     private static long itemFlowClientTick = Long.MIN_VALUE;
+    // 0.3.337: тик последнего подтверждённого предметного потока >0.
+    private static long itemFlowPositiveTick = Long.MIN_VALUE;
     private static long lastItemRequestTick = Long.MIN_VALUE;
     private static long lastItemRequestPosKey = Long.MIN_VALUE;
 
@@ -136,6 +142,9 @@ public final class WrenchHud {
         itemFlowClientTick = clientTick;
         java.util.List<net.minecraft.network.chat.Component> lines = new ArrayList<>();
         for (int i = 0; i < payload.items().size() && i < payload.counts().size(); i++) {
+            // 0.3.337 (приёмка автора): строка предмета рисуется ТОЛЬКО при
+            // реальной передаче >0 ед./тик. Нули в HUD не нужны.
+            if (payload.counts().get(i) <= 0) continue;
             net.minecraft.world.item.Item item =
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(payload.items().get(i));
             Component name = item.getName(new net.minecraft.world.item.ItemStack(item));
@@ -149,6 +158,8 @@ public final class WrenchHud {
             lines.add(Component.translatable("hud.gonzotech.item_flow_line", itemName, count));
         }
         itemFlowLinesCache = lines;
+        if (!lines.isEmpty()) itemFlowPositiveTick = clientTick;
+        else itemFlowPositiveTick = Long.MIN_VALUE;   // свежий подтверждённый ноль
     }
 
     /** Принимает содержимое очереди Filter I/II, запрошенное HUD ключа. */
@@ -190,6 +201,7 @@ public final class WrenchHud {
         e.lossMilli = payload.lossMilli();
         e.clumpSize = payload.clumpSize();
         e.clientTick = clientTick;
+        if (payload.posAmount() + payload.negAmount() > 0) e.lastPositiveTick = clientTick;
         // 0.3.335: отдельный кэш счётчика, не привязанный к свежести потока.
         clumpPos = payload.pos();
         clumpSize = payload.clumpSize();
@@ -607,24 +619,31 @@ public final class WrenchHud {
     }
 
     /**
-     * Строки потока предметов (кэш от сервера). 0.3.337: НЕ гасим их по
-     * истечении FLOW_STALE_TICKS — при медленном сервере/пересчёте показываем
-     * последнее подтверждённое значение, а не «1 сек есть — 1 сек нет».
-     * Цифры приходят каждые 1–2 тика, поэтому строка всегда актуальна.
+     * Строки потока предметов. 0.3.337 (приёмка автора): показываем ТОЛЬКО
+     * реально идущие предметы (>0 ед./тик). При задержке сервера строка не
+     * «пропадает на секунду»: если только что шла передача, выводится честная
+     * полная строка «поток: &lt;?&gt;». Свежий подтверждённый ноль означает
+     * реальную остановку — строку убираем сразу.
      */
     private static List<Component> itemFlowLines(BlockPos pos) {
         if (itemFlowPos == null || !itemFlowPos.equals(pos)) return List.of();
         boolean stale = clientTick - itemFlowClientTick > FLOW_STALE_TICKS;
-        if (stale || itemFlowLinesCache.isEmpty()) {
-            // 0.3.337: после подтверждённого ответа строка «поток» остаётся:
-            // свежий НОЛЬ или честный «<?>» при задержавшемся сервере/пересчёте.
-            if (clientTick - flowWaitStartTick < PENDING_GRACE_TICKS) return List.of();
-            int color = PipeType.ITEM.color();
-            Object value = stale || itemFlowClientTick == Long.MIN_VALUE ? "<?>" : 0L;
-            return java.util.List.of(Component.translatable("hud.gonzotech.flow_amount",
-                GtUnits.rate(value, GtUnits.key(PipeType.ITEM.unitKey(), color), color)));
-        }
-        return itemFlowLinesCache;
+        if (!stale) return itemFlowLinesCache;   // в т.ч. пустой кэш = потока нет
+        if (clientTick - flowWaitStartTick < PENDING_GRACE_TICKS) return List.of();
+        if (itemFlowPositiveTick == Long.MIN_VALUE
+            || clientTick - itemFlowPositiveTick > FLOW_STALE_TICKS) return List.of();
+        return java.util.List.of(unknownFlowLine(PipeType.ITEM));
+    }
+
+    /** Полная строка «&lt;ресурс&gt; | поток: &lt;?&gt;» для задержавшегося ответа. */
+    private static Component unknownFlowLine(PipeType part) {
+        int color = part.color();
+        Component name = Component.translatable("resource.gonzotech." + part.id())
+            .setStyle(Style.EMPTY.withColor(color));
+        Component sep = Component.literal(" | ").setStyle(Style.EMPTY.withColor(0xA0A0A0));
+        Component unknown = Component.translatable("hud.gonzotech.flow_amount",
+            GtUnits.rate("<?>", GtUnits.key(part.unitKey(), color), color));
+        return Component.empty().append(name).append(sep).append(unknown);
     }
 
     /** 0.3.335: один пакет на все типы позиции; 0.3.337 — каждые 2 тика. */
@@ -684,46 +703,54 @@ public final class WrenchHud {
     }
 
     /**
-     * 0.3.337 (приёмка автора): строка «поток» НИКОГДА не исчезает после
-     * первого подтверждённого ответа. Раньше она пропадала при total&lt;=0 и
-     * при ответе старше FLOW_STALE_TICKS — отсюда «1 сек есть / 1 сек нет»
-     * даже в статике. Теперь: свежий ответ → текущее число (в т.ч. НОЛЬ),
-     * задержавшийся сервер/пересчёт → ПОЛНАЯ строка с «&lt;?&gt;», а до первого
-     * ответа в grace-окне строка честно не рисуется (нет вспышки «не той»
-     * надписи). Цифры обновляются каждые FLOW_REQUEST_INTERVAL = 2 тика.
+     * 0.3.337 (приёмка автора, уточнение): строка «поток» рисуется ТОЛЬКО для
+     * типа с ТЕКУЩЕЙ передачей &gt;0 ед./тик. Универсальный узел несёт 15 типов,
+     * и «строка всегда видна априори» превращала подсказку в кипу нулей — это
+     * была маскировка, а не лечение. Багованное «1 сек есть / 1 сек нет» при
+     * 100% постоянном потоке лечится на СЕРВЕРЕ (FlowTracker.getHud, окно
+     * 1–2 тика) и частотой опроса, а не вечным показом строки; поточное
+     * появление/исчезновение при реально прерывистом потоке КОРРЕКТНО и
+     * отображает реальность. При задержке ответа для типа с недавним
+     * подтверждённым потоком выводится полная строка «&lt;?&gt;», чтобы строка не
+     * гасла из-за обновления, а не из-за физики.
      */
     private static Component flowLine(BlockPos pos, PipeType part) {
         FlowEntry e = (flowPos != null && flowPos.equals(pos))
             ? flowByType.get(part.ordinal()) : null;
-        int color = part.color();
-        Component name = Component.translatable("resource.gonzotech." + part.id())
-            .setStyle(Style.EMPTY.withColor(color));
-        Component sep = Component.literal(" | ").setStyle(Style.EMPTY.withColor(0xA0A0A0));
-        if (e == null && clientTick - flowWaitStartTick < PENDING_GRACE_TICKS) return null;
-        boolean stale = e == null || clientTick - e.clientTick > FLOW_STALE_TICKS;
-        if (stale) {
-            Component unknown = Component.translatable("hud.gonzotech.flow_amount",
-                GtUnits.rate("<?>", GtUnits.key(part.unitKey(), color), color));
-            return Component.empty().append(name).append(sep).append(unknown);
+        boolean fresh = e != null && clientTick - e.clientTick <= FLOW_STALE_TICKS;
+        long total = fresh ? Math.max(0L, e.pos3d + e.neg3d) : 0L;
+        if (fresh && total > 0) {
+            int color = part.color();
+            Component name = Component.translatable("resource.gonzotech." + part.id())
+                .setStyle(Style.EMPTY.withColor(color));
+            Component sep = Component.literal(" | ").setStyle(Style.EMPTY.withColor(0xA0A0A0));
+            // GTU/GTH идут по проводам в МИЛЛИ (×1000) — показываем целые единицы с
+            // суффиксом больших тиров и одной десятой (12.3M). Вода/пар в mB — как есть.
+            // ГОСТ единиц: число и обозначение — цветом ресурса, «/t» — цветом строки.
+            // 0.3.73: поток тоже простыми единицами с одной десятой («33.3»), без
+            // «К»-тиров: у форматирутора «К» означает кило-МИЛЛИ (=единица), игрок же
+            // читает его как тысячи GTH.
+            String value = part.isFluid() ? Long.toString(total)
+                : String.format(java.util.Locale.ROOT, "%.1f", total / 1000.0);
+            Component amount = Component.translatable("hud.gonzotech.flow_amount",
+                GtUnits.rate(value, GtUnits.key(part.unitKey(), color), color));
+            MutableComponent line = Component.empty().append(name).append(sep).append(amount);
+            // Потери проноса на участке цепи от источника до этой трубы (0.3.60):
+            // серый хвост «(+4.0)» — сколько единиц рассеялось в проводах выше по течению.
+            if (e.lossMilli > 0 && !part.isFluid()) {
+                line = line.append(Component.literal(" (+" + lossText(e.lossMilli) + ")")
+                    .withStyle(ChatFormatting.GRAY));
+            }
+            return line;
         }
-        long total = Math.max(0L, e.pos3d + e.neg3d);
-        // GTU/GTH идут по проводам в МИЛЛИ (×1000) — показываем целые единицы с
-        // суффиксом больших тиров и одной десятой (12.3M). Вода/пар в mB — как есть.
-        // ГОСТ единиц: число и обозначение — цветом ресурса, «/t» — цветом строки.
-        // 0.3.73: поток тоже простыми единицами с одной десятой («33.3»), без
-        // «К»-тиров: у форматирутора «К» означает кило-МИЛЛИ (=единица), игрок же
-        // читает его как тысячи GTH.
-        String value = part.isFluid() ? Long.toString(total)
-            : String.format(java.util.Locale.ROOT, "%.1f", total / 1000.0);
-        Component amount = Component.translatable("hud.gonzotech.flow_amount",
-            GtUnits.rate(value, GtUnits.key(part.unitKey(), color), color));
-        MutableComponent line = Component.empty().append(name).append(sep).append(amount);
-        // Потери проноса на участке цепи от источника до этой трубы (0.3.60):
-        // серый хвост «(+4.0)» — сколько единиц рассеялось в проводах выше по течению.
-        if (e.lossMilli > 0 && !part.isFluid()) {
-            line = line.append(Component.literal(" (+" + lossText(e.lossMilli) + ")")
-                .withStyle(ChatFormatting.GRAY));
-        }
-        return line;
+        // Свежий подтверждённый НОЛЬ: передачи нет, строка не нужна. Это не
+        // «багованное мелькание» — оно устранено серверным окном выборки.
+        if (fresh) return null;
+        // Ответ задержался: не гасим уже показанную передачу, но и не рисуем
+        // «<?>» для типов, по которым поток никогда не шёл.
+        if (clientTick - flowWaitStartTick < PENDING_GRACE_TICKS) return null;
+        if (e == null || e.lastPositiveTick == Long.MIN_VALUE
+            || clientTick - e.lastPositiveTick > FLOW_STALE_TICKS) return null;
+        return unknownFlowLine(part);
     }
 }

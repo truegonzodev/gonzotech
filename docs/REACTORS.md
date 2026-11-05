@@ -89,3 +89,5 @@ Headless production-regressions1692 assertions, exact462183e negative и5 menu/o
 ## 0.3.337: без изменений в балансе и режимах реактора
 
 Автор принял режимы вшитых портов 0.3.336; изменений в `REACTOR_GTH_PER_PORT_MILLI = 16_364×MILLI`, `gthPortLimit`, геометрии `4³…18³`/`2³…16³`, первичной сборке от `onPlace(movedByPiston=true)` и логике `allowsOutput` в этом патче НЕТ. Правки 0.3.337 касаются только HUD ключа (`WrenchHud.java`: grace 2 тика, строка «поток» всегда видна, три строки подсказки) и сетевого лимита `FLOW_REQUESTS_PER_WINDOW = 24` в `PipeFlowNetwork.java`; area-probe владельцев и `PortInfoPayload` не переписывались. [HISTORY](HISTORY.md#v-0-3-337), [AUDIT](AUDIT.md#hud337).
+
+**Приёмочная правка 0.3.337.** Уточнение HUD (`image-4.png`) не меняет баланс и режимы реактора: показываются только текущие потоки >0 ед./тик, а багованное секундное мелькание при постоянном GTH лечится серверным окном выборки `FlowTracker.getHud` (1–2 тика), а не «строкой априори». `REACTOR_GTH_PER_PORT_MILLI`, `gthPortLimit`, `allowsOutput` и лимиты труб по-прежнему не тронуты. [HISTORY](HISTORY.md#v-0-3-337-accept).

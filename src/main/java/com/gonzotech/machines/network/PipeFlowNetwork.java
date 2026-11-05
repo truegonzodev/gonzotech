@@ -421,7 +421,10 @@ public final class PipeFlowNetwork {
         PipeType pipeType = PipeType.values()[typeId];
         if (!(state.getBlock() instanceof PipeCarrier carrier) || !carrier.carries(state, pipeType)) return;
 
-        long[] flow = FlowTracker.get(level, pos, pipeType);
+        // 0.3.337 (приёмка автора): HUD берёт срез за окно 1–2 тика, а не
+        // мгновенный <=1 тик — постоянный поток больше не проваливается в ноль
+        // на фазе обработки пакета. Игровая семантика get() не изменена.
+        long[] flow = FlowTracker.getHud(level, pos, pipeType);
 
         // 0.3.102: hover ЛЮБОГО члена клампа показывает поток ВСЕГО клампа.
         // 0.3.101 считал сумму ГРАНИЧНЫХ граней — а в главном кейсе (порт
@@ -434,7 +437,7 @@ public final class PipeFlowNetwork {
             long clumpSum = 0;
             for (BlockPos m : NodeClumpIndex.membersOf(level, pos)) {
                 long own = 0;
-                for (long v : FlowTracker.get(level, m, pipeType)) own += v;
+                for (long v : FlowTracker.getHud(level, m, pipeType)) own += v;
                 if (own > clumpSum) clumpSum = own;
             }
             PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, clumpSum, 0,
@@ -461,7 +464,7 @@ public final class PipeFlowNetwork {
         BlockState state = level.getBlockState(pos);
         if (!(state.getBlock() instanceof PipeCarrier carrier) || !carrier.carries(state, PipeType.ITEM)) return;
 
-        java.util.Map<net.minecraft.world.item.Item, Integer> flow = ItemFlowTracker.get(level, pos);
+        java.util.Map<net.minecraft.world.item.Item, Integer> flow = ItemFlowTracker.getHud(level, pos);
         // Топ по количеству, максимум 5 строк — чтобы HUD не разрастался.
         java.util.List<java.util.Map.Entry<net.minecraft.world.item.Item, Integer>> entries =
             new java.util.ArrayList<>(flow.entrySet());
@@ -471,6 +474,8 @@ public final class PipeFlowNetwork {
         java.util.List<Integer> counts = new java.util.ArrayList<>();
         int limit = Math.min(5, entries.size());
         for (int i = 0; i < limit; i++) {
+            // 0.3.337: в HUD уходят ТОЛЬКО реально идущие предметы (>0 ед./тик).
+            if (entries.get(i).getValue() <= 0) continue;
             items.add(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(entries.get(i).getKey()));
             counts.add(entries.get(i).getValue());
         }

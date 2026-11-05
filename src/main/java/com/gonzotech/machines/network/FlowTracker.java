@@ -23,6 +23,17 @@ import java.util.Map;
  */
 public final class FlowTracker {
 
+    /**
+     * 0.3.337 (приёмка автора): окно выборки для HUD ключа. Равно интервалу
+     * обновления цифр (1–2 тика). Мгновенный срез get() живёт <=1 тика, и при
+     * 100% постоянном потоке C2S-пакет периодически попадал в фазу, когда срез
+     * уже обнулился — сервер слал ложный ноль и строка «поток» гасла на ~1 сек.
+     * Это БАГ ОБНОВЛЕНИЯ, а не природа потока: лечим сам срез, а не «всегда
+     * показываем строку». Реально остановившийся поток старше окна даёт ноль,
+     * поэтому прерывистая передача отображается как есть.
+     */
+    public static final int HUD_WINDOW_TICKS = 2;
+
     private static final int DIRS = 6;
     private static final int TYPES = PipeType.values().length;
     private static final long[] EMPTY = new long[DIRS];
@@ -81,6 +92,21 @@ public final class FlowTracker {
         }
         long[] byType = h.loss.computeIfAbsent(pipe.asLong(), k -> new long[TYPES]);
         if (lossMilli > byType[type.ordinal()]) byType[type.ordinal()] = lossMilli;
+    }
+
+    /**
+     * 0.3.337: поток для HUD ключа за окно HUD_WINDOW_TICKS тиков. Возвращает
+     * ПОСЛЕДНИЙ ПОДТВЕРЖДЁННЫЙ срез в ед./тик (без усреднения, максимумов и
+     * «замороженных» чисел): при однородном постоянном потоке ответ стабилен
+     * независимо от фазы обработки пакета, а при реальной остановке старше окна
+     * честно обнуляется. get() для компаратора/геймплея оставлен с окном 1 тик.
+     */
+    public static long[] getHud(Level level, BlockPos pipe, PipeType type) {
+        Holder h = LEVELS.get(level);
+        if (h == null) return EMPTY;
+        if (level.getGameTime() - h.tick > HUD_WINDOW_TICKS) return EMPTY;
+        long[][] byType = h.flow.get(pipe.asLong());
+        return byType == null ? EMPTY : byType[type.ordinal()];
     }
 
     /**
