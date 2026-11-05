@@ -7,6 +7,8 @@ public class BlockPos {
     public static BlockPos of(long packed) { return new BlockPos(0, 0, 0); }
     public static long asLong(int x, int y, int z) { return 0L; }
     public BlockPos relative(net.minecraft.core.Direction dir) { return new BlockPos(0, 0, 0); }
+    /** 0.3.335 (приёмка автора): реальная сигнатура BlockPos.offset(int,int,int). */
+    public BlockPos offset(int dx, int dy, int dz) { return new BlockPos(0, 0, 0); }
     public BlockPos immutable() { return this; }
     public int getX() { return 0; }
     public int getY() { return 0; }

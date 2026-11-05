@@ -79,9 +79,13 @@ public final class WrenchHud {
     private static int clumpSize = -1;
     private static long clumpClientTick = Long.MIN_VALUE;
     private static BlockPos aimedPos;
-    private static BlockPos portInfoPos;
-    private static boolean portEmbedded;
-    private static long portInfoClientTick = Long.MIN_VALUE;
+    // 0.3.335 (приёмка автора): кэш «чей порт» ПО ПОЗИЦИИ, без срока жизни.
+    // Блок в значении нужен только для инвалидации при замене блока: смена
+    // режима ключом кэш не роняет. До первого ответа записи нет — и тогда
+    // классическая строка НЕ рисуется вообще (не «не та надпись» на 1 мс).
+    private record PortInfo(int ownerId, net.minecraft.world.level.block.Block block) {}
+    private static final java.util.Map<BlockPos, PortInfo> portOwners = new java.util.HashMap<>();
+    private static long lastPortProbeTick = Long.MIN_VALUE;
     // Один C2S-пакет на все типы позиции раз в REQUEST_INTERVAL (лимит сервера 8/20 тиков).
     private static BlockPos allFlowRequestPos;
     private static long lastAllFlowRequestTick = Long.MIN_VALUE;
@@ -182,12 +186,13 @@ public final class WrenchHud {
         clumpClientTick = clientTick;
     }
 
-    /** 0.3.335: серверный факт «вшитый корпусный порт» для заголовка HUD. */
+    /** 0.3.335: серверный факт «чей порт»; кэшируем по позиции навсегда. */
     public static void acceptPortInfo(PipeFlowNetwork.PortInfoPayload payload) {
-        if (aimedPos == null || !aimedPos.equals(payload.pos())) return;
-        portInfoPos = payload.pos();
-        portEmbedded = payload.embeddedPort();
-        portInfoClientTick = clientTick;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        if (portOwners.size() > 4096) portOwners.clear();
+        portOwners.put(payload.pos().immutable(),
+            new PortInfo(payload.ownerId(), mc.level.getBlockState(payload.pos()).getBlock()));
     }
 
     @SubscribeEvent
@@ -209,16 +214,17 @@ public final class WrenchHud {
 
         clientTick = mc.level.getGameTime();
 
-        // 0.3.335 HUD-NODE1: смена цели сбрасывает все адресные кэши; число
-        // старой группы никогда не переносится на новую.
-        if (aimedPos == null || !aimedPos.equals(pos)) {
+        // 0.3.335 HUD-NODE1: смена цели сбрасывает кэши ПОТОКА/клампа; число
+        // старой группы никогда не переносится на новую. Кэш «чей порт»
+        // намеренно НЕ сбрасывается — именно он убирает мерцание при переводе
+        // взгляда между узлами.
+        boolean targetChanged = aimedPos == null || !aimedPos.equals(pos);
+        if (targetChanged) {
             flowByType.clear();
             flowPos = null;
             clumpPos = null;
             clumpSize = -1;
             clumpClientTick = Long.MIN_VALUE;
-            portInfoPos = null;
-            portEmbedded = false;
         }
         aimedPos = pos;
 
@@ -245,29 +251,55 @@ public final class WrenchHud {
         PipeType part = aimedPart(state, pos, bhit);
         if (part == null) return;
         // 0.3.335: один адресный запрос на все типы, в т.ч. для предметной трубы.
-        maybeRequestAllFlow(pos);
+        maybeRequestAllFlow(pos, targetChanged);
 
         PipeMode mode = modeOf(state, part);
-        // 0.3.335: вшитый порт сформированной структуры показывает СВОЁ реальное
-        // имя блока в скобках и режим с пояснением AUTO; обычная труба — прежняя строка.
-        boolean embedded = portInfoPos != null && portInfoPos.equals(pos) && portEmbedded
-            && clientTick - portInfoClientTick <= FLOW_STALE_TICKS;
-        Component line = embedded
-            ? Component.translatable("hud.gonzotech.wrench_embedded_port",
-                state.getBlock().getName(),
-                Component.translatable("hud.gonzotech.wrench_port_mode." + mode.getSerializedName()))
-            : Component.translatable("hud.gonzotech.wrench_pipe",
-                partLabel(state, part),
-                Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()));
+        PortInfo info = portOwners.get(pos);
+        if (info != null && info.block() != state.getBlock()) {
+            portOwners.remove(pos);   // блок заменили — прежний ответ больше не валиден
+            info = null;
+        }
+        // ГОСТ (приёмка автора 05.11.2026): несколько КОРОТКИХ строк вместо
+        // одной длинной, которая не помещалась на экране. &f — первая строка,
+        // &7 — остальные. Никакой «классической строки до проверки»: info=null
+        // означает, что заголовок пока НЕ рисуется вообще.
+        java.util.List<Component> title = new java.util.ArrayList<>(4);
+        Component shortMode = Component.translatable(
+            "message.gonzotech.pipe_mode_short." + mode.getSerializedName());
+        if (info == null) {
+            // ответ ещё в пути — честно молчим, но не показываем неверный ярлык
+        } else if (info.ownerId() == com.gonzotech.machines.FormedPorts.OWNER_NONE) {
+            title.add(Component.translatable("hud.gonzotech.wrench_pipe",
+                partLabel(state, part), shortMode));
+        } else {
+            title.add(Component.translatable("hud.gonzotech.wrench_embedded_port",
+                Component.translatable("resource.gonzotech." + part.id()), shortMode)
+                .withStyle(ChatFormatting.WHITE));
+            title.add(Component.translatable("hud.gonzotech.wrench_embedded_port.host",
+                state.getBlock().getName()).withStyle(ChatFormatting.GRAY));
+            title.add(Component.translatable("hud.gonzotech.wrench_embedded_port.owner",
+                Component.translatable(ownerKey(info.ownerId()))).withStyle(ChatFormatting.GRAY));
+            // 4-я короткая строка несёт снятое с ПЕРВОЙ строки длинное
+            // пояснение AUTO; для «забор»/«отдача» режим уже назван выше и
+            // четвёртая строка не нужна (лишнее слово не рисуем).
+            if (mode == PipeMode.AUTO) {
+                title.add(Component.translatable("hud.gonzotech.wrench_port_mode.auto")
+                    .withStyle(ChatFormatting.GRAY));
+            }
+        }
 
         GuiGraphics g = event.getGuiGraphics();
         Font font = mc.font;
         int screenW = g.guiWidth();
         int screenH = g.guiHeight();
         int y = screenH / 2 - 30;
-        g.drawString(font, line, (screenW - font.width(line)) / 2, y, 0xFFFFFF, true);
+        for (int i = 0; i < title.size(); i++) {
+            Component line = title.get(i);
+            g.drawString(font, line, (screenW - font.width(line)) / 2,
+                y + i * (font.lineHeight + 1), 0xFFFFFF, true);
+        }
 
-        int lineY = y + font.lineHeight + 1;
+        int lineY = y + Math.max(1, title.size()) * (font.lineHeight + 1);
 
         // 0.3.335 HUD-NODE1: строка живёт по СВОЕЙ свежести топологии, а не по
         // свежести flow-метрик. Пока ответа нет / сервер задержался — честный <?>.
@@ -559,13 +591,29 @@ public final class WrenchHud {
     }
 
     /** 0.3.335: один пакет на все типы позиции, раз в REQUEST_INTERVAL. */
-    private static void maybeRequestAllFlow(BlockPos pos) {
-        if (allFlowRequestPos == null || !allFlowRequestPos.equals(pos)
-            || clientTick - lastAllFlowRequestTick >= REQUEST_INTERVAL) {
-            allFlowRequestPos = pos;
-            lastAllFlowRequestTick = clientTick;
-            PacketDistributor.sendToServer(new PipeFlowNetwork.AllFlowRequestPayload(pos));
-        }
+    private static void maybeRequestAllFlow(BlockPos pos, boolean targetChanged) {
+        if (allFlowRequestPos != null && allFlowRequestPos.equals(pos)
+            && clientTick - lastAllFlowRequestTick < REQUEST_INTERVAL) return;
+        // На смене цели (и раз в 20 тиков для обновления) просим сервер
+        // разрешить ВСЮ область сразу: после одного ответа переключение между
+        // узлами уже не ждёт сети и не мигает.
+        boolean probe = targetChanged || clientTick - lastPortProbeTick >= 20L;
+        if (probe) lastPortProbeTick = clientTick;
+        allFlowRequestPos = pos;
+        lastAllFlowRequestTick = clientTick;
+        PacketDistributor.sendToServer(new PipeFlowNetwork.AllFlowRequestPayload(pos, probe));
+    }
+
+    /** Lang-ключ названия сборки-владельца вшитого порта. */
+    private static String ownerKey(int ownerId) {
+        return switch (ownerId) {
+            case com.gonzotech.machines.FormedPorts.OWNER_REACTOR -> "hud.gonzotech.wrench_embedded_port.owner.reactor";
+            case com.gonzotech.machines.FormedPorts.OWNER_TURBINE -> "hud.gonzotech.wrench_embedded_port.owner.turbine";
+            case com.gonzotech.machines.FormedPorts.OWNER_STEAMGEN -> "hud.gonzotech.wrench_embedded_port.owner.steamgen";
+            case com.gonzotech.machines.FormedPorts.OWNER_BLAST_FURNACE -> "hud.gonzotech.wrench_embedded_port.owner.blast_furnace";
+            case com.gonzotech.machines.FormedPorts.OWNER_SILICON_FACTORY -> "hud.gonzotech.wrench_embedded_port.owner.silicon_factory";
+            default -> "hud.gonzotech.wrench_embedded_port.owner.unknown";
+        };
     }
 
     private static void maybeRequestFlow(BlockPos pos, PipeType part) {

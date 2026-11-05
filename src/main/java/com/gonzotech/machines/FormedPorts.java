@@ -21,26 +21,44 @@ import net.minecraft.world.level.block.state.BlockState;
  *
  * <p>Проверка строго серверная (индексы членов живут в ServerLevel) и
  * вызывается только из ответа на адресный запрос HUD ключа. Клиент сам
- * решает, какой заголовок показать, по полученному флагу.</p>
+ * решает, какой заголовок показать, по полученному ownerId: до ответа
+ * классическая строка не рисуется вовсе.</p>
  *
  * <p>Политика САМИХ РЕЖИМОВ вшитого порта (AUTO/PULL/PUSH, «обе стороны
  * делят общую проводимость порта») в 0.3.335 НЕ реализована: см.
- * {@code D-PORTMODE1} в DEFFERED и заглушки вызовов в PipeRouting. Здесь
+ * {@code D-PORTMODE1} в CURRENT-STATE (активная работа после приёмки)
+ * и заглушки вызовов в PipeRouting. Здесь
  * определяется только факт принадлежности порта к сборке.</p>
  */
 public final class FormedPorts {
+
+    /** 0 = обычный узел; 1..5 — хозяин вшитого порта. */
+    public static final int OWNER_NONE = 0;
+    public static final int OWNER_REACTOR = 1;
+    public static final int OWNER_TURBINE = 2;
+    public static final int OWNER_STEAMGEN = 3;
+    public static final int OWNER_BLAST_FURNACE = 4;
+    public static final int OWNER_SILICON_FACTORY = 5;
 
     private FormedPorts() {
     }
 
     /** Позиция — порт одной из сформированных структур? */
     public static boolean isEmbeddedPort(ServerLevel level, BlockPos pos, BlockState state) {
-        if (!(state.getBlock() instanceof PipeCarrier)) return false;
-        if (ReactorStructure.isMember(level, pos)
-            || TurbineStructure.isMember(level, pos)
-            || SteamGenStructure.isMember(level, pos)) {
-            return true;
-        }
+        return ownerId(level, pos, state) != OWNER_NONE;
+    }
+
+    /**
+     * 0.3.335 (приёмка автора): сервер отдаёт НЕ только флаг «вшитый/обычный»,
+     * но и владельца сборки. Это позволяет клиенту один раз закэшировать
+     * ГОСТ-подсказку по позиции и больше не подменять классическую строку
+     * «после проверок».
+     */
+    public static int ownerId(ServerLevel level, BlockPos pos, BlockState state) {
+        if (!(state.getBlock() instanceof PipeCarrier)) return OWNER_NONE;
+        if (ReactorStructure.isMember(level, pos)) return OWNER_REACTOR;
+        if (TurbineStructure.isMember(level, pos)) return OWNER_TURBINE;
+        if (SteamGenStructure.isMember(level, pos)) return OWNER_STEAMGEN;
         // Доменная печь: узлы вывода стоят только в среднем слое (dy=0) и
         // только в четырёх ячейках isNodeCell; перебираем ровно 4 кандидата
         // топки, а не все 27 клеток куба (запрос HUD приходит каждые 5 тиков).
@@ -51,7 +69,7 @@ public final class FormedPorts {
                 if (level.getBlockEntity(fireboxPos) instanceof FireboxBlockEntity firebox
                     && firebox.isBlastFormed()
                     && BlastFurnaceStructure.nodePositions(level, fireboxPos).contains(pos)) {
-                    return true;
+                    return OWNER_BLAST_FURNACE;
                 }
             }
         }
@@ -60,8 +78,8 @@ public final class FormedPorts {
         if (root != null
             && level.getBlockEntity(root) instanceof SiliconFactoryBlockEntity controller
             && controller.isFormed()) {
-            return true;
+            return OWNER_SILICON_FACTORY;
         }
-        return false;
+        return OWNER_NONE;
     }
 }

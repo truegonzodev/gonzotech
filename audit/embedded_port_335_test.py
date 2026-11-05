@@ -79,7 +79,7 @@ assert 'Component.translatable("hud.gonzotech.wrench_clump", entry.clumpSize)' n
 assert 'private static Component flowLine(BlockPos pos, PipeType part)' in hud  # flow-метрики остаются у FlowEntry
 assert 'aimedPos == null || !aimedPos.equals(payload.pos())' in hud  # задержанный ответ старой цели
 # один C2S-пакет на все типы вместо N пакетов в тик
-assert 'maybeRequestAllFlow(pos);' in hud
+assert 'maybeRequestAllFlow(pos, targetChanged);' in hud
 assert 'AllFlowRequestPayload' in hud
 assert 'for (PipeType t : parts) maybeRequestFlow(pos, t);' not in hud
 assert 'REQUEST_INTERVAL' in hud
@@ -87,16 +87,32 @@ assert 'REQUEST_INTERVAL' in hud
 assert 'clumpSize = -1' in hud
 assert 'clumpSize = 1' not in hud
 
-# ── Подсказка вшитого порта: реальное имя + режимы для всех formed ──────────
+# ── Подсказка вшитого порта: ГОСТ, реальное имя, режимы для всех formed ─────
 assert 'hud.gonzotech.wrench_embedded_port' in hud
+assert 'hud.gonzotech.wrench_embedded_port.host' in hud
+assert 'hud.gonzotech.wrench_embedded_port.owner' in hud
 assert 'hud.gonzotech.wrench_port_mode.' in hud
 assert 'state.getBlock().getName()' in hud
 assert 'public static void acceptPortInfo(' in hud
-assert 'portEmbedded' in hud
-assert 'public record PortInfoPayload(BlockPos pos, boolean embeddedPort) implements CustomPacketPayload' in flow
-assert 'public record AllFlowRequestPayload(BlockPos pos) implements CustomPacketPayload' in flow
-assert 'private static void respondAll(ServerPlayer player, BlockPos pos)' in flow
-assert 'FormedPorts.isEmbeddedPort(level, pos, state)' in flow
+assert 'resource.gonzotech.' in hud and 'ownerKey(' in hud
+assert 'java.util.List<Component> title' in hud and 'title.add' in hud
+# ГОСТ: несколько КОРОТКИХ строк, а не одна непомещающаяся
+assert 'Вшитый корпусный порт (%s) — режим: %s' not in hud
+assert 'font.lineHeight + 1' in hud
+# Приёмка автора (замечание 2): НЕ подменяем классическую строку после проверок.
+# До подтверждения заголовок не рисуется вовсе; кэш постоянный по позиции.
+assert 'portEmbedded' not in hud and 'portInfoPos' not in hud
+assert 'portOwners' in hud and 'ownerId' in hud
+assert 'if (info == null)' in hud
+assert 'info.ownerId() == com.gonzotech.machines.FormedPorts.OWNER_NONE' in hud
+assert 'portOwners.remove(pos)' in hud
+assert 'title.add(Component.translatable("hud.gonzotech.wrench_pipe"' in hud
+# Ответ приходит пачкой по области и кэшируется без срока жизни
+assert 'public record PortInfoPayload(BlockPos pos, int ownerId) implements CustomPacketPayload' in flow
+assert 'public record AllFlowRequestPayload(BlockPos pos, boolean probe) implements CustomPacketPayload' in flow
+assert 'private static void respondAll(ServerPlayer player, BlockPos pos, boolean probe)' in flow
+assert 'PORT_PROBE_RADIUS' in flow and 'PORT_PROBE_LIMIT' in flow
+assert 'FormedPorts.ownerId(level, pos, state)' in flow
 assert 'private static int clumpSizeForHud(' in flow
 # «поставил два узла на узел корпуса → Сшито 2»: считаем кламп СНАРУЖИ
 assert 'NodeClumpIndex.sizeAt(level, pos.relative(direction))' in flow
@@ -106,6 +122,9 @@ assert 'ByteBufCodecs.VAR_INT, FlowPayload::clumpSize' in flow
 
 # все formed-структуры участвуют в определении порта
 assert 'public static boolean isEmbeddedPort(ServerLevel level, BlockPos pos, BlockState state)' in ports
+assert 'public static int ownerId(ServerLevel level, BlockPos pos, BlockState state)' in ports
+for owner in ('OWNER_REACTOR', 'OWNER_TURBINE', 'OWNER_STEAMGEN', 'OWNER_BLAST_FURNACE', 'OWNER_SILICON_FACTORY'):
+    assert owner in ports, owner
 for symbol in ('ReactorStructure.isMember', 'TurbineStructure.isMember', 'SteamGenStructure.isMember',
                'FireboxBlockEntity', 'BlastFurnaceStructure.nodePositions',
                'SiliconFactoryStructure.controllerAt', 'SiliconFactoryBlockEntity'):
@@ -124,6 +143,14 @@ assert 'PipeMode effective = EmbeddedPortMode.resolve' not in routing.replace(
 keys = {
     'hud.gonzotech.wrench_clump_unknown',
     'hud.gonzotech.wrench_embedded_port',
+    'hud.gonzotech.wrench_embedded_port.host',
+    'hud.gonzotech.wrench_embedded_port.owner',
+    'hud.gonzotech.wrench_embedded_port.owner.reactor',
+    'hud.gonzotech.wrench_embedded_port.owner.turbine',
+    'hud.gonzotech.wrench_embedded_port.owner.steamgen',
+    'hud.gonzotech.wrench_embedded_port.owner.blast_furnace',
+    'hud.gonzotech.wrench_embedded_port.owner.silicon_factory',
+    'hud.gonzotech.wrench_embedded_port.owner.unknown',
     'hud.gonzotech.wrench_port_mode.auto',
     'hud.gonzotech.wrench_port_mode.pull',
     'hud.gonzotech.wrench_port_mode.push',
@@ -133,6 +160,10 @@ en = json.loads((LANG / 'en_us.json').read_text(encoding='utf-8'))
 for key in keys:
     assert ru.get(key) and en.get(key), key
 assert '<?>' in ru['hud.gonzotech.wrench_clump_unknown']
+assert 'Принадлежит' in ru['hud.gonzotech.wrench_embedded_port.owner']
+assert 'Реактор I-поколения' in ru['hud.gonzotech.wrench_embedded_port.owner.reactor']
+assert '%s' in ru['hud.gonzotech.wrench_embedded_port'] and '(%s)' not in ru['hud.gonzotech.wrench_embedded_port']
+assert 'Belongs to' in en['hud.gonzotech.wrench_embedded_port.owner']
 assert 'обе стороны' in ru['hud.gonzotech.wrench_port_mode.auto']
 assert 'both sides' in en['hud.gonzotech.wrench_port_mode.auto']
 assert len(ru) == len(en), (len(ru), len(en))

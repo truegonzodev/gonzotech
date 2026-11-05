@@ -92,13 +92,14 @@ public final class PipeFlowNetwork {
      * (см. CURRENT-STATE 334). Теперь один пакет на позицию, сервер сам отвечает
      * по каждому реально несомому типу.
      */
-    public record AllFlowRequestPayload(BlockPos pos) implements CustomPacketPayload {
+    public record AllFlowRequestPayload(BlockPos pos, boolean probe) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<AllFlowRequestPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_flow_all_request"));
 
         public static final StreamCodec<RegistryFriendlyByteBuf, AllFlowRequestPayload> STREAM_CODEC =
             StreamCodec.composite(
                 BlockPos.STREAM_CODEC, AllFlowRequestPayload::pos,
+                ByteBufCodecs.BOOL, AllFlowRequestPayload::probe,
                 AllFlowRequestPayload::new);
 
         @Override
@@ -108,19 +109,22 @@ public final class PipeFlowNetwork {
     }
 
     /**
-     * 0.3.335: серверный факт «позиция — вшитый порт сформированной структуры».
-     * Клиент не может сам опросить серверные индексы членов (ClientLevel), поэтому
-     * заголовок HUD ключа выбирается по этому адресному ответу.
+     * 0.3.335 (приёмка автора): серверный факт «чей это порт». ownerId: 0 —
+     * обычный узел, 1..5 — владелец сборки (FormedPorts.OWNER_*). Клиент
+     * кэширует ответ ПО ПОЗИЦИИ без срока жизни и до получения ответа вообще
+     * не рисует классическую строку: тем самым убрано мерцание «не той
+     * надписью» в первую миллисекунду наведения. probe-запрос дополнительно
+     * присылает пачку ответов по всей видимой области.
      */
-    public record PortInfoPayload(BlockPos pos, boolean embeddedPort) implements CustomPacketPayload {
+    public record PortInfoPayload(BlockPos pos, int ownerId) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<PortInfoPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_port_info"));
 
         public static final StreamCodec<RegistryFriendlyByteBuf, PortInfoPayload> STREAM_CODEC =
             StreamCodec.composite(
                 BlockPos.STREAM_CODEC, PortInfoPayload::pos,
-                ByteBufCodecs.VAR_INT, payload -> payload.embeddedPort() ? 1 : 0,
-                (pos, flag) -> new PortInfoPayload(pos, flag != 0));
+                ByteBufCodecs.VAR_INT, PortInfoPayload::ownerId,
+                PortInfoPayload::new);
 
         @Override
         public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
@@ -285,7 +289,7 @@ public final class PipeFlowNetwork {
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
                     if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeFlowAll", 8)) return;
-                    respondAll(player, payload.pos());
+                    respondAll(player, payload.pos(), payload.probe());
                 }
             }));
 
@@ -353,14 +357,36 @@ public final class PipeFlowNetwork {
     /** Максимальная дистанция (блоков), в пределах которой отвечаем на запрос. */
     private static final double MAX_DISTANCE_SQR = 8.0D * 8.0D;
 
+    /** Радиус area-probe: 7×7×7 = 343 клетки, одна пачка ответов на область. */
+    private static final int PORT_PROBE_RADIUS = 3;
+    private static final int PORT_PROBE_LIMIT = 96;
+
     /** 0.3.335: один C2S-запрос → ответы по каждому реально несомому типу. */
-    private static void respondAll(ServerPlayer player, BlockPos pos) {
+    private static void respondAll(ServerPlayer player, BlockPos pos, boolean probe) {
         ServerLevel level = player.serverLevel();
         if (pos.distToCenterSqr(player.getX(), player.getY(), player.getZ()) > MAX_DISTANCE_SQR) return;
         BlockState state = level.getBlockState(pos);
         if (!(state.getBlock() instanceof PipeCarrier carrier)) return;
-        PacketDistributor.sendToPlayer(player, new PortInfoPayload(pos,
-            com.gonzotech.machines.FormedPorts.isEmbeddedPort(level, pos, state)));
+        int owner = com.gonzotech.machines.FormedPorts.ownerId(level, pos, state);
+        PacketDistributor.sendToPlayer(player, new PortInfoPayload(pos, owner));
+        // При смене цели один раз разрешаем ВСЮ видимую область: клиент кэширует
+        // каждую позицию, поэтому переключение между узлами уже не ждёт сети.
+        if (probe && com.gonzotech.core.network.PayloadThrottle.allow(player, "pipePortArea", 4)) {
+            int sent = 0;
+            for (int dy = -PORT_PROBE_RADIUS; dy <= PORT_PROBE_RADIUS && sent < PORT_PROBE_LIMIT; dy++) {
+                for (int dx = -PORT_PROBE_RADIUS; dx <= PORT_PROBE_RADIUS && sent < PORT_PROBE_LIMIT; dx++) {
+                    for (int dz = -PORT_PROBE_RADIUS; dz <= PORT_PROBE_RADIUS && sent < PORT_PROBE_LIMIT; dz++) {
+                        if (dx == 0 && dy == 0 && dz == 0) continue;
+                        BlockPos near = pos.offset(dx, dy, dz);
+                        BlockState nearState = level.getBlockState(near);
+                        if (!(nearState.getBlock() instanceof PipeCarrier)) continue;
+                        PacketDistributor.sendToPlayer(player, new PortInfoPayload(near,
+                            com.gonzotech.machines.FormedPorts.ownerId(level, near, nearState)));
+                        sent++;
+                    }
+                }
+            }
+        }
         for (PipeType type : PipeType.values()) {
             if (carrier.carries(state, type)) respond(player, pos, type.ordinal());
         }
