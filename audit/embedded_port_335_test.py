@@ -92,7 +92,10 @@ assert 'clumpSize = 1' not in hud
 assert 'hud.gonzotech.wrench_embedded_port' in hud
 assert 'hud.gonzotech.wrench_embedded_port.host' in hud
 assert 'hud.gonzotech.wrench_embedded_port.owner' in hud
-assert 'hud.gonzotech.wrench_port_mode.' in hud
+# 0.3.337 (приёмка автора): нижняя строка с пояснением AUTO убрана ЦЕЛИКОМ.
+# Ключи остаются в lang как канонические названия режимов, но в HUD не рендерятся.
+assert 'hud.gonzotech.wrench_port_mode.' not in hud
+assert 'java.util.List<Component> title = new java.util.ArrayList<>(3)' in hud
 assert 'state.getBlock().getName()' in hud
 assert 'public static void acceptPortInfo(' in hud
 assert 'resource.gonzotech.' in hud and 'ownerKey(' in hud

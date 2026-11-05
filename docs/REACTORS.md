@@ -85,3 +85,7 @@ Headless production-regressions1692 assertions, exact462183e negative и5 menu/o
 ## 0.3.336: режим порта влияет на выдачу GTH
 
 `PipeRouting.drainFromMultiblockPort` теперь проверяет режим исходного порта реактора: в «заборе»/`PULL` выдача GTH запрещена (`"mode-output-blocked"`), в «отдаче»/`PUSH` и «авто»/`AUTO` разрешена, причём `AUTO` делит общий потолок порта с приёмом. Потолок по-прежнему `REACTOR_GTH_PER_PORT_MILLI = 16_364×MILLI` (16 364 GTH/т на вывод) и `gthPortLimit`; число не перебалансировалось и не дублируется в политике. При распаде реактора `MODE` порта не сбрасывается. [MULTIBLOCK](MULTIBLOCK.md), [MACHINES](MACHINES.md), [хроника](HISTORY.md#v-0-3-336).
+
+## 0.3.337: без изменений в балансе и режимах реактора
+
+Автор принял режимы вшитых портов 0.3.336; изменений в `REACTOR_GTH_PER_PORT_MILLI = 16_364×MILLI`, `gthPortLimit`, геометрии `4³…18³`/`2³…16³`, первичной сборке от `onPlace(movedByPiston=true)` и логике `allowsOutput` в этом патче НЕТ. Правки 0.3.337 касаются только HUD ключа (`WrenchHud.java`: grace 2 тика, строка «поток» всегда видна, три строки подсказки) и сетевого лимита `FLOW_REQUESTS_PER_WINDOW = 24` в `PipeFlowNetwork.java`; area-probe владельцев и `PortInfoPayload` не переписывались. [HISTORY](HISTORY.md#v-0-3-337), [AUDIT](AUDIT.md#hud337).

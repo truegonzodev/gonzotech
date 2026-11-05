@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_CURRENT-STATE.md",
+      "sha256": "2671f2b251ad635c90b42ceff15da2014023149a4b7e239f4a0609cff79edb17",
+      "bytes": 22253,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/HISTORY.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_HISTORY.md",
+      "sha256": "e889d581bad05de3f253ab4793c2050b2d3a8ac72792e2b0b704cffa23d2ec07",
+      "bytes": 933856,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_DEFFERED.md",
+      "sha256": "9a3bf6a0508d773be64f057d86791bbe927b77284a92db83cd9e6f2107558685",
+      "bytes": 83224,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_AUDIT.md",
+      "sha256": "1560f30b7ce7a8304109c90f995d80c727036ad5ae663a1e288a1fc2606621d1",
+      "bytes": 179355,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/RULES.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_RULES.md",
+      "sha256": "60ba0c2125e06e23dab991430cb7feafff2c929c5ed4c3195eaa293110b3934d",
+      "bytes": 21080,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/DOCS_RULES.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_DOCS_RULES.md",
+      "sha256": "8de24813b847eeb54761bd278eb9b53550a876fe2bba87fa469a63925f707ba2",
+      "bytes": 27508,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/AUDIO_VISUAL.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_AUDIO_VISUAL.md",
+      "sha256": "11da484738d27f2b8c381bc9295d527e606d5dbcb8f28823094bf59579bf6c53",
+      "bytes": 25166,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_CAPABILITIES.md",
+      "sha256": "121601b79ba9661a3f1f5ff9b83ea4b6032ace1b70420b4e166f294a6ecd87d9",
+      "bytes": 60299,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/REACTORS.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_REACTORS.md",
+      "sha256": "222638ebce95f23fbf1d41772d7a4689234a83ee12dede0329fca050c103acfb",
+      "bytes": 18982,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_MULTIBLOCK.md",
+      "sha256": "780bd5bc1d1c9f3aed0502e0e4d565b3304bb61e6ad55fe157576454190853c5",
+      "bytes": 30039,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_MACHINES.md",
+      "sha256": "9f6e929d048981bf5a861c61b94335b7ccffcd9a751a0bea84f54ff592fd73a1",
+      "bytes": 65113,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "source_commit": "b328877971e811fbac63f78b41a5041b44ae4cae",
+      "snapshot": "docs/archive/editions/0.3.337/OUTDATED_BEFORE_337_archive-README.md",
+      "sha256": "ecc668f7849215802b43d8b386f32581c58519211cfca429f7ab679ee97c7911",
+      "bytes": 8723,
+      "task": "0.3.337 HUD-FLOW2: clump/flow flicker, 1-2 tick digits, AUTO line removed"
+    }
+  ]
+}

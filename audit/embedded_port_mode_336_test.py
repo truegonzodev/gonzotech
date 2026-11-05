@@ -69,7 +69,10 @@ assert 'for (PipeType type : PipeType.values())' in mode
 assert 'if (carrier.carries(state, type)) return carrier.modeFor(state, type);' in mode
 assert 'public static PipeMode resolve(' in mode and 'return nodeMode(state);' in mode
 assert 'EmbeddedPortMode.nodeMode(state)' in hud                # HUD показывает тот же режим
-assert 'portShortMode' in hud and 'portMode == PipeMode.AUTO' in hud
+assert 'portShortMode' in hud
+# 0.3.337: четвёртая строка AUTO удалена по указанию автора, режим остался в первой.
+assert 'portMode == PipeMode.AUTO' not in hud
+assert 'hud.gonzotech.wrench_port_mode.' not in hud
 assert 'PipeMode portMode = embedded' in hud
 # Политика не вводит per-канального хранения режимов.
 assert 'MODE.get(type)' not in mode

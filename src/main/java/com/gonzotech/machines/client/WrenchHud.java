@@ -54,8 +54,15 @@ public final class WrenchHud {
     private WrenchHud() {
     }
 
+    // Прочие адресные запросы (предметы, фильтр, вольфрам) — как прежде.
     private static final int REQUEST_INTERVAL = 5;
+    // 0.3.337: цифры потока обновляются раз в 1–2 тика, а не раз в 5.
+    private static final int FLOW_REQUEST_INTERVAL = 2;
     private static final int FLOW_STALE_TICKS = 15;
+    // 0.3.337 (приёмка автора): НЕ показываем "<?>" в первый кадр наведения.
+    // Первые 1–2 тика ждём подтверждённый ответ и честно молчим; только если
+    // сервер/пересчёт реально задержались, выводим ПОЛНУЮ строку с "<?>".
+    private static final int PENDING_GRACE_TICKS = 2;
 
     /** Один закэшированный ответ сервера о потоке (по типу трубы). */
     private static final class FlowEntry {
@@ -86,9 +93,12 @@ public final class WrenchHud {
     private record PortInfo(int ownerId, net.minecraft.world.level.block.Block block) {}
     private static final java.util.Map<BlockPos, PortInfo> portOwners = new java.util.HashMap<>();
     private static long lastPortProbeTick = Long.MIN_VALUE;
-    // Один C2S-пакет на все типы позиции раз в REQUEST_INTERVAL (лимит сервера 8/20 тиков).
+    // Один C2S-пакет на все типы позиции раз в FLOW_REQUEST_INTERVAL (0.3.337:
+    // лимит сервера FLOW_REQUESTS_PER_WINDOW = 24/20 тиков, с запасом на смену цели).
     private static BlockPos allFlowRequestPos;
     private static long lastAllFlowRequestTick = Long.MIN_VALUE;
+    // Тик, с которого ждём первый ответ по текущей цели (для grace-окна).
+    private static long flowWaitStartTick = Long.MIN_VALUE;
 
     // Троттлинг запросов (последний запрошенный тип; для нескольких типов сбрасываем
     // троттлинг между ними — они шлются подряд в одном тике).
@@ -225,8 +235,10 @@ public final class WrenchHud {
             clumpPos = null;
             clumpSize = -1;
             clumpClientTick = Long.MIN_VALUE;
+            flowWaitStartTick = clientTick;
         }
         aimedPos = pos;
+        if (flowWaitStartTick == Long.MIN_VALUE) flowWaitStartTick = clientTick;
 
         // Обычный вольфрам декоративен. Если к нему подключено тепло, ключ
         // показывает скрытый GTH-абсорбер и его температурный диапазон.
@@ -259,11 +271,12 @@ public final class WrenchHud {
             portOwners.remove(pos);   // блок заменили — прежний ответ больше не валиден
             info = null;
         }
-        // ГОСТ (приёмка автора 05.11.2026): несколько КОРОТКИХ строк вместо
+        // ГОСТ (приёмка автора 05.11.2026): ТРИ короткие строки вместо
         // одной длинной, которая не помещалась на экране. &f — первая строка,
-        // &7 — остальные. Никакой «классической строки до проверки»: info=null
-        // означает, что заголовок пока НЕ рисуется вообще.
-        java.util.List<Component> title = new java.util.ArrayList<>(4);
+        // &7 — вторая и третья. 0.3.337: четвёртая строка с пояснением AUTO
+        // убрана ЦЕЛИКОМ по указанию автора. Никакой «классической строки до
+        // проверки»: info=null означает, что заголовок не рисуется вообще.
+        java.util.List<Component> title = new java.util.ArrayList<>(3);
         Component shortMode = Component.translatable(
             "message.gonzotech.pipe_mode_short." + mode.getSerializedName());
         // 0.3.336 D-PORTMODE1: режим вшитого порта ОДИН на весь узел, поэтому
@@ -287,13 +300,6 @@ public final class WrenchHud {
                 state.getBlock().getName()).withStyle(ChatFormatting.GRAY));
             title.add(Component.translatable("hud.gonzotech.wrench_embedded_port.owner",
                 Component.translatable(ownerKey(info.ownerId()))).withStyle(ChatFormatting.GRAY));
-            // 4-я короткая строка несёт снятое с ПЕРВОЙ строки длинное
-            // пояснение AUTO; для «забор»/«отдача» режим уже назван выше и
-            // четвёртая строка не нужна (лишнее слово не рисуем).
-            if (portMode == PipeMode.AUTO) {
-                title.add(Component.translatable("hud.gonzotech.wrench_port_mode.auto")
-                    .withStyle(ChatFormatting.GRAY));
-            }
         }
 
         GuiGraphics g = event.getGuiGraphics();
@@ -322,8 +328,17 @@ public final class WrenchHud {
                 merged = Component.translatable("hud.gonzotech.wrench_clump", clumpSize)
                     .withStyle(ChatFormatting.GRAY);
             } else if (!clumpFresh || clumpSize < 0) {
-                merged = Component.translatable("hud.gonzotech.wrench_clump_unknown")
-                    .withStyle(ChatFormatting.GRAY);
+                // 0.3.337: до первого подтверждённого ответа строку НЕ рисуем
+                // вообще — именно это убирает вспышку «сшито <?>» на 1 мс.
+                // По истечении grace (медленный сервер/пересчёт) — честная
+                // ПОЛНАЯ строка «сшито узлов: <?>», без вечного скрытия.
+                boolean awaitingFirst = clumpClientTick == Long.MIN_VALUE;
+                boolean grace = awaitingFirst
+                    && clientTick - flowWaitStartTick < PENDING_GRACE_TICKS;
+                if (!grace) {
+                    merged = Component.translatable("hud.gonzotech.wrench_clump_unknown")
+                        .withStyle(ChatFormatting.GRAY);
+                }
             }
             if (merged != null) {
                 g.drawString(font, merged, (screenW - font.width(merged)) / 2, lineY, 0xFFFFFF, true);
@@ -584,24 +599,41 @@ public final class WrenchHud {
 
     private static void maybeRequestItemFlow(BlockPos pos) {
         long key = pos.asLong();
-        if (key != lastItemRequestPosKey || clientTick - lastItemRequestTick >= REQUEST_INTERVAL) {
+        if (key != lastItemRequestPosKey || clientTick - lastItemRequestTick >= FLOW_REQUEST_INTERVAL) {
             lastItemRequestPosKey = key;
             lastItemRequestTick = clientTick;
             PacketDistributor.sendToServer(new PipeFlowNetwork.ItemFlowRequestPayload(pos));
         }
     }
 
-    /** Строки потока предметов (кэш от сервера), пусто если данных нет/устарели. */
+    /**
+     * Строки потока предметов (кэш от сервера). 0.3.337: НЕ гасим их по
+     * истечении FLOW_STALE_TICKS — при медленном сервере/пересчёте показываем
+     * последнее подтверждённое значение, а не «1 сек есть — 1 сек нет».
+     * Цифры приходят каждые 1–2 тика, поэтому строка всегда актуальна.
+     */
     private static List<Component> itemFlowLines(BlockPos pos) {
         if (itemFlowPos == null || !itemFlowPos.equals(pos)) return List.of();
-        if (clientTick - itemFlowClientTick > FLOW_STALE_TICKS) return List.of();
+        boolean stale = clientTick - itemFlowClientTick > FLOW_STALE_TICKS;
+        if (stale || itemFlowLinesCache.isEmpty()) {
+            // 0.3.337: после подтверждённого ответа строка «поток» остаётся:
+            // свежий НОЛЬ или честный «<?>» при задержавшемся сервере/пересчёте.
+            if (clientTick - flowWaitStartTick < PENDING_GRACE_TICKS) return List.of();
+            int color = PipeType.ITEM.color();
+            Object value = stale || itemFlowClientTick == Long.MIN_VALUE ? "<?>" : 0L;
+            return java.util.List.of(Component.translatable("hud.gonzotech.flow_amount",
+                GtUnits.rate(value, GtUnits.key(PipeType.ITEM.unitKey(), color), color)));
+        }
         return itemFlowLinesCache;
     }
 
-    /** 0.3.335: один пакет на все типы позиции, раз в REQUEST_INTERVAL. */
+    /** 0.3.335: один пакет на все типы позиции; 0.3.337 — каждые 2 тика. */
     private static void maybeRequestAllFlow(BlockPos pos, boolean targetChanged) {
         if (allFlowRequestPos != null && allFlowRequestPos.equals(pos)
-            && clientTick - lastAllFlowRequestTick < REQUEST_INTERVAL) return;
+            && clientTick - lastAllFlowRequestTick < FLOW_REQUEST_INTERVAL) return;
+        // Area-probe владельцев по-прежнему раз в 20 тиков (pipePortArea 4/20)
+        // и на смене цели: он НЕ учащается вместе с цифрами потока. Кэш
+        // portOwners без TTL делает повторное наведение мгновенным.
         // На смене цели (и раз в 20 тиков для обновления) просим сервер
         // разрешить ВСЮ область сразу: после одного ответа переключение между
         // узлами уже не ждёт сети и не мигает.
@@ -651,18 +683,30 @@ public final class WrenchHud {
         return String.format(java.util.Locale.ROOT, "%.2f", milli / 1000.0);
     }
 
+    /**
+     * 0.3.337 (приёмка автора): строка «поток» НИКОГДА не исчезает после
+     * первого подтверждённого ответа. Раньше она пропадала при total&lt;=0 и
+     * при ответе старше FLOW_STALE_TICKS — отсюда «1 сек есть / 1 сек нет»
+     * даже в статике. Теперь: свежий ответ → текущее число (в т.ч. НОЛЬ),
+     * задержавшийся сервер/пересчёт → ПОЛНАЯ строка с «&lt;?&gt;», а до первого
+     * ответа в grace-окне строка честно не рисуется (нет вспышки «не той»
+     * надписи). Цифры обновляются каждые FLOW_REQUEST_INTERVAL = 2 тика.
+     */
     private static Component flowLine(BlockPos pos, PipeType part) {
-        if (flowPos == null || !flowPos.equals(pos)) return null;
-        FlowEntry e = flowByType.get(part.ordinal());
-        if (e == null) return null;
-        if (clientTick - e.clientTick > FLOW_STALE_TICKS) return null;
-        long total = e.pos3d + e.neg3d;
-        if (total <= 0) return null;
-
+        FlowEntry e = (flowPos != null && flowPos.equals(pos))
+            ? flowByType.get(part.ordinal()) : null;
         int color = part.color();
         Component name = Component.translatable("resource.gonzotech." + part.id())
             .setStyle(Style.EMPTY.withColor(color));
         Component sep = Component.literal(" | ").setStyle(Style.EMPTY.withColor(0xA0A0A0));
+        if (e == null && clientTick - flowWaitStartTick < PENDING_GRACE_TICKS) return null;
+        boolean stale = e == null || clientTick - e.clientTick > FLOW_STALE_TICKS;
+        if (stale) {
+            Component unknown = Component.translatable("hud.gonzotech.flow_amount",
+                GtUnits.rate("<?>", GtUnits.key(part.unitKey(), color), color));
+            return Component.empty().append(name).append(sep).append(unknown);
+        }
+        long total = Math.max(0L, e.pos3d + e.neg3d);
         // GTU/GTH идут по проводам в МИЛЛИ (×1000) — показываем целые единицы с
         // суффиксом больших тиров и одной десятой (12.3M). Вода/пар в mB — как есть.
         // ГОСТ единиц: число и обозначение — цветом ресурса, «/t» — цветом строки.

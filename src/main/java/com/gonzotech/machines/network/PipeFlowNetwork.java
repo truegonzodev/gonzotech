@@ -288,7 +288,7 @@ public final class PipeFlowNetwork {
             AllFlowRequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
-                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeFlowAll", 8)) return;
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeFlowAll", FLOW_REQUESTS_PER_WINDOW)) return;
                     respondAll(player, payload.pos(), payload.probe());
                 }
             }));
@@ -304,7 +304,7 @@ public final class PipeFlowNetwork {
             ItemFlowRequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
                 if (context.player() instanceof ServerPlayer player) {
-                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeItemFlow", 8)) return;
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeItemFlow", FLOW_REQUESTS_PER_WINDOW)) return;
                     respondItemFlow(player, payload.pos());
                 }
             }));
@@ -360,6 +360,12 @@ public final class PipeFlowNetwork {
     /** Радиус area-probe: 7×7×7 = 343 клетки, одна пачка ответов на область. */
     private static final int PORT_PROBE_RADIUS = 3;
     private static final int PORT_PROBE_LIMIT = 96;
+    /**
+     * 0.3.337: клиент запрашивает поток каждые 2 тика (цифры обновляются раз в
+     * 1–2 тика), поэтому прежний лимит 8/20 тиков молча отбрасывал половину
+     * запросов и строка «поток» мигала. 24/20 тиков с запасом на смену цели.
+     */
+    private static final int FLOW_REQUESTS_PER_WINDOW = 24;
 
     /** 0.3.335: один C2S-запрос → ответы по каждому реально несомому типу. */
     private static void respondAll(ServerPlayer player, BlockPos pos, boolean probe) {

@@ -281,3 +281,7 @@ Headless production-regression1692+2566 assertions PASS; exact462183e baseline2/
 ## 0.3.336: политика режимов в маршрутизаторе
 
 `EmbeddedPortMode` перестал быть заглушкой: `nodeMode`/`allowsIntake`/`allowsOutput`/`resolve`, потолок `portCap` (структурный, но не ниже лимита трубы) и общий бюджет на сумму приёма и выдачи. `PipeRouting` гейтит выдачу из сборки, режет `effectiveBudget`, списывает факт и оборачивает приёмники портов в `cappedIntake`; `WrenchHud` показывает `nodeMode`. `PipeFlowLedger`, левелинг дорожек, `REACTOR_GTH_PER_PORT_MILLI`, буферы, `Sinks` и `D-PIPE2` вне этого шага. [REACTORS](REACTORS.md), [AUDIO_VISUAL](AUDIO_VISUAL.md), [AUDIT](AUDIT.md#portmode336), [хроника](HISTORY.md#v-0-3-336).
+
+## 0.3.337: сетевой лимит под частоту опроса потока
+
+`PipeFlowNetwork.java`: `FLOW_REQUESTS_PER_WINDOW = 24` вместо `8` для `pipeFlowAll` и `pipeItemFlow`, потому что клиент в `WrenchHud.java` теперь запрашивает поток каждые `FLOW_REQUEST_INTERVAL = 2` тика — прежние 8/20 молча отбрасывали бы часть пакетов. `REQUEST_INTERVAL = 5` для фильтра/вольфрама, `PortInfoPayload(pos,int ownerId)`, `PORT_PROBE_RADIUS = 3`, `PORT_PROBE_LIMIT = 96` и пакетная выдача владельцев не изменились. Политика режимов `EmbeddedPortMode` и `PipeRouting` 0.3.336 не переписывалась: D-PORTMODE1 закрыт по игровой приёмке автора. [AUDIT](AUDIT.md#hud337), [HISTORY](HISTORY.md#v-0-3-337), [правила](RULES.md).
