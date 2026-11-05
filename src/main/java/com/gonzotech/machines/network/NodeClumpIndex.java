@@ -1,5 +1,6 @@
 package com.gonzotech.machines.network;
 
+import com.gonzotech.machines.reactor.ReactorStructure;
 import com.gonzotech.machines.steamgen.SteamGenStructure;
 import com.gonzotech.machines.turbine.TurbineStructure;
 import net.minecraft.core.BlockPos;
@@ -122,6 +123,11 @@ public final class NodeClumpIndex {
      */
     private static String kindOf(Level level, BlockPos pos, BlockState state) {
         if (TurbineStructure.isMember(level, pos) || SteamGenStructure.isMember(level, pos)) return null;
+        // 0.3.335 REACT-VAL1 (автор): узел в обшивке сформированного реактора —
+        // порт, а не узел сети. Не сшивается ни с соседними портами корпуса, ни с
+        // узлом, поставленным снаружи; сшитые до сборки узлы расшиваются в
+        // ReactorStructure.applyFormedVisuals через detachPorts.
+        if (ReactorStructure.isMember(level, pos)) return null;
         return kindOfBlock(state);
     }
 

@@ -67,6 +67,15 @@ public final class ReactorStructure {
     private static final Map<Level, Map<Long, BlockPos>> MEMBER_INDEX =
         Collections.synchronizedMap(new WeakHashMap<>());
 
+    /**
+     * 0.3.335 REACT-VAL2: панели с СОХРАНЁННЫМИ границами, ждущие повторной
+     * проверки после завершённого движения поршня. Значение — крайний тик.
+     * Никакого периодического глобального сканирования: запись появляется только
+     * от событийной постановки блока обшивки и живёт не более трёх тиков.
+     */
+    private static final Map<Level, Map<Long, Long>> PISTON_REVALIDATION =
+        Collections.synchronizedMap(new WeakHashMap<>());
+
     private ReactorStructure() {
     }
 
@@ -112,12 +121,18 @@ public final class ReactorStructure {
             if (panels.isEmpty()) PANEL_POSITIONS.remove(level);
         }
         removeIndexForRoot(level, pos);
+        Map<Long, Long> pending = PISTON_REVALIDATION.get(level);
+        if (pending != null) {
+            pending.remove(pos.asLong());
+            if (pending.isEmpty()) PISTON_REVALIDATION.remove(level);
+        }
     }
 
     /** Transient loaded-panel and formed-member indexes are rebuilt from saved panel bounds. */
     public static void clearAll() {
         PANEL_POSITIONS.clear();
         MEMBER_INDEX.clear();
+        PISTON_REVALIDATION.clear();
         ReactorMatrix.clearCache();
     }
 
@@ -149,6 +164,132 @@ public final class ReactorStructure {
         if (root == null) return;
         if (!server.getChunkSource().hasChunk(root.getX() >> 4, root.getZ() >> 4)) return;
         invalidateAt(server, pos);
+    }
+
+    /**
+     * 0.3.335 REACT-VAL1: смена ТОЛЬКО свойств BlockState (режим AUTO/PULL/PUSH
+     * ключом, FORMED обшивки, waterlogged/ось) не меняет ни whitelist, ни
+     * геометрию корпуса и не должна расформировывать собранный реактор.
+     * Единственное состояние, которое реально читает validateBox, — FACING
+     * клапана; его смена остаётся структурной правкой.
+     */
+    public static boolean isCosmeticStateChange(BlockState before, BlockState after) {
+        if (before == null || after == null) return false;
+        if (before.equals(after)) return true;
+        if (!before.is(after.getBlock())) return false;
+        if (after.getBlock() instanceof com.gonzotech.core.block.ReactorValveBlock
+            && before.getValue(com.gonzotech.core.block.ReactorValveBlock.FACING)
+                != after.getValue(com.gonzotech.core.block.ReactorValveBlock.FACING)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 0.3.335 REACT-VAL1: косметическая правка порта не инвалидирует форму.
+     * Дополнительно лечит УЖЕ испорченное состояние старых миров: возврат
+     * режима в AUTO (любая смена состояния pipe-carrier внутри сохранённых
+     * границ) будит проверку СОХРАНЁННЫХ bounds без ручного break/place.
+     * Это не первичная автосборка: панель без сохранённых границ не трогается,
+     * загрузка чанков и глобальные сканы этим путём не формируют реактор.
+     */
+    public static void onWorldEditStateOnly(Level level, BlockPos pos, BlockState before, BlockState after) {
+        if (!(level instanceof ServerLevel server)) return;
+        if (before == null || after == null || before.equals(after)) return;
+        if (!(before.getBlock() instanceof PipeCarrier) || !before.is(after.getBlock())) return;
+        if (controllerAt(server, pos) != null) return; // уже сформирован — режим валидности не касается
+        Set<Long> panels = PANEL_POSITIONS.get(server);
+        if (panels == null || panels.isEmpty()) return;
+        for (long packed : Set.copyOf(panels)) {
+            BlockPos panelPos = BlockPos.of(packed);
+            if (!server.hasChunkAt(panelPos)) continue;
+            if (!(server.getBlockEntity(panelPos) instanceof ReactorControlPanelBlockEntity panel)) continue;
+            if (panel.isFormedController() || !panel.hasSavedBounds()) continue;
+            // panel.contains() требует isFormedController(), а здесь форма как раз
+            // потеряна; сравниваем СОХРАНЁННЫЕ границы напрямую.
+            BlockPos min = panel.min();
+            BlockPos max = panel.max();
+            if (pos.getX() < min.getX() || pos.getX() > max.getX()
+                || pos.getY() < min.getY() || pos.getY() > max.getY()
+                || pos.getZ() < min.getZ() || pos.getZ() > max.getZ()) continue;
+            revalidateSavedBounds(server, panel);
+        }
+    }
+
+    /**
+     * 0.3.335 REACT-VAL2: постановка блока обшивки поршнем приходит в момент,
+     * когда соседние клетки ещё могут быть moving_piston. Итоговая проверка
+     * переносится на ближайший серверный тик панели и ограничена тремя тиками.
+     * Первичной сборки нет: участвуют только панели с сохранёнными bounds.
+     */
+    public static void schedulePistonShellRevalidation(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return;
+        Set<Long> panels = PANEL_POSITIONS.get(server);
+        if (panels == null || panels.isEmpty()) return;
+        long deadline = server.getGameTime() + 3L;
+        Map<Long, Long> pending = PISTON_REVALIDATION.computeIfAbsent(server, ignored -> new HashMap<>());
+        for (long packed : Set.copyOf(panels)) {
+            BlockPos panelPos = BlockPos.of(packed);
+            if (!near(pos, panelPos) || !server.hasChunkAt(panelPos)) continue;
+            if (!(server.getBlockEntity(panelPos) instanceof ReactorControlPanelBlockEntity panel)) continue;
+            if (panel.isFormedController() || !panel.hasSavedBounds()) continue;
+            pending.merge(panelPos.asLong(), deadline, Math::max);
+        }
+    }
+
+    /** Вызывается из serverTick панели; вне отложенной записи ничего не делает. */
+    public static void tickPistonRevalidation(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        Map<Long, Long> pending = PISTON_REVALIDATION.get(level);
+        if (pending == null) return;
+        long key = panel.getBlockPos().asLong();
+        Long deadline = pending.get(key);
+        if (deadline == null) return;
+        if (panel.isFormedController() || !panel.hasSavedBounds()) {
+            pending.remove(key);
+            return;
+        }
+        Validation validation = revalidateSavedBounds(level, panel);
+        // Повторяем до крайнего тика при ЛЮБОМ неуспехе: moving_piston ещё может
+        // стоять, часть чанков может быть не загружена. Настоящий пролом просто
+        // переживёт три тика и останется невалидным (formed снят).
+        if (validation.structure() == null && level.getGameTime() < deadline) return;
+        pending.remove(key);
+    }
+
+    /** Повторная проверка ТОЛЬКО сохранённых границ ранее собранного реактора. */
+    private static Validation revalidateSavedBounds(ServerLevel level, ReactorControlPanelBlockEntity panel) {
+        if (panel.isFormedController() || !panel.hasSavedBounds()) {
+            return Validation.failure("панель не хранит сохранённые границы ранее собранного реактора");
+        }
+        BlockPos min = panel.min();
+        BlockPos max = panel.max();
+        if (!chunksLoaded(level, min, max)) return Validation.incompleteResult();
+        Validation validation = validateBox(level, panel.getBlockPos(), new Bounds(min, max), null);
+        if (validation.incomplete()) return validation;
+        if (validation.structure() != null) {
+            applyFormedVisuals(level, panel, validation.structure());
+            return validation;
+        }
+        // Настоящий пролом: снимаем декоративный formed, который поршень мог
+        // вернуть вместе с сохранённым BlockState обшивки.
+        clearFormedVisuals(level, min, max);
+        return validation;
+    }
+
+    private static void clearFormedVisuals(ServerLevel level, BlockPos min, BlockPos max) {
+        for (int x = min.getX(); x <= max.getX(); x++) {
+            for (int y = min.getY(); y <= max.getY(); y++) {
+                for (int z = min.getZ(); z <= max.getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (!onBoundary(pos, min, max)) continue;
+                    BlockState state = level.getBlockState(pos);
+                    if (state.getBlock() instanceof ReactorCasingBlock
+                        && state.getValue(ReactorCasingBlock.FORMED)) {
+                        level.setBlock(pos, state.setValue(ReactorCasingBlock.FORMED, false), Block.UPDATE_CLIENTS);
+                    }
+                }
+            }
+        }
     }
 
     /** Restore saved bounds after load; an unformed panel is never initialized by chunk loading. */
@@ -472,12 +613,14 @@ public final class ReactorStructure {
             return;
         }
         removeIndexForRoot(level, panel.getBlockPos());
+        List<BlockPos> formerPorts = new ArrayList<>();
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int y = min.getY(); y <= max.getY(); y++) {
                 for (int z = min.getZ(); z <= max.getZ(); z++) {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (pos.equals(ignoredPos) || !onBoundary(pos, min, max)) continue;
                     BlockState state = level.getBlockState(pos);
+                    if (state.getBlock() instanceof PipeCarrier) formerPorts.add(pos);
                     if (state.getBlock() instanceof ReactorCasingBlock
                         && state.getValue(ReactorCasingBlock.FORMED)) {
                         level.setBlock(pos, state.setValue(ReactorCasingBlock.FORMED, false), Block.UPDATE_CLIENTS);
@@ -486,6 +629,8 @@ public final class ReactorStructure {
             }
         }
         panel.clearStructure();
+        // 0.3.335: после настоящего распада порты снова обычные узлы сети.
+        for (BlockPos port : formerPorts) NodeClumpIndex.onNodeChanged(level, port);
     }
 
     private static BlockPos controllerAt(ServerLevel level, BlockPos pos) {
@@ -751,7 +896,8 @@ public final class ReactorStructure {
         return null;
     }
 
-    private static boolean isShellPart(BlockState state) {
+    /** 0.3.335: доступен каналу правок мира для обнаружения возвращённой обшивки. */
+    public static boolean isShellPart(BlockState state) {
         Block block = state.getBlock();
         return block instanceof ReactorCasingBlock
             || block instanceof ReactorControlPanelBlock
@@ -835,6 +981,21 @@ public final class ReactorStructure {
         List<BlockPos> ports = new ArrayList<>(heatPorts.length + waterPorts.length);
         for (long port : heatPorts) ports.add(BlockPos.of(port));
         for (long port : waterPorts) ports.add(BlockPos.of(port));
+        // 0.3.335 REACT-VAL1 (автор): КАЖДЫЙ узел обшивки — порт, а не узел сети.
+        // Расшиваем и те каналы, которые сам реактор не использует (WIRE/ITEM/
+        // STEAM/жидкости III): иначем сшитые до сборки узлы остались бы в
+        // клампе и сшились бы с узлом, поставленным снаружи корпуса.
+        for (int x = info.min().getX(); x <= info.max().getX(); x++) {
+            for (int y = info.min().getY(); y <= info.max().getY(); y++) {
+                for (int z = info.min().getZ(); z <= info.max().getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (!onBoundary(pos, info.min(), info.max())) continue;
+                    if (level.getBlockState(pos).getBlock() instanceof PipeCarrier && !ports.contains(pos)) {
+                        ports.add(pos);
+                    }
+                }
+            }
+        }
         NodeClumpIndex.detachPorts(level, ports);
         for (int x = info.min().getX(); x <= info.max().getX(); x++) {
             for (int y = info.min().getY(); y <= info.max().getY(); y++) {

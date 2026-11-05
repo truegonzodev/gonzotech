@@ -72,6 +72,20 @@ public final class WrenchHud {
     private static BlockPos flowPos;
     private static final java.util.Map<Integer, FlowEntry> flowByType = new java.util.HashMap<>();
 
+    // 0.3.335 HUD-NODE1: счётчик топологии живёт ОТДЕЛЬНО от свежести flow.
+    // -1 = на эту позицию ещё не приходило ни одного ответа.
+    private static final int CLUMP_STALE_TICKS = 15;
+    private static BlockPos clumpPos;
+    private static int clumpSize = -1;
+    private static long clumpClientTick = Long.MIN_VALUE;
+    private static BlockPos aimedPos;
+    private static BlockPos portInfoPos;
+    private static boolean portEmbedded;
+    private static long portInfoClientTick = Long.MIN_VALUE;
+    // Один C2S-пакет на все типы позиции раз в REQUEST_INTERVAL (лимит сервера 8/20 тиков).
+    private static BlockPos allFlowRequestPos;
+    private static long lastAllFlowRequestTick = Long.MIN_VALUE;
+
     // Троттлинг запросов (последний запрошенный тип; для нескольких типов сбрасываем
     // троттлинг между ними — они шлются подряд в одном тике).
     private static long lastRequestTick = Long.MIN_VALUE;
@@ -148,6 +162,8 @@ public final class WrenchHud {
     }
 
     public static void acceptFlow(PipeFlowNetwork.FlowPayload payload) {
+        // 0.3.335: задержанный ответ по СТАРОЙ цели не чистит кэш новой.
+        if (aimedPos == null || !aimedPos.equals(payload.pos())) return;
         // Ответы разных типов приходят по одной позиции; при смене позиции чистим кэш.
         if (flowPos == null || !flowPos.equals(payload.pos())) {
             flowByType.clear();
@@ -160,6 +176,18 @@ public final class WrenchHud {
         e.lossMilli = payload.lossMilli();
         e.clumpSize = payload.clumpSize();
         e.clientTick = clientTick;
+        // 0.3.335: отдельный кэш счётчика, не привязанный к свежести потока.
+        clumpPos = payload.pos();
+        clumpSize = payload.clumpSize();
+        clumpClientTick = clientTick;
+    }
+
+    /** 0.3.335: серверный факт «вшитый корпусный порт» для заголовка HUD. */
+    public static void acceptPortInfo(PipeFlowNetwork.PortInfoPayload payload) {
+        if (aimedPos == null || !aimedPos.equals(payload.pos())) return;
+        portInfoPos = payload.pos();
+        portEmbedded = payload.embeddedPort();
+        portInfoClientTick = clientTick;
     }
 
     @SubscribeEvent
@@ -180,6 +208,19 @@ public final class WrenchHud {
         BlockState state = mc.level.getBlockState(pos);
 
         clientTick = mc.level.getGameTime();
+
+        // 0.3.335 HUD-NODE1: смена цели сбрасывает все адресные кэши; число
+        // старой группы никогда не переносится на новую.
+        if (aimedPos == null || !aimedPos.equals(pos)) {
+            flowByType.clear();
+            flowPos = null;
+            clumpPos = null;
+            clumpSize = -1;
+            clumpClientTick = Long.MIN_VALUE;
+            portInfoPos = null;
+            portEmbedded = false;
+        }
+        aimedPos = pos;
 
         // Обычный вольфрам декоративен. Если к нему подключено тепло, ключ
         // показывает скрытый GTH-абсорбер и его температурный диапазон.
@@ -203,13 +244,21 @@ public final class WrenchHud {
         // Какую трубу пучка мы держим на прицеле?
         PipeType part = aimedPart(state, pos, bhit);
         if (part == null) return;
+        // 0.3.335: один адресный запрос на все типы, в т.ч. для предметной трубы.
+        maybeRequestAllFlow(pos);
 
         PipeMode mode = modeOf(state, part);
-        // Строка 1: имя трубы/узла + режим (напр. «Труба — режим: авто»).
-        Component line = Component.translatable(
-            "hud.gonzotech.wrench_pipe",
-            partLabel(state, part),
-            Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()));
+        // 0.3.335: вшитый порт сформированной структуры показывает СВОЁ реальное
+        // имя блока в скобках и режим с пояснением AUTO; обычная труба — прежняя строка.
+        boolean embedded = portInfoPos != null && portInfoPos.equals(pos) && portEmbedded
+            && clientTick - portInfoClientTick <= FLOW_STALE_TICKS;
+        Component line = embedded
+            ? Component.translatable("hud.gonzotech.wrench_embedded_port",
+                state.getBlock().getName(),
+                Component.translatable("hud.gonzotech.wrench_port_mode." + mode.getSerializedName()))
+            : Component.translatable("hud.gonzotech.wrench_pipe",
+                partLabel(state, part),
+                Component.translatable("message.gonzotech.pipe_mode_short." + mode.getSerializedName()));
 
         GuiGraphics g = event.getGuiGraphics();
         Font font = mc.font;
@@ -220,15 +269,26 @@ public final class WrenchHud {
 
         int lineY = y + font.lineHeight + 1;
 
-        // 0.3.102: «сшито узлов: N» возвращён (автору нужна строка) — теперь с
-        // ЧЕСТНЫМ размером: инвариант непересечения 0.3.101 убрал экспоненциальный
-        // рост счётчика. Показывается на любом члене клампа.
-        FlowEntry entry = flowByType.get(part.ordinal());
-        if (entry != null && entry.clumpSize > 0 && clientTick - entry.clientTick <= FLOW_STALE_TICKS) {
-            Component merged = Component.translatable("hud.gonzotech.wrench_clump", entry.clumpSize)
-                .withStyle(ChatFormatting.GRAY);
-            g.drawString(font, merged, (screenW - font.width(merged)) / 2, lineY, 0xFFFFFF, true);
-            lineY += font.lineHeight + 1;
+        // 0.3.335 HUD-NODE1: строка живёт по СВОЕЙ свежести топологии, а не по
+        // свежести flow-метрик. Пока ответа нет / сервер задержался — честный <?>.
+        // Не лечим замороженным числом, фиктивной единицей или вечным скрытием.
+        boolean clumpCandidate = state.getBlock() instanceof com.gonzotech.machines.network.NodeBlock
+            || state.getBlock() instanceof com.gonzotech.machines.network.UniversalNodeBlock;
+        boolean clumpFresh = clumpPos != null && clumpPos.equals(pos)
+            && clientTick - clumpClientTick <= CLUMP_STALE_TICKS;
+        if (clumpCandidate) {
+            Component merged = null;
+            if (clumpFresh && clumpSize > 0) {
+                merged = Component.translatable("hud.gonzotech.wrench_clump", clumpSize)
+                    .withStyle(ChatFormatting.GRAY);
+            } else if (!clumpFresh || clumpSize < 0) {
+                merged = Component.translatable("hud.gonzotech.wrench_clump_unknown")
+                    .withStyle(ChatFormatting.GRAY);
+            }
+            if (merged != null) {
+                g.drawString(font, merged, (screenW - font.width(merged)) / 2, lineY, 0xFFFFFF, true);
+                lineY += font.lineHeight + 1;
+            }
         }
 
         // Предметная труба: показываем поток ПО ПРЕДМЕТАМ («Булыжник — 16/т»).
@@ -244,7 +304,6 @@ public final class WrenchHud {
         // Универсальная жидкостная труба несёт несколько ресурсов (вода+пар) — ключ
         // показывает ВСЕ компоненты потока. Для остальных — только наведённый тип.
         List<PipeType> parts = carriedParts(state, part);
-        for (PipeType t : parts) maybeRequestFlow(pos, t);
 
         // Ниже — по строке на каждый компонент потока: цветное имя ресурса +
         // «поток: N» тем же цветом (сумма по концам, без «влево/вправо»).
@@ -497,6 +556,16 @@ public final class WrenchHud {
         if (itemFlowPos == null || !itemFlowPos.equals(pos)) return List.of();
         if (clientTick - itemFlowClientTick > FLOW_STALE_TICKS) return List.of();
         return itemFlowLinesCache;
+    }
+
+    /** 0.3.335: один пакет на все типы позиции, раз в REQUEST_INTERVAL. */
+    private static void maybeRequestAllFlow(BlockPos pos) {
+        if (allFlowRequestPos == null || !allFlowRequestPos.equals(pos)
+            || clientTick - lastAllFlowRequestTick >= REQUEST_INTERVAL) {
+            allFlowRequestPos = pos;
+            lastAllFlowRequestTick = clientTick;
+            PacketDistributor.sendToServer(new PipeFlowNetwork.AllFlowRequestPayload(pos));
+        }
     }
 
     private static void maybeRequestFlow(BlockPos pos, PipeType part) {

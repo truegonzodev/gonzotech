@@ -267,3 +267,13 @@ Headless production-regression1692+2566 assertions PASS; exact462183e baseline2/
 В CURRENT добавлены **HUD-NODE1** (мигает счётчик у любой сшитой группы), **REACT-VAL1** (режим встроенного порта не должен расформировывать реактор/требовать break-place) и **REACT-VAL2** (после поршневого возврата обшивки formed и реальная доступность GUI/портов должны совпадать). Это зарегистрированные проблемы, не новые выполненные фиксы. Сохраняются ресурсы/температура/топливные владельцы и CRIT-1, потолок реактора16 364GTH/т на вывод и лимиты труб. Не затрагивать standalone-режимы прочих сетей и классический цикл парогенератора/турбины; их авторский положительный контроль не выдаётся за новый агентский тест.
 
 [CURRENT](CURRENT-STATE.md), [решение и доказательства](HISTORY.md#reactor-review334), [предыдущая редакция](archive/editions/0.3.334/OUTDATED_BEFORE_REACTOR_REVIEW334_MACHINES.md). Код в этом документальном шаге не менялся.
+
+
+<a id="embedded-port335"></a>
+## 0.3.335: сетевой индекс, порты и тик панели
+
+`NodeClumpIndex.kindOf` получил отдельный reactor-гвард `if (ReactorStructure.isMember(level, pos)) return null;` при сохранённой дословно строке turbine/steamgen. `NodeClumpIndex.detachPorts(level, ports)` теперь вызывается для **всех** boundary-портов сформированного реактора, а после распада `invalidateController` заново вызывает `onNodeChanged` для бывших портов — индекс не оставляет «призрачных» узлов и не теряет нормальные узлы.
+
+`PipeFlowNetwork` добавлены `AllFlowRequestPayload` (`pipe_flow_all_request`) и `PortInfoPayload` (`pipe_port_info`), `respondAll` (шесть `FlowPayload` одним запросом), `clumpSizeForHud` (сумма `NodeClumpIndex.sizeAt` по внешним соседям порта). `FlowPayload(BlockPos pos, int typeId, long generationMilli, long heatMilli, long waterMilli, long lossMilli, int clumpSize)` и `ByteBufCodecs.VAR_INT, FlowPayload::clumpSize` не изменились. `PipeRouting` получил два закомментированных места вызова `EmbeddedPortMode.resolve(...)`; `PipeMode mode = modeOf(pstate, type);` **`не`** подменялся.
+
+`ReactorControlPanelBlockEntity.serverTick` вызывает `ReactorStructure.tickPistonRevalidation(serverLevel, this)`; `clearAll` панели чистит `invalidateAt` и `panelUnloaded`. `WrenchHud` отделил счётчик клампа от свежести flow и показывает подсказку вшитого порта. Баланс, `REACTOR_GTH_PER_PORT_MILLI`, буферы, `Sinks`, `D-PIPE2` вне этого шага. [REACTORS](REACTORS.md#embedded-port335), [AUDIO_VISUAL](AUDIO_VISUAL.md#embedded-port335), [хроника](HISTORY.md#v-0-3-335).

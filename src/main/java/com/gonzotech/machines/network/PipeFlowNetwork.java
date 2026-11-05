@@ -83,6 +83,51 @@ public final class PipeFlowNetwork {
         }
     }
 
+    /**
+     * 0.3.335 HUD-NODE1: один запрос на ВСЕ типы позиции. Раньше ключ слал по
+     * пакету на каждый PipeType.values() (до 13 у универсального узла) каждые
+     * REQUEST_INTERVAL тиков, при этом общий ключ PayloadThrottle "pipeFlow"
+     * допускает 8 запросов / 20 тиков. Это правдоподобная диагностика
+     * нестабильности строки, НО доказанной причиной мигания её не объявляем
+     * (см. CURRENT-STATE 334). Теперь один пакет на позицию, сервер сам отвечает
+     * по каждому реально несомому типу.
+     */
+    public record AllFlowRequestPayload(BlockPos pos) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<AllFlowRequestPayload> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_flow_all_request"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, AllFlowRequestPayload> STREAM_CODEC =
+            StreamCodec.composite(
+                BlockPos.STREAM_CODEC, AllFlowRequestPayload::pos,
+                AllFlowRequestPayload::new);
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    /**
+     * 0.3.335: серверный факт «позиция — вшитый порт сформированной структуры».
+     * Клиент не может сам опросить серверные индексы членов (ClientLevel), поэтому
+     * заголовок HUD ключа выбирается по этому адресному ответу.
+     */
+    public record PortInfoPayload(BlockPos pos, boolean embeddedPort) implements CustomPacketPayload {
+        public static final CustomPacketPayload.Type<PortInfoPayload> TYPE =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(GonzoTechMod.MOD_ID, "pipe_port_info"));
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, PortInfoPayload> STREAM_CODEC =
+            StreamCodec.composite(
+                BlockPos.STREAM_CODEC, PortInfoPayload::pos,
+                ByteBufCodecs.VAR_INT, payload -> payload.embeddedPort() ? 1 : 0,
+                (pos, flag) -> new PortInfoPayload(pos, flag != 0));
+
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     /** Клиент → сервер: «покажи поток ПРЕДМЕТОВ в предметной трубе в этой позиции». */
     public record ItemFlowRequestPayload(BlockPos pos) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<ItemFlowRequestPayload> TYPE =
@@ -235,6 +280,22 @@ public final class PipeFlowNetwork {
                 com.gonzotech.machines.client.WrenchHud.acceptFlow(payload)));
 
         registrar.playToServer(
+            AllFlowRequestPayload.TYPE,
+            AllFlowRequestPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() -> {
+                if (context.player() instanceof ServerPlayer player) {
+                    if (!com.gonzotech.core.network.PayloadThrottle.allow(player, "pipeFlowAll", 8)) return;
+                    respondAll(player, payload.pos());
+                }
+            }));
+
+        registrar.playToClient(
+            PortInfoPayload.TYPE,
+            PortInfoPayload.STREAM_CODEC,
+            (payload, context) -> context.enqueueWork(() ->
+                com.gonzotech.machines.client.WrenchHud.acceptPortInfo(payload)));
+
+        registrar.playToServer(
             ItemFlowRequestPayload.TYPE,
             ItemFlowRequestPayload.STREAM_CODEC,
             (payload, context) -> context.enqueueWork(() -> {
@@ -292,6 +353,34 @@ public final class PipeFlowNetwork {
     /** Максимальная дистанция (блоков), в пределах которой отвечаем на запрос. */
     private static final double MAX_DISTANCE_SQR = 8.0D * 8.0D;
 
+    /** 0.3.335: один C2S-запрос → ответы по каждому реально несомому типу. */
+    private static void respondAll(ServerPlayer player, BlockPos pos) {
+        ServerLevel level = player.serverLevel();
+        if (pos.distToCenterSqr(player.getX(), player.getY(), player.getZ()) > MAX_DISTANCE_SQR) return;
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getBlock() instanceof PipeCarrier carrier)) return;
+        PacketDistributor.sendToPlayer(player, new PortInfoPayload(pos,
+            com.gonzotech.machines.FormedPorts.isEmbeddedPort(level, pos, state)));
+        for (PipeType type : PipeType.values()) {
+            if (carrier.carries(state, type)) respond(player, pos, type.ordinal());
+        }
+    }
+
+    /**
+     * 0.3.335: счётчик сшитых узлов для HUD. У вшитого порта собственный размер
+     * всегда 0 (он исключён из клампов), поэтому показываем ближайший кламп
+     * СНАРУЖИ корпуса: «поставил два узла на узел корпуса → Сшито 2».
+     */
+    private static int clumpSizeForHud(ServerLevel level, BlockPos pos, BlockState state) {
+        int size = NodeClumpIndex.sizeAt(level, pos);
+        if (size > 0 || !com.gonzotech.machines.FormedPorts.isEmbeddedPort(level, pos, state)) return size;
+        for (Direction direction : Direction.values()) {
+            int neighbour = NodeClumpIndex.sizeAt(level, pos.relative(direction));
+            if (neighbour > size) size = neighbour;
+        }
+        return size;
+    }
+
     private static void respond(ServerPlayer player, BlockPos pos, int typeId) {
         ServerLevel level = player.serverLevel();
         if (pos.distToCenterSqr(player.getX(), player.getY(), player.getZ()) > MAX_DISTANCE_SQR) return;
@@ -318,7 +407,7 @@ public final class PipeFlowNetwork {
             }
             PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, clumpSum, 0,
                 NodeClumpIndex.lossMilliOfRoot(level, NodeClumpIndex.rootOf(level, pos)),
-                NodeClumpIndex.sizeAt(level, pos)));
+                clumpSizeForHud(level, pos, state)));
             return;
         }
 
@@ -330,7 +419,7 @@ public final class PipeFlowNetwork {
         long total = 0;
         for (long v : flow) total += v;
         PacketDistributor.sendToPlayer(player, new FlowPayload(pos, typeId, AXIS_NODE_SUM, total, 0,
-            FlowTracker.getLoss(level, pos, pipeType), NodeClumpIndex.sizeAt(level, pos)));
+            FlowTracker.getLoss(level, pos, pipeType), clumpSizeForHud(level, pos, state)));
     }
 
     /** Отвечает на запрос потока ПРЕДМЕТОВ в предметной трубе (топ по количеству). */

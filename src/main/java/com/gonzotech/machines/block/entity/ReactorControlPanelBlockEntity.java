@@ -255,6 +255,9 @@ public final class ReactorControlPanelBlockEntity extends BlockEntity implements
     /** Restore saved bounds when possible, then advance the ReaCalc simulation each server tick. */
     public void serverTick() {
         if (!(level instanceof ServerLevel serverLevel)) return;
+        // 0.3.335 REACT-VAL2: отложенная проверка после завершённого движения
+        // поршня с обшивкой (только панели с сохранёнными границами).
+        ReactorStructure.tickPistonRevalidation(serverLevel, this);
         if (validationPending) {
             if (serverLevel.getGameTime() % 20L == 0L) {
                 ReactorStructure.restorePanel(serverLevel, this);

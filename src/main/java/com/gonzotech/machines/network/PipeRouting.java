@@ -257,6 +257,9 @@ public final class PipeRouting {
                     buildPath(level, pipe, pipe, parent), direct, lanes, diagnostics);
             }
             PipeMode mode = modeOf(pstate, type);
+            // 0.3.336+ D-PORTMODE1 (заглушка вызова, поведение НЕ меняется):
+            // PipeMode effective = EmbeddedPortMode.resolve(level, pipe, pstate, type, mode);
+            // Политика режимов вшитого порта обсуждается после приёмки 0.3.335.
             for (Direction dir : Direction.values()) {
                 BlockPos next = pipe.relative(dir);
                 // Через другую встроенную ноду не идём: порт — это граница
@@ -373,6 +376,9 @@ public final class PipeRouting {
                 addPortLane(level, pipe, fromPos, type, portRaw, selfPath, direct, lanes, diagnostics);
             }
             PipeMode mode = modeOf(pstate, type);
+            // 0.3.336+ D-PORTMODE1 (заглушка вызова, поведение НЕ меняется):
+            // PipeMode effective = EmbeddedPortMode.resolve(level, pipe, pstate, type, mode);
+            // Политика режимов вшитого порта обсуждается после приёмки 0.3.335.
             for (Direction dir : Direction.values()) {
                 BlockPos npos = pipe.relative(dir);
                 BlockState nstate = level.getBlockState(npos);

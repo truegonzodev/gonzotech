@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_CURRENT-STATE.md",
+      "sha256": "94b3cb0b291c5ef858bc8e194de4d7083a147fb6a3bb1f682cf1752f3c253a70",
+      "bytes": 13704,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/HISTORY.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_HISTORY.md",
+      "sha256": "1f3ede1bdcca6690239dcdca4eff47f5d9cd20fd30f65cebda7bad2a58b2dd5e",
+      "bytes": 888851,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_DEFFERED.md",
+      "sha256": "06e92a2bcebdd5d2b108214eb602cdfb7972bd9959163e73858630661b240b22",
+      "bytes": 82064,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_AUDIT.md",
+      "sha256": "e30d5f7efe4b190c25f0b3b1058341538f3e2a5b3a8bce7c2ab79f6fbcbd7127",
+      "bytes": 162489,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/RULES.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_RULES.md",
+      "sha256": "c94a80dbcc9048fdecb933c46fad2cee125af291bca8b43e0d004851666cc2d1",
+      "bytes": 13914,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/DOCS_RULES.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_DOCS_RULES.md",
+      "sha256": "97b3c01d29f1fa9de537beeec6cc03e0f0d310ba816d035e3939976970023970",
+      "bytes": 25325,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/AUDIO_VISUAL.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_AUDIO_VISUAL.md",
+      "sha256": "cd7686c4a1ad8f50b05f77e13548b7c817eeda2e5bd95f595ea5cd9826ea3833",
+      "bytes": 20051,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_CAPABILITIES.md",
+      "sha256": "52f007482e112461574eae6f36caa6f2e048d0a6a948a8cf5ba871bc1e3af255",
+      "bytes": 55393,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/REACTORS.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_REACTORS.md",
+      "sha256": "d42f63b6d59ecd318fbb1ccc5070f496befca128d946d04e68cacc26fff0b571",
+      "bytes": 14375,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_MULTIBLOCK.md",
+      "sha256": "92721dd66b21c3bd3df7388d744106d468c3b7d1dbf887a480e4d1869e51c8a4",
+      "bytes": 25502,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_MACHINES.md",
+      "sha256": "2fecea23e82baa20ad3ab85505e60064fed0c6142c9dbb98faab74c9a64cbe60",
+      "bytes": 61771,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "source_commit": "5426f74f013087a578f945f49152d087c44c8d34",
+      "snapshot": "docs/archive/editions/0.3.335/OUTDATED_BEFORE_335_README.md",
+      "sha256": "a1bbbec165276c16e0d6582b7aef50a707c29a7cbdcaf5994609a566b56306c8",
+      "bytes": 7301,
+      "task": "0.3.335 REACT-VAL1/REACT-VAL2/HUD-NODE1: embedded ports, piston shell return, stable clump counter"
+    }
+  ]
+}

@@ -56,3 +56,5 @@
 - [Перед исправлением сборки0.3.334](editions/0.3.333/README.md): exact333 CURRENT/AUDIT до авторского compileJava FAILED; исправлен ChestMenu caller, native/авторская приёмка не заявлена.
 
 - [Приёмка CRIT и новые задачи в334](editions/0.3.334/README.md):10exactec3ba9dснимков; оба фикса закрыты автором, в CURRENT мигание любой сшитой группы/режим реакторного порта/поршневое восстановление. Документальный шаг без runtime-патча.
+
+- [Редакции 0.3.334 перед микропатчем 0.3.335](editions/0.3.335/README.md): 12 exact `5426f74f…` снимков (CURRENT/HISTORY/DEFFERED/AUDIT/RULES/DOCS_RULES + AUDIO_VISUAL/CAPABILITIES/REACTORS/MULTIBLOCK/MACHINES + этот README), manifest с SHA-256/байтами/commit. Перед реализацией HUD-NODE1/REACT-VAL1/REACT-VAL2, подсказки вшитого порта и правил 31–35. Не действующая спецификация; решения 335 — в [CURRENT-STATE](../CURRENT-STATE.md) и [HISTORY](../HISTORY.md#v-0-3-335).

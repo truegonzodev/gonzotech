@@ -28,7 +28,21 @@ public abstract class LevelChunkCleanRoomMixin {
             com.gonzotech.machines.network.ItemRouting.onWorldEdit(level);
             // 0.3.306 (автор 26.10): тем же каналом правки командой/взрывом
             // будят ревалидацию матрицы реактора, если клетка внутри границ.
-            com.gonzotech.machines.reactor.ReactorStructure.onWorldEditCell(level, pos);
+            // 0.3.335 REACT-VAL1: смена ТОЛЬКО свойств BlockState (режим узла
+            // ключом, FORMED обшивки) геометрию не меняет и форму не рвёт.
+            if (com.gonzotech.machines.reactor.ReactorStructure.isCosmeticStateChange(old, actual)) {
+                com.gonzotech.machines.reactor.ReactorStructure.onWorldEditStateOnly(level, pos, old, actual);
+            } else {
+                com.gonzotech.machines.reactor.ReactorStructure.onWorldEditCell(level, pos);
+            }
+            // 0.3.335 REACT-VAL2: поршень возвращает блок обшивки вместе с его
+            // сохранённым BlockState (в т.ч. formed=true), но в этот момент
+            // соседние клетки ещё могут быть moving_piston. Итоговая проверка
+            // выполняется на ближайшем серверном тике панели, не здесь.
+            if (com.gonzotech.machines.reactor.ReactorStructure.isShellPart(actual)
+                && !old.is(actual.getBlock())) {
+                com.gonzotech.machines.reactor.ReactorStructure.schedulePistonShellRevalidation(level, pos);
+            }
         }
     }
 }
