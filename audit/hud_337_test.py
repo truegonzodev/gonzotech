@@ -130,6 +130,13 @@ audit = (DOCS / 'AUDIT.md').read_text(encoding='utf-8')
 deferred = (DOCS / 'DEFFERED.md').read_text(encoding='utf-8')
 assert '0.3.337' in current and '**Статус: закрыто.**' in current
 assert 'Закрыто в 0.3.337. Удалить при 0.3.341.' in current
+# 0.3.337 (закрытие по игровой приёмке): HUD-FLOW2 тоже закрыта, удержание 337->341.
+hf2 = current[current.index('<a id="hud-flow2"></a>'):]
+assert '**Статус: закрыто.**' in hf2
+assert 'Закрыто в 0.3.337. Удалить при 0.3.341.' in hf2
+assert 'С кайфом по проверке в игре всё норм' in history
+assert 'v-0-3-337-closed' in history and 'hud337-closed' in audit
+assert 'активных незакрытых задач' in current.lower() or 'Активных незакрытых задач' in current
 assert 'Режимы работы вшитых портов приняты' in history
 assert 'v-0-3-337' in history and 'v-0-3-337-accept' in history
 assert 'image-4.png' in history
