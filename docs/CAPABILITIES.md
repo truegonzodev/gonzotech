@@ -225,4 +225,9 @@ D-PORTMODE1 **закрыт** по игровой приёмке автора («
 
 **Приёмочная правка в том же 0.3.337.** По `image-4.png` убрана кипа нулевых строк: HUD показывает только текущие потоки >0, предметы с `count <= 0` отбрасываются, `<?>` при задержке — только для типов с недавней подтверждённой передачей. Игровая семантика `FlowTracker.get()` (компаратор/редстоун) и `getLoss` не изменены. Версия не поднималась. [HISTORY](HISTORY.md#v-0-3-337-accept), [AUDIT](AUDIT.md#hud337-accept).
 
-**Итог 0.3.337.** D-PORTMODE1 и HUD-FLOW2 закрыты по игровой приёмке автора, удержание до 0.3.341. Активных задач в CURRENT нет. [HISTORY](HISTORY.md#v-0-3-337-closed), [AUDIT](AUDIT.md#hud337-closed).
+**Итог 0.3.337.** D-PORTMODE1 и HUD-FLOW2 закрыты по игровой приёмке автора, удержание до 0.3.341. Шагом RAD-VALID1 в CURRENT заведена активная задача по валидации всех взаимодействий радиации; реализация D-PERF12 не начата. [HISTORY](HISTORY.md#v-0-3-337-closed), [AUDIT](AUDIT.md#hud337-closed), [RAD-VALID1](CURRENT-STATE.md#rad-valid1).
+
+<a id="rad-valid1"></a>
+## RAD-VALID1 — границы доказательств радиации (0.3.337)
+
+Полная [матрица взаимодействий](../RADIATION_INTERACTIONS.md#rad-matrix337) (A–H, формула/ожидание/`файл:строки`) доставлена в ветку; это рабочий артефакт валидации в корне репозитория, не новый профиль docs. Подтверждено 11 радиационных сьютов и полный локальный набор (101 PASS / 0 SKIP / 0 FAIL / 101), `doc_links`/`docs_structure`/ECJ/validate/brackets/tree-sitter. **Не** подтверждено: native Gradle/NeoForge/JAR, Minecraft-клиент/сервер, Mixins-рантайм, GPU/TPS/аллокационный профиль, GameTest «29/29» (23 `@GameTest` не запускались), полное детерминированное old/new сравнение. `SKIP ≠ PASS`; исторические `D-AUD1`, `selfTest3FAIL`, неиспользуемый `G` в `third_grinder` не скрыты; ECJ-repack 14 658 971 байт не выдаётся за Maven SHA `01f5a92…`. Порядок автора: радиация → крафты/баланс/цепочки → трубы → серверная валидация; D-PERF12 [отложена](DEFFERED.md#d-perf12), Этап 1 — измерение без баланса. [CURRENT](CURRENT-STATE.md#rad-valid1), [HISTORY](HISTORY.md#rad-valid1), [AUDIT](AUDIT.md#rad-valid1).
