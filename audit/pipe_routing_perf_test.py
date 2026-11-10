@@ -14,12 +14,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 r = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeRouting.java").read_text()
 
-# caps
-assert "MAX_BFS_CELLS_PER_ENTRY = 2048" in r
-assert "MAX_LANES_PER_DRAIN = 1024" in r  # 0.3.91: замер автора — 15 узлов > 256 дорожек
-assert "MAX_LANES_PER_DRAIN = 256" not in r
-assert "if (++cells > MAX_BFS_CELLS_PER_ENTRY) break;" in r
-assert "lanes.size() >= MAX_LANES_PER_DRAIN" in r
+# 0.3.338: work quotas replace reachability truncation; executable scale/churn in pipe_reform_test.
+service = (ROOT / "src/main/java/com/gonzotech/machines/network/PipeNetworkService.java").read_text()
+assert "MAX_BFS_CELLS_PER_ENTRY" not in r and "MAX_LANES_PER_DRAIN" not in r
+assert "NODES_PER_TICK = 4096" in service and "NANOS_PER_TICK" in service
+assert '"topology-pending"' in r and 'PipeNetworkService.request' in r
 
 # crossing index replaces the per-round lane rescan
 assert "crossers.computeIfAbsent(key, k -> new ArrayList<>()).add(i);" in r
@@ -30,9 +29,8 @@ assert "remaining -= x * activeCount;" not in r           # старый учё�
 # lazy paths: receiver resolved BEFORE buildPath in both lane builders
 aml = r[r.index("private static void addMachineLane"):]
 aml = aml[:aml.index("private static void addPortLane")]
-assert aml.index("if (raw == null) return;") < aml.index("List<PathStep> path = buildPath")
-cl = r[r.index("Transfer.Receiver portRaw = switch (type)"):r.index("PipeMode mode = modeOf(pstate, type);")]
-assert "buildPath" not in cl.split("if (portRaw != null)")[0]
+assert aml.index("if (raw == null) return;") < aml.index("List<PathStep> path = cachedPath")
+assert r.index("if (raw == null || !EmbeddedPortMode.allowsIntake") < r.index("cachedPath(level, pipe, pipe, plan)")
 
 # unified port lane builder; old trio gone
 assert "private static void addPortLane" in r
@@ -55,9 +53,9 @@ for api in ("public static long drain(", "drainFromTurbinePort(", "drainFromMult
 # источниках. Оба обхода обязаны распознавать одни и те же виртуальные порты.
 import _ver
 _ver.at_least("0.3.251", "multiblock-port drain sees steamgen/turbine virtual receivers")
-assert r.count("case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);") == 2
-assert r.count("TurbineStructure.steamReceiverAt(level, pipe)") >= 2
-assert r.count("SteamGenStructure.waterReceiverAt(level, pipe)") >= 2
+assert r.count("case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);") == 1
+assert r.count("TurbineStructure.steamReceiverAt(level, pipe)") == 1
+assert r.count("SteamGenStructure.waterReceiverAt(level, pipe)") == 1
 drain_port_section = r.split("drainFromMultiblockPort(Level level, BlockPos port", 1)[1]
 assert "case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);" in drain_port_section
 assert "case WATER -> {" in drain_port_section
@@ -84,7 +82,7 @@ assert "HOLD_TICKS = 60" in w
 assert "it.remove();" in w                            # чистка в тике (static-гигиена)
 assert "PipeFlowWarnings.mark(level, BlockPos.of(e.getKey())," in r  # маркер из раскладки
 
-print("PipeRouting perf pins passed (crossing index, lazy paths, caps, hot-pipe particles; law/leveling semantics unchanged)")
+print("PipeRouting perf pins passed (crossing index, lazy cached paths, resumable quotas, hot-pipe particles; law/leveling semantics unchanged)")
 
 # 0.3.307: исходный #42 — виртуальный endpoint не форсит чанки и не
 # доверяет захваченному BE после simulate/перестройки. Это source-контракт,

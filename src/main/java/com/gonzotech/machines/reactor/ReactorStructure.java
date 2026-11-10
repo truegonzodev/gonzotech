@@ -676,7 +676,9 @@ public final class ReactorStructure {
         for (int x = min.getX(); x <= max.getX(); x++) {
             for (int y = min.getY(); y <= max.getY(); y++) {
                 for (int z = min.getZ(); z <= max.getZ(); z++) {
-                    index.put(new BlockPos(x, y, z).asLong(), root);
+                    BlockPos member = new BlockPos(x, y, z);
+                    index.put(member.asLong(), root);
+                    com.gonzotech.machines.network.PipeNetworkService.changed(level, member);
                 }
             }
         }
@@ -685,7 +687,11 @@ public final class ReactorStructure {
     private static void removeIndexForRoot(Level level, BlockPos root) {
         Map<Long, BlockPos> index = MEMBER_INDEX.get(level);
         if (index == null) return;
-        index.entrySet().removeIf(entry -> root.equals(entry.getValue()));
+        index.entrySet().removeIf(entry -> {
+            if (!root.equals(entry.getValue())) return false;
+            com.gonzotech.machines.network.PipeNetworkService.changed(level, BlockPos.of(entry.getKey()));
+            return true;
+        });
         if (index.isEmpty()) MEMBER_INDEX.remove(level);
     }
 

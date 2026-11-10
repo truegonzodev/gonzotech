@@ -24,8 +24,8 @@ public abstract class LevelChunkCleanRoomMixin {
             com.gonzotech.radiation.Containment.blockChanged(level, pos, old, actual);
             // 0.3.290 #17: тот же канал кормит счётчики Плотника (см. SECTOR_PULSE).
             com.gonzotech.machines.block.entity.PlotnickBlockEntity.pulseBlockChange(level, pos);
-            // 0.3.299 (N13): тем же штампом инвалидируется кэш топологии труб.
-            com.gonzotech.machines.network.ItemRouting.onWorldEdit(level);
+            // Spatial invalidation: an unrelated world edit does not restart every pipe search.
+            com.gonzotech.machines.network.PipeNetworkService.changed(level, pos, old, actual);
             // 0.3.306 (автор 26.10): тем же каналом правки командой/взрывом
             // будят ревалидацию матрицы реактора, если клетка внутри границ.
             // 0.3.335 REACT-VAL1: смена ТОЛЬКО свойств BlockState (режим узла
@@ -44,5 +44,19 @@ public abstract class LevelChunkCleanRoomMixin {
                 com.gonzotech.machines.reactor.ReactorStructure.schedulePistonShellRevalidation(level, pos);
             }
         }
+    }
+    @Inject(method = "setBlockEntity", at = @At("RETURN"))
+    private void gonzotech$pipeEntityAdded(net.minecraft.world.level.block.entity.BlockEntity entity,
+                                          org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        LevelChunk chunk = (LevelChunk) (Object) this;
+        if (chunk.getLevel() instanceof ServerLevel level)
+            com.gonzotech.machines.network.PipeNetworkService.changed(level, entity.getBlockPos());
+    }
+    @Inject(method = "removeBlockEntity", at = @At("RETURN"))
+    private void gonzotech$pipeEntityRemoved(BlockPos pos,
+                                            org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        LevelChunk chunk = (LevelChunk) (Object) this;
+        if (chunk.getLevel() instanceof ServerLevel level)
+            com.gonzotech.machines.network.PipeNetworkService.changed(level, pos);
     }
 }

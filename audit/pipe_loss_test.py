@@ -42,7 +42,7 @@ for pin in (
     "perCell[i] = Math.round(PipeLoss.perCell(true, heatType) * ThirdTierPipe.STAT_FACTOR);",
     # Lane gained destination identity for cache validation; direct-neighbor
     # path/loss remain null/0, not a routed pipe cell.
-    "lanes.add(new Lane(raw, null, 0, pos));",
+    "lanes.add(new Lane(guarded, null, 0, pos));",
     "long[] lossCells = pathLossCells(level, path, type);",
     "return PipeLoss.sum(pathLossCells(level, path, type));",
     # Opt-in diagnostics wrap the same receiver, then identical loss accounting.

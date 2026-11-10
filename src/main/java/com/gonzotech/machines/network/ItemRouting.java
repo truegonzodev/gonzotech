@@ -12,10 +12,7 @@ import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,6 +71,25 @@ public final class ItemRouting {
      */
     // One tick of directed transfer history per world. Values contain only primitive
     // addresses/UUIDs, never a Container -> Level reference back to the weak key.
+    private static final Map<Level, NodeTickBudget> NODE_BUDGETS = new java.util.WeakHashMap<>();
+    private static final class NodeTickBudget {
+        long tick = Long.MIN_VALUE;
+        final Map<Long, Map<net.minecraft.world.item.Item, Integer>> nodes = new HashMap<>();
+        Map<net.minecraft.world.item.Item, Integer> at(long now, BlockPos pos) {
+            if (tick != now) { nodes.clear(); tick = now; }
+            return nodes.computeIfAbsent(pos.asLong(), k -> new HashMap<>());
+        }
+    }
+
+    /** Explicit lifecycle cleanup: cached containers can retain their world. */
+    public static void closeLevel(Level level) {
+        TRANSFER_GUARDS.remove(level); NODE_BUDGETS.remove(level);
+        TOPO_CACHE.remove(level);
+    }
+    public static void clearAll() {
+        TRANSFER_GUARDS.clear(); NODE_BUDGETS.clear(); TOPO_CACHE.clear();
+    }
+
     private static final Map<Level, ItemTransferGuard> TRANSFER_GUARDS = new java.util.WeakHashMap<>();
 
     /**
@@ -135,14 +151,16 @@ public final class ItemRouting {
         // Фаза 2 (0.3.96): ОДИН обход сети на узел за тик (раньше — до шести,
         // по грани на каждую). Множество приёмников от грани не зависит: BFS
         // стартует от узла, исключение источника делаем при вставке.
-        // 0.3.299 (N13): результат кэшируется на узел (инвалидация — общий
-        // штамп геометрии из LevelChunk-миксина), с бюджетом узлов на тик.
+        // 0.3.338: complete route plan from the shared, resumable scheduler.
         List<Sink> sinks = sinksCached(level, pos);
         if (sinks.isEmpty()) {
             if (diagnostics) PipeRoutingDiagnostics.itemEvent(level, pos, null, "no-discovered-sinks", "sources=" + faces.size());
             return 0;
         }
 
+        Map<net.minecraft.world.item.Item, Integer> allowance = NODE_BUDGETS.computeIfAbsent(level, k -> new NodeTickBudget()).at(now, pos);
+        for (int used : allowance.values()) budget -= used;
+        if (budget <= 0) return 0;
         int moved = 0;
         for (Object[] face : faces) {
             if (budget <= 0) break;
@@ -169,15 +187,8 @@ public final class ItemRouting {
      */
     private static int pushItems(Level level, BlockPos pipePos, Container src, Direction srcFace,
                                  List<Sink> sinks, BlockPos excludeSrc, int budget, int perItemCap, long now) {
-        // 0.3.306 (автор 26.10, подтверждено в игре: «передают ещё 1–5 тиков»):
-        // даже свежий по штампу/TTL кэш не доказывает живость сущности, поэтому
-        // перед вставкой ВСЕ приёмники проверяются повторным обходом: цель —
-        // тот же контейнер на своём месте, каждая труба маршрута цела и
-        // соединена. Что не прошло проверку — не используется; если от списка
-        // что-то отброшено, запись кэша выбрасывается (следующий тик
-        // пересоберёт по бюджету). Перенос при этом просто задерживается —
-        // теряться предметам не за чем.
-        // A captured source must still be the same live physical inventory.
+        // The complete plan is revoked by geometry/chunk/BE edits. Endpoint
+        // identity remains a live check; no stale lease authorizes an insertion.
         if (!sameContainerAt(level, excludeSrc, src)) {
             if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, pipePos, excludeSrc, "source-identity-rejected", src.getClass().getName());
             return 0;
@@ -195,7 +206,7 @@ public final class ItemRouting {
         long rotation = level.getGameTime();
         int n = sinks.size();
         // Сколько уже перемещено КАЖДОГО вида за этот тик (для лимита PER_ITEM_TICK_CAP).
-        java.util.Map<net.minecraft.world.item.Item, Integer> perItem = new java.util.HashMap<>();
+        java.util.Map<net.minecraft.world.item.Item, Integer> perItem = NODE_BUDGETS.computeIfAbsent(level, k -> new NodeTickBudget()).at(now, pipePos);
 
         for (int slot : extractableSlots(src, srcFace)) {
             if (moved >= budget) break;
@@ -223,6 +234,8 @@ public final class ItemRouting {
                         if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, pipePos, sink.containerPos(), "return-cycle-or-owner-unavailable", "source=" + excludeSrc);
                         continue;
                     }
+                    if (!sink.plan().current() || !sameContainerAt(level, excludeSrc, src)
+                        || !sameContainerAt(level, sink.containerPos(), sink.container())) continue;
                     if (insertOne(sink.container, sink.face, one)) {
                         src.removeItem(slot, 1);
                         src.setChanged();
@@ -307,143 +320,42 @@ public final class ItemRouting {
     // ─────────────────────────── обход сети (BFS) ───────────────────────────
 
     /** Приёмник и точный маршрут труб, по которому предмет физически был передан. */
-    private record Sink(Container container, Direction face, List<BlockPos> path, BlockPos containerPos) {
+    private record Sink(Container container, Direction face, List<BlockPos> path, BlockPos containerPos, PipeNetworkService.Plan plan) {
     }
-
-    // ───────────────────── кэш топологии (0.3.299 N13) ─────────────────────
-    // collectSinks бегал по каждой открытой трубе каждый тик: куча труб —
-    // тысячи getBlockState на ровном месте. Кэш приёмников стартовой трубы
-    // считается свежим только при совпадении штампа геометрии И непросроченном
-    // TOPO_TTL_TICKS. Контейнер-сущность может приехать без block edit; один
-    // неизменный штамп не должен навсегда удерживать даже пустой результат.
-    // TOPO_BUDGET_PER_TICK — лимит новых BFS-узлов на игровой тик: перерасход
-    // берёт прошлый результат трубы или отдаляет пересчёт на следующий тик.
 
     static final int TOPO_TTL_TICKS = 40;
-    static final int TOPO_BUDGET_PER_TICK = 2048;
+    private record CachedSinks(List<Sink> sinks, long builtTick, PipeNetworkService.Plan plan) {}
+    private static final Map<Level, Map<Long, CachedSinks>> TOPO_CACHE = new java.util.WeakHashMap<>();
 
-    private record CachedSinks(List<Sink> sinks, long builtTick, long version) {}
-
-    private static final java.util.Map<Level, long[]> TOPO_VERSION =
-        new java.util.WeakHashMap<>();
-    private static final java.util.Map<Level, java.util.Map<Long, CachedSinks>> TOPO_CACHE =
-        new java.util.WeakHashMap<>();
-    private static long topoBudgetTick = Long.MIN_VALUE;
-    private static int topoBudget;
-
-    /** Миксин зовёт на КАЖДОМ setBlockState: версии расходятся — кэш протух. */
+    /** Compatibility/debug invalidation; ordinary edits use the spatial service hook. */
     public static void onWorldEdit(Level level) {
-        if (level.isClientSide()) return;
-        TOPO_VERSION.computeIfAbsent(level, k -> new long[1])[0]++;
+        PipeNetworkService.invalidateAll(level);
+        TOPO_CACHE.remove(level);
     }
-
-    private static long topoVersion(Level level) {
-        long[] v = TOPO_VERSION.get(level);
-        return v == null ? 0L : v[0];
-    }
-
-    private record SinkSearch(List<Sink> sinks, int visited, boolean complete) { }
-
     private static List<Sink> sinksCached(Level level, BlockPos startPipe) {
-        if (level.isClientSide()) return collectSinks(level, startPipe, Integer.MAX_VALUE).sinks();
+        PipeNetworkService.Plan plan = PipeNetworkService.requestItems(level, startPipe, false);
+        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null,
+            "cache", plan == null ? "pending jobs=" + PipeNetworkService.pendingJobs() : "ready visited=" + plan.visited());
+        if (plan == null) return List.of();
         long now = level.getGameTime();
-        if (topoBudgetTick != now) {
-            topoBudgetTick = now;
-            topoBudget = TOPO_BUDGET_PER_TICK;
+        Map<Long, CachedSinks> cache = TOPO_CACHE.computeIfAbsent(level, k -> new HashMap<>());
+        CachedSinks old = cache.get(startPipe.asLong());
+        if (old != null && old.plan() == plan && now - old.builtTick() <= TOPO_TTL_TICKS) return old.sinks();
+        if (plan.visited() >= HOT_NODE_BFS) PipeFlowWarnings.mark(level, startPipe, now + PipeFlowWarnings.HOLD_TICKS);
+        List<Sink> sinks = new ArrayList<>();
+        for (PipeNetworkService.Outlet outlet : plan.outlets()) {
+            Container c = containerAt(level, outlet.target());
+            if (c != null) sinks.add(new Sink(c, outlet.face(), plan.pathTo(outlet.pipe()), outlet.target(), plan));
         }
-        java.util.Map<Long, CachedSinks> perLevel = TOPO_CACHE.get(level);
-        CachedSinks hit = perLevel == null ? null : perLevel.get(startPipe.asLong());
-        long version = topoVersion(level);
-        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "cache",
-            "hit=" + (hit != null) + " age=" + (hit == null ? "-" : now - hit.builtTick())
-                + " version=" + version + " budget=" + topoBudget);
-        if (hit != null
-            && (hit.version() == version && now - hit.builtTick() <= TOPO_TTL_TICKS)) {
-            return hit.sinks();
-        }
-        if (topoBudget <= 0) {
-            if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "bfs-budget-deferred", "fallback=" + (hit == null ? 0 : hit.sinks().size()));
-            return hit != null ? hit.sinks() : List.of();
-        }
-        SinkSearch search = collectSinks(level, startPipe, topoBudget);
-        List<Sink> sinks = search.sinks();
-        if (PipeRoutingDiagnostics.itemEnabled(level)) PipeRoutingDiagnostics.itemEvent(level, startPipe, null, "bfs-result",
-            "visited=" + search.visited() + " complete=" + search.complete() + " sinks=" + sinks.size());
-        topoBudget -= search.visited();
-        if (perLevel == null) {
-            perLevel = new java.util.HashMap<>();
-            TOPO_CACHE.put(level, perLevel);
-        }
-        if (perLevel.size() > 8192) perLevel.clear(); // трубы ломают — кэш не раздуваем
-        // 0.3.306: усечённый бюджетом обход в кэш не кладём — иначе тик позже
-        // по нему ездили бы как по полному (недоисследованные приёмники пропали б).
-        if (search.complete()) perLevel.put(startPipe.asLong(), new CachedSinks(sinks, now, version));
+        if (!plan.current()) return List.of();
+        cache.put(startPipe.asLong(), new CachedSinks(sinks, now, plan));
+        // Incremental/idle eviction is performed by the lifecycle hook, never clear-all on size.
         return sinks;
     }
 
-    /**
-     * Собирает контейнеры-приёмники, достижимые по связной цепи предметных труб от
-     * {@code startPipe}. Источник/его alias исключаются перед переносом. Правила
-     * соединения — как в {@link PipeRouting}: труба↔труба по открытым навстречу
-     * граням; труба→контейнер, если грань открыта к нему и режим = ОТДАЧА/АВТО.
-     */
-    private static SinkSearch collectSinks(Level level, BlockPos startPipe, int maxNodes) {
-        List<Sink> sinks = new ArrayList<>();
-        Set<BlockPos> visited = new HashSet<>();
-        Map<Long, BlockPos> parents = new HashMap<>();
-        Deque<BlockPos> queue = new ArrayDeque<>();
-        queue.add(startPipe);
-        visited.add(startPipe);
-        parents.put(startPipe.asLong(), null);
-
-        // Count processed nodes, independently of completion. Discovering a queued
-        // neighbour is not permission to process it beyond the remaining budget.
-        int processed = 0;
-        while (!queue.isEmpty() && processed < maxNodes) {
-            processed++;
-            BlockPos pipe = queue.poll();
-            if (!level.hasChunkAt(pipe)) continue;
-            BlockState pstate = level.getBlockState(pipe);
-            if (!isItemPipe(pstate)) continue;
-            PipeMode mode = modeOf(pstate);
-
-            for (Direction dir : Direction.values()) {
-                BlockPos npos = pipe.relative(dir);
-                if (!level.hasChunkAt(npos)) continue;
-                BlockState nstate = level.getBlockState(npos);
-
-                if (isItemPipe(nstate)) {
-                    if (!pipesConnect(pstate, nstate, dir)) continue;
-                    if (visited.add(npos)) {
-                        parents.put(npos.asLong(), pipe);
-                        queue.add(npos);
-                    }
-                    continue;
-                }
-                // Контейнер за трубой — приёмник, если труба открыта к нему и отдаёт.
-                if (!opensToward(pstate, dir)) continue;
-                if (!mode.deliversToMachine()) continue;
-                Container c = containerAt(level, npos);
-                if (c != null) sinks.add(new Sink(c, dir.getOpposite(), pathTo(pipe, parents), npos));
-            }
-        }
-        // 0.3.96 (автор: предупреждение о дорогом роутинге): огромная сеть узлов
-        // подсвечивается частицей gonzo:hot_pipe даже без дорожек PipeRouting.
-        if (visited.size() >= HOT_NODE_BFS) {
-            PipeFlowWarnings.mark(level, startPipe,
-                level.getGameTime() + PipeFlowWarnings.HOLD_TICKS);
-        }
-        return new SinkSearch(sinks, processed, queue.isEmpty());
-    }
-
-    /** Восстанавливает выбранный BFS-маршрут от стартовой трубы до {@code end}. */
-    private static List<BlockPos> pathTo(BlockPos end, Map<Long, BlockPos> parents) {
-        List<BlockPos> path = new ArrayList<>();
-        for (BlockPos at = end; at != null; at = parents.get(at.asLong())) {
-            path.add(at);
-        }
-        Collections.reverse(path);
-        return path;
+    public static void trimCache(Level level) {
+        Map<Long, CachedSinks> cache = TOPO_CACHE.get(level);
+        if (cache != null) cache.values().removeIf(c -> !c.plan().current() || level.getGameTime() - c.builtTick() > 200);
     }
 
     /**
@@ -452,6 +364,9 @@ public final class ItemRouting {
      * кэша стартовой трубы — молча ездить по протухшему маршруту сеть не будет.
      */
     private static List<Sink> liveSinks(Level level, BlockPos startPipe, List<Sink> cached) {
+        Map<Long, CachedSinks> owner = TOPO_CACHE.get(level);
+        CachedSinks lease = owner == null ? null : owner.get(startPipe.asLong());
+        if (lease != null && !lease.plan().current()) return List.of();
         List<Sink> live = new ArrayList<>(cached.size());
         boolean dropped = false;
         for (Sink sink : cached) {
@@ -462,18 +377,14 @@ public final class ItemRouting {
             java.util.Map<Long, CachedSinks> perLevel = TOPO_CACHE.get(level);
             if (perLevel != null) perLevel.remove(startPipe.asLong());
         }
+        if (lease != null && !lease.plan().current()) return List.of();
         return dropped ? live : cached;
     }
 
     /** Маршрут цел (трубы на месте и соединены) и приёмник — тот же контейнер там же. */
     private static boolean sinkLive(Level level, Sink sink) {
+        if (!sink.plan().current()) return false;
         List<BlockPos> path = sink.path();
-        for (int i = 0; i + 1 < path.size(); i++) {
-            if (!level.hasChunkAt(path.get(i)) || !level.hasChunkAt(path.get(i + 1))) return false;
-            BlockState a = level.getBlockState(path.get(i));
-            BlockState b = level.getBlockState(path.get(i + 1));
-            if (!isItemPipe(a) || !pipesConnect(a, b, dirBetween(path.get(i), path.get(i + 1)))) return false;
-        }
         BlockPos lastPipe = path.get(path.size() - 1);
         if (!level.hasChunkAt(lastPipe)) return false;
         BlockState last = level.getBlockState(lastPipe);

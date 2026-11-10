@@ -110,7 +110,7 @@ assert "waterPorts.stream().mapToLong" in structure
 assert "NodeClumpIndex.detachPorts(level, ports)" in structure
 assert "public static Transfer.Receiver waterReceiverAt(" in structure
 assert "public static long gthPortLimit(" in structure
-water_route = method(routing, "private static int collectLanes(")
+water_route = method(routing, "private static Transfer.Receiver portReceiver(")
 assert "case WATER -> {" in water_route
 assert "steamGen != null ? steamGen : ReactorStructure.waterReceiverAt(level, pipe)" in water_route
 

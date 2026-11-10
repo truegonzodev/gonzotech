@@ -427,7 +427,10 @@ public final class TurbineStructure {
 
     private static void index(ServerLevel level, Build build) {
         Map<Long, BlockPos> index = MEMBER_INDEX.computeIfAbsent(level, ignored -> new HashMap<>());
-        for (BlockPos pos : build.allParts) index.put(pos.asLong(), build.root);
+        for (BlockPos pos : build.allParts) {
+            BlockPos previous = index.put(pos.asLong(), build.root);
+            if (!build.root.equals(previous)) com.gonzotech.machines.network.PipeNetworkService.changed(level, pos);
+        }
         // 0.3.104: порты сформированной турбины — только приём/выдача мультиблока,
         // узлами сети (в т.ч. клампами с внешними узлами) не являются.
         List<BlockPos> ports = new ArrayList<>(build.steamPorts);
@@ -443,7 +446,11 @@ public final class TurbineStructure {
     private static void removeIndexForRoot(ServerLevel level, BlockPos root) {
         Map<Long, BlockPos> index = MEMBER_INDEX.get(level);
         if (index == null) return;
-        index.entrySet().removeIf(entry -> root.equals(entry.getValue()));
+        index.entrySet().removeIf(entry -> {
+            if (!root.equals(entry.getValue())) return false;
+            com.gonzotech.machines.network.PipeNetworkService.changed(level, BlockPos.of(entry.getKey()));
+            return true;
+        });
         if (index.isEmpty()) MEMBER_INDEX.remove(level);
     }
 

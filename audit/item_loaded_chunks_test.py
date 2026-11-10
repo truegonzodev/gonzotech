@@ -25,7 +25,7 @@ STUBS={
 'net/minecraft/world/level/block/state/properties/ChestType.java':'package net.minecraft.world.level.block.state.properties;public enum ChestType{SINGLE,LEFT,RIGHT}',
 'net/minecraft/world/level/block/state/properties/EnumProperty.java':'package net.minecraft.world.level.block.state.properties;public class EnumProperty<T extends Enum<T>>{}',
 'net/minecraft/world/level/block/ChestBlock.java':'''package net.minecraft.world.level.block;import net.minecraft.core.Direction;import net.minecraft.world.level.block.state.BlockState;import net.minecraft.world.level.block.state.properties.*;public class ChestBlock extends Block{public static final EnumProperty<ChestType> TYPE=new EnumProperty<>();public static Direction getConnectedDirection(BlockState s){return s.partner;}}''',
-'net/minecraft/world/level/block/state/BlockState.java':'''package net.minecraft.world.level.block.state;import net.minecraft.world.level.block.Block;import net.minecraft.world.level.block.state.properties.*;import net.minecraft.core.Direction;public class BlockState{public final Block block;public final ChestType type;public final Direction partner;public BlockState(Block b){this(b,ChestType.SINGLE,Direction.EAST);}public BlockState(Block b,ChestType t,Direction d){block=b;type=t;partner=d;}public Block getBlock(){return block;}@SuppressWarnings("unchecked")public <T extends Enum<T>>T getValue(EnumProperty<T>p){return (T)type;}}''',
+'net/minecraft/world/level/block/state/BlockState.java':'''package net.minecraft.world.level.block.state;import net.minecraft.world.level.block.Block;import net.minecraft.world.level.block.state.properties.*;import net.minecraft.core.Direction;public class BlockState{public final Block block;public final ChestType type;public final Direction partner;public BlockState(Block b){this(b,ChestType.SINGLE,Direction.EAST);}public BlockState(Block b,ChestType t,Direction d){block=b;type=t;partner=d;}public boolean hasBlockEntity(){return block instanceof net.minecraft.world.level.block.ChestBlock;}public Block getBlock(){return block;}@SuppressWarnings("unchecked")public <T extends Enum<T>>T getValue(EnumProperty<T>p){return (T)type;}}''',
 'com/gonzotech/machines/network/PipeType.java':'package com.gonzotech.machines.network;public enum PipeType{ITEM,WIRE,HEAT,WATER,STEAM;public int maxThroughput(){return 5;}}',
 'com/gonzotech/machines/network/PipeMode.java':'package com.gonzotech.machines.network;public enum PipeMode{AUTO,PULL,PUSH;public boolean acceptsFromMachine(){return this!=PUSH;}public boolean deliversToMachine(){return this!=PULL;}}',
 'com/gonzotech/machines/network/PipeCarrier.java':'''package com.gonzotech.machines.network;import net.minecraft.core.Direction;import net.minecraft.world.level.block.state.BlockState;public interface PipeCarrier{boolean carries(BlockState s,PipeType t);boolean opensToward(BlockState s,PipeType t,Direction d);PipeMode modeFor(BlockState s,PipeType t);default double throughputFactor(BlockState s,PipeType t){return 1;}default int throughputLimit(BlockState s,PipeType t){return 5;}default int perItemThroughputLimit(BlockState s,PipeType t){return 1;}}''',
@@ -34,12 +34,12 @@ STUBS={
 'com/gonzotech/radiation/engine/ExternalRadiation.java':'package com.gonzotech.radiation.engine;import net.minecraft.world.item.ItemStack;public class ExternalRadiation{public static void merge(ItemStack a,ItemStack b,int n){}}',
 'net/minecraft/world/level/block/entity/HopperBlockEntity.java':'package net.minecraft.world.level.block.entity;import net.minecraft.world.Container;import net.minecraft.core.BlockPos;import net.minecraft.world.level.Level;public class HopperBlockEntity{public static Container getContainerAt(Level l,BlockPos p){return l.lookup(p);}}',
 'net/minecraft/world/level/Level.java':'''package net.minecraft.world.level;import java.util.*;import net.minecraft.core.*;import net.minecraft.world.Container;import net.minecraft.world.level.block.*;import net.minecraft.world.level.block.state.*;import net.minecraft.world.level.block.state.properties.ChestType;
-public class Level{public static long clock;public long tick=++clock;public int reads,lookups,illegalReads,flow,powerQueries;public final java.util.List<String>debug=new java.util.ArrayList<>();public boolean diagnostics,signal,wireFootprint,assembleChests;public boolean client;public BlockPos hookAt;public int hookAfter=1;public Runnable hook;public final Set<Long> chunks=new HashSet<>();public final Map<BlockPos,BlockState> states=new HashMap<>();public final Map<BlockPos,Container> containers=new HashMap<>();public static final BlockState AIR=new BlockState(new Block());
+public class Level{public static long clock;public long tick=++clock;public int reads,lookups,illegalReads,flow,powerQueries;public final java.util.List<String>debug=new java.util.ArrayList<>();public boolean diagnostics,signal,wireFootprint,assembleChests;public boolean client;public BlockPos hookAt;public int hookAfter=1;public Runnable hook;public final Set<Long> chunks=new HashSet<>();public final Map<BlockPos,BlockState> states=new HashMap<>(){public BlockState put(BlockPos p,BlockState s){BlockState old=getOrDefault(p,AIR);BlockState prior=super.put(p,s);com.gonzotech.machines.network.PipeNetworkService.changed(Level.this,p,old,s);return prior;}public BlockState remove(Object p){BlockState old=super.remove(p);if(old!=null)com.gonzotech.machines.network.PipeNetworkService.changed(Level.this,(BlockPos)p,old,AIR);return old;}};public final Map<BlockPos,Container> containers=new HashMap<>(){public Container put(BlockPos p,Container c){Container old=super.put(p,c);com.gonzotech.machines.network.PipeNetworkService.changed(Level.this,p);return old;}public Container remove(Object p){Container old=super.remove(p);if(old!=null)com.gonzotech.machines.network.PipeNetworkService.changed(Level.this,(BlockPos)p);return old;}};public final Map<BlockPos,Container> carts=new HashMap<>();public static final BlockState AIR=new BlockState(new Block());
 public boolean hasNeighborSignal(BlockPos p){powerQueries++;for(Direction d:Direction.values())getBlockState(p.relative(d));if(wireFootprint)getBlockState(new BlockPos(p.getX()+3,p.getY(),p.getZ()));return signal;}
-public boolean isClientSide(){return client;}public long getGameTime(){return tick;}public static long key(BlockPos p){return ((long)(p.getX()>>4)<<32)^((p.getZ()>>4)&0xffffffffL);}public boolean hasChunkAt(BlockPos p){return chunks.contains(key(p));}public void load(BlockPos p){chunks.add(key(p));}public void unload(BlockPos p){chunks.remove(key(p));}
+public boolean isClientSide(){return client;}public long getGameTime(){return tick;}public static long key(BlockPos p){return ((long)(p.getX()>>4)<<32)^((p.getZ()>>4)&0xffffffffL);}public boolean hasChunkAt(BlockPos p){return chunks.contains(key(p));}public void load(BlockPos p){if(chunks.add(key(p)))com.gonzotech.machines.network.PipeNetworkService.chunkChanged(this,p.getX()>>4,p.getZ()>>4);}public void unload(BlockPos p){if(chunks.remove(key(p)))com.gonzotech.machines.network.PipeNetworkService.chunkChanged(this,p.getX()>>4,p.getZ()>>4);}
 public BlockState getBlockState(BlockPos p){if(!hasChunkAt(p)){illegalReads++;throw new AssertionError("unloaded block read: "+p);}reads++;BlockState s=states.getOrDefault(p,AIR);if(p.equals(hookAt)&&hook!=null&&--hookAfter==0){Runnable r=hook;hook=null;r.run();}return s;}
 public Object getBlockEntity(BlockPos p){if(!hasChunkAt(p)){illegalReads++;throw new AssertionError("unloaded BE read");}return containers.get(p);}
-public Container lookup(BlockPos p){lookups++;BlockState s=getBlockState(p);if(s.getBlock() instanceof ChestBlock&&s.type!=ChestType.SINGLE){BlockPos other=p.relative(ChestBlock.getConnectedDirection(s));BlockState o=getBlockState(other);if(assembleChests&&o.getBlock() instanceof ChestBlock&&o.type!=ChestType.SINGLE&&o.partner==s.partner.getOpposite()&&containers.get(p)!=null&&containers.get(other)!=null)return new net.minecraft.world.CompoundContainer(containers.get(p),containers.get(other));}return containers.get(p);}}
+public Container lookup(BlockPos p){lookups++;BlockState s=getBlockState(p);if(s.getBlock() instanceof ChestBlock&&s.type!=ChestType.SINGLE){BlockPos other=p.relative(ChestBlock.getConnectedDirection(s));BlockState o=getBlockState(other);if(assembleChests&&o.getBlock() instanceof ChestBlock&&o.type!=ChestType.SINGLE&&o.partner==s.partner.getOpposite()&&containers.get(p)!=null&&containers.get(other)!=null)return new net.minecraft.world.CompoundContainer(containers.get(p),containers.get(other));}return containers.containsKey(p)?containers.get(p):carts.get(p);}}
 ''',
 }
 STUBS.update({
@@ -54,15 +54,18 @@ STUBS.update({
 PROBE=r'''package com.gonzotech.machines.network;
 import com.gonzotech.machines.block.entity.ItemFilterBlockEntity;import net.minecraft.server.level.ServerLevel;import java.util.*;import java.lang.reflect.*;import net.minecraft.core.*;import net.minecraft.world.*;import net.minecraft.world.item.*;import net.minecraft.world.level.*;import net.minecraft.world.level.block.*;import net.minecraft.world.level.block.state.*;import net.minecraft.world.level.block.state.properties.ChestType;
 public class LoadedProbe{
-static int checks;static final Item ITEM=new Item();static void eq(int a,int b,String why){checks++;if(a!=b)throw new AssertionError(why+": "+a+" != "+b);}static void yes(boolean v,String why){eq(1,v?1:0,why);}static BlockPos p(int x){return new BlockPos(x,64,8);}static void clean(Level l){eq(0,l.illegalReads,"zero unloaded world reads");}
+static int checks;static final Item ITEM=new Item();static void eq(int a,int b,String why){checks++;if(a!=b)throw new AssertionError(why+": "+a+" != "+b);}static void yes(boolean v,String why){eq(1,v?1:0,why);}static BlockPos p(int x){return new BlockPos(x,64,8);}static void clean(Level l){eq(0,l.illegalReads,"zero unloaded world reads");PipeNetworkService.closeLevel(l);PipeNetworkService.beginTick();}
 static class Pipe extends Block implements PipeCarrier{public boolean carries(BlockState s,PipeType t){return true;}public boolean opensToward(BlockState s,PipeType t,Direction d){return d==Direction.EAST||d==Direction.WEST;}public PipeMode modeFor(BlockState s,PipeType t){return PipeMode.AUTO;}}
 static final BlockState PIPE=new BlockState(new Pipe());
 public static class Box implements Container{final Level world;final BlockPos pos;public ItemStack stack;int writes;public Box(Level l,BlockPos p,int count){world=l;pos=p;stack=new ItemStack(ITEM,count);l.containers.put(p,this);}void live(){if(!world.hasChunkAt(pos))throw new AssertionError("unloaded inventory touched");}public int getContainerSize(){live();return 1;}public ItemStack getItem(int s){live();return stack;}public void setItem(int s,ItemStack v){live();stack=v;writes++;}public void setChanged(){live();}public boolean canPlaceItem(int s,ItemStack v){live();return true;}public int getMaxStackSize(){return 64;}public ItemStack removeItem(int s,int n){live();int k=Math.min(n,stack.getCount());stack.shrink(k);return new ItemStack(ITEM,k);}}
 static Object call(String name,Class<?>[]types,Object...args){return callIn(ItemRouting.class,name,types,args);}static Object callIn(Class<?>owner,String name,Class<?>[]types,Object...args){try{Method m=owner.getDeclaredMethod(name,types);m.setAccessible(true);return m.invoke(null,args);}catch(InvocationTargetException e){if(e.getCause() instanceof AssertionError a)throw a;throw new AssertionError(e.getCause());}catch(Exception e){throw new AssertionError(e);}}
-static List<?> cache(Level l,BlockPos start){return (List<?>)call("sinksCached",new Class<?>[]{Level.class,BlockPos.class},l,start);}
+// A captured-cache test starts AFTER discovery; it must not assume that a
+// shared server scheduler can finish a route in one synchronous request.
+static void prepare(Level l,BlockPos start,boolean filter){if(!l.hasChunkAt(start))return;for(int tick=0;tick<1000;tick++){PipeNetworkService.beginTick();var plan=PipeNetworkService.requestItems(l,start,filter);PipeNetworkService.endTick();if(plan!=null)return;}throw new AssertionError("fixture route never completes");}
+static List<?> cache(Level l,BlockPos start){prepare(l,start,false);return (List<?>)call("sinksCached",new Class<?>[]{Level.class,BlockPos.class},l,start);}
 static boolean live(Level l,Object sink){return (boolean)call("sinkLive",new Class<?>[]{Level.class,sink.getClass()},l,sink);}
 static int push(Level l,BlockPos root,Box src,BlockPos srcPos,List<?>sinks){return (int)call("pushItems",new Class<?>[]{Level.class,BlockPos.class,Container.class,Direction.class,List.class,BlockPos.class,int.class,int.class,long.class},l,root,src,Direction.EAST,sinks,srcPos,5,1,l.getGameTime());}
-static List<?> filterSinks(Level l,BlockPos root){List<Object>out=new ArrayList<>();callIn(ItemFilterRouting.class,"collectSinksFromCarrier",new Class<?>[]{Level.class,BlockPos.class,List.class,List.class},l,root,List.of(),out);return out;}
+static List<?> filterSinks(Level l,BlockPos root){prepare(l,root,true);List<Object>out=new ArrayList<>();callIn(ItemFilterRouting.class,"collectSinksFromCarrier",new Class<?>[]{Level.class,BlockPos.class,List.class,List.class},l,root,List.of(),out);return out;}
 public static void main(String[]args){
  // Baseline: only one chunk loaded, valid source -> pipe -> sink still transfers.
  Level l=new Level();l.load(p(8));l.states.put(p(8),PIPE);Box src=new Box(l,p(7),16),dst=new Box(l,p(9),0);
@@ -105,7 +108,7 @@ public static void main(String[]args){
  l=new Level();l.load(p(15));for(int x=15;x<10000;x++)l.states.put(p(x),PIPE);src=new Box(l,p(14),16);dst=new Box(l,p(10000),0);
  for(int n=0;n<100;n++)eq(0,ItemRouting.tickExtract(l,p(15),PIPE),"long line remains inert beyond loaded edge");eq(1,l.chunks.size(),"no load cascade across 625 chunks");eq(16,src.stack.getCount(),"no long-line debit");clean(l);
  // Engine/external loading can restore a route; routing itself never performs it.
- l=new Level();l.load(p(15));l.states.put(p(15),PIPE);src=new Box(l,p(14),16);dst=new Box(l,p(16),0);eq(0,ItemRouting.tickExtract(l,p(15),PIPE),"initial unloaded destination");l.load(p(16));l.tick+=41;
+ l=new Level();l.load(p(15));l.states.put(p(15),PIPE);src=new Box(l,p(14),16);dst=new Box(l,p(16),0);eq(0,ItemRouting.tickExtract(l,p(15),PIPE),"initial unloaded destination");l.load(p(16));l.tick+=41;prepare(l,p(15),false);
  eq(1,ItemRouting.tickExtract(l,p(15),PIPE),"external loading and normal cache expiry restores transfer");eq(16,src.stack.getCount()+dst.stack.getCount(),"resume conserves items");clean(l);
  // Execute the WHOLE filter router, not a placeholder pretending to be a filter.
  for(int root:new int[]{8,15,16}){
@@ -163,14 +166,15 @@ public static void main(String[]args){
 }}
 '''
 
-def run(source=None,filter_source=None,chunks_source=None,comparator_source=None,extra_files=None,guard_source=None,main_class="com.gonzotech.machines.network.LoadedProbe"):
+def run(source=None,filter_source=None,chunks_source=None,comparator_source=None,extra_files=None,guard_source=None,main_class="com.gonzotech.machines.network.LoadedProbe",service_source=None):
  home=os.environ.get('JAVA_HOME');java=str(Path(home)/'bin/java') if home else shutil.which('java');javac=str(Path(home)/'bin/javac') if home else shutil.which('javac')
  if not java or not Path(java).is_file():raise SystemExit('Java 21 required: set JAVA_HOME or PATH')
  if not os.environ.get('ECJ_JAR') and not javac:raise SystemExit('javac required (or ECJ_JAR with Java 21)')
  compiler=[java,'-jar',os.environ['ECJ_JAR'],'-21','-proc:none','-nowarn'] if os.environ.get('ECJ_JAR') else [javac,'--release','21']
  with tempfile.TemporaryDirectory(prefix='gonzo-loaded-chunks-') as tmp:
   root=Path(tmp);files=dict(STUBS);
-  for name in ('ItemScavengerBlock','SecondItemScavengerBlock','LoadedItemChunks','UniversalNodeComparator','ItemTransferGuard'):files[f'com/gonzotech/machines/network/{name}.java']=(JAVA/f'machines/network/{name}.java').read_text()
+  for name in ('ItemScavengerBlock','SecondItemScavengerBlock','LoadedItemChunks','UniversalNodeComparator','ItemTransferGuard','PipeNetworkService'):files[f'com/gonzotech/machines/network/{name}.java']=(JAVA/f'machines/network/{name}.java').read_text()
+  if service_source:files['com/gonzotech/machines/network/PipeNetworkService.java']=service_source
   if guard_source:files['com/gonzotech/machines/network/ItemTransferGuard.java']=guard_source
   if chunks_source:files['com/gonzotech/machines/network/LoadedItemChunks.java']=chunks_source
   if comparator_source:files['com/gonzotech/machines/network/UniversalNodeComparator.java']=comparator_source
@@ -202,13 +206,12 @@ if __name__=='__main__':
  assert old_comparator.returncode!=0 and 'AssertionError' in old_comparator.stderr,'old comparator must fail independently'
  print('REJECTED: exact old comparator (Git/hash/bytes verified)')
  if '--mutation-check' in sys.argv:
+  # 338: traversal, lease and chunk-generation guards moved into the shared
+  # service and are mutated by pipe_reform_test. Keep independent boundary
+  # mutations here; do not match deleted BFS source or count redundant guards
+  # as surviving behavioral defects.
   mutants=[
    ('root','level.isClientSide() || !level.hasChunkAt(pos)','level.isClientSide()'),
-   ('captured-source','if (!sameContainerAt(level, excludeSrc, src)) {','if (false) {'),
-   ('queued-node','if (!level.hasChunkAt(pipe)) continue;',''),
-   ('BFS-frontier','if (!level.hasChunkAt(npos)) continue;',''),
-   ('cached-path','if (!level.hasChunkAt(path.get(i)) || !level.hasChunkAt(path.get(i + 1))) return false;',''),
-   ('last-pipe','if (!level.hasChunkAt(lastPipe)) return false;',''),
    ('endpoint-entry','if (!containerLookupLoaded(level, pos)) return null;',''),
    ('chest-companion','|| level.hasChunkAt(pos.relative(ChestBlock.getConnectedDirection(state)))','|| true'),
   ]
@@ -219,13 +222,7 @@ if __name__=='__main__':
   filter_text=FILTER.read_text()
   filter_mutants=[
    ('filter-root','level.isClientSide() || !level.hasChunkAt(pos)','level.isClientSide()'),
-   ('filter-discovery-root','if (!level.hasChunkAt(root)) return;',''),
-   ('filter-root-frontier','if (!level.hasChunkAt(npos)) continue;','',1),
-   ('filter-BFS-frontier','if (!level.hasChunkAt(npos)) continue;','',2),
-   ('filter-queued-node','if (!level.hasChunkAt(pipe)) continue;',''),
    ('filter-commit-path','if (!sinkLoaded(level, sink)) continue;',''),
-   ('filter-saved-root','if (!level.hasChunkAt(sink.root())) return false;',''),
-   ('filter-saved-segments','if (!level.hasChunkAt(pipe)) return false;',''),
    ('filter-powered-delete','if (!level.hasChunkAt(poweredScavenger) || !LoadedItemChunks.redstoneAreaLoaded(level, poweredScavenger)) break;',''),
    ('filter-powered-envelope',' || !LoadedItemChunks.redstoneAreaLoaded(level, poweredScavenger)',''),
    ('filter-reject-envelope','if (rootState.getBlock() instanceof ItemScavengerBlock scavenger\n            && !scavenger.canCheckPower(level, sink.root())) return false;',''),

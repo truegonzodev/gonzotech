@@ -1150,7 +1150,7 @@ pb299 = (ROOT / "src/main/java/com/gonzotech/machines/block/PlotnickBlock.java")
 assert "protected void onPlace" in pb299 and "server.getChunk(cx + dx, cz + dz)" in pb299, \
     "0.3.299 N11: установка Плотника не прогревает 5×5 чанков — перевыборы слепнут"
 ir299 = (ROOT / "src/main/java/com/gonzotech/machines/network/ItemRouting.java").read_text(encoding="utf-8")
-assert "sinksCached(level, pos)" in ir299 and "TOPO_BUDGET_PER_TICK" in ir299 \
+assert "sinksCached(level, pos)" in ir299 and "PipeNetworkService.requestItems" in ir299 \
     and "public static void onWorldEdit(Level level)" in ir299, \
     "0.3.299 N13: BFS приёмников снова бегает по каждой трубе каждый тик"
 assert "Map<Level, ItemTransferGuard> TRANSFER_GUARDS" in ir299 \
@@ -1158,7 +1158,7 @@ assert "Map<Level, ItemTransferGuard> TRANSFER_GUARDS" in ir299 \
     "0.3.327: transfer history must remain per-world and record successful transfers"
 assert "insertedThisTick" not in ir299, "0.3.327: received inventory must not freeze independent inputs/output"
 mx299 = (ROOT / "src/main/java/com/gonzotech/mixin/LevelChunkCleanRoomMixin.java").read_text(encoding="utf-8")
-assert "ItemRouting.onWorldEdit(level)" in mx299, \
+assert "PipeNetworkService.changed(level, pos, old, actual)" in mx299, \
     "0.3.299 N13: миксин не инвалидирует кэш топологии"
 
 # 300/301 visual stripping hooks were explicitly removed: no live radiation
@@ -1244,14 +1244,10 @@ for owner_guard326 in ("Container live = containerAt(level, pos);", "if (live ==
     assert owner_guard326 in _owner326, "0.3.326: lost physical-owner/replacement guard: " + owner_guard326
 assert "perLevel.remove(startPipe.asLong());" in ir306, \
     "0.3.306: отбракованный маршрут не выбрасывает запись кэша"
-assert "while (!queue.isEmpty() && processed < maxNodes) {" in ir306, \
-    "0.3.306: обход приёмников без бюджета (тик не упирается в потолок)"
-assert "if (search.complete()) perLevel.put(startPipe.asLong()" in ir306, \
-    "0.3.306: усечённый бюджетом список попадает в кэш как полный"
-assert "collectSinks(level, startPipe, topoBudget);" in ir306, \
-    "0.3.306: серверный путь не пользуется бюджетом"
-assert "collectSinks(level, startPipe, Integer.MAX_VALUE).sinks()" in ir306, \
-    "0.3.306: клиентский предпросмотр нельзя резать бюджетом"
+# 338 replaces the old restart/sentinel budget with a resumable full-plan service.
+assert "PipeNetworkService.requestItems(level, startPipe, false)" in ir306
+assert "if (plan == null) return List.of();" in ir306
+assert "if (!plan.current()) return List.of();" in ir306
 
 wgb = (ROOT / "src/main/java/com/gonzotech/machines/network/WorldGuardFlags.java").read_text(encoding="utf-8")
 # 0.3.332 supersedes the invented 306 aliases/API and permanent fail-open pin.

@@ -22,23 +22,23 @@ assert "if (!hasExtractableItem(src, srcFace)) {" in routing      # пустой
 assert "if (faces.isEmpty()) return 0;" in routing
 # 0.3.299 (N13): единый BFS на узел теперь ещё и кэшируется (sinksCached)
 assert "List<Sink> sinks = sinksCached(level, pos);" in routing     # ОДИН BFS
-assert "private static SinkSearch collectSinks(Level level, BlockPos startPipe, int maxNodes) {" in routing  # 0.3.299: счётчик для бюджета; 0.3.306: сам бюджет обхода
-assert "while (!queue.isEmpty() && processed < maxNodes) {" in routing  # 0.3.306: усечение не в кэш
+assert "PipeNetworkService.requestItems(level, startPipe, false)" in routing  # 0.3.299: счётчик для бюджета; 0.3.306: сам бюджет обхода
+assert "if (plan == null) return List.of();" in routing  # 0.3.306: усечение не в кэш
 assert "collectSinks(Level level, BlockPos startPipe, BlockPos srcPos)" not in routing  # старый API умер
 assert "Map<Level, ItemTransferGuard> TRANSFER_GUARDS" in routing
 assert "guard.allows(now, sourceOwners, targetOwners)" in routing
 assert "guard.record(now, sourceOwners, targetOwners);" in routing
 assert "sink.containerPos().equals(excludeSrc)" in routing
 assert "insertedThisTick" not in routing  # receiving must not veto all further inputs/output
-assert "private record CachedSinks(List<Sink> sinks, long builtTick, long version)" in routing  # N13
+assert "private record CachedSinks(List<Sink> sinks, long builtTick, PipeNetworkService.Plan plan)" in routing  # N13
 assert "public static void onWorldEdit(Level level)" in routing      # N13: инвалидация от миксина
 assert "Map<Level, ItemTransferGuard> TRANSFER_GUARDS" in routing  # per-world, tick-cleared primitive history
-assert "record Sink(Container container, Direction face, List<BlockPos> path, BlockPos containerPos)" in routing
+assert "record Sink(Container container, Direction face, List<BlockPos> path, BlockPos containerPos, PipeNetworkService.Plan plan)" in routing
 
 # ── 2) горячая метка узловых сетей ──
 assert "HOT_NODE_BFS = 128" in routing
 assert "PipeFlowWarnings.mark(level, startPipe," in routing
-assert "visited.size() >= HOT_NODE_BFS" in routing
+assert "plan.visited() >= HOT_NODE_BFS" in routing
 
 # ── 3) дым-столб: только blastFormed ──
 assert "if (be.blastFormed) {" in firebox

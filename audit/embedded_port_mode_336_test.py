@@ -54,12 +54,13 @@ assert 'public static boolean allowsOutput(PipeMode mode)' in mode
 assert 'return mode == PipeMode.AUTO || mode == PipeMode.PUSH;' in mode
 assert 'EmbeddedPortMode.allowsOutput(sourceMode)' in routing      # исходный порт
 assert '"mode-output-blocked"' in routing                        # GTH в «заборе» закрыт
-assert 'EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(pstate))' in routing
-assert routing.count('EmbeddedPortMode.cappedIntake') == 2        # оба BFS-сайта
-assert 'через отдачу нельзя ввести в условный' in routing
+assert 'EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(state))' in routing
+assert 'EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(live))' in routing
+assert routing.count('EmbeddedPortMode.cappedIntake') == 1        # оба BFS-сайта
+assert 'collectPlanLanes(level, port, type, plan' in routing
 # Направление не подменяется на старую логику «машина ↔ сеть»: гейт стоит
 # на СОБСТВЕННЫХ lane'ах порта, а ordinary machine lanes остаются при modeOf.
-assert 'PipeMode mode = modeOf(pstate, type);' in routing
+assert 'mode(s, key.type).deliversToMachine()' in read('src/main/java/com/gonzotech/machines/network/PipeNetworkService.java')
 assert routing.count('distributeLanes(level, type, lanes, effectiveBudget') == 1
 assert 'EmbeddedPortMode.charge(level, port, type, sourceTaken, true)' in routing
 

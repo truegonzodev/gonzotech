@@ -26,8 +26,8 @@ for metric in (
 ):
     assert metric in diag, f"missing route diagnostic: {metric}"
 assert "accepted=" in diag and "sourceCharge=" in diag
-assert "MAX_BFS_CELLS_PER_ENTRY = 2048" in routing
-assert "MAX_LANES_PER_DRAIN = 1024" in routing
+assert '"topology-pending"' in routing
+assert "PipeNetworkService.request" in routing
 
 # Topology reconstruction is timed separately and remains entirely opt-in.
 assert "[GONZOTECH PIPE-DIAG][CLUMP]" in diag

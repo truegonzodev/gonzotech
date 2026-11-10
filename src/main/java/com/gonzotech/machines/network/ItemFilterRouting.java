@@ -10,10 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -80,6 +77,16 @@ public final class ItemFilterRouting {
                 sourcePositions.add(npos);
             }
         }
+
+        // Keep ALL source addresses excluded, but do not search either network
+        // when neither the internal buffer nor a sided source can supply an item.
+        boolean hasWork = !be.isEmpty();
+        for (Source source : sources) {
+            if (hasWork) break;
+            Container src = ItemRouting.containerAt(level, source.pos());
+            hasWork = src != null && ItemRouting.hasExtractableItem(src, source.face());
+        }
+        if (!hasWork) return;
 
         // Выходная сеть Фильтра: BFS по item-трубам, начиная с самого Фильтра.
         collectSinksFromCarrier(level, pos, sourcePositions, pass);
@@ -302,7 +309,7 @@ public final class ItemFilterRouting {
 
     /** Приёмник и точный маршрут item-труб до него. */
     private record ItemRouting_Sink(Container container, Direction face, List<BlockPos> path,
-                                    BlockPos root, BlockPos containerPos) {
+                                    BlockPos root, BlockPos containerPos, PipeNetworkService.Plan plan) {
     }
 
     /** Источник: позиция контейнера + его грань, обращённая к Фильтру. */
@@ -322,88 +329,26 @@ public final class ItemFilterRouting {
      */
     private static void collectSinksFromCarrier(Level level, BlockPos root,
                                                 List<BlockPos> exclude, List<ItemRouting_Sink> out) {
-        if (!level.hasChunkAt(root)) return;
-        Set<BlockPos> visited = new HashSet<>();
-        Map<Long, BlockPos> parents = new HashMap<>();
-        Deque<BlockPos> queue = new ArrayDeque<>();
-        // Стартуем с прилегающих к корню труб.
-        BlockState rootState = level.getBlockState(root);
-        boolean rootIsCarrier = rootState.getBlock() instanceof PipeCarrier c && c.carries(rootState, T);
-        visited.add(root);
-
-        for (Direction dir : Direction.values()) {
-            BlockPos npos = root.relative(dir);
-            if (!level.hasChunkAt(npos)) continue;
-            BlockState nstate = level.getBlockState(npos);
-            if (isItemPipe(nstate)) {
-                // Труба должна быть открыта навстречу корню; корень-носитель — во все стороны.
-                if (!opensToward(nstate, dir.getOpposite())) continue;
-                if (rootIsCarrier && !opensToward(rootState, dir)) continue;
-                if (visited.add(npos)) {
-                    // Корень — фильтр/отсеиватель, а не сегмент трубы на пути.
-                    parents.put(npos.asLong(), null);
-                    queue.add(npos);
-                }
-            } else if (rootIsCarrier) {
-                // Корень (напр. если бы был носителем) может отдавать прямо в контейнер.
-                if (exclude.contains(npos)) continue;
-                if (!opensToward(rootState, dir)) continue;
-                Container cc = ItemRouting.containerAt(level, npos);
-                if (cc != null) out.add(new ItemRouting_Sink(cc, dir.getOpposite(), List.of(), root, npos));
-            }
-        }
-
-        while (!queue.isEmpty()) {
-            BlockPos pipe = queue.poll();
-            if (!level.hasChunkAt(pipe)) continue;
-            BlockState pstate = level.getBlockState(pipe);
-            if (!isItemPipe(pstate)) continue;
-            PipeMode mode = modeOf(pstate);
-
-            for (Direction dir : Direction.values()) {
-                BlockPos npos = pipe.relative(dir);
-                if (!level.hasChunkAt(npos)) continue;
-                BlockState nstate = level.getBlockState(npos);
-
-                if (isItemPipe(nstate)) {
-                    if (!pipesConnect(pstate, nstate, dir)) continue;
-                    if (visited.add(npos)) {
-                        parents.put(npos.asLong(), pipe);
-                        queue.add(npos);
-                    }
-                    continue;
-                }
-                if (exclude.contains(npos)) continue;
-                if (visited.contains(npos)) continue; // корень/уже учтён
-                if (!opensToward(pstate, dir)) continue;
-                if (!mode.deliversToMachine()) continue;
-                Container c = ItemRouting.containerAt(level, npos);
-                if (c != null) out.add(new ItemRouting_Sink(c, dir.getOpposite(), pathTo(pipe, parents), root, npos));
-            }
+        PipeNetworkService.Plan plan = PipeNetworkService.requestItems(level, root, true);
+        if (plan == null) return;
+        for (PipeNetworkService.Outlet outlet : plan.outlets()) {
+            if (exclude.contains(outlet.target()) || outlet.target().equals(root)) continue;
+            Container c = ItemRouting.containerAt(level, outlet.target());
+            if (c != null) out.add(new ItemRouting_Sink(c, outlet.face(),
+                outlet.pipe().equals(root) ? List.of() : plan.pathTo(outlet.pipe()), root, outlet.target(), plan));
         }
     }
 
-    /** Loaded-only check, not the shared topology/owner validation of PERF-001/13. */
+    /** Complete topology lease + live root/power and physical endpoint identity. */
     private static boolean sinkLoaded(Level level, ItemRouting_Sink sink) {
-        if (!level.hasChunkAt(sink.root())) return false;
+        if (!sink.plan().current() || !level.hasChunkAt(sink.root())) return false;
         BlockState rootState = level.getBlockState(sink.root());
         if (rootState.getBlock() instanceof ItemScavengerBlock scavenger
             && !scavenger.canCheckPower(level, sink.root())) return false;
-        for (BlockPos pipe : sink.path()) {
-            if (!level.hasChunkAt(pipe)) return false;
-        }
-        return ItemRouting.containerLookupLoaded(level, sink.containerPos());
+        return ItemRouting.containerLookupLoaded(level, sink.containerPos())
+            && ItemRouting.sameContainerAt(level, sink.containerPos(), sink.container());
     }
 
-    /** Восстанавливает выбранный BFS-маршрут от первой трубы после корня. */
-    private static List<BlockPos> pathTo(BlockPos end, Map<Long, BlockPos> parents) {
-        List<BlockPos> path = new ArrayList<>();
-        for (BlockPos at = end; at != null; at = parents.get(at.asLong())) {
-            path.add(at);
-        }
-        Collections.reverse(path);
-        return path;
-    }
 
     // ─────────────────────────── мелкие помощники ───────────────────────────
 
@@ -411,15 +356,4 @@ public final class ItemFilterRouting {
         return state.getBlock() instanceof PipeCarrier c && c.carries(state, T);
     }
 
-    private static boolean opensToward(BlockState state, Direction dir) {
-        return state.getBlock() instanceof PipeCarrier c && c.opensToward(state, T, dir);
-    }
-
-    private static boolean pipesConnect(BlockState a, BlockState b, Direction dirAtoB) {
-        return opensToward(a, dirAtoB) && opensToward(b, dirAtoB.getOpposite());
-    }
-
-    private static PipeMode modeOf(BlockState state) {
-        return state.getBlock() instanceof PipeCarrier c ? c.modeFor(state, T) : PipeMode.AUTO;
-    }
 }

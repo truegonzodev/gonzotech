@@ -93,6 +93,7 @@ public class GonzoTechMod {
 
         // При остановке сервера сбросить транзитный учёт потока труб (держит ссылки на Level).
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent e) -> {
+            com.gonzotech.machines.network.ItemRouting.clearAll();
             com.gonzotech.machines.network.FlowTracker.clearAll();
             com.gonzotech.machines.network.ItemFlowTracker.clearAll();
             com.gonzotech.machines.network.UniversalNodeComparator.clearAll();

@@ -2,6 +2,7 @@ package net.minecraft.world.level.block.state;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.Property;
 public class BlockState {
+    public boolean hasBlockEntity() { return false; }
     public Block getBlock() { return null; }
     public boolean is(Block block) { return false; }
     public boolean is(net.minecraft.tags.TagKey<Block> tag) { return false; }

@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_CURRENT-STATE.md",
+      "sha256": "190823c8a3869e507d70a4e04afe02f18e71027d7f16c578a38b395867ca67a4",
+      "bytes": 33949,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    },
+    {
+      "source": "docs/HISTORY.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_HISTORY.md",
+      "sha256": "e8301581a9c07dec8adcb0f5ed6ae94a8e08f8cbd4a39f90c3f52c509b4df724",
+      "bytes": 984885,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_DEFFERED.md",
+      "sha256": "d2714554acabf04f7763b93f33ca1bb6e5648548d06db8c183928c0b686a5a57",
+      "bytes": 86518,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_AUDIT.md",
+      "sha256": "a47e68cd5a1f571367536eb49a56f5950bd07926d25049b14e625c4ad802d581",
+      "bytes": 200608,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_CAPABILITIES.md",
+      "sha256": "bda01f4c3621aae33724c4b64b45aa81ab1f7be98238054291c09690f4e2ed6f",
+      "bytes": 66152,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_MACHINES.md",
+      "sha256": "a33f97d91a30ffedf25a1068242b775bba18edb350a29da4ed6b5fa3e97eeafc",
+      "bytes": 67344,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_MULTIBLOCK.md",
+      "sha256": "ca6835c76ec9cb3f55d197a80df6f9e5bdc4afc3ae06997ef1213c568d2c01d5",
+      "bytes": 32123,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "source_commit": "f798fc507ab1d8d4c081716e0913ebe5a52d107c",
+      "snapshot": "docs/archive/editions/0.3.338/OUTDATED_BEFORE_338_archive-README.md",
+      "sha256": "de83afb5c575b7056c5f285e2414e5a5fc4d0016c4e2224bf6506fd3e8a38449",
+      "bytes": 10444,
+      "task": "D-PIPE2: approved runtime implementation, resumable cell-indexed search"
+    }
+  ]
+}

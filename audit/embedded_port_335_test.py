@@ -139,7 +139,7 @@ assert 'PipeCarrier' in ports
 # Исторический факт 335 (заглушка) зафиксирован в HISTORY; здесь проверяем,
 # что все остальные пины 335 целы, а заглушечные комментарии убраны честно.
 assert 'D-PORTMODE1' in mode_stub
-assert 'PipeMode mode = modeOf(pstate, type);' in routing  # standalone-режим не подменён
+assert 'mode(s, key.type).deliversToMachine()' in read('machines/network/PipeNetworkService.java')  # standalone-режим не подменён
 assert routing.count('0.3.336+ D-PORTMODE1') == 0          # заглушечные комменты сняты
 assert '// PipeMode effective = EmbeddedPortMode.resolve' not in routing
 assert 'EmbeddedPortMode.resolve(level, port, portState, type,' in routing

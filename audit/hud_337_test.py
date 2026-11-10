@@ -136,7 +136,8 @@ assert '**Статус: закрыто.**' in hf2
 assert 'Закрыто в 0.3.337. Удалить при 0.3.341.' in hf2
 assert 'С кайфом по проверке в игре всё норм' in history
 assert 'v-0-3-337-closed' in history and 'hud337-closed' in audit
-assert 'активных незакрытых задач' in current.lower() or 'Активных незакрытых задач' in current
+# Later work may be active; the accepted HUD task itself must remain closed.
+assert '**Статус: закрыто.**' in hf2.split('\n<a id=', 1)[0]
 assert 'Режимы работы вшитых портов приняты' in history
 assert 'v-0-3-337' in history and 'v-0-3-337-accept' in history
 assert 'image-4.png' in history
@@ -148,8 +149,9 @@ assert (DOCS / 'archive/editions/0.3.337/manifest.json').is_file()
 mode = read('src/main/java/com/gonzotech/machines/network/EmbeddedPortMode.java')
 assert 'allowsIntake' in mode and 'allowsOutput' in mode
 assert 'sharedRemaining' in mode and 'cappedIntake' in mode
-# one_patch: новый Z НЕ заводился.
-assert 'mod_version=0.3.337' in read('gradle.properties')
+# The accepted HUD contract remains mandatory after later runtime patches.
+import _ver
+_ver.at_least('0.3.337', 'accepted HUD behavior retained')
 
 print('0.3.337 HUD: only active flows >0 + fixed server sample window PASS; '
       'bug-flicker cause treated, not masked; source-only, not a native build or GameTest')

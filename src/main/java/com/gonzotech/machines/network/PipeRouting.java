@@ -10,9 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,12 +19,12 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 /**
- * Маршрутизация слива через провода — БЕЗ сетей-объектов, буферов и тиков.
+ * Маршрутизация слива через провода; ресурсы не хранятся в топологическом кэше.
  * <p>
  * Провод здесь — просто «вынос слива за пределы блока». Он ничего не хранит и
  * ничего ни из кого не «высасывает». Когда машина ДОБРОВОЛЬНО сливает свою
  * выходную шкалу и рядом нет прямого приёмника, но есть провод — этот класс на
- * лету обходит связную цепь труб того же типа (BFS) и собирает все машины,
+ * запрашивает полный план у PipeNetworkService и разрешает живые машины,
  * которым можно отдать (грань трубы в режиме {@link PipeMode#deliversToMachine}).
  * Ресурс телепортируется приёмникам за тот же тик.
  * <p>
@@ -100,6 +98,15 @@ public final class PipeRouting {
     /** Шаг пути: труба {@code pipe} выпускает ресурс в сторону {@code out}. */
     private record PathStep(BlockPos pipe, Direction out) {
     }
+    private record PathKey(BlockPos via, BlockPos receiver) {}
+    // Values contain positions only: no receiver/BE/Level backlink to the weak plan.
+    private static final Map<PipeNetworkService.Plan, Map<PathKey, List<PathStep>>> PATHS = new java.util.WeakHashMap<>();
+    public static void clearRouteCache() { PATHS.clear(); }
+    private static List<PathStep> cachedPath(Level level, BlockPos via, BlockPos receiver, PipeNetworkService.Plan plan) {
+        return PATHS.computeIfAbsent(plan, ignored -> new HashMap<>()).computeIfAbsent(new PathKey(via, receiver),
+            ignored -> List.copyOf(buildPath(level, via, receiver, plan.parents())));
+    }
+
 
     /**
      * Дорожка: конкретный маршрут ресурса к приёмнику. Приёмник, достижимый из
@@ -130,7 +137,7 @@ public final class PipeRouting {
      */
     public static long drain(Level level, BlockPos fromPos, PipeType type, long budget, long rotation,
                              BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
-        if (budget <= 0) return 0;
+        if (budget <= 0 || level.isClientSide() || !level.hasChunkAt(fromPos)) return 0;
         PipeRoutingDiagnostics.Trace diagnostics =
             PipeRoutingDiagnostics.begin(level, fromPos, type, budget, "machine");
         long routeStarted = diagnostics == null ? 0L : System.nanoTime();
@@ -147,6 +154,7 @@ public final class PipeRouting {
         List<BlockPos> entries = new ArrayList<>();
         for (Direction dir : Direction.values()) {
             BlockPos ppos = fromPos.relative(dir);
+            if (!level.hasChunkAt(ppos)) continue;
             BlockState pstate = level.getBlockState(ppos);
             if (!isPipe(pstate, type)) continue;
             if (!machineConnects(pstate, type, dir)) continue;
@@ -166,7 +174,7 @@ public final class PipeRouting {
         // проводам уже не добавляются (прямая передача приоритетнее и не режется).
         for (Direction dir : Direction.values()) {
             BlockPos npos = fromPos.relative(dir);
-            if (isPipe(level.getBlockState(npos), type)) continue;
+            if (!level.hasChunkAt(npos) || isPipe(level.getBlockState(npos), type)) continue;
             addDirectReceiver(level, npos, fromPos, rawByPos, direct, lanes, receiverOf);
         }
 
@@ -175,9 +183,11 @@ public final class PipeRouting {
         // общие сегменты между дорожками ограничивает закон при раскладке.
         for (BlockPos entry : entries) {
             int visited = collectLanes(level, fromPos, type, entry, receiverOf, rawByPos, direct, lanes, diagnostics);
-            if (diagnostics != null) {
-                diagnostics.addBfsEntry(entry, visited, visited > MAX_BFS_CELLS_PER_ENTRY);
+            if (visited < 0) {
+                if (diagnostics != null) diagnostics.finish("topology-pending", 0L, System.nanoTime() - routeStarted, 0L);
+                return 0; // A partial recipient set must not receive a full fair-share budget.
             }
+            if (diagnostics != null) diagnostics.addBfsEntry(entry, visited, false);
         }
 
         long routeNanos = diagnostics == null ? 0L : System.nanoTime() - routeStarted;
@@ -220,6 +230,7 @@ public final class PipeRouting {
     public static long drainFromMultiblockPort(Level level, BlockPos port, PipeType type, long budget, long rotation,
                                                BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
                                                BiFunction<Level, BlockPos, Boolean> isMember) {
+        if (level.isClientSide() || !level.hasChunkAt(port)) return 0;
         BlockState portState = level.getBlockState(port);
         if (budget <= 0 || !isPipe(portState, type)) return 0;
         PipeRoutingDiagnostics.Trace diagnostics =
@@ -243,74 +254,14 @@ public final class PipeRouting {
 
         Set<Long> direct = new HashSet<>();
         List<Lane> lanes = new ArrayList<>();
-        Map<Long, BlockPos> parent = new HashMap<>();
-        Deque<BlockPos> queue = new ArrayDeque<>();
-        Set<BlockPos> visited = new HashSet<>();
-        parent.put(port.asLong(), null);
-        queue.add(port);
-        visited.add(port);
-
-        while (!queue.isEmpty()) {
-            BlockPos pipe = queue.poll();
-            BlockState pstate = level.getBlockState(pipe);
-            // Виртуальные приёмники встроенных портов — нода сама является и
-            // трубой, и входом установки. Без этой проверки парогенератор не
-            // смог бы кормить турбину (пар), а реактор — парогенератор (GTH):
-            // для BFS чужая нода — просто ещё одна труба. Полный свитч как в
-            // collectLanes (0.3.251: репорт автора «реактор не передаёт GTH
-            // в пароген» — case HEAT отсутствовал именно здесь).
-            Transfer.Receiver portRaw = switch (type) {
-                case STEAM -> TurbineStructure.steamReceiverAt(level, pipe);
-                case WATER -> {
-                    Transfer.Receiver steamGen = SteamGenStructure.waterReceiverAt(level, pipe);
-                    yield steamGen != null ? steamGen : ReactorStructure.waterReceiverAt(level, pipe);
-                }
-                case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);
-                default -> null;
-            };
-            if (portRaw != null) {
-                // 0.3.336 D-PORTMODE1: «отдача» НЕ принимает воду/тепло/пар
-                // внутрь сборки; AUTO делит общий потолок порта с выдачей.
-                if (EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(pstate))) {
-                    Transfer.Receiver gated = EmbeddedPortMode.cappedIntake(level, pipe, type, portRaw);
-                    addPortLane(level, pipe, port, type, gated,
-                        buildPath(level, pipe, pipe, parent), direct, lanes, diagnostics);
-                }
-            }
-            // 0.3.336: режим вшитого порта применяется к ЕГО СОБСТВЕННЫМ lane'ам
-            // (выше и в исходном гейте), а НЕ к ordinary machine lanes соседних
-            // блоков — для них сохраняется прежний standalone modeOf.
-            PipeMode mode = modeOf(pstate, type);
-            for (Direction dir : Direction.values()) {
-                BlockPos next = pipe.relative(dir);
-                // Через другую встроенную ноду не идём: порт — это граница
-                // машины, не внутренняя связка из проводов.
-                if (!next.equals(port) && isMember.apply(level, next)) continue;
-                BlockState nextState = level.getBlockState(next);
-                if (isPipe(nextState, type)) {
-                    // 0.3.107: перерезка 0.3.104 («порт не пирается с узлами»)
-                    // УДАЛЕНА — она рубила и ЛЕГИТИМНЫЕ пути: паровой порт
-                    // турбины — тоже узел, поэтому пароген не мог отдать пар,
-                    // а универсальные узлы-хабы не пропускали трафик порта
-                    // вовсе (репорт автора 03.10). «Порт — не узел» означает
-                    // только НЕСШИВАЕМОСТЬ (kindOf-гвард + detachPorts) и
-                    // невмешательство в сборку — НЕ разрыв проводимости.
-                    if (!pipesConnect(pstate, nextState, type, dir)) continue;
-                    if (visited.add(next)) {
-                        parent.put(next.asLong(), pipe);
-                        queue.add(next);
-                    }
-                    continue;
-                }
-                if (!machineConnects(pstate, type, dir) || !mode.deliversToMachine()) continue;
-                // 0.3.93: приёмник разрешается ВНУТРИ addMachineLane; путь строится
-                // только когда приёмник подтверждён (ленивость 0.3.90). Старый вызов
-                // остался в до-рефакторочной расстановке аргументов (сборка автора
-                // упала: PipeType не конвертируется в BlockPos).
-                addMachineLane(level, pipe, next, port, type, receiverOf, parent, direct, lanes, diagnostics);
-            }
+        PipeNetworkService.Plan plan = PipeNetworkService.request(level, port, type,
+            PipeNetworkService.Kind.PORT, p -> isMember.apply(level, p), p -> portReceiver(level, p, type) != null);
+        if (plan == null) {
+            if (diagnostics != null) diagnostics.finish("topology-pending", 0L, System.nanoTime() - routeStarted, 0L);
+            return 0;
         }
-        if (diagnostics != null) diagnostics.addBfsEntry(port, visited.size(), false);
+        collectPlanLanes(level, port, type, plan, receiverOf, direct, lanes, diagnostics);
+        if (diagnostics != null) diagnostics.addBfsEntry(port, plan.visited(), false);
         long routeNanos = diagnostics == null ? 0L : System.nanoTime() - routeStarted;
         if (lanes.isEmpty()) {
             if (diagnostics != null) diagnostics.finish("no-lanes", 0L, routeNanos, 0L);
@@ -339,96 +290,59 @@ public final class PipeRouting {
         if (raw == null) return;
         rawByPos.put(pos.asLong(), raw);
         direct.add(pos.asLong());
-        lanes.add(new Lane(raw, null, 0, pos));
+        Transfer.Receiver guarded = (amount, simulate) -> level.hasChunkAt(pos) && level.getBlockEntity(pos) == be
+            ? raw.receive(amount, simulate) : 0L;
+        lanes.add(new Lane(guarded, null, 0, pos));
     }
 
-    /**
-     * BFS от entry-трубы; каждый найденный приёмник — его дорожка (маршрут
-     * entry→…→приёмник). Позиции с прямой дорожкой пропускаются (прямой поток
-     * через трубу не идёт).
-     */
-    /**
-     * 0.3.90/0.3.91: предохранители перегрева маршрутизатора (поле абсорберов
-     * убивало TPS). Замер автора 04.10: 3 узла ≈ 48 дорожек, 5 узлов ≈ 360,
-     * поле из 15 узлов — больше 256, поэтому кап дорожек 1024: легитимные
-     * сети (15 узлов) не отсекаются, бесконечные — по-прежнему ограничены.
-     */
-    private static final int MAX_BFS_CELLS_PER_ENTRY = 2048;
-    private static final int MAX_LANES_PER_DRAIN = 1024;
+    private static Transfer.Receiver portReceiver(Level level, BlockPos pipe, PipeType type) {
+        if (!level.hasChunkAt(pipe)) return null;
+        return switch (type) {
+            case STEAM -> TurbineStructure.steamReceiverAt(level, pipe);
+            case WATER -> {
+                Transfer.Receiver steamGen = SteamGenStructure.waterReceiverAt(level, pipe);
+                yield steamGen != null ? steamGen : ReactorStructure.waterReceiverAt(level, pipe);
+            }
+            case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);
+            default -> null;
+        };
+    }
 
     private static int collectLanes(Level level, BlockPos fromPos, PipeType type, BlockPos entry,
                                     BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
                                     Map<Long, Transfer.Receiver> rawByPos,
                                     Set<Long> direct, List<Lane> lanes,
                                     PipeRoutingDiagnostics.Trace diagnostics) {
-        // Родитель каждой посещённой трубы (труба ближе к entry), null у самой entry.
-        Map<Long, BlockPos> parent = new HashMap<>();
-        Deque<BlockPos> queue = new ArrayDeque<>();
-        Set<BlockPos> visited = new HashSet<>();
-        parent.put(entry.asLong(), null);
-        queue.add(entry);
-        visited.add(entry);
+        PipeNetworkService.Plan plan = PipeNetworkService.request(level, entry, type,
+            PipeNetworkService.Kind.RESOURCE, p -> false, p -> portReceiver(level, p, type) != null);
+        if (plan == null) return -1;
+        collectPlanLanes(level, fromPos, type, plan, receiverOf, direct, lanes, diagnostics);
+        return plan.current() ? plan.visited() : -1;
+    }
 
-        // 0.3.90: buildPath дорог (подъём по родителям до entry на каждый вызов),
-        // поэтому путь строится только после дешёвой проверки, что узел вообще
-        // приёмник; не-приёмники машин соседства путь не строят вовсе.
-        int cells = 0;
-        while (!queue.isEmpty()) {
-            BlockPos pipe = queue.poll();
-            BlockState pstate = level.getBlockState(pipe);
-            if (++cells > MAX_BFS_CELLS_PER_ENTRY) break;
-
-            // Порты турбины/парогенератора — это сами ноды, а не BlockEntity за
-            // нодой. Регистрируем их как дорожки-приёмники, но продолжаем BFS:
-            // та же нода остаётся нормальной частью ресурсной сети. Сначала
-            // ДЕШЁВАЯ проверка порта, и только затем дорогой buildPath (0.3.90).
-            Transfer.Receiver portRaw = switch (type) {
-                case STEAM -> TurbineStructure.steamReceiverAt(level, pipe);
-                case WATER -> {
-                    Transfer.Receiver steamGen = SteamGenStructure.waterReceiverAt(level, pipe);
-                    yield steamGen != null ? steamGen : ReactorStructure.waterReceiverAt(level, pipe);
-                }
-                case HEAT -> SteamGenStructure.gthReceiverAt(level, pipe);
-                // Виртуальные порты есть у steamgen/turbine/reactor; прочие
-                // ресурсные приёмники представлены обычными BlockEntity-машинами.
-                default -> null;
-            };
-            if (portRaw != null) {
-                // 0.3.336 D-PORTMODE1: «через отдачу нельзя ввести в условный
-                // пароген воду»; AUTO делит общий потолок порта с выдачей.
-                if (EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(pstate))) {
-                    Transfer.Receiver gated = EmbeddedPortMode.cappedIntake(level, pipe, type, portRaw);
-                    List<PathStep> selfPath = buildPath(level, pipe, pipe, parent);
-                    addPortLane(level, pipe, fromPos, type, gated, selfPath, direct, lanes, diagnostics);
-                }
-            }
-            // 0.3.336: ordinary machine lanes остаются под прежним modeOf;
-            // политика вшитого порта применяется только к его port lane.
-            PipeMode mode = modeOf(pstate, type);
-            for (Direction dir : Direction.values()) {
-                BlockPos npos = pipe.relative(dir);
-                BlockState nstate = level.getBlockState(npos);
-                if (isPipe(nstate, type)) {
-                    // 0.3.107: парная перерезка 0.3.104 (порт↔узел) удалена —
-                    // рубила подачу в порты через узловые хабы (вода/тепло в
-                    // пароген через универсальные узлы и т.п.). Порты не сшиваются
-                    // (NodeClumpIndex) — но ресурс проводят как обычные узлы.
-                    // Соединяем, только если обе грани этого типа открыты навстречу.
-                    if (!pipesConnect(pstate, nstate, type, dir)) continue;
-                    if (visited.add(npos)) {
-                        parent.put(npos.asLong(), pipe);
-                        queue.add(npos);
-                    }
-                    continue;
-                }
-                // Машина за трубой — приёмник, только если грань трубы открыта к ней
-                // и ЭТА труба отдаёт в машину.
-                if (!machineConnects(pstate, type, dir)) continue;
-                if (!mode.deliversToMachine()) continue;
-                addMachineLane(level, pipe, npos, fromPos, type, receiverOf, parent, direct, lanes, diagnostics);
+    private static void collectPlanLanes(Level level, BlockPos fromPos, PipeType type,
+            PipeNetworkService.Plan plan, BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
+            Set<Long> direct, List<Lane> lanes, PipeRoutingDiagnostics.Trace diagnostics) {
+        for (PipeNetworkService.Outlet outlet : plan.outlets()) {
+            if (!plan.current() || !level.hasChunkAt(outlet.target())) return;
+            BlockPos pipe = outlet.pipe();
+            if (outlet.port()) {
+                BlockState state = level.getBlockState(pipe);
+                Transfer.Receiver raw = portReceiver(level, pipe, type);
+                if (raw == null || !EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(state))) continue;
+                Transfer.Receiver guarded = (amount, simulate) -> {
+                    if (!plan.current() || !level.hasChunkAt(pipe)) return 0L;
+                    BlockState live = level.getBlockState(pipe);
+                    if (!EmbeddedPortMode.allowsIntake(EmbeddedPortMode.nodeMode(live))) return 0L;
+                    Transfer.Receiver current = portReceiver(level, pipe, type);
+                    return current == null ? 0L : EmbeddedPortMode.cappedIntake(level, pipe, type, current).receive(amount, simulate);
+                };
+                addPortLane(level, pipe, fromPos, type, guarded,
+                    cachedPath(level, pipe, pipe, plan), direct, lanes, diagnostics);
+            } else {
+                addMachineLane(level, pipe, outlet.target(), fromPos, type, receiverOf, plan, direct, lanes, diagnostics);
             }
         }
-        return cells;
     }
 
     /**
@@ -439,17 +353,20 @@ public final class PipeRouting {
     /** 0.3.90: путь строится только ПОСЛЕ того, как позиция подтверждена приёмником. */
     private static void addMachineLane(Level level, BlockPos viaPipe, BlockPos pos, BlockPos fromPos, PipeType type,
                                        BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
-                                       Map<Long, BlockPos> parent,
+                                       PipeNetworkService.Plan plan,
                                        Set<Long> direct, List<Lane> lanes,
                                        PipeRoutingDiagnostics.Trace diagnostics) {
-        if (lanes.size() >= MAX_LANES_PER_DRAIN) return;
+
         if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
         long key = pos.asLong();
         BlockEntity be = level.getBlockEntity(pos);
         if (be == null) return;
         Transfer.Receiver raw = receiverOf.apply(be, pos);
         if (raw == null) return;
-        List<PathStep> path = buildPath(level, viaPipe, pos, parent);
+        Transfer.Receiver captured = raw;
+        raw = (amount, simulate) -> plan.current() && level.hasChunkAt(pos) && level.getBlockEntity(pos) == be
+            ? captured.receive(amount, simulate) : 0L;
+        List<PathStep> path = cachedPath(level, viaPipe, pos, plan);
         long[] lossCells = pathLossCells(level, path, type);
         long loss = PipeLoss.sum(lossCells);
         int laneIndex = lanes.size();
@@ -465,7 +382,7 @@ public final class PipeRouting {
                                     Transfer.Receiver raw, List<PathStep> path,
                                     Set<Long> direct, List<Lane> lanes,
                                     PipeRoutingDiagnostics.Trace diagnostics) {
-        if (lanes.size() >= MAX_LANES_PER_DRAIN) return;
+
         if (pos.equals(fromPos) || direct.contains(pos.asLong())) return;
         long[] lossCells = pathLossCells(level, path, type);
         long loss = PipeLoss.sum(lossCells);
