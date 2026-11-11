@@ -29,3 +29,6 @@ __pycache__/
 
 # Reproducible local audit reports (not live documentation)
 /audit/reports/
+
+# Immutable local A/B artifacts; source commits and manifests are documented.
+/pipe-snapshots/

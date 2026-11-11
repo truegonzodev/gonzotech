@@ -47,6 +47,11 @@ public final class ItemFilterRouting {
     public static final String ALLOY_TAG = "gonzotech_alloy";
 
     public static void tick(Level level, BlockPos pos, BlockState state, ItemFilterBlockEntity be) {
+        long start = PipeBenchmark.clock(); PipeBenchmark.add(PipeBenchmark.Metric.FILTER_CALLS, 1);
+        try { tickImpl(level, pos, state, be); }
+        finally { PipeBenchmark.elapsed(PipeBenchmark.Metric.FILTER_NS, start); }
+    }
+    private static void tickImpl(Level level, BlockPos pos, BlockState state, ItemFilterBlockEntity be) {
         if (level.isClientSide() || !level.hasChunkAt(pos)) return;
 
         // Приёмники «прошедшего» — выходная сеть Фильтра (item-трубы от Фильтра).

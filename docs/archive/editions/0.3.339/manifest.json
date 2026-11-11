@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "b1779c9331942e25d8aadecf050bdc545d6cb2a2",
+      "snapshot": "docs/archive/editions/0.3.339/OUTDATED_BEFORE_339_CURRENT-STATE.md",
+      "sha256": "f3248b506ee79ce09651cb2b8dda76783205265a64df112faa711596f907debb",
+      "bytes": 35186,
+      "task": "D-PIPE2: baseline snapshot and experimental A/B corridors"
+    },
+    {
+      "source": "docs/HISTORY.md",
+      "source_commit": "b1779c9331942e25d8aadecf050bdc545d6cb2a2",
+      "snapshot": "docs/archive/editions/0.3.339/OUTDATED_BEFORE_339_HISTORY.md",
+      "sha256": "d9a062e94bc967bab9d6d2bee332bd9b1180d055e7a48df96a1015ee082b473e",
+      "bytes": 988575,
+      "task": "D-PIPE2: baseline snapshot and experimental A/B corridors"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "b1779c9331942e25d8aadecf050bdc545d6cb2a2",
+      "snapshot": "docs/archive/editions/0.3.339/OUTDATED_BEFORE_339_AUDIT.md",
+      "sha256": "5944414b82ad2a26f0110f297d94d74927d3f94bbc878249951a39ac4c6c43ca",
+      "bytes": 208284,
+      "task": "D-PIPE2: baseline snapshot and experimental A/B corridors"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "b1779c9331942e25d8aadecf050bdc545d6cb2a2",
+      "snapshot": "docs/archive/editions/0.3.339/OUTDATED_BEFORE_339_CAPABILITIES.md",
+      "sha256": "3121e2a1cf6efcebb51f73e19fe466860c5f93daf6988612d5d62f033ba6fc0f",
+      "bytes": 70227,
+      "task": "D-PIPE2: baseline snapshot and experimental A/B corridors"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "b1779c9331942e25d8aadecf050bdc545d6cb2a2",
+      "snapshot": "docs/archive/editions/0.3.339/OUTDATED_BEFORE_339_MACHINES.md",
+      "sha256": "ba50b762b6d301e2350b054c7fd20fd1a4842e38583c30229f3ee8e54efd7b52",
+      "bytes": 70266,
+      "task": "D-PIPE2: baseline snapshot and experimental A/B corridors"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "b1779c9331942e25d8aadecf050bdc545d6cb2a2",
+      "snapshot": "docs/archive/editions/0.3.339/OUTDATED_BEFORE_339_MULTIBLOCK.md",
+      "sha256": "b9c7773fa3e9778f4a4fdccd73c9a0d90b41bac52b3e9a123b8b76d2cccfd39f",
+      "bytes": 34094,
+      "task": "D-PIPE2: baseline snapshot and experimental A/B corridors"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "source_commit": "b1779c9331942e25d8aadecf050bdc545d6cb2a2",
+      "snapshot": "docs/archive/editions/0.3.339/OUTDATED_BEFORE_339_archive-README.md",
+      "sha256": "ca6c0cd4faf3dd6caeb6711ea24beb90ae5357186bfb6777dc3eaf9e2f7c1724",
+      "bytes": 10661,
+      "task": "D-PIPE2: baseline snapshot and experimental A/B corridors"
+    }
+  ]
+}

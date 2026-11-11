@@ -166,14 +166,14 @@ public static void main(String[]args){
 }}
 '''
 
-def run(source=None,filter_source=None,chunks_source=None,comparator_source=None,extra_files=None,guard_source=None,main_class="com.gonzotech.machines.network.LoadedProbe",service_source=None):
+def run(source=None,filter_source=None,chunks_source=None,comparator_source=None,extra_files=None,guard_source=None,main_class="com.gonzotech.machines.network.LoadedProbe",service_source=None,java_args=None):
  home=os.environ.get('JAVA_HOME');java=str(Path(home)/'bin/java') if home else shutil.which('java');javac=str(Path(home)/'bin/javac') if home else shutil.which('javac')
  if not java or not Path(java).is_file():raise SystemExit('Java 21 required: set JAVA_HOME or PATH')
  if not os.environ.get('ECJ_JAR') and not javac:raise SystemExit('javac required (or ECJ_JAR with Java 21)')
  compiler=[java,'-jar',os.environ['ECJ_JAR'],'-21','-proc:none','-nowarn'] if os.environ.get('ECJ_JAR') else [javac,'--release','21']
  with tempfile.TemporaryDirectory(prefix='gonzo-loaded-chunks-') as tmp:
   root=Path(tmp);files=dict(STUBS);
-  for name in ('ItemScavengerBlock','SecondItemScavengerBlock','LoadedItemChunks','UniversalNodeComparator','ItemTransferGuard','PipeNetworkService'):files[f'com/gonzotech/machines/network/{name}.java']=(JAVA/f'machines/network/{name}.java').read_text()
+  for name in ('ItemScavengerBlock','SecondItemScavengerBlock','LoadedItemChunks','UniversalNodeComparator','ItemTransferGuard','PipeNetworkService','PipeExperiment','PipeBenchmark'):files[f'com/gonzotech/machines/network/{name}.java']=(JAVA/f'machines/network/{name}.java').read_text()
   if service_source:files['com/gonzotech/machines/network/PipeNetworkService.java']=service_source
   if guard_source:files['com/gonzotech/machines/network/ItemTransferGuard.java']=guard_source
   if chunks_source:files['com/gonzotech/machines/network/LoadedItemChunks.java']=chunks_source
@@ -186,7 +186,7 @@ def run(source=None,filter_source=None,chunks_source=None,comparator_source=None
     p=root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(code);paths.append(str(p))
   built=subprocess.run(compiler+['-d',str(root/'classes')]+paths,capture_output=True,text=True)
   assert built.returncode==0,'compiler failure is not a mutation kill:\n'+built.stdout+built.stderr
-  return subprocess.run([java,'-cp',str(root/'classes'),main_class],capture_output=True,text=True)
+  return subprocess.run([java]+(java_args or [])+['-cp',str(root/'classes'),main_class],capture_output=True,text=True)
 
 if __name__=='__main__':
  text=SOURCE.read_text();result=run();assert result.returncode==0,result.stdout+result.stderr;print(result.stdout.strip())

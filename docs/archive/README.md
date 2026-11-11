@@ -64,3 +64,5 @@
 - [Валидация радиации RAD-VALID1 в 0.3.337](../HISTORY.md#rad-valid1): полная матрица взаимодействий вынесена в корневой [`RADIATION_INTERACTIONS.md`](../../RADIATION_INTERACTIONS.md#rad-matrix337) как рабочий артефакт, **не** новый профиль и не новая редакция; 12 снимков [`0.3.337`](editions/0.3.337/README.md) из `b328877…` не переснимались, manifest/SHA-256/bytes/source_commit неизменны. D-PERF12 остаётся отложенной, реализация не начата. [CURRENT](../CURRENT-STATE.md#rad-valid1), [AUDIT](../AUDIT.md#rad-valid1).
 
 - [Редакции перед 0.3.338](editions/0.3.338/README.md): разрешённая автором реализация D-PIPE2; полный срез документов до переноса задачи.
+
+- [Редакции перед экспериментом A/B 0.3.339](editions/0.3.339/README.md): семь точных документов b1779c93; оригинальный runtime338 дополнительно сохранён отдельным ZIP/JAR вне Git.

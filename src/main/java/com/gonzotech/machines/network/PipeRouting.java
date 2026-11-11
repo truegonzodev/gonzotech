@@ -137,6 +137,14 @@ public final class PipeRouting {
      */
     public static long drain(Level level, BlockPos fromPos, PipeType type, long budget, long rotation,
                              BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
+        long start = PipeBenchmark.clock(); PipeBenchmark.add(PipeBenchmark.Metric.RESOURCE_CALLS, 1);
+        try {
+            long taken = drainImpl(level, fromPos, type, budget, rotation, receiverOf);
+            PipeBenchmark.resource(type.name(), taken); return taken;
+        } finally { PipeBenchmark.elapsed(PipeBenchmark.Metric.RESOURCE_NS, start); }
+    }
+    private static long drainImpl(Level level, BlockPos fromPos, PipeType type, long budget, long rotation,
+                             BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf) {
         if (budget <= 0 || level.isClientSide() || !level.hasChunkAt(fromPos)) return 0;
         PipeRoutingDiagnostics.Trace diagnostics =
             PipeRoutingDiagnostics.begin(level, fromPos, type, budget, "machine");
@@ -228,6 +236,15 @@ public final class PipeRouting {
      *                 исключается по {@code !next.equals(port)})
      */
     public static long drainFromMultiblockPort(Level level, BlockPos port, PipeType type, long budget, long rotation,
+                                               BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
+                                               BiFunction<Level, BlockPos, Boolean> isMember) {
+        long start = PipeBenchmark.clock(); PipeBenchmark.add(PipeBenchmark.Metric.RESOURCE_CALLS, 1);
+        try {
+            long taken = drainPortImpl(level, port, type, budget, rotation, receiverOf, isMember);
+            PipeBenchmark.resource(type.name(), taken); return taken;
+        } finally { PipeBenchmark.elapsed(PipeBenchmark.Metric.RESOURCE_NS, start); }
+    }
+    private static long drainPortImpl(Level level, BlockPos port, PipeType type, long budget, long rotation,
                                                BiFunction<BlockEntity, BlockPos, Transfer.Receiver> receiverOf,
                                                BiFunction<Level, BlockPos, Boolean> isMember) {
         if (level.isClientSide() || !level.hasChunkAt(port)) return 0;

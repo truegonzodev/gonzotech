@@ -10,12 +10,24 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 @EventBusSubscriber(modid = "gonzotech")
 public final class PipeNetworkEvents {
+    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
+    private static boolean announced;
     private PipeNetworkEvents() {}
-    @SubscribeEvent public static void pre(ServerTickEvent.Pre event) { PipeNetworkService.beginTick(); }
+    @SubscribeEvent public static void pre(ServerTickEvent.Pre event) {
+        if (!announced) {
+            LOGGER.info("[GONZOTECH PIPE-SNAPSHOT]" + PipeBenchmark.identity()
+                + " variant=" + PipeExperiment.VARIANT + " aggregateProfile=" + PipeExperiment.PROFILE
+                + " detailed=" + PipeRoutingDiagnostics.isEnabled());
+            announced = true;
+        }
+        PipeBenchmark.beginTick(); PipeNetworkService.beginTick();
+    }
     @SubscribeEvent public static void post(ServerTickEvent.Post event) {
         PipeNetworkService.endTick();
         if (event.getServer().getTickCount() % 40 == 0)
             for (ServerLevel level : event.getServer().getAllLevels()) ItemRouting.trimCache(level);
+        PipeBenchmark.endTick(PipeNetworkService.pendingJobs());
+        if (PipeBenchmark.ready()) LOGGER.info(PipeBenchmark.report(PipeNetworkService.cacheStats()));
     }
     @SubscribeEvent public static void load(ChunkEvent.Load event) { changed(event); }
     @SubscribeEvent public static void unload(ChunkEvent.Unload event) { changed(event); }
@@ -31,6 +43,9 @@ public final class PipeNetworkEvents {
         }
     }
     @SubscribeEvent public static void stop(ServerStoppedEvent event) {
+        String report = PipeBenchmark.report(PipeNetworkService.cacheStats());
+        if (report != null) LOGGER.info(report);
         PipeNetworkService.clearAll(); ItemRouting.clearAll(); PipeRouting.clearRouteCache();
+        PipeBenchmark.reset(); announced = false;
     }
 }

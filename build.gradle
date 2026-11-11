@@ -93,6 +93,15 @@ tasks.register('selfTest', JavaExec) {
 }
 
 tasks.withType(ProcessResources).configureEach {
+    def pipeVariant = providers.gradleProperty('pipeVariant').getOrElse('experimental')
+    def pipeProfile = providers.gradleProperty('pipeProfile').getOrElse('false')
+    if (!(pipeVariant in ['baseline', 'experimental'])) throw new GradleException('pipeVariant must be baseline or experimental')
+    if (!(pipeProfile in ['true', 'false'])) throw new GradleException('pipeProfile must be true or false')
+    inputs.property('pipeVariant', pipeVariant)
+    inputs.property('pipeProfile', pipeProfile)
+    filesMatching('gonzotech-pipe-snapshot.properties') {
+        expand(pipe_variant: pipeVariant, pipe_profile: pipeProfile)
+    }
     var replaceProperties = [
         minecraft_version      : minecraft_version,
         minecraft_version_range: minecraft_version_range,

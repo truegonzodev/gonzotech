@@ -109,6 +109,14 @@ public final class ItemRouting {
     public static final int HOT_NODE_BFS = 128;
 
     public static int tickExtract(Level level, BlockPos pos, BlockState state) {
+        long start = PipeBenchmark.clock();
+        PipeBenchmark.add(PipeBenchmark.Metric.ITEM_CALLS, 1);
+        try {
+            int moved = tickExtractImpl(level, pos, state);
+            PipeBenchmark.add(PipeBenchmark.Metric.NODE_ITEMS, moved); return moved;
+        } finally { PipeBenchmark.elapsed(PipeBenchmark.Metric.ITEM_NS, start); }
+    }
+    private static int tickExtractImpl(Level level, BlockPos pos, BlockState state) {
         if (level.isClientSide() || !level.hasChunkAt(pos)) return 0;
         if (!(state.getBlock() instanceof PipeCarrier carrier)) return 0;
         if (!carrier.carries(state, T)) return 0;

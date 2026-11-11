@@ -41,6 +41,8 @@ real_files = [
     ROOT / "src/main/java/com/gonzotech/core/client/SpeedometerHud.java",
     NET / "PipeRouting.java",
     NET / "PipeNetworkService.java",
+    NET / "PipeExperiment.java",
+    NET / "PipeBenchmark.java",
     # 0.3.335 (приёмка автора): компилируем новые real-файлы подсказки порта.
     ROOT / "src/main/java/com/gonzotech/machines/FormedPorts.java",
     ROOT / "src/main/java/com/gonzotech/machines/network/EmbeddedPortMode.java",

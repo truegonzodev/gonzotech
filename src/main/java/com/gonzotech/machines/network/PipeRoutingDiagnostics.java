@@ -37,7 +37,7 @@ public final class PipeRoutingDiagnostics {
 
     static void itemEvent(Level level, BlockPos pipe, BlockPos endpoint, String stage, String detail) {
         if (!itemEnabled(level)) return;
-        LOGGER.info("[GONZOTECH ITEM-DIAG] tick=" + level.getGameTime()
+        LOGGER.info("[GONZOTECH ITEM-DIAG]" + PipeBenchmark.identity() + " tick=" + level.getGameTime()
             + " dimension=" + level.dimension().location() + " pipe=" + pos(pipe)
             + " endpoint=" + (endpoint == null ? "-" : pos(endpoint))
             + " stage=" + stage + " " + detail);
@@ -60,7 +60,7 @@ public final class PipeRoutingDiagnostics {
                              int oldMembers, int rebuiltMembers, int components,
                              String result, long elapsedNanos) {
         if (!isEnabled()) return;
-        LOGGER.info("[GONZOTECH PIPE-DIAG][CLUMP] tick=" + level.getGameTime()
+        LOGGER.info("[GONZOTECH PIPE-DIAG][CLUMP]" + PipeBenchmark.identity() + " tick=" + level.getGameTime()
                 + " dimension=" + level.dimension().location()
                 + " operation=" + operation
                 + " pos=" + pos(pos)
@@ -248,6 +248,7 @@ public final class PipeRoutingDiagnostics {
             long totalNanos = System.nanoTime() - startedNanos;
             StringBuilder line = new StringBuilder(1024);
             line.append("[GONZOTECH PIPE-DIAG][ROUTE] id=").append(id)
+                    .append(PipeBenchmark.identity())
                     .append(" tick=").append(tick)
                     .append(" dimension=").append(dimension)
                     .append(" operation=").append(operation)
