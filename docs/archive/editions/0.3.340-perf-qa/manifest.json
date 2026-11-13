@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "fb011ba06d2ebc1b178a2b533d49d614a8072729",
+      "snapshot": "docs/archive/editions/0.3.340-perf-qa/OUTDATED_BEFORE_PERF_QA_docs-CURRENT-STATE.md",
+      "sha256": "49b0aa9d3c0d93461be132816e1a0b57e18753b94b6d4423f0736f375deae2e6",
+      "bytes": 37772,
+      "task": "freeze four tasks; activate D-PERF12 and D-QA1"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "fb011ba06d2ebc1b178a2b533d49d614a8072729",
+      "snapshot": "docs/archive/editions/0.3.340-perf-qa/OUTDATED_BEFORE_PERF_QA_docs-DEFFERED.md",
+      "sha256": "8845b47f4dd003b3c17cae69b6304d5fcff6d8ae1e90a7570e4c50c2ec6c411e",
+      "bytes": 71355,
+      "task": "freeze four tasks; activate D-PERF12 and D-QA1"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "fb011ba06d2ebc1b178a2b533d49d614a8072729",
+      "snapshot": "docs/archive/editions/0.3.340-perf-qa/OUTDATED_BEFORE_PERF_QA_docs-AUDIT.md",
+      "sha256": "b67ea3d354e16d1cfe914b91192c26eacd577ac3bc2fbfd190672aeb519e6993",
+      "bytes": 217111,
+      "task": "freeze four tasks; activate D-PERF12 and D-QA1"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "fb011ba06d2ebc1b178a2b533d49d614a8072729",
+      "snapshot": "docs/archive/editions/0.3.340-perf-qa/OUTDATED_BEFORE_PERF_QA_docs-CAPABILITIES.md",
+      "sha256": "5b828693303e3f1a6dea7a239d5b9bed64c73b5d00869e5c87e599f39248fb0b",
+      "bytes": 77417,
+      "task": "freeze four tasks; activate D-PERF12 and D-QA1"
+    },
+    {
+      "source": "docs/RAD_WORLD.md",
+      "source_commit": "fb011ba06d2ebc1b178a2b533d49d614a8072729",
+      "snapshot": "docs/archive/editions/0.3.340-perf-qa/OUTDATED_BEFORE_PERF_QA_docs-RAD_WORLD.md",
+      "sha256": "aa3509c9e16fb7fe76f2a8abe7f914f836be991dbda4ea3487cf7022be29366b",
+      "bytes": 26905,
+      "task": "freeze four tasks; activate D-PERF12 and D-QA1"
+    },
+    {
+      "source": "docs/RAD_ITEMS.md",
+      "source_commit": "fb011ba06d2ebc1b178a2b533d49d614a8072729",
+      "snapshot": "docs/archive/editions/0.3.340-perf-qa/OUTDATED_BEFORE_PERF_QA_docs-RAD_ITEMS.md",
+      "sha256": "36713f8f4a7ce2bbc08c7d2eefc32bfb91487c526187a82086b95abe2716876f",
+      "bytes": 50524,
+      "task": "freeze four tasks; activate D-PERF12 and D-QA1"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "source_commit": "fb011ba06d2ebc1b178a2b533d49d614a8072729",
+      "snapshot": "docs/archive/editions/0.3.340-perf-qa/OUTDATED_BEFORE_PERF_QA_docs-archive-README.md",
+      "sha256": "bf453246fde66f39f816a63d196197aa099173c4b98735b3e6463822a2277a93",
+      "bytes": 11209,
+      "task": "freeze four tasks; activate D-PERF12 and D-QA1"
+    }
+  ]
+}

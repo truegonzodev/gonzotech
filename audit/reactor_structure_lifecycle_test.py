@@ -37,7 +37,10 @@ indexing = method(structure, "private static void indexStructure(")
 assert "min.getX()" in indexing and "max.getX()" in indexing
 assert "min.getY()" in indexing and "max.getY()" in indexing
 assert "min.getZ()" in indexing and "max.getZ()" in indexing
-assert "index.put(new BlockPos(x, y, z).asLong(), root)" in indexing
+assert "BlockPos member = new BlockPos(x, y, z);" in indexing
+assert "index.put(member.asLong(), root)" in indexing
+assert "PipeNetworkService.changed(level, member)" in indexing
+assert indexing.index("index.put(member.asLong(), root)") < indexing.index("PipeNetworkService.changed(level, member)")
 assert "indexStructure(level, panel.getBlockPos(), info.min(), info.max())" in method(
     structure, "private static void applyFormedVisuals(")
 assert "StructureMin" in panel_be and "StructureMax" in panel_be

@@ -323,8 +323,12 @@ for pin in ('PipeLoss.delivered(amount, lossMilli);','PipeLoss.flow(accepted, lo
             'if (st.getBlock() instanceof UniversalNodeBlock) continue;',
             # 0.3.110: экранированная семья эпохи 3 — потери за клетку ×0.88
             'Math.round(PipeLoss.perCell(true, heatType) * ThirdTierPipe.STAT_FACTOR)',
-            'lanes.add(new Lane(raw, null, 0, pos));'):
+            'lanes.add(new Lane(guarded, null, 0, pos));'):
     assert pin in pipe_routing_code, 'routing loss pin: '+pin
+# Direct receivers have zero path loss but must still be the live, loaded owner.
+direct_receiver = method(pipe_routing_code, 'addDirectReceiver')
+assert 'level.hasChunkAt(pos) && level.getBlockEntity(pos) == be' in direct_receiver
+assert '? raw.receive(amount, simulate) : 0L' in direct_receiver
 assert pipe_routing_code.count('pathLossCells(level, path,') == 3  # 0.3.90: 2 билдера дорожек + обёртка pathLoss
 
 # ── 0.3.61: дюп дверей закрыт; открытая гермодверь = динамическая утечка ──
@@ -728,7 +732,7 @@ public class SecondPassHarness {
             check(level.powerQueries==(scavenger instanceof SecondScavenger?1:0));
             Item item=new Item(protectedItem,false); Container source=new Container(new ItemStack(item,4));
             Container sink=new Container(new ItemStack(item,0)); ItemFilterBlockEntity be=new ItemFilterBlockEntity(matched);
-            List<ItemRouting_Sink> sinks=List.of(new ItemRouting_Sink(sink,null,List.of(new BlockPos()),new BlockPos(),new BlockPos()));
+            List<ItemRouting_Sink> sinks=List.of(new ItemRouting_Sink(sink,null,List.of(new BlockPos()),new BlockPos(),new BlockPos(),new Plan()));
             ChannelBudget pass=new ChannelBudget(10),reject=new ChannelBudget(10),total=new ChannelBudget(10);
             int moved=drainContainer(new Level(),new BlockPos(),be,null,source,new BlockPos(),sinks,sinks,
                 powered?new BlockPos():null,pass,reject,total,0,0,ignore);
@@ -737,6 +741,13 @@ public class SecondPassHarness {
             check(sink.getItem(0).count==(!blocked&&(matched||!powered)?4:0));
             check(source.changed==(blocked?0:4));check(total.remaining==(blocked?10:6));
         }
+        // New route lease and live endpoint are independently required by the production body.
+        Level guardLevel=new Level(); Container guardSink=new Container(new ItemStack(new Item(false,false),0));
+        Plan guardPlan=new Plan(); ItemRouting_Sink guarded=new ItemRouting_Sink(guardSink,null,List.of(),new BlockPos(),new BlockPos(),guardPlan);
+        check(sinkLoaded(guardLevel,guarded));
+        guardPlan.valid=false; check(!sinkLoaded(guardLevel,guarded)); guardPlan.valid=true;
+        guardLevel.sameOwner=false; check(!sinkLoaded(guardLevel,guarded)); guardLevel.sameOwner=true;
+        guardLevel.loaded=false; check(!sinkLoaded(guardLevel,guarded));
         // Protected slot does not starve ordinary junk in subsequent slots.
         Container mixed=new Container(new ItemStack(new Item(true,false),4),new ItemStack(new Item(false,false),4));
         int moved=drainContainer(new Level(),new BlockPos(),new ItemFilterBlockEntity(false),null,mixed,new BlockPos(),List.of(),List.of(),
@@ -791,7 +802,7 @@ class EntityInvulnerabilityCheckEvent {
     EntityInvulnerabilityCheckEvent(Object e,boolean i){entity=e;invulnerable=i;}
     Object getEntity(){return entity;}void setInvulnerable(boolean v){invulnerable=v;}
 }
-class Level { BlockState getBlockState(BlockPos p){return new BlockState();}boolean hasChunkAt(BlockPos pos){return true;}boolean signal;int powerQueries;boolean hasNeighborSignal(BlockPos pos){powerQueries++;return signal;} }
+class Level { BlockState getBlockState(BlockPos p){return new BlockState();}boolean loaded=true,sameOwner=true;boolean hasChunkAt(BlockPos pos){return loaded;}boolean signal;int powerQueries;boolean hasNeighborSignal(BlockPos pos){powerQueries++;return signal;} }
 class LoadedItemChunks { static boolean redstoneAreaLoaded(Level l,BlockPos p){return true;} }
 class BlockState { Object getBlock(){return new Object();} }
 class ItemScavengerBlock { boolean canCheckPower(Level l,BlockPos p){return true;} }
@@ -805,13 +816,15 @@ class Container {
     void removeItem(int i,int n){items[i].count-=n;}
     void setChanged(){changed++;}
 }
-record ItemRouting_Sink(Container container,Direction face,List<BlockPos> path,BlockPos root,BlockPos containerPos) {}
+class Plan { boolean valid=true; boolean current(){return valid;} }
+record ItemRouting_Sink(Container container,Direction face,List<BlockPos> path,BlockPos root,BlockPos containerPos,Plan plan) {}
 class ItemRouting {
     record TransferAttempt(){boolean allowed(){return true;}void record(){}}
     static TransferAttempt transferAttempt(Level l,BlockPos p,Container a,BlockPos q,Container b){return new TransferAttempt();}
     static boolean sameInventory(Level l,Container a,Container b,BlockPos p){return a==b;}
     // This legacy waste/render probe is all-loaded; full loaded-boundary execution has its own suite.
     static boolean containerLookupLoaded(Level l,BlockPos p){return true;}
+    static boolean sameContainerAt(Level l,BlockPos p,Container expected){return l.sameOwner;}
     static int[] extractableSlots(Container c,Direction d){return java.util.stream.IntStream.range(0,c.items.length).toArray();}
     static boolean canTake(Container c,int slot,ItemStack s,Direction d){return true;}
     static boolean insertOne(Container c,Direction d,ItemStack s){c.items[0].count++;return true;}

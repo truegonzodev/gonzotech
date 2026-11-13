@@ -102,7 +102,12 @@ deferred = (DOCS / 'DEFFERED.md').read_text(encoding='utf-8')
 pin('<a id="d-perf12"></a>' in deferred, 'якорь D-PERF12')
 pin('RAD-VALID1' in deferred, 'D-PERF12 ссылается на валидацию')
 current = (DOCS / 'CURRENT-STATE.md').read_text(encoding='utf-8')
-pin('### RAD-VALID1 — ' in current, 'активная задача в CURRENT')
-pin('**Статус: в работе' in current, 'статус активной задачи')
+for task in ('RAD-VALID1', 'D-PIPE2', 'PIPE-LOAD1', 'D-CONTENT1'):
+    section = current.split('### ' + task + ' — ', 1)[1].split('\n### ', 1)[0]
+    pin('**Статус: ждёт приёмки; заморожено' in section, task + ' ждёт приёмки')
+for task in ('D-PERF12', 'D-QA1'):
+    section = current.split('### ' + task + ' — ', 1)[1].split('\n### ', 1)[0]
+    pin('**Статус: в работе.' in section, task + ' в работе')
+    pin('### ' + task + ' — ' not in deferred, task + ' не дублируется в DEFFERED')
 
 print('RAD-VALID1 matrix: A–H sections, code-confirmed formulas, evidence bounds and docs anchors PASS')

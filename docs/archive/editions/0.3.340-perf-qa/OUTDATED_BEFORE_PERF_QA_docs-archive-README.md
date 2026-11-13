@@ -1,0 +1,70 @@
+# Архив документации
+
+Действующий вход — [DOCS_RULES](../DOCS_RULES.md), не архив. Не брать старые идеи/статусы как нынешнее задание.
+
+## Снимок до консолидации 0.3.311
+
+- [Карта переноса всех файлов и исходных пунктов](legacy-0.3.311/MIGRATION-MAP.md).
+- [Манифест: 75 оригиналов, SHA-256, байты, исходный и новый путь](legacy-0.3.311/manifest.json).
+- [Реестр 4173 заголовков/пунктов](legacy-0.3.311/sections.json).
+- База снимка: `42730c3`; runtime `0.3.311`. Старый archive сохранён внутри legacy-0.3.311/archive, без изменения содержимого.
+
+Все оригинальные тексты/CSV/XLSX/логи заморожены. Исторические относительные ссылки/номера строк внутри них могут относиться к прежнему layout; документальная проверка их не переписывает. Живые ссылки и навигация работают через текущие документы/эту карту. Не добавлять новые текущие отчёты в старый снимок.
+
+## Последующие предыдущие редакции
+
+- [Перед DOC-003: PSYCHE, LORE, DOCS_RULES, исходная 0.3.311 → 0.3.312](editions/0.3.311/README.md). Полные OUTDATED-тексты, manifest с SHA-256/размером/исходным commit; не действующие спецификации. Правило новых снимков — [DOCS_RULES](../DOCS_RULES.md#живой-срез-и-читаемые-предыдущие-версии-doc-003).
+
+- [Редакции 0.3.312 перед RAD-001](editions/0.3.312/README.md): RAD_ITEMS, RAD_WORLD, CURRENT-STATE, AUDIT.
+
+- [Редакции 0.3.315 перед D-AUD1](editions/0.3.315/README.md): CURRENT-STATE и RAD_ITEMS до code-first ремонта audit-пинов.
+
+- [CURRENT 0.3.320 перед закрытием девяти задач и PERF-001](editions/0.3.320/README.md): полная редакция, manifest; решение автора28.10.2026 и исключение четырёхпатчевого удержания.
+
+- [PERF-001 перед ответами автора и циклом7/8](editions/0.3.321/README.md): полная редакция CURRENT из038fc35, manifest.
+
+- [PERF-001/4/7/8 — игровая приёмка и немедленное закрытие по разрешению автора](editions/0.3.322/README.md): полный CURRENT перед удалением записей, manifest; остальные11пунктов остаются текущими.
+
+- [PERF-001/2 — одноштучные слоты приняты в игре; карты внеA/B не ограничивать](editions/0.3.323/README.md): полный CURRENT изe4da112 и manifest,30.10.2026; только2закрыт,10пунктов остаются в работе.
+
+- [PERF-001/11 — replacement-only setter принят автором](editions/0.3.324/README.md): полный CURRENT из432b848, manifest;31.10.2026. Оставшиеся9не закрыты, runtime0.3.324 unchanged.
+
+- [Предыдущие CURRENT/CAPABILITIES перед0.3.325](editions/0.3.325/README.md): полные тексты3224f15до отменыadjacentloading и уточнения54; **не закрытие1/5**.
+
+- [Предыдущие CURRENT/CAPABILITIES/MACHINES перед0.3.326](editions/0.3.326/README.md): exact1370c30доblockingchestfix1/приёмки5.5остаётсязакрытойзаписьювCURRENTдо330,остальныепунктыснимканезакрываются.
+
+- [Редакции runtime0.3.326 перед0.3.327](editions/0.3.326/README.md#before-transfer-dag): exactccdfa6e CURRENT/CAPABILITIES/MACHINES до согласованной замены shield; cold-source отказ1 остаётся открытым.
+
+- [Редакции0.3.327 перед BFS-fix328](editions/0.3.327/README.md): exact3fce03b, авторский отказ327/native log, три независимые схемы;1/3 не закрываются по headless.
+
+- [Редакция328 до игровой приёмки1](editions/0.3.328/README.md):1закрыт автором, остаток3отложен вD-PIPE2; runtime не меняется.
+
+- [Редакции328 перед первым runtime-шагом6/10 в329](editions/0.3.328/README.md):5дополнительных exact6ddd502снимков; прежние снимки приёмки не перезаписаны.
+
+- [Редакции329 перед бюджетом330](editions/0.3.329/README.md):6exact9c2d9b3снимков; штатная авторская проба329 не закрывает6/10, новое решение о цельных расчётах и flood-disconnect.
+
+- [Редакции330 перед приёмкой6/10 и tooltip-fix331](editions/0.3.330/README.md):7exact8b89bd2снимков. Авторская игровая приёмка330; новая D-PLOT1 только в ближайших отложенных.
+
+- [Редакции331 перед реальным WE/WG-адаптером332](editions/0.3.331/README.md):7exact13be401снимков; уточнённая политика9, global override и ожидаемая native-приёмка; удаление принятого1 по сроку332.
+
+- [Редакции332 перед валидацией статуса/CRIT](editions/0.3.332/README.md):11exactbc1da5bcснимков; закрытие9 по решению автора без native-прогона,13/14 вD-PIPE2,12 отдельно; CRIT-1/CRIT-2 только проверка и план.
+
+- [Авторский push6ea3f43 и единый срез пакетов](editions/0.3.332/README.md#author-sync332):7исходных Markdown-пакетов и16редакций перед синхронизацией; CURRENT02,5deferred пакетов, остальные задачи некатегоризированы. Старые пути/статусы исходников сохранены, не действуют автоматически.
+
+- [Перед CRIT-1/CRIT-2 в0.3.333](editions/0.3.332/README.md#crit333):10точных редакций332 до разрешённого автором runtime-патча; native/авторская приёмка ещё требуются.
+
+- [Перед исправлением сборки0.3.334](editions/0.3.333/README.md): exact333 CURRENT/AUDIT до авторского compileJava FAILED; исправлен ChestMenu caller, native/авторская приёмка не заявлена.
+
+- [Приёмка CRIT и новые задачи в334](editions/0.3.334/README.md):10exactec3ba9dснимков; оба фикса закрыты автором, в CURRENT мигание любой сшитой группы/режим реакторного порта/поршневое восстановление. Документальный шаг без runtime-патча.
+
+- [Редакции 0.3.334 перед микропатчем 0.3.335](editions/0.3.335/README.md): 12 exact `5426f74f…` снимков (CURRENT/HISTORY/DEFFERED/AUDIT/RULES/DOCS_RULES + AUDIO_VISUAL/CAPABILITIES/REACTORS/MULTIBLOCK/MACHINES + этот README), manifest с SHA-256/байтами/commit. Перед реализацией HUD-NODE1/REACT-VAL1/REACT-VAL2, подсказки вшитого порта и правил 31–35. Не действующая спецификация; решения 335 — в [CURRENT-STATE](../CURRENT-STATE.md) и [HISTORY](../HISTORY.md#v-0-3-335), а два замечания игровой приёмки и закрытие трёх задач — в [HISTORY](../HISTORY.md#v-0-3-335-accept) (добавлено правило 36 и компактная ГОСТ-форма HUD в том же патче 0.3.335, без инкремента Z).
+- [Редакции 0.3.335 перед патчем 0.3.336](editions/0.3.336/README.md): 12 exact `f875c9b…` снимков (CURRENT/HISTORY/DEFFERED/AUDIT/RULES/DOCS_RULES + AUDIO_VISUAL/CAPABILITIES/REACTORS/MULTIBLOCK/MACHINES + этот README), manifest с SHA-256/байтами/commit. Перед реализацией D-PORTMODE1 и правила 37. Не действующая спецификация; решения 336 — в [CURRENT-STATE](../CURRENT-STATE.md) и [HISTORY](../HISTORY.md#v-0-3-336).
+- [Редакции 0.3.336 перед микропатчем 0.3.337](editions/0.3.337/README.md): 12 exact `b328877…` снимков (CURRENT/HISTORY/DEFFERED/AUDIT/RULES/DOCS_RULES + AUDIO_VISUAL/CAPABILITIES/REACTORS/MULTIBLOCK/MACHINES + этот README), manifest с SHA-256/байтами/commit. Перед устранением мерцаний HUD-FLOW2, удалением четвёртой строки AUTO и закрытием D-PORTMODE1 по игровой приёмке. Приёмочная правка внутри того же патча (`image-4.png`: только потоки >0, серверное окно `getHud`) и закрытие по игровой приёмке снимков не переснимали — см. [`HISTORY`](../HISTORY.md#v-0-3-337-accept), [`закрытие`](../HISTORY.md#v-0-3-337-closed) и Git commits `0eb40386…`/`d340321…`. Не действующая спецификация: [HISTORY](../HISTORY.md#v-0-3-337), [AUDIT](../AUDIT.md#hud337).
+
+- [Валидация радиации RAD-VALID1 в 0.3.337](../HISTORY.md#rad-valid1): полная матрица взаимодействий вынесена в корневой [`RADIATION_INTERACTIONS.md`](../../RADIATION_INTERACTIONS.md#rad-matrix337) как рабочий артефакт, **не** новый профиль и не новая редакция; 12 снимков [`0.3.337`](editions/0.3.337/README.md) из `b328877…` не переснимались, manifest/SHA-256/bytes/source_commit неизменны. D-PERF12 остаётся отложенной, реализация не начата. [CURRENT](../CURRENT-STATE.md#rad-valid1), [AUDIT](../AUDIT.md#rad-valid1).
+
+- [Редакции перед 0.3.338](editions/0.3.338/README.md): разрешённая автором реализация D-PIPE2; полный срез документов до переноса задачи.
+
+- [Редакции перед экспериментом A/B 0.3.339](editions/0.3.339/README.md): семь точных документов b1779c93; оригинальный runtime338 дополнительно сохранён отдельным ZIP/JAR вне Git.
+
+- [Редакции перед0.3.340](editions/0.3.340/README.md): выбор B автором, сохранение универсальных сшивок, согласованный рецепт гриндера III; 11 полных предыдущих текстов.
