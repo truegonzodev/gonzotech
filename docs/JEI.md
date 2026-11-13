@@ -151,6 +151,6 @@ A/I = custom_alloy; `_` in this table denotes a blank, actual strings use spaces
 
 ## CONTENT-1/A4 — загрузка crafting recipe отдельно от JEI-категории
 
-У third_grinder есть категория обработки, но keyG не используется в текущем crafting pattern; внешний аудит 332 сообщает отказ загрузчика. Наличие категории/валидного JSON не доказывает RecipeManager entry, возможность скрафтить блок или progression-доступ. [D-CONTENT1](DEFFERED.md#d-content1) хранит только этот новый вопрос: будущая native загрузка и реальный крафт/расход отдельно от JEI display/gate. Старые D-E* и прочие uncategorized JEI-задачи сюда не переносились.
+В0.3.340 автор утвердил G=second_grinder в центре PHP/PGP/PSP; прежний unused-G устранён. Native RecipeManager и recipe.matches/assemble проверяются; визуальное появление крафта в JEI и реальный progression-доступ не объявляются проверенными этим тестом. Категория обработки/гейты не менялись. [D-CONTENT1](CURRENT-STATE.md#d-content1), [AUDIT340](AUDIT.md#pipe340). Старые D-E* сюда не переносились.
 
 Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_JEI.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).

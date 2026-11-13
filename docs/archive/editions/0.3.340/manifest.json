@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "source": "docs/CURRENT-STATE.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-CURRENT-STATE.md",
+      "sha256": "59954845629fb6f9866d6e29003e2a8e34b9f01adeb710486363d6371d3018c2",
+      "bytes": 34699,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/HISTORY.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-HISTORY.md",
+      "sha256": "bcff9aa736ac3d88409dbc85c724d3e75f20923d01c1270e9f6a8af97a8f9ed6",
+      "bytes": 991835,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/AUDIT.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-AUDIT.md",
+      "sha256": "367caf4f2045983fbde3ec3eb09697e257bb0520cf45ec680ac5e2648f8f85e7",
+      "bytes": 212349,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/CAPABILITIES.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-CAPABILITIES.md",
+      "sha256": "05d85ea2d1090307761164033d69c1e8771659f451b7c76d3df0866afc7a7fd8",
+      "bytes": 74570,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/MACHINES.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-MACHINES.md",
+      "sha256": "ac4fa33334283d208ef5d5ef9dc8d8b91ec95636d693f9bdcb6f1f9f880d2cad",
+      "bytes": 71487,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/MULTIBLOCK.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-MULTIBLOCK.md",
+      "sha256": "50df1e2d1e184cc44062ddbc7ca76234ab3c824348c4164e9d574ab6203e3334",
+      "bytes": 35150,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/DEFFERED.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-DEFFERED.md",
+      "sha256": "88c33aecefff81142aac7a738289ed312cc71b55454c89447a28fb6ecaf43a05",
+      "bytes": 74012,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/JEI.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-JEI.md",
+      "sha256": "ac365e83366e6ef38760675918538021a07b0bf8b764815ebcabaa04b388ea04",
+      "bytes": 16288,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/PROGRESSION.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-PROGRESSION.md",
+      "sha256": "3e18b09a94ed181dbc07defa4650cd99db4a6d34e42984979951ba6ac348abf0",
+      "bytes": 11534,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "docs/archive/README.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_docs-archive-README.md",
+      "sha256": "f41f754d23af7ab2af383067a514161d76165b0c6b4f847953b7178b7988469a",
+      "bytes": 10934,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    },
+    {
+      "source": "info/PIPE-AB-339.md",
+      "source_commit": "66b4145bde51332d3d49e3b0fd751bea702c219c",
+      "snapshot": "docs/archive/editions/0.3.340/OUTDATED_BEFORE_340_info-PIPE-AB-339.md",
+      "sha256": "f3bc193204be9c6efeb764cda04f027977cbc1ba6585d2bf608b382c4856f51b",
+      "bytes": 8763,
+      "task": "D-PIPE2 selected B; PIPE-LOAD1; approved D-CONTENT1"
+    }
+  ]
+}

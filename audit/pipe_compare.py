@@ -26,9 +26,11 @@ def read(path, variant, session=None, skip_ticks=600):
         raise ValueError(f'{path}: no samples for selected session')
     if len({r['session'] for r in rows}) != 1:
         raise ValueError(f'{path}: multiple sessions; select --session-a/--session-b')
-    expected = 'pipe-II-339-' + ('A' if variant == 'baseline' else 'B')
-    if any(r.get('variant') != variant or r.get('snapshot') != expected for r in rows):
-        raise ValueError(f'{path}: expected {expected}/{variant}')
+    suffix = 'A' if variant == 'baseline' else 'B'
+    if any(r.get('variant') != variant or not re.fullmatch(r'pipe-II-\d+-'+suffix,r.get('snapshot','')) for r in rows):
+        raise ValueError(f'{path}: expected pipe-II-<version>-{suffix}/{variant}')
+    if len({r['snapshot'] for r in rows}) != 1:
+        raise ValueError(f'{path}: mixed snapshot versions')
     totals = [int(r['totalTicks']) for r in rows]
     if any(b <= a for a,b in zip(totals, totals[1:])):
         raise ValueError(f'{path}: duplicate or out-of-order samples')
@@ -63,6 +65,8 @@ def summarize(rows):
     return out
 
 def compare(a, b):
+    if a[0]['snapshot'].rsplit('-',1)[0] != b[0]['snapshot'].rsplit('-',1)[0]:
+        raise ValueError('Different snapshot versions; select A/B from the same version')
     sa, sb = summarize(a), summarize(b)
     lines = ['| Показатель | A — baseline | B — experimental |', '|---|---:|---:|']
     for key in dict.fromkeys([*sa, *sb]):

@@ -43,6 +43,9 @@ public final class NodeClumpIndex {
     private static final Map<Level, Map<Long, Long>> MEMBER_ROOT = new IdentityHashMap<>();
     /** level → (корень → кламп). */
     private static final Map<Level, Map<Long, Clump>> BY_ROOT = new IdentityHashMap<>();
+    // Recovery of universal groups omitted by pre-340 saves. Weak chunk keys do
+    // not retain unloaded chunks; singleton/port negatives are checked once per load.
+    private static final Map<net.minecraft.world.level.chunk.LevelChunk, Set<Long>> RECOVERY_CHECKED = new java.util.WeakHashMap<>();
 
     /** Кламп: множество членов, плоская потеря транзита ({@code потери × N}). */
     public record Clump(long root, long lossMilli, Set<Long> members) {
@@ -61,9 +64,9 @@ public final class NodeClumpIndex {
         java.util.List<ClumpSave> out = new java.util.ArrayList<>();
         if (byRoot == null) return out;
         for (Clump clump : byRoot.values()) {
-            String kind = null;
             BlockState state = level.getBlockState(BlockPos.of(clump.root()));
-            if (state.getBlock() instanceof NodeBlock) kind = kindOfBlock(state);
+            // UniversalNodeBlock is not a subclass of NodeBlock.
+            String kind = kindOfBlock(state);
             if (kind == null) continue; // блок под корнем перестал быть узлом — кламп не пишем
             out.add(new ClumpSave(clump.root(), kind, clump.members().stream().mapToLong(Long::longValue).toArray()));
         }
@@ -96,6 +99,15 @@ public final class NodeClumpIndex {
     }
 
     private NodeClumpIndex() {
+    }
+
+    /** Already indexed groups cost one map lookup. Missing old universal groups
+     * are discovered by their existing scheduled tick, without scanning chunks. */
+    static void recoverUniversal(ServerLevel level, BlockPos pos, BlockState state) {
+        if (!(state.getBlock() instanceof UniversalNodeBlock) || isMember(level, pos) || !level.hasChunkAt(pos)) return;
+        var chunk = level.getChunkAt(pos);
+        if (!RECOVERY_CHECKED.computeIfAbsent(chunk, ignored -> new HashSet<>()).add(pos.asLong())) return;
+        onNodeChanged(level, pos); // same-kind flood; formed ports are excluded here
     }
 
     /**
@@ -333,6 +345,7 @@ public final class NodeClumpIndex {
 
     /** Сброс на остановке сервера (карты держат ссылки на Level). */
     public static void clearAll() {
+        RECOVERY_CHECKED.clear();
         MEMBER_ROOT.clear();
         BY_ROOT.clear();
         NodeClumpSavedData.forgetLoaded();

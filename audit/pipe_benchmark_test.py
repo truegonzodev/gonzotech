@@ -43,6 +43,10 @@ if __name__ == '__main__':
         assert len(read(paths[0],'baseline',skip_ticks=0))==4
         report=compare(a,b)
         assert 'NODE_ITEMS/тик | 2.0000 | 2.0000' in report and 'короткая' in report
+        mismatched=[dict(r,snapshot='pipe-II-999-B') for r in b]
+        try:compare(a,mismatched)
+        except ValueError:pass
+        else:raise AssertionError('different snapshot versions compared as A/B')
         for path,variant,session,skip in [(paths[0],'experimental',None,0),(paths[0],'baseline','absent',0),(paths[0],'baseline',None,9999)]:
             try:read(path,variant,session,skip)
             except ValueError:pass

@@ -187,6 +187,7 @@ public class UniversalNodeBlock extends RotatedPillarBlock implements PipeCarrie
 
     @Override
     protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        NodeClumpIndex.recoverUniversal(level, pos, state);
         ItemRouting.tickExtract(level, pos, state);
         // Тик уже нужен предметной части узла каждый такт; заодно дёшево проверяем
         // переходы 0..5. Neighbour update вызывается только на фактическом переходе.

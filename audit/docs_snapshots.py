@@ -28,7 +28,11 @@ def registered_snapshots(root):
                              and source_name.parts[:2] == ('audit', 'author test')
                              and source_name.suffix == '.md'
                              and resolved_source.parent == root / 'audit/author test')
-            assert docs_source or author_source, source
+            # The versioned A/B launch guide is also a delivered document. Keep
+            # this exception explicit; all byte/hash/Git checks below still apply.
+            guide_source = (source_name.as_posix() == 'info/PIPE-AB-339.md'
+                            and resolved_source == root / 'info/PIPE-AB-339.md')
+            assert docs_source or author_source or guide_source, source
             path = (root / record['snapshot']).resolve()
             assert path.parent == manifest.parent.resolve(), path
             assert path.name.startswith('OUTDATED_') and path.suffix == '.md', path

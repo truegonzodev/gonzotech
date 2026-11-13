@@ -83,8 +83,7 @@ I: базовое электричество/помпа/аккумулятор/�
 
 28.10.2026 автор подтвердил обе реализации и закрыл прежние задачи. III gate сохранён; D-ENG1 с авторскими рецептами/книжной выдачей остаётся отложенной. Новая PERF-001 не добавляет рецептов/страниц и не выводит новый gameplay tier из texture directory.
 
-## CONTENT-1/A4 — недоступный рецепт third_grinder, пакет 05
+<a id="grinder340"></a>
+## CONTENT-1/A4 — гриндер III, исправление340
 
-Source-сверка 332: key содержит G=second_grinder, но PHP/P P/PSP не использует G. Внешний аудит сообщает native recipe-load rejection; JSON-синтаксис проходит. Это не снятие гейта III и не отсутствие регистрации/JEI-категории машины. В [D-CONTENT1](DEFFERED.md#d-content1) отложены выбор согласованного pattern/key и native RecipeManager/crafting/расход/gate проверки. Не удалять предыдущую ступень G или выдумывать ингредиенты без решения автора. Другие существующие сметы/рецептурные deferred к пакету не присоединены.
-
-Предыдущая редакция профиля: [до синхронизации пакетов332](archive/editions/0.3.332/OUTDATED_BEFORE_AUTHOR_SYNC332_PROGRESSION.md); причина и границы — [HISTORY](HISTORY.md#author-sync332).
+Автор13.11.2026 подтвердил улучшение II→III: G=second_grinder стоит в центре крафта PHP/PGP/PSP. P=stainless_steel_plate,H=aluminum_housing,S=sandpapy, выход1third_grinder. Прежний unused-G делал рецепт незагружаемым. Существующий III-гейт не меняется; добавление рабочего RecipeManager entry не является снятием гейта. Native matches/assemble и отказ без центра проверяются; реальный игрок/JEI/расход на клике требуют игровой приёмки. [CURRENT](CURRENT-STATE.md#d-content1), [AUDIT](AUDIT.md#pipe340).

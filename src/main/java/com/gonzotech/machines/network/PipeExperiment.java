@@ -10,7 +10,7 @@ public final class PipeExperiment {
     public static final boolean ENABLED = VARIANT.equals("experimental");
     public static final boolean PROFILE = Boolean.parseBoolean(System.getProperty(
         "gonzotech.pipe.profile", SETTINGS.getProperty("profile", "false")));
-    public static final String SNAPSHOT = "pipe-II-339-" + (ENABLED ? "B" : "A");
+    public static final String SNAPSHOT = "pipe-II-340-" + (ENABLED ? "B" : "A");
     private PipeExperiment() {}
     private static Properties settings() {
         Properties p = new Properties();
